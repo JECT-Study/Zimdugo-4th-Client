@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { ReactNode } from "react";
-import appCss from "../app/styles/global.css?url";
+import globalCss from "../app/styles/global.css?url";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -28,7 +28,7 @@ export const Route = createRootRouteWithContext<{
     links: [
       {
         rel: "stylesheet",
-        href: appCss,
+        href: globalCss,
       },
     ],
   }),

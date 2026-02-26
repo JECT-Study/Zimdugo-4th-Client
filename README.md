@@ -58,7 +58,7 @@ pnpm build-storybook
 | **HTTP 클라이언트** | axios |
 | **폼 관리** | React Hook Form |
 | **유효성 검증** | Zod |
-| **스타일링** | Tailwind CSS v4 |
+| **스타일링** | vanilla-extract (CSS-in-TS) |
 | **애니메이션** | motion |
 | **인증** | better-auth |
 | **패키지 매니저** | pnpm |
