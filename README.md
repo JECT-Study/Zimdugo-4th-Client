@@ -103,8 +103,8 @@ our-journey/
 #### 📂 `src/app/`
 - **역할**: 애플리케이션 레벨의 설정 및 초기화
 - **포함 내용**:
-  - 전역 스타일 (`styles/global.css`)
-  - 앱 공급자(Provider) 설정
+  - 전역 스타일 (`styles/global.css.ts`)
+  - Provider 설정
   - 전역 레이아웃
 - **예시**: 테마 설정, 전역 CSS, 에러 바운더리
 
@@ -214,9 +214,7 @@ our-journey/
 ### 레이어 의존성 규칙
 
 ```
-app → composites → features → entities → shared
-  ↓       ↓           ↓           ↓         ↓
-routes    ✓           ✓           ✓         ✓
+(상위) routes → composites → features → entities → shared (하위)
 ```
 
 - **상위 레이어**는 하위 레이어를 import 가능
