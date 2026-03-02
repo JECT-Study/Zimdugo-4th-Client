@@ -13,6 +13,7 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
   });
+
   setupRouterSsrQueryIntegration({
     router,
     queryClient,

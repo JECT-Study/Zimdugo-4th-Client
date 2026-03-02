@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { ReactNode } from "react";
-import globalCss from "../app/styles/global.css?url";
+import "../app/styles/global.css";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -23,12 +23,6 @@ export const Route = createRootRouteWithContext<{
       },
       {
         title: "TanStack Start Starter",
-      },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: globalCss,
       },
     ],
   }),

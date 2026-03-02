@@ -1,59 +1,61 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 
-// API 기본 URL (환경변수 또는 기본값 사용)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-
 /**
- * axios 인스턴스 생성
- * - baseURL: API 기본 경로
- * - timeout: 요청 제한 시간 (10초)
- * - headers: 기본 Content-Type 설정
+ * API 클라이언트 생성 함수
+ * - baseURL을 외부에서 주입받아 axios 인스턴스 생성
+ *
+ * @param baseURL - API 기본 URL (기본값: "/api")
+ * @returns axios 인스턴스
  */
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+export const createApiClient = (baseURL = "/api") => {
+  const client = axios.create({
+    baseURL,
+    timeout: 10000,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-/**
- * 요청 인터셉터
- * - API 요청 전에 실행됨
- * - 인증 토큰, 커스텀 헤더 등을 추가할 수 있음
- */
-apiClient.interceptors.request.use(
-  (config) => {
-    // 필요 시 인증 토큰 추가
-    // const token = getAuthToken()
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
-    return config;
-  },
-  (error) => {
-    // 요청 에러 처리
-    return Promise.reject(error);
-  },
-);
+  /**
+   * 요청 인터셉터
+   * - API 요청 전에 실행됨
+   * - 인증 토큰, 커스텀 헤더 등을 추가할 수 있음
+   */
+  client.interceptors.request.use(
+    (config) => {
+      // 필요 시 인증 토큰 추가
+      // const token = getAuthToken()
+      // if (token) {
+      //   config.headers.Authorization = `Bearer ${token}`
+      // }
+      return config;
+    },
+    (error) => {
+      // 요청 에러 처리
+      return Promise.reject(error);
+    },
+  );
 
-/**
- * 응답 인터셉터
- * - API 응답 후에 실행됨
- * - 전역 에러 처리, 토큰 갱신 등을 수행할 수 있음
- */
-apiClient.interceptors.response.use(
-  (response) => {
-    // 응답 데이터 가공 또는 로깅
-    return response;
-  },
-  (error) => {
-    // 401 인증 실패 등 에러 처리
-    // if (error.response?.status === 401) {
-    // }
-    return Promise.reject(error);
-  },
-);
+  /**
+   * 응답 인터셉터
+   * - API 응답 후에 실행됨
+   * - 전역 에러 처리, 토큰 갱신 등을 수행할 수 있음
+   */
+  client.interceptors.response.use(
+    (response) => {
+      // 응답 데이터 가공 또는 로깅
+      return response;
+    },
+    (error) => {
+      // 401 인증 실패 등 에러 처리
+      // if (error.response?.status === 401) {
+      // }
+      return Promise.reject(error);
+    },
+  );
+
+  return client;
+};
 
 /**
  * API 메서드 팩토리 함수
@@ -117,7 +119,3 @@ export const createApiMethods = (client: AxiosInstance) => {
     },
   };
 };
-
-// 기본 apiClient를 사용하는 HTTP 메서드들 export
-export const { httpGet, httpPost, httpPut, httpPatch, httpDelete } =
-  createApiMethods(apiClient);
