@@ -92,6 +92,7 @@ pnpm build-storybook  # Storybook 빌드
 | **스타일링** | vanilla-extract (CSS-in-TS) |
 | **애니메이션** | motion |
 | **인증** | better-auth |
+| **다국어 (i18n)** | Paraglide-JS |
 | **패키지 매니저** | pnpm |
 | **린터 / 포매터** | Biome |
 | **컴포넌트 개발** | Storybook |
@@ -143,6 +144,11 @@ our-journey/
 │       │   └── es-toolkit.ts
 │       ├── tsconfig.json
 │       └── package.json
+│   └── i18n/             # 다국어 설정 및 메시지 관리 (Paraglide-JS)
+│       ├── messages/     # 언어별 JSON 메시지 (ko, en, ja, cn)
+│       ├── src/          # Paraglide 생성 코드 및 runtime
+│       ├── project.inlang/ # Inlang 프로젝트 설정
+│       └── package.json
 ├── .agents/              # AI 에이전트 설정
 ├── .aiassistant/         # AI 어시스턴트 설정
 ├── .claude/              # Claude Code 설정
@@ -184,6 +190,12 @@ our-journey/
 - `better-auth`: 인증 설정 (서버/클라이언트)
 - `es-toolkit`: 유틸리티 함수 라이브러리 (lodash 대체)
 
+#### 📂 `packages/i18n/`
+Paraglide-JS를 이용한 다국어 지원 패키지입니다.
+- `messages/`: ko, en, ja, cn 언어별 메시지 정의
+- `src/`: Paraglide 컴파일 결과물 및 커스텀 런타임 익스포트
+- `project.inlang/`: Inlang 설정 파일 및 스키마
+
 ### 레이어 의존성 규칙
 
 #### apps/web 내부 (FSD 구조)
@@ -220,6 +232,20 @@ import { authClient } from '@repo/libs/auth-client'
 
 // es-toolkit 사용
 import { debounce, throttle } from '@repo/libs/es-toolkit'
+```
+
+#### `@repo/i18n` 사용법
+```typescript
+import { m, getLocale, setLocale } from '@repo/i18n'
+
+// 메시지 사용
+console.log(m.hello())
+
+// 현재 언어 확인
+console.log(getLocale())
+
+// 언어 변경
+setLocale('en')
 ```
 
 ---

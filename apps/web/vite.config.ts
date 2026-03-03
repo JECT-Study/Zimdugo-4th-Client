@@ -1,3 +1,4 @@
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
@@ -12,6 +13,10 @@ const config = defineConfig({
     vanillaExtractPlugin(),
     nitro({ rollupConfig: { external: [/^@sentry\//] } }),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
+    paraglideVitePlugin({
+      project: "../../packages/i18n/project.inlang",
+      outdir: "../../packages/i18n/src/paraglide",
+    }),
     tanstackStart(),
     viteReact({
       babel: {

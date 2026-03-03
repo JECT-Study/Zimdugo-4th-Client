@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { ReactNode } from "react";
 import "../app/styles/global.css";
+import { getLocale } from "@repo/i18n";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -30,8 +31,9 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const lang = getLocale();
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <title>OurJourney</title>
         <HeadContent />
