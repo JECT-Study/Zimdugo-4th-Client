@@ -1,0 +1,17 @@
+{
+  "name": "@repo/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "paraglide-js compile --project ./project.inlang && tsc",
+    "dev": "paraglide-js compile --project ./project.inlang --watch"
+  },
+  "devDependencies": {
+    "@inlang/paraglide-js": "2.13.1",
+    "typescript": "^5.7.2",
+    "@repo/configs": "workspace:*"
+  }
+}
