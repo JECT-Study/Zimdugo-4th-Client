@@ -40,6 +40,13 @@ npm install -g pnpm
 pnpm --version  # 10.x.x 이상 확인
 ```
 
+#### 3. IDE 설정 (Biome 플러그인 설치)
+
+본 프로젝트는 코드 스타일 및 린트 관리를 위해 **Biome**을 사용합니다. 원활한 개발을 위해 사용 중인 IDE에 Biome 플러그인을 설치하는 것을 강력히 권장합니다.
+
+- **VS Code**: [Biome VS Code extension](https://marketplace.visualstudio.com/items?itemName=biomejs.biome) 설치
+- **JetBrains IDE (IntelliJ, WebStorm 등)**: `Settings` > `Plugins`에서 `Biome` 검색 후 설치
+
 ### 설치 및 실행
 
 ```bash
