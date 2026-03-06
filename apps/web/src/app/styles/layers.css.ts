@@ -7,4 +7,4 @@ import { globalLayer } from "@vanilla-extract/css";
  * 1. reset - 브라우저 기본 스타일 초기화
  */
 
-export const resetLayer = globalLayer("reset");
+export const normalize = globalLayer("normalize");

@@ -1,8 +1,8 @@
 import { globalStyle } from "@vanilla-extract/css";
-import { resetLayer } from "./layers.css.ts";
+import { normalize } from "./layers.css.ts";
 
 /**
- * CSS Reset based on modern-normalize v3.0.1
+ * CSS Normalize based on modern-normalize v3.0.1
  * https://github.com/sindresorhus/modern-normalize
  * MIT License
  */
@@ -17,7 +17,7 @@ Document
 */
 globalStyle("*, ::before, ::after", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       boxSizing: "border-box",
     },
   },
@@ -31,7 +31,7 @@ globalStyle("*, ::before, ::after", {
 */
 globalStyle("html", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       fontFamily:
         'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
       lineHeight: 1.15,
@@ -51,7 +51,7 @@ Sections
 */
 globalStyle("body", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       margin: 0,
     },
   },
@@ -67,7 +67,7 @@ Chrome과 Safari에서 올바른 폰트 두께 추가
 */
 globalStyle("b, strong", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       fontWeight: "bolder",
     },
   },
@@ -79,7 +79,7 @@ globalStyle("b, strong", {
 */
 globalStyle("code, kbd, samp, pre", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       fontFamily:
         'ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
       fontSize: "1em",
@@ -92,7 +92,7 @@ globalStyle("code, kbd, samp, pre", {
 */
 globalStyle("small", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       fontSize: "80%",
     },
   },
@@ -103,7 +103,7 @@ globalStyle("small", {
 */
 globalStyle("sub, sup", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       fontSize: "75%",
       lineHeight: 0,
       position: "relative",
@@ -114,7 +114,7 @@ globalStyle("sub, sup", {
 
 globalStyle("sub", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       bottom: "-0.25em",
     },
   },
@@ -122,7 +122,7 @@ globalStyle("sub", {
 
 globalStyle("sup", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       top: "-0.5em",
     },
   },
@@ -138,7 +138,7 @@ Chrome과 Safari에서 테이블 border 색상 상속 수정
 */
 globalStyle("table", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       borderColor: "currentcolor",
     },
   },
@@ -155,7 +155,7 @@ Forms
 */
 globalStyle("button, input, optgroup, select, textarea", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       fontFamily: "inherit",
       fontSize: "100%",
       lineHeight: 1.15,
@@ -169,7 +169,7 @@ iOS와 Safari에서 클릭 가능한 타입 스타일 수정
 */
 globalStyle('button, [type="button"], [type="reset"], [type="submit"]', {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       WebkitAppearance: "button",
     },
   },
@@ -180,7 +180,7 @@ globalStyle('button, [type="button"], [type="reset"], [type="submit"]', {
 */
 globalStyle("legend", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       padding: 0,
     },
   },
@@ -191,7 +191,7 @@ Chrome과 Firefox에서 올바른 수직 정렬 추가
 */
 globalStyle("progress", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       verticalAlign: "baseline",
     },
   },
@@ -202,7 +202,7 @@ Safari에서 증가/감소 버튼의 커서 스타일 수정
 */
 globalStyle("::-webkit-inner-spin-button, ::-webkit-outer-spin-button", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       height: "auto",
     },
   },
@@ -214,7 +214,7 @@ globalStyle("::-webkit-inner-spin-button, ::-webkit-outer-spin-button", {
 */
 globalStyle('[type="search"]', {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       WebkitAppearance: "textfield",
       outlineOffset: "-2px",
     },
@@ -226,7 +226,7 @@ macOS의 Chrome과 Safari에서 내부 padding 제거
 */
 globalStyle("::-webkit-search-decoration", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       WebkitAppearance: "none",
     },
   },
@@ -238,7 +238,7 @@ globalStyle("::-webkit-search-decoration", {
 */
 globalStyle("::-webkit-file-upload-button", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       WebkitAppearance: "button",
       font: "inherit",
     },
@@ -255,7 +255,7 @@ Chrome과 Safari에서 올바른 display 추가
 */
 globalStyle("summary", {
   "@layer": {
-    [resetLayer]: {
+    [normalize]: {
       display: "list-item",
     },
   },
