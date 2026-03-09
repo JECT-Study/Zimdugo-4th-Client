@@ -1,5 +1,5 @@
 import { globalStyle } from "@vanilla-extract/css";
-import { normalize } from "./layers.css.ts";
+import { normalize } from "./layers.css";
 
 /**
  * CSS Normalize based on modern-normalize v3.0.1
