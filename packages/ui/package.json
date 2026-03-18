@@ -9,6 +9,9 @@
     },
     "./*.css": {
       "import": "./src/*.css.ts"
+    },
+    "./styles/*.css": {
+      "import": "./src/styles/*.css.ts"
     }
   },
   "scripts": {

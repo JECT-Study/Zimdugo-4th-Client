@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { ReactNode } from "react";
-import "../app/styles/global.css";
+import "@repo/ui/styles/global.css";
 import { getLocale } from "@repo/i18n";
 
 export const Route = createRootRouteWithContext<{
