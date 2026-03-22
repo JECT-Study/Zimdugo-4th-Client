@@ -1,54 +1,25 @@
 {
-  "name": "our-journey",
+  "name": "zimdugo",
   "private": true,
   "type": "module",
-  "imports": {
-    "#/*": "./src/*"
-  },
   "scripts": {
-    "dev": "vite dev --port 3010",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest run",
+    "dev:web": "pnpm --filter web dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "build:web": "pnpm --filter web build",
+    "build:admin": "pnpm --filter admin build",
+    "build": "pnpm --filter \"{apps/*}\" build",
+    "preview:web": "pnpm --filter web preview",
+    "preview:admin": "pnpm --filter admin preview",
+    "test:web": "pnpm --filter web test",
+    "test:admin": "pnpm --filter admin test",
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
-  },
-  "dependencies": {
-    "@storybook/react-vite": "^10.1.10",
-    "@tailwindcss/vite": "^4.1.18",
-    "@tanstack/react-devtools": "^0.7.0",
-    "@tanstack/react-query": "^5.66.5",
-    "@tanstack/react-query-devtools": "^5.84.2",
-    "@tanstack/react-router": "^1.132.0",
-    "@tanstack/react-router-devtools": "^1.132.0",
-    "@tanstack/react-router-ssr-query": "^1.131.7",
-    "@tanstack/react-start": "^1.132.0",
-    "@tanstack/router-plugin": "^1.132.0",
-    "better-auth": "^1.4.12",
-    "lucide-react": "^0.545.0",
-    "nitro": "npm:nitro-nightly@latest",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "storybook": "^10.1.10",
-    "tailwindcss": "^4.1.18"
+    "storybook": "pnpm --filter storybook dev",
+    "build-storybook": "pnpm --filter storybook build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
-    "@tanstack/devtools-vite": "^0.3.11",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/react": "^16.2.0",
-    "@types/node": "^22.10.2",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
-    "@vitejs/plugin-react": "^5.0.4",
-    "babel-plugin-react-compiler": "^1.0.0",
-    "jsdom": "^27.0.0",
-    "typescript": "^5.7.2",
-    "vite": "^7.1.7",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.5"
+    "typescript": "^5.7.2"
   }
 }

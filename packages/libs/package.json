@@ -1,0 +1,40 @@
+{
+  "name": "@repo/libs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./axios": {
+      "import": "./src/axios.ts"
+    },
+    "./auth": {
+      "import": "./src/auth.ts"
+    },
+    "./auth-client": {
+      "import": "./src/auth-client.ts"
+    },
+    "./dayjs": {
+      "import": "./src/dayjs.ts"
+    },
+    "./es-toolkit": {
+      "import": "./src/es-toolkit.ts"
+    }
+  },
+  "scripts": {
+    "lint": "biome lint",
+    "format": "biome format"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "better-auth": "^1.4.12",
+    "dayjs": "^1.11.19",
+    "es-toolkit": "^1.44.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0"
+  }
+}

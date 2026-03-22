@@ -1,0 +1,22 @@
+{
+  "name": "storybook",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "storybook dev -p 6006",
+    "build": "storybook build"
+  },
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@storybook/react-vite": "^10.1.10",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "storybook": "^10.1.10",
+    "typescript": "^5.7.2",
+    "vite": "^7.1.7"
+  }
+}
