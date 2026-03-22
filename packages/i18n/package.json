@@ -11,6 +11,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./paraglide/*": {
+      "types": "./src/paraglide/*.d.ts",
+      "import": "./src/paraglide/*.js",
+      "default": "./src/paraglide/*.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js",
@@ -18,7 +23,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/paraglide"
   ],
   "scripts": {
     "build": "paraglide-js compile --project ./project.inlang && tsc",
