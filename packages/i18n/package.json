@@ -23,7 +23,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/paraglide"
   ],
   "scripts": {
     "build": "paraglide-js compile --project ./project.inlang && tsc",
