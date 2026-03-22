@@ -1,4 +1,4 @@
-# Our Journey
+# Zimdugo
 
 TanStack Start 기반의 React 애플리케이션 프로젝트입니다.
 
@@ -57,17 +57,22 @@ cd Zimdugo-4th-Client
 # 2. 의존성 설치
 pnpm install
 
-# 3. 개발 서버 실행 (http://localhost:3010)
-pnpm dev
+# 3. 개발 서버 실행 (web: 3010, admin: 3011)
+pnpm dev:web    # 메인 웹 실행
+pnpm dev:admin  # 어드민 실행
 ```
 
 ### 주요 명령어
 
 ```bash
 # 개발
-pnpm dev              # 개발 서버 실행 (http://localhost:3010)
-pnpm build            # 프로덕션 빌드
-pnpm preview          # 프로덕션 빌드 미리보기
+pnpm dev:web          # 메인 웹 개발 서버 실행 (http://localhost:3010)
+pnpm dev:admin        # 어드민 개발 서버 실행 (http://localhost:3011)
+pnpm build            # 모든 앱 프로덕션 빌드
+pnpm build:web        # 메인 웹 프로덕션 빌드
+pnpm build:admin      # 어드민 프로덕션 빌드
+pnpm preview:web      # 메인 웹 프로덕션 빌드 미리보기
+pnpm preview:admin    # 어드민 프로덕션 빌드 미리보기
 
 # 코드 품질
 pnpm format           # 코드 포맷팅 (Biome)
@@ -75,7 +80,8 @@ pnpm lint             # 린트 검사 (Biome)
 pnpm check            # 포맷 + 린트 검사
 
 # 테스트
-pnpm test             # 테스트 실행 (Vitest)
+pnpm test:web         # 메인 웹 테스트 실행 (Vitest)
+pnpm test:admin       # 어드민 테스트 실행 (Vitest)
 
 # Storybook
 pnpm storybook        # Storybook 실행 (http://localhost:6006)
@@ -115,25 +121,11 @@ pnpm build-storybook  # Storybook 빌드
 본 프로젝트는 **pnpm workspace 기반 모노레포** 구조를 채택하고 있으며, **Feature-Sliced Design (FSD)** 철학을 따릅니다.
 
 ```
-our-journey/
+zimdugo/
 ├── apps/
 │   ├── web/              # 메인 웹 애플리케이션
-│   │   ├── public/       # 정적 파일
-│   │   ├── src/
-│   │   │   ├── app/      # 앱 레벨 설정 및 전역 스타일
-│   │   │   ├── composites/   # 복합 컴포넌트
-│   │   │   ├── entities/     # 비즈니스 엔티티
-│   │   │   ├── features/     # 기능 단위 모듈
-│   │   │   ├── routes/       # 라우트 정의
-│   │   │   ├── shared/       # 공유 리소스
-│   │   │   ├── router.tsx
-│   │   │   └── routeTree.gen.ts
-│   │   ├── vite.config.ts
-│   │   ├── tsconfig.json
-│   │   └── package.json
+│   ├── admin/            # 어드민 관리자 애플리케이션
 │   └── storybook/        # Storybook 앱
-│       ├── .storybook/   # Storybook 설정
-│       └── package.json
 ├── packages/
 │   ├── ui/               # 공통 UI 컴포넌트
 │   │   ├── src/
@@ -178,6 +170,9 @@ our-journey/
 - **`src/composites/`**: 복합 컴포넌트 (여러 entities/features 조합)
 - **`src/routes/`**: TanStack Router 라우트 정의
 
+#### 📂 `apps/admin/`
+관리자용 애플리케이션으로, `apps/web`과 동일한 **Feature-Sliced Design (FSD)** 구조와 기술 스택을 공유합니다.
+
 #### 📂 `apps/storybook/`
 컴포넌트 개발을 위한 Storybook 앱입니다.
 - `packages/ui`와 `apps/web`의 컴포넌트 스토리를 참조합니다.
@@ -217,7 +212,8 @@ Paraglide-JS를 이용한 다국어 지원 패키지입니다.
 
 #### 워크스페이스 간 의존성
 ```
-apps/web → packages/ui, packages/libs
+apps/web → packages/ui, packages/libs, packages/i18n
+apps/admin → packages/ui, packages/libs, packages/i18n
 apps/storybook → packages/ui
 packages/ui → (외부 의존성만)
 packages/libs → (외부 의존성만)
