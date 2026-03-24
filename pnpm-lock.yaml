@@ -282,16 +282,11 @@ importers:
         specifier: ^3.0.5
         version: 3.2.4(@types/node@24.11.0)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.0.1))(tsx@4.21.0)
 
-  packages/configs: {}
-
   packages/i18n:
     devDependencies:
       '@inlang/paraglide-js':
         specifier: 2.13.1
         version: 2.13.1
-      '@repo/configs':
-        specifier: workspace:*
-        version: link:../configs
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -5803,14 +5798,14 @@ snapshots:
   h3@2.0.1-rc.14(crossws@0.4.4(srvx@0.11.12)):
     dependencies:
       rou3: 0.7.12
-      srvx: 0.11.8
+      srvx: 0.11.12
     optionalDependencies:
       crossws: 0.4.4(srvx@0.11.12)
 
   h3@2.0.1-rc.14(crossws@0.4.4(srvx@0.11.8)):
     dependencies:
       rou3: 0.7.12
-      srvx: 0.11.8
+      srvx: 0.11.12
     optionalDependencies:
       crossws: 0.4.4(srvx@0.11.8)
 

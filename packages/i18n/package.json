@@ -32,7 +32,6 @@
   },
   "devDependencies": {
     "@inlang/paraglide-js": "2.13.1",
-    "typescript": "^5.7.2",
-    "@repo/configs": "workspace:*"
+    "typescript": "^5.7.2"
   }
 }
