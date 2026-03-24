@@ -1,12 +1,11 @@
 {
-  "extends": "@repo/configs/tsconfig",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
     "allowJs": true,
     "checkJs": false,
     "declaration": true,
-    "noEmit": false
   },
   "include": ["src/**/*", "project.inlang"],
   "exclude": ["node_modules", "dist"]

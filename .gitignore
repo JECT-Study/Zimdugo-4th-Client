@@ -13,3 +13,7 @@ __unconfig*
 todos.json
 .idea
 .vscode
+
+# storybook
+*storybook.log
+**/storybook-static/
