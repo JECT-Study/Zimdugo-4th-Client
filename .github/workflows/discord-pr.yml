@@ -1,0 +1,57 @@
+name: Discord PR Notification
+
+on:
+  pull_request:
+    types:
+      - review_requested  # 리뷰어 지정될 때만
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const mapping = {
+              '4anghyeon': '996764944978686093',
+              'Binz-collab': '513338604945408000',
+              // 팀원 추가...
+            };
+
+            const pr = context.payload.pull_request;
+            const reviewer = context.payload.requested_reviewer;
+            const discordId = mapping[reviewer.login];
+
+            const MAX_DESC_LENGTH = 200;
+            const body = pr.body?.trim();
+            const description = !body
+              ? '_PR 설명이 없습니다._'
+              : body.length > MAX_DESC_LENGTH
+                ? body.slice(0, MAX_DESC_LENGTH) + '...'
+                : body;
+
+            const content = `🤖  ${discordId ? `<@${discordId}>` : `@${reviewer.login}`}님 Pull Request 확인 부탁드립니다!`;
+
+            const message = {
+              content,
+              embeds: [{
+                title: pr.title,
+                description,
+                url: pr.html_url,
+                color: 0x00864c,
+                fields: [
+                  { name: '작성자', value: pr.user.login, inline: true },
+                  { name: '브랜치', value: `\`${pr.head.ref}\` → \`${pr.base.ref}\``, inline: true }
+                ],
+                footer: { text: pr.base.repo.name }
+              }]
+            };
+
+            await fetch(process.env.DISCORD_WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(message)
+            });
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
