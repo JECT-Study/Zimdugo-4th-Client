@@ -131,18 +131,14 @@ zimdugo/
 │   │   ├── src/
 │   │   ├── tsconfig.json
 │   │   └── package.json
-│   ├── configs/          # 공유 설정 (tsconfig, biome 등)
+│   ├── libs/             # 공통 라이브러리 설정
+│   │   ├── src/
+│   │   │   ├── axios.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── auth-client.ts
+│   │   │   └── es-toolkit.ts
 │   │   ├── tsconfig.json
-│   │   ├── biome.json
 │   │   └── package.json
-│   └── libs/             # 공통 라이브러리 설정
-│       ├── src/
-│       │   ├── axios.ts
-│       │   ├── auth.ts
-│       │   ├── auth-client.ts
-│       │   └── es-toolkit.ts
-│       ├── tsconfig.json
-│       └── package.json
 │   └── i18n/             # 다국어 설정 및 메시지 관리 (Paraglide-JS)
 │       ├── messages/     # 언어별 JSON 메시지 (ko, en, ja, cn)
 │       ├── src/          # Paraglide 생성 코드 및 runtime
@@ -155,6 +151,8 @@ zimdugo/
 ├── .junie/               # JetBrains Junie 설정
 ├── .vscode/              # VS Code 설정
 ├── pnpm-workspace.yaml   # pnpm 워크스페이스 설정
+├── biome.json            # 전역 Biome 설정
+├── tsconfig.base.json    # 전역 TypeScript 설정
 └── package.json          # 루트 package.json
 ```
 
@@ -180,11 +178,6 @@ zimdugo/
 #### 📂 `packages/ui/`
 여러 앱에서 공유하는 공통 UI 컴포넌트 라이브러리입니다.
 - 디자인 시스템의 기본 컴포넌트 (Button, Input 등)를 포함합니다.
-
-#### 📂 `packages/configs/`
-프로젝트 전반에서 사용하는 공유 설정 파일들입니다.
-- `tsconfig.json`: TypeScript 기본 설정
-- `biome.json`: Biome 린터/포매터 설정
 
 #### 📂 `packages/libs/`
 여러 앱에서 공유하는 라이브러리 설정 및 re-export 패키지입니다.
@@ -217,7 +210,6 @@ apps/admin → packages/ui, packages/libs, packages/i18n
 apps/storybook → packages/ui
 packages/ui → (외부 의존성만)
 packages/libs → (외부 의존성만)
-packages/configs → (외부 의존성만)
 ```
 
 ### 패키지 사용 예시

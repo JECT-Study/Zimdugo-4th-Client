@@ -5,13 +5,33 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./paraglide/*": {
+      "types": "./src/paraglide/*.d.ts",
+      "import": "./src/paraglide/*.js",
+      "default": "./src/paraglide/*.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/paraglide"
+  ],
   "scripts": {
     "build": "paraglide-js compile --project ./project.inlang && tsc",
     "dev": "paraglide-js compile --project ./project.inlang --watch"
   },
   "devDependencies": {
     "@inlang/paraglide-js": "2.13.1",
-    "typescript": "^5.7.2",
-    "@repo/configs": "workspace:*"
+    "typescript": "^5.7.2"
   }
 }

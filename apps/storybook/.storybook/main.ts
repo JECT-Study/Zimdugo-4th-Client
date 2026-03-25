@@ -1,14 +1,14 @@
-import type { StorybookConfig } from '@storybook/react-vite'
+import type { StorybookConfig } from "@storybook/react-vite";
 
 const config: StorybookConfig = {
   stories: [
-    '../../packages/ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)',
-    '../../../apps/web/src/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    "../../packages/ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../../../apps/web/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   addons: [],
   framework: {
-    name: '@storybook/react-vite',
+    name: "@storybook/react-vite",
     options: {},
   },
-}
-export default config
+};
+export default config;
