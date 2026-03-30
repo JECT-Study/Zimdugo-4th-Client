@@ -247,3 +247,66 @@ export const opacityOverlay = style({
   position: "absolute",
   inset: 0,
 });
+
+// ── PrimitiveTokenTable ───────────────────────────────────────────────────────
+
+export const tokenTableSection = style({
+  marginTop: "48px",
+});
+
+export const tokenTableTitle = style({
+  fontSize: "13px",
+  fontWeight: 600,
+  color: color.palette.gray[700],
+  marginBottom: "12px",
+});
+
+export const tokenTable = style({
+  width: "100%",
+  borderCollapse: "collapse",
+});
+
+export const tokenTableHeadCell = style({
+  padding: "6px 12px",
+  textAlign: "left",
+  fontSize: "10px",
+  fontWeight: 600,
+  color: color.palette.gray[500],
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  borderBottom: `2px solid ${color.palette.gray[300]}`,
+});
+
+export const tokenTableRow = style({
+  borderBottom: `1px solid ${color.palette.gray[200]}`,
+  selectors: {
+    "&:hover": {
+      backgroundColor: color.palette.gray[200],
+    },
+  },
+});
+
+export const tokenTableCellName = style({
+  padding: "7px 12px",
+  fontFamily: "ui-monospace, monospace",
+  fontSize: "12px",
+  color: color.palette.gray[800],
+});
+
+export const tokenTableCellValue = style({
+  padding: "7px 12px",
+  fontFamily: "ui-monospace, monospace",
+  fontSize: "12px",
+  color: color.palette.gray[600],
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+});
+
+export const tokenTableSwatch = style({
+  width: "18px",
+  height: "18px",
+  borderRadius: "4px",
+  flexShrink: 0,
+  border: `1px solid ${color.palette.gray[300]}`,
+});

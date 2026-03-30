@@ -2,10 +2,6 @@ import type { Meta, StoryObj } from "@storybook/react";
 import * as styles from "./Colors.css.ts";
 import { color } from "./color.css.ts";
 
-// ──────────────────────────────────────────────
-// Storybook 메타
-// ──────────────────────────────────────────────
-
 const meta = {
   title: "Foundation/Colors",
   parameters: { layout: "fullscreen" },
@@ -14,87 +10,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Primitive: Story = {
-  name: "Primitive",
-  render: () => <PrimitiveColors />,
-};
-
 export const Semantic: Story = {
   name: "Semantic",
   render: () => <SemanticColors />,
 };
-
-const PRIMITIVE_FAMILIES: Array<{
-  name: string;
-  scale: Record<number, string>;
-  steps: number[];
-}> = [
-  {
-    name: "Gray",
-    scale: color.palette.gray,
-    steps: Object.keys(color.palette.gray).map(Number),
-  },
-  {
-    name: "Blue",
-    scale: color.palette.blue,
-    steps: Object.keys(color.palette.blue).map(Number),
-  },
-  {
-    name: "Red",
-    scale: color.palette.red,
-    steps: Object.keys(color.palette.red).map(Number),
-  },
-  {
-    name: "Green",
-    scale: color.palette.green,
-    steps: Object.keys(color.palette.green).map(Number),
-  },
-];
-
-function PrimitiveColors() {
-  return (
-    <div className={styles.primitiveWrapper}>
-      <div className={styles.pageHeader}>
-        <h2 className={styles.pageTitle}>Primitive Colors</h2>
-        <p className={styles.pageSubtitle}>
-          색상 시스템의 원시값으로, 역할 기반 색상(Semantic Color)의 재료입니다.
-          역할 기반 색상으로 표현하기 어려운 예외적인 경우에 한해 직접 참조할 수
-          있습니다.
-        </p>
-      </div>
-
-      <div className={styles.familyList}>
-        {PRIMITIVE_FAMILIES.map(({ name, scale, steps }) => (
-          <div key={name}>
-            <h3 className={styles.familyName}>{name}</h3>
-            <div className={styles.swatchRow}>
-              {steps.map((step) => (
-                <ColorBlock key={step} step={step} hex={scale[step]} />
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {/* Opacity */}
-        <div>
-          <div className={styles.opacityLabelContainer}>
-            <span className={styles.opacityDot} />
-            Opacity
-          </div>
-          <div className={styles.swatchRow}>
-            {([200, 400, 600, 800] as const).map((step) => (
-              <OpacityBlock key={step} step={step} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────
-// Semantic — 토큰 데이터
-// ──────────────────────────────────────────────
 
 type SemanticToken = {
   name: string;
@@ -221,45 +140,6 @@ function SemanticTokenRow({ token }: { token: SemanticToken }) {
       </div>
       {/* Primitive 토큰 경로 */}
       <div className={styles.primitiveTokenBadge}>{token.primitiveToken}</div>
-    </div>
-  );
-}
-
-function ColorBlock({ step, hex }: { step: number | string; hex: string }) {
-  return (
-    <div className={styles.colorBlockContainer}>
-      {/* 색상 블록 */}
-      <div
-        title={`${step}: ${hex}`}
-        className={styles.colorBlockSwatch}
-        style={{ backgroundColor: hex }}
-      />
-      {/* 정보 영역 */}
-      <div className={styles.blockInfo}>
-        <div className={styles.blockStepLabel}>{step}</div>
-        <div className={styles.blockValueLabel}>{hex}</div>
-      </div>
-    </div>
-  );
-}
-
-function OpacityBlock({ step }: { step: 200 | 400 | 600 | 800 }) {
-  const rgba = color.palette.opacity[step];
-  return (
-    <div className={styles.opacityBlockContainer}>
-      <div
-        title={`opacity.${step}: ${rgba}`}
-        className={styles.opacityBlockSwatch}
-      >
-        <div
-          className={styles.opacityOverlay}
-          style={{ backgroundColor: rgba }}
-        />
-      </div>
-      <div className={styles.blockInfo}>
-        <div className={styles.blockStepLabel}>{step}</div>
-        <div className={styles.blockValueLabel}>{rgba}</div>
-      </div>
     </div>
   );
 }
