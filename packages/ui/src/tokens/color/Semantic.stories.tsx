@@ -15,14 +15,17 @@ export const Semantic: Story = {
   render: () => <SemanticColors />,
 };
 
+/** 시맨틱 토큰 단일 항목 */
 type SemanticToken = {
   name: string;
   value: string;
   primitiveToken: string;
   description?: string;
 };
+/** 시맨틱 토큰 그룹 */
 type SemanticGroup = { label: string; tokens: SemanticToken[] };
 
+/** 렌더링할 시맨틱 토큰 그룹 목록 */
 const SEMANTIC_GROUPS: SemanticGroup[] = [
   {
     label: "Brand",
@@ -83,6 +86,7 @@ const SEMANTIC_GROUPS: SemanticGroup[] = [
   },
 ];
 
+/** 역할 기반 시맨틱 컬러 토큰을 그룹별로 표시합니다 */
 function SemanticColors() {
   return (
     <div className={styles.semanticWrapper}>
@@ -123,6 +127,7 @@ function SemanticColors() {
   );
 }
 
+/** 단일 시맨틱 토큰을 스워치, 토큰명, 원시 토큰 경로와 함께 표시합니다 */
 function SemanticTokenRow({ token }: { token: SemanticToken }) {
   return (
     <div className={styles.tokenRow}>

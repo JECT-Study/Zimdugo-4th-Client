@@ -15,6 +15,7 @@ export const Primitive: Story = {
   render: () => <PrimitiveColors />,
 };
 
+/** 렌더링할 색상 패밀리 목록 */
 const PRIMITIVE_FAMILIES: Array<{
   name: string;
   scale: Record<number, string>;
@@ -42,6 +43,11 @@ const PRIMITIVE_FAMILIES: Array<{
   },
 ];
 
+const OPACITY_KEYS = Object.keys(
+  color.palette.opacity,
+) as unknown as (keyof typeof color.palette.opacity)[];
+
+/** 원시 색상 팔레트 전체를 스워치와 토큰 테이블로 표시합니다 */
 function PrimitiveColors() {
   return (
     <div className={styles.primitiveWrapper}>
@@ -89,6 +95,7 @@ function PrimitiveColors() {
   );
 }
 
+/** 단일 색상 스텝을 스워치와 hex 값으로 표시합니다 */
 function ColorBlock({ step, hex }: { step: number | string; hex: string }) {
   return (
     <div className={styles.colorBlockContainer}>
@@ -107,6 +114,7 @@ function ColorBlock({ step, hex }: { step: number | string; hex: string }) {
   );
 }
 
+/** 단일 불투명도 스텝을 체커보드 배경 위에 표시합니다 */
 function OpacityBlock({ step }: { step: 200 | 400 | 600 | 800 }) {
   const rgba = color.palette.opacity[step];
   return (
@@ -128,6 +136,7 @@ function OpacityBlock({ step }: { step: 200 | 400 | 600 | 800 }) {
   );
 }
 
+/** 모든 원시 색상 토큰을 이름과 값으로 나열합니다 */
 function PrimitiveTokenTable() {
   return (
     <div className={styles.tokenTableSection}>
@@ -156,7 +165,7 @@ function PrimitiveTokenTable() {
               </tr>
             )),
           )}
-          {([200, 400, 600, 800] as const).map((step) => (
+          {OPACITY_KEYS.map((step) => (
             <tr key={`opacity-${step}`} className={styles.tokenTableRow}>
               <td className={styles.tokenTableCellName}>
                 {`color.opacity.${step}`}
