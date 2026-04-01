@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import * as styles from "./Colors.css.ts";
 import { color } from "./color.css.ts";
+import * as styles from "./Stories.css.ts";
 
 const meta = {
   title: "Foundation/Colors",
