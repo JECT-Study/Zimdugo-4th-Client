@@ -23,9 +23,6 @@ function OverviewPage() {
   );
 }
 
-// ── Hero ──────────────────────────────────────────────────────────────────────
-
-/** Zimdugo 디자인 시스템 소개 */
 function Hero() {
   return (
     <div className={styles.hero}>

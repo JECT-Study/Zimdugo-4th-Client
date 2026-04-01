@@ -48,8 +48,8 @@ const SEMANTIC_GROUPS: SemanticGroup[] = [
     label: "Info",
     tokens: [
       {
-        name: "info.default",
-        value: color.info.default,
+        name: "default.info",
+        value: color.default.info,
         primitiveToken: "color.blue.300",
         description: "정보성 기본 색상",
       },
@@ -81,6 +81,205 @@ const SEMANTIC_GROUPS: SemanticGroup[] = [
         value: color.danger.disabled,
         primitiveToken: "color.red.100",
         description: "위험 비활성 색상",
+      },
+    ],
+  },
+  {
+    label: "Text",
+    tokens: [
+      {
+        name: "text.title",
+        value: color.text.title,
+        primitiveToken: "color.gray.800",
+        description: "제목 텍스트 색상",
+      },
+      {
+        name: "text.content",
+        value: color.text.content,
+        primitiveToken: "color.gray.700",
+        description: "본문 텍스트 색상",
+      },
+      {
+        name: "text.surface",
+        value: color.text.surface,
+        primitiveToken: "color.gray.600",
+        description: "서피스 텍스트 색상",
+      },
+      {
+        name: "text.brand",
+        value: color.text.brand,
+        primitiveToken: "color.green.500",
+        description: "브랜드 텍스트 색상",
+      },
+      {
+        name: "text.white",
+        value: color.text.white,
+        primitiveToken: "color.gray.100",
+        description: "흰색 텍스트 색상",
+      },
+      {
+        name: "text.error",
+        value: color.text.error,
+        primitiveToken: "color.red.300",
+        description: "오류 텍스트 색상",
+      },
+      {
+        name: "text.assistant",
+        value: color.text.assistant,
+        primitiveToken: "color.blue.300",
+        description: "어시스턴트 텍스트 색상",
+      },
+      {
+        name: "text.disable",
+        value: color.text.disable,
+        primitiveToken: "color.gray.500",
+        description: "비활성 텍스트 색상",
+      },
+    ],
+  },
+  {
+    label: "Focus",
+    tokens: [
+      {
+        name: "focus",
+        value: color.focus,
+        primitiveToken: "color.green.500",
+        description: "포커스 색상",
+      },
+    ],
+  },
+  {
+    label: "Icon",
+    tokens: [
+      {
+        name: "icon.primary",
+        value: color.icon.primary,
+        primitiveToken: "color.green.500",
+        description: "주요 아이콘 색상",
+      },
+      {
+        name: "icon.lighten",
+        value: color.icon.lighten,
+        primitiveToken: "color.gray.500",
+        description: "연한 아이콘 색상",
+      },
+      {
+        name: "icon.default",
+        value: color.icon.default,
+        primitiveToken: "color.gray.600",
+        description: "기본 아이콘 색상",
+      },
+      {
+        name: "icon.black",
+        value: color.icon.black,
+        primitiveToken: "color.gray.800",
+        description: "검정 아이콘 색상",
+      },
+      {
+        name: "icon.bg",
+        value: color.icon.bg,
+        primitiveToken: "color.gray.200",
+        description: "아이콘 배경 색상",
+      },
+      {
+        name: "icon.white",
+        value: color.icon.white,
+        primitiveToken: "color.gray.100",
+        description: "흰색 아이콘 색상",
+      },
+      {
+        name: "icon.error",
+        value: color.icon.error,
+        primitiveToken: "color.red.300",
+        description: "오류 아이콘 색상",
+      },
+    ],
+  },
+  {
+    label: "Border",
+    tokens: [
+      {
+        name: "border.default",
+        value: color.border.default,
+        primitiveToken: "color.gray.300",
+        description: "기본 보더 색상",
+      },
+      {
+        name: "border.hover",
+        value: color.border.hover,
+        primitiveToken: "color.gray.500",
+        description: "호버 보더 색상",
+      },
+      {
+        name: "border.error",
+        value: color.border.error,
+        primitiveToken: "color.red.300",
+        description: "오류 보더 색상",
+      },
+      {
+        name: "border.focus",
+        value: color.border.focus,
+        primitiveToken: "color.green.500",
+        description: "포커스 보더 색상",
+      },
+      {
+        name: "border.action",
+        value: color.border.action,
+        primitiveToken: "color.gray.700",
+        description: "액션 보더 색상",
+      },
+    ],
+  },
+  {
+    label: "Background",
+    tokens: [
+      {
+        name: "bg.default",
+        value: color.bg.default,
+        primitiveToken: "color.gray.100",
+        description: "기본 배경 색상",
+      },
+      {
+        name: "bg.surface",
+        value: color.bg.surface,
+        primitiveToken: "color.gray.200",
+        description: "서피스 배경 색상",
+      },
+      {
+        name: "bg.subtle",
+        value: color.bg.subtle,
+        primitiveToken: "color.gray.300",
+        description: "은은한 배경 색상",
+      },
+      {
+        name: "bg.active",
+        value: color.bg.active,
+        primitiveToken: "color.gray.700",
+        description: "활성 배경 색상",
+      },
+      {
+        name: "bg.disable",
+        value: color.bg.disable,
+        primitiveToken: "color.gray.500",
+        description: "비활성 배경 색상",
+      },
+      {
+        name: "bg.brand.default",
+        value: color.bg.brand.default,
+        primitiveToken: "color.green.500",
+        description: "브랜드 기본 배경 색상",
+      },
+      {
+        name: "bg.brand.disable",
+        value: color.bg.brand.disable,
+        primitiveToken: "color.green.100",
+        description: "브랜드 비활성 배경 색상",
+      },
+      {
+        name: "bg.brand.active",
+        value: color.bg.brand.active,
+        primitiveToken: "color.green.700",
+        description: "브랜드 활성 배경 색상",
       },
     ],
   },

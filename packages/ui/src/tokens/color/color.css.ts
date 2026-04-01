@@ -42,8 +42,8 @@ const palette = {
 } as const;
 
 const semantic = createGlobalTheme(":root", {
-  info: {
-    default: palette.blue["300"],
+  default: {
+    info: palette.blue["300"],
   },
   brand: {
     primary: palette.green["500"],
@@ -72,7 +72,7 @@ const semantic = createGlobalTheme(":root", {
     default: palette.gray["600"],
     black: palette.gray["800"],
     bg: palette.gray["200"],
-    color: palette.gray["100"],
+    white: palette.gray["100"],
     error: palette.red["300"],
   },
   border: {
@@ -92,45 +92,6 @@ const semantic = createGlobalTheme(":root", {
       default: palette.green["500"],
       disable: palette.green["100"],
       active: palette.green["700"],
-    },
-  },
-  button: {
-    text: {
-      color: {
-        default: palette.gray["100"],
-        disabled: palette.gray["600"],
-        neutral: palette.gray["800"],
-      },
-    },
-    outline: {
-      border: {
-        primary: {
-          default: palette.gray["700"],
-          hover: palette.green["600"],
-          active: palette.green["700"],
-          disable: palette.green["200"],
-          intent: {
-            primary: { hover: palette.green["500"] },
-            neutral: { hover: palette.gray["600"] },
-          },
-        },
-      },
-    },
-    bg: {
-      neutral: {
-        default: palette.gray["200"],
-        hover: palette.gray["200"],
-        active: palette.gray["400"],
-        disable: palette.gray["200"],
-        focus: palette.gray["200"],
-      },
-      primary: {
-        default: palette.green["500"],
-        hover: palette.green["300"],
-        pressed: palette.green["700"],
-        disable: palette.green["100"],
-        focus: palette.green["100"],
-      },
     },
   },
 });
