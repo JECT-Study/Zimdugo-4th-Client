@@ -4,14 +4,23 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "import": "./src/index.ts"
-    },
     "./*.css": {
       "import": "./src/*.css.ts"
     },
     "./styles/*.css": {
       "import": "./src/styles/*.css.ts"
+    },
+    "./tokens/*.css": {
+      "import": "./src/tokens/*.css.ts"
+    },
+    "./tokens/*": {
+      "import": "./src/tokens/*.ts"
+    },
+    "./tokens/color/*.css": {
+      "import": "./src/tokens/color/*.css.ts"
+    },
+    "./tokens/color/*": {
+      "import": "./src/tokens/color/*.ts"
     }
   },
   "scripts": {
@@ -19,6 +28,7 @@
     "format": "biome format"
   },
   "dependencies": {
+    "@storybook/react": "^10.3.3",
     "@vanilla-extract/css": "^1.18.0",
     "@vanilla-extract/recipes": "^0.5.7",
     "@vanilla-extract/sprinkles": "^1.6.5"
