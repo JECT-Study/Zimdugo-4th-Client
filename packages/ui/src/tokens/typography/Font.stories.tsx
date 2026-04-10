@@ -10,19 +10,30 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-type LineHeightKey = keyof typeof typography.scale.lineHeight;
+type FontKey = keyof typeof typography.scale.font;
 type SampleTextKey = keyof typeof SAMPLE_TEXT;
+type FontValue = (typeof typography.scale.font)[FontKey];
+type FontFamilyToken = {
+  id: string;
+  label: string;
+  fontFamily: string;
+  sampleTextKey: SampleTextKey;
+};
 
 const SAMPLE_TEXT = {
   Pretendard: "다람쥐 헌 쳇바퀴에 타고파.",
   Metropolis: "Stay hungry, stay foolish.",
 } as const;
 
-const LINE_HEIGHT_TOKENS: Array<{ key: LineHeightKey; value: string }> = (
-  Object.keys(typography.scale.lineHeight) as LineHeightKey[]
-).map((key) => ({ key, value: typography.scale.lineHeight[key] }));
+const removePxSuffix = (value: string) => value.replace(/px$/u, "");
+const formatFontValue = (value: FontValue) =>
+  `${value.fontSize} / ${value.fontWeight} / ${value.lineHeight}`;
 
-const FONT_TOKENS = [
+const FONT_TOKENS: Array<{ key: FontKey; value: FontValue }> = (
+  Object.keys(typography.scale.font) as FontKey[]
+).map((key) => ({ key, value: typography.scale.font[key] }));
+
+const FONT_FAMILY_TOKENS = [
   {
     id: "default",
     label: "Pretendard",
@@ -35,28 +46,23 @@ const FONT_TOKENS = [
     fontFamily: "Metropolis",
     sampleTextKey: "Metropolis",
   },
-] as const satisfies ReadonlyArray<{
-  id: string;
-  label: string;
-  fontFamily: string;
-  sampleTextKey: SampleTextKey;
-}>;
+] as const satisfies ReadonlyArray<FontFamilyToken>;
 
-export const LineHeight: Story = {
-  name: "LineHeight",
-  render: () => <LineHeights />,
+export const Font: Story = {
+  name: "Font",
+  render: () => <Fonts />,
 };
 
-function LineHeights() {
+function Fonts() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.pageHeader}>
-        <h2 className={styles.pageTitle}>Line Height Tokens</h2>
-        <p className={styles.pageSubtitle}>줄 간격 토큰입니다.</p>
+        <h2 className={styles.pageTitle}>Font Tokens</h2>
+        <p className={styles.pageSubtitle}>폰트 토큰입니다.</p>
       </div>
 
       <div className={styles.fontPreviewHeader}>
-        {FONT_TOKENS.map(({ id, label }) => (
+        {FONT_FAMILY_TOKENS.map(({ id, label }) => (
           <h4 key={id} className={styles.fontColumnTitle}>
             {label}
           </h4>
@@ -64,15 +70,20 @@ function LineHeights() {
         <div aria-hidden="true" style={{ height: "16px" }} />
       </div>
 
-      {LINE_HEIGHT_TOKENS.map(({ key, value }) => (
+      {FONT_TOKENS.map(({ key, value }) => (
         <div key={String(key)} className={styles.fontTokenItem}>
           <div className={styles.fontPreviewGrid}>
-            {FONT_TOKENS.map(({ id, fontFamily, sampleTextKey }) => (
-              <div key={id} className={styles.fontPreviewColumn}>
+            {FONT_FAMILY_TOKENS.map(({ id, fontFamily, sampleTextKey }) => (
+              <div
+                key={`${id}-${String(key)}`}
+                className={styles.fontPreviewColumn}
+              >
                 <span
                   className={styles.fontPreviewText}
                   style={{
-                    lineHeight: value,
+                    fontSize: value.fontSize,
+                    fontWeight: value.fontWeight,
+                    lineHeight: value.lineHeight,
                     fontFamily,
                   }}
                 >
@@ -84,22 +95,24 @@ function LineHeights() {
             <div className={styles.fontTokenMeta}>
               <span
                 className={styles.tokenKey}
-              >{`lineHeight.${String(key)}`}</span>
-              <span className={styles.tokenValue}>{value}</span>
+              >{`font.${String(key)}.${removePxSuffix(value.fontSize)}`}</span>
+              <span className={styles.tokenValue}>
+                {formatFontValue(value)}
+              </span>
             </div>
           </div>
         </div>
       ))}
 
-      <LineHeightTokenTable />
+      <FontTokenTable />
     </div>
   );
 }
 
-function LineHeightTokenTable() {
+function FontTokenTable() {
   return (
     <div className={styles.tokenTableSection}>
-      <div className={styles.tokenTableTitle}>Line Height Tokens</div>
+      <div className={styles.tokenTableTitle}>Font Tokens</div>
       <table className={styles.tokenTable}>
         <thead>
           <tr>
@@ -108,12 +121,14 @@ function LineHeightTokenTable() {
           </tr>
         </thead>
         <tbody>
-          {LINE_HEIGHT_TOKENS.map(({ key, value }) => (
+          {FONT_TOKENS.map(({ key, value }) => (
             <tr key={String(key)} className={styles.tokenTableRow}>
-              <td className={styles.tokenTableCellName}>
-                {`lineHeight.${String(key)}`}
+              <td
+                className={styles.tokenTableCellName}
+              >{`font.${String(key)}.${removePxSuffix(value.fontSize)}`}</td>
+              <td className={styles.tokenTableCellValue}>
+                {formatFontValue(value)}
               </td>
-              <td className={styles.tokenTableCellValue}> {value} </td>
             </tr>
           ))}
         </tbody>

@@ -2,7 +2,6 @@ import { style } from "@vanilla-extract/css";
 import { color } from "../color/color.css.ts";
 
 // ── 공통 ──────────────────────────────────────────────────────────────────────
-
 export const pageHeader = style({
   marginBottom: "40px",
 });
@@ -30,28 +29,6 @@ export const wrapper = style({
   backgroundColor: color.palette.gray[100],
 });
 
-export const tokenList = style({
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-});
-
-// region 미사용 스타일
-export const tokenRow = style({
-  display: "flex",
-  alignItems: "center",
-  gap: "16px",
-  padding: "10px 0",
-  borderBottom: `1px solid ${color.palette.gray[200]}`,
-});
-
-export const tokenMeta = style({
-  display: "flex",
-  gap: "16px",
-  alignItems: "baseline",
-});
-// endregion
-
 export const tokenKey = style({
   fontSize: "13px",
   fontWeight: 700,
@@ -66,7 +43,7 @@ export const tokenValue = style({
   fontFamily: "ui-monospace, monospace",
 });
 
-export const fontSizeItem = style({
+export const fontTokenItem = style({
   display: "flex",
   flexDirection: "column",
   gap: "12px",
@@ -139,14 +116,7 @@ export const tokenTableCellValue = style({
   color: color.palette.gray[600],
 });
 
-// 폰트별 그리드 레아아웃을 위한 스타일 요소들
-export const fontPreviewHeader = style({
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) minmax(170px, 220px)",
-  gap: "24px",
-  alignItems: "center",
-  marginBottom: "10px",
-});
+// ── TokenGrid ────────────────────────────────────────────────────────────────
 
 export const fontPreviewGrid = style({
   display: "grid",
@@ -156,13 +126,21 @@ export const fontPreviewGrid = style({
   marginTop: "4px",
 });
 
+export const fontPreviewHeader = style({
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) minmax(170px, 220px)",
+  gap: "24px",
+  alignItems: "center",
+  marginBottom: "10px",
+});
+
 export const fontPreviewColumn = style({
   display: "flex",
   flexDirection: "column",
   gap: "8px",
 });
 
-export const columnTitle = style({
+export const fontColumnTitle = style({
   fontSize: "12px",
   fontWeight: 700,
   lineHeight: "16px",

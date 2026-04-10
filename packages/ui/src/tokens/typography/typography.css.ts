@@ -1,15 +1,5 @@
 import { createGlobalTheme } from "@vanilla-extract/css";
 
-const fontFamilies = {
-  Pretendard: "Pretendard",
-  MetroPolis: "MetroPolis",
-} as const;
-
-const sampleText = {
-  ko: "다람쥐 헌 쳇바퀴에 타고파",
-  en: "The quick brown fox jumps over the lazy dog",
-} as const;
-
 const fontWeightScale = {
   Thin: "100",
   ExtraLight: "200",
@@ -36,24 +26,75 @@ const fontSizeScale = {
 } as const;
 
 const lineHeightScale = {
-  tight: "120%",
-  narrow: "130%",
-  default: "140%",
+  none: "1px",
+  tight: "16px",
+  normal: "20px",
+  relaxed: "24px",
+  loose: "28px",
 } as const;
 
+type FontToken = {
+  fontSize: string;
+  fontWeight: string;
+  lineHeight: string;
+};
+
+const fontScale = {
+  hero: {
+    fontSize: fontSizeScale[48],
+    fontWeight: fontWeightScale.SemiBold,
+    lineHeight: "120%",
+  },
+  h1: {
+    fontSize: fontSizeScale[36],
+    fontWeight: fontWeightScale.SemiBold,
+    lineHeight: "120%",
+  },
+  h2: {
+    fontSize: fontSizeScale[24],
+    fontWeight: fontWeightScale.SemiBold,
+    lineHeight: "120%",
+  },
+  h3: {
+    fontSize: fontSizeScale[18],
+    fontWeight: fontWeightScale.SemiBold,
+    lineHeight: "120%",
+  },
+  body1: {
+    fontSize: fontSizeScale[16],
+    fontWeight: fontWeightScale.SemiBold,
+    lineHeight: "120%",
+  },
+  body2: {
+    fontSize: fontSizeScale[14],
+    fontWeight: fontWeightScale.SemiBold,
+    lineHeight: "120%",
+  },
+  caption: {
+    fontSize: fontSizeScale[12],
+    fontWeight: fontWeightScale.Medium,
+    lineHeight: "120%",
+  },
+  btn: {
+    fontSize: fontSizeScale[16],
+    fontWeight: fontWeightScale.Medium,
+    lineHeight: "120%",
+  },
+} as const satisfies Record<string, FontToken>;
+
 export const typographyTheme = createGlobalTheme(":root", {
-  fontFamily: fontFamilies,
-  sampleText: sampleText,
-  fontWeight: fontWeightScale,
   fontSize: fontSizeScale,
+  fontWeight: fontWeightScale,
   lineHeight: lineHeightScale,
+  font: fontScale,
 });
 
 export const typography = {
   ...typographyTheme,
   scale: {
-    fontWeight: fontWeightScale,
     fontSize: fontSizeScale,
+    fontWeight: fontWeightScale,
     lineHeight: lineHeightScale,
+    font: fontScale,
   },
 };

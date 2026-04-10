@@ -3,7 +3,7 @@ import * as styles from "./Stories.css.ts";
 import { typography } from "./typography.css.ts";
 
 const meta = {
-  title: "Foundation/typography",
+  title: "Foundation/Typography",
   parameters: { layout: "fullscreen" },
 } satisfies Meta;
 
@@ -11,21 +11,36 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 type FontWeightKey = keyof typeof typography.scale.fontWeight;
-type FontKey = keyof typeof typography.fontFamily;
+type SampleTextKey = keyof typeof SAMPLE_TEXT;
 
 const SAMPLE_TEXT = {
   Pretendard: "다람쥐 헌 쳇바퀴에 타고파.",
-  MetroPolis: "Stay hungry, stay foolish.",
+  Metropolis: "Stay hungry, stay foolish.",
 } as const;
-
-const FONT_TOKENS = [
-  { id: "default", label: "Pretendard" },
-  { id: "english", label: "MetroPolis" },
-] as const satisfies ReadonlyArray<{ id: string; label: FontKey }>;
 
 const FONT_WEIGHT_TOKENS: Array<{ key: FontWeightKey; value: string }> = (
   Object.keys(typography.scale.fontWeight) as FontWeightKey[]
 ).map((key) => ({ key, value: typography.scale.fontWeight[key] }));
+
+const FONT_TOKENS = [
+  {
+    id: "default",
+    label: "Pretendard",
+    fontFamily: "Pretendard",
+    sampleTextKey: "Pretendard",
+  },
+  {
+    id: "english",
+    label: "Metropolis",
+    fontFamily: "Metropolis",
+    sampleTextKey: "Metropolis",
+  },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  label: string;
+  fontFamily: string;
+  sampleTextKey: SampleTextKey;
+}>;
 
 export const FontWeight: Story = {
   name: "FontWeight",
@@ -42,24 +57,23 @@ function FontWeights() {
 
       <div className={styles.fontPreviewHeader}>
         {FONT_TOKENS.map(({ id, label }) => (
-          <h4 key={id} className={styles.columnTitle}>
+          <h4 key={id} className={styles.fontColumnTitle}>
             {label}
           </h4>
         ))}
-        {/*얘는 역할이 뭐지?*/}
         <div aria-hidden="true" style={{ height: "16px" }} />
       </div>
 
       {FONT_WEIGHT_TOKENS.map(({ key, value }) => (
-        <div key={String(key)} className={styles.fontSizeItem}>
+        <div key={String(key)} className={styles.fontTokenItem}>
           <div className={styles.fontPreviewGrid}>
-            {FONT_TOKENS.map(({ id, label }) => (
+            {FONT_TOKENS.map(({ id, fontFamily, sampleTextKey }) => (
               <div
                 key={`${id}-${String(key)}`}
                 className={styles.fontPreviewColumn}
-                style={{ fontWeight: value }}
+                style={{ fontWeight: value, fontFamily }}
               >
-                {SAMPLE_TEXT[label as keyof typeof SAMPLE_TEXT]}
+                {SAMPLE_TEXT[sampleTextKey]}
               </div>
             ))}
 
