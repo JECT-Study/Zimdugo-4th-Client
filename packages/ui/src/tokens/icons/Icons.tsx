@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { color } from "../color/color.css.ts";
 import { typography } from "../typography/typography.css.ts";
 import {
@@ -743,6 +743,184 @@ export function IconCamera24({ className }: { className?: string }) {
     </svg>
   );
 }
+
+function IconMenuHome({
+  isActive,
+  className,
+}: {
+  isActive: boolean;
+  className?: string;
+}) {
+  const fill = isActive ? color.palette.gray[800] : color.palette.gray[600];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 18 18.7332"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18.7332}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>menu.home</title>
+      {isActive ? (
+        <path
+          d="M18 17.7332C18 18.2855 17.5523 18.7332 17 18.7332H1C0.44772 18.7332 0 18.2855 0 17.7332V7.22223C0 6.91364 0.14247 6.62233 0.38606 6.43288L8.3861 0.210645C8.7472 -0.070215 9.2528 -0.070215 9.6139 0.210645L17.6139 6.43288C17.8575 6.62233 18 6.91364 18 7.22223V17.7332ZM8 10.7332V16.7332H10V10.7332H8Z"
+          fill={fill}
+        />
+      ) : (
+        <path
+          d="M10 16.7332H16V7.71131L9 2.26687L2 7.71131V16.7332H8V10.7332H10V16.7332ZM18 17.7332C18 18.2855 17.5523 18.7332 17 18.7332H1C0.44772 18.7332 0 18.2855 0 17.7332V7.22223C0 6.91364 0.14247 6.62233 0.38606 6.43288L8.3861 0.210645C8.7472 -0.070215 9.2528 -0.070215 9.6139 0.210645L17.6139 6.43288C17.8575 6.62233 18 6.91364 18 7.22223V17.7332Z"
+          fill={fill}
+        />
+      )}
+    </svg>
+  );
+}
+
+function IconMenuReport({
+  isActive,
+  className,
+}: {
+  isActive: boolean;
+  className?: string;
+}) {
+  const fill = isActive ? color.palette.green[500] : color.palette.gray[600];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 17.76 21.315"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={17.76}
+      height={21.315}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>menu.report</title>
+      <path
+        d="M17.76 3.01C17.76 3.01 17.76 3.09 17.76 3.13C17.76 3.6 17.66 4.04 17.49 4.44L17.46 4.51L10.52 20.25C9.9 21.67 7.89 21.67 7.26 20.25L3.04 10.7L9.03 7.82C9.42 8.52 10.18 9.01 11.05 9.01C12.38 9.01 13.44 7.89 13.36 6.55C13.29 5.4 12.35 4.46 11.2 4.39C9.86 4.31 8.74 5.37 8.74 6.7C8.74 6.82 8.74 6.94 8.77 7.06L2 8.36L0.29 4.5C0.1 4.08 0 3.62 0 3.14C0 3.1 0 3.06 0 3.02C0 2.99 0 2.96 0 2.94C0 1.84 0.61 0.87 1.5 0.37C1.5 0.37 1.5 0.37 1.51 0.37C1.64 0.3 1.77 0.24 1.91 0.18C2.23 0.06 2.58 0 2.94 0C3.21 0 3.48 0.04 3.73 0.11C3.85 0.14 4.27 0.28 4.39 0.33C4.7 0.44 4.78 0.47 4.93 0.53C7.38 1.5 10.25 1.48 12.74 0.52L13.76 0.2C14.08 0.0799999 14.43 0.00999999 14.8 0.00999999C15.34 0.00999999 15.84 0.15 16.28 0.4C17.16 0.91 17.76 1.86 17.76 2.96C17.76 2.99 17.76 3.02 17.76 3.04V3.01Z"
+        fill={fill}
+      />
+      {isActive ? (
+        <path
+          d="M11.35 2.31C11.35 3.59 10.31 4.62 9.04 4.62C8.17 4.62 7.41 4.14 7.02 3.43L1.03 6.32L0.52 5.16L0.4 4.88L0 3.97L6.77 2.67C6.75 2.55 6.74 2.43 6.74 2.31C6.74 1.03 7.78 0 9.05 0C10.32 0 11.36 1.04 11.36 2.31H11.35Z"
+          fill={color.palette.gray[100]}
+          transform="translate(3.72 4.77)"
+        />
+      ) : null}
+    </svg>
+  );
+}
+
+function IconMenuMy({
+  isActive,
+  className,
+}: {
+  isActive: boolean;
+  className?: string;
+}) {
+  const fill = isActive ? color.palette.gray[800] : color.palette.gray[600];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 16 21"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={16}
+      height={21}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>menu.my</title>
+      {isActive ? (
+        <path
+          d="M16 21H0V19C0 16.2386 2.23858 14 5 14H11C13.7614 14 16 16.2386 16 19V21ZM8 12C4.68629 12 2 9.3137 2 6C2 2.68629 4.68629 0 8 0C11.3137 0 14 2.68629 14 6C14 9.3137 11.3137 12 8 12Z"
+          fill={fill}
+        />
+      ) : (
+        <path
+          d="M16 21H14V19C14 17.3431 12.6569 16 11 16H5C3.34315 16 2 17.3431 2 19V21H0V19C0 16.2386 2.23858 14 5 14H11C13.7614 14 16 16.2386 16 19V21ZM8 12C4.68629 12 2 9.3137 2 6C2 2.68629 4.68629 0 8 0C11.3137 0 14 2.68629 14 6C14 9.3137 11.3137 12 8 12ZM8 10C10.2091 10 12 8.20914 12 6C12 3.79086 10.2091 2 8 2C5.79086 2 4 3.79086 4 6C4 8.20914 5.79086 10 8 10Z"
+          fill={fill}
+        />
+      )}
+    </svg>
+  );
+}
+
+function IconMenuSettings({
+  isActive,
+  className,
+}: {
+  isActive: boolean;
+  className?: string;
+}) {
+  const fill = isActive ? color.palette.gray[800] : color.palette.gray[600];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 19 22"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={19}
+      height={22}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>menu.settings</title>
+      {isActive ? (
+        <path
+          d="M9.5 0L19 5.5V16.5L9.5 22L0 16.5V5.5L9.5 0ZM9.5 14C11.1569 14 12.5 12.6569 12.5 11C12.5 9.3431 11.1569 8 9.5 8C7.8431 8 6.5 9.3431 6.5 11C6.5 12.6569 7.8431 14 9.5 14Z"
+          fill={fill}
+        />
+      ) : (
+        <path
+          d="M9.5 0L19 5.5V16.5L9.5 22L0 16.5V5.5L9.5 0ZM9.5 2.311L2 6.65311V15.3469L9.5 19.689L17 15.3469V6.65311L9.5 2.311ZM9.5 15C7.29086 15 5.5 13.2091 5.5 11C5.5 8.79086 7.29086 7 9.5 7C11.7091 7 13.5 8.79086 13.5 11C13.5 13.2091 11.7091 15 9.5 15ZM9.5 13C10.6046 13 11.5 12.1046 11.5 11C11.5 9.8954 10.6046 9 9.5 9C8.3954 9 7.5 9.8954 7.5 11C7.5 12.1046 8.3954 13 9.5 13Z"
+          fill={fill}
+        />
+      )}
+    </svg>
+  );
+}
+
+export type BottomTabKey = "home" | "report" | "my" | "settings";
+
+export function BottomMenuIcon({
+  tab,
+  isActive,
+  className,
+}: {
+  tab: BottomTabKey;
+  isActive: boolean;
+  className?: string;
+}) {
+  switch (tab) {
+    case "home":
+      return <IconMenuHome isActive={isActive} className={className} />;
+    case "report":
+      return <IconMenuReport isActive={isActive} className={className} />;
+    case "my":
+      return <IconMenuMy isActive={isActive} className={className} />;
+    case "settings":
+      return <IconMenuSettings isActive={isActive} className={className} />;
+  }
+}
+
+export function getMenuGroupIcons(
+  activeTab: BottomTabKey,
+): Record<BottomTabKey, ReactElement> {
+  return {
+    home: <BottomMenuIcon tab="home" isActive={activeTab === "home"} />,
+    report: <BottomMenuIcon tab="report" isActive={activeTab === "report"} />,
+    my: <BottomMenuIcon tab="my" isActive={activeTab === "my"} />,
+    settings: (
+      <BottomMenuIcon tab="settings" isActive={activeTab === "settings"} />
+    ),
+  };
+}
+
+export const BottomTabBarIcon = BottomMenuIcon;
 
 // 1차 검수 완료 (26.04.21)
 export function IconShare24({ className }: { className?: string }) {

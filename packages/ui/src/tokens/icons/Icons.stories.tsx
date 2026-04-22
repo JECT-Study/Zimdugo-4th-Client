@@ -1,9 +1,9 @@
 ﻿import type { Meta, StoryObj } from "@storybook/react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { BottomMenuIcon } from "../../components/bottom-tab-bar/BottomTabBarIcons.tsx";
 import { color } from "../color/color.css.ts";
 import {
+  BottomMenuIcon,
   BrandSymbolIcon,
   BrandTextLogoLarge,
   BrandTextLogoSmall,
