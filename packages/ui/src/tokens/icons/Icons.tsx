@@ -10,10 +10,8 @@ import {
   circleBoxRoot,
   circleBoxSize,
   iconSvgFixed,
-  // locationAvatarRoot,
 } from "./Icons.css.ts";
 
-// 1차 검수 완료 (26.04.22)
 export function IconNavigationSearch24({
   className,
   tone = "default",
@@ -50,7 +48,6 @@ export function IconNavigationSearch24({
   );
 }
 
-// todo: viewbox 및 size 옵션 재확인 필요
 export function IconNormalSearch24({
   className,
   size = 24,
@@ -82,7 +79,6 @@ export function IconNormalSearch24({
   );
 }
 
-// todo: viewbox 및 size 옵션 재확인 필요
 export function IconStarOutline24({
   className,
   size = 24,
@@ -110,7 +106,6 @@ export function IconStarOutline24({
   );
 }
 
-// todo: viewbox 및 size 옵션 재확인 필요
 export function IconStarFilled24({
   className,
   size = 24,
@@ -178,7 +173,6 @@ export function BrandSymbolIcon({
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function BrandTextLogoLarge({ className }: { className?: string }) {
   return (
     <svg
@@ -197,7 +191,6 @@ export function BrandTextLogoLarge({ className }: { className?: string }) {
         fontFamily="'Metropolis', sans-serif"
         fontWeight={typography.fontWeight.Bold}
         fontSize="32"
-        // lineHeight={typography.lineHeight.loose}
         letterSpacing="0"
       >
         <tspan fill={color.palette.gray[800]}>Zim</tspan>
@@ -207,7 +200,6 @@ export function BrandTextLogoLarge({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function BrandTextLogoSmall({ className }: { className?: string }) {
   return (
     <svg
@@ -298,7 +290,6 @@ export function IconGoogle24({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconX16({ className }: { className?: string }) {
   return (
     <svg
@@ -322,7 +313,6 @@ export function IconX16({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconFilter20({ className }: { className?: string }) {
   return (
     <svg
@@ -337,28 +327,13 @@ export function IconFilter20({ className }: { className?: string }) {
     >
       <title>필터</title>
       <path
-        // d="M4.16667 5.83333H15.8333V7.08333H4.16667V5.83333ZM6.66667 9.375H13.3333V10.625H6.66667V9.375ZM4.16667 12.9167H15.8333V14.1667H4.16667V12.9167Z"
         d="M3.47559 13.3333C3.81878 12.3623 4.74482 11.6667 5.83333 11.6667C6.92183 11.6667 7.84792 12.3623 8.19108 13.3333H16.6667V15H8.19108C7.84792 15.971 6.92183 16.6667 5.83333 16.6667C4.74482 16.6667 3.81878 15.971 3.47559 15H0V13.3333H3.47559ZM8.47558 7.5C8.81875 6.52901 9.74483 5.83333 10.8333 5.83333C11.9218 5.83333 12.8479 6.52901 13.1911 7.5H16.6667V9.16667H13.1911C12.8479 10.1377 11.9218 10.8333 10.8333 10.8333C9.74483 10.8333 8.81875 10.1377 8.47558 9.16667H0V7.5H8.47558ZM3.47559 1.66667C3.81878 0.695675 4.74482 0 5.83333 0C6.92183 0 7.84792 0.695675 8.19108 1.66667H16.6667V3.33333H8.19108C7.84792 4.30433 6.92183 5 5.83333 5C4.74482 5 3.81878 4.30433 3.47559 3.33333H0V1.66667H3.47559ZM5.83333 3.33333C6.29357 3.33333 6.66667 2.96023 6.66667 2.5C6.66667 2.03977 6.29357 1.66667 5.83333 1.66667C5.3731 1.66667 5 2.03977 5 2.5C5 2.96023 5.3731 3.33333 5.83333 3.33333ZM10.8333 9.16667C11.2936 9.16667 11.6667 8.79358 11.6667 8.33333C11.6667 7.87308 11.2936 7.5 10.8333 7.5C10.3731 7.5 10 7.87308 10 8.33333C10 8.79358 10.3731 9.16667 10.8333 9.16667ZM5.83333 15C6.29357 15 6.66667 14.6269 6.66667 14.1667C6.66667 13.7064 6.29357 13.3333 5.83333 13.3333C5.3731 13.3333 5 13.7064 5 14.1667C5 14.6269 5.3731 15 5.83333 15Z"
         fill={color.palette.gray[600]}
       />
-      {/*<circle*/}
-      {/*  cx="6.66667"*/}
-      {/*  cy="6.45833"*/}
-      {/*  r="1.45833"*/}
-      {/*  fill={color.palette.gray[600]}*/}
-      {/*/>*/}
-      {/*<circle cx="11.25" cy="10" r="1.45833" fill={color.palette.gray[600]} />*/}
-      {/*<circle*/}
-      {/*  cx="8.75"*/}
-      {/*  cy="13.5417"*/}
-      {/*  r="1.45833"*/}
-      {/*  fill={color.palette.gray[600]}*/}
-      {/*/>*/}
     </svg>
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconNormalMapPin24({
   className,
   state = "default",
@@ -389,28 +364,12 @@ export function IconNormalMapPin24({
       />
     </svg>
   );
-  // ) : (
-  //   <svg
-  //     className={[iconSvgFixed, className].filter(Boolean).join(" ")}
-  //     viewBox="0 0 24 24"
-  //     fill="none"
-  //     xmlns="http://www.w3.org/2000/svg"
-  //     width={24}
-  //     height={24}
-  //     aria-hidden
-  //   >
-  //     <title>지도 핀</title>
-  //     <path d={d} fill={color.palette.gray[500]} />
-  //   </svg>
-  // );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconNavigationMapPin24({ className }: { className?: string }) {
   return <IconNormalMapPin24 className={className} state="active" />;
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconNavigationMapPin24Fill({
   className,
 }: {
@@ -419,7 +378,6 @@ export function IconNavigationMapPin24Fill({
   return <IconNormalMapPin24 className={className} state="fill" />;
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconNavigationCrosshair24({
   className,
   state = "default",
@@ -445,19 +403,10 @@ export function IconNavigationCrosshair24({
         d="M10 4.07089C6.93431 4.5094 4.5094 6.93431 4.07089 10H6V12H4.07089C4.5094 15.0657 6.93431 17.4906 10 17.9291V16H12V17.9291C15.0657 17.4906 17.4906 15.0657 17.9291 12H16V10H17.9291C17.4906 6.93431 15.0657 4.5094 12 4.07089V6H10V4.07089ZM2.05493 10C2.51608 5.82838 5.82838 2.51608 10 2.05493V0H12V2.05493C16.1716 2.51608 19.4839 5.82838 19.9451 10H22V12H19.9451C19.4839 16.1716 16.1716 19.4839 12 19.9451V22H10V19.9451C5.82838 19.4839 2.51608 16.1716 2.05493 12H0V10H2.05493ZM13 11C13 12.1046 12.1046 13 11 13C9.8954 13 9 12.1046 9 11C9 9.8954 9.8954 9 11 9C12.1046 9 13 9.8954 13 11Z"
         fill={fill}
       />
-      {/*<circle cx="12" cy="12" r="5.2" stroke={stroke} strokeWidth="1.6" />*/}
-      {/*<path*/}
-      {/*  d="M12 2.8V5.4M12 18.6V21.2M2.8 12H5.4M18.6 12H21.2"*/}
-      {/*  stroke={stroke}*/}
-      {/*  strokeWidth="1.6"*/}
-      {/*  strokeLinecap="round"*/}
-      {/*/>*/}
-      {/*<circle cx="12" cy="12" r="1.2" fill={stroke} />*/}
     </svg>
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconNavigationNavigate24({
   className,
   state = "default",
@@ -501,7 +450,37 @@ export function IconNavigationNavigate24({
   );
 }
 
-// 1차 검수 완료 (26.04.22)
+export function IconNavigationRefresh24({
+  className,
+  state = "refreshActive",
+}: {
+  className?: string;
+  state?: "refresh" | "refreshActive";
+}) {
+  const fill =
+    state === "refreshActive"
+      ? color.palette.gray[800]
+      : color.palette.gray[500];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>새로고침</title>
+      <path
+        d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
+        fill={fill}
+      />
+    </svg>
+  );
+}
+
 export function IconNavigationClock24({
   className,
   state = "default",
@@ -509,7 +488,6 @@ export function IconNavigationClock24({
   className?: string;
   state?: "default" | "active";
 }) {
-  // const stroke = color.palette.gray[600];
   const fill = color.palette.gray[800];
   return state === "active" ? (
     <svg
@@ -526,14 +504,6 @@ export function IconNavigationClock24({
         d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM13 12V7H11V14H17V12H13Z"
         fill={fill}
       />
-      {/*<circle cx="12" cy="12" r="10" fill={fill} />*/}
-      {/*<path*/}
-      {/*  d="M12 7V12L15.2 14.1"*/}
-      {/*  stroke={color.palette.gray[100]}*/}
-      {/*  strokeWidth="1.8"*/}
-      {/*  strokeLinecap="round"*/}
-      {/*  strokeLinejoin="round"*/}
-      {/*/>*/}
     </svg>
   ) : (
     <svg
@@ -550,19 +520,10 @@ export function IconNavigationClock24({
         d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM13 12H17V14H11V7H13V12Z"
         fill={fill}
       />
-      {/*<circle cx="12" cy="12" r="9.2" stroke={stroke} strokeWidth="1.6" />*/}
-      {/*<path*/}
-      {/*  d="M12 7V12L15.2 14.1"*/}
-      {/*  stroke={stroke}*/}
-      {/*  strokeWidth="1.8"*/}
-      {/*  strokeLinecap="round"*/}
-      {/*  strokeLinejoin="round"*/}
-      {/*/>*/}
     </svg>
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconNavigationPushPin24({
   className,
   state = "default",
@@ -570,7 +531,6 @@ export function IconNavigationPushPin24({
   className?: string;
   state?: "default" | "active";
 }) {
-  // const stroke = color.palette.gray[600];
   const fill = color.palette.gray[800];
   return state === "active" ? (
     <svg
@@ -584,7 +544,6 @@ export function IconNavigationPushPin24({
     >
       <title>압정 활성</title>
       <path
-        // d="M8 4H16L14.6 10L17.5 12V13H13L12.5 20H11.5L11 13H6.5V12L9.4 10L8 4Z"
         d="M19.0919 8.4853L17.6777 9.8995L16.9706 9.1924L12.7279 13.435L12.0208 16.9706L10.6066 18.3848L6.36396 14.1421L1.41422 19.0919L0 17.6777L4.94975 12.7279L0.70711 8.4853L2.12132 7.07107L5.65686 6.36396L9.8995 2.12132L9.1924 1.41422L10.6066 0L19.0919 8.4853Z"
         fill={fill}
       />
@@ -601,18 +560,13 @@ export function IconNavigationPushPin24({
     >
       <title>압정</title>
       <path
-        // d="M8 4H16L14.6 10L17.5 12V13H13L12.5 20H11.5L11 13H6.5V12L9.4 10L8 4Z"
         d="M10.6066 0L19.0919 8.4853L17.6777 9.8995L16.9706 9.1924L12.7279 13.435L12.0208 16.9706L10.6066 18.3848L6.36396 14.1421L1.41422 19.0919L0 17.6777L4.94975 12.7279L0.70711 8.4853L2.12132 7.07107L5.65686 6.36396L9.8995 2.12132L9.1924 1.41422L10.6066 0ZM11.3137 3.53554L6.64288 8.20637L3.821 8.7707L10.3211 15.2709L10.8855 12.449L15.5564 7.77818L11.3137 3.53554Z"
         fill={fill}
-        // stroke={stroke}
-        // strokeWidth="1.6"
-        // strokeLinejoin="round"
       />
     </svg>
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconNormalArrow24({
   className,
   direction = "left",
@@ -658,7 +612,6 @@ export function IconNormalArrow24({
   );
 }
 
-// 보류
 export function IconChevronLeft13({ className }: { className?: string }) {
   return (
     <svg
@@ -682,7 +635,6 @@ export function IconChevronLeft13({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconCheck24({ className }: { className?: string }) {
   return (
     <svg
@@ -696,13 +648,9 @@ export function IconCheck24({ className }: { className?: string }) {
     >
       <title>체크</title>
       <path
-        // d="M5 12.8L9.5 17.2L19 7.5"
         d="M17.642 0.25267C17.84 0.428853 17.96 0.676424 17.9755 0.940994C17.9911 1.20556 17.901 1.46549 17.725 1.66367L7.05902 13.6637C6.9652 13.7692 6.85008 13.8538 6.72124 13.9116C6.5924 13.9695 6.45276 13.9994 6.31152 13.9994C6.17028 13.9994 6.03064 13.9695 5.9018 13.9116C5.77296 13.8538 5.65784 13.7692 5.56402 13.6637L0.231018 7.66367C0.0651361 7.46413 -0.016686 7.20792 0.00283604 6.94917C0.022358 6.69042 0.141695 6.44939 0.335638 6.27699C0.529581 6.1046 0.782941 6.01434 1.0422 6.02529C1.30145 6.03624 1.5463 6.14754 1.72502 6.33567L6.31102 11.4947L16.231 0.33467C16.4073 0.136826 16.655 0.0170611 16.9195 0.00168594C17.1841 -0.0136893 17.444 0.0765821 17.642 0.25267Z"
         fill={color.palette.green[500]}
         transform="translate(3 5)"
-        // strokeWidth="2.2"
-        // strokeLinecap="round"
-        // strokeLinejoin="round"
       />
     </svg>
   );
@@ -922,7 +870,6 @@ export function getMenuGroupIcons(
 
 export const BottomTabBarIcon = BottomMenuIcon;
 
-// 1차 검수 완료 (26.04.21)
 export function IconShare24({ className }: { className?: string }) {
   return (
     <svg
@@ -936,33 +883,13 @@ export function IconShare24({ className }: { className?: string }) {
     >
       <title>공유</title>
       <path
-        // d="M14 4H20V10"
         d="M9 0L15.2071 6.2071L13.7929 7.62128L10 3.82842V13.4142H8V3.82842L4.20711 7.62128L2.79289 6.2071L9 0ZM0 15.4142V11.4142H2V15.4142C2 15.9665 2.44772 16.4142 3 16.4142H15C15.5523 16.4142 16 15.9665 16 15.4142V11.4142H18V15.4142C18 17.0711 16.6569 18.4142 15 18.4142H3C1.34315 18.4142 0 17.0711 0 15.4142Z"
         fill={color.palette.gray[800]}
-        // strokeWidth="2"
-        // strokeLinecap="round"
-        // strokeLinejoin="round"
       />
-      {/*<path*/}
-      {/*  d="M20 4L11 13"*/}
-      {/*  stroke={color.palette.gray[800]}*/}
-      {/*  strokeWidth="2"*/}
-      {/*  strokeLinecap="round"*/}
-      {/*/>*/}
-      {/*<rect*/}
-      {/*  x="4"*/}
-      {/*  y="8"*/}
-      {/*  width="10"*/}
-      {/*  height="12"*/}
-      {/*  rx="2"*/}
-      {/*  stroke={color.palette.gray[800]}*/}
-      {/*  strokeWidth="1.8"*/}
-      {/*/>*/}
     </svg>
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconThumbUp24({ className }: { className?: string }) {
   return (
     <svg
@@ -985,7 +912,6 @@ export function IconThumbUp24({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconThumbDown24({ className }: { className?: string }) {
   return (
     <svg
@@ -1008,7 +934,6 @@ export function IconThumbDown24({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconCaution24({
   className,
   state = "correct",
@@ -1033,28 +958,10 @@ export function IconCaution24({
         d="M12 8.58275e-07C18.6276 1.43768e-06 24 5.3724 24 12C24 18.6276 18.6276 24 12 24C5.3724 24 4.6967e-07 18.6276 1.04907e-06 12C1.62848e-06 5.3724 5.3724 2.78872e-07 12 8.58275e-07ZM12 2.4C9.45392 2.4 7.01212 3.41143 5.21177 5.21177C3.41143 7.01212 2.4 9.45392 2.4 12C2.4 14.5461 3.41143 16.9879 5.21177 18.7882C7.01212 20.5886 9.45392 21.6 12 21.6C14.5461 21.6 16.9879 20.5886 18.7882 18.7882C20.5886 16.9879 21.6 14.5461 21.6 12C21.6 9.45392 20.5886 7.01212 18.7882 5.21177C16.9879 3.41143 14.5461 2.4 12 2.4ZM13.2 18L10.8 18L10.8 15.6L13.2 15.6L13.2 18ZM13.2 13.2L10.8 13.2L10.8 6L13.2 6L13.2 13.2Z"
         fill={fill}
       />
-      {/*<circle cx="12" cy="12" r="10" fill={fill} />*/}
-      {/*{state === "correct" ? (*/}
-      {/*  <path*/}
-      {/*    d="M7.2 12.4L10.5 15.7L16.8 9.4"*/}
-      {/*    stroke={color.palette.gray[100]}*/}
-      {/*    strokeWidth="2.1"*/}
-      {/*    strokeLinecap="round"*/}
-      {/*    strokeLinejoin="round"*/}
-      {/*  />*/}
-      {/*) : (*/}
-      {/*  <path*/}
-      {/*    d="M12 7.8V12.8M12 16.2H12.01"*/}
-      {/*    stroke={color.palette.gray[100]}*/}
-      {/*    strokeWidth="2.1"*/}
-      {/*    strokeLinecap="round"*/}
-      {/*  />*/}
-      {/*)}*/}
     </svg>
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconMarker22({
   className,
   size = 22,
@@ -1085,7 +992,6 @@ export function IconMarker22({
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconPencil24({ className }: { className?: string }) {
   return (
     <svg
@@ -1099,23 +1005,13 @@ export function IconPencil24({ className }: { className?: string }) {
     >
       <title>수정</title>
       <path
-        // d="M4 20H8L18.2 9.8L14.2 5.8L4 16V20Z"
         d="M15.7279 9.57628L14.3137 8.16207L5 17.4758V18.89H6.41421L15.7279 9.57628ZM17.1421 8.16207L18.5563 6.74786L17.1421 5.33364L15.7279 6.74786L17.1421 8.16207ZM7.24264 20.89H3V16.6473L16.435 3.21232C16.8256 2.8218 17.4587 2.8218 17.8492 3.21232L20.6777 6.04075C21.0682 6.43127 21.0682 7.06444 20.6777 7.45496L7.24264 20.89Z"
         fill={color.palette.gray[500]}
-        // strokeWidth="1.8"
-        // strokeLinejoin="round"
       />
-      {/*<path*/}
-      {/*  d="M12.8 7.2L16.8 11.2"*/}
-      {/*  stroke={color.palette.gray[800]}*/}
-      {/*  strokeWidth="1.8"*/}
-      {/*  strokeLinecap="round"*/}
-      {/*/>*/}
     </svg>
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconAddBox18({ className }: { className?: string }) {
   return (
     <svg
@@ -1132,21 +1028,6 @@ export function IconAddBox18({ className }: { className?: string }) {
         d="M8.25 4.5H9.75V8.25H13.5V9.75H9.75V13.5H8.25V9.75H4.5V8.25H8.25V4.5Z"
         fill={color.palette.gray[600]}
       />
-      {/*<rect*/}
-      {/*  x="1.5"*/}
-      {/*  y="1.5"*/}
-      {/*  width="15"*/}
-      {/*  height="15"*/}
-      {/*  rx="2.5"*/}
-      {/*  stroke={color.palette.gray[800]}*/}
-      {/*  strokeWidth="1.6"*/}
-      {/*/>*/}
-      {/*<path*/}
-      {/*  d="M9 5.2V12.8M5.2 9H12.8"*/}
-      {/*  stroke={color.palette.gray[800]}*/}
-      {/*  strokeWidth="1.6"*/}
-      {/*  strokeLinecap="round"*/}
-      {/*/>*/}
     </svg>
   );
 }
@@ -1164,21 +1045,6 @@ export function IconMinusBox18({ className }: { className?: string }) {
     >
       <title>제거</title>
       <path d="M4.5 8.25H13.5V9.75H4.5V8.25Z" fill={color.palette.gray[600]} />
-      {/*<rect*/}
-      {/*  x="1.5"*/}
-      {/*  y="1.5"*/}
-      {/*  width="15"*/}
-      {/*  height="15"*/}
-      {/*  rx="2.5"*/}
-      {/*  stroke={color.palette.gray[800]}*/}
-      {/*  strokeWidth="1.6"*/}
-      {/*/>*/}
-      {/*<path*/}
-      {/*  d="M5.2 9H12.8"*/}
-      {/*  stroke={color.palette.gray[800]}*/}
-      {/*  strokeWidth="1.6"*/}
-      {/*  strokeLinecap="round"*/}
-      {/*/>*/}
     </svg>
   );
 }
@@ -1200,6 +1066,8 @@ function CircleBox({
         .filter(Boolean)
         .join(" ")}
       style={{
+        backgroundImage:
+          "linear-gradient(to right, transparent calc(50% - 0.5px), rgba(22,24,28,0.22) calc(50% - 0.5px), rgba(22,24,28,0.22) calc(50% + 0.5px), transparent calc(50% + 0.5px)), linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(22,24,28,0.22) calc(50% - 0.5px), rgba(22,24,28,0.22) calc(50% + 0.5px), transparent calc(50% + 0.5px))",
         ...style,
       }}
       aria-hidden
@@ -1234,7 +1102,6 @@ function CircleBoxGlyph({
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconNormalProfile({ className }: { className?: string }) {
   return (
     <CircleBox size={32} className={className}>
@@ -1243,7 +1110,6 @@ export function IconNormalProfile({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.22)
 export function IconThumbnail24({ className }: { className?: string }) {
   return (
     <CircleBox size={24} className={className}>
@@ -1427,7 +1293,6 @@ export function IconCircleboxFilter32({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconCircleboxThumbUp32({ className }: { className?: string }) {
   return (
     <CircleBox size={32} className={className}>
@@ -1438,7 +1303,6 @@ export function IconCircleboxThumbUp32({ className }: { className?: string }) {
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconCircleboxThumbDown32({
   className,
 }: {
@@ -1446,7 +1310,7 @@ export function IconCircleboxThumbDown32({
 }) {
   return (
     <CircleBox size={32} className={className}>
-      <CircleBoxGlyph size={20} offsetY={1}>
+      <CircleBoxGlyph size={20} offsetX={-1} offsetY={1}>
         <IconThumbDown24 />
       </CircleBoxGlyph>
     </CircleBox>
@@ -1467,8 +1331,70 @@ export function IconCircleboxCrosshair48({
         boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
       }}
     >
-      <CircleBoxGlyph offsetX={2} offsetY={1}>
+      <CircleBoxGlyph offsetX={1} offsetY={1}>
+        <IconNavigationCrosshair24 state="default" />
+      </CircleBoxGlyph>
+    </CircleBox>
+  );
+}
+
+export function IconCircleboxCrosshairActive48({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <CircleBox
+      size={48}
+      className={className}
+      style={{
+        background: color.bg.default,
+        boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
+      }}
+    >
+      <CircleBoxGlyph offsetX={1} offsetY={1}>
         <IconNavigationCrosshair24 state="active" />
+      </CircleBoxGlyph>
+    </CircleBox>
+  );
+}
+
+export function IconCircleboxRefresh48({
+  className,
+  state = "refreshActive",
+}: {
+  className?: string;
+  state?: "refresh" | "refreshActive";
+}) {
+  const fill =
+    state === "refreshActive"
+      ? color.palette.gray[800]
+      : color.palette.gray[500];
+  return (
+    <CircleBox
+      size={48}
+      className={className}
+      style={{
+        background: color.bg.default,
+        boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
+      }}
+    >
+      <CircleBoxGlyph size={20} offsetX={1} offsetY={1}>
+        <svg
+          className={iconSvgFixed}
+          viewBox="0 0 20 20"
+          width={20}
+          height={20}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden
+        >
+          <title>새로고침</title>
+          <path
+            d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
+            fill={fill}
+          />
+        </svg>
       </CircleBoxGlyph>
     </CircleBox>
   );
@@ -1476,7 +1402,6 @@ export function IconCircleboxCrosshair48({
 
 type IconSizeState = "default" | "selected" | "disabled";
 
-// 1차 검수 완료 (26.04.21)
 export function IconSizeS({
   className,
   state = "default",
@@ -1507,7 +1432,6 @@ export function IconSizeS({
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconSizeM({
   className,
   state = "default",
@@ -1543,7 +1467,6 @@ export function IconSizeM({
   );
 }
 
-// 1차 검수 완료 (26.04.21)
 export function IconSizeL({
   className,
   state = "default",
