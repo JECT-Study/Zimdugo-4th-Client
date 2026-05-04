@@ -19,17 +19,6 @@ export const brandSymbolBase = style({
   inset: 0,
 });
 
-export const locationAvatarRoot = style({
-  position: "relative",
-  width: "32px",
-  height: "32px",
-  borderRadius: "9999px",
-  flexShrink: 0,
-  overflow: "hidden",
-  backgroundColor: color.palette.gray[300],
-});
-
-
 export const circleBoxRoot = style({
   borderRadius: "9999px",
   backgroundColor: color.palette.gray[300],
