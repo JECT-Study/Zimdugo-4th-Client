@@ -1,7 +1,6 @@
 import { style, styleVariants } from "@vanilla-extract/css";
 import { color } from "../color/color.css.ts";
 
-/** width/height 속성으로 크기를 주는 아이콘용 */
 export const iconSvgFixed = style({
   display: "block",
   flexShrink: 0,
@@ -19,17 +18,6 @@ export const brandSymbolBase = style({
   position: "absolute",
   inset: 0,
 });
-
-export const locationAvatarRoot = style({
-  position: "relative",
-  width: "32px",
-  height: "32px",
-  borderRadius: "9999px",
-  flexShrink: 0,
-  overflow: "hidden",
-  backgroundColor: color.palette.gray[300],
-});
-
 
 export const circleBoxRoot = style({
   borderRadius: "9999px",

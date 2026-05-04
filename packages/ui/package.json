@@ -24,6 +24,9 @@
     },
     "./components/button": {
       "import": "./src/components/button/Button.tsx"
+    },
+    "./tokens/icons": {
+      "import": "./src/tokens/icons/Icons.tsx"
     }
   },
   "scripts": {
