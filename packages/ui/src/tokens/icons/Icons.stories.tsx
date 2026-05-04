@@ -16,9 +16,11 @@ import {
   IconCircleboxChevron32,
   IconCircleboxClock32,
   IconCircleboxCrosshair48,
+  IconCircleboxCrosshairActive48,
   IconCircleboxFilter32,
   IconCircleboxHappy32,
   IconCircleboxMike32,
+  IconCircleboxRefresh48,
   IconCircleboxThumbDown32,
   IconCircleboxThumbUp32,
   IconCircleboxUnhappy32,
@@ -36,6 +38,7 @@ import {
   IconNavigationMapPin24Fill,
   IconNavigationNavigate24,
   IconNavigationPushPin24,
+  IconNavigationRefresh24,
   IconNavigationSearch24,
   IconNormalArrow24,
   IconNormalMapPin24,
@@ -55,7 +58,7 @@ import {
 } from "./Icons.tsx";
 
 const meta = {
-  title: "Foundation/icon",
+  title: "Foundation/Icons",
   parameters: {
     layout: "padded",
     docs: {
@@ -589,6 +592,12 @@ export const Navigation: Story = {
       <Cell name="crosshairActive">
         <IconNavigationCrosshair24 state="active" />
       </Cell>
+      <Cell name="refresh">
+        <IconNavigationRefresh24 state="default" />
+      </Cell>
+      <Cell name="refreshActive">
+        <IconNavigationRefresh24 state="active" />
+      </Cell>
       <Cell name="nav pin" ingredients={["BrandSymbolIcon"]}>
         <IconNavigatePin />
       </Cell>
@@ -666,12 +675,6 @@ export const Normal: Story = {
       <Cell name="minusBox">
         <IconMinusBox18 />
       </Cell>
-      {/*<Cell name="chevronDown">*/}
-      {/*  <IconChevronDown16 size={16} />*/}
-      {/*</Cell>*/}
-      {/*<Cell name="chevronDown.active">*/}
-      {/*  <IconChevronDown16 size={12} tone="active" />*/}
-      {/*</Cell>*/}
     </div>
   ),
 };
@@ -691,9 +694,7 @@ export const Brand: Story = {
         </div>
       </Cell>
       <Cell name="small" spanColumns={2} style={{ gridColumn: "span 2" }}>
-        {/* <div style={{ width: 78, height: 16 }}> */}
-          <BrandTextLogoSmall />
-        {/* </div> */}
+        <BrandTextLogoSmall />
       </Cell>
     </div>
   ),
@@ -749,7 +750,11 @@ export const Circlebox: Story = {
       <Cell name="check" ingredients={["IconCheck24"]} probeTarget="root">
         <IconCircleboxCheck32 />
       </Cell>
-      <Cell name="chevron" ingredients={["IconChevronLeft13"]} probeTarget="root">
+      <Cell
+        name="chevron"
+        ingredients={["IconChevronLeft13"]}
+        probeTarget="root"
+      >
         <IconCircleboxChevron32 />
       </Cell>
       <Cell
@@ -780,11 +785,24 @@ export const Circlebox: Story = {
         <IconCircleboxThumbDown32 />
       </Cell>
       <Cell
-        name="crosshair(48)"
+        name="crosshair"
         ingredients={["IconNavigationCrosshair24"]}
         probeTarget="root"
       >
         <IconCircleboxCrosshair48 />
+      </Cell>
+      <Cell
+        name="crosshairActive"
+        ingredients={["IconNavigationCrosshair24(active)"]}
+        probeTarget="root"
+      >
+        <IconCircleboxCrosshairActive48 />
+      </Cell>
+      <Cell name="refresh" probeTarget="root">
+        <IconCircleboxRefresh48 state="default" />
+      </Cell>
+      <Cell name="refreshActive" probeTarget="root">
+        <IconCircleboxRefresh48 state="active" />
       </Cell>
     </div>
   ),
@@ -900,6 +918,12 @@ export const Gallery: Story = {
         <Cell name="crosshairActive">
           <IconNavigationCrosshair24 state="active" />
         </Cell>
+        <Cell name="refresh">
+          <IconNavigationRefresh24 state="default" />
+        </Cell>
+        <Cell name="refreshActive">
+          <IconNavigationRefresh24 state="active" />
+        </Cell>
         <Cell name="nav pin" ingredients={["BrandSymbolIcon"]}>
           <IconNavigatePin />
         </Cell>
@@ -972,12 +996,6 @@ export const Gallery: Story = {
         <Cell name="minusBox">
           <IconMinusBox18 />
         </Cell>
-        {/*<Cell name="chevronDown">*/}
-        {/*  <IconChevronDown16 size={16} />*/}
-        {/*</Cell>*/}
-        {/*<Cell name="chevronDown.active">*/}
-        {/*  <IconChevronDown16 size={12} tone="active" />*/}
-        {/*</Cell>*/}
       </RowSection>
 
       <RowSection title="icon.brand / icon.social">
@@ -1007,14 +1025,16 @@ export const Gallery: Story = {
           </div>
         </Cell>
         <Cell name="small" spanColumns={2}>
-          {/* <div style={{ width: 78, height: 16 }}> */}
-            <BrandTextLogoSmall />
-          {/* </div> */}
+          <BrandTextLogoSmall />
         </Cell>
       </RowSection>
 
       <RowSection title="icon.circlebox">
-        <Cell name="thumbnail" ingredients={["IconMarker22"]} probeTarget="root">
+        <Cell
+          name="thumbnail"
+          ingredients={["IconMarker22"]}
+          probeTarget="root"
+        >
           <IconThumbnail24 />
         </Cell>
         <Cell name="profile" ingredients={["IconMarker22"]} probeTarget="root">
@@ -1037,7 +1057,11 @@ export const Gallery: Story = {
         <Cell name="check" ingredients={["IconCheck24"]} probeTarget="root">
           <IconCircleboxCheck32 />
         </Cell>
-        <Cell name="chevron" ingredients={["IconChevronLeft13"]} probeTarget="root">
+        <Cell
+          name="chevron"
+          ingredients={["IconChevronLeft13"]}
+          probeTarget="root"
+        >
           <IconCircleboxChevron32 />
         </Cell>
         <Cell
@@ -1068,11 +1092,24 @@ export const Gallery: Story = {
           <IconCircleboxThumbDown32 />
         </Cell>
         <Cell
-          name="crosshair(48)"
+          name="crosshair"
           ingredients={["IconNavigationCrosshair24"]}
           probeTarget="root"
         >
           <IconCircleboxCrosshair48 />
+        </Cell>
+        <Cell
+          name="crosshairActive"
+          ingredients={["IconNavigationCrosshair24(active)"]}
+          probeTarget="root"
+        >
+          <IconCircleboxCrosshairActive48 />
+        </Cell>
+        <Cell name="refresh" probeTarget="root">
+          <IconCircleboxRefresh48 state="default" />
+        </Cell>
+        <Cell name="refreshActive" probeTarget="root">
+          <IconCircleboxRefresh48 state="active" />
         </Cell>
       </RowSection>
 

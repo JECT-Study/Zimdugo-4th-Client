@@ -1,7 +1,6 @@
 import { style, styleVariants } from "@vanilla-extract/css";
 import { color } from "../color/color.css.ts";
 
-/** width/height 속성으로 크기를 주는 아이콘용 */
 export const iconSvgFixed = style({
   display: "block",
   flexShrink: 0,
