@@ -450,13 +450,13 @@ export function IconNavigationNavigate24({
   );
 }
 
-export function IconNavigationRefresh24({
+function IconNavigationRefresh({
   className,
-  size = 24,
+  size,
   state = "default",
 }: {
   className?: string;
-  size?: 20 | 24;
+  size: 20 | 24;
   state?: "default" | "active";
 }) {
   const fill =
@@ -479,6 +479,26 @@ export function IconNavigationRefresh24({
       />
     </svg>
   );
+}
+
+export function IconNavigationRefresh24({
+  className,
+  state = "default",
+}: {
+  className?: string;
+  state?: "default" | "active";
+}) {
+  return <IconNavigationRefresh className={className} size={24} state={state} />;
+}
+
+export function IconNavigationRefresh20({
+  className,
+  state = "default",
+}: {
+  className?: string;
+  state?: "default" | "active";
+}) {
+  return <IconNavigationRefresh className={className} size={20} state={state} />;
 }
 
 export function IconNavigationClock24({
@@ -1317,8 +1337,10 @@ export function IconCircleboxThumbDown32({
 
 export function IconCircleboxCrosshair48({
   className,
+  state = "default",
 }: {
   className?: string;
+  state?: "default" | "active";
 }) {
   return (
     <CircleBox
@@ -1330,7 +1352,7 @@ export function IconCircleboxCrosshair48({
       }}
     >
       <CircleBoxGlyph offsetX={1} offsetY={1}>
-        <IconNavigationCrosshair24 state="default" />
+        <IconNavigationCrosshair24 state={state} />
       </CircleBoxGlyph>
     </CircleBox>
   );
@@ -1341,20 +1363,8 @@ export function IconCircleboxCrosshairActive48({
 }: {
   className?: string;
 }) {
-  return (
-    <CircleBox
-      size={48}
-      className={className}
-      style={{
-        background: color.bg.default,
-        boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
-      }}
-    >
-      <CircleBoxGlyph offsetX={1} offsetY={1}>
-        <IconNavigationCrosshair24 state="active" />
-      </CircleBoxGlyph>
-    </CircleBox>
-  );
+  // Deprecated: prefer <IconCircleboxCrosshair48 state="active" />
+  return <IconCircleboxCrosshair48 className={className} state="active" />;
 }
 
 export function IconCircleboxRefresh48({
@@ -1375,7 +1385,7 @@ export function IconCircleboxRefresh48({
       }}
     >
       <CircleBoxGlyph size={innerSize} offsetX={1} offsetY={1}>
-        <IconNavigationRefresh24 size={innerSize} state={state} />
+        <IconNavigationRefresh20 state={state} />
       </CircleBoxGlyph>
     </CircleBox>
   );

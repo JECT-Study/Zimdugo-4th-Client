@@ -16,7 +16,6 @@ import {
   IconCircleboxChevron32,
   IconCircleboxClock32,
   IconCircleboxCrosshair48,
-  IconCircleboxCrosshairActive48,
   IconCircleboxFilter32,
   IconCircleboxHappy32,
   IconCircleboxMike32,
@@ -796,7 +795,7 @@ export const Circlebox: Story = {
         ingredients={["IconNavigationCrosshair24(active)"]}
         probeTarget="root"
       >
-        <IconCircleboxCrosshairActive48 />
+        <IconCircleboxCrosshair48 state="active" />
       </Cell>
       <Cell name="refresh" probeTarget="root">
         <IconCircleboxRefresh48 state="default" />
@@ -1103,7 +1102,7 @@ export const Gallery: Story = {
           ingredients={["IconNavigationCrosshair24(active)"]}
           probeTarget="root"
         >
-          <IconCircleboxCrosshairActive48 />
+          <IconCircleboxCrosshair48 state="active" />
         </Cell>
         <Cell name="refresh" probeTarget="root">
           <IconCircleboxRefresh48 state="default" />
