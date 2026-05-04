@@ -456,7 +456,7 @@ export function IconNavigationRefresh24({
   state = "default",
 }: {
   className?: string;
-  size?: number;
+  size?: 20 | 24;
   state?: "default" | "active";
 }) {
   const fill =
@@ -1360,24 +1360,21 @@ export function IconCircleboxCrosshairActive48({
 export function IconCircleboxRefresh48({
   className,
   state = "default",
-  circleSize = 48,
 }: {
   className?: string;
   state?: "default" | "active";
-  /** 원형 프레임(32·48). 글리프는 20px `IconNavigationRefresh24` 재사용 */
-  circleSize?: 32 | 48;
 }) {
   const innerSize = 20;
   return (
     <CircleBox
-      size={circleSize}
+      size={48}
       className={className}
       style={{
         background: color.bg.default,
         boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
       }}
     >
-      <CircleBoxGlyph size={20} offsetX={1} offsetY={1}>
+      <CircleBoxGlyph size={innerSize} offsetX={1} offsetY={1}>
         <IconNavigationRefresh24 size={innerSize} state={state} />
       </CircleBoxGlyph>
     </CircleBox>
