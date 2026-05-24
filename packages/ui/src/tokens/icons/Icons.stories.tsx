@@ -1,4 +1,4 @@
-﻿import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { color } from "../color/color.css.ts";
@@ -591,11 +591,14 @@ export const Navigation: Story = {
       <Cell name="crosshairActive">
         <IconNavigationCrosshair24 state="active" />
       </Cell>
+      <Cell name="crosshairDenied">
+        <IconNavigationCrosshair24 state="denied" />
+      </Cell>
       <Cell name="refresh">
-        <IconNavigationRefresh24 state="default" />
+        <IconNavigationRefresh24 state="refresh" />
       </Cell>
       <Cell name="refreshActive">
-        <IconNavigationRefresh24 state="active" />
+        <IconNavigationRefresh24 state="refreshActive" />
       </Cell>
       <Cell name="nav pin" ingredients={["BrandSymbolIcon"]}>
         <IconNavigatePin />
@@ -798,10 +801,10 @@ export const Circlebox: Story = {
         <IconCircleboxCrosshair48 state="active" />
       </Cell>
       <Cell name="refresh" probeTarget="root">
-        <IconCircleboxRefresh48 state="default" />
+        <IconCircleboxRefresh48 state="refresh" />
       </Cell>
       <Cell name="refreshActive" probeTarget="root">
-        <IconCircleboxRefresh48 state="active" />
+        <IconCircleboxRefresh48 state="refreshActive" />
       </Cell>
     </div>
   ),
@@ -917,11 +920,14 @@ export const Gallery: Story = {
         <Cell name="crosshairActive">
           <IconNavigationCrosshair24 state="active" />
         </Cell>
+        <Cell name="crosshairDenied">
+          <IconNavigationCrosshair24 state="denied" />
+        </Cell>
         <Cell name="refresh">
-          <IconNavigationRefresh24 state="default" />
+          <IconNavigationRefresh24 state="refresh" />
         </Cell>
         <Cell name="refreshActive">
-          <IconNavigationRefresh24 state="active" />
+          <IconNavigationRefresh24 state="refreshActive" />
         </Cell>
         <Cell name="nav pin" ingredients={["BrandSymbolIcon"]}>
           <IconNavigatePin />
@@ -1104,11 +1110,18 @@ export const Gallery: Story = {
         >
           <IconCircleboxCrosshair48 state="active" />
         </Cell>
+        <Cell
+          name="crosshairDenied"
+          ingredients={["IconNavigationCrosshair24(denied)"]}
+          probeTarget="root"
+        >
+          <IconCircleboxCrosshair48 state="denied" />
+        </Cell>
         <Cell name="refresh" probeTarget="root">
-          <IconCircleboxRefresh48 state="default" />
+          <IconCircleboxRefresh48 state="refresh" />
         </Cell>
         <Cell name="refreshActive" probeTarget="root">
-          <IconCircleboxRefresh48 state="active" />
+          <IconCircleboxRefresh48 state="refreshActive" />
         </Cell>
       </RowSection>
 

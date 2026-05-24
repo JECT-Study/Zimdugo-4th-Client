@@ -447,10 +447,14 @@ export function IconNavigationCrosshair24({
   state = "default",
 }: {
   className?: string;
-  state?: "default" | "active";
+  state?: "default" | "active" | "denied";
 }) {
   const fill =
-    state === "active" ? color.palette.green[500] : color.palette.gray[600];
+    state === "active"
+      ? color.palette.green[500]
+      : state === "denied"
+        ? color.palette.gray[500]
+        : color.palette.gray[800];
 
   return (
     <svg
@@ -545,15 +549,6 @@ function IconNavigationRefresh({
   );
 }
 
-export function IconNavigationRefresh24({
-  className,
-  state = "default",
-}: {
-  className?: string;
-  state?: "default" | "active";
-}) {
-  return <IconNavigationRefresh className={className} size={24} state={state} />;
-}
 
 export function IconNavigationRefresh20({
   className,
@@ -1404,7 +1399,7 @@ export function IconCircleboxCrosshair48({
   state = "default",
 }: {
   className?: string;
-  state?: "default" | "active";
+  state?: "default" | "active" | "denied";
 }) {
   return (
     <CircleBox
@@ -1431,29 +1426,7 @@ export function IconCircleboxCrosshairActive48({
   return <IconCircleboxCrosshair48 className={className} state="active" />;
 }
 
-export function IconCircleboxRefresh48({
-  className,
-  state = "default",
-}: {
-  className?: string;
-  state?: "default" | "active";
-}) {
-  const innerSize = 20;
-  return (
-    <CircleBox
-      size={48}
-      className={className}
-      style={{
-        background: color.bg.default,
-        boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
-      }}
-    >
-      <CircleBoxGlyph size={innerSize} offsetX={1} offsetY={1}>
-        <IconNavigationRefresh20 state={state} />
-      </CircleBoxGlyph>
-    </CircleBox>
-  );
-}
+
 
 export function IconNavigationRefresh24({
   className,
@@ -1486,26 +1459,7 @@ export function IconNavigationRefresh24({
   );
 }
 
-export function IconCircleboxCrosshairActive48({
-  className,
-}: {
-  className?: string;
-}) {
-  return (
-    <CircleBox
-      size={48}
-      className={className}
-      style={{
-        background: color.bg.default,
-        boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
-      }}
-    >
-      <CircleBoxGlyph offsetX={2} offsetY={1}>
-        <IconNavigationCrosshair24 state="active" />
-      </CircleBoxGlyph>
-    </CircleBox>
-  );
-}
+
 
 export function IconCircleboxRefresh48({
   className,
