@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Dialog, Modal, ModalOverlay } from "react-aria-components";
+import { Dialog, Modal, ModalOverlay, Button as AriaButton } from "react-aria-components";
 import { Button } from "../button/Button.tsx";
 import { IconCaution24, IconX24 } from "../../tokens/icons/Icons.tsx";
 import {
@@ -87,14 +87,13 @@ export function Popup({
 
             return (
               <>
-                <button
-                  type="button"
+                <AriaButton
                   className={closeButton}
-                  onClick={() => onOpenChange(false)}
+                  onPress={() => onOpenChange(false)}
                   aria-label="닫기"
                 >
                   <IconX24 />
-                </button>
+                </AriaButton>
                 <div className={hasMiddleElement ? container.withMiddle : container.default}>
                   {/* 기본 Caution 아이콘을 초록색으로 표현하기 위해 state 생략 또는 커스텀 */}
                   <div className={iconWrapper}>
@@ -109,13 +108,12 @@ export function Popup({
                         {hasHelper && <div className={helper}>{helperText}</div>}
 
                         {hasSubAction && (
-                          <button
-                            type="button"
+                          <AriaButton
                             className={subActionText}
-                            onClick={handleSubAction}
+                            onPress={handleSubAction}
                           >
                             {subAction.label}
-                          </button>
+                          </AriaButton>
                         )}
                       </div>
                     )}
