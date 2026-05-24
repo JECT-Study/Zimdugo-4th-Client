@@ -1,3 +1,4 @@
+import { keyframes, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../vars.css.ts";
 
@@ -186,4 +187,29 @@ export const button = recipe({
     intent: "primary",
     size: "L",
   },
+});
+
+const bounce = keyframes({
+  "0%, 100%": {
+    transform: "translateY(0)",
+  },
+  "50%": {
+    transform: "translateY(-4px)",
+  },
+});
+
+export const loadingDots = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "2px",
+  height: "100%",
+  justifyContent: "center",
+});
+
+export const dot = style({
+  width: "4px",
+  height: "4px",
+  borderRadius: "50%",
+  backgroundColor: "currentColor",
+  animation: `${bounce} 1s infinite ease-in-out`,
 });
