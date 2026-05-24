@@ -100,7 +100,11 @@ For `packages/ui` component work:
 
 ### Context Mode
 
-For long work, maintain a context note under `docs/context/` or use gstack `/context-save`:
+For long work, maintain a context note under `docs/context/<issue-key>.md` or use gstack `/context-save`.
+
+**Local only — do not commit.** `docs/context/*` is gitignored (only `docs/context/.gitkeep` is tracked). Context notes are for your machine and session continuity, not for the shared repository.
+
+Record:
 
 - Current goal
 - Decisions made
