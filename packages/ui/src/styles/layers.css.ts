@@ -8,3 +8,11 @@ import { globalLayer } from "@vanilla-extract/css";
  */
 
 export const normalize = globalLayer("normalize");
+
+// 실제 CSS 출력을 보장하기 위해 빈 레이어에 스타일 할당
+import { globalStyle } from "@vanilla-extract/css";
+globalStyle("html", {
+  "@layer": {
+    [normalize]: {},
+  },
+});

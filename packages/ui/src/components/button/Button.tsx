@@ -13,6 +13,7 @@ interface ButtonProps extends Omit<AriaButtonProps, "className"> {
   intent?: ButtonIntent;
   size?: ButtonSize;
   className?: string;
+  isLoading?: boolean;
 }
 
 export function Button({
@@ -21,6 +22,8 @@ export function Button({
   size = "L",
   className,
   children,
+  isLoading,
+  isDisabled,
   ...props
 }: ButtonProps) {
   return (
@@ -28,9 +31,10 @@ export function Button({
       className={[button({ variant, intent, size }), className]
         .filter(Boolean)
         .join(" ")}
+      isDisabled={isDisabled || isLoading}
       {...props}
     >
-      {children}
+      {isLoading ? "..." : children}
     </AriaButton>
   );
 }

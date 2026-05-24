@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
-import { typography } from "../../tokens/typography/typography.css.ts";
+import { vars } from "../../vars.css.ts";
 import { Button } from "./Button.tsx";
 
 const meta = {
-  title: "Components/Button",
+  title: "Shared/Button",
   component: Button,
   parameters: { layout: "centered" },
   argTypes: {
@@ -68,7 +68,7 @@ export const AllVariants: Story = {
   name: "Variants",
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <p style={typography.font.caption}>
+      <p style={vars.typography.font.caption}>
         <strong>Hover / Active / Focus</strong> 상태는 정적으로 강제할 수 없어
         이 표에서 제외되었습니다.
         <br />각 버튼에 직접 마우스를 올리거나(hover), 클릭한 채로
