@@ -4,7 +4,7 @@ import {
   TextField,
   type TextFieldProps,
 } from "react-aria-components";
-import { useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import {
   IconNormalMapPin24,
   IconNormalSearch24,
@@ -60,14 +60,16 @@ export function Input({
   className,
   ...props
 }: InputProps) {
-  const isControlledValue = props.value !== undefined;
-  const [uncontrolledValue, setUncontrolledValue] = useState(
-    String(props.defaultValue ?? ""),
+  const [value, setValue] = useState<string>(
+    String(props.defaultValue ?? props.value ?? "")
   );
+  const isControlledValue = props.value !== undefined;
+  const currentValue = isControlledValue ? String(props.value ?? "") : value;
+
   const isDisabled = props.isDisabled ?? variant === "disabled";
   const isLabelOn = labelTitleSize !== "none" && Boolean(label);
   const defaultLeftSearch = labelTypeVariant === "text";
-  const defaultRightSearch = labelTypeVariant === "text";
+  const defaultRightSearch = labelTypeVariant === "iconText";
   const showLeftSearch =
     searchIconPlacement === "auto"
       ? defaultLeftSearch
@@ -77,19 +79,21 @@ export function Input({
       ? defaultRightSearch
       : searchIconPlacement === "right";
   const showLeftMapPin = labelTypeVariant === "iconText";
-  const currentValue = isControlledValue
-    ? String(props.value ?? "")
-    : uncontrolledValue;
   const hasTextValue = (currentValue || "").trim().length > 0;
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+
+  const handleValueChange = (val: string) => {
     if (!isControlledValue) {
-      setUncontrolledValue(event.currentTarget.value);
+      setValue(val);
     }
+    props.onChange?.(val);
   };
 
   return (
     <TextField
       {...props}
+      value={isControlledValue ? props.value : undefined}
+      defaultValue={isControlledValue ? undefined : props.defaultValue}
+      onChange={handleValueChange}
       isDisabled={isDisabled}
       className={[root, className].filter(Boolean).join(" ")}
     >
@@ -136,7 +140,6 @@ export function Input({
                 <AriaInput
                   className={[inputText, toneClass].filter(Boolean).join(" ")}
                   placeholder={placeholder}
-                  onChange={handleInputChange}
                 />
               </div>
               {showRightSearch ? (
