@@ -30,6 +30,7 @@ const CheckIcon = ({ isSelected }: { isSelected: boolean }) => (
     viewBox="0 0 12 9" 
     fill="none" 
     className={checkSvg} 
+    aria-hidden="true"
     style={{ 
       // 아이콘을 항상 렌더링하여 레이아웃 시프트를 막고 즉시 표시
       visibility: isSelected ? "visible" : "hidden",
