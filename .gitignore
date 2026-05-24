@@ -17,3 +17,11 @@ todos.json
 # storybook
 *storybook.log
 **/storybook-static/
+# Added by code-review-graph
+.code-review-graph/
+
+# Personal docs (local only, not shared)
+docs/ai-workflow.md
+# Context notes: local only; never commit (see AGENTS.md Context Mode)
+docs/context/*
+!docs/context/.gitkeep

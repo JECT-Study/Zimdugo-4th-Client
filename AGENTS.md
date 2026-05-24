@@ -6,6 +6,116 @@
 
 ---
 
+## AI Development Workflow
+
+> This section is shared by Codex, Claude Code, Cursor, Gemini CLI, Antigravity, and other AI coding agents.
+> **Agent adapters** (`GEMINI.md`, `.cursor/rules/*.mdc`, etc.) may include a minimal bootstrap: point to this file, session-start reminders, and non-conflicting summaries of gstack/RTK/review steps. Do not copy full rule sets or contradict this file. When in doubt, prefer linking to a subsection here over duplicating text.
+> `CLAUDE.md` is a symlink to this file.
+
+### Source of Truth
+
+- Read this `AGENTS.md` before changing code.
+- Answer in Korean.
+- Keep changes small enough to review, explain, revert, and commit independently.
+- Preserve unrelated user or agent changes. Do not reset or revert files unless explicitly asked.
+- Treat `pnpm-lock.yaml` as dependency evidence. Do not change it unless a real dependency change requires it.
+
+### Standard Review Graph
+
+Use this graph before staging or committing:
+
+1. Scope review: list changed files and decide the smallest commit boundary.
+   - When `code-review-graph` is available: run `detect_changes` (MCP) or `code-review-graph detect-changes --base main` (CLI) to catch scope bleed (e.g. `packages/ui`-only PR vs unstaged `apps/web` changes).
+2. Dependency/import review: verify moved files, package exports, import paths, and lockfile impact.
+   - For shared package or export changes: `get_impact_radius` or `get_review_context` on touched entry files.
+3. Type/lint review: run the narrowest useful TypeScript, Biome, or package check.
+4. UI review: for Storybook/Figma/UI changes, verify the rendered story or equivalent browser path.
+5. Code review: use gstack `/review` when available. Otherwise perform a bug-first review manually.
+6. Security review: use gstack `/cso` for auth, dependency, env, infra, CI/CD, external API, file upload, location, or user-data changes.
+7. Context checkpoint: save the current decisions and remaining work when the task spans multiple sessions.
+8. Commit review: ensure the staged files match one coherent Korean commit message.
+
+### code-review-graph
+
+MCP setup, tool table, install steps, and per-agent config paths for code-review-graph live **only in this subsection**. Agent adapters must link here — do not duplicate CRG rules or tables elsewhere.
+
+MCP is configured per agent via `code-review-graph install --platform all --no-instructions`.
+
+| Step | MCP tool | CLI fallback |
+|------|----------|--------------|
+| Scope / PR boundary | `detect_changes` | `code-review-graph detect-changes --base main` |
+| Import blast radius | `get_impact_radius`, `get_review_context` | — |
+| Structure search | `query_graph`, `semantic_search_nodes` | Grep/Read when graph lacks coverage |
+
+Setup: `code-review-graph build` (once), `code-review-graph update` (incremental). Data dir: `.code-review-graph/` (gitignored).
+
+After clone, each machine runs: `code-review-graph install --platform all --no-instructions -y`
+
+| Agent | MCP config |
+|-------|------------|
+| Cursor | `.cursor/mcp.json` |
+| Codex | `~/.codex/config.toml` |
+| Claude Code | `.mcp.json` |
+| Gemini CLI | `.gemini/settings.json` |
+| Antigravity | `~/.gemini/antigravity/mcp_config.json` |
+
+CRG supplements gstack `/review`; it does not replace manual or gstack review.
+
+### gstack Usage
+
+When gstack is available, prefer these skills:
+
+- Planning: `/office-hours`, `/autoplan`, `/plan-eng-review`, `/plan-design-review`, `/plan-devex-review`
+- Code review: `/review`
+- Security review: `/cso`
+- UI and browser QA: `/design-review`, `/qa`, `/qa-only`, `/browse`
+- Context: `/context-save`, `/context-restore`
+- Safety: `/guard`, `/freeze`, `/careful`, `/unfreeze`
+- Shipping: `/ship`, `/land-and-deploy`, `/canary`
+
+If gstack is not available in the current agent, follow the same review graph manually and record any skipped checks.
+
+### RTK Usage
+
+When RTK is available, use it for noisy shell output so the agent can keep more useful context:
+
+- `rtk git status`
+- `rtk git diff`
+- `rtk grep "pattern" .`
+- `rtk tsc`
+- `rtk lint biome`
+- `rtk test <command>`
+- `rtk pnpm list`
+
+Use raw commands when full output is required for debugging or when RTK is unavailable.
+
+### UI Component Workflow
+
+For `packages/ui` component work:
+
+1. Inspect `Button` conventions first.
+2. Keep actual component directory ownership separate from Storybook information architecture.
+3. Update package exports when moving public components.
+4. Update consuming app imports immediately after file moves.
+5. Keep Storybook stories consistent with component category and avoid unnecessary explanatory copy.
+6. Verify with `pnpm exec tsc -p packages/ui/tsconfig.json --noEmit --pretty false`.
+
+### Context Mode
+
+For long work, maintain a context note under `docs/context/<issue-key>.md` or use gstack `/context-save`.
+
+**Local only — do not commit.** `docs/context/*` is gitignored (only `docs/context/.gitkeep` is tracked). Context notes are for your machine and session continuity, not for the shared repository.
+
+Record:
+
+- Current goal
+- Decisions made
+- Files intentionally included or excluded from the next commit
+- Verification commands already run
+- Remaining risks or skipped checks
+
+---
+
 ## Tech Stack
 
 | Category | Library / Tool |
@@ -32,6 +142,14 @@
 ---
 
 ## Code Conventions
+
+### 엔지니어링 품질 게이트
+
+- 오류, 테스트 실패, 예상하지 못한 동작이 발생하면 코드를 수정하기 전에 원인 추적 흐름을 먼저 따른다. 증상, 재현 경로, 최근 변경, 가설, 검증 결과를 함께 확인한다.
+- Storybook 또는 Figma 기반 UI 컴포넌트는 렌더링되는 Storybook 스토리나 동등한 브라우저 실행 경로를 확인한다. 린트와 TypeScript 검사는 필요하지만 렌더링 검증을 대체하지 않는다.
+- 반복될 가능성이 있는 비단순 문제가 해결되고 검증되면 Compound Engineering의 compound 단계를 실행해 `docs/solutions/`에 학습 내용을 문서화한다.
+- 커밋을 스테이징하기 전에 커밋 범위를 검토하고 관련 gstack 피드백 단계를 실행한다. 보안, 의존성, 인증, 인프라, 환경, CI/CD, 데이터 노출과 관련된 변경은 CSO 리뷰를 사용하고, 일반 구현과 UI 변경은 코드 리뷰 또는 디자인 리뷰를 사용한다.
+- 각 커밋은 독립적으로 리뷰, 되돌리기, 설명이 가능할 만큼 작게 유지한다.
 
 ### Functions
 
