@@ -1,0 +1,23 @@
+---
+description: packages/ui component and Storybook workflow
+globs:
+  - "packages/ui/src/components/**/*"
+  - "packages/ui/package.json"
+alwaysApply: false
+---
+
+# UI Component Workflow
+
+- Inspect `packages/ui/src/components/button` before changing shared components.
+- Use function declarations for React components.
+- Keep actual component directory ownership separate from Storybook grouping.
+- When moving a public component, update:
+  - source directory
+  - relative imports
+  - `packages/ui/package.json` exports
+  - app imports
+  - Storybook title
+- Avoid unnecessary explanatory copy in variants stories.
+- For Storybook/Figma-based UI changes, verify rendering when possible.
+- Prefer this focused check:
+  `pnpm exec tsc -p packages/ui/tsconfig.json --noEmit --pretty false`

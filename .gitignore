@@ -17,3 +17,10 @@ todos.json
 # storybook
 *storybook.log
 **/storybook-static/
+# Added by code-review-graph
+.code-review-graph/
+
+# Personal docs (local only, not shared)
+docs/ai-workflow.md
+docs/context/*
+!docs/context/.gitkeep

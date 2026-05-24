@@ -1,0 +1,28 @@
+---
+description: Project-wide rules for OurJourney
+alwaysApply: true
+---
+
+# Project Rules
+
+- Read `AGENTS.md` before changing code.
+- Answer in Korean.
+- Treat `AGENTS.md` as the source of truth for code conventions, Git workflow, gstack usage, RTK usage, and review gates.
+- Preserve unrelated user or agent changes.
+- Do not modify `pnpm-lock.yaml` unless dependency changes require it.
+- Keep changes small enough to review, explain, revert, and commit independently.
+
+## Preferred Review Graph
+
+1. Scope review.
+2. Dependency/import review.
+3. Type/lint review.
+4. UI/Storybook render review when relevant.
+5. gstack `/review` when available.
+6. gstack `/cso` for security, dependency, auth, env, CI/CD, external API, location, upload, or user-data changes.
+7. Context checkpoint for long work.
+8. Commit scope review.
+
+## RTK
+
+When RTK is available, prefer `rtk git status`, `rtk git diff`, `rtk grep`, `rtk tsc`, and `rtk test <command>` for noisy output.

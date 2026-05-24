@@ -1,0 +1,19 @@
+---
+description: Review, security, and commit workflow
+alwaysApply: false
+---
+
+# Review Workflow
+
+Before staging or committing:
+
+- Run `rtk git status` or `git status --short`.
+- Run `rtk git diff` or a focused `git diff -- <paths>`.
+- Verify imports and package exports for moved files.
+- Run a focused type/lint/test command.
+- Use gstack `/review` for implementation changes when available.
+- Use gstack `/cso` for auth, dependency, env, CI/CD, infra, external API, upload, location, or user-data changes.
+- Use gstack `/design-review`, `/qa`, or `/qa-only` for UI changes when available.
+- State skipped checks explicitly.
+
+Commit messages must be Korean and follow the format in `AGENTS.md`.
