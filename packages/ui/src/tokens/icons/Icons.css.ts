@@ -26,6 +26,7 @@ export const circleBoxRoot = style({
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
+  position: "relative",
 });
 
 export const circleBoxSize = styleVariants({

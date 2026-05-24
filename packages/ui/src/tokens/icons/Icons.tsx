@@ -313,27 +313,91 @@ export function IconX16({ className }: { className?: string }) {
   );
 }
 
-export function IconFilter20({ className }: { className?: string }) {
+export function IconX24({ className }: { className?: string }) {
   return (
     <svg
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
-      viewBox="0 0 20 20"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      width={20}
-      height={20}
+      width={24}
+      height={24}
       preserveAspectRatio="xMidYMid meet"
       aria-hidden
     >
-      <title>필터</title>
+      <title>닫기</title>
       <path
-        d="M3.47559 13.3333C3.81878 12.3623 4.74482 11.6667 5.83333 11.6667C6.92183 11.6667 7.84792 12.3623 8.19108 13.3333H16.6667V15H8.19108C7.84792 15.971 6.92183 16.6667 5.83333 16.6667C4.74482 16.6667 3.81878 15.971 3.47559 15H0V13.3333H3.47559ZM8.47558 7.5C8.81875 6.52901 9.74483 5.83333 10.8333 5.83333C11.9218 5.83333 12.8479 6.52901 13.1911 7.5H16.6667V9.16667H13.1911C12.8479 10.1377 11.9218 10.8333 10.8333 10.8333C9.74483 10.8333 8.81875 10.1377 8.47558 9.16667H0V7.5H8.47558ZM3.47559 1.66667C3.81878 0.695675 4.74482 0 5.83333 0C6.92183 0 7.84792 0.695675 8.19108 1.66667H16.6667V3.33333H8.19108C7.84792 4.30433 6.92183 5 5.83333 5C4.74482 5 3.81878 4.30433 3.47559 3.33333H0V1.66667H3.47559ZM5.83333 3.33333C6.29357 3.33333 6.66667 2.96023 6.66667 2.5C6.66667 2.03977 6.29357 1.66667 5.83333 1.66667C5.3731 1.66667 5 2.03977 5 2.5C5 2.96023 5.3731 3.33333 5.83333 3.33333ZM10.8333 9.16667C11.2936 9.16667 11.6667 8.79358 11.6667 8.33333C11.6667 7.87308 11.2936 7.5 10.8333 7.5C10.3731 7.5 10 7.87308 10 8.33333C10 8.79358 10.3731 9.16667 10.8333 9.16667ZM5.83333 15C6.29357 15 6.66667 14.6269 6.66667 14.1667C6.66667 13.7064 6.29357 13.3333 5.83333 13.3333C5.3731 13.3333 5 13.7064 5 14.1667C5 14.6269 5.3731 15 5.83333 15Z"
-        fill={color.palette.gray[600]}
+        d="M6 6L18 18M18 6L6 18"
+        stroke={color.palette.gray[500]}
+        strokeWidth="2"
+        strokeLinecap="round"
       />
     </svg>
   );
 }
 
+// 1차 검수 완료 (26.04.21)
+export function IconFilter14({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>필터</title>
+      <path
+        d="M2.78047 10.6667C3.05503 9.88987 3.79585 9.33333 4.66667 9.33333C5.53747 9.33333 6.27833 9.88987 6.55287 10.6667H13.3333V12H6.55287C6.27833 12.7768 5.53747 13.3333 4.66667 13.3333C3.79585 13.3333 3.05503 12.7768 2.78047 12H0V10.6667H2.78047ZM6.78047 6C7.055 5.22321 7.79587 4.66667 8.66667 4.66667C9.53747 4.66667 10.2783 5.22321 10.5529 6H13.3333V7.33333H10.5529C10.2783 8.11013 9.53747 8.66667 8.66667 8.66667C7.79587 8.66667 7.055 8.11013 6.78047 7.33333H0V6H6.78047ZM2.78047 1.33333C3.05503 0.55654 3.79585 0 4.66667 0C5.53747 0 6.27833 0.55654 6.55287 1.33333H13.3333V2.66667H6.55287C6.27833 3.44346 5.53747 4 4.66667 4C3.79585 4 3.05503 3.44346 2.78047 2.66667H0V1.33333H2.78047ZM4.66667 2.66667C5.03485 2.66667 5.33333 2.36819 5.33333 2C5.33333 1.63181 5.03485 1.33333 4.66667 1.33333C4.29848 1.33333 4 1.63181 4 2C4 2.36819 4.29848 2.66667 4.66667 2.66667ZM8.66667 7.33333C9.03487 7.33333 9.33333 7.03487 9.33333 6.66667C9.33333 6.29847 9.03487 6 8.66667 6C8.29847 6 8 6.29847 8 6.66667C8 7.03487 8.29847 7.33333 8.66667 7.33333ZM4.66667 12C5.03485 12 5.33333 11.7015 5.33333 11.3333C5.33333 10.9651 5.03485 10.6667 4.66667 10.6667C4.29848 10.6667 4 10.9651 4 11.3333C4 11.7015 4.29848 12 4.66667 12Z"
+        fill="var(--icon-default, #8E8E8E)"
+      />
+    </svg>
+  );
+}
+
+export function IconFilter20({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width="20"
+      height="20"
+      viewBox="0 0 14 14"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>filter</title>
+      <path
+        d="M2.78047 10.6667C3.05503 9.88987 3.79585 9.33333 4.66667 9.33333C5.53747 9.33333 6.27833 9.88987 6.55287 10.6667H13.3333V12H6.55287C6.27833 12.7768 5.53747 13.3333 4.66667 13.3333C3.79585 13.3333 3.05503 12.7768 2.78047 12H0V10.6667H2.78047ZM6.78047 6C7.055 5.22321 7.79587 4.66667 8.66667 4.66667C9.53747 4.66667 10.2783 5.22321 10.5529 6H13.3333V7.33333H10.5529C10.2783 8.11013 9.53747 8.66667 8.66667 8.66667C7.79587 8.66667 7.055 8.11013 6.78047 7.33333H0V6H6.78047ZM2.78047 1.33333C3.05503 0.55654 3.79585 0 4.66667 0C5.53747 0 6.27833 0.55654 6.55287 1.33333H13.3333V2.66667H6.55287C6.27833 3.44346 5.53747 4 4.66667 4C3.79585 4 3.05503 3.44346 2.78047 2.66667H0V1.33333H2.78047ZM4.66667 2.66667C5.03485 2.66667 5.33333 2.36819 5.33333 2C5.33333 1.63181 5.03485 1.33333 4.66667 1.33333C4.29848 1.33333 4 1.63181 4 2C4 2.36819 4.29848 2.66667 4.66667 2.66667ZM8.66667 7.33333C9.03487 7.33333 9.33333 7.03487 9.33333 6.66667C9.33333 6.29847 9.03487 6 8.66667 6C8.29847 6 8 6.29847 8 6.66667C8 7.03487 8.29847 7.33333 8.66667 7.33333ZM4.66667 12C5.03485 12 5.33333 11.7015 5.33333 11.3333C5.33333 10.9651 5.03485 10.6667 4.66667 10.6667C4.29848 10.6667 4 10.9651 4 11.3333C4 11.7015 4.29848 12 4.66667 12Z"
+        fill="var(--icon-default, #8E8E8E)"
+      />
+    </svg>
+  );
+}
+
+export function IconCircleboxFilter28({ className }: { className?: string }) {
+  return (
+    <div
+      className={className}
+      style={{
+        display: "flex",
+        width: "28px",
+        height: "28px",
+        justifyContent: "center",
+        alignItems: "center",
+        flexShrink: 0,
+      }}
+    >
+      <IconFilter14 />
+    </div>
+  );
+}
+
+// 1차 검수 완료 (26.04.22)
 export function IconNormalMapPin24({
   className,
   state = "default",
@@ -383,10 +447,14 @@ export function IconNavigationCrosshair24({
   state = "default",
 }: {
   className?: string;
-  state?: "default" | "active";
+  state?: "default" | "active" | "denied";
 }) {
   const fill =
-    state === "active" ? color.palette.green[500] : color.palette.gray[600];
+    state === "active"
+      ? color.palette.green[500]
+      : state === "denied"
+        ? color.palette.gray[500]
+        : color.palette.gray[800];
 
   return (
     <svg
@@ -481,15 +549,6 @@ function IconNavigationRefresh({
   );
 }
 
-export function IconNavigationRefresh24({
-  className,
-  state = "default",
-}: {
-  className?: string;
-  state?: "default" | "active";
-}) {
-  return <IconNavigationRefresh className={className} size={24} state={state} />;
-}
 
 export function IconNavigationRefresh20({
   className,
@@ -1340,7 +1399,7 @@ export function IconCircleboxCrosshair48({
   state = "default",
 }: {
   className?: string;
-  state?: "default" | "active";
+  state?: "default" | "active" | "denied";
 }) {
   return (
     <CircleBox
@@ -1367,14 +1426,52 @@ export function IconCircleboxCrosshairActive48({
   return <IconCircleboxCrosshair48 className={className} state="active" />;
 }
 
-export function IconCircleboxRefresh48({
+
+
+export function IconNavigationRefresh24({
   className,
-  state = "default",
+  state = "refreshActive",
 }: {
   className?: string;
-  state?: "default" | "active";
+  state?: "refresh" | "refreshActive";
 }) {
-  const innerSize = 20;
+  const fill =
+    state === "refreshActive"
+      ? color.palette.gray[800]
+      : color.palette.gray[500];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>새로고침</title>
+      <path
+        d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
+        fill={fill}
+      />
+    </svg>
+  );
+}
+
+
+
+export function IconCircleboxRefresh48({
+  className,
+  state = "refreshActive",
+}: {
+  className?: string;
+  state?: "refresh" | "refreshActive";
+}) {
+  const fill =
+    state === "refreshActive"
+      ? color.palette.gray[800]
+      : color.palette.gray[500];
   return (
     <CircleBox
       size={48}
@@ -1384,8 +1481,22 @@ export function IconCircleboxRefresh48({
         boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
       }}
     >
-      <CircleBoxGlyph size={innerSize} offsetX={1} offsetY={1}>
-        <IconNavigationRefresh20 state={state} />
+      <CircleBoxGlyph size={20} offsetX={1} offsetY={1}>
+        <svg
+          className={iconSvgFixed}
+          viewBox="0 0 20 20"
+          width={20}
+          height={20}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden
+        >
+          <title>새로고침</title>
+          <path
+            d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
+            fill={fill}
+          />
+        </svg>
       </CircleBoxGlyph>
     </CircleBox>
   );
@@ -1484,6 +1595,31 @@ export function IconSizeL({
         d="M41.3479 13.7483C45.0599 13.7483 48.1189 16.7729 48.1189 20.6224V58.4301C48.1189 62.314 45.0599 65.3042 41.3479 65.3042C41.3479 67.2977 39.7325 68.7413 37.8077 68.7413C36.0892 68.7413 34.3706 67.2977 34.3706 65.3042H13.7483C13.7483 67.2977 12.0297 68.7413 10.3112 68.7413C8.38644 68.7413 6.77101 67.2977 6.77101 65.3042C3.05899 65.3042 0 62.314 0 58.4301V20.6224C0 16.7729 3.05899 13.7483 6.77101 13.7483H13.7483V3.43706C13.7483 1.44357 15.3293 0 17.1853 0H30.9336C32.7896 0 34.3706 1.44357 34.3706 3.43706V13.7483H41.3479ZM29.215 13.7483V5.1556H18.9039V13.7483H29.215ZM10.3112 24.0594V54.993H15.4668V24.0594H10.3112ZM32.6521 24.0594V54.993H37.8077V24.0594H32.6521ZM21.4816 24.0594V54.993H26.6372V24.0594H21.4816Z"
         fill={fill}
       />
+    </svg>
+  );
+}
+
+export function IconNavigationPin40({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={40}
+      height={48}
+      viewBox="0 0 40 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M20.0202 47.9794C17.753 47.9794 15.7895 46.6615 14.8583 44.5611L5.46559 22.8983H5.48583L4.21053 20.0566L0.769231 12.1287C0.263158 10.9961 0 9.76062 0 8.48391V8.07207C0 5.14801 1.5587 2.42986 4.06883 1.00901L4.65587 0.679537L4.97976 0.576577C6.01215 0.164736 6.96356 0 7.97571 0C8.70445 0 9.41296 0.10296 10.1215 0.30888C10.4656 0.391248 11.1943 0.658945 11.5992 0.803089C12.2672 1.05019 12.4494 1.11197 12.753 1.23552C14.919 2.10039 17.3684 2.574 19.8178 2.574C22.2672 2.574 24.8178 2.10039 27.085 1.21493L29.17 0.535393C30.1215 0.185328 31.0526 0.020592 31.9838 0.020592C33.3806 0.020592 34.7571 0.391248 35.9717 1.09138C38.4413 2.55341 40 5.25097 40 8.15444V8.5045C40 9.69884 39.7571 10.8726 39.2915 12.0051L25.1619 44.5817C24.251 46.7027 22.2875 48 20.0202 48V47.9794Z"
+        fill={color.bg.default}
+      />
+      <g transform="translate(2, 2)">
+        <path
+          d="M35.9514 6.1982C35.9514 6.1982 35.9514 6.36293 35.9514 6.4453C35.9514 7.41313 35.749 8.31918 35.4049 9.14286L35.3441 9.287L21.2955 41.6988C20.0405 44.6229 15.9717 44.6229 14.6964 41.6988L6.15385 22.0335L18.2794 16.103C19.0688 17.5444 20.6073 18.5534 22.3684 18.5534C25.0607 18.5534 27.2065 16.2471 27.0445 13.4878C26.9028 11.1197 25 9.18404 22.6721 9.0399C19.9595 8.87516 17.6923 11.0579 17.6923 13.7967C17.6923 14.0438 17.6923 14.2909 17.6923 14.538L4.04858 17.2149L0.587045 9.26641C0.20243 8.40154 0 7.45431 0 6.46589C0 6.38353 0 6.30116 0 6.21879C0 6.15701 0 6.09524 0 6.05405C0 3.78893 1.23482 1.79151 3.03644 0.761905C3.03644 0.761905 3.03644 0.761905 3.05668 0.761905C3.31984 0.617761 3.583 0.494208 3.8664 0.370656C4.51417 0.123552 5.22267 0 5.95142 0C6.49798 0 7.04453 0.0823681 7.55061 0.226512C7.79352 0.288288 8.64373 0.576577 8.88664 0.679537C9.51417 0.906049 9.67611 0.967825 9.97976 1.09138C14.9393 3.0888 20.749 3.04762 25.7895 1.07079L27.8542 0.41184C28.502 0.164736 29.2105 0.020592 29.9595 0.020592C31.0526 0.020592 32.0648 0.30888 32.9555 0.823681C34.7368 1.87387 35.9514 3.83012 35.9514 6.09524C35.9514 6.15701 35.9514 6.21879 35.9514 6.25997V6.1982Z"
+          fill={color.brand.primary}
+        />
+      </g>
     </svg>
   );
 }

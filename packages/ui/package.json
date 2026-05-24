@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./vars": {
+      "import": "./src/vars.css.ts"
+    },
     "./*.css": {
       "import": "./src/*.css.ts"
     },
@@ -24,6 +27,63 @@
     },
     "./components/button": {
       "import": "./src/components/button/Button.tsx"
+    },
+    "./components/bottom-sheet-frame": {
+      "import": "./src/components/bottom-sheet-frame/BottomSheetFrame.tsx"
+    },
+    "./components/layout/app-shell": {
+      "import": "./src/components/layout/AppShell.tsx"
+    },
+    "./components/layout/app-container": {
+      "import": "./src/components/layout/app-container/AppContainer.tsx"
+    },
+    "./components/layout/bottom-bar-frame": {
+      "import": "./src/components/layout/BottomBarFrame.tsx"
+    },
+    "./components/layout/header": {
+      "import": "./src/components/layout/header/Header.tsx"
+    },
+    "./components/popup": {
+      "import": "./src/components/popup/Popup.tsx"
+    },
+    "./components/dropdown": {
+      "import": "./src/components/dropdown/Dropdown.tsx"
+    },
+    "./components/popover": {
+      "import": "./src/components/popover/Popover.tsx"
+    },
+    "./components/radio": {
+      "import": "./src/components/radio/Radio.tsx"
+    },
+    "./components/toggle": {
+      "import": "./src/components/toggle/Toggle.tsx"
+    },
+    "./components/search-field": {
+      "import": "./src/components/search-field/SearchField.tsx"
+    },
+    "./components/tab": {
+      "import": "./src/components/tab/Tab.tsx"
+    },
+    "./components/chip-group": {
+      "import": "./src/components/chip/ChipGroup.tsx"
+    },
+    "./components/checkbox": {
+      "import": "./src/components/checkbox/Checkbox.tsx"
+    },
+    "./components/control-chip": {
+      "import": "./src/components/control-chip/ControlChip.tsx"
+    },
+    "./components/input": {
+      "import": "./src/components/input/Input.tsx"
+    },
+    "./components/input-text": {
+      "import": "./src/components/input-text/InputText.tsx"
+    },
+    "./components/label-title": {
+      "import": "./src/components/label-title/LabelTitle.tsx"
+    },
+    "./components/feedback/skeleton": {
+      "import": "./src/components/feedback/skeleton/Skeleton.tsx"
     },
     "./tokens/icons": {
       "import": "./src/tokens/icons/Icons.tsx"
