@@ -35,8 +35,6 @@ export interface ChipGroupProps {
   isDisabled?: boolean;
   /** 레이아웃 모드: 기본 wrap / 1,2행 엇갈림 배치 */
   layout?: "wrap" | "staggered";
-  /** staggered 모드의 1행 chip 개수 */
-  staggerFirstRowCount?: number;
 }
 
 /**
