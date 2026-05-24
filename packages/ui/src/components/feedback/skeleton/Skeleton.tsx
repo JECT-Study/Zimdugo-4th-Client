@@ -12,7 +12,7 @@ export interface SkeletonProps {
 
 /**
  * 고도화된 스켈레톤 컴포넌트.
- * Motion을 사용하여 부드러운 펄스 애니메이션을 제공하며, 디자인 시스템 토큰을 준수합니다.
+ * CSS keyframes 기반의 부드러운 펄스 애니메이션을 제공하며, 디자인 시스템 토큰을 준수합니다.
  */
 export function Skeleton({
   width,
