@@ -9,8 +9,8 @@
 ## AI Development Workflow
 
 > This section is shared by Codex, Claude Code, Cursor, Gemini CLI, Antigravity, and other AI coding agents.
-> Agent-specific files should point back here instead of redefining conflicting rules.
-> `CLAUDE.md` is a symlink to this file. Keep agent-specific adapters thin; put shared rules here.
+> **Agent adapters** (`GEMINI.md`, `.cursor/rules/*.mdc`, etc.) may include a minimal bootstrap: point to this file, session-start reminders, and non-conflicting summaries of gstack/RTK/review steps. Do not copy full rule sets or contradict this file. When in doubt, prefer linking to a subsection here over duplicating text.
+> `CLAUDE.md` is a symlink to this file.
 
 ### Source of Truth
 
@@ -37,7 +37,9 @@ Use this graph before staging or committing:
 
 ### code-review-graph
 
-MCP is configured per agent via `code-review-graph install --platform all --no-instructions`. Rules live here only — do not duplicate in agent-specific files.
+MCP setup, tool table, install steps, and per-agent config paths for code-review-graph live **only in this subsection**. Agent adapters must link here — do not duplicate CRG rules or tables elsewhere.
+
+MCP is configured per agent via `code-review-graph install --platform all --no-instructions`.
 
 | Step | MCP tool | CLI fallback |
 |------|----------|--------------|
