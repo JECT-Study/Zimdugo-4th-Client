@@ -52,8 +52,8 @@ declare namespace naver.maps {
       callback: (status: Status, response: ReverseGeocodeResponse) => void,
     ): void;
     const OrderType: {
-      ROAD_ADDR: string;
-      ADDR: string;
+      readonly ROAD_ADDR: "roadaddr";
+      readonly ADDR: "addr";
     };
   }
 }
