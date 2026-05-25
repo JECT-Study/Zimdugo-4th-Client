@@ -34,7 +34,7 @@ export interface BottomTabBarProps {
   className?: string;
 }
 
-export const BottomTabBar = memo(function BottomTabBar({
+function BottomTabBarComponent({
   activeTab,
   links,
   labels,
@@ -63,7 +63,9 @@ export const BottomTabBar = memo(function BottomTabBar({
       })}
     </BottomBarFrame>
   );
-});
+}
+
+export const BottomTabBar = memo(BottomTabBarComponent);
 
 interface BottomTabBarIconProps {
   to: string;
@@ -72,7 +74,7 @@ interface BottomTabBarIconProps {
   icon: ReactNode;
 }
 
-const BottomTabBarIcon = memo(function BottomTabBarIcon({
+function BottomTabBarIconComponent({
   to,
   isActive,
   label,
@@ -86,4 +88,6 @@ const BottomTabBarIcon = memo(function BottomTabBarIcon({
       </span>
     </Link>
   );
-});
+}
+
+const BottomTabBarIcon = memo(BottomTabBarIconComponent);
