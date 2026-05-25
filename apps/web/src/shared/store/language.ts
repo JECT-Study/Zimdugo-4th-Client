@@ -53,6 +53,7 @@ interface AppLanguageState {
   hasHydrated: boolean;
   initializeLanguage: (urlLanguage?: string | null) => void;
   setAppLanguage: (language: AppLanguage) => void;
+  markHydrated: () => void;
 }
 
 export const useAppLanguageStore = create<AppLanguageState>()(
@@ -88,6 +89,9 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         setLanguageTag(language);
         setLanguageCookie(language);
       },
+      markHydrated: () => {
+        set({ hasInitialized: false, hasHydrated: true });
+      },
     }),
     {
       name: APP_LANGUAGE_STORAGE_KEY,
@@ -102,12 +106,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
       ),
       partialize: (state) => ({ appLanguage: state.appLanguage }),
       onRehydrateStorage: () => (state) => {
-        if (!state) {
-          return;
-        }
-
-        state.hasInitialized = false;
-        state.hasHydrated = true;
+        state?.markHydrated();
       },
     },
   ),
