@@ -30,6 +30,7 @@ const config = defineConfig({
     tanstackStart({
       prerender: {
         enabled: true,
+        crawlLinks: false,
       },
       pages: prerenderRoutes,
     }),
