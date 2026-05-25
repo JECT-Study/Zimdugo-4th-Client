@@ -8,6 +8,7 @@ import {
   type MapCoordinates,
   watchCurrentLocationPermission,
 } from "./current-location";
+import { useNaverMapSdk } from "./NaverMapProvider";
 
 const isPermissionDeniedError = (
   error: unknown,
@@ -35,9 +36,12 @@ export interface UseCurrentLocationFocusResult {
 
 export function useCurrentLocationFocus({
   map = null,
-  maps = typeof window !== "undefined" ? window.naver?.maps : null,
+  maps,
   positionOptions = DEFAULT_CURRENT_LOCATION_OPTIONS,
 }: UseCurrentLocationFocusOptions = {}): UseCurrentLocationFocusResult {
+  const { maps: sdkMaps } = useNaverMapSdk();
+  const resolvedMaps = maps ?? sdkMaps;
+
   const [coordinates, setCoordinates] = useState<MapCoordinates | null>(null);
   const [error, setError] = useState<GeolocationPositionError | Error | null>(
     null,
@@ -50,12 +54,12 @@ export function useCurrentLocationFocus({
   const focusCachedLocation = useCallback(() => {
     const didFocus = focusNaverMapOnCoordinates({
       map,
-      maps,
+      maps: resolvedMaps,
       coordinates,
     });
     setIsCentered(didFocus);
     return didFocus;
-  }, [coordinates, map, maps]);
+  }, [coordinates, map, resolvedMaps]);
 
   const requestCurrentLocation = useCallback(async () => {
     setIsRequesting(true);
@@ -68,7 +72,7 @@ export function useCurrentLocationFocus({
       setIsCentered(
         focusNaverMapOnCoordinates({
           map,
-          maps,
+          maps: resolvedMaps,
           coordinates: nextCoordinates,
         }),
       );
@@ -87,7 +91,7 @@ export function useCurrentLocationFocus({
     } finally {
       setIsRequesting(false);
     }
-  }, [map, maps, positionOptions]);
+  }, [map, resolvedMaps, positionOptions]);
 
   useEffect(() => {
     return watchCurrentLocationPermission((nextPermission) => {
