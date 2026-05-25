@@ -13,6 +13,7 @@ import { languageTag } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
 import { BottomTabBar, type BottomTabKey } from "#/entities/navigation";
+import { NotFoundComponent } from "#/shared/ui/NotFound";
 
 const BOTTOM_TAB_LINKS: Record<BottomTabKey, string> = {
   home: "/",
@@ -59,6 +60,7 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: NotFoundComponent,
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
