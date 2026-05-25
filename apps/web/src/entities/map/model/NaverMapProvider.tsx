@@ -8,6 +8,12 @@ import {
   useState,
 } from "react";
 
+import {
+  DEFAULT_NAVER_MAP_LANGUAGE,
+  normalizeNaverMapLanguage,
+  type NaverMapLanguage,
+} from "./naver-map-language";
+
 export type NaverMapSdkStatus = "idle" | "loading" | "ready" | "error";
 
 export interface NaverMapProviderProps {
@@ -21,13 +27,13 @@ interface NaverMapContextValue {
   status: NaverMapSdkStatus;
   isReady: boolean;
   error: Error | null;
+  language: NaverMapLanguage;
   maps: typeof naver.maps | null;
   reload: () => void;
 }
 
 const NAVER_MAP_SCRIPT_SELECTOR = 'script[data-naver-maps-sdk="true"]';
 const NAVER_MAP_SCRIPT_DATA_KEY = "naverMapsSdk";
-const DEFAULT_LANGUAGE = "ko";
 const DEFAULT_SUBMODULES = ["geocoder"];
 
 const NaverMapContext = createContext<NaverMapContextValue | null>(null);
@@ -105,7 +111,7 @@ const loadNaverMapSdk = async ({
 export function NaverMapProvider({
   children,
   clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID,
-  language = DEFAULT_LANGUAGE,
+  language = DEFAULT_NAVER_MAP_LANGUAGE,
   submodules = DEFAULT_SUBMODULES,
 }: NaverMapProviderProps) {
   const [status, setStatus] = useState<NaverMapSdkStatus>("idle");
@@ -113,6 +119,7 @@ export function NaverMapProvider({
   const [error, setError] = useState<Error | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const naverMapLanguage = normalizeNaverMapLanguage(language);
   const submoduleKey = submodules.join(",");
 
   useEffect(() => {
@@ -123,7 +130,7 @@ export function NaverMapProvider({
 
     loadNaverMapSdk({
       clientId,
-      language,
+      language: naverMapLanguage,
       submodules,
     })
       .then((loadedMaps) => {
@@ -150,7 +157,7 @@ export function NaverMapProvider({
     return () => {
       isMounted = false;
     };
-  }, [clientId, language, submoduleKey, reloadKey]);
+  }, [clientId, naverMapLanguage, submoduleKey, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((key) => key + 1);
@@ -161,10 +168,11 @@ export function NaverMapProvider({
       status,
       isReady: status === "ready",
       error,
+      language: naverMapLanguage,
       maps,
       reload,
     }),
-    [error, maps, reload, status],
+    [error, maps, naverMapLanguage, reload, status],
   );
 
   return (
