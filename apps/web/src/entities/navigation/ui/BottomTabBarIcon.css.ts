@@ -15,7 +15,7 @@ export const tabItem = style({
   outline: "none",
   transition: "all 0.2s ease-in-out",
   selectors: {
-    "&[data-focus-visible]": {
+    "&:focus-visible": {
       borderRadius: vars.radius[4],
       boxShadow: `0 0 0 2px ${vars.color.focus}`,
     },
