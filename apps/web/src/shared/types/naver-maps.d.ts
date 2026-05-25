@@ -1,4 +1,5 @@
 declare namespace naver.maps {
+  // biome-ignore lint/suspicious/noShadowRestrictedNames: naver maps SDK 명세상 Map 이름 유지
   class Map {
     constructor(element: string | HTMLElement, options: any);
     setCenter(latlng: LatLng | LatLngLiteral): void;
@@ -25,10 +26,11 @@ declare namespace naver.maps {
     ): void;
   }
   namespace Service {
-    enum Status {
-      OK,
-      ERROR
-    }
+    const Status: {
+      readonly OK: 200;
+      readonly ERROR: 500;
+    };
+    type Status = (typeof Status)[keyof typeof Status];
     interface ReverseGeocodeResponse {
       v2: {
         results: Array<{
