@@ -1,13 +1,13 @@
-import { m } from "@repo/i18n";
+import { languageTag } from "@repo/i18n";
+import { NaverMapCanvas, NaverMapProvider } from "#/entities/map";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute("/")({ component: IndexPage });
 
-function App() {
+function IndexPage() {
   return (
-    <div>
-      Zimdugo
-      <h1>{m.hello()}</h1>
-    </div>
+    <NaverMapProvider language={languageTag()}>
+      <NaverMapCanvas />
+    </NaverMapProvider>
   );
 }
