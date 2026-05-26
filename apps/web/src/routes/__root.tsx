@@ -107,7 +107,7 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang={lang}>
       <head>
         <title>Zimdugo</title>
-        <style dangerouslySetInnerHTML={{ __html: CRITICAL_LAYOUT_CSS }} />
+        <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
       </head>
       <body>
