@@ -76,7 +76,7 @@ const getNaverMapAuthUrl = ({
 }) => {
   const params = new URLSearchParams({
     ncpKeyId: clientId,
-    url: window.location.href,
+    url: `${window.location.origin}${window.location.pathname}`,
     time: String(Date.now()),
     callback: callbackName,
   });
