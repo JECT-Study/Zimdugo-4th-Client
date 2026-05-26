@@ -53,6 +53,26 @@ const skeletonTabItemFallbackStyle: CSSProperties = {
   gap: 4,
 };
 
+const bottomTabItemFallbackStyle: CSSProperties = {
+  ...skeletonTabItemFallbackStyle,
+  textDecoration: "none",
+  color: "inherit",
+};
+
+const iconWrapperFallbackStyle: CSSProperties = {
+  width: 24,
+  height: 24,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const labelTextFallbackStyle: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 500,
+  textAlign: "center",
+};
+
 const isBottomTabStyleReady = (element: HTMLElement) => {
   const style = window.getComputedStyle(element);
 
@@ -200,9 +220,14 @@ function BottomTabBarIconComponent({
   icon,
 }: BottomTabBarIconProps) {
   return (
-    <Link to={to} className={tabItem}>
-      <div className={iconWrapper}>{icon}</div>
-      <span className={[labelText, isActive ? active : inactive].join(" ")}>
+    <Link to={to} className={tabItem} style={bottomTabItemFallbackStyle}>
+      <div className={iconWrapper} style={iconWrapperFallbackStyle}>
+        {icon}
+      </div>
+      <span
+        className={[labelText, isActive ? active : inactive].join(" ")}
+        style={labelTextFallbackStyle}
+      >
         {label}
       </span>
     </Link>
