@@ -5,6 +5,7 @@ declare namespace naver.maps {
     setCenter(latlng: LatLng | LatLngLiteral): void;
     getCenter(): LatLng;
     panTo(latlng: LatLng | LatLngLiteral): void;
+    getBounds(): LatLngBounds;
   }
   class LatLng {
     constructor(lat: number, lng: number);
@@ -15,15 +16,24 @@ declare namespace naver.maps {
     lat: number;
     lng: number;
   }
+  class LatLngBounds {
+    getNE(): LatLng;
+    getSW(): LatLng;
+  }
   class Marker {
     constructor(options: any);
     setMap(map: Map | null): void;
   }
+  // Event.addListener는 removeListener에 넘길 수 있는 opaque 핸들을 돌려준다.
+  type MapEventListener = unknown;
   namespace Event {
     function addListener(
       instance: any,
       eventName: string,
       handler: (event: any) => void,
+    ): MapEventListener;
+    function removeListener(
+      listener: MapEventListener | MapEventListener[],
     ): void;
   }
   namespace Service {
