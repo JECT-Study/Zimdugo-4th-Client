@@ -13,7 +13,7 @@ export const mapArea = style({
   position: "absolute",
   inset: 0,
   zIndex: 1,
-  backgroundColor: "#f5f5f5",
+  backgroundColor: vars.color.bg.surface,
 });
 
 export const topControlSkeleton = style({
