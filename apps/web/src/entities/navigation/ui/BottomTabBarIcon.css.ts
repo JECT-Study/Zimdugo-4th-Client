@@ -25,12 +25,27 @@ export const tabItem = style({
   },
 });
 
+export const skeletonTabItem = style({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  flex: 1,
+  height: "100%",
+  minWidth: vars.layout.touchTarget,
+  gap: vars.spacing[4],
+});
+
 export const iconWrapper = style({
   width: "24px",
   height: "24px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+});
+
+export const skeletonLabel = style({
+  flexShrink: 0,
 });
 
 export const labelText = style({

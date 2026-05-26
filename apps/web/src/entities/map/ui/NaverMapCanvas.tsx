@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useNaverMapSdk } from "../model/NaverMapProvider";
 import { MapError } from "./MapError";
+import { MapSkeleton } from "./map-skeleton/MapSkeleton";
 import { canvas, root } from "./NaverMapCanvas.css";
 
 const DEFAULT_CENTER = {
@@ -68,6 +69,7 @@ export function NaverMapCanvas() {
   };
 
   const hasError = status === "error" || mapInitError !== null;
+  const isLoading = status === "idle" || status === "loading";
   const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
 
   return (
@@ -78,6 +80,8 @@ export function NaverMapCanvas() {
         role="application"
         aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC778\uD130\uB799\uD2F0\uBE0C \uD654\uBA74"
       />
+
+      {isLoading ? <MapSkeleton /> : null}
 
       {hasError ? (
         <MapError message={errorMessage} onRetry={handleRetry} />

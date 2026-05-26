@@ -22,6 +22,7 @@ const fallbackContainerStyle: CSSProperties & Record<`--${string}`, string> = {
   width: "100%",
   maxWidth: "375px",
   margin: "0 auto",
+  boxSizing: "border-box",
   height: "100svh",
   minHeight: "100svh",
   backgroundColor: "#ffffff",

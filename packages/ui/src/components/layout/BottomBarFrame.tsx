@@ -20,6 +20,7 @@ const fallbackFrameStyle = {
   boxSizing: "border-box",
   background: "#ffffff",
   borderTop: "1px solid #e6e8eb",
+  zIndex: 20,
 } as const;
 
 export function BottomBarFrame({ children, className }: BottomBarFrameProps) {
