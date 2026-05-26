@@ -139,8 +139,6 @@ const loadNaverMapSdk = async ({
     throw new Error("VITE_NAVER_MAP_CLIENT_ID is required.");
   }
 
-  await verifyNaverMapAuth(clientId);
-
   const scriptSrc = getScriptSrc({ clientId, language, submodules });
   const activeScript = document.querySelector<HTMLScriptElement>(
     NAVER_MAP_SCRIPT_SELECTOR,
@@ -149,6 +147,8 @@ const loadNaverMapSdk = async ({
   if (activeScript?.src === scriptSrc && window.naver?.maps) {
     return window.naver.maps;
   }
+
+  await verifyNaverMapAuth(clientId);
 
   removeNaverMapScript();
   delete window.naver;
