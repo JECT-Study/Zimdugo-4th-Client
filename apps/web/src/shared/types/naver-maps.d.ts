@@ -17,6 +17,7 @@ declare namespace naver.maps {
   }
   class Marker {
     constructor(options: any);
+    setMap(map: Map | null): void;
   }
   namespace Event {
     function addListener(
