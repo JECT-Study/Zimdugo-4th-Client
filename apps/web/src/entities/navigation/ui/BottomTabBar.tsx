@@ -107,6 +107,7 @@ function BottomTabBarComponent({
       }
 
       if (checkCount >= STYLE_READY_CHECK_LIMIT) {
+        setIsStyleReady(true);
         return;
       }
 
