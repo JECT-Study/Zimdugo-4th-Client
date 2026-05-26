@@ -74,12 +74,7 @@ export function NaverMapCanvas() {
 
   return (
     <section className={root} aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC601\uC5ED">
-      <div
-        ref={containerRef}
-        className={canvas}
-        role="application"
-        aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC778\uD130\uB799\uD2F0\uBE0C \uD654\uBA74"
-      />
+      <div ref={containerRef} className={canvas} />
 
       {isLoading ? <MapSkeleton /> : null}
 
