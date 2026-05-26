@@ -7,7 +7,7 @@ export const layoutScale = {
   contentBottomPadding: "60px",
   detailBottomPadding: "64px",
   containerWidth: "375px",
-  touchTarget: "44px",
+  touchTarget: "48px",
   sidePadding: "16px",
 } as const;
 

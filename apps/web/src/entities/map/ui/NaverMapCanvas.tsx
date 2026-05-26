@@ -1,60 +1,86 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useNaverMapSdk } from "../model/NaverMapProvider";
-import {
-  canvas,
-  retryButton,
-  root,
-  statusDescription,
-  statusPanel,
-  statusTitle,
-} from "./NaverMapCanvas.css";
+import { MapError } from "./MapError";
+import { MapSkeleton } from "./map-skeleton/MapSkeleton";
+import { canvas, root } from "./NaverMapCanvas.css";
 
 const DEFAULT_CENTER = {
   lat: 37.5665,
   lng: 126.978,
 };
 
+const MAP_ERROR_MESSAGE =
+  "\uB124\uD2B8\uC6CC\uD06C \uC0C1\uD0DC\uB97C \uD655\uC778\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.";
+
+const MAP_AUTH_ERROR_SIGNATURES = [
+  "VITE_NAVER_MAP_CLIENT_ID",
+  "Naver Maps authentication failed",
+  "Naver Maps authentication request timed out",
+  "Naver Maps SDK did not expose window.naver.maps",
+  "Failed to load Naver Maps SDK",
+];
+
+const getMapErrorMessage = (message?: string) => {
+  if (!message) return MAP_ERROR_MESSAGE;
+
+  const isAuthOrSdkError = MAP_AUTH_ERROR_SIGNATURES.some((signature) =>
+    message.includes(signature),
+  );
+
+  return isAuthOrSdkError ? MAP_ERROR_MESSAGE : message;
+};
+
 export function NaverMapCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
   const { status, isReady, maps, error, reload } = useNaverMapSdk();
+  const [mapInitError, setMapInitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isReady || !maps || !containerRef.current) return;
 
-    mapRef.current = new maps.Map(containerRef.current, {
-      center: new maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
-      zoom: 15,
-      zoomControl: true,
-      scaleControl: false,
-      mapDataControl: false,
-    });
+    setMapInitError(null);
+
+    try {
+      mapRef.current = new maps.Map(containerRef.current, {
+        center: new maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
+        zoom: 15,
+        zoomControl: true,
+        scaleControl: false,
+        mapDataControl: false,
+      });
+    } catch (nextError) {
+      setMapInitError(
+        nextError instanceof Error
+          ? nextError.message
+          : "\uC9C0\uB3C4 \uCD08\uAE30\uD654 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.",
+      );
+    }
 
     return () => {
       mapRef.current = null;
     };
   }, [isReady, maps]);
 
+  const handleRetry = () => {
+    setMapInitError(null);
+    reload();
+  };
+
+  const hasError = status === "error" || mapInitError !== null;
+  const isLoading = status === "idle" || status === "loading";
+  const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
+
   return (
-    <div className={root}>
-      <div ref={containerRef} className={canvas} aria-label="Naver map" />
-      {status === "loading" || status === "idle" ? (
-        <div className={statusPanel}>
-          <p className={statusTitle}>지도를 불러오고 있습니다.</p>
-        </div>
+    <section className={root} aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC601\uC5ED">
+      <div ref={containerRef} className={canvas} />
+
+      {isLoading ? <MapSkeleton /> : null}
+
+      {hasError ? (
+        <MapError message={errorMessage} onRetry={handleRetry} />
       ) : null}
-      {status === "error" ? (
-        <div className={statusPanel}>
-          <p className={statusTitle}>지도를 불러오지 못했습니다.</p>
-          <p className={statusDescription}>
-            {error?.message ?? "Naver Maps SDK 로딩 중 오류가 발생했습니다."}
-          </p>
-          <button type="button" className={retryButton} onClick={reload}>
-            다시 시도
-          </button>
-        </div>
-      ) : null}
-    </div>
+    </section>
   );
 }

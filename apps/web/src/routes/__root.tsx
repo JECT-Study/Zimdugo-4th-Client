@@ -22,6 +22,42 @@ const BOTTOM_TAB_LINKS: Record<BottomTabKey, string> = {
   settings: "/settings",
 };
 
+const CRITICAL_LAYOUT_CSS = `
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: #f5f5f5;
+  }
+
+  #app,
+  #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  button,
+  [role="button"] {
+    font: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+`;
+
 const getActiveBottomTab = (pathname: string): BottomTabKey => {
   const normalizedPath =
     pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
@@ -71,6 +107,7 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang={lang}>
       <head>
         <title>Zimdugo</title>
+        <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
       </head>
       <body>

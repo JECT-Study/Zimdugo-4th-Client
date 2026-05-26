@@ -34,6 +34,7 @@ interface NaverMapContextValue {
 
 const NAVER_MAP_SCRIPT_SELECTOR = 'script[data-naver-maps-sdk="true"]';
 const NAVER_MAP_SCRIPT_DATA_KEY = "naverMapsSdk";
+const NAVER_MAP_AUTH_BASE_URL = "https://oapi.map.naver.com/v3/auth";
 const DEFAULT_SUBMODULES = ["geocoder"];
 
 const NaverMapContext = createContext<NaverMapContextValue | null>(null);
@@ -66,6 +67,61 @@ const removeNaverMapScript = () => {
   activeScript?.remove();
 };
 
+const getNaverMapAuthUrl = ({
+  callbackName,
+  clientId,
+}: {
+  callbackName: string;
+  clientId: string;
+}) => {
+  const params = new URLSearchParams({
+    ncpKeyId: clientId,
+    url: `${window.location.protocol}//${window.location.hostname}`,
+    time: String(Date.now()),
+    callback: callbackName,
+  });
+
+  return `${NAVER_MAP_AUTH_BASE_URL}?${params.toString()}`;
+};
+
+const verifyNaverMapAuth = async (clientId: string) => {
+  if (typeof window === "undefined") return;
+
+  await new Promise<void>((resolve, reject) => {
+    const callbackName = `__zimdugo_naver_maps_auth_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2)}`;
+    const script = document.createElement("script");
+    const cleanup = () => {
+      delete (window as Record<string, unknown>)[callbackName];
+      script.remove();
+    };
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Naver Maps authentication request timed out."));
+    }, 5000);
+
+    (window as Record<string, unknown>)[callbackName] = () => {
+      window.clearTimeout(timeoutId);
+      cleanup();
+      resolve();
+    };
+
+    script.async = true;
+    script.src = getNaverMapAuthUrl({ callbackName, clientId });
+    script.onerror = () => {
+      window.clearTimeout(timeoutId);
+      cleanup();
+      reject(
+        new Error(
+          "Naver Maps authentication failed. Check the Client ID and allowed service URL.",
+        ),
+      );
+    };
+    document.head.appendChild(script);
+  });
+};
+
 const loadNaverMapSdk = async ({
   clientId,
   language,
@@ -91,6 +147,8 @@ const loadNaverMapSdk = async ({
   if (activeScript?.src === scriptSrc && window.naver?.maps) {
     return window.naver.maps;
   }
+
+  await verifyNaverMapAuth(clientId);
 
   removeNaverMapScript();
   delete window.naver;
