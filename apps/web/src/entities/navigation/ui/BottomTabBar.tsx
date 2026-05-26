@@ -109,6 +109,7 @@ function BottomTabBarComponent({
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const probeRef = useRef<HTMLDivElement>(null);
   const [isStyleReady, setIsStyleReady] = useState(false);
+  const [isStyleTimedOut, setIsStyleTimedOut] = useState(false);
   const defaultLabels = DEFAULT_LABELS_BY_LANGUAGE[appLanguage];
 
   const getLabel = (key: BottomTabKey) => labels?.[key] ?? defaultLabels[key];
@@ -127,6 +128,7 @@ function BottomTabBarComponent({
       }
 
       if (checkCount >= STYLE_READY_CHECK_LIMIT) {
+        setIsStyleTimedOut(true);
         setIsStyleReady(true);
         return;
       }
@@ -157,6 +159,7 @@ function BottomTabBarComponent({
               isActive={isActive}
               label={getLabel(tabKey)}
               icon={<BottomMenuIcon tab={tabKey} isActive={isActive} />}
+              applyFallbackStyle={isStyleTimedOut}
             />
           );
         })
@@ -211,6 +214,7 @@ interface BottomTabBarIconProps {
   isActive: boolean;
   label: string;
   icon: ReactNode;
+  applyFallbackStyle?: boolean;
 }
 
 function BottomTabBarIconComponent({
@@ -218,15 +222,23 @@ function BottomTabBarIconComponent({
   isActive,
   label,
   icon,
+  applyFallbackStyle = false,
 }: BottomTabBarIconProps) {
   return (
-    <Link to={to} className={tabItem} style={bottomTabItemFallbackStyle}>
-      <div className={iconWrapper} style={iconWrapperFallbackStyle}>
+    <Link
+      to={to}
+      className={tabItem}
+      style={applyFallbackStyle ? bottomTabItemFallbackStyle : undefined}
+    >
+      <div
+        className={iconWrapper}
+        style={applyFallbackStyle ? iconWrapperFallbackStyle : undefined}
+      >
         {icon}
       </div>
       <span
         className={[labelText, isActive ? active : inactive].join(" ")}
-        style={labelTextFallbackStyle}
+        style={applyFallbackStyle ? labelTextFallbackStyle : undefined}
       >
         {label}
       </span>
