@@ -14,7 +14,7 @@ export const Route = createFileRoute("/my")({
         to: "/login",
         search: { 
           returnPath: location.pathname,
-          ...(code ? { code } : {})
+          code: code as string | undefined
         },
       });
     }
