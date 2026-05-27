@@ -78,6 +78,13 @@ const getActiveBottomTab = (pathname: string): BottomTabKey => {
   return "home";
 };
 
+const shouldShowBottomTab = (pathname: string) => {
+    const normalizedPath =
+        pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
+
+    return normalizedPath !== "/login";
+};
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -99,9 +106,18 @@ export const Route = createRootRouteWithContext<{
   notFoundComponent: NotFoundComponent,
 });
 
+import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
+import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
+import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
+
 function RootDocument({ children }: { children: ReactNode }) {
   const lang = languageTag();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const showBottomTab = shouldShowBottomTab(pathname);
+
+    // 로그인 상태 초기화 및 인증 결과 감지
+  useBootstrapAuth();
+  useLoginResultHandler();
 
   return (
     <html lang={lang}>
@@ -114,10 +130,12 @@ function RootDocument({ children }: { children: ReactNode }) {
         <AppContainer>
           <AppShell
             bottomTabBar={
-              <BottomTabBar
-                activeTab={getActiveBottomTab(pathname)}
-                links={BOTTOM_TAB_LINKS}
-              />
+                showBottomTab ? (
+                    <BottomTabBar
+                        activeTab={getActiveBottomTab(pathname)}
+                        links={BOTTOM_TAB_LINKS}
+                    />
+                ) : undefined
             }
           >
             {children}
@@ -126,6 +144,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <TanStackRouterDevtools position="bottom-right" />
         <ReactQueryDevtools buttonPosition="bottom-left" />
         <Scripts />
+        <AuthRequirePopup />
       </body>
     </html>
   );
