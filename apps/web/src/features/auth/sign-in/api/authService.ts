@@ -32,9 +32,10 @@ export const authService = {
         // 2. email 주소 또는 응답 데이터를 기반으로 OAuth 제공자(Provider) 식별
         let provider = authData.provider || authData.oauthProvider || null;
         if (!provider && email) {
-          if (email.includes("gmail.com")) provider = "google";
-          else if (email.includes("naver.com")) provider = "naver";
-          else if (email.includes("kakao.com") || email.includes("daum.net")) provider = "kakao";
+          const lowerEmail = email.toLowerCase();
+          if (lowerEmail.endsWith("@gmail.com")) provider = "google";
+          else if (lowerEmail.endsWith("@naver.com")) provider = "naver";
+          else if (lowerEmail.endsWith("@kakao.com") || lowerEmail.endsWith("@daum.net")) provider = "kakao";
         }
 
         // 3. 클라이언트 상태 관리에 저장할 최종 인증 데이터 반환

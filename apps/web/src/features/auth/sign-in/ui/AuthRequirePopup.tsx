@@ -2,7 +2,7 @@ import { Popup } from "@repo/ui/components/popup";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 
-export const AuthRequirePopup = () => {
+export function AuthRequirePopup() {
   const { isOpen, returnPath, closePopup } = useAuthPopupStore();
   const navigate = useNavigate();
 
@@ -27,4 +27,4 @@ export const AuthRequirePopup = () => {
       }}
     />
   );
-};
+}

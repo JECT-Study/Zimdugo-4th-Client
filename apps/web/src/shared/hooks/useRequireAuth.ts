@@ -1,16 +1,16 @@
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "../store/authStore";
 
 export const useRequireAuth = () => {
   const { isAuthenticated } = useAuthStore();
-  const location = useLocation();
+  const location = useRouterState({ select: (s) => s.location });
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      const returnPath = location.pathname + location.search;
-      navigate(`/login?returnPath=${encodeURIComponent(returnPath)}`, { replace: true });
+      const returnPath = location.pathname + location.searchStr;
+      navigate({ to: "/login", search: { returnPath }, replace: true });
     }
   }, [isAuthenticated, location, navigate]);
 };
