@@ -1,3 +1,4 @@
+import { vars } from "@repo/ui/vars";
 import { describe, expect, it, vi } from "vitest";
 
 import { createLockerMarkerIcon, syncLockerMarkers } from "./map-marker";
@@ -55,7 +56,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('height="24"');
     expect(icon).toContain('viewBox="0 0 24 24"');
     expect(icon).toContain(
-      '<circle cx="12" cy="12" r="12" fill="#FFFFFF"/>',
+      `<circle cx="12" cy="12" r="12" fill="${vars.color.palette.gray[100]}"/>`,
     );
     expect(icon).toContain(
       '<svg x="1" y="1" width="22" height="22" viewBox="0 0 22 22"',

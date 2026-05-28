@@ -14,7 +14,7 @@ export type LockerMarkerStatus = "active" | "inactive";
 
 /**
  * 디자인 시스템의 icon.nav.marker(`IconNavigateMarker` = `IconMarker22`) 형상을
- * `bg.default` 흰색 원 위에 올린 형태로 그린다. 색상은 `@repo/ui` palette 토큰을
+ * `bg.default`(=`vars.color.palette.gray[100]`) 원 위에 올린 형태로 그린다. 색상은 `@repo/ui` palette 토큰을
  * 그대로 인라인한다.
  */
 const LOCKER_MARKER_FILL: Record<LockerMarkerStatus, string> = {
