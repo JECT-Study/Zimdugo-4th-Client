@@ -28,6 +28,10 @@ export const useLoginResultHandler = () => {
           }
         } else if (code === "LOGIN_FAILED") {
           handleFailure(returnPath, navigate);
+        } else {
+          // LOGIN_SUCCESS나 LOGIN_FAILED가 아닌 알 수 없는 code 값이 들어온 경우 (예: 인증 서버 에러 등)
+          // 처리되지 않고 URL에 code가 남아서 무한 대기하는 현상을 방지하기 위해 실패로 간주하고 초기화합니다.
+          handleFailure(returnPath, navigate);
         }
       };
 
@@ -41,6 +45,6 @@ function handleFailure(returnPath: string, navigate: any) {
   useLoginResultStore.getState().open("failure");
   
   // 실패 시에는 사용자가 다시 로그인할 수 있도록 무조건 로그인 폼을 보여주어야 하므로
-  // URL에서 code 파라미터를 제거하고 /login 경로로 렌더링을 갱신합니다.
-  navigate({ to: "/login", search: { returnPath }, replace: true });
+  // URL에서 code 파라미터를 명확히 제거(undefined)하여 무한 루프를 방지하고 /login 경로로 렌더링을 갱신합니다.
+  navigate({ to: "/login", search: { returnPath, code: undefined }, replace: true });
 }

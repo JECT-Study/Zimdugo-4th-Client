@@ -73,7 +73,12 @@ export function SocialLoginStack({
     const baseUrl =
       import.meta.env.VITE_API_BASE_URL ??
       (import.meta.env.DEV ? "http://localhost:8080" : "");
-    const absoluteCallbackUrl = `${window.location.origin}${returnPath.startsWith("/") ? returnPath : `/${returnPath}`}`;
+    
+    // 콜백이 무조건 /login을 거치도록 해야, my, report 등 보호된 라우트의 beforeLoad에서 차단되지 않고
+    // 토큰 갱신 로직(useLoginResultHandler)이 정상적으로 실행될 수 있습니다.
+    const encodedReturnPath = encodeURIComponent(returnPath.startsWith("/") ? returnPath : `/${returnPath}`);
+    const absoluteCallbackUrl = `${window.location.origin}/login?returnPath=${encodedReturnPath}`;
+    
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}?callbackUrl=${encodeURIComponent(absoluteCallbackUrl)}`;
   };
 
