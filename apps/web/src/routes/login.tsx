@@ -11,8 +11,12 @@ export const Route = createFileRoute("/login")({
     // SSR 환경에서는 Zustand persist(로컬스토리지/쿠키) 상태를 서버에서 즉시 읽기 어려우므로 일단 가드를 통과시킵니다.
     // TODO: 추후 2번 방식(HttpOnly 쿠키 직접 확인) 적용 시, 서버(SSR) 컨텍스트에서 헤더를 읽어 isAuthenticated를 판단하도록 개선 필요
     if (typeof window !== "undefined" && useAuthStore.getState().isAuthenticated) {
+      let safePath = (search as Record<string, any>).returnPath as string | undefined;
+      if (!safePath || !safePath.startsWith("/") || safePath.startsWith("//") || safePath.includes("://")) {
+        safePath = "/";
+      }
       throw redirect({
-        to: (search as any).returnPath || "/",
+        to: safePath,
         replace: true,
       });
     }
