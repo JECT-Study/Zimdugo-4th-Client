@@ -34,8 +34,10 @@ const createFakeMaps = () =>
           if (eventName === "click") {
             instance.listeners.push(handler);
           }
+          return { eventName, id: instance.listeners.length + 1 };
         },
       ),
+      removeListener: vi.fn(),
     },
   }) as unknown as typeof naver.maps;
 
@@ -153,6 +155,7 @@ describe("syncLockerMarkers", () => {
     cleanup();
 
     expect(FakeMarker.instances[0]?.setMap).toHaveBeenCalledWith(null);
+    expect(maps.Event.removeListener).not.toHaveBeenCalled();
   });
 
   it("마커 옵션의 icon.content에 SVG 문자열을 전달한다", () => {
@@ -207,6 +210,32 @@ describe("syncLockerMarkers", () => {
     FakeMarker.instances[0]?.listeners[0]?.();
 
     expect(handleSelectLocker).toHaveBeenCalledWith("locker-42");
+  });
+
+  it("onSelectLocker가 있을 때 cleanup에서 click 리스너를 해제한다", () => {
+    FakeMarker.instances = [];
+
+    const map = {} as naver.maps.Map;
+    const maps = createFakeMaps();
+    const handleSelectLocker = vi.fn();
+
+    const cleanup = syncLockerMarkers({
+      map,
+      maps,
+      lockers: [
+        {
+          id: "locker-42",
+          name: "강남역 보관함",
+          lat: 37.4979,
+          lng: 127.0276,
+        },
+      ],
+      onSelectLocker: handleSelectLocker,
+    });
+
+    cleanup();
+
+    expect(maps.Event.removeListener).toHaveBeenCalledTimes(1);
   });
 
   it("onSelectLocker가 없으면 click 리스너를 등록하지 않는다", () => {

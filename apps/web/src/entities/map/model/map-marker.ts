@@ -67,6 +67,8 @@ export const syncLockerMarkers = ({
   lockers,
   onSelectLocker,
 }: SyncLockerMarkersOptions) => {
+  const markerListeners: naver.maps.MapEventListener[] = [];
+
   const naverMarkers = lockers.map((locker) => {
     const naverMarker = new maps.Marker({
       map,
@@ -78,15 +80,19 @@ export const syncLockerMarkers = ({
     });
 
     if (onSelectLocker) {
-      maps.Event.addListener(naverMarker, "click", () => {
+      const listener = maps.Event.addListener(naverMarker, "click", () => {
         onSelectLocker(locker.id);
       });
+      markerListeners.push(listener);
     }
 
     return naverMarker;
   });
 
   return () => {
+    if (markerListeners.length > 0) {
+      maps.Event.removeListener(markerListeners);
+    }
     for (const marker of naverMarkers) {
       marker.setMap(null);
     }
