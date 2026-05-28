@@ -36,14 +36,16 @@ export interface SubscribeMapIdleOptions {
 const readViewport = (map: naver.maps.Map): MapViewport => {
   const center = map.getCenter();
   const bounds = map.getBounds();
-  const ne = bounds.getNE();
-  const sw = bounds.getSW();
+  const ne = bounds?.getNE?.();
+  const sw = bounds?.getSW?.();
+  const centerLat = center.lat();
+  const centerLng = center.lng();
   return {
-    center: { lat: center.lat(), lng: center.lng() },
+    center: { lat: centerLat, lng: centerLng },
     zoom: map.getZoom(),
     bounds: {
-      northEast: { lat: ne.lat(), lng: ne.lng() },
-      southWest: { lat: sw.lat(), lng: sw.lng() },
+      northEast: { lat: ne?.lat?.() ?? centerLat, lng: ne?.lng?.() ?? centerLng },
+      southWest: { lat: sw?.lat?.() ?? centerLat, lng: sw?.lng?.() ?? centerLng },
     },
   };
 };

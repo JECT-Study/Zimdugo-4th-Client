@@ -194,6 +194,29 @@ describe("subscribeMapIdle", () => {
     );
   });
 
+  it("bounds가 비어있으면 center 좌표로 안전하게 fallback 한다", () => {
+    const mapsState: FakeMapsState = { handlers: [], removed: [] };
+    const fake = createFakeMap();
+    const maps = createFakeMaps(mapsState);
+    const onSettle = vi.fn();
+
+    subscribeMapIdle({ map: fake.map, maps, onSettle });
+
+    fake.state.bounds = null as unknown as FakeLatLngBounds;
+    mapsState.handlers[0]?.();
+
+    expect(onSettle).toHaveBeenCalledTimes(1);
+    expect(onSettle).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        center: { lat: 37.4979, lng: 127.0276 },
+        bounds: {
+          northEast: { lat: 37.4979, lng: 127.0276 },
+          southWest: { lat: 37.4979, lng: 127.0276 },
+        },
+      }),
+    );
+  });
+
   it("cleanup 시 listener를 해제하고 이후 핸들러 호출은 onSettle을 일으키지 않는다", () => {
     const mapsState: FakeMapsState = { handlers: [], removed: [] };
     const fake = createFakeMap();
