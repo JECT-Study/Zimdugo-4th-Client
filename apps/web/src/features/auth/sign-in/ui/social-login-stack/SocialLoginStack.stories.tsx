@@ -9,15 +9,9 @@ const meta = {
     layout: "centered",
   },
   args: {
-    naverHref: "#",
-    kakaoHref: "#",
-    googleHref: "#",
     showEnglishLabel: false,
   },
   argTypes: {
-    naverHref: { control: "text" },
-    kakaoHref: { control: "text" },
-    googleHref: { control: "text" },
     showEnglishLabel: { control: "boolean" },
   },
 } satisfies Meta<typeof SocialLoginStack>;

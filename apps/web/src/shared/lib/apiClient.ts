@@ -22,7 +22,9 @@ apiClient.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
+      originalRequest &&
       !originalRequest._retry &&
+      typeof originalRequest.url === "string" &&
       !originalRequest.url.includes("/api/auth/refresh")
     ) {
       originalRequest._retry = true;

@@ -23,6 +23,9 @@ const loginBase = style({
   outline: "none",
   gap: "10px",
   selectors: {
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
     "&[data-focus-visible]": {
       boxShadow: `0 0 0 2px ${vars.color.focus}`,
     },

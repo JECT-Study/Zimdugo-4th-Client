@@ -8,7 +8,7 @@ interface AuthState {
   email: string | null;
   provider: string | null;
   isAuthenticated: boolean;
-  setAuth: (payload: { accessToken: string; userId: number; email: string | null; provider?: string | null }) => void;
+  setAuth: (payload: { accessToken: string; userId: number | null; email: string | null; provider?: string | null }) => void;
   clearAuth: () => void;
   getAccessToken: () => string | null;
 }

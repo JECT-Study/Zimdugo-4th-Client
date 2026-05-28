@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Popup } from "@repo/ui/components/popup";
 import { useLoginResultStore } from "#/shared/store/loginResultStore";
 
-export const LoginResultModal = () => {
+export function LoginResultModal() {
   const { isOpen, type, close } = useLoginResultStore();
 
   useEffect(() => {

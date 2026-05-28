@@ -1,7 +1,7 @@
 import { apiClient } from "#/shared/lib/apiClient";
 import { useAuthStore } from "#/shared/store/authStore";
 
-let refreshPromise: Promise<{ accessToken: string; userId: number; email: string | null; provider: string | null }> | null = null;
+let refreshPromise: Promise<{ accessToken: string; userId: number | null; email: string | null; provider: string | null }> | null = null;
 
 export const authService = {
   refresh: async () => {
@@ -45,7 +45,12 @@ export const authService = {
           provider,
         };
       } catch (error: any) {
-        console.error("토큰 갱신 또는 유저 정보 조회 실패:", error);
+        if (import.meta.env.DEV) {
+          console.error("토큰 갱신 또는 유저 정보 조회 실패:", {
+            message: error?.message,
+            status: error?.response?.status,
+          });
+        }
         // 오류 발생 시 기존 인증 상태 초기화
         useAuthStore.getState().clearAuth();
         throw new Error(error?.response?.data?.message || error?.message || "Unknown auth refresh error");

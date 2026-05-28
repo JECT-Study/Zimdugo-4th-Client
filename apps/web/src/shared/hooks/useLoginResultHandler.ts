@@ -9,7 +9,10 @@ export const useLoginResultHandler = () => {
   // @tanstack/react-router의 useSearch는 strict: false일 때 location.search 전체를 반환합니다.
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const code = search.code as string | undefined;
-  const returnPath = (search.returnPath as string) || "/";
+  let returnPath = (search.returnPath as string) || "/";
+  if (!returnPath.startsWith("/") || returnPath.startsWith("//")) {
+    returnPath = "/";
+  }
 
   useEffect(() => {
     if (code) {
