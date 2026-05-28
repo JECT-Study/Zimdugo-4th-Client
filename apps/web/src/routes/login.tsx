@@ -2,15 +2,15 @@ import { useEffect, type CSSProperties } from "react";
 import { createFileRoute, useSearch, redirect } from "@tanstack/react-router";
 import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
 import { SocialLoginStack } from "#/features/auth/sign-in/ui/social-login-stack/SocialLoginStack";
-import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import { useAuthStore } from "#/shared/store/authStore";
 import { loginStack, logo, page } from "./-login.css.ts";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: ({ search }) => {
     // 이미 로그인된 사용자가 명시적으로 /login에 접근하면 리다이렉트
-    // (단, OAuth 콜백 중에는 아직 isAuthenticated가 갱신되기 전이므로 통과됨)
-    if (useAuthStore.getState().isAuthenticated) {
+    // SSR 환경에서는 Zustand persist(로컬스토리지/쿠키) 상태를 서버에서 즉시 읽기 어려우므로 일단 가드를 통과시킵니다.
+    // TODO: 추후 2번 방식(HttpOnly 쿠키 직접 확인) 적용 시, 서버(SSR) 컨텍스트에서 헤더를 읽어 isAuthenticated를 판단하도록 개선 필요
+    if (typeof window !== "undefined" && useAuthStore.getState().isAuthenticated) {
       throw redirect({
         to: (search as any).returnPath || "/",
         replace: true,
@@ -46,11 +46,20 @@ const wordmarkStyle = {
 } satisfies CSSProperties;
 
 function LoginPage() {
-  const { returnPath } = useSearch({ from: "/login" });
+  const { returnPath, code } = useSearch({ from: "/login" });
+
+  // 소셜 로그인 콜백으로 돌아온 경우, UI를 숨겨 화면 깜빡임 방지 (Hydration 에러 방지를 위해 구조는 유지)
+  const isProcessing = !!code;
 
   return (
-    <div className={page}>
-      <LoginResultModal />
+    <div 
+      className={page}
+      style={{ 
+        opacity: isProcessing ? 0 : 1, 
+        pointerEvents: isProcessing ? "none" : "auto",
+        transition: "opacity 0.2s ease-in-out"
+      }}
+    >
       <div className={logo}>
         <div style={symbolSlotStyle}>
           <div style={symbolFrameStyle}>

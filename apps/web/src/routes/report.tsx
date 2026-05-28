@@ -37,15 +37,19 @@ const lockerTypeOptions = [
 ];
 
 export const Route = createFileRoute("/report")({
-  beforeLoad: ({ location, search }) => {
-    if (!useAuthStore.getState().isAuthenticated) {
-      const code = (search as any).code;
+  beforeLoad: ({ location, preload }) => {
+    // TODO: 추후 2번 방식(HttpOnly 쿠키 직접 확인) 적용 시, 서버(SSR) 컨텍스트에서 헤더를 읽어 isAuthenticated를 판단하도록 개선 필요
+    if (typeof window !== "undefined" && !useAuthStore.getState().isAuthenticated) {
+      if (!preload) {
+        // 실제 네비게이션 시에만 로그인 팝업을 띄우기 위한 전역 상태 갱신
+        import("#/shared/store/authPopupStore").then(m => 
+          m.useAuthPopupStore.getState().openPopup(location.pathname)
+        );
+      }
+      // 로그인 페이지로 강제 납치하지 않고 메인 화면("/")으로 돌려보낸 뒤 팝업을 띄움
       throw redirect({
-        to: "/login",
-        search: { 
-          returnPath: location.pathname,
-          code: code as string | undefined
-        },
+        to: "/",
+        replace: true,
       });
     }
   },
