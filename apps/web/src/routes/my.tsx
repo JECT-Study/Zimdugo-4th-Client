@@ -5,8 +5,8 @@ import { Button } from "@repo/ui/components/button";
 
 export const Route = createFileRoute("/my")({
   beforeLoad: ({ location, preload }) => {
-    if (typeof window !== "undefined" && !useAuthStore.getState().isAuthenticated) {
-      if (!preload) {
+    if (!useAuthStore.getState().isAuthenticated) {
+      if (typeof window !== "undefined" && !preload) {
         import("#/shared/store/authPopupStore").then(m => 
           m.useAuthPopupStore.getState().openPopup(location.pathname)
         );
