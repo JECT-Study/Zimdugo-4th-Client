@@ -20,12 +20,20 @@ const prerenderRoutes = ["/"].flatMap((path) =>
 const config = defineConfig({
   plugins: [
     devtools(),
-    vanillaExtractPlugin(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+    nitro({ 
+      rollupConfig: { external: [/^@sentry\//] },
+      routeRules: process.env.NODE_ENV === 'development' ? {
+        "/api/**": { proxy: "http://localhost:8080/api/**" },
+        "/oauth2/**": { proxy: "http://localhost:8080/oauth2/**" },
+        "/login/oauth2/**": { proxy: "http://localhost:8080/login/oauth2/**" }
+      } : {}
+    }),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     paraglideVitePlugin({
       project: "../../packages/i18n/project.inlang",
       outdir: "../../packages/i18n/src/paraglide",
+        outputStructure: "message-modules",
+
     }),
     tanstackStart({
       prerender: {
@@ -34,6 +42,7 @@ const config = defineConfig({
       },
       pages: prerenderRoutes,
     }),
+    vanillaExtractPlugin(),
     viteReact({
       babel: {
         plugins: ["babel-plugin-react-compiler"],
