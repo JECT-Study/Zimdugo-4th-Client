@@ -109,6 +109,7 @@ export const Route = createRootRouteWithContext<{
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
 import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
+import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 
 function RootDocument({ children }: { children: ReactNode }) {
   const lang = languageTag();
@@ -145,6 +146,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <ReactQueryDevtools buttonPosition="bottom-left" />
         <Scripts />
         <AuthRequirePopup />
+        <LoginResultModal />
       </body>
     </html>
   );
