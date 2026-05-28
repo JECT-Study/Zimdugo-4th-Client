@@ -14,26 +14,16 @@ export const useLoginResultHandler = () => {
   useEffect(() => {
     if (code) {
       const handleLoginResult = async () => {
-        // 주소창에서 지저분한 code 파라미터를 즉시 제거합니다 (현재 라우트 유지).
-        navigate({ 
-          to: ".", 
-          search: (prev: any) => {
-            const { code, ...rest } = prev;
-            return rest;
-          }, 
-          replace: true 
-        });
-
         if (code === "LOGIN_SUCCESS") {
           try {
             // 소셜 인증 후 받아온 쿠키(RT)를 이용해 즉시 AT 발급 시도
             const authData = await authService.refresh();
             useAuthStore.getState().setAuth(authData);
             
-            // 성공 시: 즉시 목적지(없으면 메인 "/")로 이동 후 팝업 표출
-            navigate({ to: returnPath as any, replace: true });
+            // 성공 시: 즉시 목적지(없으면 메인 "/")로 완전히 이동한 후 팝업 표출
+            await navigate({ to: returnPath as any, replace: true });
             useLoginResultStore.getState().open("success");
-          } catch (error) {
+          } catch (error: any) {
             handleFailure(returnPath, navigate);
           }
         } else if (code === "LOGIN_FAILED") {
@@ -50,8 +40,7 @@ export const useLoginResultHandler = () => {
 function handleFailure(returnPath: string, navigate: any) {
   useLoginResultStore.getState().open("failure");
   
-  // 만약 소셜 로그인 콜백이 /login이 아닌 엉뚱한 곳으로 떨어졌다면 /login으로 돌려보냄
-  if (window.location.pathname !== "/login") {
-    navigate({ to: "/login", search: { returnPath }, replace: true });
-  }
+  // 실패 시에는 사용자가 다시 로그인할 수 있도록 무조건 로그인 폼을 보여주어야 하므로
+  // URL에서 code 파라미터를 제거하고 /login 경로로 렌더링을 갱신합니다.
+  navigate({ to: "/login", search: { returnPath }, replace: true });
 }

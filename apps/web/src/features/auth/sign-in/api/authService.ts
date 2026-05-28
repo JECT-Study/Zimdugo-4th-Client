@@ -12,9 +12,8 @@ export const authService = {
     refreshPromise = (async () => {
       try {
         const response = await apiClient.post("/api/auth/refresh");
-        console.log("🔒 Refresh Response Data:", response.data);
         
-        // 1. 토큰 추출 (래핑된 경우 껍데기 벗기기)
+        // 1. 공통 응답 포맷(RestResponse)에서 실제 데이터 객체 추출
         let authData = response.data?.data ? response.data.data : response.data;
         if (typeof authData === "string") {
           authData = { accessToken: authData };
@@ -25,37 +24,31 @@ export const authService = {
           throw new Error("No access token received from refresh endpoint");
         }
 
-        // 2. 발급받은 토큰으로 즉시 /api/v1/me API 호출하여 유저 정보 획득
-        // (무한 루프 방지를 위해 _retry: true 강제 주입)
-        const userResponse = await apiClient.get("/api/v1/me", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          ...({ _retry: true } as any)
-        });
-        
-        const userData = userResponse.data?.data ? userResponse.data.data : userResponse.data;
+        // Token 갱신 응답에 포함된 userId 및 email 정보를 활용하여
+        // 추가적인 사용자 정보 조회 API(/api/v1/me) 호출을 생략함
+        const userId = authData.userId || authData.id || null;
+        const email = authData.email || null;
 
-        // 4. 이메일이나 제공된 속성을 통해 OAuth 제공자 유추
-        let provider = userData.provider || userData.oauthProvider || null;
-        if (!provider && userData.email) {
-          if (userData.email.includes("gmail.com")) provider = "google";
-          else if (userData.email.includes("naver.com")) provider = "naver";
-          else if (userData.email.includes("kakao.com") || userData.email.includes("daum.net")) provider = "kakao";
+        // 2. email 주소 또는 응답 데이터를 기반으로 OAuth 제공자(Provider) 식별
+        let provider = authData.provider || authData.oauthProvider || null;
+        if (!provider && email) {
+          if (email.includes("gmail.com")) provider = "google";
+          else if (email.includes("naver.com")) provider = "naver";
+          else if (email.includes("kakao.com") || email.includes("daum.net")) provider = "kakao";
         }
 
-        // 5. 상태 저장소 저장을 위한 최종 객체 반환
+        // 3. 클라이언트 상태 관리에 저장할 최종 인증 데이터 반환
         return {
           accessToken,
-          userId: userData.userId ?? userData.id,
-          email: userData.email,
+          userId,
+          email,
           provider,
         };
-      } catch (error) {
+      } catch (error: any) {
         console.error("토큰 갱신 또는 유저 정보 조회 실패:", error);
-        // 에러 시 기존 인증 정보 완벽하게 파기
+        // 오류 발생 시 기존 인증 상태 초기화
         useAuthStore.getState().clearAuth();
-        throw error;
+        throw new Error(error?.response?.data?.message || error?.message || "Unknown auth refresh error");
       } finally {
         refreshPromise = null;
       }
