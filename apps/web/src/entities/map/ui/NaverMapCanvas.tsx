@@ -6,8 +6,8 @@ import { MapSkeleton } from "./map-skeleton/MapSkeleton";
 import { canvas, root } from "./NaverMapCanvas.css";
 
 const DEFAULT_CENTER = {
-  lat: 37.5665,
-  lng: 126.978,
+  lat: 37.4979,
+  lng: 127.0276,
 };
 
 const MAP_ERROR_MESSAGE =
