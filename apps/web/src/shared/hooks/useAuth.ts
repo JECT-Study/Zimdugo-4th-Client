@@ -7,11 +7,14 @@ export const useAuth = () => {
   const { isAuthenticated, email, userId } = useAuthStore();
 
   const login = (provider: "naver" | "kakao" | "google", returnPath?: string) => {
-    const callbackUrl = returnPath || "/";
+    const callbackUrl = "/login";
+    const query = returnPath ? `?returnPath=${encodeURIComponent(returnPath)}` : "";
+    const absoluteCallbackUrl = `${window.location.origin}${callbackUrl}${query}`;
+    
     const baseUrl =
       import.meta.env.VITE_API_BASE_URL ??
       (import.meta.env.DEV ? "http://localhost:8080" : "");
-    const absoluteCallbackUrl = `${window.location.origin}${callbackUrl.startsWith("/") ? callbackUrl : `/${callbackUrl}`}`;
+      
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}?callbackUrl=${encodeURIComponent(absoluteCallbackUrl)}`;
   };
 
