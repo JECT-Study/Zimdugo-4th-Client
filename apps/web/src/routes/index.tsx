@@ -1,11 +1,11 @@
 import { languageTag } from "@repo/i18n";
-import { NaverMapCanvas, NaverMapProvider } from "#/entities/map";
-import { createFileRoute } from "@tanstack/react-router";
 import {
   IconCircleboxCrosshair48,
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
-import { useCallback, useRef, useState, useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { NaverMapCanvas, NaverMapProvider } from "#/entities/map";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
@@ -26,9 +26,22 @@ export const Route = createFileRoute("/")({ component: IndexPage });
 function IndexPage() {
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
+  const locationLoadingTimerRef = useRef<number | undefined>(undefined);
+
+  // onFirstLocation을 useCallback으로 메모이즈
+  // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
+  //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
+  //   재등록되는 무한 루프가 발생함
+  // setIsLocationDelayedLoading은 useState dispatch로 stable하므로 deps [] 안전
+  const handleFirstLocation = useCallback(() => {
+    window.clearTimeout(locationLoadingTimerRef.current);
+    locationLoadingTimerRef.current = undefined;
+    // GPS 응답 시점에 오버레이 해제(애니메이션을 늦추면 사용자 경험 저하)
+    setIsLocationDelayedLoading(false);
+  }, []);
 
   const { permission, isTracking, location, startTracking, stopTracking } =
-    useLocationTracking();
+    useLocationTracking({ onFirstLocation: handleFirstLocation });
   const { openPopup: openLocationPopup } = useLocationPermissionPopup();
 
   // 리프레시 버튼 관련 상태
@@ -36,6 +49,10 @@ function IndexPage() {
   const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
   const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
   const [isRefreshVisualLoading, setIsRefreshVisualLoading] = useState(false);
+
+  // 내 위치 버튼 지연 로딩 관련 상태
+  const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
+    useState(false);
 
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
@@ -61,13 +78,18 @@ function IndexPage() {
     }, 1000);
   }, [isRefreshing]);
 
-  const handleMyLocation = () => {
+  const handleMyLocation = useCallback(() => {
     if (permission === "denied") {
       openLocationPopup();
       return;
     }
+    // GPS 응답이 300ms 안에 오면 onFirstLocation이 타이머를 취소
+    // 느리면 오버레이를 띄워 GPS 대기 중임을 표시
+    locationLoadingTimerRef.current = window.setTimeout(() => {
+      setIsLocationDelayedLoading(true);
+    }, 300);
     startTracking();
-  };
+  }, [permission, openLocationPopup, startTracking]);
 
   const handleMapLoad = useCallback((map: naver.maps.Map) => {
     mapInstanceRef.current = map;
@@ -101,7 +123,7 @@ function IndexPage() {
 
   return (
     <main className={pageWrapper}>
-      {isRefreshVisualLoading && (
+      {(isRefreshVisualLoading || isLocationDelayedLoading) && (
         <div className={refreshLoadingOverlay}>
           <div className={refreshLoadingBackdrop} />
           <div className={refreshLoadingSpinner} />
@@ -121,7 +143,9 @@ function IndexPage() {
           type="button"
           className={[
             locationButton,
-            isRefreshing || !mapInstanceRef.current ? refreshButtonDisabled : "",
+            isRefreshing || !mapInstanceRef.current
+              ? refreshButtonDisabled
+              : "",
           ]
             .filter(Boolean)
             .join(" ")}

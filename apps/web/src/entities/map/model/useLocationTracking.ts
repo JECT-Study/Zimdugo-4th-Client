@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type LocationPermissionState = "prompt" | "granted" | "denied";
 
@@ -8,11 +8,22 @@ interface LocationData {
   heading: number | null;
 }
 
-export function useLocationTracking() {
-  const [permission, setPermission] = useState<LocationPermissionState>("prompt");
+interface UseLocationTrackingOptions {
+  onFirstLocation?: () => void;
+}
+
+export function useLocationTracking({
+  onFirstLocation,
+}: UseLocationTrackingOptions = {}) {
+  const [permission, setPermission] =
+    useState<LocationPermissionState>("prompt");
   const [isTracking, setIsTracking] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [location, setLocation] = useState<LocationData | null>(null);
   const [error, setError] = useState<GeolocationPositionError | null>(null);
+  // watchPosition의 첫 번째 콜백인지 판단하는 플래그
+  // startTracking() 호출 시 true로 리셋, 첫 콜백 시 false로 플립
+  const isFirstLocationRef = useRef(true);
 
   // 권한 상태 초기화 및 감지
   useEffect(() => {
@@ -28,6 +39,7 @@ export function useLocationTracking() {
         }
         if (state === "denied") {
           setIsTracking(false);
+          setIsLocating(false);
         }
       }
     };
@@ -59,6 +71,11 @@ export function useLocationTracking() {
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
+        // 첫 번째 콜백에서만 onFirstLocation 호출
+        if (isFirstLocationRef.current) {
+          isFirstLocationRef.current = false;
+          onFirstLocation?.();
+        }
         setLocation({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -66,10 +83,12 @@ export function useLocationTracking() {
         });
         setError(null);
         setPermission("granted");
+        setIsLocating(false);
       },
       (err) => {
         setError(err);
         setIsTracking(false);
+        setIsLocating(false);
         if (err.code === err.PERMISSION_DENIED) {
           setPermission("denied");
         }
@@ -78,25 +97,30 @@ export function useLocationTracking() {
         enableHighAccuracy: true,
         maximumAge: 0,
         timeout: 10000,
-      }
+      },
     );
 
     return () => {
       navigator.geolocation.clearWatch(watchId);
     };
-  }, [isTracking]);
+  }, [isTracking, onFirstLocation]);
 
   const startTracking = useCallback(() => {
+    setLocation(null);
     setIsTracking(true);
+    setIsLocating(true);
+    isFirstLocationRef.current = true;
   }, []);
 
   const stopTracking = useCallback(() => {
     setIsTracking(false);
+    setIsLocating(false);
   }, []);
 
   return {
     permission,
     isTracking,
+    isLocating,
     location,
     error,
     startTracking,
