@@ -334,6 +334,8 @@ All Messages should be written in Korean
 
 ### Commit Message Format
 
+- Do NOT use scope keywords in parentheses (e.g., `feat(ui):`, `fix(payment):`). Use only the type prefix (e.g., `feat:`, `fix:`).
+
 ```
 <type>: <title (imperative, ≤50 chars, no period)>
 
@@ -365,12 +367,11 @@ chore: TanStack Query v5로 업그레이드
 ```
 
 ```
-fix(payment): 가상계좌 결제 완료 후 상태 미갱신 수정
+fix: 가상계좌 결제 완료 후 상태 미갱신 수정
 
 결제 완료 웹훅 수신 후 쿼리 캐시를 invalidate하지 않아
 결제 상태가 즉시 반영되지 않는 문제 수정
 ```
-
 ---
 
 ### Branch Strategy (Git Flow)
