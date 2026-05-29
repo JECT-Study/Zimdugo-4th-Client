@@ -7,6 +7,13 @@ declare namespace naver.maps {
     panTo(latlng: LatLng | LatLngLiteral): void;
     getBounds(): LatLngBounds;
     getZoom(): number;
+    refresh(noEffect?: boolean): void;
+    destroy(): void;
+  }
+  class Point {
+    constructor(x: number, y: number);
+    x: number;
+    y: number;
   }
   class LatLng {
     constructor(lat: number, lng: number);
@@ -24,6 +31,7 @@ declare namespace naver.maps {
   class Marker {
     constructor(options: any);
     setMap(map: Map | null): void;
+    setPosition(latlng: LatLng | LatLngLiteral): void;
   }
   // Event.addListener는 removeListener에 넘길 수 있는 opaque 핸들을 돌려준다.
   type MapEventListener = unknown;

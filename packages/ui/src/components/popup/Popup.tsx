@@ -68,7 +68,7 @@ export function Popup({
       className={overlay}
     >
       <Modal className={className}>
-        <Dialog className={dialog}>
+        <Dialog className={dialog} aria-label={titleText}>
           {({ close }: { close: () => void }) => {
             const handlePrimary = () => {
               primaryAction.onPress();

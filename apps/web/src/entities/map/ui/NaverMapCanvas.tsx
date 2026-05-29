@@ -31,11 +31,18 @@ const getMapErrorMessage = (message?: string) => {
   return isAuthOrSdkError ? MAP_ERROR_MESSAGE : message;
 };
 
-export function NaverMapCanvas() {
+export interface NaverMapCanvasProps {
+  onLoad?: (map: naver.maps.Map | null) => void;
+}
+
+export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
   const { status, isReady, maps, error, reload } = useNaverMapSdk();
   const [mapInitError, setMapInitError] = useState<string | null>(null);
+
+  const onLoadRef = useRef(onLoad);
+  onLoadRef.current = onLoad;
 
   useEffect(() => {
     if (!isReady || !maps || !containerRef.current) return;
@@ -43,13 +50,15 @@ export function NaverMapCanvas() {
     setMapInitError(null);
 
     try {
-      mapRef.current = new maps.Map(containerRef.current, {
+      const map = new maps.Map(containerRef.current, {
         center: new maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
         zoom: 15,
-        zoomControl: true,
-        scaleControl: false,
+        zoomControl: false,
+        scaleControl: true,
         mapDataControl: false,
       });
+      mapRef.current = map;
+      onLoadRef.current?.(map);
     } catch (nextError) {
       setMapInitError(
         nextError instanceof Error
@@ -59,7 +68,11 @@ export function NaverMapCanvas() {
     }
 
     return () => {
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.destroy();
+        mapRef.current = null;
+        onLoadRef.current?.(null);
+      }
     };
   }, [isReady, maps]);
 
@@ -73,7 +86,10 @@ export function NaverMapCanvas() {
   const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
 
   return (
-    <section className={root} aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC601\uC5ED">
+    <section
+      className={root}
+      aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC601\uC5ED"
+    >
       <div ref={containerRef} className={canvas} />
 
       {isLoading ? <MapSkeleton /> : null}
