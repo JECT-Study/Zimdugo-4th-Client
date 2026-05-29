@@ -30,6 +30,17 @@ function IndexPage() {
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
 
+  // 리프레시 버튼 타이머 클린업 레퍼런스
+  const refreshTimersRef = useRef<{
+    spinning?: number;
+    visual?: number;
+    interval?: NodeJS.Timeout;
+  }>({});
+
+  // 내 위치 버튼 지연 로딩 상태 (Hoisting)
+  const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
+    useState(false);
+
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
@@ -65,10 +76,6 @@ function IndexPage() {
   const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
   const [isRefreshVisualLoading, setIsRefreshVisualLoading] = useState(false);
 
-  // 내 위치 버튼 지연 로딩 관련 상태
-  const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
-    useState(false);
-
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
     setIsRefreshing(true);
@@ -76,15 +83,21 @@ function IndexPage() {
     setIsRefreshSpinning(true);
     setIsRefreshVisualLoading(true);
 
-    setTimeout(() => setIsRefreshSpinning(false), 500);
-    setTimeout(() => setIsRefreshVisualLoading(false), 900);
+    refreshTimersRef.current.spinning = window.setTimeout(
+      () => setIsRefreshSpinning(false),
+      500,
+    );
+    refreshTimersRef.current.visual = window.setTimeout(
+      () => setIsRefreshVisualLoading(false),
+      900,
+    );
 
     mapInstanceRef.current.refresh();
 
-    const interval = setInterval(() => {
+    refreshTimersRef.current.interval = setInterval(() => {
       setRefreshCooldownRemaining((prev) => {
         if (prev <= 1) {
-          clearInterval(interval);
+          clearInterval(refreshTimersRef.current.interval);
           setIsRefreshing(false);
           return 0;
         }
@@ -92,6 +105,15 @@ function IndexPage() {
       });
     }, 1000);
   }, [isRefreshing]);
+
+  // 언마운트 시 리프레시 타이머 클린업
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(refreshTimersRef.current.spinning);
+      window.clearTimeout(refreshTimersRef.current.visual);
+      clearInterval(refreshTimersRef.current.interval);
+    };
+  }, []);
 
   const handleMyLocation = useCallback(async () => {
     if (permission === "denied") {
@@ -113,8 +135,10 @@ function IndexPage() {
       setIsCameraCentered(true);
     } else if (isCameraCentered && !isOrientationTracking) {
       // 상태 2: 나침반 모드 ON
-      await requestOrientationPermission();
-      startOrientationTracking();
+      const granted = await requestOrientationPermission();
+      if (granted) {
+        startOrientationTracking();
+      }
     } else {
       // 상태 0으로 복귀: 카메라 중앙 고정 OFF, 나침반 OFF (GPS는 계속 켜둠)
       setIsCameraCentered(false);
