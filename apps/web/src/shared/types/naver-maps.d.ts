@@ -7,6 +7,7 @@ declare namespace naver.maps {
     panTo(latlng: LatLng | LatLngLiteral): void;
     getBounds(): LatLngBounds;
     getZoom(): number;
+    refresh(noEffect?: boolean): void;
   }
   class LatLng {
     constructor(lat: number, lng: number);

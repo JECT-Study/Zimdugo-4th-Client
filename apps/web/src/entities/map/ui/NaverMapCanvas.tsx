@@ -31,7 +31,11 @@ const getMapErrorMessage = (message?: string) => {
   return isAuthOrSdkError ? MAP_ERROR_MESSAGE : message;
 };
 
-export function NaverMapCanvas() {
+export interface NaverMapCanvasProps {
+  onLoad?: (map: naver.maps.Map) => void;
+}
+
+export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
   const { status, isReady, maps, error, reload } = useNaverMapSdk();
@@ -43,13 +47,15 @@ export function NaverMapCanvas() {
     setMapInitError(null);
 
     try {
-      mapRef.current = new maps.Map(containerRef.current, {
+      const map = new maps.Map(containerRef.current, {
         center: new maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
         zoom: 15,
         zoomControl: true,
         scaleControl: false,
         mapDataControl: false,
       });
+      mapRef.current = map;
+      onLoad?.(map);
     } catch (nextError) {
       setMapInitError(
         nextError instanceof Error
@@ -61,7 +67,7 @@ export function NaverMapCanvas() {
     return () => {
       mapRef.current = null;
     };
-  }, [isReady, maps]);
+  }, [isReady, maps, onLoad]);
 
   const handleRetry = () => {
     setMapInitError(null);
