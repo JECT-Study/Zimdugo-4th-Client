@@ -86,11 +86,28 @@ export function MyLocationMarker({
     }
   }, [isOrientationTracking]);
 
+  const previousHeadingRef = useRef(0);
+
   // 3. 디바이스 방향(혹은 GPS 방향) 갱신 시 DOM 엘리먼트 Transform 직접 수정 (리렌더링/플리커링 방지)
   useEffect(() => {
     if (wrapperRef.current) {
-      const heading = deviceHeading ?? location?.heading ?? 0;
-      wrapperRef.current.style.transform = `rotate(${heading}deg)`;
+      const rawHeading = deviceHeading ?? location?.heading ?? 0;
+      const prev = previousHeadingRef.current;
+
+      // 360도 <-> 0도 경계를 지날 때 CSS transition이 역방향으로 도는 현상 방지 (최단 거리 계산)
+      const positiveModulo = ((prev % 360) + 360) % 360;
+      let diff = rawHeading - positiveModulo;
+
+      if (diff > 180) {
+        diff -= 360;
+      } else if (diff < -180) {
+        diff += 360;
+      }
+
+      const newHeading = prev + diff;
+      previousHeadingRef.current = newHeading;
+
+      wrapperRef.current.style.transform = `rotate(${newHeading}deg)`;
     }
   }, [deviceHeading, location?.heading]);
 
