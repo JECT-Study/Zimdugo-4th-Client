@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface DeviceOrientationEventiOS extends DeviceOrientationEvent {
   requestPermission?: () => Promise<"granted" | "denied">;
@@ -14,36 +14,33 @@ export function useDeviceOrientation() {
   const [isTracking, setIsTracking] = useState(false);
   const lastUpdateRef = useRef(0);
 
-  const handleOrientation = useCallback(
-    (event: DeviceOrientationEvent) => {
-      const now = Date.now();
-      if (now - lastUpdateRef.current < 50) return; // 50ms 쓰로틀링 (초당 20번 제한)
-      lastUpdateRef.current = now;
+  const handleOrientation = useCallback((event: DeviceOrientationEvent) => {
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 50) return; // 50ms 쓰로틀링 (초당 20번 제한)
+    lastUpdateRef.current = now;
 
-      const iosEvent = event as DeviceOrientationEventiOS;
+    const iosEvent = event as DeviceOrientationEventiOS;
 
-      // iOS (Safari) - webkitCompassHeading is clockwise (0=North, 90=East)
-      if (typeof iosEvent.webkitCompassHeading === "number") {
-        setHeading(iosEvent.webkitCompassHeading);
-        return;
-      }
+    // iOS (Safari) - webkitCompassHeading is clockwise (0=North, 90=East)
+    if (typeof iosEvent.webkitCompassHeading === "number") {
+      setHeading(iosEvent.webkitCompassHeading);
+      return;
+    }
 
-      // Android (Chrome) - absolute alpha is counter-clockwise (0=North, 90=West)
-      // Convert to clockwise to match CSS rotate
-      if (event.absolute && event.alpha !== null) {
-        setHeading(360 - event.alpha);
-        return;
-      }
+    // Android (Chrome) - absolute alpha is counter-clockwise (0=North, 90=West)
+    // Convert to clockwise to match CSS rotate
+    if (event.absolute && event.alpha !== null) {
+      setHeading(360 - event.alpha);
+      return;
+    }
 
-      // Fallback if absolute is not available but alpha is
-      // This might just be relative to where the phone started, not true North,
-      // but better than nothing if absolute fails.
-      if (event.alpha !== null) {
-        setHeading(360 - event.alpha);
-      }
-    },
-    [lastUpdateRef],
-  );
+    // Fallback if absolute is not available but alpha is
+    // This might just be relative to where the phone started, not true North,
+    // but better than nothing if absolute fails.
+    if (event.alpha !== null) {
+      setHeading(360 - event.alpha);
+    }
+  }, []);
 
   const startTracking = useCallback(() => {
     setIsTracking(true);
