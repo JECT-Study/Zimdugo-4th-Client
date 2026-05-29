@@ -29,6 +29,7 @@ export function useLocationTracking({
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.permissions) return;
 
+    let isCancelled = false;
     let permissionStatus: PermissionStatus | null = null;
 
     const handlePermissionChange = () => {
@@ -47,6 +48,7 @@ export function useLocationTracking({
     navigator.permissions
       .query({ name: "geolocation" })
       .then((status) => {
+        if (isCancelled) return;
         permissionStatus = status;
         const state = status.state;
         if (state === "granted" || state === "denied" || state === "prompt") {
@@ -59,6 +61,7 @@ export function useLocationTracking({
       });
 
     return () => {
+      isCancelled = true;
       if (permissionStatus) {
         permissionStatus.removeEventListener("change", handlePermissionChange);
       }
