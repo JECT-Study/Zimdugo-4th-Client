@@ -75,6 +75,7 @@ export function MyLocationMarker({
         },
       });
     } else {
+      markerRef.current.setMap(map);
       markerRef.current.setPosition(latLng);
     }
   }, [map, location, isOrientationTracking]);
