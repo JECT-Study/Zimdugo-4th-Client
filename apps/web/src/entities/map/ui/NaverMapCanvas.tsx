@@ -50,8 +50,8 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
       const map = new maps.Map(containerRef.current, {
         center: new maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
         zoom: 15,
-        zoomControl: true,
-        scaleControl: false,
+        zoomControl: false,
+        scaleControl: true,
         mapDataControl: false,
       });
       mapRef.current = map;
