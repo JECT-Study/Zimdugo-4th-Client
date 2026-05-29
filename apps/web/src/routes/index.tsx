@@ -1,4 +1,5 @@
 import { languageTag } from "@repo/i18n";
+import { Popup } from "@repo/ui/components/popup";
 import {
   IconCircleboxCrosshair48,
   IconCircleboxRefresh48,
@@ -49,7 +50,11 @@ function IndexPage() {
     startTracking: startOrientationTracking,
     stopTracking: stopOrientationTracking,
   } = useDeviceOrientation();
-  const { openPopup: openLocationPopup } = useLocationPermissionPopup();
+  const {
+    isOpen: isLocationPopupOpen,
+    openPopup: openLocationPopup,
+    closePopup: closeLocationPopup,
+  } = useLocationPermissionPopup();
 
   // 리프레시 버튼 관련 상태
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -204,6 +209,17 @@ function IndexPage() {
           />
         </button>
       </div>
+
+      <Popup
+        isOpen={isLocationPopupOpen}
+        onOpenChange={closeLocationPopup}
+        titleText="위치 권한이 필요합니다"
+        helperText="현재 위치를 확인하려면 브라우저 설정에서 위치 권한을 허용한 뒤, 페이지를 새로고침해주세요."
+        primaryAction={{
+          label: "확인",
+          onPress: closeLocationPopup,
+        }}
+      />
     </main>
   );
 }
