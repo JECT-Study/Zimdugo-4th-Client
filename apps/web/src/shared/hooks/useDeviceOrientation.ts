@@ -12,30 +12,38 @@ export function useDeviceOrientation() {
     null,
   );
   const [isTracking, setIsTracking] = useState(false);
+  const lastUpdateRef = useRef(0);
 
-  const handleOrientation = useCallback((event: DeviceOrientationEvent) => {
-    const iosEvent = event as DeviceOrientationEventiOS;
+  const handleOrientation = useCallback(
+    (event: DeviceOrientationEvent) => {
+      const now = Date.now();
+      if (now - lastUpdateRef.current < 50) return; // 50ms 쓰로틀링 (초당 20번 제한)
+      lastUpdateRef.current = now;
 
-    // iOS (Safari) - webkitCompassHeading is clockwise (0=North, 90=East)
-    if (typeof iosEvent.webkitCompassHeading === "number") {
-      setHeading(iosEvent.webkitCompassHeading);
-      return;
-    }
+      const iosEvent = event as DeviceOrientationEventiOS;
 
-    // Android (Chrome) - absolute alpha is counter-clockwise (0=North, 90=West)
-    // Convert to clockwise to match CSS rotate
-    if (event.absolute && event.alpha !== null) {
-      setHeading(360 - event.alpha);
-      return;
-    }
+      // iOS (Safari) - webkitCompassHeading is clockwise (0=North, 90=East)
+      if (typeof iosEvent.webkitCompassHeading === "number") {
+        setHeading(iosEvent.webkitCompassHeading);
+        return;
+      }
 
-    // Fallback if absolute is not available but alpha is
-    // This might just be relative to where the phone started, not true North,
-    // but better than nothing if absolute fails.
-    if (event.alpha !== null) {
-      setHeading(360 - event.alpha);
-    }
-  }, []);
+      // Android (Chrome) - absolute alpha is counter-clockwise (0=North, 90=West)
+      // Convert to clockwise to match CSS rotate
+      if (event.absolute && event.alpha !== null) {
+        setHeading(360 - event.alpha);
+        return;
+      }
+
+      // Fallback if absolute is not available but alpha is
+      // This might just be relative to where the phone started, not true North,
+      // but better than nothing if absolute fails.
+      if (event.alpha !== null) {
+        setHeading(360 - event.alpha);
+      }
+    },
+    [lastUpdateRef],
+  );
 
   const startTracking = useCallback(() => {
     setIsTracking(true);

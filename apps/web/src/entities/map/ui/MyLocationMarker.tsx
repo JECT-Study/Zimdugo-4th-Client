@@ -36,7 +36,7 @@ export function MyLocationMarker({
       wrapper.style.position = "relative";
       wrapper.style.width = "80px";
       wrapper.style.height = "80px";
-      wrapper.style.transition = "transform 0.1s linear"; // 부드러운 회전 효과
+      // CSS transition을 제거하고 JS requestAnimationFrame으로 부드럽게(LERP) 회전 처리
 
       const cone = document.createElement("div");
       cone.style.position = "absolute";
@@ -86,30 +86,46 @@ export function MyLocationMarker({
     }
   }, [isOrientationTracking]);
 
-  const previousHeadingRef = useRef(0);
+  const targetHeadingRef = useRef(0);
+  const currentHeadingRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
-  // 3. 디바이스 방향(혹은 GPS 방향) 갱신 시 DOM 엘리먼트 Transform 직접 수정 (리렌더링/플리커링 방지)
+  // 3. 디바이스 방향(혹은 GPS 방향) 갱신 시 목표 각도(Target)만 설정 (리렌더링 최소화)
   useEffect(() => {
-    if (wrapperRef.current) {
-      const rawHeading = deviceHeading ?? location?.heading ?? 0;
-      const prev = previousHeadingRef.current;
+    const rawHeading = deviceHeading ?? location?.heading ?? 0;
+    const prevTarget = targetHeadingRef.current;
 
-      // 360도 <-> 0도 경계를 지날 때 CSS transition이 역방향으로 도는 현상 방지 (최단 거리 계산)
-      const positiveModulo = ((prev % 360) + 360) % 360;
-      let diff = rawHeading - positiveModulo;
+    // 360도 <-> 0도 경계를 지날 때 최단 거리 계산
+    const positiveModulo = ((prevTarget % 360) + 360) % 360;
+    let diff = rawHeading - positiveModulo;
 
-      if (diff > 180) {
-        diff -= 360;
-      } else if (diff < -180) {
-        diff += 360;
-      }
+    if (diff > 180) diff -= 360;
+    else if (diff < -180) diff += 360;
 
-      const newHeading = prev + diff;
-      previousHeadingRef.current = newHeading;
-
-      wrapperRef.current.style.transform = `rotate(${newHeading}deg)`;
-    }
+    targetHeadingRef.current = prevTarget + diff;
   }, [deviceHeading, location?.heading]);
+
+  // 4. requestAnimationFrame을 활용한 LERP(Low Pass Filter) 스무딩 애니메이션 (극심한 떨림/노이즈 방지)
+  useEffect(() => {
+    const animate = () => {
+      // 0.1은 보간(스무딩) 속도. 낮을수록 센서 노이즈가 제거되어 훨씬 부드럽지만 반응이 살짝 느려짐.
+      currentHeadingRef.current +=
+        (targetHeadingRef.current - currentHeadingRef.current) * 0.1;
+
+      if (wrapperRef.current) {
+        wrapperRef.current.style.transform = `rotate(${currentHeadingRef.current}deg)`;
+      }
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   // 언마운트 시 마커 제거
   useEffect(() => {
