@@ -4,6 +4,7 @@ export const zIndexScale = {
   map: "0",
   pin: "10",
   ui: "20",
+  overlay: "100",
   bottomSheet: "1000",
   modal: "1100",
   toast: "1200",
