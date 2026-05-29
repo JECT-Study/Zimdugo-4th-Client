@@ -41,6 +41,9 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
   const { status, isReady, maps, error, reload } = useNaverMapSdk();
   const [mapInitError, setMapInitError] = useState<string | null>(null);
 
+  const onLoadRef = useRef(onLoad);
+  onLoadRef.current = onLoad;
+
   useEffect(() => {
     if (!isReady || !maps || !containerRef.current) return;
 
@@ -55,7 +58,7 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
         mapDataControl: false,
       });
       mapRef.current = map;
-      onLoad?.(map);
+      onLoadRef.current?.(map);
     } catch (nextError) {
       setMapInitError(
         nextError instanceof Error
@@ -65,9 +68,12 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
     }
 
     return () => {
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.destroy();
+        mapRef.current = null;
+      }
     };
-  }, [isReady, maps, onLoad]);
+  }, [isReady, maps]);
 
   const handleRetry = () => {
     setMapInitError(null);
