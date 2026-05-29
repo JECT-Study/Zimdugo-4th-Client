@@ -46,6 +46,7 @@ function IndexPage() {
     useLocationTracking({ onFirstLocation: handleFirstLocation });
   const {
     heading: deviceHeading,
+    isTracking: isOrientationTracking,
     requestPermission: requestOrientationPermission,
     startTracking: startOrientationTracking,
     stopTracking: stopOrientationTracking,
@@ -96,22 +97,32 @@ function IndexPage() {
       return;
     }
 
-    // iOS 방향 센서 권한 요청 (클릭 이벤트 내에서 발생해야 함)
-    await requestOrientationPermission();
-
-    // GPS 응답이 300ms 안에 오면 onFirstLocation이 타이머를 취소
-    // 느리면 오버레이를 띄워 GPS 대기 중임을 표시
-    locationLoadingTimerRef.current = window.setTimeout(() => {
-      setIsLocationDelayedLoading(true);
-    }, 300);
-    startTracking();
-    startOrientationTracking();
+    if (!isTracking) {
+      // 1단계: GPS 트래킹 시작 (나침반 끔)
+      locationLoadingTimerRef.current = window.setTimeout(() => {
+        setIsLocationDelayedLoading(true);
+      }, 300);
+      startTracking();
+      stopOrientationTracking();
+    } else if (isTracking && !isOrientationTracking) {
+      // 2단계: 현재 위치 트래킹 중일 때 한 번 더 누르면 나침반 모드 켬
+      await requestOrientationPermission();
+      startOrientationTracking();
+    } else {
+      // 3단계: 나침반 모드까지 켜져 있을 때 한 번 더 누르면 초기화(트래킹 종료)
+      stopTracking();
+      stopOrientationTracking();
+    }
   }, [
     permission,
+    isTracking,
+    isOrientationTracking,
     openLocationPopup,
     requestOrientationPermission,
     startTracking,
+    stopTracking,
     startOrientationTracking,
+    stopOrientationTracking,
   ]);
 
   const handleMapLoad = useCallback((map: naver.maps.Map) => {
