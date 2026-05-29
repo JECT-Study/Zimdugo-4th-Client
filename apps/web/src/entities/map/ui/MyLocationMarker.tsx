@@ -105,10 +105,15 @@ export function MyLocationMarker({
     targetHeadingRef.current = prevTarget + diff;
   }, [deviceHeading, location?.heading]);
 
-  // 4. requestAnimationFrame을 활용한 LERP(Low Pass Filter) 스무딩 애니메이션 (극심한 떨림/노이즈 방지)
+  // 4. requestAnimationFrame을 활용한 LERP(Low Pass Filter) 스무딩 애니메이션
   useEffect(() => {
+    if (!isOrientationTracking) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      return;
+    }
+
     const animate = () => {
-      // 0.1은 보간(스무딩) 속도. 낮을수록 센서 노이즈가 제거되어 훨씬 부드럽지만 반응이 살짝 느려짐.
+      // 0.1은 보간(스무딩) 속도. 낮을수록 센서 노이즈가 제거되어 부드러움.
       currentHeadingRef.current +=
         (targetHeadingRef.current - currentHeadingRef.current) * 0.1;
 
@@ -125,7 +130,7 @@ export function MyLocationMarker({
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, []);
+  }, [isOrientationTracking]);
 
   // 언마운트 시 마커 제거
   useEffect(() => {
