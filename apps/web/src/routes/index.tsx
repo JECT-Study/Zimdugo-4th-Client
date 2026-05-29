@@ -42,7 +42,9 @@ function IndexPage() {
     setIsLocationDelayedLoading(false);
   }, []);
 
-  const { permission, isTracking, location, startTracking, stopTracking } =
+  // 위치 및 방향 트래킹
+  const [isCameraCentered, setIsCameraCentered] = useState(false);
+  const { permission, isTracking, location, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
   const {
     heading: deviceHeading,
@@ -97,30 +99,36 @@ function IndexPage() {
       return;
     }
 
-    if (!isTracking) {
-      // 1단계: GPS 트래킹 시작 (나침반 끔)
-      locationLoadingTimerRef.current = window.setTimeout(() => {
-        setIsLocationDelayedLoading(true);
-      }, 300);
-      startTracking();
-      stopOrientationTracking();
-    } else if (isTracking && !isOrientationTracking) {
-      // 2단계: 현재 위치 트래킹 중일 때 한 번 더 누르면 나침반 모드 켬
+    if (!isCameraCentered) {
+      // 상태 1: 카메라 중앙 고정 ON (만약 GPS가 안 켜져있다면 켜기)
+      if (!isTracking) {
+        locationLoadingTimerRef.current = window.setTimeout(() => {
+          setIsLocationDelayedLoading(true);
+        }, 300);
+        startTracking();
+      } else if (location && mapInstanceRef.current) {
+        const latLng = new window.naver.maps.LatLng(location.lat, location.lng);
+        mapInstanceRef.current.panTo(latLng);
+      }
+      setIsCameraCentered(true);
+    } else if (isCameraCentered && !isOrientationTracking) {
+      // 상태 2: 나침반 모드 ON
       await requestOrientationPermission();
       startOrientationTracking();
     } else {
-      // 3단계: 나침반 모드까지 켜져 있을 때 한 번 더 누르면 초기화(트래킹 종료)
-      stopTracking();
+      // 상태 0으로 복귀: 카메라 중앙 고정 OFF, 나침반 OFF (GPS는 계속 켜둠)
+      setIsCameraCentered(false);
       stopOrientationTracking();
     }
   }, [
     permission,
+    isCameraCentered,
     isTracking,
+    location,
     isOrientationTracking,
     openLocationPopup,
     requestOrientationPermission,
     startTracking,
-    stopTracking,
     startOrientationTracking,
     stopOrientationTracking,
   ]);
@@ -130,15 +138,15 @@ function IndexPage() {
     setMapInstance(map);
   }, []);
 
-  // 트래킹 중일 때 위치가 갱신되면 지도 중심 이동
+  // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
   useEffect(() => {
-    if (isTracking && location && mapInstance) {
+    if (isCameraCentered && location && mapInstance) {
       const latLng = new window.naver.maps.LatLng(location.lat, location.lng);
       mapInstance.panTo(latLng);
     }
-  }, [isTracking, location, mapInstance]);
+  }, [isCameraCentered, location, mapInstance]);
 
-  // 지도 드래그 시 트래킹 모드 해제
+  // 지도 드래그 시 카메라 고정 해제 및 나침반 해제 (GPS는 유지)
   useEffect(() => {
     if (!mapInstance) return;
 
@@ -146,7 +154,7 @@ function IndexPage() {
       mapInstance,
       "dragstart",
       () => {
-        stopTracking();
+        setIsCameraCentered(false);
         stopOrientationTracking();
       },
     );
@@ -154,7 +162,7 @@ function IndexPage() {
     return () => {
       window.naver.maps.Event.removeListener(listener);
     };
-  }, [mapInstance, stopTracking, stopOrientationTracking]);
+  }, [mapInstance, stopOrientationTracking]);
 
   return (
     <main className={pageWrapper}>
@@ -171,6 +179,7 @@ function IndexPage() {
           map={mapInstance}
           location={location}
           deviceHeading={deviceHeading}
+          isOrientationTracking={isOrientationTracking}
         />
       </NaverMapProvider>
       <div className={locationControlStack}>
@@ -207,13 +216,13 @@ function IndexPage() {
           type="button"
           className={locationButton}
           onClick={handleMyLocation}
-          aria-label="내 위치 찾기"
+          aria-label="내 위치로 이동"
         >
           <IconCircleboxCrosshair48
             state={
               permission === "denied"
                 ? "denied"
-                : isTracking
+                : isCameraCentered
                   ? "active"
                   : "default"
             }

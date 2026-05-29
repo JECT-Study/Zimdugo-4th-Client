@@ -65,6 +65,13 @@ export function useLocationTracking({
     };
   }, []);
 
+  // 권한이 이미 허용되어 있다면 자동으로 백그라운드 추적 시작
+  useEffect(() => {
+    if (permission === "granted") {
+      setIsTracking(true);
+    }
+  }, [permission]);
+
   // 실시간 위치 추적
   useEffect(() => {
     if (!isTracking || !navigator.geolocation) return;
@@ -106,7 +113,6 @@ export function useLocationTracking({
   }, [isTracking, onFirstLocation]);
 
   const startTracking = useCallback(() => {
-    setLocation(null);
     setIsTracking(true);
     setIsLocating(true);
     isFirstLocationRef.current = true;
