@@ -34,7 +34,7 @@ function IndexPage() {
   const refreshTimersRef = useRef<{
     spinning?: number;
     visual?: number;
-    interval?: NodeJS.Timeout;
+    interval?: number;
   }>({});
 
   // 내 위치 버튼 지연 로딩 상태 (Hoisting)
@@ -103,10 +103,10 @@ function IndexPage() {
 
     mapInstanceRef.current.refresh();
 
-    refreshTimersRef.current.interval = setInterval(() => {
+    refreshTimersRef.current.interval = window.setInterval(() => {
       setRefreshCooldownRemaining((prev) => {
         if (prev <= 1) {
-          clearInterval(refreshTimersRef.current.interval);
+          window.clearInterval(refreshTimersRef.current.interval);
           setIsRefreshing(false);
           return 0;
         }
@@ -120,7 +120,7 @@ function IndexPage() {
     return () => {
       window.clearTimeout(refreshTimersRef.current.spinning);
       window.clearTimeout(refreshTimersRef.current.visual);
-      clearInterval(refreshTimersRef.current.interval);
+      window.clearInterval(refreshTimersRef.current.interval);
       window.clearTimeout(locationLoadingTimerRef.current);
     };
   }, []);
