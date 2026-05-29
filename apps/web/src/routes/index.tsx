@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NaverMapCanvas, NaverMapProvider } from "#/entities/map";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
+import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import {
   locationButton,
@@ -42,6 +43,12 @@ function IndexPage() {
 
   const { permission, isTracking, location, startTracking, stopTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
+  const {
+    heading: deviceHeading,
+    requestPermission: requestOrientationPermission,
+    startTracking: startOrientationTracking,
+    stopTracking: stopOrientationTracking,
+  } = useDeviceOrientation();
   const { openPopup: openLocationPopup } = useLocationPermissionPopup();
 
   // 리프레시 버튼 관련 상태
@@ -78,18 +85,29 @@ function IndexPage() {
     }, 1000);
   }, [isRefreshing]);
 
-  const handleMyLocation = useCallback(() => {
+  const handleMyLocation = useCallback(async () => {
     if (permission === "denied") {
       openLocationPopup();
       return;
     }
+
+    // iOS 방향 센서 권한 요청 (클릭 이벤트 내에서 발생해야 함)
+    await requestOrientationPermission();
+
     // GPS 응답이 300ms 안에 오면 onFirstLocation이 타이머를 취소
     // 느리면 오버레이를 띄워 GPS 대기 중임을 표시
     locationLoadingTimerRef.current = window.setTimeout(() => {
       setIsLocationDelayedLoading(true);
     }, 300);
     startTracking();
-  }, [permission, openLocationPopup, startTracking]);
+    startOrientationTracking();
+  }, [
+    permission,
+    openLocationPopup,
+    requestOrientationPermission,
+    startTracking,
+    startOrientationTracking,
+  ]);
 
   const handleMapLoad = useCallback((map: naver.maps.Map) => {
     mapInstanceRef.current = map;
@@ -113,13 +131,14 @@ function IndexPage() {
       "dragstart",
       () => {
         stopTracking();
+        stopOrientationTracking();
       },
     );
 
     return () => {
       window.naver.maps.Event.removeListener(listener);
     };
-  }, [mapInstance, stopTracking]);
+  }, [mapInstance, stopTracking, stopOrientationTracking]);
 
   return (
     <main className={pageWrapper}>
@@ -135,7 +154,7 @@ function IndexPage() {
         <MyLocationMarker
           map={mapInstance}
           location={location}
-          isTracking={isTracking}
+          deviceHeading={deviceHeading}
         />
       </NaverMapProvider>
       <div className={locationControlStack}>

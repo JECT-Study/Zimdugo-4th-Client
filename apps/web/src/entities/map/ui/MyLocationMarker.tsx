@@ -1,21 +1,32 @@
-import { useEffect, useRef } from "react";
 import { vars } from "@repo/ui/vars";
+import { useEffect, useRef } from "react";
 
 interface MyLocationMarkerProps {
   map: naver.maps.Map | null;
   location: { lat: number; lng: number; heading: number | null } | null;
-  isTracking: boolean;
+  deviceHeading?: number | null;
 }
 
-export function MyLocationMarker({ map, location, isTracking }: MyLocationMarkerProps) {
+export function MyLocationMarker({
+  map,
+  location,
+  deviceHeading,
+}: MyLocationMarkerProps) {
   const markerRef = useRef<naver.maps.Marker | null>(null);
 
   useEffect(() => {
-    if (!map || !location || typeof window === "undefined" || !window.naver?.maps) return;
+    if (
+      !map ||
+      !location ||
+      typeof window === "undefined" ||
+      !window.naver?.maps
+    )
+      return;
 
     const latLng = new window.naver.maps.LatLng(location.lat, location.lng);
-    const heading = location.heading || 0;
-    
+    // 방향 센서(deviceHeading)가 있으면 최우선 적용, 없으면 GPS 이동 기반(heading) 사용
+    const heading = deviceHeading ?? location.heading ?? 0;
+
     // 임시 내 위치 아이콘 (방향 표시 포함)
     // isTracking 모드일 때만 파란색, 아니면 회색 등으로 변경할 수도 있지만 일단은 파란색 유지
     const iconHtml = `
@@ -59,7 +70,7 @@ export function MyLocationMarker({ map, location, isTracking }: MyLocationMarker
         anchor: new window.naver.maps.Point(16, 16),
       });
     }
-  }, [map, location, isTracking]);
+  }, [map, location, deviceHeading]);
 
   // 언마운트 시 마커 제거
   useEffect(() => {
