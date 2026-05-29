@@ -70,6 +70,15 @@ function IndexPage() {
     closePopup: closeLocationPopup,
   } = useLocationPermissionPopup();
 
+  // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
+  useEffect(() => {
+    if (permission === "denied") {
+      window.clearTimeout(locationLoadingTimerRef.current);
+      locationLoadingTimerRef.current = undefined;
+      setIsLocationDelayedLoading(false);
+    }
+  }, [permission]);
+
   // 리프레시 버튼 관련 상태
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
@@ -112,6 +121,7 @@ function IndexPage() {
       window.clearTimeout(refreshTimersRef.current.spinning);
       window.clearTimeout(refreshTimersRef.current.visual);
       clearInterval(refreshTimersRef.current.interval);
+      window.clearTimeout(locationLoadingTimerRef.current);
     };
   }, []);
 
@@ -124,6 +134,7 @@ function IndexPage() {
     if (!isCameraCentered) {
       // 상태 1: 카메라 중앙 고정 ON (만약 GPS가 안 켜져있다면 켜기)
       if (!isTracking) {
+        window.clearTimeout(locationLoadingTimerRef.current);
         locationLoadingTimerRef.current = window.setTimeout(() => {
           setIsLocationDelayedLoading(true);
         }, 300);
@@ -219,6 +230,7 @@ function IndexPage() {
             .join(" ")}
           onClick={handleRefreshMap}
           aria-label="현 지도에서 검색"
+          disabled={isRefreshing || !mapInstanceRef.current}
         >
           <IconCircleboxRefresh48
             state={
@@ -256,7 +268,9 @@ function IndexPage() {
 
       <Popup
         isOpen={isLocationPopupOpen}
-        onOpenChange={closeLocationPopup}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) closeLocationPopup();
+        }}
         titleText="위치 권한이 필요합니다"
         helperText="현재 위치를 확인하려면 브라우저 설정에서 위치 권한을 허용한 뒤, 페이지를 새로고침해주세요."
         primaryAction={{
