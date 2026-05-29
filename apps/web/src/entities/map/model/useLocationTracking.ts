@@ -99,7 +99,7 @@ export function useLocationTracking({
         setError(err);
         setIsTracking(false);
         setIsLocating(false);
-        if (err.code === err.PERMISSION_DENIED) {
+        if (err.code === 1) {
           setPermission("denied");
         }
       },

@@ -32,7 +32,7 @@ const getMapErrorMessage = (message?: string) => {
 };
 
 export interface NaverMapCanvasProps {
-  onLoad?: (map: naver.maps.Map) => void;
+  onLoad?: (map: naver.maps.Map | null) => void;
 }
 
 export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
@@ -71,6 +71,7 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
       if (mapRef.current) {
         mapRef.current.destroy();
         mapRef.current = null;
+        onLoadRef.current?.(null);
       }
     };
   }, [isReady, maps]);
@@ -85,7 +86,10 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
   const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
 
   return (
-    <section className={root} aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC601\uC5ED">
+    <section
+      className={root}
+      aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC601\uC5ED"
+    >
       <div ref={containerRef} className={canvas} />
 
       {isLoading ? <MapSkeleton /> : null}

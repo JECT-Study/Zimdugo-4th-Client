@@ -168,7 +168,7 @@ function IndexPage() {
     stopOrientationTracking,
   ]);
 
-  const handleMapLoad = useCallback((map: naver.maps.Map) => {
+  const handleMapLoad = useCallback((map: naver.maps.Map | null) => {
     mapInstanceRef.current = map;
     setMapInstance(map);
   }, []);
