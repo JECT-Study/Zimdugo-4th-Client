@@ -16,6 +16,10 @@ export function MyLocationMarker({
 }: MyLocationMarkerProps) {
   const markerRef = useRef<naver.maps.Marker | null>(null);
 
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const coneRef = useRef<HTMLDivElement | null>(null);
+
+  // 1. 마커 초기화 및 좌표 업데이트
   useEffect(() => {
     if (
       !map ||
@@ -26,71 +30,69 @@ export function MyLocationMarker({
       return;
 
     const latLng = new window.naver.maps.LatLng(location.lat, location.lng);
-    // 방향 센서(deviceHeading)가 있으면 최우선 적용, 없으면 GPS 이동 기반(heading) 사용
-    const heading = deviceHeading ?? location.heading ?? 0;
-
-    // 캔버스 크기: 80x80, 중심 40,40
-    // 중앙 파란 점 크기: 20x20
-    const dotHtml = `
-      <div style="
-        position: absolute;
-        top: 30px;
-        left: 30px;
-        width: 20px;
-        height: 20px;
-        background-color: ${vars.color.palette.blue[500]};
-        border-radius: 50%;
-        border: 3px solid ${vars.color.palette.white};
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      "></div>
-    `;
-
-    // 꼬깔(시야각): 위쪽으로 넓어지는 반투명 파란색 부채꼴 (CSS border 트릭)
-    const coneHtml = isOrientationTracking
-      ? `
-      <div style="
-        position: absolute;
-        top: 0;
-        left: 20px;
-        width: 0;
-        height: 0;
-        border-left: 20px solid transparent;
-        border-right: 20px solid transparent;
-        border-top: 40px solid rgba(0, 102, 255, 0.25);
-      "></div>
-      `
-      : "";
-
-    const iconHtml = `
-      <div style="
-        position: relative;
-        width: 80px; 
-        height: 80px; 
-        transform: rotate(${heading}deg);
-        transition: transform 0.2s ease-out;
-      ">
-        ${coneHtml}
-        ${dotHtml}
-      </div>
-    `;
 
     if (!markerRef.current) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+      wrapper.style.width = "80px";
+      wrapper.style.height = "80px";
+      wrapper.style.transition = "transform 0.1s linear"; // 부드러운 회전 효과
+
+      const cone = document.createElement("div");
+      cone.style.position = "absolute";
+      cone.style.top = "0";
+      cone.style.left = "20px";
+      cone.style.width = "0";
+      cone.style.height = "0";
+      cone.style.borderLeft = "20px solid transparent";
+      cone.style.borderRight = "20px solid transparent";
+      cone.style.borderTop = "40px solid rgba(0, 102, 255, 0.25)";
+      cone.style.display = isOrientationTracking ? "block" : "none";
+
+      const dot = document.createElement("div");
+      dot.style.position = "absolute";
+      dot.style.top = "30px";
+      dot.style.left = "30px";
+      dot.style.width = "20px";
+      dot.style.height = "20px";
+      dot.style.backgroundColor = vars.color.palette.blue[500];
+      dot.style.borderRadius = "50%";
+      dot.style.border = `3px solid ${vars.color.palette.white}`;
+      dot.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+
+      wrapper.appendChild(cone);
+      wrapper.appendChild(dot);
+
+      wrapperRef.current = wrapper;
+      coneRef.current = cone;
+
       markerRef.current = new window.naver.maps.Marker({
         map,
         position: latLng,
         icon: {
-          content: iconHtml,
+          content: wrapper,
           anchor: new window.naver.maps.Point(40, 40),
         },
       });
     } else {
       markerRef.current.setPosition(latLng);
-      markerRef.current.setIcon({
-        content: iconHtml,
-        anchor: new window.naver.maps.Point(40, 40),
-      });
     }
-  }, [map, location, deviceHeading, isOrientationTracking]);
+  }, [map, location, isOrientationTracking]);
+
+  // 2. 나침반 모드 ON/OFF 시 꼬깔(시야각) 렌더링 토글
+  useEffect(() => {
+    if (coneRef.current) {
+      coneRef.current.style.display = isOrientationTracking ? "block" : "none";
+    }
+  }, [isOrientationTracking]);
+
+  // 3. 디바이스 방향(혹은 GPS 방향) 갱신 시 DOM 엘리먼트 Transform 직접 수정 (리렌더링/플리커링 방지)
+  useEffect(() => {
+    if (wrapperRef.current) {
+      const heading = deviceHeading ?? location?.heading ?? 0;
+      wrapperRef.current.style.transform = `rotate(${heading}deg)`;
+    }
+  }, [deviceHeading, location?.heading]);
 
   // 언마운트 시 마커 제거
   useEffect(() => {
