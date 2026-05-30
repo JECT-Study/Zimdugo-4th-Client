@@ -116,6 +116,12 @@ export function useLocationTracking({
   }, [isTracking, onFirstLocation]);
 
   const startTracking = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setIsLocating(false);
+      setIsTracking(false);
+      setPermission("denied");
+      return;
+    }
     setIsTracking(true);
     setIsLocating(true);
     isFirstLocationRef.current = true;
