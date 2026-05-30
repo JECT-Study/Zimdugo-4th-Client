@@ -8,7 +8,13 @@ declare namespace naver.maps {
     getBounds(): LatLngBounds;
     getZoom(): number;
     refresh(noEffect?: boolean): void;
+    setSize(size: Size): void;
     destroy(): void;
+  }
+  class Size {
+    constructor(width: number, height: number);
+    width: number;
+    height: number;
   }
   class Point {
     constructor(x: number, y: number);
