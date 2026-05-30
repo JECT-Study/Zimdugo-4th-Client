@@ -136,4 +136,8 @@ export const controlButton = style({
   ":active": {
     backgroundColor: vars.color.bg.surface,
   },
+  ":focus-visible": {
+    outline: `2px solid ${vars.color.brand.primary}`,
+    outlineOffset: "2px",
+  },
 });

@@ -49,6 +49,8 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
 
     setMapInitError(null);
 
+    let resizeObserver: ResizeObserver | null = null;
+
     try {
       const map = new maps.Map(containerRef.current, {
         center: new maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
@@ -59,6 +61,16 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
       });
       mapRef.current = map;
       onLoadRef.current?.(map);
+
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (mapRef.current) {
+            const { width, height } = entry.contentRect;
+            mapRef.current.setSize(new maps.Size(width, height));
+          }
+        }
+      });
+      resizeObserver.observe(containerRef.current);
     } catch (nextError) {
       setMapInitError(
         nextError instanceof Error
@@ -68,6 +80,9 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
     }
 
     return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (mapRef.current) {
         mapRef.current.destroy();
         mapRef.current = null;

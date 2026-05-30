@@ -47,7 +47,7 @@ export function MyLocationMarker({
       cone.style.borderLeft = "20px solid transparent";
       cone.style.borderRight = "20px solid transparent";
       cone.style.borderTop = "40px solid rgba(0, 102, 255, 0.25)";
-      cone.style.display = isOrientationTracking ? "block" : "none";
+      cone.style.display = "none";
 
       const dot = document.createElement("div");
       dot.style.position = "absolute";
@@ -78,7 +78,7 @@ export function MyLocationMarker({
       markerRef.current.setMap(map);
       markerRef.current.setPosition(latLng);
     }
-  }, [map, location, isOrientationTracking]);
+  }, [map, location]);
 
   // 2. 나침반 모드 ON/OFF 시 꼬깔(시야각) 렌더링 토글
   useEffect(() => {

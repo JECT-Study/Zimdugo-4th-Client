@@ -222,7 +222,7 @@ function IndexPage() {
           type="button"
           className={[
             locationButton,
-            isRefreshing || !mapInstanceRef.current
+            isRefreshing || !mapInstance
               ? refreshButtonDisabled
               : "",
           ]
@@ -230,11 +230,11 @@ function IndexPage() {
             .join(" ")}
           onClick={handleRefreshMap}
           aria-label="현 지도에서 검색"
-          disabled={isRefreshing || !mapInstanceRef.current}
+          disabled={isRefreshing || !mapInstance}
         >
           <IconCircleboxRefresh48
             state={
-              isRefreshing || !mapInstanceRef.current
+              isRefreshing || !mapInstance
                 ? "refresh"
                 : "refreshActive"
             }
