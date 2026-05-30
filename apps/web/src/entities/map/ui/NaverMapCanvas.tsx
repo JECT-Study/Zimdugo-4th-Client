@@ -59,6 +59,24 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
       });
       mapRef.current = map;
       onLoadRef.current?.(map);
+
+      // 리사이즈 옵저버를 통해 컨테이너 크기 변경 감지 및 지도 사이즈 갱신
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (mapRef.current) {
+            const { width, height } = entry.contentRect;
+            mapRef.current.setSize(new maps.Size(width, height));
+          }
+        }
+      });
+      resizeObserver.observe(containerRef.current);
+      
+      // cleanup 함수에 전달하기 위해 map 객체 프로퍼티로 잠시 보관 (꼼수) 또는 상위 클로저 변수 사용 불가하므로 effect 반환 함수에서 처리
+      // 단, effect 클로저 내에서 변수를 할당하고 cleanup에서 사용할 수 있습니다.
+      // 여기서는 useEffect 반환 스코프에 resizeObserver를 전달할 수 있도록 ref를 사용하거나 직접 해제합니다.
+      // 가장 간단한 방법은 이 effect 스코프 내 변수를 활용하는 것입니다.
+      (map as any).__resizeObserver = resizeObserver;
+
     } catch (nextError) {
       setMapInitError(
         nextError instanceof Error
@@ -69,6 +87,9 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
 
     return () => {
       if (mapRef.current) {
+        if ((mapRef.current as any).__resizeObserver) {
+          (mapRef.current as any).__resizeObserver.disconnect();
+        }
         mapRef.current.destroy();
         mapRef.current = null;
         onLoadRef.current?.(null);
