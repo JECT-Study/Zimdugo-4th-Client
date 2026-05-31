@@ -220,10 +220,18 @@ interface BottomTabBarLinkProps {
 }
 
 function BottomTabBarLinkComponent(props: BottomTabBarLinkProps) {
-  if (props.activeOverride !== undefined) {
-    return <BottomTabBarLinkControlled {...props} />;
+  const { activeOverride, ...rest } = props;
+
+  if (activeOverride !== undefined) {
+    return (
+      <BottomTabBarLinkControlled
+        {...rest}
+        activeOverride={activeOverride}
+      />
+    );
   }
-  return <BottomTabBarLinkRouter {...props} />;
+
+  return <BottomTabBarLinkRouter {...rest} />;
 }
 
 interface BottomTabBarLinkContentProps extends BottomTabBarLinkProps {
