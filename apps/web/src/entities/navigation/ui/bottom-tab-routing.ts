@@ -18,7 +18,7 @@ const stripLocale = (pathname: string) =>
 /**
  * 현재 경로에 해당하는 활성 탭을 계산한다. (로케일 프리픽스 방어적 제거)
  */
-export function getActiveBottomTab(pathname: string): BottomTabKey {
+export const getActiveBottomTab = (pathname: string): BottomTabKey => {
   const normalizedPath = stripLocale(pathname);
 
   if (normalizedPath === "/report" || normalizedPath.startsWith("/report/")) {
@@ -35,11 +35,10 @@ export function getActiveBottomTab(pathname: string): BottomTabKey {
   }
 
   return "home";
-}
+};
 
 /**
  * 하단 탭바를 노출할지 여부. (로그인 화면에서는 숨김)
  */
-export function shouldShowBottomTab(pathname: string): boolean {
-  return stripLocale(pathname) !== "/login";
-}
+export const shouldShowBottomTab = (pathname: string): boolean =>
+  stripLocale(pathname) !== "/login";
