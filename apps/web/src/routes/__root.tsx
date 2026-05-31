@@ -82,15 +82,14 @@ import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 
 function RootDocument({ children }: { children: ReactNode }) {
+  useBootstrapAuth();
+  useLoginResultHandler();
+
   // 경로(로케일 프리픽스 포함 예정)를 구독해 네비게이션마다 RootDocument를 갱신한다.
   // → 추후 주소 기반 로케일/i18n 적용 시 <html lang>과 languageTag()가 항상 최신으로 유지됨.
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const lang = languageTag();
   const showBottomTab = shouldShowBottomTab(pathname);
-
-    // 로그인 상태 초기화 및 인증 결과 감지
-  useBootstrapAuth();
-  useLoginResultHandler();
 
   return (
     <html lang={lang}>
