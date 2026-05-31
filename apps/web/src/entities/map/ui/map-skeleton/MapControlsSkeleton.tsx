@@ -1,21 +1,8 @@
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import type { CSSProperties } from "react";
+import { mapControlStackInlineFallbackStyle } from "#/entities/map/ui/map-control-stack-fallback";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import { controlButton, controlStack } from "./MapControlsSkeleton.css";
-
-// CSS 청크 로드 전에도 정확한 위치에 그려지도록 인라인 폴백을 함께 제공한다.
-// (className만 의존하면 vanilla-extract CSS가 늦게 도착할 때 스켈레톤이 한참 뒤에 나타남)
-// 값은 controlStack(MapControlsSkeleton.css)과 동일: bottomNav(60px) + 52px = 112px, zIndex.ui = 20.
-const controlStackFallbackStyle: CSSProperties = {
-  position: "fixed",
-  right: "max(16px, calc((100vw - 375px) / 2 + 16px))",
-  bottom: 112,
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  zIndex: 20,
-  pointerEvents: "none",
-};
 
 const controlButtonStyle: CSSProperties = {
   ...SKELETON_SURFACE_STYLE,
@@ -32,7 +19,7 @@ export function MapControlsSkeleton() {
   return (
     <div
       className={controlStack}
-      style={controlStackFallbackStyle}
+      style={mapControlStackInlineFallbackStyle}
       aria-hidden="true"
     >
       <Skeleton

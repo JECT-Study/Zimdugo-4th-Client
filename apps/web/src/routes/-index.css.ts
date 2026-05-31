@@ -1,6 +1,7 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "@repo/ui/vars";
 import { keyframes } from "@vanilla-extract/css";
+import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
 
 export const mapContainer = style({
   width: "100%",
@@ -36,7 +37,7 @@ export const topControlStack = style({
 export const locationControlStack = style({
   position: "fixed",
   right: `max(${vars.spacing[16]}, calc((100vw - ${vars.layout.containerWidth}) / 2 + ${vars.spacing[16]}))`,
-  bottom: `calc(${vars.layout.bottomNav} + 52px)`,
+  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
   display: "flex",
   flexDirection: "column",
   gap: vars.spacing[8],

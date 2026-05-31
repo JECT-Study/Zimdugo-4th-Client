@@ -5,12 +5,13 @@ import {
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
 import { createFileRoute } from "@tanstack/react-router";
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
   NaverMapProvider,
 } from "#/entities/map";
+import { mapControlStackPositionFallbackStyle } from "#/entities/map/ui/map-control-stack-fallback";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
@@ -28,16 +29,6 @@ import {
 } from "./-index.css";
 
 export const Route = createFileRoute("/")({ component: IndexPage });
-
-const locationControlStackFallbackStyle: CSSProperties = {
-  position: "fixed",
-  right: "max(16px, calc((100vw - 375px) / 2 + 16px))",
-  bottom: 112,
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  zIndex: 20,
-};
 
 function IndexPage() {
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
@@ -242,7 +233,7 @@ function IndexPage() {
       ) : (
         <div
           className={locationControlStack}
-          style={locationControlStackFallbackStyle}
+          style={mapControlStackPositionFallbackStyle}
         >
           <button
             type="button"
