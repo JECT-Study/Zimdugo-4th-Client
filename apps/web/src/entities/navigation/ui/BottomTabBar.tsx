@@ -219,14 +219,12 @@ interface BottomTabBarLinkProps {
   applyFallbackStyle?: boolean;
 }
 
-function BottomTabBarLink(props: BottomTabBarLinkProps) {
+function BottomTabBarLinkComponent(props: BottomTabBarLinkProps) {
   if (props.activeOverride !== undefined) {
     return <BottomTabBarLinkControlled {...props} />;
   }
   return <BottomTabBarLinkRouter {...props} />;
 }
-
-const BottomTabBarLinkMemo = memo(BottomTabBarLink);
 
 interface BottomTabBarLinkContentProps extends BottomTabBarLinkProps {
   isActive: boolean;
@@ -286,4 +284,4 @@ function BottomTabBarLinkRouter(props: BottomTabBarLinkProps) {
   return <BottomTabBarLinkContent {...props} isActive={routerActive} />;
 }
 
-const BottomTabBarLink = BottomTabBarLinkMemo;
+const BottomTabBarLink = memo(BottomTabBarLinkComponent);
