@@ -12,15 +12,12 @@ import "@repo/ui/styles/global.css";
 import { languageTag } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
-import { BottomTabBar, type BottomTabKey } from "#/entities/navigation";
+import {
+  BOTTOM_TAB_LINKS,
+  BottomTabBar,
+  shouldShowBottomTab,
+} from "#/entities/navigation";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
-
-const BOTTOM_TAB_LINKS: Record<BottomTabKey, string> = {
-  home: "/",
-  report: "/report",
-  my: "/my",
-  settings: "/settings",
-};
 
 const CRITICAL_LAYOUT_CSS = `
   *, ::before, ::after {
@@ -58,33 +55,6 @@ const CRITICAL_LAYOUT_CSS = `
   }
 `;
 
-const getActiveBottomTab = (pathname: string): BottomTabKey => {
-  const normalizedPath =
-    pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
-
-  if (normalizedPath === "/report" || normalizedPath.startsWith("/report/")) {
-    return "report";
-  }
-  if (normalizedPath === "/my" || normalizedPath.startsWith("/my/")) {
-    return "my";
-  }
-  if (
-    normalizedPath === "/settings" ||
-    normalizedPath.startsWith("/settings/")
-  ) {
-    return "settings";
-  }
-
-  return "home";
-};
-
-const shouldShowBottomTab = (pathname: string) => {
-    const normalizedPath =
-        pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
-
-    return normalizedPath !== "/login";
-};
-
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -112,8 +82,10 @@ import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 
 function RootDocument({ children }: { children: ReactNode }) {
-  const lang = languageTag();
+  // 경로(로케일 프리픽스 포함 예정)를 구독해 네비게이션마다 RootDocument를 갱신한다.
+  // → 추후 주소 기반 로케일/i18n 적용 시 <html lang>과 languageTag()가 항상 최신으로 유지됨.
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const lang = languageTag();
   const showBottomTab = shouldShowBottomTab(pathname);
 
     // 로그인 상태 초기화 및 인증 결과 감지
@@ -132,10 +104,7 @@ function RootDocument({ children }: { children: ReactNode }) {
           <AppShell
             bottomTabBar={
                 showBottomTab ? (
-                    <BottomTabBar
-                        activeTab={getActiveBottomTab(pathname)}
-                        links={BOTTOM_TAB_LINKS}
-                    />
+                    <BottomTabBar links={BOTTOM_TAB_LINKS} />
                 ) : undefined
             }
           >
