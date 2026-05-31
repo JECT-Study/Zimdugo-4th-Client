@@ -228,7 +228,7 @@ function IndexPage() {
           isOrientationTracking={isOrientationTracking}
         />
       </NaverMapProvider>
-      {isMapLoading ? (
+      {isMapLoading || !mapInstance ? (
         <MapControlsSkeleton />
       ) : (
         <div
