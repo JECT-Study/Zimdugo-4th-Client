@@ -13,14 +13,18 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** CSS 청크 도착 전 로그인 화면 스켈레톤 (390×844) */
+/** PR 스크린샷용 — 실제 LoginPageSkeleton (390×844) */
 export const MobileViewport: Story = {
-  tags: ["!autodocs"],
-  parameters: {
-    docs: { disable: true },
-  },
   render: () => (
-    <div style={{ width: 390, height: 844, margin: "0 auto", overflow: "hidden" }}>
+    <div
+      style={{
+        width: 390,
+        height: 844,
+        margin: "0 auto",
+        overflow: "hidden",
+        background: "#FFFFFF",
+      }}
+    >
       <LoginPageSkeleton />
     </div>
   ),
