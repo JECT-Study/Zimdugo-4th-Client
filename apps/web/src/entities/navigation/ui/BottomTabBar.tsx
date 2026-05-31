@@ -219,22 +219,26 @@ interface BottomTabBarLinkProps {
   applyFallbackStyle?: boolean;
 }
 
-/**
- * 탭 1개. 라우터 상태를 "이 탭이 활성인지"라는 boolean으로만 구독하므로,
- * 탭 이동 시 활성 상태가 바뀐 탭(이전/현재)만 리렌더되고 부모(BottomTabBar)는 리렌더되지 않는다.
- */
-function BottomTabBarLinkComponent({
+function BottomTabBarLink(props: BottomTabBarLinkProps) {
+  if (props.activeOverride !== undefined) {
+    return <BottomTabBarLinkControlled {...props} />;
+  }
+  return <BottomTabBarLinkRouter {...props} />;
+}
+
+const BottomTabBarLinkMemo = memo(BottomTabBarLink);
+
+interface BottomTabBarLinkContentProps extends BottomTabBarLinkProps {
+  isActive: boolean;
+}
+
+function BottomTabBarLinkContent({
   to,
   tabKey,
   label,
-  activeOverride,
+  isActive,
   applyFallbackStyle = false,
-}: BottomTabBarLinkProps) {
-  const routerActive = useRouterState({
-    select: (state) => getActiveBottomTab(state.location.pathname) === tabKey,
-  });
-  const isActive = activeOverride ?? routerActive;
-
+}: BottomTabBarLinkContentProps) {
   return (
     <Link
       to={to}
@@ -257,4 +261,29 @@ function BottomTabBarLinkComponent({
   );
 }
 
-const BottomTabBarLink = memo(BottomTabBarLinkComponent);
+/**
+ * 제어형 탭 링크. 라우터를 구독하지 않는다.
+ */
+function BottomTabBarLinkControlled({
+  activeOverride,
+  ...rest
+}: BottomTabBarLinkProps & { activeOverride: boolean }) {
+  return (
+    <BottomTabBarLinkContent {...rest} isActive={activeOverride} />
+  );
+}
+
+/**
+ * 탭 1개. 라우터 상태를 "이 탭이 활성인지" boolean으로만 구독하므로,
+ * 탭 이동 시 활성 상태가 바뀐 탭(이전/현재)만 리렌더되고 부모(BottomTabBar)는 리렌더되지 않는다.
+ */
+function BottomTabBarLinkRouter(props: BottomTabBarLinkProps) {
+  const routerActive = useRouterState({
+    select: (state) =>
+      getActiveBottomTab(state.location.pathname) === props.tabKey,
+  });
+
+  return <BottomTabBarLinkContent {...props} isActive={routerActive} />;
+}
+
+const BottomTabBarLink = BottomTabBarLinkMemo;
