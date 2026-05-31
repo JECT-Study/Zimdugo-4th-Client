@@ -11,7 +11,6 @@ import {
   NaverMapCanvas,
   NaverMapProvider,
 } from "#/entities/map";
-import { mapControlStackPositionFallbackStyle } from "#/entities/map/ui/map-control-stack-fallback";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
@@ -231,10 +230,7 @@ function IndexPage() {
       {isMapLoading || !mapInstance ? (
         <MapControlsSkeleton />
       ) : (
-        <div
-          className={locationControlStack}
-          style={mapControlStackPositionFallbackStyle}
-        >
+        <div className={locationControlStack}>
           <button
             type="button"
             className={[
