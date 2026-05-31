@@ -1,5 +1,7 @@
 import { useSearch } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/tokens/icons";
+import { loginSocialButtonInlineFallbackStyle } from "#/features/auth/sign-in/ui/login-page-fallback";
 import {
   google,
   icon19,
@@ -14,6 +16,32 @@ import {
 } from "./SocialLoginStack.css.ts";
 
 type LoginProvider = "naver" | "kakao" | "google";
+
+const rowFallbackStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  gap: 10,
+  width: 207,
+};
+
+const iconFallbackStyle: CSSProperties = {
+  width: 24,
+  height: 24,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};
+
+const labelContainerFallbackStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  justifyContent: "center",
+  width: 173,
+  lineHeight: 1.2,
+};
 
 const loginTexts = {
   naver: {
@@ -34,6 +62,10 @@ export interface SocialLoginStackProps {
   /** Figma 로그인 버튼의 영어 보조 문구 표시 여부 */
   showEnglishLabel?: boolean;
   className?: string;
+  /** CSS 청크 지연 시 스택 컨테이너 인라인 레이아웃 폴백 */
+  stackFallbackStyle?: CSSProperties;
+  /** CSS 청크 지연 시 버튼·행 인라인 레이아웃 폴백 */
+  applyFallbackStyle?: boolean;
   /** 클라이언트 측 로그인 처리 로직을 주입해야 하는 경우 */
   onLogin?: (provider: LoginProvider) => void;
 }
@@ -45,6 +77,8 @@ export interface SocialLoginStackProps {
 export function SocialLoginStack({
   showEnglishLabel = false,
   className,
+  stackFallbackStyle,
+  applyFallbackStyle = false,
   onLogin,
 }: SocialLoginStackProps) {
   const search = useSearch({ strict: false }) as Record<string, unknown>;
@@ -83,17 +117,30 @@ export function SocialLoginStack({
   };
 
   return (
-    <div className={[stack, className].filter(Boolean).join(" ")}>
+    <div
+      className={[stack, className].filter(Boolean).join(" ")}
+      style={stackFallbackStyle}
+    >
       <a
         href={getHref("naver")}
         className={naver}
+        style={applyFallbackStyle ? loginSocialButtonInlineFallbackStyle : undefined}
         onClick={(e) => handleClick(e, "naver")}
       >
-        <span className={row}>
-          <span className={icon19}>
+        <span
+          className={row}
+          style={applyFallbackStyle ? rowFallbackStyle : undefined}
+        >
+          <span
+            className={icon19}
+            style={applyFallbackStyle ? iconFallbackStyle : undefined}
+          >
             <IconNaver19 />
           </span>
-          <span className={labelContainer}>
+          <span
+            className={labelContainer}
+            style={applyFallbackStyle ? labelContainerFallbackStyle : undefined}
+          >
             <span className={labelTitle}>{loginTexts.naver.title}</span>
             {showEnglishLabel && (
               <span className={labelEn}>{loginTexts.naver.en}</span>
@@ -104,13 +151,23 @@ export function SocialLoginStack({
       <a
         href={getHref("kakao")}
         className={kakao}
+        style={applyFallbackStyle ? loginSocialButtonInlineFallbackStyle : undefined}
         onClick={(e) => handleClick(e, "kakao")}
       >
-        <span className={row}>
-          <span className={icon24}>
+        <span
+          className={row}
+          style={applyFallbackStyle ? rowFallbackStyle : undefined}
+        >
+          <span
+            className={icon24}
+            style={applyFallbackStyle ? iconFallbackStyle : undefined}
+          >
             <IconKakao24 />
           </span>
-          <span className={labelContainer}>
+          <span
+            className={labelContainer}
+            style={applyFallbackStyle ? labelContainerFallbackStyle : undefined}
+          >
             <span className={labelTitle}>{loginTexts.kakao.title}</span>
             {showEnglishLabel && (
               <span className={labelEn}>{loginTexts.kakao.en}</span>
@@ -121,13 +178,23 @@ export function SocialLoginStack({
       <a
         href={getHref("google")}
         className={google}
+        style={applyFallbackStyle ? loginSocialButtonInlineFallbackStyle : undefined}
         onClick={(e) => handleClick(e, "google")}
       >
-        <span className={row}>
-          <span className={icon24}>
+        <span
+          className={row}
+          style={applyFallbackStyle ? rowFallbackStyle : undefined}
+        >
+          <span
+            className={icon24}
+            style={applyFallbackStyle ? iconFallbackStyle : undefined}
+          >
             <IconGoogle24 />
           </span>
-          <span className={labelContainer}>
+          <span
+            className={labelContainer}
+            style={applyFallbackStyle ? labelContainerFallbackStyle : undefined}
+          >
             <span className={labelTitle}>{loginTexts.google.title}</span>
             {showEnglishLabel && (
               <span className={labelEn}>{loginTexts.google.en}</span>

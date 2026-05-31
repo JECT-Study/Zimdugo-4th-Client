@@ -2,6 +2,13 @@ import { useEffect, type CSSProperties } from "react";
 import { createFileRoute, useSearch, redirect } from "@tanstack/react-router";
 import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
 import { SocialLoginStack } from "#/features/auth/sign-in/ui/social-login-stack/SocialLoginStack";
+import { LoginPageSkeleton } from "#/features/auth/sign-in/ui/LoginPageSkeleton";
+import {
+  loginLogoInlineFallbackStyle,
+  loginPageInlineFallbackStyle,
+  loginStackInlineFallbackStyle,
+} from "#/features/auth/sign-in/ui/login-page-fallback";
+import { useLoginPageStyleReady } from "#/features/auth/sign-in/ui/useLoginPageStyleReady";
 import { useAuthStore } from "#/shared/store/authStore";
 import { loginStack, logo, page } from "./-login.css.ts";
 
@@ -54,21 +61,52 @@ const wordmarkStyle = {
 } satisfies CSSProperties;
 
 function LoginPage() {
-  const { returnPath, code } = useSearch({ from: "/login" });
+  const { code } = useSearch({ from: "/login" });
+  const { isStyleReady, isStyleTimedOut } = useLoginPageStyleReady();
 
   // 소셜 로그인 콜백으로 돌아온 경우, UI를 숨겨 화면 깜빡임 방지 (Hydration 에러 방지를 위해 구조는 유지)
   const isProcessing = !!code;
 
+  if (isProcessing) {
+    return (
+      <div
+        className={page}
+        style={{
+          opacity: 0,
+          pointerEvents: "none",
+          transition: "opacity 0.2s ease-in-out",
+        }}
+      >
+        <LoginPageContent applyFallbackStyle={false} />
+      </div>
+    );
+  }
+
+  if (!isStyleReady) {
+    return <LoginPageSkeleton />;
+  }
+
   return (
-    <div 
+    <div
       className={page}
-      style={{ 
-        opacity: isProcessing ? 0 : 1, 
-        pointerEvents: isProcessing ? "none" : "auto",
-        transition: "opacity 0.2s ease-in-out"
-      }}
+      style={isStyleTimedOut ? loginPageInlineFallbackStyle : undefined}
     >
-      <div className={logo}>
+      <LoginPageContent applyFallbackStyle={isStyleTimedOut} />
+    </div>
+  );
+}
+
+function LoginPageContent({
+  applyFallbackStyle,
+}: {
+  applyFallbackStyle: boolean;
+}) {
+  return (
+    <>
+      <div
+        className={logo}
+        style={applyFallbackStyle ? loginLogoInlineFallbackStyle : undefined}
+      >
         <div style={symbolSlotStyle}>
           <div style={symbolFrameStyle}>
             <BrandSymbolIcon width={90} height={90} />
@@ -78,7 +116,14 @@ function LoginPage() {
           <BrandTextLogoLarge />
         </div>
       </div>
-      <SocialLoginStack className={loginStack} showEnglishLabel />
-    </div>
+      <SocialLoginStack
+        className={loginStack}
+        stackFallbackStyle={
+          applyFallbackStyle ? loginStackInlineFallbackStyle : undefined
+        }
+        applyFallbackStyle={applyFallbackStyle}
+        showEnglishLabel
+      />
+    </>
   );
 }
