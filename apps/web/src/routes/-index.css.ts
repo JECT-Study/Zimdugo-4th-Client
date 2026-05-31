@@ -1,6 +1,7 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "@repo/ui/vars";
 import { keyframes } from "@vanilla-extract/css";
+import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
 
 export const mapContainer = style({
   width: "100%",
@@ -34,14 +35,15 @@ export const topControlStack = style({
 
 // 우측 하단 컨트롤 스택 (새로고침 + 현재 위치)
 export const locationControlStack = style({
-  position: "absolute",
-  right: vars.spacing[16],
-  bottom: `calc(${vars.layout.bottomNav} + 36px)`,
+  position: "fixed",
+  right: `max(${vars.spacing[16]}, calc((100vw - ${vars.layout.containerWidth}) / 2 + ${vars.spacing[16]}))`,
+  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
   display: "flex",
   flexDirection: "column",
   gap: vars.spacing[8],
   zIndex: vars.zIndex.ui,
 });
+
 
 export const locationButton = style({
   position: "relative",

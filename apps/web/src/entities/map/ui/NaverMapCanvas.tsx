@@ -33,9 +33,10 @@ const getMapErrorMessage = (message?: string) => {
 
 export interface NaverMapCanvasProps {
   onLoad?: (map: naver.maps.Map | null) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
-export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
+export function NaverMapCanvas({ onLoad, onLoadingChange }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
   const { status, isReady, maps, error, reload } = useNaverMapSdk();
@@ -43,6 +44,9 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
 
   const onLoadRef = useRef(onLoad);
   onLoadRef.current = onLoad;
+
+  const onLoadingChangeRef = useRef(onLoadingChange);
+  onLoadingChangeRef.current = onLoadingChange;
 
   useEffect(() => {
     if (!isReady || !maps || !containerRef.current) return;
@@ -99,6 +103,10 @@ export function NaverMapCanvas({ onLoad }: NaverMapCanvasProps) {
   const hasError = status === "error" || mapInitError !== null;
   const isLoading = status === "idle" || status === "loading";
   const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
+
+  useEffect(() => {
+    onLoadingChangeRef.current?.(isLoading);
+  }, [isLoading]);
 
   return (
     <section

@@ -85,6 +85,9 @@
     "./components/feedback/skeleton": {
       "import": "./src/components/feedback/skeleton/Skeleton.tsx"
     },
+    "./components/feedback/skeleton/theme": {
+      "import": "./src/components/feedback/skeleton/skeleton-theme.ts"
+    },
     "./tokens/icons": {
       "import": "./src/tokens/icons/Icons.tsx"
     }

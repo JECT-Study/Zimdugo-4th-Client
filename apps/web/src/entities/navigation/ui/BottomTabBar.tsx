@@ -1,11 +1,10 @@
 import { BottomBarFrame } from "@repo/ui/components/layout/bottom-bar-frame";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { BottomMenuIcon, type BottomTabKey } from "@repo/ui/tokens/icons";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   memo,
   type CSSProperties,
-  type ReactNode,
   useEffect,
   useRef,
   useState,
@@ -14,6 +13,8 @@ import {
   type AppLanguage,
   useAppLanguageStore,
 } from "../../../shared/store/language.ts";
+import { SKELETON_SURFACE_STYLE } from "../../../shared/ui/skeleton-style.ts";
+import { getActiveBottomTab } from "./bottom-tab-routing.ts";
 import {
   active,
   iconWrapper,
@@ -38,9 +39,7 @@ const bottomTabStyleProbe: CSSProperties = {
   visibility: "hidden",
 };
 
-const skeletonFallbackStyle: CSSProperties = {
-  background: "rgba(230, 232, 235, 0.6)",
-};
+const skeletonFallbackStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 
 const skeletonTabItemFallbackStyle: CSSProperties = {
   display: "flex",
@@ -94,7 +93,12 @@ const DEFAULT_LABELS_BY_LANGUAGE = {
 export type BottomTabLinks = Record<BottomTabKey, string>;
 
 export interface BottomTabBarProps {
-  activeTab: BottomTabKey;
+  /**
+   * 활성 탭. 미지정(기본)이면 각 탭이 라우터 상태를 자체 구독한다.
+   * → 탭 이동 시 BottomTabBar 래퍼는 리렌더되지 않고, 상태가 바뀐 탭만 갱신된다.
+   * 값을 지정하면 제어형으로 동작한다(스토리북/테스트 등 라우터가 없거나 강제 지정이 필요한 경우).
+   */
+  activeTab?: BottomTabKey;
   links: BottomTabLinks;
   labels?: Partial<Record<BottomTabKey, string>>;
   className?: string;
@@ -148,21 +152,17 @@ function BottomTabBarComponent({
     <BottomBarFrame className={className}>
       <div ref={probeRef} className={tabItem} style={bottomTabStyleProbe} />
       {isStyleReady ? (
-        TAB_ORDER.map((tabKey) => {
-          const isActive = activeTab === tabKey;
-          const href = links[tabKey];
-
-          return (
-            <BottomTabBarIcon
-              key={tabKey}
-              to={href}
-              isActive={isActive}
-              label={getLabel(tabKey)}
-              icon={<BottomMenuIcon tab={tabKey} isActive={isActive} />}
-              applyFallbackStyle={isStyleTimedOut}
-            />
-          );
-        })
+        TAB_ORDER.map((tabKey) => (
+          <BottomTabBarLink
+            key={tabKey}
+            to={links[tabKey]}
+            tabKey={tabKey}
+            label={getLabel(tabKey)}
+            // 제어형(activeTab 지정)일 때만 override; 미지정이면 링크가 라우터를 자체 구독
+            activeOverride={activeTab === undefined ? undefined : activeTab === tabKey}
+            applyFallbackStyle={isStyleTimedOut}
+          />
+        ))
       ) : (
         <BottomTabBarSkeletonItems />
       )}
@@ -195,7 +195,8 @@ function BottomTabBarSkeletonItems() {
       <Skeleton
         width={24}
         height={24}
-        variant="circle"
+        variant="rect"
+        borderRadius={9999}
         style={skeletonFallbackStyle}
       />
       <Skeleton
@@ -209,21 +210,33 @@ function BottomTabBarSkeletonItems() {
   ));
 }
 
-interface BottomTabBarIconProps {
+interface BottomTabBarLinkProps {
   to: string;
-  isActive: boolean;
+  tabKey: BottomTabKey;
   label: string;
-  icon: ReactNode;
+  /** 제어형 override. undefined면 라우터 상태를 자체 구독한다. */
+  activeOverride?: boolean;
   applyFallbackStyle?: boolean;
 }
 
-function BottomTabBarIconComponent({
+function BottomTabBarLinkComponent(props: BottomTabBarLinkProps) {
+  if (props.activeOverride !== undefined) {
+    return <BottomTabBarLinkControlled {...props} />;
+  }
+  return <BottomTabBarLinkRouter {...props} />;
+}
+
+interface BottomTabBarLinkContentProps extends BottomTabBarLinkProps {
+  isActive: boolean;
+}
+
+function BottomTabBarLinkContent({
   to,
-  isActive,
+  tabKey,
   label,
-  icon,
+  isActive,
   applyFallbackStyle = false,
-}: BottomTabBarIconProps) {
+}: BottomTabBarLinkContentProps) {
   return (
     <Link
       to={to}
@@ -234,7 +247,7 @@ function BottomTabBarIconComponent({
         className={iconWrapper}
         style={applyFallbackStyle ? iconWrapperFallbackStyle : undefined}
       >
-        {icon}
+        <BottomMenuIcon tab={tabKey} isActive={isActive} />
       </div>
       <span
         className={[labelText, isActive ? active : inactive].join(" ")}
@@ -246,4 +259,29 @@ function BottomTabBarIconComponent({
   );
 }
 
-const BottomTabBarIcon = memo(BottomTabBarIconComponent);
+/**
+ * 제어형 탭 링크. 라우터를 구독하지 않는다.
+ */
+function BottomTabBarLinkControlled({
+  activeOverride,
+  ...rest
+}: BottomTabBarLinkProps & { activeOverride: boolean }) {
+  return (
+    <BottomTabBarLinkContent {...rest} isActive={activeOverride} />
+  );
+}
+
+/**
+ * 탭 1개. 라우터 상태를 "이 탭이 활성인지" boolean으로만 구독하므로,
+ * 탭 이동 시 활성 상태가 바뀐 탭(이전/현재)만 리렌더되고 부모(BottomTabBar)는 리렌더되지 않는다.
+ */
+function BottomTabBarLinkRouter(props: BottomTabBarLinkProps) {
+  const routerActive = useRouterState({
+    select: (state) =>
+      getActiveBottomTab(state.location.pathname) === props.tabKey,
+  });
+
+  return <BottomTabBarLinkContent {...props} isActive={routerActive} />;
+}
+
+const BottomTabBarLink = memo(BottomTabBarLinkComponent);
