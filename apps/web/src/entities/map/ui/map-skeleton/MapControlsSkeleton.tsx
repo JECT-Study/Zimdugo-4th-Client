@@ -26,7 +26,7 @@ export function MapControlsSkeleton() {
         width={48}
         height={48}
         borderRadius={9999}
-        variant="circle"
+        variant="rect"
         className={controlButton}
         style={controlButtonStyle}
       />
@@ -34,7 +34,7 @@ export function MapControlsSkeleton() {
         width={48}
         height={48}
         borderRadius={9999}
-        variant="circle"
+        variant="rect"
         className={controlButton}
         style={controlButtonStyle}
       />
