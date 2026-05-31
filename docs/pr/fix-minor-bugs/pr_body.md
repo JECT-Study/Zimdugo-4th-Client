@@ -23,27 +23,27 @@
 
 ### 스크린샷 (390×844, 로컬 dev)
 
-> GitHub PR 본문에서는 **상대 경로 이미지가 깨질 수 있어** `?raw=1` 절대 URL을 사용합니다.
+> `?raw=1` 절대 URL · **2열 HTML 테이블** (열당 `width="100%"`)
 
-**홈 — 하단 탭·지도**
-
-![홈](https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/01-home-map-controls.png?raw=1)
-
-**로그인 — CSS 로드 전 스켈레톤**
-
-![로그인 스켈레톤](https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/05-login-skeleton.png?raw=1)
-
-**로그인 — returnPath=/my (스타일 적용 완료)**
-
-![로그인 my](https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/02-login-return-path.png?raw=1)
-
-**비로그인 → 제보 탭 → 로그인 팝업**
-
-![로그인 팝업](https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/03-auth-popup.png?raw=1)
-
-**팝업 「로그인하기」→ `/login?returnPath=/report`**
-
-![로그인 report](https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/04-login-return-path-report.png?raw=1)
+<table>
+<tr>
+<td width="50%" valign="top" align="center">
+<b>홈 — 하단 탭·지도</b><br/>
+<img src="https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/01-home-map-controls.png?raw=1" width="100%" alt="홈"/>
+</td>
+<td width="50%" valign="top" align="center">
+<b>로그인 — CSS 로드 전 스켈레톤</b><br/>
+<img src="https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/05-login-skeleton.png?raw=1" width="100%" alt="로그인 스켈레톤"/>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top" align="center">
+<b>비로그인 → 제보 탭 → 로그인 팝업</b><br/>
+<img src="https://github.com/JECT-Study/Zimdugo-4th-Client/blob/fix/minor-bugs/docs/pr/fix-minor-bugs/assets/03-auth-popup.png?raw=1" width="100%" alt="로그인 팝업"/>
+</td>
+<td width="50%" valign="top" align="center">&nbsp;</td>
+</tr>
+</table>
 
 ### 테스트 계획
 
