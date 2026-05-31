@@ -17,7 +17,7 @@ export function AuthRequirePopup() {
           closePopup();
           navigate({
             to: "/login",
-            search: { returnPath },
+            search: { returnPath, code: undefined },
           });
         },
       }}

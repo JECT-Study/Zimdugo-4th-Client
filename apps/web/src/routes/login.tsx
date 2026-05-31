@@ -22,10 +22,14 @@ export const Route = createFileRoute("/login")({
     }
   },
   component: LoginPage,
-  validateSearch: (search: Record<string, unknown>) => ({
-    returnPath: (search.returnPath as string) || "/",
-    code: search.code as string | undefined,
-  }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { returnPath: string; code?: string } => {
+    const returnPath = (search.returnPath as string) || "/";
+    const code = search.code as string | undefined;
+
+    return code ? { returnPath, code } : { returnPath };
+  },
 });
 
 const symbolFrameStyle = {

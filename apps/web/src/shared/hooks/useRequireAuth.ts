@@ -10,7 +10,11 @@ export const useRequireAuth = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       const returnPath = location.pathname + location.searchStr;
-      navigate({ to: "/login", search: { returnPath }, replace: true });
+      navigate({
+        to: "/login",
+        search: { returnPath, code: undefined },
+        replace: true,
+      });
     }
   }, [isAuthenticated, location, navigate]);
 };
