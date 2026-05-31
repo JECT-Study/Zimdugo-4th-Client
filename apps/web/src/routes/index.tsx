@@ -26,6 +26,7 @@ import {
   refreshLoadingOverlay,
   refreshLoadingSpinner,
 } from "./-index.css";
+import { shouldShowMapControls } from "./-map-control-visibility";
 
 export const Route = createFileRoute("/")({ component: IndexPage });
 
@@ -35,6 +36,7 @@ function IndexPage() {
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
   // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
   const [isMapLoading, setIsMapLoading] = useState(true);
+  const [hasMapError, setHasMapError] = useState(false);
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
@@ -206,6 +208,12 @@ function IndexPage() {
     };
   }, [mapInstance, stopOrientationTracking]);
 
+  const shouldRenderMapControls = shouldShowMapControls({
+    isMapLoading,
+    hasMapError,
+    hasMapInstance: !!mapInstance,
+  });
+
   return (
     <main className={pageWrapper}>
       {(isRefreshVisualLoading || isLocationDelayedLoading) && (
@@ -219,6 +227,7 @@ function IndexPage() {
         <NaverMapCanvas
           onLoad={handleMapLoad}
           onLoadingChange={setIsMapLoading}
+          onErrorChange={setHasMapError}
         />
         <MyLocationMarker
           map={mapInstance}
@@ -227,17 +236,15 @@ function IndexPage() {
           isOrientationTracking={isOrientationTracking}
         />
       </NaverMapProvider>
-      {isMapLoading || !mapInstance ? (
+      {isMapLoading && !hasMapError ? (
         <MapControlsSkeleton />
-      ) : (
+      ) : shouldRenderMapControls ? (
         <div className={locationControlStack}>
           <button
             type="button"
             className={[
               locationButton,
-              isRefreshing || !mapInstance
-                ? refreshButtonDisabled
-                : "",
+              isRefreshing || !mapInstance ? refreshButtonDisabled : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -246,11 +253,7 @@ function IndexPage() {
             disabled={isRefreshing || !mapInstance}
           >
             <IconCircleboxRefresh48
-              state={
-                isRefreshing || !mapInstance
-                  ? "refresh"
-                  : "refreshActive"
-              }
+              state={isRefreshing || !mapInstance ? "refresh" : "refreshActive"}
               className={isRefreshSpinning ? refreshIconSpinning : ""}
             />
             {isRefreshing &&
@@ -278,7 +281,7 @@ function IndexPage() {
             />
           </button>
         </div>
-      )}
+      ) : null}
 
       <Popup
         isOpen={isLocationPopupOpen}

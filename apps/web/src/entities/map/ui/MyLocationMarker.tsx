@@ -57,7 +57,7 @@ export function MyLocationMarker({
       dot.style.height = "20px";
       dot.style.backgroundColor = vars.color.palette.blue[500];
       dot.style.borderRadius = "50%";
-      dot.style.border = `3px solid ${vars.color.palette.white}`;
+      dot.style.border = `3px solid ${vars.color.icon.white}`;
       dot.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
 
       wrapper.appendChild(cone);
