@@ -5,8 +5,12 @@ import {
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { NaverMapCanvas, NaverMapProvider } from "#/entities/map";
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import {
+  MapControlsSkeleton,
+  NaverMapCanvas,
+  NaverMapProvider,
+} from "#/entities/map";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
@@ -25,9 +29,22 @@ import {
 
 export const Route = createFileRoute("/")({ component: IndexPage });
 
+const locationControlStackFallbackStyle: CSSProperties = {
+  position: "fixed",
+  right: "max(16px, calc((100vw - 375px) / 2 + 16px))",
+  bottom: 112,
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  zIndex: 20,
+};
+
 function IndexPage() {
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
+  // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
+  // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
+  const [isMapLoading, setIsMapLoading] = useState(true);
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
@@ -209,7 +226,10 @@ function IndexPage() {
       )}
 
       <NaverMapProvider language={languageTag()}>
-        <NaverMapCanvas onLoad={handleMapLoad} />
+        <NaverMapCanvas
+          onLoad={handleMapLoad}
+          onLoadingChange={setIsMapLoading}
+        />
         <MyLocationMarker
           map={mapInstance}
           location={location}
@@ -217,54 +237,61 @@ function IndexPage() {
           isOrientationTracking={isOrientationTracking}
         />
       </NaverMapProvider>
-      <div className={locationControlStack}>
-        <button
-          type="button"
-          className={[
-            locationButton,
-            isRefreshing || !mapInstance
-              ? refreshButtonDisabled
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          onClick={handleRefreshMap}
-          aria-label="현 지도에서 검색"
-          disabled={isRefreshing || !mapInstance}
+      {isMapLoading ? (
+        <MapControlsSkeleton />
+      ) : (
+        <div
+          className={locationControlStack}
+          style={locationControlStackFallbackStyle}
         >
-          <IconCircleboxRefresh48
-            state={
+          <button
+            type="button"
+            className={[
+              locationButton,
               isRefreshing || !mapInstance
-                ? "refresh"
-                : "refreshActive"
-            }
-            className={isRefreshSpinning ? refreshIconSpinning : ""}
-          />
-          {isRefreshing &&
-            !isRefreshSpinning &&
-            refreshCooldownRemaining > 0 && (
-              <div className={refreshCooldownBadge}>
-                {refreshCooldownRemaining}
-              </div>
-            )}
-        </button>
-        <button
-          type="button"
-          className={locationButton}
-          onClick={handleMyLocation}
-          aria-label="내 위치로 이동"
-        >
-          <IconCircleboxCrosshair48
-            state={
-              permission === "denied"
-                ? "denied"
-                : isCameraCentered
-                  ? "active"
-                  : "default"
-            }
-          />
-        </button>
-      </div>
+                ? refreshButtonDisabled
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={handleRefreshMap}
+            aria-label="현 지도에서 검색"
+            disabled={isRefreshing || !mapInstance}
+          >
+            <IconCircleboxRefresh48
+              state={
+                isRefreshing || !mapInstance
+                  ? "refresh"
+                  : "refreshActive"
+              }
+              className={isRefreshSpinning ? refreshIconSpinning : ""}
+            />
+            {isRefreshing &&
+              !isRefreshSpinning &&
+              refreshCooldownRemaining > 0 && (
+                <div className={refreshCooldownBadge}>
+                  {refreshCooldownRemaining}
+                </div>
+              )}
+          </button>
+          <button
+            type="button"
+            className={locationButton}
+            onClick={handleMyLocation}
+            aria-label="내 위치로 이동"
+          >
+            <IconCircleboxCrosshair48
+              state={
+                permission === "denied"
+                  ? "denied"
+                  : isCameraCentered
+                    ? "active"
+                    : "default"
+              }
+            />
+          </button>
+        </div>
+      )}
 
       <Popup
         isOpen={isLocationPopupOpen}

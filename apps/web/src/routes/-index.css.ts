@@ -34,14 +34,15 @@ export const topControlStack = style({
 
 // 우측 하단 컨트롤 스택 (새로고침 + 현재 위치)
 export const locationControlStack = style({
-  position: "absolute",
-  right: vars.spacing[16],
-  bottom: `calc(${vars.layout.bottomNav} + 36px)`,
+  position: "fixed",
+  right: `max(${vars.spacing[16]}, calc((100vw - ${vars.layout.containerWidth}) / 2 + ${vars.spacing[16]}))`,
+  bottom: `calc(${vars.layout.bottomNav} + 52px)`,
   display: "flex",
   flexDirection: "column",
   gap: vars.spacing[8],
   zIndex: vars.zIndex.ui,
 });
+
 
 export const locationButton = style({
   position: "relative",
