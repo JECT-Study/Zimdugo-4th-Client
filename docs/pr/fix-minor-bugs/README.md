@@ -8,4 +8,4 @@
 
 PR 본문에는 `?raw=1` GitHub URL로 첨부합니다 (상대 경로는 PR에서 깨질 수 있음).
 
-캡처: `05` — Storybook `LoginPageSkeleton/Mobile Viewport` (`npx playwright install chromium` 후 `node capture-login-skeleton.mjs`, Storybook `:6008`). 나머지 — `pnpm exec vite dev --port 3010`, `node capture-screenshots.mjs`.
+재촬영 스크립트는 Git에 올리지 않고 `.local/`에만 둡니다 (자세한 사용법은 `.local/README.md`).
