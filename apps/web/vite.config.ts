@@ -1,5 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
-import { locales, localizeHref } from "@repo/i18n";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
@@ -7,6 +8,9 @@ import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { locales, localizeHref } from "./src/i18n";
+
+const appDir = path.dirname(fileURLToPath(import.meta.url));
 
 const prerenderRoutes = ["/"].flatMap((path) =>
   locales.map((locale) => ({
@@ -18,6 +22,11 @@ const prerenderRoutes = ["/"].flatMap((path) =>
 );
 
 const config = defineConfig({
+  resolve: {
+    alias: {
+      "@repo/i18n": path.resolve(appDir, "src/i18n.ts"),
+    },
+  },
   plugins: [
     devtools(),
     nitro({ 
@@ -31,9 +40,8 @@ const config = defineConfig({
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     paraglideVitePlugin({
       project: "../../packages/i18n/project.inlang",
-      outdir: "../../packages/i18n/src/paraglide",
-        outputStructure: "message-modules",
-
+      outdir: path.resolve(appDir, "src/paraglide"),
+      outputStructure: "message-modules",
     }),
     tanstackStart({
       prerender: {
