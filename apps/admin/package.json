@@ -6,10 +6,11 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3011",
-    "build": "pnpm --filter @repo/i18n build && vite build",
+    "i18n:compile": "paraglide-js compile --project ../../packages/i18n/project.inlang --outdir ./src/paraglide",
+    "dev": "paraglide-js compile --project ../../packages/i18n/project.inlang --outdir ./src/paraglide && vite dev --port 3011",
+    "build": "paraglide-js compile --project ../../packages/i18n/project.inlang --outdir ./src/paraglide && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "paraglide-js compile --project ../../packages/i18n/project.inlang --outdir ./src/paraglide && vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

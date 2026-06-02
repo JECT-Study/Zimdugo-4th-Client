@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@repo/i18n": ["./src/i18n.ts"],
       "@/*": ["./src/*"],
       "#/*": ["./src/*"]
     },
