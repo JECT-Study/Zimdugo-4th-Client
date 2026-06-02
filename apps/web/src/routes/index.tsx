@@ -11,6 +11,7 @@ import {
   NaverMapCanvas,
   NaverMapProvider,
 } from "#/entities/map";
+import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
@@ -149,8 +150,10 @@ function IndexPage() {
         }, 300);
         startTracking();
       } else if (location && mapInstanceRef.current) {
-        const latLng = new window.naver.maps.LatLng(location.lat, location.lng);
-        mapInstanceRef.current.panTo(latLng);
+        focusNaverMapOnCoordinates({
+          map: mapInstanceRef.current,
+          coordinates: location,
+        });
       }
       setIsCameraCentered(true);
     } else if (isCameraCentered && !isOrientationTracking) {
@@ -185,26 +188,23 @@ function IndexPage() {
   // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
   useEffect(() => {
     if (isCameraCentered && location && mapInstance) {
-      const latLng = new window.naver.maps.LatLng(location.lat, location.lng);
-      mapInstance.panTo(latLng);
+      focusNaverMapOnCoordinates({ map: mapInstance, coordinates: location });
     }
   }, [isCameraCentered, location, mapInstance]);
 
   // 지도 드래그 시 카메라 고정 해제 및 나침반 해제 (GPS는 유지)
   useEffect(() => {
-    if (!mapInstance) return;
+    const maps = typeof window !== "undefined" ? window.naver?.maps : null;
 
-    const listener = window.naver.maps.Event.addListener(
-      mapInstance,
-      "dragstart",
-      () => {
-        setIsCameraCentered(false);
-        stopOrientationTracking();
-      },
-    );
+    if (!mapInstance || !maps?.Event) return;
+
+    const listener = maps.Event.addListener(mapInstance, "dragstart", () => {
+      setIsCameraCentered(false);
+      stopOrientationTracking();
+    });
 
     return () => {
-      window.naver.maps.Event.removeListener(listener);
+      maps.Event.removeListener(listener);
     };
   }, [mapInstance, stopOrientationTracking]);
 
