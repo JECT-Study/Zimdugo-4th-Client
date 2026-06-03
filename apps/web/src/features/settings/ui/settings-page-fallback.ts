@@ -1,22 +1,24 @@
 import type { CSSProperties } from "react";
+import { color } from "@repo/ui/tokens/color/color.css";
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
+import { radius } from "@repo/ui/tokens/radius/radius.css";
+import { spacing } from "@repo/ui/tokens/spacing/spacing.css";
 
 /**
- * `settings.css.ts`·`layoutScale`(header 56px)·palette와 동기화된 정적 폴백 값.
- * vanilla-extract CSS 청크 도착 전 인라인 스타일에만 사용한다.
+ * `settings.css.ts` vars와 동기화 — vanilla-extract CSS 청크 도착 전 인라인 스타일에만 사용한다.
  */
-export const SETTINGS_PAGE_BG = "#FFFFFF";
-export const SETTINGS_ROW_BG = "#FFFFFF";
-export const SETTINGS_ROW_BORDER = "#EEEEEE";
-export const SETTINGS_ROW_MIN_HEIGHT_PX = 48;
-export const SETTINGS_ROW_PADDING_X_PX = 16;
-export const SETTINGS_ROW_BORDER_RADIUS_PX = 6;
-export const SETTINGS_HEADER_HEIGHT_PX = 56;
-/** `settings.css.ts` `content` · `layoutScale.containerWidth` */
-export const SETTINGS_CONTENT_MAX_WIDTH_PX = 375;
+export const SETTINGS_PAGE_BG = color.bg.default;
+export const SETTINGS_ROW_BG = color.bg.default;
+export const SETTINGS_ROW_BORDER = color.border.default;
+export const SETTINGS_ROW_MIN_HEIGHT = layoutScale.touchTarget;
+export const SETTINGS_ROW_PADDING_X = spacing.scale[16];
+export const SETTINGS_ROW_BORDER_RADIUS = radius.scale[6];
+export const SETTINGS_HEADER_HEIGHT = layoutScale.header;
+export const SETTINGS_CONTENT_MAX_WIDTH = layoutScale.containerWidth;
 
 const settingsContentLayoutFallbackStyle: CSSProperties = {
   width: "100%",
-  maxWidth: SETTINGS_CONTENT_MAX_WIDTH_PX,
+  maxWidth: SETTINGS_CONTENT_MAX_WIDTH,
   margin: "0 auto",
   boxSizing: "border-box",
 };
@@ -24,7 +26,7 @@ const settingsContentLayoutFallbackStyle: CSSProperties = {
 export const settingsPageSkeletonInlineFallbackStyle: CSSProperties = {
   minHeight: "100dvh",
   background: SETTINGS_PAGE_BG,
-  paddingTop: `calc(env(safe-area-inset-top, 0px) + ${SETTINGS_HEADER_HEIGHT_PX}px)`,
+  paddingTop: `calc(env(safe-area-inset-top, 0px) + ${SETTINGS_HEADER_HEIGHT})`,
 };
 
 export const settingsSkeletonContentInlineFallbackStyle: CSSProperties = {
@@ -48,10 +50,10 @@ export const settingsSettingRowSkeletonInlineFallbackStyle = (options?: {
 }): CSSProperties => {
   return {
     width: "100%",
-    minHeight: SETTINGS_ROW_MIN_HEIGHT_PX,
-    padding: `0 ${SETTINGS_ROW_PADDING_X_PX}px`,
+    minHeight: SETTINGS_ROW_MIN_HEIGHT,
+    padding: `0 ${SETTINGS_ROW_PADDING_X}`,
     border: `2px solid ${SETTINGS_ROW_BORDER}`,
-    borderRadius: SETTINGS_ROW_BORDER_RADIUS_PX,
+    borderRadius: SETTINGS_ROW_BORDER_RADIUS,
     marginTop: options?.attached ? "-2px" : 0,
     boxSizing: "border-box",
     display: "flex",
