@@ -70,7 +70,7 @@ function SettingsLanguagePage() {
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                aria-current={isCurrent ? "true" : undefined}
+                aria-pressed={isCurrent}
                 onClick={() => setAppLanguage(language)}
               >
                 <span className={settingRowText}>
