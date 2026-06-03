@@ -1,4 +1,9 @@
-import { setLanguageTag } from "@repo/i18n";
+import {
+  deLocalizeHref,
+  extractLocaleFromUrl,
+  localizeHref,
+  setLanguageTag,
+} from "@repo/i18n";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -11,7 +16,7 @@ const APP_LANGUAGE_COOKIE_KEY = "PARAGLIDE_LOCALE";
 const APP_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const DEFAULT_APP_LANGUAGE: AppLanguage = "ko";
 
-const normalizeLanguage = (value?: string | null): AppLanguage | null => {
+export const normalizeLanguage = (value?: string | null): AppLanguage | null => {
   if (!value) return null;
 
   const lower = value.toLowerCase();
@@ -21,6 +26,17 @@ const normalizeLanguage = (value?: string | null): AppLanguage | null => {
   if (lower.startsWith("zh")) return "zh";
 
   return null;
+};
+
+export const getUrlLanguage = (href: string): AppLanguage | null => {
+  return normalizeLanguage(extractLocaleFromUrl(href));
+};
+
+export const getLocalizedHref = (
+  href: string,
+  language: AppLanguage,
+): string => {
+  return localizeHref(deLocalizeHref(href), { locale: language });
 };
 
 const getSystemLanguage = (): AppLanguage | null => {
@@ -64,12 +80,21 @@ export const useAppLanguageStore = create<AppLanguageState>()(
       hasInitialized: false,
       hasHydrated: false,
       initializeLanguage: (urlLanguage) => {
+        const fallbackUrlLanguage = normalizeLanguage(urlLanguage);
+
         if (get().hasInitialized) {
+          if (
+            fallbackUrlLanguage &&
+            fallbackUrlLanguage !== get().appLanguage
+          ) {
+            set({ appLanguage: fallbackUrlLanguage });
+            setLanguageTag(fallbackUrlLanguage);
+            setLanguageCookie(fallbackUrlLanguage);
+          }
           return;
         }
 
         const hydratedLanguage = get().hasHydrated ? get().appLanguage : null;
-        const fallbackUrlLanguage = normalizeLanguage(urlLanguage);
         const fallbackSystemLanguage = getSystemLanguage();
         const nextLanguage =
           fallbackUrlLanguage ??

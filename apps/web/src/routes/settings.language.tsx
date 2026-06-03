@@ -20,7 +20,9 @@ import {
 } from "#/features/settings/ui/settings.css.ts";
 import {
   APP_LANGUAGES,
+  type AppLanguage,
   appLanguageLabelMap,
+  getLocalizedHref,
   useAppLanguageStore,
 } from "#/shared/store/language";
 
@@ -33,6 +35,17 @@ function SettingsLanguagePage() {
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const { isStyleReady } = useSettingsStyleReady();
+
+  const handleSelectLanguage = (language: AppLanguage) => {
+    setAppLanguage(language);
+
+    const localizedHref = getLocalizedHref(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      language,
+    );
+
+    navigate({ href: localizedHref, replace: true });
+  };
 
   if (!isStyleReady) {
     return (
@@ -69,7 +82,7 @@ function SettingsLanguagePage() {
                   .filter(Boolean)
                   .join(" ")}
                 aria-pressed={isCurrent}
-                onClick={() => setAppLanguage(language)}
+                onClick={() => handleSelectLanguage(language)}
               >
                 <span className={settingRowText}>
                   {appLanguageLabelMap[language]}
