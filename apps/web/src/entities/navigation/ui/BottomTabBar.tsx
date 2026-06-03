@@ -105,13 +105,13 @@ function BottomTabBarComponent({
   className,
 }: BottomTabBarProps) {
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
-  const shouldProbeStyle = !hasBottomTabStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
-    enabled: shouldProbeStyle,
+    enabled: !hasBottomTabStyleResolved,
     probes: BOTTOM_TAB_STYLE_PROBES,
   });
-  const defaultLabels = DEFAULT_LABELS_BY_LANGUAGE[appLanguage];
 
+  const shouldProbeStyle = !hasBottomTabStyleResolved;
+  const defaultLabels = DEFAULT_LABELS_BY_LANGUAGE[appLanguage];
   const getLabel = (key: BottomTabKey) => labels?.[key] ?? defaultLabels[key];
 
   useEffect(() => {
