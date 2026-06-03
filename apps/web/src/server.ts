@@ -111,7 +111,14 @@ const withLocaleCookieHeader = (req: Request, locale: AppLocale): Request => {
   const headers = new Headers(req.headers);
   headers.set("Cookie", getRequestCookieHeader(headers.get("Cookie"), locale));
 
-  return new Request(req, { headers });
+  // Nitro/prerender Request는 `new Request(req, …)` 복제 시 undici #state 오류가 난다.
+  const init: RequestInit = { method: req.method, headers };
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    init.body = req.body;
+    init.duplex = "half";
+  }
+
+  return new Request(req.url, init);
 };
 
 const withLocaleCookieResponse = (
@@ -121,7 +128,9 @@ const withLocaleCookieResponse = (
   const headers = new Headers(response.headers);
   headers.append("Set-Cookie", getLocaleCookie(locale));
 
-  return new Response(response.body, {
+  const hasNoBody = response.status === 204 || response.status === 304;
+
+  return new Response(hasNoBody ? null : response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
@@ -158,7 +167,7 @@ export default {
       ? withLocaleCookieHeader(req, pathLocale)
       : req;
     const response = await paraglideMiddleware(middlewareRequest, () =>
-      handler.fetch(req),
+      handler.fetch(middlewareRequest),
     );
 
     return pathLocale
