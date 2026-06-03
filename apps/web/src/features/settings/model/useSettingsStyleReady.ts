@@ -30,6 +30,10 @@ const SETTINGS_STYLE_PROBES: StyleReadyProbe[] = [
   },
 ];
 
+/**
+ * Settings subtree CSS chunk probe. Caches after first successful (non-timeout) resolve
+ * so revisiting settings routes skips the skeleton (similar to BottomTabBar chrome policy).
+ */
 export function useSettingsStyleReady({ enabled = true } = {}) {
   const shouldProbeStyle = enabled && !hasSettingsStyleResolved;
   const styleReadyState = useStyleReadyProbe({
