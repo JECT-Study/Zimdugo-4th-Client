@@ -6,27 +6,23 @@ import {
 } from "@repo/i18n";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import {
+  APP_LOCALES,
+  type AppLocale,
+  BASE_LOCALE,
+  LOCALE_COOKIE_MAX_AGE,
+  LOCALE_COOKIE_NAME,
+  normalizeLocale,
+} from "#/shared/i18n/locales";
 
-export const APP_LANGUAGES = ["ko", "en", "ja", "zh"] as const;
+export const APP_LANGUAGES = APP_LOCALES;
 
-export type AppLanguage = (typeof APP_LANGUAGES)[number];
+export type AppLanguage = AppLocale;
 
 const APP_LANGUAGE_STORAGE_KEY = "app-language";
-const APP_LANGUAGE_COOKIE_KEY = "PARAGLIDE_LOCALE";
-const APP_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-const DEFAULT_APP_LANGUAGE: AppLanguage = "ko";
+const DEFAULT_APP_LANGUAGE: AppLanguage = BASE_LOCALE;
 
-export const normalizeLanguage = (value?: string | null): AppLanguage | null => {
-  if (!value) return null;
-
-  const lower = value.toLowerCase();
-  if (lower.startsWith("ko")) return "ko";
-  if (lower.startsWith("en")) return "en";
-  if (lower.startsWith("ja")) return "ja";
-  if (lower.startsWith("zh")) return "zh";
-
-  return null;
-};
+export const normalizeLanguage = normalizeLocale;
 
 export const getUrlLanguage = (href: string): AppLanguage | null => {
   return normalizeLanguage(extractLocaleFromUrl(href));
@@ -60,8 +56,7 @@ const setLanguageCookie = (language: AppLanguage) => {
     return;
   }
 
-  document.cookie =
-    `${APP_LANGUAGE_COOKIE_KEY}=${language};path=/;max-age=${APP_LANGUAGE_COOKIE_MAX_AGE};SameSite=Lax`;
+  document.cookie = `${LOCALE_COOKIE_NAME}=${language};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`;
 };
 
 interface AppLanguageState {
@@ -79,15 +74,15 @@ export const useAppLanguageStore = create<AppLanguageState>()(
       appLanguage: DEFAULT_APP_LANGUAGE,
       hasInitialized: false,
       hasHydrated: false,
-      initializeLanguage: (urlLanguage) => {
-        const fallbackUrlLanguage =
-          normalizeLanguage(urlLanguage) ?? DEFAULT_APP_LANGUAGE;
+      initializeLanguage: (urlLanguageParam) => {
+        const urlLanguage = normalizeLanguage(urlLanguageParam);
 
         if (get().hasInitialized) {
-          if (fallbackUrlLanguage !== get().appLanguage) {
-            set({ appLanguage: fallbackUrlLanguage });
-            setLanguageTag(fallbackUrlLanguage);
-            setLanguageCookie(fallbackUrlLanguage);
+          const nextLanguage = urlLanguage ?? DEFAULT_APP_LANGUAGE;
+          if (nextLanguage !== get().appLanguage) {
+            set({ appLanguage: nextLanguage });
+            setLanguageTag(nextLanguage);
+            setLanguageCookie(nextLanguage);
           }
           return;
         }
@@ -95,7 +90,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         const hydratedLanguage = get().hasHydrated ? get().appLanguage : null;
         const fallbackSystemLanguage = getSystemLanguage();
         const nextLanguage =
-          fallbackUrlLanguage ??
+          urlLanguage ??
           hydratedLanguage ??
           fallbackSystemLanguage ??
           DEFAULT_APP_LANGUAGE;
