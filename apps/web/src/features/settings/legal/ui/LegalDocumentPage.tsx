@@ -46,8 +46,11 @@ export function LegalDocumentPage({ legalDocument }: LegalDocumentPageProps) {
           {legalDocument.sections.map((item) => (
             <section key={item.title} className={section}>
               <h2 className={sectionTitle}>{item.title}</h2>
-              {item.paragraphs.map((itemParagraph, index) => (
-                <p key={`${item.title}-${index}`} className={paragraph}>
+              {item.paragraphs.map((itemParagraph) => (
+                <p
+                  key={`${item.title}-${itemParagraph}`}
+                  className={paragraph}
+                >
                   {itemParagraph}
                 </p>
               ))}
