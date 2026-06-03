@@ -1,16 +1,22 @@
-import { setLanguageTag } from "@repo/i18n";
+import {
+  deLocalizeHref,
+  extractLocaleFromUrl,
+  localizeHref,
+  setLanguageTag,
+} from "@repo/i18n";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export type AppLanguage = "ko" | "en" | "ja" | "zh";
+export const APP_LANGUAGES = ["ko", "en", "ja", "zh"] as const;
+
+export type AppLanguage = (typeof APP_LANGUAGES)[number];
 
 const APP_LANGUAGE_STORAGE_KEY = "app-language";
 const APP_LANGUAGE_COOKIE_KEY = "PARAGLIDE_LOCALE";
 const APP_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const DEFAULT_APP_LANGUAGE: AppLanguage = "ko";
 
-const APP_LANGUAGES: readonly AppLanguage[] = ["ko", "en", "ja", "zh"];
-
-const normalizeLanguage = (value?: string | null): AppLanguage | null => {
+export const normalizeLanguage = (value?: string | null): AppLanguage | null => {
   if (!value) return null;
 
   const lower = value.toLowerCase();
@@ -20,6 +26,17 @@ const normalizeLanguage = (value?: string | null): AppLanguage | null => {
   if (lower.startsWith("zh")) return "zh";
 
   return null;
+};
+
+export const getUrlLanguage = (href: string): AppLanguage | null => {
+  return normalizeLanguage(extractLocaleFromUrl(href));
+};
+
+export const getLocalizedHref = (
+  href: string,
+  language: AppLanguage,
+): string => {
+  return localizeHref(deLocalizeHref(href), { locale: language });
 };
 
 const getSystemLanguage = (): AppLanguage | null => {
@@ -59,19 +76,29 @@ interface AppLanguageState {
 export const useAppLanguageStore = create<AppLanguageState>()(
   persist(
     (set, get) => ({
-      appLanguage: "ko",
+      appLanguage: DEFAULT_APP_LANGUAGE,
       hasInitialized: false,
       hasHydrated: false,
       initializeLanguage: (urlLanguage) => {
+        const fallbackUrlLanguage =
+          normalizeLanguage(urlLanguage) ?? DEFAULT_APP_LANGUAGE;
+
         if (get().hasInitialized) {
+          if (fallbackUrlLanguage !== get().appLanguage) {
+            set({ appLanguage: fallbackUrlLanguage });
+            setLanguageTag(fallbackUrlLanguage);
+            setLanguageCookie(fallbackUrlLanguage);
+          }
           return;
         }
 
         const hydratedLanguage = get().hasHydrated ? get().appLanguage : null;
-        const fallbackUrlLanguage = normalizeLanguage(urlLanguage);
         const fallbackSystemLanguage = getSystemLanguage();
         const nextLanguage =
-          fallbackUrlLanguage ?? hydratedLanguage ?? fallbackSystemLanguage ?? "ko";
+          fallbackUrlLanguage ??
+          hydratedLanguage ??
+          fallbackSystemLanguage ??
+          DEFAULT_APP_LANGUAGE;
 
         set({
           appLanguage: nextLanguage,
@@ -113,8 +140,8 @@ export const useAppLanguageStore = create<AppLanguageState>()(
 );
 
 export const appLanguageLabelMap: Record<AppLanguage, string> = {
-  ko: "한국어",
+  ko: "\uD55C\uAD6D\uC5B4",
   en: "English",
-  ja: "日本語",
-  zh: "中文",
+  ja: "\u65E5\u672C\u8A9E",
+  zh: "\u4E2D\u6587",
 };

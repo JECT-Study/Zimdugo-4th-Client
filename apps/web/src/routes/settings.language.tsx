@@ -19,8 +19,10 @@ import {
   settingRowText,
 } from "#/features/settings/ui/settings.css.ts";
 import {
+  APP_LANGUAGES,
   type AppLanguage,
   appLanguageLabelMap,
+  getLocalizedHref,
   useAppLanguageStore,
 } from "#/shared/store/language";
 
@@ -28,13 +30,22 @@ export const Route = createFileRoute("/settings/language")({
   component: SettingsLanguagePage,
 });
 
-const languageOrder: AppLanguage[] = ["ko", "en", "ja", "zh"];
-
 function SettingsLanguagePage() {
   const navigate = useNavigate();
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const { isStyleReady } = useSettingsStyleReady();
+
+  const handleSelectLanguage = (language: AppLanguage) => {
+    setAppLanguage(language);
+
+    const localizedHref = getLocalizedHref(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      language,
+    );
+
+    navigate({ href: localizedHref, replace: true });
+  };
 
   if (!isStyleReady) {
     return (
@@ -57,7 +68,7 @@ function SettingsLanguagePage() {
 
       <main className={[content, languageContent].join(" ")}>
         <section className={languageGroup}>
-          {languageOrder.map((language) => {
+          {APP_LANGUAGES.map((language) => {
             const isCurrent = language === appLanguage;
             return (
               <button
@@ -71,7 +82,7 @@ function SettingsLanguagePage() {
                   .filter(Boolean)
                   .join(" ")}
                 aria-pressed={isCurrent}
-                onClick={() => setAppLanguage(language)}
+                onClick={() => handleSelectLanguage(language)}
               >
                 <span className={settingRowText}>
                   {appLanguageLabelMap[language]}
