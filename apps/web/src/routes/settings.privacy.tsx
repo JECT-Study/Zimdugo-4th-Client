@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { NotFoundComponent } from "#/shared/ui/NotFound";
+import { privacyDocument } from "#/features/settings/legal/model/legal-documents";
+import { LegalDocumentPage } from "#/features/settings/legal/ui/LegalDocumentPage";
 
 export const Route = createFileRoute("/settings/privacy")({
   component: SettingsPrivacyPage,
 });
 
 function SettingsPrivacyPage() {
-  return <NotFoundComponent />;
+  return <LegalDocumentPage legalDocument={privacyDocument} />;
 }
