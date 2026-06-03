@@ -1,11 +1,12 @@
 import { m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
-  type AppLanguage,
-  appLanguageLabelMap,
-  useAppLanguageStore,
-} from "#/shared/store/language";
+  SettingsHeaderSkeleton,
+  SettingsLanguageSkeleton,
+  SettingsSkeletonFrame,
+} from "#/features/settings/ui/SettingsRouteSkeleton";
 import {
   content,
   header,
@@ -16,26 +17,14 @@ import {
   rowButton,
   settingRowSelected,
   settingRowText,
-} from "./-settings.css.ts";
-import { useSettingsStyleReady } from "./-useSettingsStyleReady";
+} from "#/features/settings/ui/settings.css.ts";
 import {
-  SettingsHeaderSkeleton,
-  SettingsLanguageSkeleton,
-  SettingsSkeletonFrame,
-} from "./route-skeletons/-SettingsRouteSkeleton";
+  type AppLanguage,
+  appLanguageLabelMap,
+  useAppLanguageStore,
+} from "#/shared/store/language";
 
 export const Route = createFileRoute("/settings/language")({
-  loader: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 120));
-  },
-  pendingMs: 0,
-  pendingMinMs: 180,
-  pendingComponent: () => (
-    <SettingsSkeletonFrame>
-      <SettingsHeaderSkeleton />
-      <SettingsLanguageSkeleton />
-    </SettingsSkeletonFrame>
-  ),
   component: SettingsLanguagePage,
 });
 

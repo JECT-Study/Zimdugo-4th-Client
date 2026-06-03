@@ -10,6 +10,7 @@ import {
   titleText,
 } from "./Header.css.ts";
 import { IconChevronLeft13 } from "../../../tokens/icons/Icons";
+export { HeaderSkeleton } from "./HeaderSkeleton";
 
 export interface HeaderProps {
   /** 좌측 컴포넌트 구성 요소 (none 이면 표시 안 함, back 이면 뒤로가기 버튼) */

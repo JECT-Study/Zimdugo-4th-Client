@@ -14,8 +14,6 @@ import { Route as ReportRouteImport } from './routes/report'
 import { Route as MyRouteImport } from './routes/my'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsWithdrawRouteImport } from './routes/settings.withdraw'
-import { Route as SettingsThemeRouteImport } from './routes/settings.theme'
 import { Route as SettingsLanguageRouteImport } from './routes/settings.language'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -43,16 +41,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsWithdrawRoute = SettingsWithdrawRouteImport.update({
-  id: '/withdraw',
-  path: '/withdraw',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsThemeRoute = SettingsThemeRouteImport.update({
-  id: '/theme',
-  path: '/theme',
-  getParentRoute: () => SettingsRoute,
-} as any)
 const SettingsLanguageRoute = SettingsLanguageRouteImport.update({
   id: '/language',
   path: '/language',
@@ -66,8 +54,6 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/settings/language': typeof SettingsLanguageRoute
-  '/settings/theme': typeof SettingsThemeRoute
-  '/settings/withdraw': typeof SettingsWithdrawRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,8 +62,6 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/settings/language': typeof SettingsLanguageRoute
-  '/settings/theme': typeof SettingsThemeRoute
-  '/settings/withdraw': typeof SettingsWithdrawRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,8 +71,6 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/settings/language': typeof SettingsLanguageRoute
-  '/settings/theme': typeof SettingsThemeRoute
-  '/settings/withdraw': typeof SettingsWithdrawRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,18 +81,8 @@ export interface FileRouteTypes {
     | '/report'
     | '/settings'
     | '/settings/language'
-    | '/settings/theme'
-    | '/settings/withdraw'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/login'
-    | '/my'
-    | '/report'
-    | '/settings'
-    | '/settings/language'
-    | '/settings/theme'
-    | '/settings/withdraw'
+  to: '/' | '/login' | '/my' | '/report' | '/settings' | '/settings/language'
   id:
     | '__root__'
     | '/'
@@ -119,8 +91,6 @@ export interface FileRouteTypes {
     | '/report'
     | '/settings'
     | '/settings/language'
-    | '/settings/theme'
-    | '/settings/withdraw'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -168,20 +138,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/withdraw': {
-      id: '/settings/withdraw'
-      path: '/withdraw'
-      fullPath: '/settings/withdraw'
-      preLoaderRoute: typeof SettingsWithdrawRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/theme': {
-      id: '/settings/theme'
-      path: '/theme'
-      fullPath: '/settings/theme'
-      preLoaderRoute: typeof SettingsThemeRouteImport
-      parentRoute: typeof SettingsRoute
-    }
     '/settings/language': {
       id: '/settings/language'
       path: '/language'
@@ -194,14 +150,10 @@ declare module '@tanstack/react-router' {
 
 interface SettingsRouteChildren {
   SettingsLanguageRoute: typeof SettingsLanguageRoute
-  SettingsThemeRoute: typeof SettingsThemeRoute
-  SettingsWithdrawRoute: typeof SettingsWithdrawRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsLanguageRoute: SettingsLanguageRoute,
-  SettingsThemeRoute: SettingsThemeRoute,
-  SettingsWithdrawRoute: SettingsWithdrawRoute,
 }
 
 const SettingsRouteWithChildren = SettingsRoute._addFileChildren(

@@ -7,6 +7,12 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
+import {
+  SettingsHeaderSkeleton,
+  SettingsSkeleton,
+  SettingsSkeletonFrame,
+} from "#/features/settings/ui/SettingsRouteSkeleton";
 import {
   content,
   group,
@@ -17,26 +23,9 @@ import {
   settingRow,
   settingRowText,
   versionText,
-} from "./-settings.css.ts";
-import { useSettingsStyleReady } from "./-useSettingsStyleReady";
-import {
-  SettingsHeaderSkeleton,
-  SettingsSkeleton,
-  SettingsSkeletonFrame,
-} from "./route-skeletons/-SettingsRouteSkeleton";
+} from "#/features/settings/ui/settings.css.ts";
 
 export const Route = createFileRoute("/settings")({
-  loader: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 120));
-  },
-  pendingMs: 0,
-  pendingMinMs: 180,
-  pendingComponent: () => (
-    <SettingsSkeletonFrame>
-      <SettingsHeaderSkeleton />
-      <SettingsSkeleton />
-    </SettingsSkeletonFrame>
-  ),
   component: SettingsPage,
 });
 
@@ -85,10 +74,8 @@ export function SettingsPage() {
             label={m.settings_language()}
             onClick={() => navigate({ to: "/settings/language" })}
           />
-          <SettingRow
-            label={m.settings_dark_mode()}
-            onClick={() => navigate({ to: "/settings/theme" })}
-          />
+          {/* Theme settings are hidden until the dark-mode rollout decision is made. */}
+          {/* <SettingRow label={m.settings_dark_mode()} /> */}
         </section>
 
         <section className={[group, groupGap].join(" ")}>
@@ -96,10 +83,7 @@ export function SettingsPage() {
           <SettingRow label={m.settings_terms()} />
           <SettingRow label={m.settings_privacy()} />
           {/* {isAuthenticated && ( */}
-          <SettingRow
-            label={m.settings_withdraw()}
-            onClick={() => navigate({ to: "/settings/withdraw" })}
-          />
+          <SettingRow label={m.settings_withdraw()} />
           {/* )} */}
         </section>
 
