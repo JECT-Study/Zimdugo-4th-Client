@@ -1,7 +1,8 @@
 import type { BottomTabKey } from "@repo/ui/tokens/icons";
 
 /**
- * 하단 탭 → 경로 매핑. 모듈 상수(안정적 레퍼런스)이므로 그대로 전달해도 리렌더를 유발하지 않는다.
+ * Bottom tab route map. Keep this object stable so the shell can pass it
+ * through without changing references on every render.
  */
 export const BOTTOM_TAB_LINKS: Record<BottomTabKey, string> = {
   home: "/",
@@ -16,7 +17,7 @@ const stripLocale = (pathname: string) =>
   pathname.replace(LOCALE_PREFIX, "") || "/";
 
 /**
- * 현재 경로에 해당하는 활성 탭을 계산한다. (로케일 프리픽스 방어적 제거)
+ * Calculates the active tab for the current route, ignoring locale prefixes.
  */
 export const getActiveBottomTab = (pathname: string): BottomTabKey => {
   const normalizedPath = stripLocale(pathname);
@@ -38,7 +39,18 @@ export const getActiveBottomTab = (pathname: string): BottomTabKey => {
 };
 
 /**
- * 하단 탭바를 노출할지 여부. (로그인 화면에서는 숨김)
+ * Bottom tab is hidden on full-screen flows that own the entire viewport.
  */
-export const shouldShowBottomTab = (pathname: string): boolean =>
-  stripLocale(pathname) !== "/login";
+export const shouldShowBottomTab = (pathname: string): boolean => {
+  const normalizedPath = stripLocale(pathname);
+
+  if (normalizedPath === "/login" || normalizedPath.startsWith("/login/")) {
+    return false;
+  }
+
+  if (normalizedPath === "/report" || normalizedPath.startsWith("/report/")) {
+    return false;
+  }
+
+  return true;
+};

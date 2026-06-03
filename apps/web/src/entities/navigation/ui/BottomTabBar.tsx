@@ -1,20 +1,17 @@
-import { BottomBarFrame } from "@repo/ui/components/layout/bottom-bar-frame";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
+import { BottomBarFrame } from "@repo/ui/components/layout/bottom-bar-frame";
 import { BottomMenuIcon, type BottomTabKey } from "@repo/ui/tokens/icons";
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  memo,
-  type CSSProperties,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type CSSProperties, memo, useEffect } from "react";
 import {
   type AppLanguage,
   useAppLanguageStore,
-} from "../../../shared/store/language.ts";
-import { SKELETON_SURFACE_STYLE } from "../../../shared/ui/skeleton-style.ts";
-import { getActiveBottomTab } from "./bottom-tab-routing.ts";
+} from "@/shared/store/language.ts";
+import { SKELETON_SURFACE_STYLE } from "@/shared/ui/skeleton-style.ts";
+import {
+  type StyleReadyProbe,
+  useStyleReadyProbe,
+} from "@/shared/ui/useStyleReadyProbe.ts";
 import {
   active,
   iconWrapper,
@@ -24,20 +21,11 @@ import {
   skeletonTabItem,
   tabItem,
 } from "./BottomTabBarIcon.css.ts";
+import { getActiveBottomTab } from "./bottom-tab-routing.ts";
 
 export type { BottomTabKey };
 
 const TAB_ORDER: BottomTabKey[] = ["home", "report", "my", "settings"];
-const STYLE_READY_CHECK_LIMIT = 20;
-
-const bottomTabStyleProbe: CSSProperties = {
-  position: "absolute",
-  width: 0,
-  height: 0,
-  overflow: "hidden",
-  pointerEvents: "none",
-  visibility: "hidden",
-};
 
 const skeletonFallbackStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 
@@ -83,6 +71,12 @@ const isBottomTabStyleReady = (element: HTMLElement) => {
   );
 };
 
+const BOTTOM_TAB_STYLE_PROBES: StyleReadyProbe[] = [
+  { className: tabItem, isReady: isBottomTabStyleReady },
+];
+
+let hasBottomTabStyleResolved = false;
+
 const DEFAULT_LABELS_BY_LANGUAGE = {
   ko: { home: "홈", report: "제보", my: "MY", settings: "설정" },
   en: { home: "Home", report: "Report", my: "MY", settings: "Settings" },
@@ -94,9 +88,9 @@ export type BottomTabLinks = Record<BottomTabKey, string>;
 
 export interface BottomTabBarProps {
   /**
-   * 활성 탭. 미지정(기본)이면 각 탭이 라우터 상태를 자체 구독한다.
-   * → 탭 이동 시 BottomTabBar 래퍼는 리렌더되지 않고, 상태가 바뀐 탭만 갱신된다.
-   * 값을 지정하면 제어형으로 동작한다(스토리북/테스트 등 라우터가 없거나 강제 지정이 필요한 경우).
+   * Controlled active tab for stories/tests. When omitted, each link subscribes
+   * to the router and only the previous/current active links update on route
+   * changes instead of rerendering the whole bar.
    */
   activeTab?: BottomTabKey;
   links: BottomTabLinks;
@@ -111,46 +105,23 @@ function BottomTabBarComponent({
   className,
 }: BottomTabBarProps) {
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
-  const probeRef = useRef<HTMLDivElement>(null);
-  const [isStyleReady, setIsStyleReady] = useState(false);
-  const [isStyleTimedOut, setIsStyleTimedOut] = useState(false);
+  const shouldProbeStyle = !hasBottomTabStyleResolved;
+  const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
+    enabled: shouldProbeStyle,
+    probes: BOTTOM_TAB_STYLE_PROBES,
+  });
   const defaultLabels = DEFAULT_LABELS_BY_LANGUAGE[appLanguage];
 
   const getLabel = (key: BottomTabKey) => labels?.[key] ?? defaultLabels[key];
 
   useEffect(() => {
-    let frameId = 0;
-    let checkCount = 0;
-
-    const checkStyleReady = () => {
-      const probe = probeRef.current;
-      if (!probe) return;
-
-      if (isBottomTabStyleReady(probe)) {
-        setIsStyleReady(true);
-        return;
-      }
-
-      if (checkCount >= STYLE_READY_CHECK_LIMIT) {
-        setIsStyleTimedOut(true);
-        setIsStyleReady(true);
-        return;
-      }
-
-      checkCount += 1;
-      frameId = window.requestAnimationFrame(checkStyleReady);
-    };
-
-    frameId = window.requestAnimationFrame(checkStyleReady);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, []);
+    if (shouldProbeStyle && isStyleReady) {
+      hasBottomTabStyleResolved = true;
+    }
+  }, [shouldProbeStyle, isStyleReady]);
 
   return (
     <BottomBarFrame className={className}>
-      <div ref={probeRef} className={tabItem} style={bottomTabStyleProbe} />
       {isStyleReady ? (
         TAB_ORDER.map((tabKey) => (
           <BottomTabBarLink
@@ -158,8 +129,9 @@ function BottomTabBarComponent({
             to={links[tabKey]}
             tabKey={tabKey}
             label={getLabel(tabKey)}
-            // 제어형(activeTab 지정)일 때만 override; 미지정이면 링크가 라우터를 자체 구독
-            activeOverride={activeTab === undefined ? undefined : activeTab === tabKey}
+            activeOverride={
+              activeTab === undefined ? undefined : activeTab === tabKey
+            }
             applyFallbackStyle={isStyleTimedOut}
           />
         ))
@@ -172,11 +144,7 @@ function BottomTabBarComponent({
 
 export const BottomTabBar = memo(BottomTabBarComponent);
 
-export function BottomTabBarSkeleton({
-  className,
-}: {
-  className?: string;
-}) {
+export function BottomTabBarSkeleton({ className }: { className?: string }) {
   return (
     <BottomBarFrame className={className}>
       <BottomTabBarSkeletonItems />
@@ -214,7 +182,7 @@ interface BottomTabBarLinkProps {
   to: string;
   tabKey: BottomTabKey;
   label: string;
-  /** 제어형 override. undefined면 라우터 상태를 자체 구독한다. */
+  /** Controlled active override. Undefined means the link subscribes to router state. */
   activeOverride?: boolean;
   applyFallbackStyle?: boolean;
 }
@@ -224,10 +192,7 @@ function BottomTabBarLinkComponent(props: BottomTabBarLinkProps) {
 
   if (activeOverride !== undefined) {
     return (
-      <BottomTabBarLinkControlled
-        {...rest}
-        activeOverride={activeOverride}
-      />
+      <BottomTabBarLinkControlled {...rest} activeOverride={activeOverride} />
     );
   }
 
@@ -267,21 +232,16 @@ function BottomTabBarLinkContent({
   );
 }
 
-/**
- * 제어형 탭 링크. 라우터를 구독하지 않는다.
- */
 function BottomTabBarLinkControlled({
   activeOverride,
   ...rest
 }: BottomTabBarLinkProps & { activeOverride: boolean }) {
-  return (
-    <BottomTabBarLinkContent {...rest} isActive={activeOverride} />
-  );
+  return <BottomTabBarLinkContent {...rest} isActive={activeOverride} />;
 }
 
 /**
- * 탭 1개. 라우터 상태를 "이 탭이 활성인지" boolean으로만 구독하므로,
- * 탭 이동 시 활성 상태가 바뀐 탭(이전/현재)만 리렌더되고 부모(BottomTabBar)는 리렌더되지 않는다.
+ * Each link selects only its own active state so route changes rerender the
+ * previous and current active links instead of the whole BottomTabBar.
  */
 function BottomTabBarLinkRouter(props: BottomTabBarLinkProps) {
   const routerActive = useRouterState({

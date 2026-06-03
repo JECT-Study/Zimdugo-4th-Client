@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { layoutScale } from "../../tokens/layout/layout.css.ts";
 import { frame } from "./BottomBarFrame.css.ts";
 
 export interface BottomBarFrameProps {
@@ -11,9 +12,9 @@ const fallbackFrameStyle = {
   left: "50%",
   bottom: 0,
   transform: "translateX(-50%)",
-  width: "min(100vw, 375px)",
-  maxWidth: "min(100vw, 375px)",
-  height: "60px",
+  width: `min(100vw, ${layoutScale.containerWidth})`,
+  maxWidth: `min(100vw, ${layoutScale.containerWidth})`,
+  height: layoutScale.bottomNav,
   display: "flex",
   alignItems: "stretch",
   justifyContent: "space-evenly",
