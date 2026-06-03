@@ -41,7 +41,11 @@ const getCookieLocale = (cookieHeader: string | null): AppLocale | null => {
     const [name, ...valueParts] = cookie.trim().split("=");
     if (name !== LOCALE_COOKIE_NAME) continue;
 
-    return normalizeLocale(decodeURIComponent(valueParts.join("=")));
+    try {
+      return normalizeLocale(decodeURIComponent(valueParts.join("=")));
+    } catch {
+      return null;
+    }
   }
 
   return null;
