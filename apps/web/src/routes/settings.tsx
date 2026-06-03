@@ -1,5 +1,6 @@
 import { m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
+import { Popup } from "@repo/ui/components/popup";
 import {
   createFileRoute,
   Outlet,
@@ -7,6 +8,8 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useState } from "react";
+import { authService } from "#/features/auth/sign-in/api/authService";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
   SettingsHeaderSkeleton,
@@ -24,6 +27,7 @@ import {
   settingRowText,
   versionText,
 } from "#/features/settings/ui/settings.css.ts";
+import { useAuthStore } from "#/shared/store/authStore";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -32,16 +36,29 @@ export const Route = createFileRoute("/settings")({
 export function SettingsPage() {
   // 1. Hooks
   const navigate = useNavigate();
+  const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   // 2. Derived values
   const normalizedPath =
     pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
   const isSettingsRoot = normalizedPath === "/settings";
   const { isStyleReady } = useSettingsStyleReady({ enabled: isSettingsRoot });
-  // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // 3. Event handlers
+  const handleConfirmWithdraw = async () => {
+    try {
+      await authService.withdraw();
+      navigate({ to: "/", replace: true });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Failed to withdraw account:", error);
+      }
+    }
+  };
 
   // 5. Early returns
   if (!isSettingsRoot) {
@@ -91,9 +108,12 @@ export function SettingsPage() {
             label={m.settings_privacy()}
             onClick={() => navigate({ to: "/settings/privacy" })}
           />
-          {/* {isAuthenticated && ( */}
-          <SettingRow label={m.settings_withdraw()} />
-          {/* )} */}
+          {isAuthenticated && (
+            <SettingRow
+              label={m.settings_withdraw()}
+              onClick={() => setIsWithdrawPopupOpen(true)}
+            />
+          )}
         </section>
 
         <p className={versionText}>
@@ -101,6 +121,23 @@ export function SettingsPage() {
           {import.meta.env.VITE_APP_VERSION || "1.0.0"}
         </p>
       </main>
+
+      <Popup
+        isOpen={isWithdrawPopupOpen}
+        onOpenChange={setIsWithdrawPopupOpen}
+        titleText={m.settings_withdraw_title()}
+        helperText={m.settings_withdraw_desc()}
+        primaryAction={{
+          label: m.settings_withdraw_confirm(),
+          onPress: () => {
+            void handleConfirmWithdraw();
+          },
+        }}
+        secondaryAction={{
+          label: m.settings_withdraw_cancel(),
+          onPress: () => setIsWithdrawPopupOpen(false),
+        }}
+      />
     </div>
   );
 }
