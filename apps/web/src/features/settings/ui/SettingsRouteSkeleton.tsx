@@ -2,19 +2,24 @@ import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { HeaderSkeleton } from "@repo/ui/components/layout/header";
 import type { CSSProperties, ReactNode } from "react";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
+import {
+  settingsLanguageSettingRowSkeletonInlineFallbackStyle,
+  settingsLanguageSkeletonContentInlineFallbackStyle,
+  settingsPageSkeletonInlineFallbackStyle,
+  settingsSettingRowSkeletonInlineFallbackStyle,
+  settingsSkeletonContentInlineFallbackStyle,
+} from "#/features/settings/ui/settings-page-fallback";
 import { header, page } from "./settings.css.ts";
-
-const settingsSkeletonPageFallbackStyle: CSSProperties = {
-  minHeight: "100dvh",
-  background: "#f5f5f5",
-  paddingTop: "calc(env(safe-area-inset-top, 0px) + 56px)",
-};
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 
 export function SettingsSkeletonFrame({ children }: { children: ReactNode }) {
   return (
-    <div className={page} style={settingsSkeletonPageFallbackStyle}>
+    <div
+      className={page}
+      style={settingsPageSkeletonInlineFallbackStyle}
+      aria-hidden="true"
+    >
       {children}
     </div>
   );
@@ -26,14 +31,7 @@ export function SettingsHeaderSkeleton() {
 
 export function SettingsSkeleton() {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "24px",
-        padding: "32px 16px 24px",
-      }}
-    >
+    <div style={settingsSkeletonContentInlineFallbackStyle}>
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         <SettingsSkeletonRow width={128} />
       </div>
@@ -57,27 +55,20 @@ export function SettingsSkeleton() {
 
 export function SettingsLanguageSkeleton() {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        padding: "40px 16px 16px",
-      }}
-    >
-      <SettingsLanguageSkeletonRow />
-      <SettingsLanguageSkeletonRow />
-      <SettingsLanguageSkeletonRow />
-      <SettingsLanguageSkeletonRow />
+    <div style={settingsLanguageSkeletonContentInlineFallbackStyle}>
+      <SettingsLanguageSkeletonRow width={112} />
+      <SettingsLanguageSkeletonRow width={128} />
+      <SettingsLanguageSkeletonRow width={116} />
+      <SettingsLanguageSkeletonRow width={120} />
     </div>
   );
 }
 
-function SettingsLanguageSkeletonRow() {
+function SettingsLanguageSkeletonRow({ width }: { width: number }) {
   return (
-    <div style={{ padding: "12px 0" }}>
+    <div style={settingsLanguageSettingRowSkeletonInlineFallbackStyle}>
       <Skeleton
-        width={112}
+        width={width}
         height={14}
         borderRadius={6}
         style={skeletonSurfaceStyle}
@@ -94,20 +85,7 @@ function SettingsSkeletonRow({
   width: number;
 }) {
   return (
-    <div
-      style={{
-        width: "100%",
-        minHeight: "48px",
-        padding: "0 16px",
-        border: "2px solid #e5e5e5",
-        borderRadius: "6px",
-        marginTop: attached ? "-2px" : 0,
-        boxSizing: "border-box",
-        display: "flex",
-        alignItems: "center",
-        background: "#f5f5f5",
-      }}
-    >
+    <div style={settingsSettingRowSkeletonInlineFallbackStyle({ attached })}>
       <Skeleton
         width={width}
         height={14}
