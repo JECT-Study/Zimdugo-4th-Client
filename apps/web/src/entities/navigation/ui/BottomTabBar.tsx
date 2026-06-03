@@ -115,10 +115,10 @@ function BottomTabBarComponent({
   const getLabel = (key: BottomTabKey) => labels?.[key] ?? defaultLabels[key];
 
   useEffect(() => {
-    if (shouldProbeStyle && isStyleReady) {
+    if (shouldProbeStyle && isStyleReady && !isStyleTimedOut) {
       hasBottomTabStyleResolved = true;
     }
-  }, [shouldProbeStyle, isStyleReady]);
+  }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
 
   return (
     <BottomBarFrame className={className}>
