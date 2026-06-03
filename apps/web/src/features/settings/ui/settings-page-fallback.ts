@@ -43,9 +43,9 @@ export const settingsLanguageSkeletonContentInlineFallbackStyle: CSSProperties =
   padding: "40px 16px 24px",
 };
 
-export function settingsSettingRowSkeletonInlineFallbackStyle(options?: {
+export const settingsSettingRowSkeletonInlineFallbackStyle = (options?: {
   attached?: boolean;
-}): CSSProperties {
+}): CSSProperties => {
   return {
     width: "100%",
     minHeight: SETTINGS_ROW_MIN_HEIGHT_PX,
@@ -58,7 +58,7 @@ export function settingsSettingRowSkeletonInlineFallbackStyle(options?: {
     alignItems: "center",
     background: SETTINGS_ROW_BG,
   };
-}
+};
 
 export const settingsLanguageSettingRowSkeletonInlineFallbackStyle: CSSProperties =
   {
