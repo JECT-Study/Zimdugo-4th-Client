@@ -58,7 +58,16 @@ const getAcceptLanguageLocale = (
 
   const candidates = acceptLanguageHeader
     .split(",")
-    .map((part) => part.trim().split(";")[0]);
+    .map((part) => {
+      const [tag, ...params] = part.trim().split(";");
+      const qParam = params.find((param) => param.trim().startsWith("q="));
+      const q = qParam ? Number.parseFloat(qParam.split("=")[1] ?? "1") : 1;
+
+      return { tag: tag.trim(), q };
+    })
+    .filter(({ q }) => !Number.isNaN(q) && q > 0)
+    .sort((a, b) => b.q - a.q)
+    .map(({ tag }) => tag);
 
   for (const candidate of candidates) {
     const locale = normalizeLocale(candidate);
