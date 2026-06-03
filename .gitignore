@@ -31,3 +31,4 @@ docs/ai-workflow.md
 # Context notes: local only; never commit (see AGENTS.md Context Mode)
 docs/context/*
 !docs/context/.gitkeep
+docs/troubleshooting/*

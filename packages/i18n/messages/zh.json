@@ -1,1 +1,12 @@
-{"$schema": "https://inlang.com/schema/message-format", "hello": "你好"}
+{
+  "$schema": "https://inlang.com/schema/message-format",
+  "hello": "你好",
+  "settings_title": "设置",
+  "settings_language": "语言设置",
+  "settings_admin_mode": "管理员模式",
+  "settings_notice": "服务公告",
+  "settings_terms": "服务条款",
+  "settings_privacy": "隐私政策",
+  "settings_withdraw": "注销账户",
+  "settings_version_prefix": "服务版本"
+}

@@ -4,4 +4,3 @@ export {
   getLocale as languageTag,
   setLocale as setLanguageTag,
 } from "./paraglide/runtime.js";
-export * from "./paraglide/server.js";

@@ -1,10 +1,13 @@
-import type { StorybookConfig } from "@storybook/react-vite";
-import { paraglideVitePlugin } from "@inlang/paraglide-js";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { StorybookConfig } from "@storybook/react-vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 
-const storybookDir = path.dirname(fileURLToPath(import.meta.url));
+const webI18nEntry = fileURLToPath(
+  new URL("../../web/src/i18n.ts", import.meta.url),
+);
+const webI18nServerEntry = fileURLToPath(
+  new URL("../../web/src/i18n-server.ts", import.meta.url),
+);
 
 const config: StorybookConfig = {
   stories: [
@@ -17,30 +20,23 @@ const config: StorybookConfig = {
     options: {},
   },
   viteFinal: async (config) => {
-    const existingAlias = config.resolve?.alias ?? {};
-    const i18nAlias = {
-      find: "@repo/i18n",
-      replacement: path.resolve(storybookDir, "i18n.ts"),
-    };
+    config.plugins = [...(config.plugins ?? []), vanillaExtractPlugin()];
+    const alias = config.resolve?.alias;
+    const aliases = Array.isArray(alias)
+      ? alias
+      : Object.entries(alias ?? {}).map(([find, replacement]) => ({
+          find,
+          replacement,
+        }));
 
     config.resolve = {
       ...config.resolve,
-      alias: Array.isArray(existingAlias)
-        ? [...existingAlias, i18nAlias]
-        : { ...existingAlias, "@repo/i18n": i18nAlias.replacement },
+      alias: [
+        { find: "@repo/i18n/server", replacement: webI18nServerEntry },
+        { find: "@repo/i18n", replacement: webI18nEntry },
+        ...aliases,
+      ],
     };
-    config.plugins = [
-      ...(config.plugins ?? []),
-      paraglideVitePlugin({
-        project: path.resolve(
-          storybookDir,
-          "../../../packages/i18n/project.inlang",
-        ),
-        outdir: path.resolve(storybookDir, "paraglide"),
-        outputStructure: "message-modules",
-      }),
-      vanillaExtractPlugin(),
-    ];
     return config;
   },
 };

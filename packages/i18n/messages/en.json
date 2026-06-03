@@ -1,1 +1,12 @@
-{"$schema": "https://inlang.com/schema/message-format", "hello": "Hello"}
+{
+  "$schema": "https://inlang.com/schema/message-format",
+  "hello": "Hello",
+  "settings_title": "Settings",
+  "settings_language": "Language",
+  "settings_admin_mode": "Admin Mode",
+  "settings_notice": "Service Notices",
+  "settings_terms": "Terms of Service",
+  "settings_privacy": "Privacy Policy",
+  "settings_withdraw": "Delete Account",
+  "settings_version_prefix": "Version"
+}

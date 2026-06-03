@@ -11,6 +11,11 @@
       "import": "./src/index.ts",
       "default": "./dist/index.js"
     },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./src/server.ts",
+      "default": "./dist/server.js"
+    },
     "./paraglide/*": {
       "types": "./src/paraglide/*.d.ts",
       "import": "./src/paraglide/*.js",

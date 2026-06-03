@@ -1,1 +1,12 @@
-{"$schema": "https://inlang.com/schema/message-format", "hello": "こんにちは"}
+{
+  "$schema": "https://inlang.com/schema/message-format",
+  "hello": "こんにちは",
+  "settings_title": "設定",
+  "settings_language": "言語設定",
+  "settings_admin_mode": "管理者モード",
+  "settings_notice": "サービスのお知らせ",
+  "settings_terms": "利用規約",
+  "settings_privacy": "プライバシーポリシー",
+  "settings_withdraw": "退会",
+  "settings_version_prefix": "サービスバージョン"
+}

@@ -1,4 +1,4 @@
-import { paraglideMiddleware } from "@repo/i18n";
+import { paraglideMiddleware } from "@repo/i18n/server";
 import handler from "@tanstack/react-start/server-entry";
 export default {
   fetch(req: Request): Promise<Response> {
