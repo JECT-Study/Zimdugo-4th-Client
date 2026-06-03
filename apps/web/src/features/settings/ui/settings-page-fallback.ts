@@ -61,14 +61,4 @@ export const settingsSettingRowSkeletonInlineFallbackStyle = (options?: {
 };
 
 export const settingsLanguageSettingRowSkeletonInlineFallbackStyle: CSSProperties =
-  {
-    width: "100%",
-    minHeight: SETTINGS_ROW_MIN_HEIGHT_PX,
-    padding: `0 ${SETTINGS_ROW_PADDING_X_PX}px`,
-    border: `2px solid ${SETTINGS_ROW_BORDER}`,
-    borderRadius: SETTINGS_ROW_BORDER_RADIUS_PX,
-    boxSizing: "border-box",
-    display: "flex",
-    alignItems: "center",
-    background: SETTINGS_ROW_BG,
-  };
+  settingsSettingRowSkeletonInlineFallbackStyle();
