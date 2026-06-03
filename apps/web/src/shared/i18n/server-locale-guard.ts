@@ -7,7 +7,7 @@ import {
   normalizeLocale,
 } from "#/shared/i18n/locales";
 
-export const isDocumentRequest = (req: Request): boolean => {
+const isDocumentRequest = (req: Request): boolean => {
   if (!["GET", "HEAD"].includes(req.method)) return false;
 
   const url = new URL(req.url);
@@ -28,14 +28,12 @@ export const isDocumentRequest = (req: Request): boolean => {
   return req.headers.get("Accept")?.includes("text/html") ?? false;
 };
 
-export const getPathLocale = (pathname: string): AppLocale | null => {
+const getPathLocale = (pathname: string): AppLocale | null => {
   const firstSegment = pathname.split("/").filter(Boolean)[0]?.toLowerCase();
   return firstSegment && isAppLocale(firstSegment) ? firstSegment : null;
 };
 
-export const getCookieLocale = (
-  cookieHeader: string | null,
-): AppLocale | null => {
+const getCookieLocale = (cookieHeader: string | null): AppLocale | null => {
   if (!cookieHeader) return null;
 
   const cookies = cookieHeader.split(";");
@@ -49,7 +47,7 @@ export const getCookieLocale = (
   return null;
 };
 
-export const getAcceptLanguageLocale = (
+const getAcceptLanguageLocale = (
   acceptLanguageHeader: string | null,
 ): AppLocale | null => {
   if (!acceptLanguageHeader) return null;
@@ -66,7 +64,7 @@ export const getAcceptLanguageLocale = (
   return null;
 };
 
-export const getLocalizedPath = (url: URL, locale: AppLocale): string => {
+const getLocalizedPath = (url: URL, locale: AppLocale): string => {
   if (locale === BASE_LOCALE) {
     return `${url.pathname}${url.search}`;
   }
@@ -74,7 +72,7 @@ export const getLocalizedPath = (url: URL, locale: AppLocale): string => {
   return `/${locale}${url.pathname === "/" ? "" : url.pathname}${url.search}`;
 };
 
-export const getLocaleCookie = (locale: AppLocale): string => {
+const getLocaleCookie = (locale: AppLocale): string => {
   return `${LOCALE_COOKIE_NAME}=${locale}; Path=/; Max-Age=${LOCALE_COOKIE_MAX_AGE}; SameSite=Lax`;
 };
 
@@ -92,10 +90,7 @@ const getRequestCookieHeader = (
   return [...preservedCookies, `${LOCALE_COOKIE_NAME}=${locale}`].join("; ");
 };
 
-export const withLocaleCookieHeader = (
-  req: Request,
-  locale: AppLocale,
-): Request => {
+const withLocaleCookieHeader = (req: Request, locale: AppLocale): Request => {
   const headers = new Headers(req.headers);
   headers.set("Cookie", getRequestCookieHeader(headers.get("Cookie"), locale));
 
@@ -109,7 +104,7 @@ export const withLocaleCookieHeader = (
   return new Request(req.url, init);
 };
 
-export const withLocaleCookieResponse = (
+const withLocaleCookieResponse = (
   response: Response,
   locale: AppLocale,
 ): Response => {
@@ -125,10 +120,7 @@ export const withLocaleCookieResponse = (
   });
 };
 
-export const getLocaleRedirectResponse = (
-  url: URL,
-  locale: AppLocale,
-): Response => {
+const getLocaleRedirectResponse = (url: URL, locale: AppLocale): Response => {
   return new Response(null, {
     status: 307,
     headers: {
