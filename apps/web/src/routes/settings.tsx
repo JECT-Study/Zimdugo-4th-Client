@@ -79,9 +79,18 @@ export function SettingsPage() {
         </section>
 
         <section className={[group, groupGap].join(" ")}>
-          <SettingRow label={m.settings_notice()} />
-          <SettingRow label={m.settings_terms()} />
-          <SettingRow label={m.settings_privacy()} />
+          <SettingRow
+            label={m.settings_notice()}
+            onClick={() => navigate({ to: "/settings/notices" })}
+          />
+          <SettingRow
+            label={m.settings_terms()}
+            onClick={() => navigate({ to: "/settings/terms" })}
+          />
+          <SettingRow
+            label={m.settings_privacy()}
+            onClick={() => navigate({ to: "/settings/privacy" })}
+          />
           {/* {isAuthenticated && ( */}
           <SettingRow label={m.settings_withdraw()} />
           {/* )} */}

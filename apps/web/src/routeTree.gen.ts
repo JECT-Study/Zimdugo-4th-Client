@@ -14,6 +14,9 @@ import { Route as ReportRouteImport } from './routes/report'
 import { Route as MyRouteImport } from './routes/my'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
+import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
+import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
 import { Route as SettingsLanguageRouteImport } from './routes/settings.language'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -41,6 +44,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsTermsRoute = SettingsTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsPrivacyRoute = SettingsPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsNoticesRoute = SettingsNoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsLanguageRoute = SettingsLanguageRouteImport.update({
   id: '/language',
   path: '/language',
@@ -54,6 +72,9 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/settings/language': typeof SettingsLanguageRoute
+  '/settings/notices': typeof SettingsNoticesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
+  '/settings/terms': typeof SettingsTermsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +83,9 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/settings/language': typeof SettingsLanguageRoute
+  '/settings/notices': typeof SettingsNoticesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
+  '/settings/terms': typeof SettingsTermsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +95,9 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/settings/language': typeof SettingsLanguageRoute
+  '/settings/notices': typeof SettingsNoticesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
+  '/settings/terms': typeof SettingsTermsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +108,20 @@ export interface FileRouteTypes {
     | '/report'
     | '/settings'
     | '/settings/language'
+    | '/settings/notices'
+    | '/settings/privacy'
+    | '/settings/terms'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/my' | '/report' | '/settings' | '/settings/language'
+  to:
+    | '/'
+    | '/login'
+    | '/my'
+    | '/report'
+    | '/settings'
+    | '/settings/language'
+    | '/settings/notices'
+    | '/settings/privacy'
+    | '/settings/terms'
   id:
     | '__root__'
     | '/'
@@ -91,6 +130,9 @@ export interface FileRouteTypes {
     | '/report'
     | '/settings'
     | '/settings/language'
+    | '/settings/notices'
+    | '/settings/privacy'
+    | '/settings/terms'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -138,6 +180,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/terms': {
+      id: '/settings/terms'
+      path: '/terms'
+      fullPath: '/settings/terms'
+      preLoaderRoute: typeof SettingsTermsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/privacy': {
+      id: '/settings/privacy'
+      path: '/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof SettingsPrivacyRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/notices': {
+      id: '/settings/notices'
+      path: '/notices'
+      fullPath: '/settings/notices'
+      preLoaderRoute: typeof SettingsNoticesRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/language': {
       id: '/settings/language'
       path: '/language'
@@ -150,10 +213,16 @@ declare module '@tanstack/react-router' {
 
 interface SettingsRouteChildren {
   SettingsLanguageRoute: typeof SettingsLanguageRoute
+  SettingsNoticesRoute: typeof SettingsNoticesRoute
+  SettingsPrivacyRoute: typeof SettingsPrivacyRoute
+  SettingsTermsRoute: typeof SettingsTermsRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsLanguageRoute: SettingsLanguageRoute,
+  SettingsNoticesRoute: SettingsNoticesRoute,
+  SettingsPrivacyRoute: SettingsPrivacyRoute,
+  SettingsTermsRoute: SettingsTermsRoute,
 }
 
 const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
