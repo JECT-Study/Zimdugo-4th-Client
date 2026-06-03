@@ -21,7 +21,9 @@ export function useStyleReadyProbe({
   probes,
   checkLimit = DEFAULT_STYLE_READY_CHECK_LIMIT,
 }: UseStyleReadyProbeOptions) {
-  const [isStyleReady, setIsStyleReady] = useState(!enabled);
+  const [isStyleReady, setIsStyleReady] = useState(
+    !enabled || probes.length === 0,
+  );
   const [isStyleTimedOut, setIsStyleTimedOut] = useState(false);
 
   useEffect(() => {
