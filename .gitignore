@@ -17,6 +17,12 @@ todos.json
 # storybook
 *storybook.log
 **/storybook-static/
+
+# Paraglide generated output
+apps/web/src/paraglide/
+apps/admin/src/paraglide/
+apps/storybook/.storybook/paraglide/
+
 # Added by code-review-graph
 .code-review-graph/
 
