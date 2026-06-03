@@ -19,7 +19,7 @@ import {
   settingRowText,
 } from "#/features/settings/ui/settings.css.ts";
 import {
-  type AppLanguage,
+  APP_LANGUAGES,
   appLanguageLabelMap,
   useAppLanguageStore,
 } from "#/shared/store/language";
@@ -27,8 +27,6 @@ import {
 export const Route = createFileRoute("/settings/language")({
   component: SettingsLanguagePage,
 });
-
-const languageOrder: AppLanguage[] = ["ko", "en", "ja", "zh"];
 
 function SettingsLanguagePage() {
   const navigate = useNavigate();
@@ -57,7 +55,7 @@ function SettingsLanguagePage() {
 
       <main className={[content, languageContent].join(" ")}>
         <section className={languageGroup}>
-          {languageOrder.map((language) => {
+          {APP_LANGUAGES.map((language) => {
             const isCurrent = language === appLanguage;
             return (
               <button

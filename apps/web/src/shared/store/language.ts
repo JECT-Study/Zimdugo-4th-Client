@@ -2,13 +2,14 @@ import { setLanguageTag } from "@repo/i18n";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export type AppLanguage = "ko" | "en" | "ja" | "zh";
+export const APP_LANGUAGES = ["ko", "en", "ja", "zh"] as const;
+
+export type AppLanguage = (typeof APP_LANGUAGES)[number];
 
 const APP_LANGUAGE_STORAGE_KEY = "app-language";
 const APP_LANGUAGE_COOKIE_KEY = "PARAGLIDE_LOCALE";
 const APP_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
-const APP_LANGUAGES: readonly AppLanguage[] = ["ko", "en", "ja", "zh"];
+const DEFAULT_APP_LANGUAGE: AppLanguage = "ko";
 
 const normalizeLanguage = (value?: string | null): AppLanguage | null => {
   if (!value) return null;
@@ -59,7 +60,7 @@ interface AppLanguageState {
 export const useAppLanguageStore = create<AppLanguageState>()(
   persist(
     (set, get) => ({
-      appLanguage: "ko",
+      appLanguage: DEFAULT_APP_LANGUAGE,
       hasInitialized: false,
       hasHydrated: false,
       initializeLanguage: (urlLanguage) => {
@@ -71,7 +72,10 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         const fallbackUrlLanguage = normalizeLanguage(urlLanguage);
         const fallbackSystemLanguage = getSystemLanguage();
         const nextLanguage =
-          fallbackUrlLanguage ?? hydratedLanguage ?? fallbackSystemLanguage ?? "ko";
+          fallbackUrlLanguage ??
+          hydratedLanguage ??
+          fallbackSystemLanguage ??
+          DEFAULT_APP_LANGUAGE;
 
         set({
           appLanguage: nextLanguage,
@@ -113,8 +117,8 @@ export const useAppLanguageStore = create<AppLanguageState>()(
 );
 
 export const appLanguageLabelMap: Record<AppLanguage, string> = {
-  ko: "한국어",
+  ko: "\uD55C\uAD6D\uC5B4",
   en: "English",
-  ja: "日本語",
-  zh: "中文",
+  ja: "\u65E5\u672C\u8A9E",
+  zh: "\u4E2D\u6587",
 };
