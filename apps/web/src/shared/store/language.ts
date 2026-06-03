@@ -80,13 +80,11 @@ export const useAppLanguageStore = create<AppLanguageState>()(
       hasInitialized: false,
       hasHydrated: false,
       initializeLanguage: (urlLanguage) => {
-        const fallbackUrlLanguage = normalizeLanguage(urlLanguage);
+        const fallbackUrlLanguage =
+          normalizeLanguage(urlLanguage) ?? DEFAULT_APP_LANGUAGE;
 
         if (get().hasInitialized) {
-          if (
-            fallbackUrlLanguage &&
-            fallbackUrlLanguage !== get().appLanguage
-          ) {
+          if (fallbackUrlLanguage !== get().appLanguage) {
             set({ appLanguage: fallbackUrlLanguage });
             setLanguageTag(fallbackUrlLanguage);
             setLanguageCookie(fallbackUrlLanguage);

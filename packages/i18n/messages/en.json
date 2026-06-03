@@ -19,6 +19,7 @@
   "settings_withdraw_desc": "All your information will be deleted and cannot be recovered.",
   "settings_withdraw_confirm": "Delete",
   "settings_withdraw_cancel": "Cancel",
+  "settings_withdraw_failed": "Account withdrawal failed. Please try again.",
   "search_recent_title": "Recent Searches",
   "search_delete_all": "Delete All",
   "search_no_recent": "No recent searches.",

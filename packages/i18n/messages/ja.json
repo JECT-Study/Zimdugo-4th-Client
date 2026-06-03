@@ -19,6 +19,7 @@
   "settings_withdraw_desc": "退会するとすべての情報が削除され、復元できません。",
   "settings_withdraw_confirm": "退会する",
   "settings_withdraw_cancel": "キャンセル",
+  "settings_withdraw_failed": "退会処理に失敗しました。もう一度お試しください。",
   "search_recent_title": "最近の検索",
   "search_delete_all": "すべて削除",
   "search_no_recent": "最近の検索履歴はありません。",

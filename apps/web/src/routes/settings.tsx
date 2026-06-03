@@ -57,6 +57,7 @@ export function SettingsPage() {
       if (import.meta.env.DEV) {
         console.error("Failed to withdraw account:", error);
       }
+      alert(m.settings_withdraw_failed());
     }
   };
 
