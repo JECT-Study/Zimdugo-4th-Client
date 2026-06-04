@@ -71,11 +71,22 @@ export const languageSettingRow = style({
   minHeight: "48px",
   display: "flex",
   alignItems: "center",
+  justifyContent: "space-between",
+  gap: vars.spacing[8],
   padding: `0 ${vars.spacing[16]}`,
   border: `2px solid ${vars.color.border.default}`,
   borderRadius: vars.radius.scale[6],
   boxSizing: "border-box",
   backgroundColor: vars.color.bg.default,
+});
+
+export const languageSettingRowCheck = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  flexShrink: 0,
 });
 
 export const settingRowSelected = style({

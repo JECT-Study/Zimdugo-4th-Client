@@ -1,9 +1,4 @@
-import {
-  deLocalizeHref,
-  extractLocaleFromUrl,
-  localizeHref,
-  setLanguageTag,
-} from "@repo/i18n";
+import { setLanguageTag } from "@repo/i18n";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -21,18 +16,44 @@ export type AppLanguage = AppLocale;
 
 const APP_LANGUAGE_STORAGE_KEY = "app-language";
 const DEFAULT_APP_LANGUAGE: AppLanguage = BASE_LOCALE;
+const LOCALE_PATH_PREFIX = /^\/(?:ko|en|ja|zh)(?=\/|$)/;
 
 export const normalizeLanguage = normalizeLocale;
 
 export const getUrlLanguage = (href: string): AppLanguage | null => {
-  return normalizeLanguage(extractLocaleFromUrl(href));
+  const pathname = href.startsWith("http")
+    ? new URL(href).pathname
+    : (href.split(/[?#]/)[0] ?? href);
+  const firstSegment = pathname.split("/").filter(Boolean)[0];
+
+  return normalizeLanguage(firstSegment);
 };
 
 export const getLocalizedHref = (
   href: string,
   language: AppLanguage,
 ): string => {
-  return localizeHref(deLocalizeHref(href), { locale: language });
+  const hashIndex = href.indexOf("#");
+  const searchIndex = href.indexOf("?");
+  const pathnameEnd =
+    searchIndex === -1
+      ? hashIndex === -1
+        ? href.length
+        : hashIndex
+      : searchIndex;
+  const pathname = href.slice(0, pathnameEnd);
+  const search =
+    searchIndex === -1
+      ? ""
+      : href.slice(searchIndex, hashIndex === -1 ? href.length : hashIndex);
+  const hash = hashIndex === -1 ? "" : href.slice(hashIndex);
+  const basePathname = pathname.replace(LOCALE_PATH_PREFIX, "") || "/";
+  const localizedPathname =
+    language === DEFAULT_APP_LANGUAGE
+      ? basePathname
+      : `/${language}${basePathname === "/" ? "" : basePathname}`;
+
+  return `${localizedPathname}${search}${hash}`;
 };
 
 const getSystemLanguage = (): AppLanguage | null => {
@@ -81,7 +102,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
           const nextLanguage = urlLanguage ?? DEFAULT_APP_LANGUAGE;
           if (nextLanguage !== get().appLanguage) {
             set({ appLanguage: nextLanguage });
-            setLanguageTag(nextLanguage);
+            setLanguageTag(nextLanguage, { reload: false });
             setLanguageCookie(nextLanguage);
           }
           return;
@@ -99,7 +120,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
           appLanguage: nextLanguage,
           hasInitialized: true,
         });
-        setLanguageTag(nextLanguage);
+        setLanguageTag(nextLanguage, { reload: false });
         setLanguageCookie(nextLanguage);
       },
       setAppLanguage: (language) => {
@@ -108,7 +129,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         }
 
         set({ appLanguage: language, hasInitialized: true });
-        setLanguageTag(language);
+        setLanguageTag(language, { reload: false });
         setLanguageCookie(language);
       },
       markHydrated: () => {
