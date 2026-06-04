@@ -1,5 +1,6 @@
 import { m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
+import { IconCheck24 } from "@repo/ui/tokens/icons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
@@ -13,6 +14,7 @@ import {
   languageContent,
   languageGroup,
   languageSettingRow,
+  languageSettingRowCheck,
   page,
   rowButton,
   settingRowSelected,
@@ -46,12 +48,17 @@ function SettingsLanguagePage() {
   const handleSelectLanguage = (language: AppLanguage) => {
     setAppLanguage(language);
 
-    const localizedHref = getLocalizedHref(
-      `${window.location.pathname}${window.location.search}${window.location.hash}`,
-      language,
-    );
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const localizedHref = getLocalizedHref(currentHref, language);
 
-    navigate({ href: localizedHref, replace: true });
+    if (localizedHref !== currentHref) {
+      window.location.assign(localizedHref);
+      return;
+    }
+
+    if (appLanguage !== language) {
+      window.location.reload();
+    }
   };
 
   if (!isStyleReady) {
@@ -116,6 +123,11 @@ function SettingsLanguagePage() {
                 <span className={settingRowText}>
                   {appLanguageLabelMap[language]}
                 </span>
+                {isCurrent ? (
+                  <span className={languageSettingRowCheck}>
+                    <IconCheck24 />
+                  </span>
+                ) : null}
               </button>
             );
           })}
