@@ -19,6 +19,12 @@ import {
   settingRowText,
 } from "#/features/settings/ui/settings.css.ts";
 import {
+  settingsLanguageContentInlineFallbackStyle,
+  settingsLanguageGroupInlineFallbackStyle,
+  settingsLanguageSettingRowInlineFallbackStyle,
+  settingsPageInlineFallbackStyle,
+} from "#/features/settings/ui/settings-page-fallback";
+import {
   APP_LANGUAGES,
   type AppLanguage,
   appLanguageLabelMap,
@@ -34,7 +40,8 @@ function SettingsLanguagePage() {
   const navigate = useNavigate();
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
-  const { isStyleReady } = useSettingsStyleReady();
+  const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady();
+  const applyFallbackStyle = isStyleTimedOut;
 
   const handleSelectLanguage = (language: AppLanguage) => {
     setAppLanguage(language);
@@ -57,7 +64,10 @@ function SettingsLanguagePage() {
   }
 
   return (
-    <div className={page}>
+    <div
+      className={page}
+      style={applyFallbackStyle ? settingsPageInlineFallbackStyle : undefined}
+    >
       <Header
         className={header}
         leading="back"
@@ -66,8 +76,22 @@ function SettingsLanguagePage() {
         onBack={() => navigate({ to: "/settings" })}
       />
 
-      <main className={[content, languageContent].join(" ")}>
-        <section className={languageGroup}>
+      <main
+        className={[content, languageContent].join(" ")}
+        style={
+          applyFallbackStyle
+            ? settingsLanguageContentInlineFallbackStyle
+            : undefined
+        }
+      >
+        <section
+          className={languageGroup}
+          style={
+            applyFallbackStyle
+              ? settingsLanguageGroupInlineFallbackStyle
+              : undefined
+          }
+        >
           {APP_LANGUAGES.map((language) => {
             const isCurrent = language === appLanguage;
             return (
@@ -81,6 +105,11 @@ function SettingsLanguagePage() {
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                style={
+                  applyFallbackStyle
+                    ? settingsLanguageSettingRowInlineFallbackStyle
+                    : undefined
+                }
                 aria-pressed={isCurrent}
                 onClick={() => handleSelectLanguage(language)}
               >

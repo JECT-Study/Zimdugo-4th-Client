@@ -1,14 +1,14 @@
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { HeaderSkeleton } from "@repo/ui/components/layout/header";
 import type { CSSProperties, ReactNode } from "react";
-import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
-  settingsLanguageSettingRowSkeletonInlineFallbackStyle,
+  settingsLanguageSettingRowInlineFallbackStyle,
   settingsLanguageSkeletonContentInlineFallbackStyle,
   settingsPageSkeletonInlineFallbackStyle,
-  settingsSettingRowSkeletonInlineFallbackStyle,
+  settingsSettingRowInlineFallbackStyle,
   settingsSkeletonContentInlineFallbackStyle,
 } from "#/features/settings/ui/settings-page-fallback";
+import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import { header, page } from "./settings.css.ts";
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
@@ -66,7 +66,7 @@ export function SettingsLanguageSkeleton() {
 
 function SettingsLanguageSkeletonRow({ width }: { width: number }) {
   return (
-    <div style={settingsLanguageSettingRowSkeletonInlineFallbackStyle}>
+    <div style={settingsLanguageSettingRowInlineFallbackStyle}>
       <Skeleton
         width={width}
         height={14}
@@ -85,7 +85,7 @@ function SettingsSkeletonRow({
   width: number;
 }) {
   return (
-    <div style={settingsSettingRowSkeletonInlineFallbackStyle({ attached })}>
+    <div style={settingsSettingRowInlineFallbackStyle({ attached })}>
       <Skeleton
         width={width}
         height={14}

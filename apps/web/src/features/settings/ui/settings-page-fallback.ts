@@ -1,11 +1,11 @@
-import type { CSSProperties } from "react";
 import { color } from "@repo/ui/tokens/color/color.css";
 import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { radius } from "@repo/ui/tokens/radius/radius.css";
 import { spacing } from "@repo/ui/tokens/spacing/spacing.css";
+import type { CSSProperties } from "react";
 
 /**
- * `settings.css.ts` vars와 동기화 — vanilla-extract CSS 청크 도착 전 인라인 스타일에만 사용한다.
+ * `settings.css.ts` vars와 동기화 — vanilla-extract CSS 청크 도착 전·timeout 인라인 스타일에만 사용한다.
  */
 export const SETTINGS_PAGE_BG = color.bg.default;
 export const SETTINGS_ROW_BG = color.bg.default;
@@ -23,29 +23,59 @@ const settingsContentLayoutFallbackStyle: CSSProperties = {
   boxSizing: "border-box",
 };
 
-export const settingsPageSkeletonInlineFallbackStyle: CSSProperties = {
+export const settingsPageInlineFallbackStyle: CSSProperties = {
   minHeight: "100dvh",
   background: SETTINGS_PAGE_BG,
   paddingTop: `calc(env(safe-area-inset-top, 0px) + ${SETTINGS_HEADER_HEIGHT})`,
 };
 
-export const settingsSkeletonContentInlineFallbackStyle: CSSProperties = {
+/** 스켈레톤 전용 (클릭 차단) */
+export const settingsPageSkeletonInlineFallbackStyle: CSSProperties = {
+  ...settingsPageInlineFallbackStyle,
+  pointerEvents: "none",
+};
+
+export const settingsContentInlineFallbackStyle: CSSProperties = {
   ...settingsContentLayoutFallbackStyle,
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
   padding: "32px 16px 24px",
 };
 
-export const settingsLanguageSkeletonContentInlineFallbackStyle: CSSProperties = {
+export const settingsLanguageContentInlineFallbackStyle: CSSProperties = {
   ...settingsContentLayoutFallbackStyle,
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
   padding: "40px 16px 24px",
 };
 
-export const settingsSettingRowSkeletonInlineFallbackStyle = (options?: {
+export const settingsGroupInlineFallbackStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+};
+
+export const settingsGroupGapInlineFallbackStyle: CSSProperties = {
+  marginTop: "32px",
+};
+
+export const settingsLanguageGroupInlineFallbackStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "24px",
+};
+
+export const settingsSkeletonContentInlineFallbackStyle: CSSProperties = {
+  ...settingsContentInlineFallbackStyle,
+  display: "flex",
+  flexDirection: "column",
+  gap: "24px",
+};
+
+export const settingsLanguageSkeletonContentInlineFallbackStyle: CSSProperties =
+  {
+    ...settingsLanguageContentInlineFallbackStyle,
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px",
+  };
+
+export const settingsSettingRowInlineFallbackStyle = (options?: {
   attached?: boolean;
 }): CSSProperties => {
   return {
@@ -62,5 +92,5 @@ export const settingsSettingRowSkeletonInlineFallbackStyle = (options?: {
   };
 };
 
-export const settingsLanguageSettingRowSkeletonInlineFallbackStyle: CSSProperties =
-  settingsSettingRowSkeletonInlineFallbackStyle();
+export const settingsLanguageSettingRowInlineFallbackStyle: CSSProperties =
+  settingsSettingRowInlineFallbackStyle();

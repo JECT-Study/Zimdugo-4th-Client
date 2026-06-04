@@ -27,6 +27,13 @@ import {
   settingRowText,
   versionText,
 } from "#/features/settings/ui/settings.css.ts";
+import {
+  settingsContentInlineFallbackStyle,
+  settingsGroupGapInlineFallbackStyle,
+  settingsGroupInlineFallbackStyle,
+  settingsPageInlineFallbackStyle,
+  settingsSettingRowInlineFallbackStyle,
+} from "#/features/settings/ui/settings-page-fallback";
 import { useAuthStore } from "#/shared/store/authStore";
 
 export const Route = createFileRoute("/settings")({
@@ -46,7 +53,10 @@ export function SettingsPage() {
   const normalizedPath =
     pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
   const isSettingsRoot = normalizedPath === "/settings";
-  const { isStyleReady } = useSettingsStyleReady({ enabled: isSettingsRoot });
+  const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady({
+    enabled: isSettingsRoot,
+  });
+  const applyFallbackStyle = isStyleTimedOut;
 
   // 3. Event handlers
   const handleConfirmWithdraw = async () => {
@@ -77,7 +87,10 @@ export function SettingsPage() {
 
   // 6. JSX return
   return (
-    <div className={page}>
+    <div
+      className={page}
+      style={applyFallbackStyle ? settingsPageInlineFallbackStyle : undefined}
+    >
       <Header
         className={header}
         leading="back"
@@ -86,33 +99,61 @@ export function SettingsPage() {
         onBack={() => navigate({ to: "/" })}
       />
 
-      <main className={content}>
-        <section className={group}>
+      <main
+        className={content}
+        style={
+          applyFallbackStyle ? settingsContentInlineFallbackStyle : undefined
+        }
+      >
+        <section
+          className={group}
+          style={
+            applyFallbackStyle ? settingsGroupInlineFallbackStyle : undefined
+          }
+        >
           <SettingRow
             label={m.settings_language()}
             onClick={() => navigate({ to: "/settings/language" })}
+            applyFallbackStyle={applyFallbackStyle}
           />
           {/* Theme settings are hidden until the dark-mode rollout decision is made. */}
           {/* <SettingRow label={m.settings_dark_mode()} /> */}
         </section>
 
-        <section className={[group, groupGap].join(" ")}>
+        <section
+          className={[group, groupGap].join(" ")}
+          style={
+            applyFallbackStyle
+              ? {
+                  ...settingsGroupInlineFallbackStyle,
+                  ...settingsGroupGapInlineFallbackStyle,
+                }
+              : undefined
+          }
+        >
           <SettingRow
             label={m.settings_notice()}
             onClick={() => navigate({ to: "/settings/notices" })}
+            applyFallbackStyle={applyFallbackStyle}
           />
           <SettingRow
             label={m.settings_terms()}
             onClick={() => navigate({ to: "/settings/terms" })}
+            applyFallbackStyle={applyFallbackStyle}
+            attached
           />
           <SettingRow
             label={m.settings_privacy()}
             onClick={() => navigate({ to: "/settings/privacy" })}
+            applyFallbackStyle={applyFallbackStyle}
+            attached
           />
           {isAuthenticated && (
             <SettingRow
               label={m.settings_withdraw()}
               onClick={() => setIsWithdrawPopupOpen(true)}
+              applyFallbackStyle={applyFallbackStyle}
+              attached
             />
           )}
         </section>
@@ -147,13 +188,26 @@ interface SettingRowProps {
   label: string;
   onClick?: () => void;
   children?: ReactNode;
+  applyFallbackStyle?: boolean;
+  attached?: boolean;
 }
 
-function SettingRow({ label, onClick, children }: SettingRowProps) {
+function SettingRow({
+  label,
+  onClick,
+  children,
+  applyFallbackStyle = false,
+  attached = false,
+}: SettingRowProps) {
   return (
     <button
       type="button"
       className={[rowButton, settingRow].join(" ")}
+      style={
+        applyFallbackStyle
+          ? settingsSettingRowInlineFallbackStyle({ attached })
+          : undefined
+      }
       aria-label={label}
       onClick={onClick}
     >
