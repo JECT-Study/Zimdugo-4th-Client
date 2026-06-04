@@ -22,10 +22,12 @@ const HREF_PARSE_BASE_ORIGIN = "http://zimdugo.local";
 export const normalizeLanguage = normalizeLocale;
 
 export const getUrlLanguage = (href: string): AppLanguage | null => {
-  const pathname = href.startsWith("http")
-    ? new URL(href).pathname
-    : (href.split(/[?#]/)[0] ?? href);
-  const firstSegment = pathname.split("/").filter(Boolean)[0];
+  const isProtocolRelative = href.startsWith("//");
+  const url = new URL(
+    href,
+    isProtocolRelative ? `http:${href}` : HREF_PARSE_BASE_ORIGIN,
+  );
+  const firstSegment = url.pathname.split("/").filter(Boolean)[0];
 
   return normalizeLanguage(firstSegment);
 };
