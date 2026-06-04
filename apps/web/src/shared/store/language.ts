@@ -17,6 +17,7 @@ export type AppLanguage = AppLocale;
 const APP_LANGUAGE_STORAGE_KEY = "app-language";
 const DEFAULT_APP_LANGUAGE: AppLanguage = BASE_LOCALE;
 const LOCALE_PATH_PREFIX = /^\/(?:ko|en|ja|zh)(?=\/|$)/;
+const HREF_PARSE_BASE_ORIGIN = "http://zimdugo.local";
 
 export const normalizeLanguage = normalizeLocale;
 
@@ -33,27 +34,29 @@ export const getLocalizedHref = (
   href: string,
   language: AppLanguage,
 ): string => {
-  const hashIndex = href.indexOf("#");
-  const searchIndex = href.indexOf("?");
-  const pathnameEnd =
-    searchIndex === -1
-      ? hashIndex === -1
-        ? href.length
-        : hashIndex
-      : searchIndex;
-  const pathname = href.slice(0, pathnameEnd);
-  const search =
-    searchIndex === -1
-      ? ""
-      : href.slice(searchIndex, hashIndex === -1 ? href.length : hashIndex);
-  const hash = hashIndex === -1 ? "" : href.slice(hashIndex);
-  const basePathname = pathname.replace(LOCALE_PATH_PREFIX, "") || "/";
+  const isProtocolRelative = href.startsWith("//");
+  const isAbsolute = /^[a-z][a-z\d+\-.]*:/i.test(href);
+  const url = new URL(
+    href,
+    isProtocolRelative ? `http:${href}` : HREF_PARSE_BASE_ORIGIN,
+  );
+  const basePathname = url.pathname.replace(LOCALE_PATH_PREFIX, "") || "/";
   const localizedPathname =
     language === DEFAULT_APP_LANGUAGE
       ? basePathname
       : `/${language}${basePathname === "/" ? "" : basePathname}`;
 
-  return `${localizedPathname}${search}${hash}`;
+  url.pathname = localizedPathname;
+
+  if (isProtocolRelative) {
+    return `//${url.host}${url.pathname}${url.search}${url.hash}`;
+  }
+
+  if (isAbsolute) {
+    return url.href;
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
 };
 
 const getSystemLanguage = (): AppLanguage | null => {
