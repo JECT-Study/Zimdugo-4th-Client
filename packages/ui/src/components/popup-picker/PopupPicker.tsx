@@ -1,0 +1,258 @@
+import type { CSSProperties, KeyboardEvent } from "react";
+import { useEffect, useRef } from "react";
+import { Dialog, Modal, ModalOverlay } from "react-aria-components";
+import { Button } from "../button/Button.tsx";
+import {
+  action,
+  columnDivider,
+  dialColumn,
+  dialItem,
+  dialList,
+  dialog,
+  overlay,
+  pickerFrame,
+  selection,
+  title,
+} from "./PopupPicker.css.ts";
+
+const DIAL_ITEM_HEIGHT = 32;
+
+export interface DialPickerOption {
+  value: string;
+  label: string;
+}
+
+export interface DialPickerColumn {
+  id: string;
+  value: string;
+  options: DialPickerOption[];
+  ariaLabel: string;
+  isCircular?: boolean;
+}
+
+export interface DialPickerProps {
+  columns: DialPickerColumn[];
+  onColumnChange: (columnId: string, value: string) => void;
+  className?: string;
+}
+
+export type PopupPickerOption = DialPickerOption;
+export type PopupPickerColumn = DialPickerColumn;
+
+export interface PopupPickerProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  titleText: string;
+  columns: DialPickerColumn[];
+  onColumnChange: (columnId: string, value: string) => void;
+  primaryAction: {
+    label: string;
+    onPress: () => void;
+  };
+  className?: string;
+}
+
+const getOptionIndex = (column: DialPickerColumn) => {
+  const selectedIndex = column.options.findIndex(
+    (option) => option.value === column.value,
+  );
+
+  return selectedIndex === -1 ? 0 : selectedIndex;
+};
+
+const getClampedIndex = (index: number, length: number) => {
+  return Math.min(Math.max(index, 0), Math.max(length - 1, 0));
+};
+
+const getCircularIndex = (index: number, length: number) => {
+  if (length <= 0) return 0;
+
+  return ((index % length) + length) % length;
+};
+
+interface DialPickerColumnViewProps {
+  column: DialPickerColumn;
+  hasDivider: boolean;
+  onChange: (columnId: string, value: string) => void;
+}
+
+function DialPickerColumnView({
+  column: pickerColumn,
+  hasDivider,
+  onChange,
+}: DialPickerColumnViewProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const selectedIndex = getOptionIndex(pickerColumn);
+  const selectedOption = pickerColumn.options[selectedIndex];
+  const isCircular =
+    pickerColumn.isCircular && pickerColumn.options.length > 1;
+  const visibleOptions = isCircular
+    ? [
+        ...pickerColumn.options,
+        ...pickerColumn.options,
+        ...pickerColumn.options,
+      ]
+    : pickerColumn.options;
+  const selectedVisibleIndex = isCircular
+    ? selectedIndex + pickerColumn.options.length
+    : selectedIndex;
+  const selectedElementId =
+    selectedOption &&
+    `${pickerColumn.id}-${selectedOption.value}-${selectedVisibleIndex}`;
+
+  const commitIndex = (index: number) => {
+    const nextIndex = isCircular
+      ? getCircularIndex(index, pickerColumn.options.length)
+      : getClampedIndex(index, pickerColumn.options.length);
+    const nextOption = pickerColumn.options[nextIndex];
+
+    if (nextOption && nextOption.value !== pickerColumn.value) {
+      onChange(pickerColumn.id, nextOption.value);
+    }
+  };
+
+  const handleScroll = () => {
+    if (scrollEndTimerRef.current) {
+      clearTimeout(scrollEndTimerRef.current);
+    }
+
+    scrollEndTimerRef.current = setTimeout(() => {
+      const listElement = listRef.current;
+
+      if (!listElement) return;
+
+      commitIndex(Math.round(listElement.scrollTop / DIAL_ITEM_HEIGHT));
+    }, 120);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      commitIndex(selectedIndex - 1);
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      commitIndex(selectedIndex + 1);
+    }
+  };
+
+  useEffect(() => {
+    const listElement = listRef.current;
+
+    if (!listElement) return;
+
+    listElement.scrollTo({
+      top: selectedVisibleIndex * DIAL_ITEM_HEIGHT,
+      behavior: "smooth",
+    });
+  }, [selectedVisibleIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollEndTimerRef.current) {
+        clearTimeout(scrollEndTimerRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <fieldset className={dialColumn} aria-label={pickerColumn.ariaLabel}>
+      {hasDivider && <div className={columnDivider} />}
+      <div
+        ref={listRef}
+        className={dialList}
+        role="listbox"
+        tabIndex={0}
+        aria-label={pickerColumn.ariaLabel}
+        aria-activedescendant={selectedElementId}
+        onScroll={handleScroll}
+        onKeyDown={handleKeyDown}
+      >
+        <div style={{ height: DIAL_ITEM_HEIGHT }} aria-hidden="true" />
+        {visibleOptions.map((option, visibleIndex) => (
+          <div
+            key={`${option.value}-${visibleIndex}`}
+            id={`${pickerColumn.id}-${option.value}-${visibleIndex}`}
+            className={dialItem}
+            role="option"
+            aria-selected={option.value === pickerColumn.value}
+            tabIndex={-1}
+            data-selected={option.value === pickerColumn.value || undefined}
+          >
+            {option.label}
+          </div>
+        ))}
+        <div style={{ height: DIAL_ITEM_HEIGHT }} aria-hidden="true" />
+      </div>
+    </fieldset>
+  );
+}
+
+export function DialPicker({
+  columns,
+  onColumnChange,
+  className,
+}: DialPickerProps) {
+  return (
+    <div
+      className={[pickerFrame, className].filter(Boolean).join(" ")}
+      style={
+        {
+          "--popup-picker-column-count": String(columns.length),
+        } as CSSProperties
+      }
+    >
+      <div className={selection} aria-hidden="true" />
+      {columns.map((pickerColumn, index) => (
+        <DialPickerColumnView
+          key={pickerColumn.id}
+          column={pickerColumn}
+          hasDivider={index > 0}
+          onChange={onColumnChange}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function PopupPicker({
+  isOpen,
+  onOpenChange,
+  titleText,
+  columns,
+  onColumnChange,
+  primaryAction,
+  className,
+}: PopupPickerProps) {
+  const handlePrimaryPress = () => {
+    primaryAction.onPress();
+    onOpenChange(false);
+  };
+
+  return (
+    <ModalOverlay
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      className={overlay}
+    >
+      <Modal className={className}>
+        <Dialog className={dialog} aria-label={titleText}>
+          <h2 className={title}>{titleText}</h2>
+          <DialPicker columns={columns} onColumnChange={onColumnChange} />
+          <Button
+            className={action}
+            variant="filled"
+            intent="primary"
+            size="L"
+            onPress={handlePrimaryPress}
+          >
+            {primaryAction.label}
+          </Button>
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
+  );
+}
