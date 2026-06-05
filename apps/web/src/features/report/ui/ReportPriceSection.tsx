@@ -36,17 +36,29 @@ export function ReportPriceSection({
         <Checkbox
           labelText={m.report_price_free()}
           isSelected={priceType === "free"}
-          onSelectedChange={(selected) =>
-            setPriceType(selected ? "free" : "none")
-          }
+          onSelectedChange={(selected) => {
+            if (selected) {
+              setPriceType("free");
+              return;
+            }
+            if (priceType === "free") {
+              setPriceType("none");
+            }
+          }}
           labelLocation="right"
         />
         <Checkbox
           labelText={m.report_price_paid()}
           isSelected={priceType === "paid"}
-          onSelectedChange={(selected) =>
-            setPriceType(selected ? "paid" : "none")
-          }
+          onSelectedChange={(selected) => {
+            if (selected) {
+              setPriceType("paid");
+              return;
+            }
+            if (priceType === "paid") {
+              setPriceType("none");
+            }
+          }}
           labelLocation="right"
         />
       </div>
