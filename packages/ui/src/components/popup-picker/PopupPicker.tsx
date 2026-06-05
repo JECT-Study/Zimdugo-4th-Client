@@ -83,6 +83,8 @@ function DialPickerColumnView({
 }: DialPickerColumnViewProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isRecenteringRef = useRef(false);
+  const shouldSkipValueScrollRef = useRef(false);
 
   const selectedIndex = getOptionIndex(pickerColumn);
   const selectedOption = pickerColumn.options[selectedIndex];
@@ -102,18 +104,42 @@ function DialPickerColumnView({
     selectedOption &&
     `${pickerColumn.id}-${selectedOption.value}-${selectedVisibleIndex}`;
 
-  const commitIndex = (index: number) => {
+  const commitIndex = (
+    index: number,
+    options: { skipValueScroll?: boolean } = {},
+  ) => {
     const nextIndex = isCircular
       ? getCircularIndex(index, pickerColumn.options.length)
       : getClampedIndex(index, pickerColumn.options.length);
     const nextOption = pickerColumn.options[nextIndex];
 
     if (nextOption && nextOption.value !== pickerColumn.value) {
+      shouldSkipValueScrollRef.current = options.skipValueScroll ?? false;
       onChange(pickerColumn.id, nextOption.value);
     }
   };
 
+  const recenterCircularIndex = (visibleIndex: number) => {
+    const optionCount = pickerColumn.options.length;
+    if (!isCircular || optionCount <= 0) return;
+
+    const middleIndex =
+      getCircularIndex(visibleIndex, optionCount) + optionCount;
+    if (middleIndex === visibleIndex) return;
+
+    const listElement = listRef.current;
+    if (!listElement) return;
+
+    isRecenteringRef.current = true;
+    listElement.scrollTop = middleIndex * DIAL_ITEM_HEIGHT;
+    requestAnimationFrame(() => {
+      isRecenteringRef.current = false;
+    });
+  };
+
   const handleScroll = () => {
+    if (isRecenteringRef.current) return;
+
     if (scrollEndTimerRef.current) {
       clearTimeout(scrollEndTimerRef.current);
     }
@@ -123,7 +149,9 @@ function DialPickerColumnView({
 
       if (!listElement) return;
 
-      commitIndex(Math.round(listElement.scrollTop / DIAL_ITEM_HEIGHT));
+      const visibleIndex = Math.round(listElement.scrollTop / DIAL_ITEM_HEIGHT);
+      commitIndex(visibleIndex, { skipValueScroll: true });
+      recenterCircularIndex(visibleIndex);
     }, 120);
   };
 
@@ -144,11 +172,16 @@ function DialPickerColumnView({
 
     if (!listElement) return;
 
+    if (shouldSkipValueScrollRef.current) {
+      shouldSkipValueScrollRef.current = false;
+      return;
+    }
+
     listElement.scrollTo({
       top: selectedVisibleIndex * DIAL_ITEM_HEIGHT,
-      behavior: "smooth",
+      behavior: isCircular ? "auto" : "smooth",
     });
-  }, [selectedVisibleIndex]);
+  }, [isCircular, selectedVisibleIndex]);
 
   useEffect(() => {
     return () => {
@@ -172,19 +205,25 @@ function DialPickerColumnView({
         onKeyDown={handleKeyDown}
       >
         <div style={{ height: DIAL_ITEM_HEIGHT }} aria-hidden="true" />
-        {visibleOptions.map((option, visibleIndex) => (
-          <div
-            key={`${option.value}-${visibleIndex}`}
-            id={`${pickerColumn.id}-${option.value}-${visibleIndex}`}
-            className={dialItem}
-            role="option"
-            aria-selected={option.value === pickerColumn.value}
-            tabIndex={-1}
-            data-selected={option.value === pickerColumn.value || undefined}
-          >
-            {option.label}
-          </div>
-        ))}
+        {visibleOptions.map((option, visibleIndex) => {
+          const isSelected =
+            option.value === pickerColumn.value &&
+            visibleIndex === selectedVisibleIndex;
+
+          return (
+            <div
+              key={`${option.value}-${visibleIndex}`}
+              id={`${pickerColumn.id}-${option.value}-${visibleIndex}`}
+              className={dialItem}
+              role="option"
+              aria-selected={isSelected}
+              tabIndex={-1}
+              data-selected={isSelected || undefined}
+            >
+              {option.label}
+            </div>
+          );
+        })}
         <div style={{ height: DIAL_ITEM_HEIGHT }} aria-hidden="true" />
       </div>
     </fieldset>
