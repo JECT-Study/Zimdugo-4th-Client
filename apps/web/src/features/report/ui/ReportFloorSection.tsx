@@ -39,8 +39,7 @@ type FloorScope = (typeof FLOOR_SCOPE)[keyof typeof FLOOR_SCOPE];
 const normalizeFloorScope = (value: string): FloorScope => {
   if (
     value === FLOOR_SCOPE.underground ||
-    value === m.report_floor_underground() ||
-    value === "\uC9C0\uD558"
+    value === m.report_floor_underground()
   ) {
     return FLOOR_SCOPE.underground;
   }
