@@ -80,11 +80,16 @@ export function useReportForm() {
   const formatPrice = useCallback((val: string) => formatPriceInput(val), []);
 
   const sanitizeFloorNumber = useCallback((raw: string) => {
+    if (!raw) return "";
     if (raw.startsWith("B")) {
       const numPart = raw.substring(1);
-      return `B${parseInt(numPart, 10)}`;
+      const parsed = Number.parseInt(numPart, 10);
+      if (Number.isNaN(parsed)) return "";
+      return `B${parsed}`;
     }
-    return String(parseInt(raw, 10));
+    const parsed = Number.parseInt(raw, 10);
+    if (Number.isNaN(parsed)) return "";
+    return String(parsed);
   }, []);
 
   // Sync Logic: Floor
