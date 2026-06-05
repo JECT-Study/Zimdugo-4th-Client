@@ -120,6 +120,7 @@
   "report_floor_picker_confirm": "완료",
   "report_section_photo": "보관함 사진",
   "report_photo_upload": "이미지 업로드",
+  "report_photo_uploaded_alt": "업로드한 사진 {index}",
   "report_section_size": "보관함 규격",
   "report_size_s": "소형",
   "report_size_m": "중형",

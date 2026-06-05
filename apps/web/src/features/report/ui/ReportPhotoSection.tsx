@@ -87,7 +87,7 @@ export function ReportPhotoSection({
           <div key={url} className={imageWrapper}>
             <img
               src={url}
-              alt={`Uploaded ${index + 1}`}
+              alt={m.report_photo_uploaded_alt({ index: index + 1 })}
               className={imagePreview}
             />
             <button

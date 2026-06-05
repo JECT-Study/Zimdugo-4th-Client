@@ -120,6 +120,7 @@
   "report_floor_picker_confirm": "完成",
   "report_section_photo": "寄存柜照片",
   "report_photo_upload": "上传照片",
+  "report_photo_uploaded_alt": "已上传照片 {index}",
   "report_section_size": "寄存柜规格",
   "report_size_s": "小型",
   "report_size_m": "中型",

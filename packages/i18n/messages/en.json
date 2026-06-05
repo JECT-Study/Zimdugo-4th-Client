@@ -120,6 +120,7 @@
   "report_floor_picker_confirm": "Done",
   "report_section_photo": "Locker Photo",
   "report_photo_upload": "Upload Image",
+  "report_photo_uploaded_alt": "Uploaded photo {index}",
   "report_section_size": "Locker Size",
   "report_size_s": "Small",
   "report_size_m": "Medium",

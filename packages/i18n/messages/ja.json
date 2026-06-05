@@ -120,6 +120,7 @@
   "report_floor_picker_confirm": "完了",
   "report_section_photo": "ロッカーの写真",
   "report_photo_upload": "画像アップロード",
+  "report_photo_uploaded_alt": "アップロードした写真 {index}",
   "report_section_size": "ロッカーのサイズ",
   "report_size_s": "小型",
   "report_size_m": "中型",
