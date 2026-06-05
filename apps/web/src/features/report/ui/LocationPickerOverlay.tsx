@@ -57,6 +57,7 @@ export function LocationPickerOverlay({
   const geocodeRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const isMountedRef = useRef(true);
 
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
 
@@ -136,7 +137,9 @@ export function LocationPickerOverlay({
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (geocodeRetryTimeoutRef.current) {
         clearTimeout(geocodeRetryTimeoutRef.current);
       }
@@ -148,6 +151,9 @@ export function LocationPickerOverlay({
       if (!window.naver?.maps?.Service) {
         // SDK는 로드되었으나 geocoder 서브모듈 초기화가 지연될 경우를 대비한 재시도 로직
         if (retry >= 20) return;
+        if (geocodeRetryTimeoutRef.current) {
+          clearTimeout(geocodeRetryTimeoutRef.current);
+        }
         geocodeRetryTimeoutRef.current = setTimeout(
           () => updateAddressFromCoords(lat, lng, retry + 1),
           100,
@@ -168,6 +174,7 @@ export function LocationPickerOverlay({
           status: naver.maps.Service.Status,
           response: naver.maps.Service.ReverseGeocodeResponse,
         ) => {
+          if (!isMountedRef.current) return;
           setIsGeocoding(false);
           if (status !== window.naver.maps.Service.Status.OK) return;
 
@@ -215,6 +222,7 @@ export function LocationPickerOverlay({
     if (!initialCoords && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (!isMountedRef.current) return;
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           const latLng = new window.naver.maps.LatLng(lat, lng);
@@ -225,6 +233,7 @@ export function LocationPickerOverlay({
           setLocationPermission("granted");
         },
         (error) => {
+          if (!isMountedRef.current) return;
           // 권한 거부 등 실패 시 강남역 기본 좌표에 대한 주소 갱신
           updateAddressFromCoords(currentCoords.lat, currentCoords.lng);
           if (error.code === error.PERMISSION_DENIED) {
@@ -264,6 +273,7 @@ export function LocationPickerOverlay({
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (!isMountedRef.current) return;
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           const latLng = new window.naver.maps.LatLng(lat, lng);
@@ -272,6 +282,7 @@ export function LocationPickerOverlay({
           setLocationPermission("granted");
         },
         (error) => {
+          if (!isMountedRef.current) return;
           setIsCentered(false);
           if (error.code === error.PERMISSION_DENIED) {
             setLocationPermission("denied");
