@@ -43,6 +43,12 @@ export function useReportForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const uploadedImagesRef = useRef(uploadedImages);
+
+  useEffect(() => {
+    uploadedImagesRef.current = uploadedImages;
+  }, [uploadedImages]);
 
   // Form Data State
   const [lockerType, setLockerType] = useState<string[]>([]);
@@ -87,6 +93,19 @@ export function useReportForm() {
     }
   }, [dialPrefix, dialD1, dialD2, dialD3, floorType]);
 
+  useEffect(() => {
+    return () => {
+      if (submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+      }
+      for (const url of uploadedImagesRef.current) {
+        if (url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      }
+    };
+  }, []);
+
   // Handlers
   const handleBack = useCallback(() => {
     if (step > 1) setStep((s) => s - 1);
@@ -122,7 +141,7 @@ export function useReportForm() {
         return;
       }
 
-      setTimeout(() => {
+      submitTimeoutRef.current = setTimeout(() => {
         setIsSubmitting(false);
         const history = localStorage.getItem("report_history");
         let historyList: unknown[] = [];
@@ -200,13 +219,16 @@ export function useReportForm() {
     [uploadedImages.length],
   );
 
-  const handleImageRemove = useCallback((index: number) => {
-    setUploadedImages((prev) => {
-      const targetUrl = prev[index];
-      if (targetUrl?.startsWith("blob:")) URL.revokeObjectURL(targetUrl);
-      return prev.filter((_, i) => i !== index);
-    });
-  }, []);
+  const handleImageRemove = useCallback(
+    (index: number) => {
+      const targetUrl = uploadedImages[index];
+      if (targetUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(targetUrl);
+      }
+      setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    },
+    [uploadedImages],
+  );
 
   const isStep1Valid = !!address && lockerType.length > 0;
   const isStep2Valid = true;
