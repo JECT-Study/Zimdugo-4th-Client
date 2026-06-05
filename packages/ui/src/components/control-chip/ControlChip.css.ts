@@ -1,5 +1,13 @@
+import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../vars.css.ts";
+
+export const controlChipLabel = style({
+  display: "block",
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+});
 
 export const controlChip = recipe({
   base: {
@@ -43,10 +51,30 @@ export const controlChip = recipe({
         selectors: {
           "&[data-active='true'], &[data-selected='true']": {
             backgroundColor: vars.color.bg.brand.active,
-            color: vars.color.text.white,
+            color: vars.color.palette.gray[100],
+            borderColor: "transparent",
           },
-          "&:not([data-active='true']):not([data-selected='true']):not([data-disabled])[data-hovered]": {
-            backgroundColor: vars.color.palette.gray[300],
+          "&[data-disabled]": {
+            opacity: 1,
+            backgroundColor: vars.color.bg.brand.disable,
+            color: vars.color.palette.gray[400],
+            borderColor: "transparent",
+          },
+          "&[data-active='true'][data-disabled], &[data-selected='true'][data-disabled]":
+            {
+              backgroundColor: vars.color.bg.brand.disable,
+              color: vars.color.palette.gray[400],
+              borderColor: "transparent",
+            },
+          "&:not([data-active='true']):not([data-selected='true']):not([data-disabled])[data-hovered], &:not([data-active='true']):not([data-selected='true']):not([data-disabled])[data-pressed]":
+            {
+              backgroundColor: vars.color.palette.gray[100],
+              color: vars.color.palette.green[600],
+              borderColor: vars.color.palette.green[500],
+            },
+          "&:not([data-disabled])[data-focus-visible]": {
+            boxShadow: "none",
+            borderColor: vars.color.focus,
           },
         },
       },
@@ -61,9 +89,10 @@ export const controlChip = recipe({
             borderColor: vars.color.focus,
             color: vars.color.text.brand,
           },
-          "&:not([data-active='true']):not([data-selected='true']):not([data-disabled])[data-hovered]": {
-            borderColor: vars.color.border.hover,
-          },
+          "&:not([data-active='true']):not([data-selected='true']):not([data-disabled])[data-hovered]":
+            {
+              borderColor: vars.color.border.hover,
+            },
         },
       },
       sort: {
@@ -77,9 +106,10 @@ export const controlChip = recipe({
             borderColor: vars.color.focus,
             color: vars.color.text.brand,
           },
-          "&:not([data-active='true']):not([data-selected='true']):not([data-disabled])[data-hovered]": {
-            borderColor: vars.color.border.hover,
-          },
+          "&:not([data-active='true']):not([data-selected='true']):not([data-disabled])[data-hovered]":
+            {
+              borderColor: vars.color.border.hover,
+            },
         },
       },
     },

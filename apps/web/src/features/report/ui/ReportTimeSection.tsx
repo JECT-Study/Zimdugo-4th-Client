@@ -1,0 +1,146 @@
+import { m } from "@repo/i18n";
+import { LabelTitle } from "@repo/ui/components/label-title";
+import {
+  PopupPicker,
+  type PopupPickerColumn,
+} from "@repo/ui/components/popup-picker";
+import { useMemo, useState } from "react";
+import { PickerTriggerButton } from "./PickerTriggerButton";
+import { section, timeRow, timeSeparator } from "./report.css.ts";
+
+interface ReportTimeSectionProps {
+  openTime: string;
+  setOpenTime: (val: string) => void;
+  closeTime: string;
+  setCloseTime: (val: string) => void;
+}
+
+type TimeTarget = "open" | "close";
+
+const parseTime = (time: string) => {
+  const [hour = "00", minute = "00"] = time.split(":");
+
+  return {
+    hour: hour.padStart(2, "0").slice(0, 2),
+    minute: minute.padStart(2, "0").slice(0, 2),
+  };
+};
+
+export function ReportTimeSection({
+  openTime,
+  setOpenTime,
+  closeTime,
+  setCloseTime,
+}: ReportTimeSectionProps) {
+  const [activeTarget, setActiveTarget] = useState<TimeTarget | null>(null);
+  const [pendingHour, setPendingHour] = useState("00");
+  const [pendingMinute, setPendingMinute] = useState("00");
+
+  const hourOptions = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, index) => {
+        const hour = String(index).padStart(2, "0");
+
+        return { value: hour, label: hour };
+      }),
+    [],
+  );
+
+  const minuteOptions = useMemo(
+    () =>
+      Array.from({ length: 60 }, (_, index) => {
+        const minute = String(index).padStart(2, "0");
+
+        return { value: minute, label: minute };
+      }),
+    [],
+  );
+
+  const columns = useMemo<PopupPickerColumn[]>(
+    () => [
+      {
+        id: "hour",
+        value: pendingHour,
+        options: hourOptions,
+        ariaLabel: m.report_time_hour_aria(),
+        isCircular: true,
+      },
+      {
+        id: "minute",
+        value: pendingMinute,
+        options: minuteOptions,
+        ariaLabel: m.report_time_minute_aria(),
+        isCircular: true,
+      },
+    ],
+    [hourOptions, minuteOptions, pendingHour, pendingMinute],
+  );
+
+  const handleOpenPicker = (target: TimeTarget) => {
+    const currentTime = parseTime(target === "open" ? openTime : closeTime);
+
+    setActiveTarget(target);
+    setPendingHour(currentTime.hour);
+    setPendingMinute(currentTime.minute);
+  };
+
+  const handleTimeChange = (columnId: string, value: string) => {
+    if (columnId === "hour") {
+      setPendingHour(value);
+    }
+
+    if (columnId === "minute") {
+      setPendingMinute(value);
+    }
+  };
+
+  const handleConfirmTime = () => {
+    const nextTime = `${pendingHour}:${pendingMinute}`;
+
+    if (activeTarget === "open") {
+      setOpenTime(nextTime);
+    }
+
+    if (activeTarget === "close") {
+      setCloseTime(nextTime);
+    }
+  };
+
+  return (
+    <section className={section}>
+      <LabelTitle size="small">{m.report_section_time()}</LabelTitle>
+      <div className={timeRow}>
+        {/* Existing Dropdown is kept aside while this section uses PopupPicker. */}
+        <PickerTriggerButton
+          label={openTime || m.report_time_start()}
+          ariaLabel={m.report_time_start_select_aria()}
+          onPress={() => handleOpenPicker("open")}
+        />
+        <span className={timeSeparator}>~</span>
+        <PickerTriggerButton
+          label={closeTime || m.report_time_end()}
+          ariaLabel={m.report_time_end_select_aria()}
+          onPress={() => handleOpenPicker("close")}
+        />
+      </div>
+
+      <PopupPicker
+        isOpen={activeTarget !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setActiveTarget(null);
+        }}
+        titleText={
+          activeTarget === "close"
+            ? m.report_time_end_picker_title()
+            : m.report_time_start_picker_title()
+        }
+        columns={columns}
+        onColumnChange={handleTimeChange}
+        primaryAction={{
+          label: m.report_time_picker_confirm(),
+          onPress: handleConfirmTime,
+        }}
+      />
+    </section>
+  );
+}

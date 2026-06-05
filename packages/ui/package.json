@@ -46,6 +46,9 @@
     "./components/popup": {
       "import": "./src/components/popup/Popup.tsx"
     },
+    "./components/popup-picker": {
+      "import": "./src/components/popup-picker/PopupPicker.tsx"
+    },
     "./components/dropdown": {
       "import": "./src/components/dropdown/Dropdown.tsx"
     },
@@ -64,14 +67,14 @@
     "./components/tab": {
       "import": "./src/components/tab/Tab.tsx"
     },
-    "./components/chip-group": {
-      "import": "./src/components/chip/ChipGroup.tsx"
-    },
     "./components/checkbox": {
       "import": "./src/components/checkbox/Checkbox.tsx"
     },
     "./components/control-chip": {
       "import": "./src/components/control-chip/ControlChip.tsx"
+    },
+    "./components/control-chip-group": {
+      "import": "./src/components/control-chip-group/ControlChipGroup.tsx"
     },
     "./components/input": {
       "import": "./src/components/input/Input.tsx"
