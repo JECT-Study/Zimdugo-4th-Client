@@ -304,12 +304,12 @@ function ReportPage() {
         onOpenChange={setIsExitPopupOpen}
         titleText={m.report_exit_title()}
         primaryAction={{
-          label: m.report_exit_leave(),
-          onPress: handleLeaveReport,
-        }}
-        secondaryAction={{
           label: m.report_exit_back(),
           onPress: handleStayOnReport,
+        }}
+        secondaryAction={{
+          label: m.report_exit_leave(),
+          onPress: handleLeaveReport,
         }}
       />
 
