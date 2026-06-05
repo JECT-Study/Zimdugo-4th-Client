@@ -1,6 +1,5 @@
 import { m } from "@repo/i18n";
 import { Checkbox } from "@repo/ui/components/checkbox";
-// import { ChipGroup } from "@repo/ui/components/chip-group";
 import { Input } from "@repo/ui/components/input";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import {
@@ -33,32 +32,21 @@ export function ReportPriceSection({
   return (
     <section className={section}>
       <LabelTitle size="small">{m.report_section_price()}</LabelTitle>
-      {/*
-      <ChipGroup
-        options={[
-          { label: m.report_price_free(), value: "free" },
-          { label: m.report_price_paid(), value: "paid" },
-        ]}
-        value={priceType === "none" ? [] : [priceType]}
-        onChange={(keys) => {
-          const nextKey = keys[keys.length - 1] as "free" | "paid";
-          if (nextKey) setPriceType(nextKey);
-        }}
-        selectionMode="single"
-        ariaLabel="가격 유형 선택"
-      />
-      */}
       <div className={priceRow}>
         <Checkbox
           labelText={m.report_price_free()}
           isSelected={priceType === "free"}
-          onSelectedChange={(selected) => setPriceType(selected ? "free" : "none")}
+          onSelectedChange={(selected) =>
+            setPriceType(selected ? "free" : "none")
+          }
           labelLocation="right"
         />
         <Checkbox
           labelText={m.report_price_paid()}
           isSelected={priceType === "paid"}
-          onSelectedChange={(selected) => setPriceType(selected ? "paid" : "none")}
+          onSelectedChange={(selected) =>
+            setPriceType(selected ? "paid" : "none")
+          }
           labelLocation="right"
         />
       </div>

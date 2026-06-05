@@ -67,9 +67,6 @@
     "./components/tab": {
       "import": "./src/components/tab/Tab.tsx"
     },
-    "./components/chip-group": {
-      "import": "./src/components/chip/ChipGroup.tsx"
-    },
     "./components/checkbox": {
       "import": "./src/components/checkbox/Checkbox.tsx"
     },
