@@ -3,7 +3,7 @@ import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useReportForm } from "#/features/report/model/useReportForm";
@@ -25,7 +25,7 @@ import {
   stepWrapper,
 } from "#/features/report/ui/report.css.ts";
 
-// import { useAuthStore } from "#/shared/store/authStore";
+import { useAuthStore } from "#/shared/store/authStore";
 
 const lockerTypeOptions = [
   {
@@ -63,26 +63,20 @@ const lockerTypeOptions = [
 ];
 
 export const Route = createFileRoute("/report")({
-  // TODO: report 화면 QA 중 임시 비활성화. 커밋 전 인증 guard 복구 필요.
-  // beforeLoad: ({ location, preload }) => {
-  //   // TODO: 추후 2번 방식(HttpOnly 쿠키 직접 확인) 적용 시, 서버(SSR) 컨텍스트에서 헤더를 읽어 isAuthenticated를 판단하도록 개선 필요
-  //   if (
-  //     typeof window !== "undefined" &&
-  //     !useAuthStore.getState().isAuthenticated
-  //   ) {
-  //     if (!preload) {
-  //       // 실제 네비게이션 시에만 로그인 팝업을 띄우기 위한 전역 상태 갱신
-  //       import("#/shared/store/authPopupStore").then((m) =>
-  //         m.useAuthPopupStore.getState().openPopup(location.pathname),
-  //       );
-  //     }
-  //     // 로그인 페이지로 강제 납치하지 않고 메인 화면("/")으로 돌려보낸 뒤 팝업을 띄움
-  //     throw redirect({
-  //       to: "/",
-  //       replace: true,
-  //     });
-  //   }
-  // },
+  beforeLoad: ({ location, preload }) => {
+    // TODO: 추후 2번 방식(HttpOnly 쿠키 직접 확인) 적용 시, 서버(SSR) 컨텍스트에서 헤더를 읽어 isAuthenticated를 판단하도록 개선 필요
+    if (!useAuthStore.getState().isAuthenticated) {
+      if (typeof window !== "undefined" && !preload) {
+        import("#/shared/store/authPopupStore").then((m) =>
+          m.useAuthPopupStore.getState().openPopup(location.pathname),
+        );
+      }
+      throw redirect({
+        to: "/",
+        replace: true,
+      });
+    }
+  },
   component: ReportPage,
 });
 
