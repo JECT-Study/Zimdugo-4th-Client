@@ -31,6 +31,9 @@ const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
 
 const loadNaverMapsScript = async () => {
   if (typeof window === "undefined") return;
+  if (!NAVER_MAP_CLIENT_ID) {
+    throw new Error("VITE_NAVER_MAP_CLIENT_ID is required.");
+  }
   const scriptSrc = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_MAP_CLIENT_ID}&submodules=geocoder`;
   const activeScript = document.querySelector<HTMLScriptElement>(
     'script[src*="maps.js"]',
