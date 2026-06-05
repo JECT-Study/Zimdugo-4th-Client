@@ -61,7 +61,9 @@ export function LocationPickerOverlay({
 
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
 
-  const [currentAddress, setCurrentAddress] = useState("위치를 선택해주세요");
+  const [currentAddress, setCurrentAddress] = useState(
+    m.report_location_select_placeholder(),
+  );
   const [currentCoords, setCurrentCoords] = useState<{
     lat: number;
     lng: number;
