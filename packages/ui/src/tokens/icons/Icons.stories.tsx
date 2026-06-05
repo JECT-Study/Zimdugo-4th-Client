@@ -29,6 +29,7 @@ import {
   IconMarker22,
   IconMinusBox18,
   IconNaver19,
+  IconNavigateLocation,
   IconNavigateMarker,
   IconNavigatePin,
   IconNavigationClock24,
@@ -606,6 +607,9 @@ export const Navigation: Story = {
       <Cell name="nav marker" ingredients={["IconMarker22"]}>
         <IconNavigateMarker />
       </Cell>
+      <Cell name="nav location">
+        <IconNavigateLocation />
+      </Cell>
     </div>
   ),
 };
@@ -934,6 +938,9 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="nav marker" ingredients={["IconMarker22"]}>
           <IconNavigateMarker />
+        </Cell>
+        <Cell name="nav location">
+          <IconNavigateLocation />
         </Cell>
       </RowSection>
 

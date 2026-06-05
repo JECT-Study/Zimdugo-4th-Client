@@ -1,5 +1,19 @@
-import { vars } from "@repo/ui/vars";
 import { useEffect, useRef } from "react";
+
+const MY_LOCATION_ICON_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="41" height="41" viewBox="0 0 41 41" fill="none">
+  <g filter="url(#my-location-marker-blur)">
+    <circle cx="20.5" cy="20.5" r="8.5" fill="#718CEF"/>
+  </g>
+  <circle cx="20.5" cy="20.5" r="6.5" fill="#718CEF" stroke="white" stroke-width="2"/>
+  <defs>
+    <filter id="my-location-marker-blur" x="0" y="0" width="41" height="41" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="6" result="effect1_foregroundBlur_1197_305"/>
+    </filter>
+  </defs>
+</svg>`;
 
 interface MyLocationMarkerProps {
   map: naver.maps.Map | null;
@@ -49,19 +63,16 @@ export function MyLocationMarker({
       cone.style.borderTop = "40px solid rgba(0, 102, 255, 0.25)";
       cone.style.display = "none";
 
-      const dot = document.createElement("div");
-      dot.style.position = "absolute";
-      dot.style.top = "30px";
-      dot.style.left = "30px";
-      dot.style.width = "20px";
-      dot.style.height = "20px";
-      dot.style.backgroundColor = vars.color.palette.blue[500];
-      dot.style.borderRadius = "50%";
-      dot.style.border = `3px solid ${vars.color.icon.white}`;
-      dot.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+      const locationIcon = document.createElement("div");
+      locationIcon.style.position = "absolute";
+      locationIcon.style.top = "19.5px";
+      locationIcon.style.left = "19.5px";
+      locationIcon.style.width = "41px";
+      locationIcon.style.height = "41px";
+      locationIcon.innerHTML = MY_LOCATION_ICON_SVG;
 
       wrapper.appendChild(cone);
-      wrapper.appendChild(dot);
+      wrapper.appendChild(locationIcon);
 
       wrapperRef.current = wrapper;
       coneRef.current = cone;
