@@ -125,7 +125,15 @@ export function useReportForm() {
       setTimeout(() => {
         setIsSubmitting(false);
         const history = localStorage.getItem("report_history");
-        const historyList = history ? JSON.parse(history) : [];
+        let historyList: unknown[] = [];
+        if (history) {
+          try {
+            const parsed = JSON.parse(history);
+            historyList = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            historyList = [];
+          }
+        }
         const newRecord = {
           ...result.data,
           id: Date.now().toString(),
