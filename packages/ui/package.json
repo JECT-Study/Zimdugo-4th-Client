@@ -76,6 +76,9 @@
     "./components/control-chip": {
       "import": "./src/components/control-chip/ControlChip.tsx"
     },
+    "./components/control-chip-group": {
+      "import": "./src/components/control-chip-group/ControlChipGroup.tsx"
+    },
     "./components/input": {
       "import": "./src/components/input/Input.tsx"
     },
@@ -90,6 +93,9 @@
     },
     "./components/feedback/skeleton/theme": {
       "import": "./src/components/feedback/skeleton/skeleton-theme.ts"
+    },
+    "./components/control-chip-group": {
+      "import": "./src/components/control-chip-group/ControlChipGroup.tsx"
     },
     "./tokens/icons": {
       "import": "./src/tokens/icons/Icons.tsx"

@@ -3,7 +3,7 @@ import {
   type ButtonProps as AriaButtonProps,
 } from "react-aria-components";
 import { IconNormalArrow24 } from "../../tokens/icons/Icons.tsx";
-import { controlChip } from "./ControlChip.css.ts";
+import { controlChip, controlChipLabel } from "./ControlChip.css.ts";
 
 type ControlChipVariant = "choice" | "filter" | "sort";
 type ControlChipSize = "small" | "medium";
@@ -46,7 +46,7 @@ export function ControlChip({
       aria-pressed={variant === "choice" ? isVisuallyActive : undefined}
       data-active={isVisuallyActive}
     >
-      <span>{label}</span>
+      <span className={controlChipLabel}>{label}</span>
       {shouldShowArrow ? (
         <span
           style={{
