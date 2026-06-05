@@ -1,3 +1,4 @@
+import { m } from "@repo/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
@@ -40,6 +41,8 @@ export function useReportForm() {
   const [step, setStep] = useState(1);
   const [isAddressOverlayOpen, setIsAddressOverlayOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isPhotoErrorPopupOpen, setIsPhotoErrorPopupOpen] = useState(false);
+  const [photoErrorMessage, setPhotoErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -194,7 +197,8 @@ export function useReportForm() {
       if (!files?.length) return;
 
       if (uploadedImages.length >= MAX_REPORT_PHOTOS) {
-        alert("사진은 1장만 업로드 가능합니다.");
+        setPhotoErrorMessage(m.report_photo_max_count_exceeded());
+        setIsPhotoErrorPopupOpen(true);
         e.target.value = "";
         return;
       }
@@ -208,7 +212,8 @@ export function useReportForm() {
       }
 
       if (imageFile.size > MAX_REPORT_PHOTO_SIZE_BYTES) {
-        alert("사진은 5MB 이하만 업로드 가능합니다.");
+        setPhotoErrorMessage(m.report_photo_max_size_exceeded());
+        setIsPhotoErrorPopupOpen(true);
         e.target.value = "";
         return;
       }
@@ -239,6 +244,9 @@ export function useReportForm() {
     setIsAddressOverlayOpen,
     isPopupOpen,
     setIsPopupOpen,
+    isPhotoErrorPopupOpen,
+    setIsPhotoErrorPopupOpen,
+    photoErrorMessage,
     isSubmitting,
     uploadedImages,
     fileInputRef,

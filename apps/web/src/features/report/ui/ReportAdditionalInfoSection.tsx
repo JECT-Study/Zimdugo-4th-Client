@@ -27,7 +27,7 @@ export function ReportAdditionalInfoSection({
       textarea.style.height = "auto";
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
-  }, []);
+  }, [additionalInfo]);
 
   return (
     <section className={section}>

@@ -77,6 +77,8 @@ export function LocationPickerOverlay({
     closePopup,
   } = useLocationPermissionPopup();
   const [isCentered, setIsCentered] = useState(false);
+  const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
+    useState(false);
   const [locationPermission, setLocationPermission] = useState<
     "prompt" | "granted" | "denied"
   >("prompt");
@@ -288,7 +290,7 @@ export function LocationPickerOverlay({
             setLocationPermission("denied");
             openPopup();
           } else {
-            alert("위치 정보를 가져올 수 없습니다.");
+            setIsLocationErrorPopupOpen(true);
           }
         },
       );
@@ -331,7 +333,7 @@ export function LocationPickerOverlay({
 
       <div className={bottomPanel}>
         <div className={addressInfo}>
-          <span className={addressLabel}>선택한 위치</span>
+          <span className={addressLabel}>{m.report_location_selected_label()}</span>
           <div className={addressText}>
             {isMapMoving || isGeocoding
               ? m.report_location_loading()
@@ -346,18 +348,31 @@ export function LocationPickerOverlay({
           onPress={handleConfirm}
           isDisabled={isMapMoving || isGeocoding}
         >
-          {isMapMoving || isGeocoding ? "위치 설정 중..." : "이 위치로 설정"}
+          {isMapMoving || isGeocoding
+            ? m.report_location_confirming()
+            : m.report_location_confirm_button()}
         </Button>
       </div>
 
       <Popup
         isOpen={isLocationPopupOpen}
         onOpenChange={closePopup}
-        titleText="위치 권한이 필요합니다"
-        helperText="현재 위치를 확인하려면 브라우저 설정에서 위치 권한을 허용한 뒤, 페이지를 새로고침해주세요."
+        titleText={m.report_location_permission_title()}
+        helperText={m.report_location_permission_helper()}
         primaryAction={{
-          label: "확인",
+          label: m.common_confirm(),
           onPress: closePopup,
+        }}
+      />
+
+      <Popup
+        isOpen={isLocationErrorPopupOpen}
+        onOpenChange={setIsLocationErrorPopupOpen}
+        titleText={m.report_location_error_title()}
+        helperText={m.report_location_error_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsLocationErrorPopupOpen(false),
         }}
       />
     </div>

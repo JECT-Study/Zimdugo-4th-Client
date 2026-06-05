@@ -26,7 +26,7 @@ export function ReportTypeSection({
           value={lockerType}
           onChange={(keys) => setLockerType(keys.slice(-1))}
           selectionMode="single"
-          ariaLabel="보관함 유형 필터"
+          ariaLabel={m.report_type_filter_aria()}
         />
       </div>
     </section>

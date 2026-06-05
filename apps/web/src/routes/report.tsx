@@ -96,6 +96,9 @@ function ReportPage() {
     setIsAddressOverlayOpen,
     isPopupOpen,
     setIsPopupOpen,
+    isPhotoErrorPopupOpen,
+    setIsPhotoErrorPopupOpen,
+    photoErrorMessage,
     isSubmitting,
     uploadedImages,
     fileInputRef,
@@ -296,6 +299,16 @@ function ReportPage() {
             setIsPopupOpen(false);
             navigate({ to: "/my" });
           },
+        }}
+      />
+
+      <Popup
+        isOpen={isPhotoErrorPopupOpen}
+        onOpenChange={setIsPhotoErrorPopupOpen}
+        titleText={photoErrorMessage}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsPhotoErrorPopupOpen(false),
         }}
       />
 
