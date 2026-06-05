@@ -3,10 +3,6 @@ import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 export type LockerMarkerStatus = "active" | "inactive";
 
-/**
- * 디자인 시스템의 icon.nav.marker(`IconNavigateMarker` = `IconMarker22`) 형상을
- * `bg.default`(=`vars.color.palette.gray[100]`) 원 위에 올린 형태로 그린다.
- */
 const LOCKER_MARKER_FILL = vars.color.palette.green[500];
 const LOCKER_MARKER_BACKGROUND = vars.color.palette.gray[100];
 const PLACE_BADGE_FILL = vars.color.icon.error;
@@ -19,7 +15,11 @@ export const getPinId = (pin: LockerPinItemResponse): string =>
 
 export const createLockerMarkerIcon = (pin: LockerPinItemResponse): string => {
   const isPlace = pin.pinType === "PLACE";
-  const badgeText = pin.lockerCount ? (pin.lockerCount > 9 ? "9+" : pin.lockerCount.toString()) : "";
+  const badgeText = pin.lockerCount
+    ? pin.lockerCount > 9
+      ? "9+"
+      : pin.lockerCount.toString()
+    : "";
   const badgeSvg = isPlace
     ? `<circle cx="18" cy="6" r="6" fill="${PLACE_BADGE_FILL}" stroke="${LOCKER_MARKER_BACKGROUND}" stroke-width="1.5"/>
        <text x="18" y="6.3" font-family="sans-serif" font-size="7" font-weight="bold" fill="${LOCKER_MARKER_BACKGROUND}" text-anchor="middle" dominant-baseline="middle">${badgeText}</text>`
@@ -39,46 +39,209 @@ interface SyncLockerMarkersOptions {
   maps: typeof naver.maps;
   lockers: LockerPinItemResponse[];
   onSelectLocker?: (pinType: "LOCKER" | "PLACE", id: number) => void;
+  registry?: LockerMarkerRegistry;
 }
+
+interface LockerMarkerEntry {
+  marker: naver.maps.Marker;
+  iconSignature: string;
+  listener?: naver.maps.MapEventListener;
+  positionSignature: string;
+}
+
+export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
+
+const toSvgDataUrl = (svg: string): string =>
+  `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+
+/**
+ * Icon option caches.
+ *
+ * PLACE icons (`{ content: string }`) contain no SDK-specific objects and are
+ * safe to share across any maps instance, so they live in a plain module-level
+ * Map keyed by `iconSignature` ("PLACE:<lockerCount>").
+ *
+ * LOCKER icons (`{ url, size, scaledSize, origin, anchor }`) use SDK
+ * constructor values (`maps.Size`, `maps.Point`) that are tied to a particular
+ * naver.maps instance. A WeakMap keyed by the maps instance holds a per-instance
+ * inner Map, so different maps instances (e.g., unit tests with mocked SDKs)
+ * never share cached values.
+ *
+ * With ~11 possible combinations total (1 LOCKER + ~10 PLACE variants), the
+ * caches will be populated once and then reused for every subsequent marker
+ * creation, avoiding redundant SVG string generation and SDK object allocation.
+ */
+type PlaceIconOptions = { content: string };
+type LockerIconOptions = {
+  url: string;
+  size: naver.maps.Size;
+  scaledSize: naver.maps.Size;
+  origin: naver.maps.Point;
+  anchor: naver.maps.Point;
+};
+
+const placeIconCache = new Map<string, PlaceIconOptions>();
+const lockerIconCache = new WeakMap<
+  typeof naver.maps,
+  Map<string, LockerIconOptions>
+>();
+
+const createMarkerIconOptions = (
+  pin: LockerPinItemResponse,
+  maps: typeof naver.maps,
+): PlaceIconOptions | LockerIconOptions => {
+  const key = getPinIconSignature(pin);
+
+  if (pin.pinType === "PLACE") {
+    const cached = placeIconCache.get(key);
+    if (cached) return cached;
+
+    const options: PlaceIconOptions = {
+      content: createLockerMarkerIcon(pin),
+    };
+    placeIconCache.set(key, options);
+    return options;
+  }
+
+  // LOCKER — keyed by maps instance via WeakMap
+  let innerMap = lockerIconCache.get(maps);
+  if (!innerMap) {
+    innerMap = new Map<string, LockerIconOptions>();
+    lockerIconCache.set(maps, innerMap);
+  }
+
+  const cached = innerMap.get(key);
+  if (cached) return cached;
+
+  const options: LockerIconOptions = {
+    url: toSvgDataUrl(createLockerMarkerIcon(pin)),
+    size: new maps.Size(24, 24),
+    scaledSize: new maps.Size(24, 24),
+    origin: new maps.Point(0, 0),
+    anchor: new maps.Point(12, 12),
+  };
+  innerMap.set(key, options);
+  return options;
+};
+
+const getPinPositionSignature = (pin: LockerPinItemResponse): string =>
+  `${pin.latitude}:${pin.longitude}`;
+
+const getPinIconSignature = (pin: LockerPinItemResponse): string =>
+  `${pin.pinType}:${pin.lockerCount ?? ""}`;
+
+const createLockerMarker = ({
+  map,
+  maps,
+  pin,
+}: {
+  map: naver.maps.Map;
+  maps: typeof naver.maps;
+  pin: LockerPinItemResponse;
+}) =>
+  new maps.Marker({
+    map,
+    title: pin.pinType === "LOCKER" ? "보관함" : "보관함 모음",
+    position: new maps.LatLng(pin.latitude, pin.longitude),
+    icon: createMarkerIconOptions(pin, maps),
+  });
+
+const clearMarkerEntry = (
+  entry: LockerMarkerEntry,
+  maps: typeof naver.maps,
+) => {
+  if (entry.listener) {
+    maps.Event.removeListener(entry.listener);
+  }
+  entry.marker.setMap(null);
+};
+
+export const clearLockerMarkers = (
+  registry: LockerMarkerRegistry,
+  maps: typeof naver.maps,
+) => {
+  for (const entry of registry.values()) {
+    clearMarkerEntry(entry, maps);
+  }
+  registry.clear();
+};
 
 export const syncLockerMarkers = ({
   map,
   maps,
   lockers,
   onSelectLocker,
+  registry = new Map(),
 }: SyncLockerMarkersOptions) => {
-  const markerListeners: naver.maps.MapEventListener[] = [];
+  const nextPinIds = new Set(lockers.map(getPinId));
 
-  const naverMarkers = lockers.map((pin) => {
-    const naverMarker = new maps.Marker({
-      map,
-      title: pin.pinType === "LOCKER" ? "보관함" : "보관함 모음",
-      position: new maps.LatLng(pin.latitude, pin.longitude),
-      icon: {
-        content: createLockerMarkerIcon(pin),
-      },
-    });
+  // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
+  const mapBounds = map.getBounds() as naver.maps.LatLngBounds;
+  const ne = mapBounds.getNE();
+  const sw = mapBounds.getSW();
+  const latMargin = (ne.lat() - sw.lat()) * 0.1;
+  const lngMargin = (ne.lng() - sw.lng()) * 0.1;
+  const expandedBounds = new maps.LatLngBounds(
+    new maps.LatLng(sw.lat() - latMargin, sw.lng() - lngMargin),
+    new maps.LatLng(ne.lat() + latMargin, ne.lng() + lngMargin),
+  );
+
+  for (const [pinId, entry] of registry) {
+    if (!nextPinIds.has(pinId)) {
+      clearMarkerEntry(entry, maps);
+      registry.delete(pinId);
+    }
+  }
+
+  for (const pin of lockers) {
+    const pinId = getPinId(pin);
+    const existingEntry = registry.get(pinId);
+
+    const positionSignature = getPinPositionSignature(pin);
+    const iconSignature = getPinIconSignature(pin);
+    const position = new maps.LatLng(pin.latitude, pin.longitude);
+    const isVisible = expandedBounds.hasLatLng(position);
+
+    if (existingEntry) {
+      if (existingEntry.positionSignature !== positionSignature) {
+        existingEntry.marker.setPosition(position);
+        existingEntry.positionSignature = positionSignature;
+      }
+
+      if (existingEntry.iconSignature !== iconSignature) {
+        existingEntry.marker.setIcon?.(createMarkerIconOptions(pin, maps));
+        existingEntry.iconSignature = iconSignature;
+      }
+      
+      if (existingEntry.marker.getVisible() !== isVisible) {
+        existingEntry.marker.setVisible(isVisible);
+      }
+
+      continue;
+    }
+
+    const marker = createLockerMarker({ map, maps, pin });
+    marker.setVisible(isVisible);
+    
+    const entry: LockerMarkerEntry = {
+      marker,
+      iconSignature,
+      positionSignature,
+    };
 
     if (onSelectLocker) {
-      const listener = maps.Event.addListener(naverMarker, "click", () => {
+      entry.listener = maps.Event.addListener(marker, "click", () => {
         const id = pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId;
         if (id !== null) {
           onSelectLocker(pin.pinType, id);
         }
       });
-      markerListeners.push(listener);
     }
 
-    return naverMarker;
-  });
+    registry.set(pinId, entry);
+  }
 
   return () => {
-    if (markerListeners.length > 0) {
-      maps.Event.removeListener(markerListeners);
-    }
-    for (const marker of naverMarkers) {
-      marker.setMap(null);
-    }
+    clearLockerMarkers(registry, maps);
   };
 };
-

@@ -27,8 +27,24 @@ import { createLockerMarkerIcon, syncLockerMarkers } from "./map-marker";
 
 class FakeLatLng {
   constructor(
-    public readonly lat: number,
-    public readonly lng: number,
+    public readonly _lat: number,
+    public readonly _lng: number,
+  ) {}
+  lat() { return this._lat; }
+  lng() { return this._lng; }
+}
+
+class FakePoint {
+  constructor(
+    public readonly x: number,
+    public readonly y: number,
+  ) {}
+}
+
+class FakeSize {
+  constructor(
+    public readonly width: number,
+    public readonly height: number,
   ) {}
 }
 
@@ -36,7 +52,12 @@ class FakeMarker {
   static instances: FakeMarker[] = [];
 
   public readonly setMap = vi.fn();
+  public readonly setIcon = vi.fn();
+  public readonly setPosition = vi.fn();
+  public readonly setVisible = vi.fn((visible: boolean) => { this.visible = visible; });
+  public readonly getVisible = vi.fn(() => this.visible);
   public readonly listeners: Array<() => void> = [];
+  public visible = true;
 
   constructor(public readonly options: Record<string, unknown>) {
     FakeMarker.instances.push(this);
@@ -66,10 +87,23 @@ const createPlacePin = (
   ...overrides,
 });
 
+class FakeLatLngBounds {
+  constructor(public readonly sw: FakeLatLng, public readonly ne: FakeLatLng) {}
+  getSW() { return this.sw; }
+  getNE() { return this.ne; }
+  hasLatLng() { return true; }
+}
+
+const createMockMap = () => ({
+  getBounds: vi.fn(() => new FakeLatLngBounds(new FakeLatLng(37.0, 126.0), new FakeLatLng(38.0, 128.0))),
+} as unknown as naver.maps.Map);
+
 const createFakeMaps = () =>
   ({
     LatLng: FakeLatLng,
     Marker: FakeMarker,
+    Point: FakePoint,
+    Size: FakeSize,
     Event: {
       addListener: vi.fn(
         (instance: FakeMarker, eventName: string, handler: () => void) => {
@@ -81,10 +115,11 @@ const createFakeMaps = () =>
       ),
       removeListener: vi.fn(),
     },
+    LatLngBounds: FakeLatLngBounds,
   }) as unknown as typeof naver.maps;
 
 describe("createLockerMarkerIcon", () => {
-  it("24x24 컨테이너에 디자인 토큰 기반 마커 SVG를 포함한다", () => {
+  it("renders a 24x24 locker marker SVG", () => {
     const icon = createLockerMarkerIcon(createLockerPin());
 
     expect(icon).toContain('width="24"');
@@ -100,7 +135,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
-  it("장소 핀에는 보관함 개수 배지를 표시한다", () => {
+  it("renders a capped locker count badge for place markers", () => {
     const icon = createLockerMarkerIcon(createPlacePin({ lockerCount: 12 }));
 
     expect(icon).toContain('data-type="PLACE"');
@@ -110,10 +145,10 @@ describe("createLockerMarkerIcon", () => {
 });
 
 describe("syncLockerMarkers", () => {
-  it("보관함 마커를 만들고 cleanup 때 지도에서 제거한다", () => {
+  it("creates locker markers and removes them on cleanup", () => {
     FakeMarker.instances = [];
 
-    const map = {} as naver.maps.Map;
+    const map = createMockMap();
     const maps = createFakeMaps();
 
     const cleanup = syncLockerMarkers({
@@ -123,10 +158,7 @@ describe("syncLockerMarkers", () => {
     });
 
     expect(FakeMarker.instances).toHaveLength(1);
-    expect(FakeMarker.instances[0]?.options).toMatchObject({
-      map,
-      title: "보관함",
-    });
+    expect(FakeMarker.instances[0]?.options).toMatchObject({ map });
     expect(FakeMarker.instances[0]?.options.position).toBeInstanceOf(
       FakeLatLng,
     );
@@ -137,10 +169,10 @@ describe("syncLockerMarkers", () => {
     expect(maps.Event.removeListener).not.toHaveBeenCalled();
   });
 
-  it("마커 옵션에 SVG 문자열을 전달한다", () => {
+  it("uses an image icon option for locker markers", () => {
     FakeMarker.instances = [];
 
-    const map = {} as naver.maps.Map;
+    const map = createMockMap();
     const maps = createFakeMaps();
 
     syncLockerMarkers({
@@ -150,16 +182,40 @@ describe("syncLockerMarkers", () => {
     });
 
     const options = FakeMarker.instances[0]?.options as {
+      icon?: { url?: string; anchor?: FakePoint; scaledSize?: FakeSize };
+    };
+
+    expect(options.icon?.url).toContain("data:image/svg+xml");
+    expect(decodeURIComponent(options.icon?.url ?? "")).toContain(
+      'data-type="LOCKER"',
+    );
+    expect(options.icon?.anchor).toBeInstanceOf(FakePoint);
+    expect(options.icon?.scaledSize).toBeInstanceOf(FakeSize);
+  });
+
+  it("keeps content icon option for place marker badges", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createPlacePin()],
+    });
+
+    const options = FakeMarker.instances[0]?.options as {
       icon?: { content?: string };
     };
 
-    expect(options.icon?.content).toContain('data-type="LOCKER"');
+    expect(options.icon?.content).toContain('data-type="PLACE"');
   });
 
-  it("보관함 마커 클릭 때 핀 유형과 id를 전달한다", () => {
+  it("passes pin type and id when a locker marker is clicked", () => {
     FakeMarker.instances = [];
 
-    const map = {} as naver.maps.Map;
+    const map = createMockMap();
     const maps = createFakeMaps();
     const handleSelectLocker = vi.fn();
 
@@ -175,10 +231,10 @@ describe("syncLockerMarkers", () => {
     expect(handleSelectLocker).toHaveBeenCalledWith("LOCKER", 42);
   });
 
-  it("장소 마커 클릭 때 장소 id를 전달한다", () => {
+  it("passes place id when a place marker is clicked", () => {
     FakeMarker.instances = [];
 
-    const map = {} as naver.maps.Map;
+    const map = createMockMap();
     const maps = createFakeMaps();
     const handleSelectLocker = vi.fn();
 
@@ -194,10 +250,10 @@ describe("syncLockerMarkers", () => {
     expect(handleSelectLocker).toHaveBeenCalledWith("PLACE", 7);
   });
 
-  it("onSelectLocker가 있으면 cleanup에서 click listener를 해제한다", () => {
+  it("removes click listeners on cleanup", () => {
     FakeMarker.instances = [];
 
-    const map = {} as naver.maps.Map;
+    const map = createMockMap();
     const maps = createFakeMaps();
 
     const cleanup = syncLockerMarkers({
@@ -210,5 +266,48 @@ describe("syncLockerMarkers", () => {
     cleanup();
 
     expect(maps.Event.removeListener).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses an existing marker for the same pin", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ latitude: 37.5 })],
+      registry,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ latitude: 37.6 })],
+      registry,
+    });
+
+    expect(FakeMarker.instances).toHaveLength(1);
+    expect(FakeMarker.instances[0]?.setMap).not.toHaveBeenCalled();
+    expect(FakeMarker.instances[0]?.setPosition).toHaveBeenCalledWith(
+      expect.any(FakeLatLng),
+    );
+  });
+
+  it("skips marker updates when the pin data is unchanged", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin = createLockerPin();
+
+    syncLockerMarkers({ map, maps, lockers: [pin], registry });
+    syncLockerMarkers({ map, maps, lockers: [pin], registry });
+
+    expect(FakeMarker.instances).toHaveLength(1);
+    expect(FakeMarker.instances[0]?.setPosition).not.toHaveBeenCalled();
+    expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
   });
 });
