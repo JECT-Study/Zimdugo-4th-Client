@@ -24,6 +24,7 @@ export interface GetLockerPinsParams {
   lat: number;
   lng: number;
   radius?: number;
+  signal?: AbortSignal;
 }
 
 // B안 확정: 줌 레벨에 따른 고정 반경(Max 1000m) 매핑
@@ -51,11 +52,10 @@ export const getRadiusFromZoom = (zoom: number): number => {
 export const getLockerPins = async (
   params: GetLockerPinsParams,
 ): Promise<LockerPinItemResponse[]> => {
+  const { signal, ...queryParams } = params;
   const { data: response } = await httpGet<BackendResponse<LockerPinData>>(
     "/api/v1/lockers/pin",
-    {
-      params,
-    },
+    { params: queryParams, signal },
   );
   return response.data.items;
 };
