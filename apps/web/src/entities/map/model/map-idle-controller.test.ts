@@ -38,6 +38,8 @@ const createFakeMap = (overrides?: Partial<FakeMapState>) => {
   const state: FakeMapState = {
     center: new FakeLatLng(37.4979, 127.0276),
     zoom: 15,
+    // bounds 폭: lat 0.01 (37.50 - 37.49), lng 0.03 (127.04 - 127.01)
+    // 임계값 20% = lat 0.002, lng 0.006
     bounds: new FakeLatLngBounds(
       new FakeLatLng(37.5, 127.04),
       new FakeLatLng(37.49, 127.01),
@@ -130,7 +132,7 @@ describe("subscribeMapIdle", () => {
     expect(onSettle).toHaveBeenCalledTimes(1);
   });
 
-  it("center가 바뀌면 onSettle을 다시 호출한다", () => {
+  it("center가 bounds 폭의 20% 이상 이동하면 onSettle을 다시 호출한다", () => {
     const mapsState: FakeMapsState = { handlers: [], removed: [] };
     const fake = createFakeMap();
     const maps = createFakeMaps(mapsState);
@@ -139,15 +141,32 @@ describe("subscribeMapIdle", () => {
     subscribeMapIdle({ map: fake.map, maps, onSettle });
     mapsState.handlers[0]?.();
 
-    fake.state.center = new FakeLatLng(37.5, 127.05);
+    // lat 이동: 0.003 > bounds lat 폭(0.01) × 0.2(0.002) → 임계값 초과
+    fake.state.center = new FakeLatLng(37.4979 + 0.003, 127.0276);
     mapsState.handlers[0]?.();
 
     expect(onSettle).toHaveBeenCalledTimes(2);
     expect(onSettle).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        center: { lat: 37.5, lng: 127.05 },
+        center: { lat: 37.4979 + 0.003, lng: 127.0276 },
       }),
     );
+  });
+
+  it("center 이동이 bounds 폭의 20% 미만이면 onSettle을 호출하지 않는다", () => {
+    const mapsState: FakeMapsState = { handlers: [], removed: [] };
+    const fake = createFakeMap();
+    const maps = createFakeMaps(mapsState);
+    const onSettle = vi.fn();
+
+    subscribeMapIdle({ map: fake.map, maps, onSettle });
+    mapsState.handlers[0]?.();
+
+    // lat 이동: 0.001 < bounds lat 폭(0.01) × 0.2(0.002) → 임계값 미만
+    fake.state.center = new FakeLatLng(37.4979 + 0.001, 127.0276);
+    mapsState.handlers[0]?.();
+
+    expect(onSettle).toHaveBeenCalledTimes(1);
   });
 
   it("zoom이 바뀌면 onSettle을 다시 호출한다", () => {
@@ -168,7 +187,7 @@ describe("subscribeMapIdle", () => {
     );
   });
 
-  it("bounds가 바뀌면 onSettle을 다시 호출한다", () => {
+  it("줌이 바뀌면 bounds 이동량 무관하게 onSettle을 다시 호출한다", () => {
     const mapsState: FakeMapsState = { handlers: [], removed: [] };
     const fake = createFakeMap();
     const maps = createFakeMaps(mapsState);
@@ -177,20 +196,13 @@ describe("subscribeMapIdle", () => {
     subscribeMapIdle({ map: fake.map, maps, onSettle });
     mapsState.handlers[0]?.();
 
-    fake.state.bounds = new FakeLatLngBounds(
-      new FakeLatLng(37.51, 127.05),
-      new FakeLatLng(37.48, 127.0),
-    );
+    // 줌만 변경 → center·bounds 이동 없어도 즉시 발행
+    fake.state.zoom = 14;
     mapsState.handlers[0]?.();
 
     expect(onSettle).toHaveBeenCalledTimes(2);
     expect(onSettle).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        bounds: {
-          northEast: { lat: 37.51, lng: 127.05 },
-          southWest: { lat: 37.48, lng: 127.0 },
-        },
-      }),
+      expect.objectContaining({ zoom: 14 }),
     );
   });
 

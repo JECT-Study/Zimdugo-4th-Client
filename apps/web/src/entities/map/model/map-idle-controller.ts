@@ -1,10 +1,15 @@
 /**
  * 네이버 지도 `idle` 이벤트를 구독해 안정화된 시점의 viewport 스냅샷을
- * 발행한다. idle 자체가 드래그/줌 종료 후 호출되므로 별도의 이동 임계값을
- * 두지 않고, 대신 직전 발행값과 동일한 viewport는 dedup으로 차단한다.
+ * 발행한다. idle 자체가 드래그/줌 종료 후 호출되므로, 직전 발행 viewport와
+ * 비교해 변화가 유의미할 때만 onSettle을 호출한다.
  *
- * 이 모듈은 스냅샷 발행까지만 책임진다. 줌 임계값 필터링, 페이로드 변환,
- * nearby lockers API 호출 등은 본 단계의 범위가 아니다. TODO(ZIM-19).
+ * 유의미한 변화 기준:
+ *   - 줌 레벨이 달라진 경우 → 항상 발행
+ *   - 같은 줌 레벨에서 중심 이동이 현재 bounds 범위의
+ *     VIEWPORT_SETTLE_THRESHOLD(20%) 이상인 경우 → 발행
+ *
+ * 이 모듈은 스냅샷 발행까지만 책임진다. 페이로드 변환,
+ * nearby lockers API 호출 등은 본 단계의 범위가 아니다.
  */
 
 export interface MapViewportCoord {
@@ -17,10 +22,16 @@ export interface MapViewportBounds {
   southWest: MapViewportCoord;
 }
 
+export interface MapViewportSize {
+  width: number;
+  height: number;
+}
+
 export interface MapViewport {
   center: MapViewportCoord;
   zoom: number;
   bounds: MapViewportBounds;
+  size?: MapViewportSize;
 }
 
 export interface SubscribeMapIdleOptions {
@@ -36,6 +47,7 @@ export interface SubscribeMapIdleOptions {
 const readViewport = (map: naver.maps.Map): MapViewport => {
   const center = map.getCenter();
   const bounds = map.getBounds();
+  const size = map.getSize?.();
   const ne = bounds?.getNE?.();
   const sw = bounds?.getSW?.();
   const centerLat = center.lat();
@@ -47,17 +59,40 @@ const readViewport = (map: naver.maps.Map): MapViewport => {
       northEast: { lat: ne?.lat?.() ?? centerLat, lng: ne?.lng?.() ?? centerLng },
       southWest: { lat: sw?.lat?.() ?? centerLat, lng: sw?.lng?.() ?? centerLng },
     },
+    size: size ? { width: size.width, height: size.height } : undefined,
   };
 };
 
-const isSameViewport = (a: MapViewport, b: MapViewport): boolean =>
-  a.zoom === b.zoom &&
-  a.center.lat === b.center.lat &&
-  a.center.lng === b.center.lng &&
-  a.bounds.northEast.lat === b.bounds.northEast.lat &&
-  a.bounds.northEast.lng === b.bounds.northEast.lng &&
-  a.bounds.southWest.lat === b.bounds.southWest.lat &&
-  a.bounds.southWest.lng === b.bounds.southWest.lng;
+/**
+ * 직전 발행 viewport 대비 현재 viewport가 API 재요청이 필요할 만큼
+ * 충분히 변했는지 판단한다.
+ *
+ * - 줌이 달라지면 즉시 true
+ * - 동일 줌에서는 bounds 범위 대비 중심 이동 비율로 판단:
+ *   lat 또는 lng 이동량이 bounds 폭의 THRESHOLD 이상일 때만 true
+ */
+const VIEWPORT_SETTLE_THRESHOLD = 0.2;
+
+const isViewportChangedSignificantly = (
+  prev: MapViewport,
+  curr: MapViewport,
+): boolean => {
+  if (prev.zoom !== curr.zoom) return true;
+
+  const latSpan = prev.bounds.northEast.lat - prev.bounds.southWest.lat;
+  const lngSpan = prev.bounds.northEast.lng - prev.bounds.southWest.lng;
+
+  // bounds가 유효하지 않은 엣지 케이스엔 항상 발행
+  if (latSpan <= 0 || lngSpan <= 0) return true;
+
+  const latDelta = Math.abs(curr.center.lat - prev.center.lat);
+  const lngDelta = Math.abs(curr.center.lng - prev.center.lng);
+
+  return (
+    latDelta > latSpan * VIEWPORT_SETTLE_THRESHOLD ||
+    lngDelta > lngSpan * VIEWPORT_SETTLE_THRESHOLD
+  );
+};
 
 /**
  * `idle` 이벤트를 구독해 viewport 스냅샷을 dedup 후 발행한다.
@@ -74,7 +109,7 @@ export const subscribeMapIdle = ({
   const handler = () => {
     if (isCancelled) return;
     const viewport = readViewport(map);
-    if (lastViewport !== null && isSameViewport(viewport, lastViewport)) {
+    if (lastViewport !== null && !isViewportChangedSignificantly(viewport, lastViewport)) {
       return;
     }
     lastViewport = viewport;
