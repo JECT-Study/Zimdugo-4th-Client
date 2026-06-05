@@ -1,5 +1,5 @@
 import { m } from "@repo/i18n";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { z } from "zod";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
@@ -197,7 +197,7 @@ export function useReportForm() {
   }, []);
 
   const handleImageChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (!files?.length) return;
 

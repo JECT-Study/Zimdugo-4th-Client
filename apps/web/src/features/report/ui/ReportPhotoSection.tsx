@@ -2,7 +2,7 @@ import { m } from "@repo/i18n";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import { IconX16 } from "@repo/ui/tokens/icons";
-import type { RefObject } from "react";
+import type { ChangeEvent, RefObject } from "react";
 import { MAX_REPORT_PHOTOS } from "../model/useReportForm";
 import {
   agreementSection,
@@ -18,7 +18,7 @@ interface ReportPhotoSectionProps {
   uploadedImages: string[];
   fileInputRef: RefObject<HTMLInputElement | null>;
   onImageClick: () => void;
-  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onImageRemove: (index: number) => void;
   isAgreed: boolean;
   setIsAgreed: (val: boolean) => void;

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import {
   pickerContainer,
   pickerGradientBottom,
@@ -60,7 +60,7 @@ export function WheelPicker({
     }, 150);
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: KeyboardEvent) => {
     const currentIndex = options.indexOf(value);
     let nextIndex = -1;
 
@@ -76,7 +76,7 @@ export function WheelPicker({
     }
   };
 
-  const handleMouseDown = (event: React.MouseEvent) => {
+  const handleMouseDown = (event: MouseEvent) => {
     isDragging.current = true;
     startY.current = event.pageY;
     startScrollTop.current = scrollRef.current?.scrollTop || 0;
