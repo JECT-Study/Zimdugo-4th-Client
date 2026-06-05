@@ -1,9 +1,47 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { subscribeMapIdle } from "./map-idle-controller";
 import type { MapViewport } from "./map-idle-controller";
 import { syncLockerMarkers } from "./map-marker";
 import { getLockerPins, getRadiusFromZoom } from "#/shared/api/lockers";
+
+const EARTH_RADIUS_METERS = 6_371_000;
+
+const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+
+const getDistanceMeters = (
+  from: MapViewport["center"],
+  to: MapViewport["center"],
+): number => {
+  const latDelta = toRadians(to.lat - from.lat);
+  const lngDelta = toRadians(to.lng - from.lng);
+  const fromLat = toRadians(from.lat);
+  const toLat = toRadians(to.lat);
+
+  const haversine =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(lngDelta / 2) ** 2;
+
+  return (
+    2 *
+    EARTH_RADIUS_METERS *
+    Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
+  );
+};
+
+export const getRadiusFromViewport = (viewport: MapViewport): number => {
+  const fallbackRadius = getRadiusFromZoom(viewport.zoom);
+  const radiusFromBounds = Math.ceil(
+    Math.max(
+      getDistanceMeters(viewport.center, viewport.bounds.northEast),
+      getDistanceMeters(viewport.center, viewport.bounds.southWest),
+    ),
+  );
+
+  return radiusFromBounds > 0
+    ? Math.max(radiusFromBounds, fallbackRadius)
+    : fallbackRadius;
+};
 
 export interface UseLockerMarkersOptions {
   map: naver.maps.Map | null;
@@ -18,6 +56,10 @@ export const useLockerMarkers = ({
 }: UseLockerMarkersOptions) => {
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const cleanupMarkersRef = useRef<(() => void) | null>(null);
+  const radius = useMemo(
+    () => (viewport ? getRadiusFromViewport(viewport) : undefined),
+    [viewport],
+  );
 
   // 1. 지도 idle 이벤트 구독 (뷰포트 상태 업데이트만 담당)
   useEffect(() => {
@@ -41,13 +83,14 @@ export const useLockerMarkers = ({
       viewport?.center.lat,
       viewport?.center.lng,
       viewport?.zoom,
+      radius,
     ],
     queryFn: () => {
-      if (!viewport) return Promise.resolve([]);
+      if (!viewport || radius === undefined) return Promise.resolve([]);
       return getLockerPins({
         lat: viewport.center.lat,
         lng: viewport.center.lng,
-        radius: getRadiusFromZoom(viewport.zoom),
+        radius,
       });
     },
     enabled: !!viewport,
