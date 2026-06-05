@@ -241,7 +241,7 @@ export function useReportForm() {
   );
 
   const isStep1Valid = !!address && lockerType.length > 0;
-  const isStep2Valid = true;
+  const isStep2Valid = isAgreed;
 
   return {
     step,
