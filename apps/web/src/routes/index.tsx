@@ -10,8 +10,10 @@ import {
   MapControlsSkeleton,
   NaverMapCanvas,
   NaverMapProvider,
+  useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
+import { useLockerMarkers } from "#/entities/map/model/useLockerMarkers";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
@@ -235,6 +237,7 @@ function IndexPage() {
           deviceHeading={deviceHeading}
           isOrientationTracking={isOrientationTracking}
         />
+        <LockerMarkersLayer map={mapInstance} />
       </NaverMapProvider>
       {isMapLoading && !hasMapError ? (
         <MapControlsSkeleton />
@@ -297,4 +300,12 @@ function IndexPage() {
       />
     </main>
   );
+}
+
+function LockerMarkersLayer({ map }: { map: naver.maps.Map | null }) {
+  const { maps } = useNaverMapSdk();
+
+  useLockerMarkers({ map, maps });
+
+  return null;
 }
