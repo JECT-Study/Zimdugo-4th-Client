@@ -78,6 +78,7 @@ export const classificationSection = style({
 
 export const sectionErrorText = style({
   margin: 0,
+  marginTop: vars.spacing[8],
   fontSize: vars.typography.fontSize[12],
   color: vars.color.palette.red[300],
   textAlign: "center",
