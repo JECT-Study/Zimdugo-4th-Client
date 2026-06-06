@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { subscribeMapIdle } from "./map-idle-controller";
 import type { MapViewport } from "./map-idle-controller";
@@ -113,6 +113,19 @@ export const useLockerMarkers = ({
 }: UseLockerMarkersOptions) => {
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
+  const onSelectLockerRef = useRef(onSelectLocker);
+
+  useEffect(() => {
+    onSelectLockerRef.current = onSelectLocker;
+  }, [onSelectLocker]);
+
+  const handleSelectLocker = useCallback(
+    (pinType: "LOCKER" | "PLACE", id: number) => {
+      onSelectLockerRef.current?.(pinType, id);
+    },
+    [],
+  );
+
   const lockerPinQuery = useMemo(
     () => (viewport ? getLockerPinQueryFromViewport(viewport) : undefined),
     [viewport],
@@ -165,10 +178,10 @@ export const useLockerMarkers = ({
       map,
       maps,
       lockers,
-      onSelectLocker,
+      onSelectLocker: handleSelectLocker,
       registry: markerRegistryRef.current,
     });
-  }, [map, maps, lockers, onSelectLocker, viewport]);
+  }, [map, maps, lockers, handleSelectLocker, viewport]);
 
   useEffect(() => {
     return () => {
