@@ -1,9 +1,10 @@
 import { m } from "@repo/i18n";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { Input } from "@repo/ui/components/input";
-import { LabelTitle } from "@repo/ui/components/label-title";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { ReportSectionError } from "./ReportSectionError";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
+import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
   priceInputContainer,
   priceInputRow,
@@ -47,7 +48,9 @@ export function ReportPriceSection({
       data-section="price"
       aria-describedby={errorId}
     >
-      <LabelTitle size="small">{m.report_section_price()}</LabelTitle>
+      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+        {m.report_section_price()}
+      </ReportSectionTitleRow>
       <div className={priceRow}>
         <Checkbox
           labelText={m.report_price_free()}
@@ -111,7 +114,14 @@ export function ReportPriceSection({
           </div>
         </div>
       )}
-      <ReportSectionError id={errorId} message={errorMessage} />
+      <ReportSectionErrorReserve />
+      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
+      <ReportSectionError
+        id={errorId}
+        message={errorMessage}
+        placement="bottom"
+      />
+      */}
     </section>
   );
 }

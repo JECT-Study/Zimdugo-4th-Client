@@ -6,6 +6,7 @@ import type { ChangeEvent, RefObject } from "react";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { MAX_REPORT_PHOTOS } from "../model/report-types";
 import { ReportSectionError } from "./ReportSectionError";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import {
   agreementSection,
   imageDeleteButton,
@@ -14,6 +15,7 @@ import {
   photoUploadArea,
   reportPhotoGallery,
   section,
+  sectionTitleRow,
 } from "./report.css.ts";
 
 interface ReportPhotoSectionProps {
@@ -118,16 +120,30 @@ export function ReportPhotoSection({
         style={{ marginTop: "16px" }}
         aria-describedby={agreementErrorId}
       >
-        <Checkbox
-          labelText={m.report_location_agreement()}
-          isSelected={isAgreed}
-          onSelectedChange={(selected) => {
-            setIsAgreed(selected);
-            onAgreementChange?.();
-          }}
-          labelLocation="right"
+        <div className={sectionTitleRow}>
+          <Checkbox
+            labelText={m.report_location_agreement()}
+            isSelected={isAgreed}
+            onSelectedChange={(selected) => {
+              setIsAgreed(selected);
+              onAgreementChange?.();
+            }}
+            labelLocation="right"
+          />
+          <ReportSectionError
+            id={agreementErrorId}
+            message={agreementError}
+            placement="title"
+          />
+        </div>
+        <ReportSectionErrorReserve />
+        {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
+        <ReportSectionError
+          id={agreementErrorId}
+          message={agreementError}
+          placement="bottom"
         />
-        <ReportSectionError id={agreementErrorId} message={agreementError} />
+        */}
       </div>
     </section>
   );

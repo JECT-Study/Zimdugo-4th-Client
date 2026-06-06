@@ -1,6 +1,5 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
-import { LabelTitle } from "@repo/ui/components/label-title";
 import {
   PopupPicker,
   type PopupPickerColumn,
@@ -11,6 +10,8 @@ import type { ReportFormValues } from "#/features/report/model/report-types";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { PickerTriggerButton } from "./PickerTriggerButton";
 import { ReportSectionError } from "./ReportSectionError";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
+import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
   floorChoiceButton,
   floorControlRow,
@@ -175,10 +176,10 @@ export function ReportFloorSection({
       data-section="floor"
       aria-describedby={errorId}
     >
-      <LabelTitle size="small">
+      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
         {m.report_section_floor()}
         <span className={requiredMark}>*</span>
-      </LabelTitle>
+      </ReportSectionTitleRow>
       <div className={placeType}>
         <div className={floorControlRow}>
           <Button
@@ -220,7 +221,14 @@ export function ReportFloorSection({
         }}
       />
 
-      <ReportSectionError id={errorId} message={errorMessage} />
+      <ReportSectionErrorReserve />
+      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
+      <ReportSectionError
+        id={errorId}
+        message={errorMessage}
+        placement="bottom"
+      />
+      */}
     </section>
   );
 }

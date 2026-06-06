@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
 import { ControlChip } from "@repo/ui/components/control-chip";
-import { LabelTitle } from "@repo/ui/components/label-title";
 import type { IndoorOutdoorType } from "#/features/report/model/report-types";
+import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
   indoorOutdoorChip,
   indoorOutdoorControl,
@@ -12,18 +12,25 @@ import {
 interface ReportIndoorOutdoorSectionProps {
   value: IndoorOutdoorType | null;
   onChange: (value: IndoorOutdoorType) => void;
+  sectionErrorMessage?: string;
+  sectionErrorId?: string;
 }
 
 export function ReportIndoorOutdoorSection({
   value,
   onChange,
+  sectionErrorMessage,
+  sectionErrorId,
 }: ReportIndoorOutdoorSectionProps) {
   return (
     <section className={section}>
-      <LabelTitle size="small">
+      <ReportSectionTitleRow
+        errorMessage={sectionErrorMessage}
+        errorId={sectionErrorId}
+      >
         {m.report_section_indoor_outdoor()}
         <span className={requiredMark}>*</span>
-      </LabelTitle>
+      </ReportSectionTitleRow>
       <fieldset
         className={indoorOutdoorControl}
         aria-label={m.report_indoor_outdoor_aria()}

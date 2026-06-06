@@ -5,6 +5,7 @@ import { ReportIndoorOutdoorSection } from "./ReportIndoorOutdoorSection";
 import { ReportTypeSection } from "./ReportTypeSection";
 import { classificationSection } from "./report.css.ts";
 import { ReportSectionError } from "./ReportSectionError";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 
 interface ReportClassificationSectionProps {
   lockerTypeOptions: Array<{ label: string; value: LockerType }>;
@@ -36,6 +37,8 @@ export function ReportClassificationSection({
         render={({ field }) => (
           <ReportIndoorOutdoorSection
             value={field.value ?? null}
+            sectionErrorMessage={errorMessage}
+            sectionErrorId={errorId}
             onChange={(value) => {
               field.onChange(value);
               onFieldChange?.();
@@ -57,7 +60,14 @@ export function ReportClassificationSection({
           />
         )}
       />
-      <ReportSectionError id={errorId} message={errorMessage} />
+      <ReportSectionErrorReserve />
+      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
+      <ReportSectionError
+        id={errorId}
+        message={errorMessage}
+        placement="bottom"
+      />
+      */}
     </div>
   );
 }

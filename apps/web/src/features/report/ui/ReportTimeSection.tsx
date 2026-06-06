@@ -1,5 +1,4 @@
 import { m } from "@repo/i18n";
-import { LabelTitle } from "@repo/ui/components/label-title";
 import {
   PopupPicker,
   type PopupPickerColumn,
@@ -8,6 +7,8 @@ import { useMemo, useState } from "react";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { PickerTriggerButton } from "./PickerTriggerButton";
 import { ReportSectionError } from "./ReportSectionError";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
+import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import { section, timeRow, timeSeparator } from "./report.css.ts";
 
 interface ReportTimeSectionProps {
@@ -125,7 +126,9 @@ export function ReportTimeSection({
       data-section="time"
       aria-describedby={errorId}
     >
-      <LabelTitle size="small">{m.report_section_time()}</LabelTitle>
+      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+        {m.report_section_time()}
+      </ReportSectionTitleRow>
       <div className={timeRow}>
         {/* Existing Dropdown is kept aside while this section uses PopupPicker. */}
         <PickerTriggerButton
@@ -158,7 +161,14 @@ export function ReportTimeSection({
           onPress: handleConfirmTime,
         }}
       />
-      <ReportSectionError id={errorId} message={errorMessage} />
+      <ReportSectionErrorReserve />
+      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
+      <ReportSectionError
+        id={errorId}
+        message={errorMessage}
+        placement="bottom"
+      />
+      */}
     </section>
   );
 }
