@@ -54,7 +54,11 @@ class FakeSize {
 class FakeMarker {
   static instances: FakeMarker[] = [];
 
-  public readonly setMap = vi.fn();
+  private attachedMap: unknown = null;
+  public readonly setMap = vi.fn((nextMap: unknown) => {
+    this.attachedMap = nextMap;
+  });
+  public readonly getMap = vi.fn(() => this.attachedMap);
   public readonly setIcon = vi.fn();
   public readonly setPosition = vi.fn();
   public readonly setVisible = vi.fn((visible: boolean) => { this.visible = visible; });
@@ -63,6 +67,7 @@ class FakeMarker {
   public visible = true;
 
   constructor(public readonly options: Record<string, unknown>) {
+    this.attachedMap = options.map ?? null;
     FakeMarker.instances.push(this);
   }
 }
