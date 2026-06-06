@@ -77,6 +77,24 @@ export const placeType = style({
   marginTop: 0,
 });
 
+export const indoorOutdoorControl = style({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: vars.spacing[16],
+  width: "256px",
+  maxWidth: "100%",
+  margin: "0 auto",
+  padding: 0,
+  border: 0,
+  minInlineSize: 0,
+});
+
+export const indoorOutdoorChip = style({
+  width: "120px",
+  maxWidth: "calc(50% - 8px)",
+});
+
 export const photoSectionContent = style({
   display: "flex",
   flexDirection: "column",

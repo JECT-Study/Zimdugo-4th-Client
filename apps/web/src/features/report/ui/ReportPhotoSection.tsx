@@ -100,6 +100,9 @@ export function ReportPhotoSection({
           </div>
         ))}
       </div>
+      <p style={{ fontSize: "12px", color: "#8E8E8E", marginTop: "8px" }}>
+        {m.report_photo_upload_deferred_hint()}
+      </p>
       <div className={agreementSection} style={{ marginTop: "16px" }}>
         <Checkbox
           labelText={m.report_location_agreement()}
