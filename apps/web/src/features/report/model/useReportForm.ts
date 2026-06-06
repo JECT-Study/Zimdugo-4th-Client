@@ -1,16 +1,25 @@
 import { m } from "@repo/i18n";
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { z } from "zod";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
+import type { IndoorOutdoorType } from "./report-types";
 
-/** @see docs/features/ep-02-report.md — 임시 확정, 추후 BE/UX 검토 */
-export const MAX_REPORT_PHOTOS = 1;
-export const MAX_REPORT_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
-export const MAX_REPORT_ADDITIONAL_INFO_LENGTH = 255;
+export {
+  MAX_REPORT_ADDITIONAL_INFO_LENGTH,
+  MAX_REPORT_PHOTOS,
+  MAX_REPORT_PHOTO_SIZE_BYTES,
+} from "./report-types";
 
 export const reportSchema = z.object({
   lockerType: z.array(z.string()).min(1),
+  indoorOutdoorType: z.enum(["INDOOR", "OUTDOOR"]),
   address: z.string().min(1),
   location: z.object({
     lat: z.number(),
@@ -62,6 +71,8 @@ export function useReportForm() {
   } | null>(null);
   const [floorType, setFloorType] = useState<string | number>("none");
   const [floorNumber, setFloorNumber] = useState("");
+  const [indoorOutdoorType, setIndoorOutdoorType] =
+    useState<IndoorOutdoorType | null>(null);
   const [isAgreed, setIsAgreed] = useState(false);
   const [priceType, setPriceType] = useState<"free" | "paid" | "none">("none");
   const [minPrice, setMinPrice] = useState("");
@@ -128,6 +139,7 @@ export function useReportForm() {
 
       const submitData = {
         lockerType,
+        indoorOutdoorType,
         address,
         location: selectedCoords,
         floor: sanitizeFloorNumber(floorNumber),
@@ -177,6 +189,7 @@ export function useReportForm() {
   }, [
     step,
     lockerType,
+    indoorOutdoorType,
     address,
     selectedCoords,
     floorNumber,
@@ -240,7 +253,8 @@ export function useReportForm() {
     [uploadedImages],
   );
 
-  const isStep1Valid = !!address && lockerType.length > 0;
+  const isStep1Valid =
+    !!address && lockerType.length > 0 && indoorOutdoorType !== null;
   const isStep2Valid = isAgreed;
 
   return {
@@ -266,6 +280,8 @@ export function useReportForm() {
       setFloorType,
       floorNumber,
       setFloorNumber,
+      indoorOutdoorType,
+      setIndoorOutdoorType,
       isAgreed,
       setIsAgreed,
       priceType,

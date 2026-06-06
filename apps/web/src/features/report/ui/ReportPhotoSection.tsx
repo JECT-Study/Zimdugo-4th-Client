@@ -3,7 +3,7 @@ import { Checkbox } from "@repo/ui/components/checkbox";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import { IconX16 } from "@repo/ui/tokens/icons";
 import type { ChangeEvent, RefObject } from "react";
-import { MAX_REPORT_PHOTOS } from "../model/useReportForm";
+import { MAX_REPORT_PHOTOS } from "../model/report-types";
 import {
   agreementSection,
   imageDeleteButton,

@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import { useEffect, useRef } from "react";
-import { MAX_REPORT_ADDITIONAL_INFO_LENGTH } from "../model/useReportForm";
+import { MAX_REPORT_ADDITIONAL_INFO_LENGTH } from "../model/report-types";
 import {
   charCounter,
   section,
