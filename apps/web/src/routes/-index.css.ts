@@ -53,10 +53,20 @@ export const locationButton = style({
   cursor: "pointer",
   backgroundColor: "transparent",
   border: "none",
-  outline: "none",
+  outline: "2px solid transparent",
+  outlineOffset: "2px",
   padding: 0,
   ":focus-visible": {
     boxShadow: `0 0 0 3px ${vars.color.bg.default}, 0 0 0 5px ${vars.color.brand.primary}`,
+    outlineColor: vars.color.brand.primary,
+  },
+  "@media": {
+    "(forced-colors: active)": {
+      ":focus-visible": {
+        boxShadow: "none",
+        outline: "2px solid Highlight",
+      },
+    },
   },
 });
 
