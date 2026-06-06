@@ -13,7 +13,7 @@ export const useAuth = () => {
     
     const baseUrl =
       import.meta.env.VITE_API_BASE_URL ??
-      "https://api.zimdugo.com";
+      (import.meta.env.DEV ? "http://localhost:8080" : "");
       
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}?callbackUrl=${encodeURIComponent(absoluteCallbackUrl)}`;
   };
