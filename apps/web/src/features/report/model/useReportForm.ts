@@ -14,6 +14,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
+import { validateReportPhotoFile } from "#/features/report/lib/validate-report-photo-file";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
 import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
@@ -23,12 +24,16 @@ import {
   scrollToReportSection,
 } from "#/features/report/lib/scroll-to-report-section";
 import { createLockerReport } from "#/features/report/api/create-locker-report";
-import { applyValidationErrors } from "./report-error-targets";
-import { reportSchema } from "./report-schema";
+import {
+  applyValidationErrors,
+  applyClientValidationIssues,
+  getSectionAnchorFields,
+  toClientValidationIssues,
+} from "./report-error-targets";
+import { parseReportForm, reportSchema } from "./report-schema";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import {
   MAX_REPORT_PHOTOS,
-  MAX_REPORT_PHOTO_SIZE_BYTES,
   type ReportFormValues,
   type ReportSectionId,
   reportDefaultValues,
@@ -60,16 +65,6 @@ export function useReportForm(): {
   fileInputRef: RefObject<HTMLInputElement | null>;
   minPriceDisplay: string;
   maxPriceDisplay: string;
-  dial: {
-    dialPrefix: string;
-    setDialPrefix: (val: string) => void;
-    dialD1: string;
-    setDialD1: (val: string) => void;
-    dialD2: string;
-    setDialD2: (val: string) => void;
-    dialD3: string;
-    setDialD3: (val: string) => void;
-  };
   handlers: {
     handleBack: () => void;
     handleNext: () => Promise<void>;
@@ -80,8 +75,6 @@ export function useReportForm(): {
     setMinPriceDisplay: (val: string) => void;
     setMaxPriceDisplay: (val: string) => void;
     handlePriceTypeChange: (type: "free" | "paid" | "none") => void;
-    handleUiFloorTypeChange: (val: string | number) => void;
-    handleFloorNumberChange: (val: string) => void;
     clearSectionError: (sectionId: ReportSectionId) => void;
   };
   validation: { isStep1Valid: boolean; isStep2Valid: boolean };
@@ -111,11 +104,6 @@ export function useReportForm(): {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadedImagesRef = useRef(uploadedImages);
 
-  const [dialPrefix, setDialPrefix] = useState("ground");
-  const [dialD1, setDialD1] = useState("0");
-  const [dialD2, setDialD2] = useState("0");
-  const [dialD3, setDialD3] = useState("1");
-
   useEffect(() => {
     uploadedImagesRef.current = uploadedImages;
   }, [uploadedImages]);
@@ -136,14 +124,38 @@ export function useReportForm(): {
   const locationConsentAgreed =
     useWatch({ control, name: "locationConsentAgreed" }) ?? false;
 
-  const clearSectionError = useCallback((sectionId: ReportSectionId) => {
-    setSectionServerErrors((prev) => {
-      if (!prev[sectionId]) return prev;
-      const next = { ...prev };
-      delete next[sectionId];
-      return next;
-    });
-  }, []);
+  const clearSectionError = useCallback(
+    (sectionId: ReportSectionId) => {
+      setSectionServerErrors((prev) => {
+        if (!prev[sectionId]) return prev;
+        const next = { ...prev };
+        delete next[sectionId];
+        return next;
+      });
+
+      for (const field of getSectionAnchorFields(sectionId)) {
+        form.clearErrors(field);
+      }
+    },
+    [form],
+  );
+
+  const applyZodIssuesToUi = useCallback(
+    (stepFilter?: 1 | 2) => {
+      const parsed = parseReportForm(form.getValues());
+      if (parsed.success) return [];
+
+      return applyClientValidationIssues(
+        toClientValidationIssues(parsed.error.issues),
+        {
+          setError: form.setError,
+          setSectionServerErrors,
+        },
+        stepFilter ? { step: stepFilter } : undefined,
+      );
+    },
+    [form],
+  );
 
   const handleBack = useCallback(() => {
     if (step > 1) setStep((s) => s - 1);
@@ -216,13 +228,20 @@ export function useReportForm(): {
   const onInvalid = useCallback(
     (errors: FieldErrors<ReportFormValues>) => {
       setIsSubmitting(false);
+      const sectionIds = applyZodIssuesToUi();
       const hasStep1Error = STEP_1_FIELDS.some((field) => errors[field]);
       if (hasStep1Error) {
         setStep(1);
       }
+      if (sectionIds.length > 0) {
+        requestAnimationFrame(() => {
+          scrollToEarliestReportSection(sectionIds);
+        });
+        return;
+      }
       scrollToFirstFieldError(errors);
     },
-    [scrollToFirstFieldError],
+    [applyZodIssuesToUi, scrollToFirstFieldError],
   );
 
   const handleNext = useCallback(async () => {
@@ -232,13 +251,25 @@ export function useReportForm(): {
         setStep(2);
         window.scrollTo(0, 0);
       } else {
-        scrollToFirstFieldError(form.formState.errors);
+        const sectionIds = applyZodIssuesToUi(1);
+        if (sectionIds.length > 0) {
+          requestAnimationFrame(() => {
+            scrollToEarliestReportSection(sectionIds);
+          });
+        }
       }
       return;
     }
 
     await handleSubmit(onSubmit, onInvalid)();
-  }, [step, trigger, handleSubmit, onSubmit, onInvalid, scrollToFirstFieldError, form]);
+  }, [
+    step,
+    trigger,
+    handleSubmit,
+    onSubmit,
+    onInvalid,
+    applyZodIssuesToUi,
+  ]);
 
   const formatPrice = useCallback((val: string) => formatPriceInput(val), []);
 
@@ -284,45 +315,6 @@ export function useReportForm(): {
     [clearSectionError, setValue],
   );
 
-  const handleUiFloorTypeChange = useCallback(
-    (val: string | number) => {
-      if (val === "none") {
-        setValue("hasFloor", false, { shouldDirty: true });
-        setValue("floorType", null, { shouldDirty: true });
-        setValue("floorNumber", null, { shouldDirty: true });
-      } else if (val === "exists") {
-        setValue("hasFloor", true, { shouldDirty: true });
-      }
-      clearSectionError("floor");
-    },
-    [clearSectionError, setValue],
-  );
-
-  const handleFloorNumberChange = useCallback(
-    (val: string) => {
-      if (!val) {
-        setValue("floorType", null, { shouldDirty: true });
-        setValue("floorNumber", null, { shouldDirty: true });
-        return;
-      }
-
-      const isUnderground = val.startsWith("B");
-      const numPart = isUnderground ? val.slice(1) : val;
-      const parsed = Number.parseInt(numPart, 10);
-      if (Number.isNaN(parsed)) return;
-
-      setValue("hasFloor", true, { shouldDirty: true });
-      setValue(
-        "floorType",
-        isUnderground ? "UNDERGROUND" : "ABOVE_GROUND",
-        { shouldDirty: true },
-      );
-      setValue("floorNumber", parsed, { shouldDirty: true });
-      clearSectionError("floor");
-    },
-    [clearSectionError, setValue],
-  );
-
   const handleImageClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -339,22 +331,21 @@ export function useReportForm(): {
         return;
       }
 
-      const imageFile = Array.from(files).find((f) =>
-        f.type.startsWith("image/"),
-      );
-      if (!imageFile) {
-        e.target.value = "";
-        return;
-      }
+      const selectedFile = files[0];
+      const validation = validateReportPhotoFile(selectedFile);
 
-      if (imageFile.size > MAX_REPORT_PHOTO_SIZE_BYTES) {
-        setPhotoErrorMessage(m.report_photo_max_size_exceeded());
+      if (!validation.ok) {
+        setPhotoErrorMessage(
+          validation.error === "invalid_type"
+            ? m.report_alert_image_only()
+            : m.report_photo_max_size_exceeded(),
+        );
         setIsPhotoErrorPopupOpen(true);
         e.target.value = "";
         return;
       }
 
-      setUploadedImages([URL.createObjectURL(imageFile)]);
+      setUploadedImages([URL.createObjectURL(selectedFile)]);
       e.target.value = "";
     },
     [uploadedImages.length],
@@ -394,16 +385,6 @@ export function useReportForm(): {
     fileInputRef,
     minPriceDisplay,
     maxPriceDisplay,
-    dial: {
-      dialPrefix,
-      setDialPrefix,
-      dialD1,
-      setDialD1,
-      dialD2,
-      setDialD2,
-      dialD3,
-      setDialD3,
-    },
     handlers: {
       handleBack,
       handleNext,
@@ -414,8 +395,6 @@ export function useReportForm(): {
       setMinPriceDisplay: handleMinPriceDisplayChange,
       setMaxPriceDisplay: handleMaxPriceDisplayChange,
       handlePriceTypeChange,
-      handleUiFloorTypeChange,
-      handleFloorNumberChange,
       clearSectionError,
     },
     validation: { isStep1Valid, isStep2Valid },

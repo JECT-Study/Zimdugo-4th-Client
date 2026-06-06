@@ -1,6 +1,8 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { LabelTitle } from "@repo/ui/components/label-title";
+import { useReportSectionError } from "#/features/report/model/useReportSectionError";
+import { ReportSectionError } from "./ReportSectionError";
 import {
   addressTextContent,
   locationTextButton,
@@ -13,14 +15,26 @@ interface ReportLocationSectionProps {
   address: string;
   selectedCoords: { lat: number; lng: number } | null;
   onOpenOverlay: () => void;
+  sectionServerError?: string;
 }
 
 export function ReportLocationSection({
   address,
   onOpenOverlay,
+  sectionServerError,
 }: ReportLocationSectionProps) {
+  const errorMessage = useReportSectionError(
+    ["roadAddress", "latitude", "longitude"],
+    sectionServerError,
+  );
+  const errorId = errorMessage ? "report-location-error" : undefined;
+
   return (
-    <section className={section} data-section="location">
+    <section
+      className={section}
+      data-section="location"
+      aria-describedby={errorId}
+    >
       <LabelTitle size="small">
         {m.report_section_location()}
         <span className={requiredMark}>*</span>
@@ -52,6 +66,7 @@ export function ReportLocationSection({
           {m.report_location_select_button()}
         </Button>
       </div>
+      <ReportSectionError id={errorId} message={errorMessage} />
     </section>
   );
 }

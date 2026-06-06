@@ -1,8 +1,10 @@
 import { Controller, useFormContext } from "react-hook-form";
 import type { LockerType, ReportFormValues } from "#/features/report/model/report-types";
+import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { ReportIndoorOutdoorSection } from "./ReportIndoorOutdoorSection";
 import { ReportTypeSection } from "./ReportTypeSection";
-import { classificationSection, sectionErrorText } from "./report.css.ts";
+import { classificationSection } from "./report.css.ts";
+import { ReportSectionError } from "./ReportSectionError";
 
 interface ReportClassificationSectionProps {
   lockerTypeOptions: Array<{ label: string; value: LockerType }>;
@@ -15,14 +17,12 @@ export function ReportClassificationSection({
   sectionServerError,
   onFieldChange,
 }: ReportClassificationSectionProps) {
-  const { control, formState } = useFormContext<ReportFormValues>();
-
-  const mergedError =
-    sectionServerError ??
-    formState.errors.lockerType?.message ??
-    formState.errors.indoorOutdoorType?.message;
-
-  const errorId = mergedError ? "report-classification-error" : undefined;
+  const { control } = useFormContext<ReportFormValues>();
+  const errorMessage = useReportSectionError(
+    ["indoorOutdoorType", "lockerType"],
+    sectionServerError,
+  );
+  const errorId = errorMessage ? "report-classification-error" : undefined;
 
   return (
     <div
@@ -57,11 +57,7 @@ export function ReportClassificationSection({
           />
         )}
       />
-      {mergedError ? (
-        <p id={errorId} className={sectionErrorText} role="alert">
-          {mergedError}
-        </p>
-      ) : null}
+      <ReportSectionError id={errorId} message={errorMessage} />
     </div>
   );
 }

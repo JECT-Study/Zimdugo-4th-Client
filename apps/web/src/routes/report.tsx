@@ -87,7 +87,6 @@ function ReportPage() {
     fileInputRef,
     minPriceDisplay,
     maxPriceDisplay,
-    dial,
     handlers,
     validation,
   } = useReportForm();
@@ -97,7 +96,6 @@ function ReportPage() {
   const roadAddress = useWatch({ control, name: "roadAddress" }) ?? "";
   const latitude = useWatch({ control, name: "latitude" });
   const longitude = useWatch({ control, name: "longitude" });
-  const hasFloor = useWatch({ control, name: "hasFloor" });
   const isFree = useWatch({ control, name: "isFree" });
   const sizeTypes = useWatch({ control, name: "sizeTypes" }) ?? [];
   const locationConsentAgreed =
@@ -111,7 +109,6 @@ function ReportPage() {
       ? { lat: latitude, lng: longitude }
       : null;
 
-  const uiFloorType = hasFloor ? "exists" : "none";
   const priceType =
     isFree === true ? "free" : isFree === false ? "paid" : "none";
 
@@ -125,8 +122,6 @@ function ReportPage() {
     setMinPriceDisplay,
     setMaxPriceDisplay,
     handlePriceTypeChange,
-    handleUiFloorTypeChange,
-    handleFloorNumberChange,
     clearSectionError,
   } = handlers;
 
@@ -175,19 +170,11 @@ function ReportPage() {
                   address={roadAddress}
                   selectedCoords={selectedCoords}
                   onOpenOverlay={() => setIsAddressOverlayOpen(true)}
+                  sectionServerError={sectionServerErrors.location}
                 />
                 <ReportFloorSection
-                  floorType={uiFloorType}
-                  setFloorType={handleUiFloorTypeChange}
-                  setFloorNumber={handleFloorNumberChange}
-                  dialPrefix={dial.dialPrefix}
-                  setDialPrefix={dial.setDialPrefix}
-                  dialD1={dial.dialD1}
-                  setDialD1={dial.setDialD1}
-                  dialD2={dial.dialD2}
-                  setDialD2={dial.setDialD2}
-                  dialD3={dial.dialD3}
-                  setDialD3={dial.setDialD3}
+                  sectionServerError={sectionServerErrors.floor}
+                  onFieldChange={() => clearSectionError("floor")}
                 />
                 <ReportClassificationSection
                   lockerTypeOptions={lockerTypeOptions}
@@ -224,6 +211,8 @@ function ReportPage() {
                       shouldDirty: true,
                     });
                   }}
+                  agreementServerError={sectionServerErrors.agreement}
+                  onAgreementChange={() => clearSectionError("agreement")}
                 />
                 <ReportPriceSection
                   priceType={priceType}
@@ -233,6 +222,8 @@ function ReportPage() {
                   maxPrice={maxPriceDisplay}
                   setMaxPrice={setMaxPriceDisplay}
                   formatPrice={formatPrice}
+                  sectionServerError={sectionServerErrors.price}
+                  onFieldChange={() => clearSectionError("price")}
                 />
                 <ReportTimeSection
                   openTime={startTime ?? ""}
@@ -243,6 +234,8 @@ function ReportPage() {
                   setCloseTime={(val) => {
                     setValue("endTime", val || null, { shouldDirty: true });
                   }}
+                  sectionServerError={sectionServerErrors.time}
+                  onFieldChange={() => clearSectionError("time")}
                 />
                 <ReportAdditionalInfoSection
                   additionalInfo={additionalInfo}
@@ -264,9 +257,7 @@ function ReportPage() {
             onPress={() => {
               void handleNext();
             }}
-            isDisabled={
-              step === 1 ? !validation.isStep1Valid : !validation.isStep2Valid
-            }
+            isDisabled={step === 2 ? !validation.isStep2Valid : false}
             isLoading={isSubmitting}
           >
             {step === 1 ? m.report_button_next() : m.report_button_submit()}
@@ -345,6 +336,7 @@ function ReportPage() {
               setValue("roadAddress", addr, { shouldDirty: true });
               setValue("latitude", coords.lat, { shouldDirty: true });
               setValue("longitude", coords.lng, { shouldDirty: true });
+              clearSectionError("location");
               setIsAddressOverlayOpen(false);
             }}
           />

@@ -5,7 +5,9 @@ import {
   type PopupPickerColumn,
 } from "@repo/ui/components/popup-picker";
 import { useMemo, useState } from "react";
+import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { PickerTriggerButton } from "./PickerTriggerButton";
+import { ReportSectionError } from "./ReportSectionError";
 import { section, timeRow, timeSeparator } from "./report.css.ts";
 
 interface ReportTimeSectionProps {
@@ -13,6 +15,8 @@ interface ReportTimeSectionProps {
   setOpenTime: (val: string) => void;
   closeTime: string;
   setCloseTime: (val: string) => void;
+  sectionServerError?: string;
+  onFieldChange?: () => void;
 }
 
 type TimeTarget = "open" | "close";
@@ -31,7 +35,14 @@ export function ReportTimeSection({
   setOpenTime,
   closeTime,
   setCloseTime,
+  sectionServerError,
+  onFieldChange,
 }: ReportTimeSectionProps) {
+  const errorMessage = useReportSectionError(
+    ["startTime", "endTime"],
+    sectionServerError,
+  );
+  const errorId = errorMessage ? "report-time-error" : undefined;
   const [activeTarget, setActiveTarget] = useState<TimeTarget | null>(null);
   const [pendingHour, setPendingHour] = useState("00");
   const [pendingMinute, setPendingMinute] = useState("00");
@@ -104,10 +115,16 @@ export function ReportTimeSection({
     if (activeTarget === "close") {
       setCloseTime(nextTime);
     }
+
+    onFieldChange?.();
   };
 
   return (
-    <section className={section} data-section="time">
+    <section
+      className={section}
+      data-section="time"
+      aria-describedby={errorId}
+    >
       <LabelTitle size="small">{m.report_section_time()}</LabelTitle>
       <div className={timeRow}>
         {/* Existing Dropdown is kept aside while this section uses PopupPicker. */}
@@ -141,6 +158,7 @@ export function ReportTimeSection({
           onPress: handleConfirmTime,
         }}
       />
+      <ReportSectionError id={errorId} message={errorMessage} />
     </section>
   );
 }

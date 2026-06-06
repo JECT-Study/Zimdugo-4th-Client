@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  applyClientValidationIssues,
   applyValidationErrors,
   getEarliestStep,
   resolveValidationErrorTarget,
+  toClientValidationIssues,
 } from "#/features/report/model/report-error-targets";
 
 describe("resolveValidationErrorTarget", () => {
@@ -126,5 +128,62 @@ describe("applyValidationErrors", () => {
     expect(setError).not.toHaveBeenCalled();
     expect(setSectionServerErrors).not.toHaveBeenCalled();
     expect(result.hasUnknown).toBe(true);
+  });
+});
+
+describe("toClientValidationIssues", () => {
+  it("Zod issue path에서 string·number 세그먼트만 유지한다", () => {
+    expect(
+      toClientValidationIssues([
+        { path: ["lockerType", Symbol("x")], message: "required" },
+      ]),
+    ).toEqual([{ path: ["lockerType"], message: "required" }]);
+  });
+});
+
+describe("applyClientValidationIssues", () => {
+  it("Zod field 오류를 sectionServerErrors와 setError에 반영한다", () => {
+    const setError = vi.fn();
+    const updates: Array<Partial<Record<string, string>>> = [];
+    const setSectionServerErrors = vi.fn((updater) => {
+      updates.push(updater({}));
+    });
+
+    const sectionIds = applyClientValidationIssues(
+      [{ path: ["endTime"], message: "invalid_range" }],
+      { setError, setSectionServerErrors },
+      { step: 2 },
+    );
+
+    expect(setError).toHaveBeenCalledWith("endTime", {
+      type: "custom",
+      message: "invalid_range",
+    });
+    expect(updates.at(-1)?.time).toBe("invalid_range");
+    expect(sectionIds).toEqual(["time"]);
+  });
+
+  it("step 필터로 해당 단계 오류만 반영한다", () => {
+    const setError = vi.fn();
+    const updates: Array<Partial<Record<string, string>>> = [];
+    const setSectionServerErrors = vi.fn((updater) => {
+      updates.push(updater({}));
+    });
+
+    applyClientValidationIssues(
+      [
+        { path: ["lockerType"], message: "required" },
+        { path: ["endTime"], message: "invalid_range" },
+      ],
+      { setError, setSectionServerErrors },
+      { step: 1 },
+    );
+
+    expect(setError).toHaveBeenCalledWith("lockerType", {
+      type: "custom",
+      message: "required",
+    });
+    expect(setError).not.toHaveBeenCalledWith("endTime", expect.anything());
+    expect(updates.at(-1)).toEqual({ classification: "required" });
   });
 });

@@ -3,7 +3,9 @@ import { Checkbox } from "@repo/ui/components/checkbox";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import { IconX16 } from "@repo/ui/tokens/icons";
 import type { ChangeEvent, RefObject } from "react";
+import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { MAX_REPORT_PHOTOS } from "../model/report-types";
+import { ReportSectionError } from "./ReportSectionError";
 import {
   agreementSection,
   imageDeleteButton,
@@ -22,6 +24,8 @@ interface ReportPhotoSectionProps {
   onImageRemove: (index: number) => void;
   isAgreed: boolean;
   setIsAgreed: (val: boolean) => void;
+  agreementServerError?: string;
+  onAgreementChange?: () => void;
 }
 
 export function ReportPhotoSection({
@@ -32,7 +36,15 @@ export function ReportPhotoSection({
   onImageRemove,
   isAgreed,
   setIsAgreed,
+  agreementServerError,
+  onAgreementChange,
 }: ReportPhotoSectionProps) {
+  const agreementError = useReportSectionError(
+    ["locationConsentAgreed"],
+    agreementServerError,
+  );
+  const agreementErrorId = agreementError ? "report-agreement-error" : undefined;
+
   return (
     <section className={section} data-section="photo">
       <LabelTitle size="small">
@@ -100,20 +112,22 @@ export function ReportPhotoSection({
           </div>
         ))}
       </div>
-      <p style={{ fontSize: "12px", color: "#8E8E8E", marginTop: "8px" }}>
-        {m.report_photo_upload_deferred_hint()}
-      </p>
       <div
         className={agreementSection}
         data-section="agreement"
         style={{ marginTop: "16px" }}
+        aria-describedby={agreementErrorId}
       >
         <Checkbox
           labelText={m.report_location_agreement()}
           isSelected={isAgreed}
-          onSelectedChange={setIsAgreed}
+          onSelectedChange={(selected) => {
+            setIsAgreed(selected);
+            onAgreementChange?.();
+          }}
           labelLocation="right"
         />
+        <ReportSectionError id={agreementErrorId} message={agreementError} />
       </div>
     </section>
   );

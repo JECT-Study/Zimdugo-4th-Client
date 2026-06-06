@@ -180,3 +180,65 @@ export function isStep2Field(
 ): field is (typeof STEP_2_FIELDS)[number] {
   return (STEP_2_FIELDS as readonly string[]).includes(field);
 }
+
+export type ClientValidationIssue = {
+  path: (string | number)[];
+  message: string;
+};
+
+export function toClientValidationIssues(
+  issues: Array<{ path: PropertyKey[]; message: string }>,
+): ClientValidationIssue[] {
+  return issues.map((issue) => ({
+    path: issue.path.filter(
+      (segment): segment is string | number =>
+        typeof segment === "string" || typeof segment === "number",
+    ),
+    message: issue.message,
+  }));
+}
+
+export function getSectionAnchorFields(
+  sectionId: ReportSectionId,
+): Array<keyof ReportFormValues> {
+  return Object.entries(FIELD_TARGETS)
+    .filter(([, target]) => target.sectionId === sectionId && target.anchorField)
+    .map(([, target]) => target.anchorField as keyof ReportFormValues);
+}
+
+/** Zod 클라이언트 검증 오류를 섹션 UI + RHF field error로 반영한다. */
+export function applyClientValidationIssues(
+  issues: ClientValidationIssue[],
+  { setError, setSectionServerErrors }: ApplyValidationErrorsParams,
+  options?: { step?: 1 | 2 },
+): ReportSectionId[] {
+  const sectionUpdates: Partial<Record<ReportSectionId, string>> = {};
+  const sectionOrder: ReportSectionId[] = [];
+
+  for (const issue of issues) {
+    const field = issue.path[0];
+    if (typeof field !== "string") continue;
+
+    const target = resolveValidationErrorTarget(field);
+    if (options?.step && target.step !== options.step) continue;
+    if (!target.sectionId) continue;
+
+    if (target.anchorField) {
+      setError(target.anchorField, {
+        type: "custom",
+        message: issue.message,
+      });
+    }
+
+    if (!sectionUpdates[target.sectionId]) {
+      sectionUpdates[target.sectionId] = issue.message;
+      sectionOrder.push(target.sectionId);
+    }
+  }
+
+  if (Object.keys(sectionUpdates).length > 0) {
+    setSectionServerErrors((prev) => ({ ...prev, ...sectionUpdates }));
+  }
+
+  return sectionOrder;
+}
