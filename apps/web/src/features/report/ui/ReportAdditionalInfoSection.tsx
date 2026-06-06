@@ -30,7 +30,7 @@ export function ReportAdditionalInfoSection({
   }, [additionalInfo]);
 
   return (
-    <section className={section}>
+    <section className={section} data-section="additionalInfo">
       <LabelTitle size="small">{m.report_section_additional()}</LabelTitle>
       <div className={textareaContainer}>
         <textarea

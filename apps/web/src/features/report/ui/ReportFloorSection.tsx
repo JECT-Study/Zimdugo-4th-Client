@@ -170,7 +170,7 @@ export function ReportFloorSection({
   };
 
   return (
-    <section className={section}>
+    <section className={section} data-section="floor">
       <LabelTitle size="small">
         {m.report_section_floor()}
         <span className={requiredMark}>*</span>

@@ -34,7 +34,7 @@ export function ReportPhotoSection({
   setIsAgreed,
 }: ReportPhotoSectionProps) {
   return (
-    <section className={section}>
+    <section className={section} data-section="photo">
       <LabelTitle size="small">
         {m.report_section_photo()}
         <span
@@ -103,7 +103,11 @@ export function ReportPhotoSection({
       <p style={{ fontSize: "12px", color: "#8E8E8E", marginTop: "8px" }}>
         {m.report_photo_upload_deferred_hint()}
       </p>
-      <div className={agreementSection} style={{ marginTop: "16px" }}>
+      <div
+        className={agreementSection}
+        data-section="agreement"
+        style={{ marginTop: "16px" }}
+      >
         <Checkbox
           labelText={m.report_location_agreement()}
           isSelected={isAgreed}

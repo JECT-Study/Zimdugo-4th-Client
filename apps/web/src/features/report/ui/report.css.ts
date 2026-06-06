@@ -69,6 +69,20 @@ export const section = style({
   gap: "14px",
 });
 
+export const classificationSection = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "32px",
+  width: "100%",
+});
+
+export const sectionErrorText = style({
+  margin: 0,
+  fontSize: vars.typography.fontSize[12],
+  color: vars.color.palette.red[300],
+  textAlign: "center",
+});
+
 export const sectionGap24 = style({
   marginTop: vars.spacing[24],
 });

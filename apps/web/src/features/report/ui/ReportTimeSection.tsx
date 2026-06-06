@@ -107,7 +107,7 @@ export function ReportTimeSection({
   };
 
   return (
-    <section className={section}>
+    <section className={section} data-section="time">
       <LabelTitle size="small">{m.report_section_time()}</LabelTitle>
       <div className={timeRow}>
         {/* Existing Dropdown is kept aside while this section uses PopupPicker. */}

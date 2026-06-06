@@ -30,7 +30,7 @@ export function ReportPriceSection({
   formatPrice,
 }: ReportPriceSectionProps) {
   return (
-    <section className={section}>
+    <section className={section} data-section="price">
       <LabelTitle size="small">{m.report_section_price()}</LabelTitle>
       <div className={priceRow}>
         <Checkbox

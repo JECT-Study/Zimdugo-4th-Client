@@ -20,7 +20,7 @@ export function ReportLocationSection({
   onOpenOverlay,
 }: ReportLocationSectionProps) {
   return (
-    <section className={section}>
+    <section className={section} data-section="location">
       <LabelTitle size="small">
         {m.report_section_location()}
         <span className={requiredMark}>*</span>
