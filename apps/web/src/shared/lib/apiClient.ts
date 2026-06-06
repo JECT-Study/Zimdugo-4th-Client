@@ -3,7 +3,7 @@ import { useAuthStore } from "#/shared/store/authStore";
 import { authService } from "#/features/auth/sign-in/api/authService";
 
 export const apiClient = createApiClient(
-  import.meta.env.VITE_API_BASE_URL ?? "https://api.zimdugo.com",
+  import.meta.env.VITE_API_BASE_URL ?? "",
 );
 apiClient.defaults.withCredentials = true;
 
