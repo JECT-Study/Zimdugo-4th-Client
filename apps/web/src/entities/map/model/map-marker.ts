@@ -197,6 +197,10 @@ export const syncLockerMarkers = ({
     const isVisible = expandedBounds.hasLatLng(position);
 
     if (existingEntry) {
+      if (existingEntry.marker.getMap() !== map) {
+        existingEntry.marker.setMap(map);
+      }
+
       if (existingEntry.positionSignature !== positionSignature) {
         existingEntry.marker.setPosition(position);
         existingEntry.positionSignature = positionSignature;
