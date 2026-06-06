@@ -10,6 +10,7 @@ const baseForm = (): ReportFormValues => ({
   longitude: 126.923,
   indoorOutdoorType: "INDOOR",
   lockerType: "SUBWAY_STATION",
+  hasFloor: false,
   locationConsentAgreed: true,
   additionalInfo: "  B2 화장실 옆  ",
 });

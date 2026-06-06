@@ -17,6 +17,7 @@ const validStep1Values = (): ReportFormValues => ({
   longitude: 126.978,
   indoorOutdoorType: "INDOOR",
   lockerType: "MUSEUM",
+  hasFloor: false,
 });
 
 function hasStep1ValidationErrors(values: ReportFormValues): boolean {

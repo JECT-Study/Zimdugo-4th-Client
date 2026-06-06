@@ -24,7 +24,7 @@ export const reportSchema = z
     locationConsentAgreed: z.boolean(),
     indoorOutdoorType: z.enum(["INDOOR", "OUTDOOR"]).nullable(),
     lockerType: z.enum(LOCKER_TYPES).nullable(),
-    hasFloor: z.boolean(),
+    hasFloor: z.boolean().nullable(),
     floorType: z.enum(["ABOVE_GROUND", "UNDERGROUND"]).nullable(),
     floorNumber: z.number().int().nullable(),
     isFree: z.boolean().nullable(),
@@ -77,7 +77,13 @@ export const reportSchema = z
       });
     }
 
-    if (data.hasFloor) {
+    if (data.hasFloor === null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["hasFloor"],
+        message: "required",
+      });
+    } else if (data.hasFloor) {
       if (!data.floorType) {
         ctx.addIssue({
           code: "custom",

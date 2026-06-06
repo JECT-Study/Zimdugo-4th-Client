@@ -23,7 +23,7 @@ export type ReportFormValues = {
   locationConsentAgreed: boolean;
   indoorOutdoorType: IndoorOutdoorType | null;
   lockerType: LockerType | null;
-  hasFloor: boolean;
+  hasFloor: boolean | null;
   floorType: FloorType | null;
   floorNumber: number | null;
   isFree: boolean | null;
@@ -146,7 +146,7 @@ export const reportDefaultValues: ReportFormValues = {
   locationConsentAgreed: false,
   indoorOutdoorType: null,
   lockerType: null,
-  hasFloor: false,
+  hasFloor: null,
   floorType: null,
   floorNumber: null,
   isFree: null,

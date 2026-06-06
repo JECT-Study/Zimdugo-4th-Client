@@ -10,7 +10,7 @@ import type {
 export function normalizeReportPayload(
   values: ReportFormValues,
 ): LockerReportCreateRequest {
-  const hasFloor = values.hasFloor;
+  const hasFloor = values.hasFloor === true;
 
   const floorType = hasFloor ? values.floorType : null;
   const floorNumber = hasFloor ? values.floorNumber : null;
@@ -25,6 +25,7 @@ export function normalizeReportPayload(
   return {
     ...values,
     roadAddress: values.roadAddress.trim(),
+    hasFloor,
     floorType,
     floorNumber,
     minPrice,

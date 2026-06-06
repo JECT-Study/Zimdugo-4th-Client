@@ -10,6 +10,7 @@ const validForm = (): ReportFormValues => ({
   longitude: 126.923,
   indoorOutdoorType: "INDOOR",
   lockerType: "SUBWAY_STATION",
+  hasFloor: false,
   locationConsentAgreed: true,
 });
 
@@ -53,6 +54,18 @@ describe("reportSchema", () => {
       lockerType: null,
     });
     expect(result.success).toBe(false);
+  });
+
+  it("층 선택 여부는 필수이다", () => {
+    const result = parseReportForm({
+      ...validForm(),
+      hasFloor: null,
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.some((issue) => issue.path[0] === "hasFloor")).toBe(
+      true,
+    );
   });
 
   it("층 있음일 때 층 유형과 층수는 필수이다", () => {
