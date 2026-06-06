@@ -2,11 +2,24 @@ import { IconCaution24 } from "@repo/ui/tokens/icons";
 import { vars } from "@repo/ui/vars";
 
 interface MapErrorProps {
+  alertLabel: string;
+  description: string;
   message?: string;
   onRetry: () => void;
+  retryAriaLabel: string;
+  retryLabel: string;
+  title: string;
 }
 
-export function MapError({ message, onRetry }: MapErrorProps) {
+export function MapError({
+  alertLabel,
+  description,
+  message,
+  onRetry,
+  retryAriaLabel,
+  retryLabel,
+  title,
+}: MapErrorProps) {
   return (
     <div
       style={{
@@ -23,7 +36,7 @@ export function MapError({ message, onRetry }: MapErrorProps) {
         pointerEvents: "auto",
       }}
       role="alert"
-      aria-label="\uC9C0\uB3C4 \uB85C\uB4DC \uC2E4\uD328 \uC54C\uB9BC"
+      aria-label={alertLabel}
     >
       <div
         style={{
@@ -61,7 +74,7 @@ export function MapError({ message, onRetry }: MapErrorProps) {
                 color: vars.color.text.title,
               }}
             >
-              {"\uC9C0\uB3C4 \uB85C\uB4DC \uC624\uB958"}
+              {title}
             </p>
           </div>
           <div
@@ -79,7 +92,7 @@ export function MapError({ message, onRetry }: MapErrorProps) {
                 color: vars.color.text.title,
               }}
             >
-              {"\uC9C0\uB3C4\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4"}
+              {description}
             </p>
             <p
               style={{
@@ -89,7 +102,7 @@ export function MapError({ message, onRetry }: MapErrorProps) {
                 wordBreak: "break-word",
               }}
             >
-              {message ?? "Failed to load map. Please check your network."}
+              {message}
             </p>
           </div>
         </div>
@@ -113,9 +126,9 @@ export function MapError({ message, onRetry }: MapErrorProps) {
             fontWeight: 600,
             boxSizing: "border-box",
           }}
-          aria-label="\uC9C0\uB3C4 \uB2E4\uC2DC \uBD88\uB7EC\uC624\uAE30"
+          aria-label={retryAriaLabel}
         >
-          {"\uB2E4\uC2DC \uC2DC\uB3C4"}
+          {retryLabel}
         </button>
       </div>
     </div>

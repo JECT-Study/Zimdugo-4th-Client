@@ -50,6 +50,7 @@ const config = defineConfig({
           : {},
     }),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
+    vanillaExtractPlugin(),
     tanstackStart({
       prerender: {
         enabled: true,
@@ -57,7 +58,6 @@ const config = defineConfig({
       },
       pages: prerenderRoutes,
     }),
-    vanillaExtractPlugin(),
     viteReact({
       babel: {
         plugins: ["babel-plugin-react-compiler"],

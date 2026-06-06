@@ -1,9 +1,10 @@
-import { languageTag } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import {
   IconCircleboxCrosshair48,
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -13,8 +14,11 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
-import { useLockerMarkers } from "#/entities/map/model/useLockerMarkers";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
+import {
+  LOCKER_PINS_QUERY_KEY,
+  useLockerMarkers,
+} from "#/entities/map/model/useLockerMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
@@ -34,6 +38,7 @@ import { shouldShowMapControls } from "./-map-control-visibility";
 export const Route = createFileRoute("/")({ component: IndexPage });
 
 function IndexPage() {
+  const queryClient = useQueryClient();
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -41,6 +46,7 @@ function IndexPage() {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [hasMapError, setHasMapError] = useState(false);
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
+  const hasPendingLocationRequestRef = useRef(false);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -59,6 +65,7 @@ function IndexPage() {
   //   재등록되는 무한 루프가 발생함
   // setIsLocationDelayedLoading은 useState dispatch로 stable하므로 deps [] 안전
   const handleFirstLocation = useCallback(() => {
+    hasPendingLocationRequestRef.current = false;
     window.clearTimeout(locationLoadingTimerRef.current);
     locationLoadingTimerRef.current = undefined;
     // GPS 응답 시점에 오버레이 해제(애니메이션을 늦추면 사용자 경험 저하)
@@ -88,8 +95,14 @@ function IndexPage() {
       window.clearTimeout(locationLoadingTimerRef.current);
       locationLoadingTimerRef.current = undefined;
       setIsLocationDelayedLoading(false);
+      setIsCameraCentered(false);
+
+      if (hasPendingLocationRequestRef.current) {
+        hasPendingLocationRequestRef.current = false;
+        openLocationPopup();
+      }
     }
-  }, [permission]);
+  }, [permission, openLocationPopup]);
 
   // 리프레시 버튼 관련 상태
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -114,6 +127,10 @@ function IndexPage() {
     );
 
     mapInstanceRef.current.refresh();
+    void queryClient.invalidateQueries({
+      queryKey: [LOCKER_PINS_QUERY_KEY],
+      refetchType: "active",
+    });
 
     refreshTimersRef.current.interval = window.setInterval(() => {
       setRefreshCooldownRemaining((prev) => {
@@ -125,7 +142,7 @@ function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing]);
+  }, [isRefreshing, queryClient]);
 
   // 언마운트 시 리프레시 타이머 클린업
   useEffect(() => {
@@ -139,6 +156,7 @@ function IndexPage() {
 
   const handleMyLocation = useCallback(async () => {
     if (permission === "denied") {
+      hasPendingLocationRequestRef.current = false;
       openLocationPopup();
       return;
     }
@@ -146,6 +164,7 @@ function IndexPage() {
     if (!isCameraCentered) {
       // 상태 1: 카메라 중앙 고정 ON (만약 GPS가 안 켜져있다면 켜기)
       if (!isTracking) {
+        hasPendingLocationRequestRef.current = true;
         window.clearTimeout(locationLoadingTimerRef.current);
         locationLoadingTimerRef.current = window.setTimeout(() => {
           setIsLocationDelayedLoading(true);
@@ -291,10 +310,10 @@ function IndexPage() {
         onOpenChange={(isOpen) => {
           if (!isOpen) closeLocationPopup();
         }}
-        titleText="위치 권한이 필요합니다"
-        helperText="현재 위치를 확인하려면 브라우저 설정에서 위치 권한을 허용한 뒤, 페이지를 새로고침해주세요."
+        titleText={m.home_location_permission_title()}
+        helperText={m.home_location_permission_helper()}
         primaryAction={{
-          label: "확인",
+          label: m.common_confirm(),
           onPress: closeLocationPopup,
         }}
       />

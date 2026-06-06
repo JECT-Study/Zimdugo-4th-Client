@@ -49,10 +49,15 @@ export const locationButton = style({
   position: "relative",
   width: "48px",
   height: "48px",
+  borderRadius: vars.radius.max,
   cursor: "pointer",
   backgroundColor: "transparent",
   border: "none",
+  outline: "none",
   padding: 0,
+  ":focus-visible": {
+    boxShadow: `0 0 0 3px ${vars.color.bg.default}, 0 0 0 5px ${vars.color.brand.primary}`,
+  },
 });
 
 export const refreshButtonDisabled = style({

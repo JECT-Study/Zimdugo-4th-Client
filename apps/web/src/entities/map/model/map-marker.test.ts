@@ -18,6 +18,9 @@ vi.mock("@repo/ui/vars", () => ({
         green: {
           500: "#3BD569",
         },
+        red: {
+          300: "#FF4D4F",
+        },
       },
     },
   },
@@ -135,12 +138,13 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
-  it("renders a capped locker count badge for place markers", () => {
+  it("renders place markers with a red marker icon and no count badge", () => {
     const icon = createLockerMarkerIcon(createPlacePin({ lockerCount: 12 }));
 
     expect(icon).toContain('data-type="PLACE"');
-    expect(icon).toContain(">9+<");
     expect(icon).toContain(`fill="${MOCK_ERROR_COLOR}"`);
+    expect(icon).not.toContain(">9+<");
+    expect(icon).not.toContain("<text");
   });
 });
 
