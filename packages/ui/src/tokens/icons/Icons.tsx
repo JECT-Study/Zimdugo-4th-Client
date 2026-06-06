@@ -1,4 +1,9 @@
-import type { CSSProperties, ReactElement, ReactNode } from "react";
+import {
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+  useId,
+} from "react";
 import { color } from "../color/color.css.ts";
 import { typography } from "../typography/typography.css.ts";
 import {
@@ -135,6 +140,58 @@ export function IconStarFilled24({
 
 export function IconNavigateMarker({ className }: { className?: string }) {
   return <IconMarker22 className={className} size={24} />;
+}
+
+export function IconNavigateLocation({ className }: { className?: string }) {
+  const blurId = useId();
+
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      xmlns="http://www.w3.org/2000/svg"
+      width={41}
+      height={41}
+      viewBox="0 0 41 41"
+      fill="none"
+      aria-hidden
+    >
+      <title>current location</title>
+      <g filter={`url(#${blurId})`}>
+        <circle cx="20.5" cy="20.5" r="8.5" fill={color.palette.blue[300]} />
+      </g>
+      <circle
+        cx="20.5"
+        cy="20.5"
+        r="6.5"
+        fill={color.palette.blue[300]}
+        stroke={color.palette.gray[100]}
+        strokeWidth="2"
+      />
+      <defs>
+        <filter
+          id={blurId}
+          x="0"
+          y="0"
+          width="41"
+          height="41"
+          filterUnits="userSpaceOnUse"
+          colorInterpolationFilters="sRGB"
+        >
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
+          <feBlend
+            mode="normal"
+            in="SourceGraphic"
+            in2="BackgroundImageFix"
+            result="shape"
+          />
+          <feGaussianBlur
+            stdDeviation="6"
+            result="effect1_foregroundBlur_1197_305"
+          />
+        </filter>
+      </defs>
+    </svg>
+  );
 }
 
 export function IconNavigatePin({ className }: { className?: string }) {

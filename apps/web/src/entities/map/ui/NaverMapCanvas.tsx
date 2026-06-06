@@ -1,3 +1,4 @@
+import { m } from "@repo/i18n";
 import { useEffect, useRef, useState } from "react";
 
 import { useNaverMapSdk } from "../model/NaverMapProvider";
@@ -10,9 +11,6 @@ const DEFAULT_CENTER = {
   lng: 127.0276,
 };
 
-const MAP_ERROR_MESSAGE =
-  "\uB124\uD2B8\uC6CC\uD06C \uC0C1\uD0DC\uB97C \uD655\uC778\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.";
-
 const MAP_AUTH_ERROR_SIGNATURES = [
   "VITE_NAVER_MAP_CLIENT_ID",
   "Naver Maps authentication failed",
@@ -22,13 +20,13 @@ const MAP_AUTH_ERROR_SIGNATURES = [
 ];
 
 const getMapErrorMessage = (message?: string) => {
-  if (!message) return MAP_ERROR_MESSAGE;
+  if (!message) return m.map_error_default_message();
 
   const isAuthOrSdkError = MAP_AUTH_ERROR_SIGNATURES.some((signature) =>
     message.includes(signature),
   );
 
-  return isAuthOrSdkError ? MAP_ERROR_MESSAGE : message;
+  return isAuthOrSdkError ? m.map_error_default_message() : message;
 };
 
 export interface NaverMapCanvasProps {
@@ -55,6 +53,15 @@ export function NaverMapCanvas({
 
   const onErrorChangeRef = useRef(onErrorChange);
   onErrorChangeRef.current = onErrorChange;
+
+  const hasError = status === "error" || mapInitError !== null;
+  const isLoading = status === "idle" || status === "loading";
+  const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
+
+  const handleRetry = () => {
+    setMapInitError(null);
+    reload();
+  };
 
   useEffect(() => {
     if (!isReady || !maps || !containerRef.current) return;
@@ -88,7 +95,7 @@ export function NaverMapCanvas({
       setMapInitError(
         nextError instanceof Error
           ? nextError.message
-          : "\uC9C0\uB3C4 \uCD08\uAE30\uD654 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.",
+          : m.map_error_initialization_message(),
       );
     }
 
@@ -104,15 +111,6 @@ export function NaverMapCanvas({
     };
   }, [isReady, maps]);
 
-  const handleRetry = () => {
-    setMapInitError(null);
-    reload();
-  };
-
-  const hasError = status === "error" || mapInitError !== null;
-  const isLoading = status === "idle" || status === "loading";
-  const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
-
   useEffect(() => {
     onLoadingChangeRef.current?.(isLoading);
   }, [isLoading]);
@@ -122,16 +120,21 @@ export function NaverMapCanvas({
   }, [hasError]);
 
   return (
-    <section
-      className={root}
-      aria-label="\uB124\uC774\uBC84 \uC9C0\uB3C4 \uC601\uC5ED"
-    >
+    <section className={root} aria-label={m.map_area_aria()}>
       <div ref={containerRef} className={canvas} />
 
       {isLoading ? <MapSkeleton /> : null}
 
       {hasError ? (
-        <MapError message={errorMessage} onRetry={handleRetry} />
+        <MapError
+          alertLabel={m.map_error_alert_aria()}
+          description={m.map_error_description()}
+          message={errorMessage}
+          onRetry={handleRetry}
+          retryAriaLabel={m.map_error_retry_aria()}
+          retryLabel={m.map_error_retry()}
+          title={m.map_error_title()}
+        />
       ) : null}
     </section>
   );

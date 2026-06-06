@@ -12,6 +12,10 @@ const appI18nEntry = fileURLToPath(new URL("./src/i18n.ts", import.meta.url));
 const appI18nServerEntry = fileURLToPath(
   new URL("./src/i18n-server.ts", import.meta.url),
 );
+const API_BASE_URL =
+  process.env.VITE_API_BASE_URL ??
+  process.env.API_BASE_URL ??
+  "https://api.zimdugo.com";
 const localizeHref = (path: string, { locale }: { locale: string }) => {
   if (locale === "ko") return path;
   return path === "/" ? `/${locale}` : `/${locale}${path}`;
@@ -40,15 +44,16 @@ const config = defineConfig({
       routeRules:
         process.env.NODE_ENV === "development"
           ? {
-              "/api/**": { proxy: "http://localhost:8080/api/**" },
-              "/oauth2/**": { proxy: "http://localhost:8080/oauth2/**" },
+              "/api/**": { proxy: `${API_BASE_URL}/api/**` },
+              "/oauth2/**": { proxy: `${API_BASE_URL}/oauth2/**` },
               "/login/oauth2/**": {
-                proxy: "http://localhost:8080/login/oauth2/**",
+                proxy: `${API_BASE_URL}/login/oauth2/**`,
               },
             }
           : {},
     }),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
+    vanillaExtractPlugin(),
     tanstackStart({
       prerender: {
         enabled: true,
@@ -56,7 +61,6 @@ const config = defineConfig({
       },
       pages: prerenderRoutes,
     }),
-    vanillaExtractPlugin(),
     viteReact({
       babel: {
         plugins: ["babel-plugin-react-compiler"],
