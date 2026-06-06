@@ -109,7 +109,7 @@ export const subscribeMapIdle = ({
   const handler = () => {
     if (isCancelled) return;
     const viewport = readViewport(map);
-    if (lastViewport !== null && !isViewportChangedSignificantly(viewport, lastViewport)) {
+    if (lastViewport !== null && !isViewportChangedSignificantly(lastViewport, viewport)) {
       return;
     }
     lastViewport = viewport;
