@@ -5,6 +5,7 @@
  *
  * 유의미한 변화 기준:
  *   - 줌 레벨이 달라진 경우 → 항상 발행
+ *   - 같은 줌 레벨에서 bounds span 또는 map size가 달라진 경우 → 발행
  *   - 같은 줌 레벨에서 중심 이동이 현재 bounds 범위의
  *     VIEWPORT_SETTLE_THRESHOLD(20%) 이상인 경우 → 발행
  *
@@ -68,10 +69,14 @@ const readViewport = (map: naver.maps.Map): MapViewport => {
  * 충분히 변했는지 판단한다.
  *
  * - 줌이 달라지면 즉시 true
- * - 동일 줌에서는 bounds 범위 대비 중심 이동 비율로 판단:
- *   lat 또는 lng 이동량이 bounds 폭의 THRESHOLD 이상일 때만 true
+ * - 동일 줌에서는 bounds span/size 변화 또는 bounds 범위 대비 중심 이동 비율로 판단
  */
 const VIEWPORT_SETTLE_THRESHOLD = 0.2;
+
+const getBoundsSpan = (bounds: MapViewportBounds) => ({
+  lat: bounds.northEast.lat - bounds.southWest.lat,
+  lng: bounds.northEast.lng - bounds.southWest.lng,
+});
 
 const isViewportChangedSignificantly = (
   prev: MapViewport,
@@ -79,18 +84,31 @@ const isViewportChangedSignificantly = (
 ): boolean => {
   if (prev.zoom !== curr.zoom) return true;
 
-  const latSpan = prev.bounds.northEast.lat - prev.bounds.southWest.lat;
-  const lngSpan = prev.bounds.northEast.lng - prev.bounds.southWest.lng;
+  const prevSpan = getBoundsSpan(prev.bounds);
+  const currSpan = getBoundsSpan(curr.bounds);
 
   // bounds가 유효하지 않은 엣지 케이스엔 항상 발행
-  if (latSpan <= 0 || lngSpan <= 0) return true;
+  if (prevSpan.lat <= 0 || prevSpan.lng <= 0) return true;
+  if (currSpan.lat <= 0 || currSpan.lng <= 0) return true;
+
+  // 리사이즈/레이아웃 변화로 표시 범위가 달라지면 재발행
+  if (prevSpan.lat !== currSpan.lat || prevSpan.lng !== currSpan.lng) {
+    return true;
+  }
+
+  if (
+    prev.size?.width !== curr.size?.width ||
+    prev.size?.height !== curr.size?.height
+  ) {
+    return true;
+  }
 
   const latDelta = Math.abs(curr.center.lat - prev.center.lat);
   const lngDelta = Math.abs(curr.center.lng - prev.center.lng);
 
   return (
-    latDelta > latSpan * VIEWPORT_SETTLE_THRESHOLD ||
-    lngDelta > lngSpan * VIEWPORT_SETTLE_THRESHOLD
+    latDelta > prevSpan.lat * VIEWPORT_SETTLE_THRESHOLD ||
+    lngDelta > prevSpan.lng * VIEWPORT_SETTLE_THRESHOLD
   );
 };
 

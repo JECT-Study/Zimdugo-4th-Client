@@ -191,6 +191,24 @@ describe("subscribeMapIdle", () => {
     expect(onSettle).toHaveBeenCalledTimes(1);
   });
 
+  it("center 이동 없이 bounds span이 바뀌면 onSettle을 다시 호출한다", () => {
+    const mapsState: FakeMapsState = { handlers: [], removed: [] };
+    const fake = createFakeMap();
+    const maps = createFakeMaps(mapsState);
+    const onSettle = vi.fn();
+
+    subscribeMapIdle({ map: fake.map, maps, onSettle });
+    mapsState.handlers[0]?.();
+
+    fake.state.bounds = new FakeLatLngBounds(
+      new FakeLatLng(37.51, 127.05),
+      new FakeLatLng(37.49, 127.01),
+    );
+    mapsState.handlers[0]?.();
+
+    expect(onSettle).toHaveBeenCalledTimes(2);
+  });
+
   it("zoom이 바뀌면 onSettle을 다시 호출한다", () => {
     const mapsState: FakeMapsState = { handlers: [], removed: [] };
     const fake = createFakeMap();
