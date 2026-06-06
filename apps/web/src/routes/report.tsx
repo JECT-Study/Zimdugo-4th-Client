@@ -3,7 +3,7 @@ import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { FormProvider, useWatch } from "react-hook-form";
@@ -30,6 +30,7 @@ import {
   reportHeader,
   stepWrapper,
 } from "#/features/report/ui/report.css.ts";
+import { useAuthStore } from "#/shared/store/authStore";
 
 const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
   { label: m.search_filter_place_museum_short(), value: "MUSEUM" },
@@ -46,21 +47,19 @@ const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
 ];
 
 export const Route = createFileRoute("/report")({
-  // ZIM-26 UI QA 중에는 비로그인 상태에서도 /report에 진입할 수 있도록
-  // 인증 가드를 임시 비활성화합니다. 커밋 전 원복해야 합니다.
-  // beforeLoad: ({ location, preload }) => {
-  //   if (!useAuthStore.getState().isAuthenticated) {
-  //     if (typeof window !== "undefined" && !preload) {
-  //       import("#/shared/store/authPopupStore").then((m) =>
-  //         m.useAuthPopupStore.getState().openPopup(location.pathname),
-  //       );
-  //     }
-  //     throw redirect({
-  //       to: "/",
-  //       replace: true,
-  //     });
-  //   }
-  // },
+  beforeLoad: ({ location, preload }) => {
+    if (!useAuthStore.getState().isAuthenticated) {
+      if (typeof window !== "undefined" && !preload) {
+        import("#/shared/store/authPopupStore").then((m) =>
+          m.useAuthPopupStore.getState().openPopup(location.pathname),
+        );
+      }
+      throw redirect({
+        to: "/",
+        replace: true,
+      });
+    }
+  },
   component: ReportPage,
 });
 
