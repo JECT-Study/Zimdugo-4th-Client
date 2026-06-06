@@ -7,6 +7,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
+import { SearchOverlay } from "#/composites/search/SearchOverlay";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
@@ -22,6 +24,7 @@ import {
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
+import { useSearchStore } from "#/shared/store/search";
 import {
   locationButton,
   locationControlStack,
@@ -39,6 +42,10 @@ export const Route = createFileRoute("/")({ component: IndexPage });
 
 function IndexPage() {
   const queryClient = useQueryClient();
+  const isSearchOpen = useSearchStore((state) => state.isSearchOpen);
+  const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
+  const searchQuery = useSearchStore((state) => state.searchQuery);
+  const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -206,6 +213,21 @@ function IndexPage() {
     setMapInstance(map);
   }, []);
 
+  const handleOpenSearch = useCallback(() => {
+    setIsSearchOpen(true);
+  }, [setIsSearchOpen]);
+
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchOpen(false);
+  }, [setIsSearchOpen]);
+
+  const handleSelectSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+    },
+    [setSearchQuery],
+  );
+
   // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
   useEffect(() => {
     if (isCameraCentered && location && mapInstance) {
@@ -237,6 +259,8 @@ function IndexPage() {
 
   return (
     <main className={pageWrapper}>
+      <HomeSearchBar onOpenSearch={handleOpenSearch} />
+
       {(isRefreshVisualLoading || isLocationDelayedLoading) && (
         <div className={refreshLoadingOverlay}>
           <div className={refreshLoadingBackdrop} />
@@ -317,6 +341,15 @@ function IndexPage() {
           onPress: closeLocationPopup,
         }}
       />
+
+      {isSearchOpen ? (
+        <SearchOverlay
+          initialQuery={searchQuery}
+          onClose={handleCloseSearch}
+          onSelect={handleSelectSearch}
+          onQueryChange={setSearchQuery}
+        />
+      ) : null}
     </main>
   );
 }
