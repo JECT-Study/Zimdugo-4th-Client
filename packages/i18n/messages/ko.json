@@ -172,6 +172,8 @@
   "report_submit_success_home": "홈으로 돌아가기",
   "report_submit_success_history": "제보 히스토리 보기",
   "report_submit_success_history_alert": "제보 히스토리 기능은 준비 중입니다.",
+  "report_submit_error_title": "제보에 실패했습니다. 잠시 후 다시 시도해주세요.",
+  "report_submit_unknown_validation_error": "입력값을 확인할 수 없습니다. 다시 시도해주세요.",
   "report_exit_title": "작성을 중단하시겠습니까?",
   "report_exit_back": "돌아가기",
   "report_exit_leave": "나가기",

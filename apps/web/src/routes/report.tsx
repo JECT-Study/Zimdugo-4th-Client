@@ -14,15 +14,14 @@ import {
 import type { LockerType } from "#/features/report/model/report-types";
 import { useReportForm } from "#/features/report/model/useReportForm";
 import { LocationPickerOverlay } from "#/features/report/ui/LocationPickerOverlay";
+import { ReportClassificationSection } from "#/features/report/ui/ReportClassificationSection";
 import { ReportAdditionalInfoSection } from "#/features/report/ui/ReportAdditionalInfoSection";
 import { ReportFloorSection } from "#/features/report/ui/ReportFloorSection";
-import { ReportIndoorOutdoorSection } from "#/features/report/ui/ReportIndoorOutdoorSection";
 import { ReportLocationSection } from "#/features/report/ui/ReportLocationSection";
 import { ReportPhotoSection } from "#/features/report/ui/ReportPhotoSection";
 import { ReportPriceSection } from "#/features/report/ui/ReportPriceSection";
 import { ReportSizeSection } from "#/features/report/ui/ReportSizeSection";
 import { ReportTimeSection } from "#/features/report/ui/ReportTimeSection";
-import { ReportTypeSection } from "#/features/report/ui/ReportTypeSection";
 import {
   bottomButtonWrapper,
   contentArea,
@@ -72,12 +71,16 @@ function ReportPage() {
   const {
     form,
     step,
+    sectionServerErrors,
     isAddressOverlayOpen,
     setIsAddressOverlayOpen,
     isPopupOpen,
     setIsPopupOpen,
     isPhotoErrorPopupOpen,
     setIsPhotoErrorPopupOpen,
+    isSubmitErrorPopupOpen,
+    setIsSubmitErrorPopupOpen,
+    submitErrorMessage,
     photoErrorMessage,
     isSubmitting,
     uploadedImages,
@@ -94,8 +97,6 @@ function ReportPage() {
   const roadAddress = useWatch({ control, name: "roadAddress" }) ?? "";
   const latitude = useWatch({ control, name: "latitude" });
   const longitude = useWatch({ control, name: "longitude" });
-  const indoorOutdoorType = useWatch({ control, name: "indoorOutdoorType" });
-  const lockerType = useWatch({ control, name: "lockerType" });
   const hasFloor = useWatch({ control, name: "hasFloor" });
   const isFree = useWatch({ control, name: "isFree" });
   const sizeTypes = useWatch({ control, name: "sizeTypes" }) ?? [];
@@ -126,6 +127,7 @@ function ReportPage() {
     handlePriceTypeChange,
     handleUiFloorTypeChange,
     handleFloorNumberChange,
+    clearSectionError,
   } = handlers;
 
   const handleExitBack = () => {
@@ -187,18 +189,17 @@ function ReportPage() {
                   dialD3={dial.dialD3}
                   setDialD3={dial.setDialD3}
                 />
-                <ReportIndoorOutdoorSection
-                  value={indoorOutdoorType ?? null}
-                  onChange={(value) => {
+                <ReportClassificationSection
+                  lockerTypeOptions={lockerTypeOptions}
+                  sectionServerError={sectionServerErrors.classification}
+                  onIndoorOutdoorChange={(value) => {
                     setValue("indoorOutdoorType", value, { shouldDirty: true });
+                    clearSectionError("classification");
                   }}
-                />
-                <ReportTypeSection
-                  lockerType={lockerType ?? null}
-                  onChange={(value) => {
+                  onLockerTypeChange={(value) => {
                     setValue("lockerType", value, { shouldDirty: true });
+                    clearSectionError("classification");
                   }}
-                  options={lockerTypeOptions}
                 />
                 <ReportSizeSection
                   selectedSizes={sizeTypesToCards(sizeTypes)}
@@ -306,6 +307,16 @@ function ReportPage() {
               setIsPopupOpen(false);
               navigate({ to: "/my" });
             },
+          }}
+        />
+
+        <Popup
+          isOpen={isSubmitErrorPopupOpen}
+          onOpenChange={setIsSubmitErrorPopupOpen}
+          titleText={submitErrorMessage}
+          primaryAction={{
+            label: m.common_confirm(),
+            onPress: () => setIsSubmitErrorPopupOpen(false),
           }}
         />
 

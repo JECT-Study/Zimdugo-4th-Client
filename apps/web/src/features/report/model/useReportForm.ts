@@ -14,7 +14,17 @@ import {
   useForm,
 } from "react-hook-form";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
+import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
+import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
+import { collectErrorSectionIds } from "#/features/report/lib/report-field-errors";
+import {
+  scrollToEarliestReportSection,
+  scrollToReportSection,
+} from "#/features/report/lib/scroll-to-report-section";
+import { createLockerReport } from "#/features/report/api/create-locker-report";
+import { applyValidationErrors } from "./report-error-targets";
 import { reportSchema } from "./report-schema";
+import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import {
   MAX_REPORT_PHOTOS,
   MAX_REPORT_PHOTO_SIZE_BYTES,
@@ -40,6 +50,9 @@ export function useReportForm(): {
   setIsPopupOpen: (open: boolean) => void;
   isPhotoErrorPopupOpen: boolean;
   setIsPhotoErrorPopupOpen: (open: boolean) => void;
+  isSubmitErrorPopupOpen: boolean;
+  setIsSubmitErrorPopupOpen: (open: boolean) => void;
+  submitErrorMessage: string;
   photoErrorMessage: string;
   isSubmitting: boolean;
   uploadedImages: string[];
@@ -68,6 +81,7 @@ export function useReportForm(): {
     handlePriceTypeChange: (type: "free" | "paid" | "none") => void;
     handleUiFloorTypeChange: (val: string | number) => void;
     handleFloorNumberChange: (val: string) => void;
+    clearSectionError: (sectionId: ReportSectionId) => void;
   };
   validation: { isStep1Valid: boolean; isStep2Valid: boolean };
 } {
@@ -86,13 +100,14 @@ export function useReportForm(): {
   const [isAddressOverlayOpen, setIsAddressOverlayOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isPhotoErrorPopupOpen, setIsPhotoErrorPopupOpen] = useState(false);
+  const [isSubmitErrorPopupOpen, setIsSubmitErrorPopupOpen] = useState(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState("");
   const [photoErrorMessage, setPhotoErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [minPriceDisplay, setMinPriceDisplay] = useState("");
   const [maxPriceDisplay, setMaxPriceDisplay] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadedImagesRef = useRef(uploadedImages);
 
   const [dialPrefix, setDialPrefix] = useState("ground");
@@ -106,9 +121,6 @@ export function useReportForm(): {
 
   useEffect(() => {
     return () => {
-      if (submitTimeoutRef.current) {
-        clearTimeout(submitTimeoutRef.current);
-      }
       for (const url of uploadedImagesRef.current) {
         if (url.startsWith("blob:")) {
           URL.revokeObjectURL(url);
@@ -135,21 +147,81 @@ export function useReportForm(): {
     if (step > 1) setStep((s) => s - 1);
   }, [step]);
 
-  const onSubmit = useCallback((_data: ReportFormValues) => {
-    setIsSubmitting(true);
-    submitTimeoutRef.current = setTimeout(() => {
-      setIsSubmitting(false);
-      setIsPopupOpen(true);
-    }, 1500);
-  }, []);
+  const onSubmit = useCallback(
+    async (data: ReportFormValues) => {
+      setIsSubmitting(true);
+      try {
+        const payload = normalizeReportPayload(data);
+        await createLockerReport(payload);
+        setIsPopupOpen(true);
+      } catch (error) {
+        const failure = parseReportSubmitFailure(error);
 
-  const onInvalid = useCallback((errors: FieldErrors<ReportFormValues>) => {
-    setIsSubmitting(false);
-    const hasStep1Error = STEP_1_FIELDS.some((field) => errors[field]);
-    if (hasStep1Error) {
-      setStep(1);
-    }
-  }, []);
+        if (failure.kind === "validation") {
+          const result = applyValidationErrors(failure.validationErrors, {
+            setError: form.setError,
+            setSectionServerErrors,
+          });
+
+          if (result.hasUnknown) {
+            setSubmitErrorMessage(m.report_submit_unknown_validation_error());
+            setIsSubmitErrorPopupOpen(true);
+          }
+
+          if (result.earliestStep === 1) {
+            setStep(1);
+          }
+
+          requestAnimationFrame(() => {
+            if (result.firstSectionId) {
+              scrollToReportSection(result.firstSectionId);
+              return;
+            }
+
+            const sectionIds = collectErrorSectionIds(form.formState.errors);
+            if (sectionIds.length > 0) {
+              scrollToEarliestReportSection(sectionIds);
+            }
+          });
+          return;
+        }
+
+        if (failure.kind === "auth") {
+          useAuthPopupStore.getState().openPopup("/report");
+          return;
+        }
+
+        setSubmitErrorMessage(m.report_submit_error_title());
+        setIsSubmitErrorPopupOpen(true);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [form],
+  );
+
+  const scrollToFirstFieldError = useCallback(
+    (errors: FieldErrors<ReportFormValues>) => {
+      const sectionIds = collectErrorSectionIds(errors);
+      if (sectionIds.length === 0) return;
+      requestAnimationFrame(() => {
+        scrollToEarliestReportSection(sectionIds);
+      });
+    },
+    [],
+  );
+
+  const onInvalid = useCallback(
+    (errors: FieldErrors<ReportFormValues>) => {
+      setIsSubmitting(false);
+      const hasStep1Error = STEP_1_FIELDS.some((field) => errors[field]);
+      if (hasStep1Error) {
+        setStep(1);
+      }
+      scrollToFirstFieldError(errors);
+    },
+    [scrollToFirstFieldError],
+  );
 
   const handleNext = useCallback(async () => {
     if (step < 2) {
@@ -157,12 +229,14 @@ export function useReportForm(): {
       if (isValid) {
         setStep(2);
         window.scrollTo(0, 0);
+      } else {
+        scrollToFirstFieldError(form.formState.errors);
       }
       return;
     }
 
     await handleSubmit(onSubmit, onInvalid)();
-  }, [step, trigger, handleSubmit, onSubmit, onInvalid]);
+  }, [step, trigger, handleSubmit, onSubmit, onInvalid, scrollToFirstFieldError, form]);
 
   const formatPrice = useCallback((val: string) => formatPriceInput(val), []);
 
@@ -309,6 +383,9 @@ export function useReportForm(): {
     setIsPopupOpen,
     isPhotoErrorPopupOpen,
     setIsPhotoErrorPopupOpen,
+    isSubmitErrorPopupOpen,
+    setIsSubmitErrorPopupOpen,
+    submitErrorMessage,
     photoErrorMessage,
     isSubmitting,
     uploadedImages,
@@ -337,6 +414,7 @@ export function useReportForm(): {
       handlePriceTypeChange,
       handleUiFloorTypeChange,
       handleFloorNumberChange,
+      clearSectionError,
     },
     validation: { isStep1Valid, isStep2Valid },
   };

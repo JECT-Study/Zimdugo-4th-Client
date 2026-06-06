@@ -172,6 +172,8 @@
   "report_submit_success_home": "Back to Home",
   "report_submit_success_history": "View Report History",
   "report_submit_success_history_alert": "History feature is coming soon.",
+  "report_submit_error_title": "We couldn't submit your report. Please try again in a moment.",
+  "report_submit_unknown_validation_error": "We couldn't validate your input. Please try again.",
   "report_exit_title": "Stop writing?",
   "report_exit_back": "Go back",
   "report_exit_leave": "Leave",
