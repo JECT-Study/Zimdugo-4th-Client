@@ -170,15 +170,18 @@ export const syncLockerMarkers = ({
   const nextPinIds = new Set(lockers.map(getPinId));
 
   // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
-  const mapBounds = map.getBounds() as naver.maps.LatLngBounds;
-  const ne = mapBounds.getNE();
-  const sw = mapBounds.getSW();
-  const latMargin = (ne.lat() - sw.lat()) * 0.1;
-  const lngMargin = (ne.lng() - sw.lng()) * 0.1;
-  const expandedBounds = new maps.LatLngBounds(
-    new maps.LatLng(sw.lat() - latMargin, sw.lng() - lngMargin),
-    new maps.LatLng(ne.lat() + latMargin, ne.lng() + lngMargin),
-  );
+  const mapBounds = map.getBounds?.() as naver.maps.LatLngBounds | null | undefined;
+  const ne = mapBounds?.getNE?.();
+  const sw = mapBounds?.getSW?.();
+  let expandedBounds: naver.maps.LatLngBounds | null = null;
+  if (ne && sw) {
+    const latMargin = (ne.lat() - sw.lat()) * 0.1;
+    const lngMargin = (ne.lng() - sw.lng()) * 0.1;
+    expandedBounds = new maps.LatLngBounds(
+      new maps.LatLng(sw.lat() - latMargin, sw.lng() - lngMargin),
+      new maps.LatLng(ne.lat() + latMargin, ne.lng() + lngMargin),
+    );
+  }
 
   for (const [pinId, entry] of registry) {
     if (!nextPinIds.has(pinId)) {
@@ -194,7 +197,7 @@ export const syncLockerMarkers = ({
     const positionSignature = getPinPositionSignature(pin);
     const iconSignature = getPinIconSignature(pin);
     const position = new maps.LatLng(pin.latitude, pin.longitude);
-    const isVisible = expandedBounds.hasLatLng(position);
+    const isVisible = expandedBounds?.hasLatLng(position) ?? true;
 
     if (existingEntry) {
       if (existingEntry.marker.getMap?.() !== map) {

@@ -104,7 +104,12 @@ export const getLockerPins = async (
     { params: queryParams, signal },
   );
 
-  return (response.data?.items ?? [])
+  const items = response?.data?.items;
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items
     .map(toLockerPinItem)
     .filter((item): item is LockerPinItemResponse => item !== null);
 };
