@@ -226,9 +226,7 @@ export const syncLockerMarkers = ({
     if (onSelectLocker) {
       entry.listener = maps.Event.addListener(marker, "click", () => {
         const id = pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId;
-        if (id !== null) {
-          onSelectLocker(pin.pinType, id);
-        }
+        onSelectLocker(pin.pinType, id);
       });
     }
 

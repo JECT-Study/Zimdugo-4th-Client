@@ -1,6 +1,24 @@
 import { httpGet } from "../lib/axios";
 
-export interface LockerPinItemResponse {
+interface LockerPinBase {
+  latitude: number;
+  longitude: number;
+  lockerCount?: number;
+}
+
+export type LockerPinItemResponse =
+  | (LockerPinBase & {
+      pinType: "LOCKER";
+      lockerId: number;
+      placeId: null;
+    })
+  | (LockerPinBase & {
+      pinType: "PLACE";
+      placeId: number;
+      lockerId: null;
+    });
+
+interface LockerPinItemRaw {
   pinType: "LOCKER" | "PLACE";
   placeId: number | null;
   lockerId: number | null;
@@ -9,9 +27,37 @@ export interface LockerPinItemResponse {
   lockerCount?: number;
 }
 
+const toLockerPinItem = (
+  item: LockerPinItemRaw,
+): LockerPinItemResponse | null => {
+  if (item.pinType === "LOCKER" && item.lockerId !== null) {
+    return {
+      pinType: "LOCKER",
+      lockerId: item.lockerId,
+      placeId: null,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      lockerCount: item.lockerCount,
+    };
+  }
+
+  if (item.pinType === "PLACE" && item.placeId !== null) {
+    return {
+      pinType: "PLACE",
+      placeId: item.placeId,
+      lockerId: null,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      lockerCount: item.lockerCount,
+    };
+  }
+
+  return null;
+};
+
 export interface LockerPinData {
   count: number;
-  items: LockerPinItemResponse[];
+  items: LockerPinItemRaw[];
 }
 
 export interface BackendResponse<T> {
@@ -57,5 +103,8 @@ export const getLockerPins = async (
     "/api/v1/lockers/pin",
     { params: queryParams, signal },
   );
-  return response.data.items;
+
+  return (response.data?.items ?? [])
+    .map(toLockerPinItem)
+    .filter((item): item is LockerPinItemResponse => item !== null);
 };
