@@ -12,7 +12,10 @@ const appI18nEntry = fileURLToPath(new URL("./src/i18n.ts", import.meta.url));
 const appI18nServerEntry = fileURLToPath(
   new URL("./src/i18n-server.ts", import.meta.url),
 );
-const API_BASE_URL = "https://api.zimdugo.com";
+const API_BASE_URL =
+  process.env.VITE_API_BASE_URL ??
+  process.env.API_BASE_URL ??
+  "https://api.zimdugo.com";
 const localizeHref = (path: string, { locale }: { locale: string }) => {
   if (locale === "ko") return path;
   return path === "/" ? `/${locale}` : `/${locale}${path}`;
