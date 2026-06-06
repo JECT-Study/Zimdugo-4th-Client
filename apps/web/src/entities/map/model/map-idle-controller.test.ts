@@ -169,6 +169,28 @@ describe("subscribeMapIdle", () => {
     expect(onSettle).toHaveBeenCalledTimes(1);
   });
 
+  it("center가 bounds 폭의 정확히 20% 이동하면 onSettle을 호출하지 않는다", () => {
+    const mapsState: FakeMapsState = { handlers: [], removed: [] };
+    const fake = createFakeMap({
+      center: new FakeLatLng(100, 127),
+      bounds: new FakeLatLngBounds(
+        new FakeLatLng(110, 130),
+        new FakeLatLng(90, 120),
+      ),
+    });
+    const maps = createFakeMaps(mapsState);
+    const onSettle = vi.fn();
+
+    subscribeMapIdle({ map: fake.map, maps, onSettle });
+    mapsState.handlers[0]?.();
+
+    // lat 이동: 4 = bounds lat 폭(20) × 0.2 → 임계값과 동일 (> 비교)
+    fake.state.center = new FakeLatLng(104, 127);
+    mapsState.handlers[0]?.();
+
+    expect(onSettle).toHaveBeenCalledTimes(1);
+  });
+
   it("zoom이 바뀌면 onSettle을 다시 호출한다", () => {
     const mapsState: FakeMapsState = { handlers: [], removed: [] };
     const fake = createFakeMap();
