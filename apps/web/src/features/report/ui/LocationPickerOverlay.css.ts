@@ -115,6 +115,12 @@ export const myLocationButton = style({
   zIndex: 5,
   cursor: "pointer",
   transition: "bottom 0.3s ease",
+  selectors: {
+    "&:disabled": {
+      opacity: 0.45,
+      cursor: "not-allowed",
+    },
+  },
 });
 
 export const bottomPanel = style({
