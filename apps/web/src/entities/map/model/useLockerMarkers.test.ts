@@ -13,6 +13,9 @@ vi.mock("@repo/ui/vars", () => ({
         green: {
           500: "#3BD569",
         },
+        red: {
+          300: "#FF4D4F",
+        },
       },
     },
   },
