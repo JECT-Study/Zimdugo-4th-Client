@@ -1,4 +1,4 @@
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type { LockerType, ReportFormValues } from "#/features/report/model/report-types";
 import { ReportIndoorOutdoorSection } from "./ReportIndoorOutdoorSection";
 import { ReportTypeSection } from "./ReportTypeSection";
@@ -7,19 +7,15 @@ import { classificationSection, sectionErrorText } from "./report.css.ts";
 interface ReportClassificationSectionProps {
   lockerTypeOptions: Array<{ label: string; value: LockerType }>;
   sectionServerError?: string;
-  onIndoorOutdoorChange: (value: NonNullable<ReportFormValues["indoorOutdoorType"]>) => void;
-  onLockerTypeChange: (value: LockerType | null) => void;
+  onFieldChange?: () => void;
 }
 
 export function ReportClassificationSection({
   lockerTypeOptions,
   sectionServerError,
-  onIndoorOutdoorChange,
-  onLockerTypeChange,
+  onFieldChange,
 }: ReportClassificationSectionProps) {
-  const { watch, formState } = useFormContext<ReportFormValues>();
-  const indoorOutdoorType = watch("indoorOutdoorType");
-  const lockerType = watch("lockerType");
+  const { control, formState } = useFormContext<ReportFormValues>();
 
   const mergedError =
     sectionServerError ??
@@ -34,14 +30,32 @@ export function ReportClassificationSection({
       data-section="classification"
       aria-describedby={errorId}
     >
-      <ReportIndoorOutdoorSection
-        value={indoorOutdoorType ?? null}
-        onChange={onIndoorOutdoorChange}
+      <Controller
+        control={control}
+        name="indoorOutdoorType"
+        render={({ field }) => (
+          <ReportIndoorOutdoorSection
+            value={field.value ?? null}
+            onChange={(value) => {
+              field.onChange(value);
+              onFieldChange?.();
+            }}
+          />
+        )}
       />
-      <ReportTypeSection
-        lockerType={lockerType ?? null}
-        onChange={onLockerTypeChange}
-        options={lockerTypeOptions}
+      <Controller
+        control={control}
+        name="lockerType"
+        render={({ field }) => (
+          <ReportTypeSection
+            lockerType={field.value ?? null}
+            onChange={(value) => {
+              field.onChange(value);
+              onFieldChange?.();
+            }}
+            options={lockerTypeOptions}
+          />
+        )}
       />
       {mergedError ? (
         <p id={errorId} className={sectionErrorText} role="alert">

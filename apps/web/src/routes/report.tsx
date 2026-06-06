@@ -192,14 +192,7 @@ function ReportPage() {
                 <ReportClassificationSection
                   lockerTypeOptions={lockerTypeOptions}
                   sectionServerError={sectionServerErrors.classification}
-                  onIndoorOutdoorChange={(value) => {
-                    setValue("indoorOutdoorType", value, { shouldDirty: true });
-                    clearSectionError("classification");
-                  }}
-                  onLockerTypeChange={(value) => {
-                    setValue("lockerType", value, { shouldDirty: true });
-                    clearSectionError("classification");
-                  }}
+                  onFieldChange={() => clearSectionError("classification")}
                 />
                 <ReportSizeSection
                   selectedSizes={sizeTypesToCards(sizeTypes)}

@@ -12,6 +12,7 @@ import {
   type FieldErrors,
   type UseFormReturn,
   useForm,
+  useWatch,
 } from "react-hook-form";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
@@ -91,7 +92,7 @@ export function useReportForm(): {
     mode: "onSubmit",
   });
 
-  const { watch, setValue, trigger, handleSubmit } = form;
+  const { control, setValue, trigger, handleSubmit } = form;
 
   const [step, setStep] = useState(1);
   const [sectionServerErrors, setSectionServerErrors] = useState<
@@ -129,10 +130,11 @@ export function useReportForm(): {
     };
   }, []);
 
-  const roadAddress = watch("roadAddress");
-  const lockerType = watch("lockerType");
-  const indoorOutdoorType = watch("indoorOutdoorType");
-  const locationConsentAgreed = watch("locationConsentAgreed");
+  const roadAddress = useWatch({ control, name: "roadAddress" }) ?? "";
+  const lockerType = useWatch({ control, name: "lockerType" });
+  const indoorOutdoorType = useWatch({ control, name: "indoorOutdoorType" });
+  const locationConsentAgreed =
+    useWatch({ control, name: "locationConsentAgreed" }) ?? false;
 
   const clearSectionError = useCallback((sectionId: ReportSectionId) => {
     setSectionServerErrors((prev) => {
