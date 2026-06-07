@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createUploadUrl } from "#/features/report/api/create-upload-url";
+import { InvalidUploadCreateResponseError, createUploadUrl } from "#/features/report/api/create-upload-url";
 import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/features/report/model/report-types";
 import { apiClient } from "#/shared/lib/apiClient";
 
@@ -41,5 +41,30 @@ describe("createUploadUrl", () => {
     await expect(createUploadUrl(payload)).resolves.toEqual(uploadData);
 
     expect(apiClient.post).toHaveBeenCalledWith("/api/v1/uploads", payload);
+  });
+
+  it("응답 data 형식이 올바르지 않으면 InvalidUploadCreateResponseError를 던진다", async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        code: "SUCCESS",
+        message: "ok",
+        status: 200,
+        timestamp: "2026-06-07T14:15:38.948Z",
+        data: {
+          uploadUrl: "not-a-url",
+          fileUrl: "https://cdn.example.com/key.jpg",
+          key: "locker-report/uuid/locker-photo.jpg",
+          expiresAt: "2026-06-07T14:16:38.948Z",
+        },
+      },
+    });
+
+    await expect(
+      createUploadUrl({
+        category: UPLOAD_CATEGORY_LOCKER_REPORT,
+        fileName: "locker-photo.jpg",
+        contentType: "image/jpeg",
+      }),
+    ).rejects.toBeInstanceOf(InvalidUploadCreateResponseError);
   });
 });
