@@ -58,6 +58,11 @@ const parsePriceNumber = (formatted: string): number | null => {
   return Number(digits);
 };
 
+type PendingValidationNavigation = {
+  earliestStep: 1 | 2 | null;
+  firstSectionId: ReportSectionId | null;
+};
+
 export function useReportForm(): {
   form: UseFormReturn<ReportFormValues>;
   step: number;
@@ -88,6 +93,8 @@ export function useReportForm(): {
     setMaxPriceDisplay: (val: string) => void;
     handlePriceTypeChange: (type: "free" | "paid" | "none") => void;
     clearSectionError: (sectionId: ReportSectionId) => void;
+    handleSubmitErrorPopupConfirm: () => void;
+    handleSubmitErrorPopupOpenChange: (open: boolean) => void;
   };
   validation: { isStep1Valid: boolean; isStep2Valid: boolean };
 } {
@@ -116,6 +123,9 @@ export function useReportForm(): {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedPhotoFileRef = useRef<File | null>(null);
   const uploadedImagesRef = useRef(uploadedImages);
+  const pendingValidationNavigationRef = useRef<PendingValidationNavigation | null>(
+    null,
+  );
 
   useEffect(() => {
     uploadedImagesRef.current = uploadedImages;
@@ -174,6 +184,34 @@ export function useReportForm(): {
     if (step > 1) setStep((s) => s - 1);
   }, [step]);
 
+  const handleSubmitErrorPopupConfirm = useCallback(() => {
+    const pending = pendingValidationNavigationRef.current;
+    pendingValidationNavigationRef.current = null;
+    setIsSubmitErrorPopupOpen(false);
+
+    if (!pending) return;
+
+    if (pending.earliestStep === 1) {
+      setStep(1);
+    }
+
+    requestAnimationFrame(() => {
+      if (pending.firstSectionId) {
+        scrollToReportSection(pending.firstSectionId);
+        return;
+      }
+
+      const sectionIds = collectErrorSectionIds(form.formState.errors);
+      if (sectionIds.length > 0) {
+        scrollToEarliestReportSection(sectionIds);
+      }
+    });
+  }, [form.formState.errors]);
+
+  const handleSubmitErrorPopupOpenChange = useCallback((open: boolean) => {
+    setIsSubmitErrorPopupOpen(open);
+  }, []);
+
   const onSubmit = useCallback(
     async (data: ReportFormValues) => {
       setIsSubmitting(true);
@@ -222,26 +260,17 @@ export function useReportForm(): {
             setSectionServerErrors,
           });
 
-          if (result.hasUnknown) {
-            setSubmitErrorMessage(m.report_submit_unknown_validation_error());
-            setIsSubmitErrorPopupOpen(true);
-          }
+          pendingValidationNavigationRef.current = {
+            earliestStep: result.earliestStep,
+            firstSectionId: result.firstSectionId,
+          };
 
-          if (result.earliestStep === 1) {
-            setStep(1);
-          }
-
-          requestAnimationFrame(() => {
-            if (result.firstSectionId) {
-              scrollToReportSection(result.firstSectionId);
-              return;
-            }
-
-            const sectionIds = collectErrorSectionIds(form.formState.errors);
-            if (sectionIds.length > 0) {
-              scrollToEarliestReportSection(sectionIds);
-            }
-          });
+          setSubmitErrorMessage(
+            result.hasUnknown
+              ? m.report_submit_unknown_validation_error()
+              : m.report_submit_validation_check_title(),
+          );
+          setIsSubmitErrorPopupOpen(true);
           return;
         }
 
@@ -250,6 +279,7 @@ export function useReportForm(): {
           return;
         }
 
+        pendingValidationNavigationRef.current = null;
         setSubmitErrorMessage(m.report_submit_error_title());
         setIsSubmitErrorPopupOpen(true);
       } finally {
@@ -394,9 +424,10 @@ export function useReportForm(): {
       selectedPhotoFileRef.current = selectedFile;
       setValue("imageUrl", null, { shouldDirty: true });
       setUploadedImages([URL.createObjectURL(selectedFile)]);
+      clearSectionError("photo");
       e.target.value = "";
     },
-    [setValue, uploadedImages],
+    [clearSectionError, setValue, uploadedImages],
   );
 
   const handleImageRemove = useCallback(
@@ -408,8 +439,9 @@ export function useReportForm(): {
       selectedPhotoFileRef.current = null;
       setValue("imageUrl", null, { shouldDirty: true });
       setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+      clearSectionError("photo");
     },
-    [setValue, uploadedImages],
+    [clearSectionError, setValue, uploadedImages],
   );
 
   const isStep1Valid =
@@ -446,6 +478,8 @@ export function useReportForm(): {
       setMaxPriceDisplay: handleMaxPriceDisplayChange,
       handlePriceTypeChange,
       clearSectionError,
+      handleSubmitErrorPopupConfirm,
+      handleSubmitErrorPopupOpenChange,
     },
     validation: { isStep1Valid, isStep2Valid },
   };
