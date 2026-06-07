@@ -65,7 +65,7 @@ const FIELD_TARGETS: Record<
     step: 2,
     anchorField: "additionalInfo",
   },
-  imageUrl: { sectionId: "photo", step: 2, anchorField: null },
+  imageUrl: { sectionId: "photo", step: 2, anchorField: "imageUrl" },
 };
 
 export function resolveValidationErrorTarget(
@@ -111,6 +111,38 @@ export type ValidationErrorItem = {
   message: string;
 };
 
+const LOCATION_FIELDS = new Set(["roadAddress", "latitude", "longitude"]);
+
+/** 서버 400 응답 메시지를 FE 표시 톤에 맞게 정규화한다. null이면 UI에 반영하지 않는다. */
+export function normalizeServerValidationMessage(
+  field: string,
+  message: string,
+): string | null {
+  if (field === "locationConsentAgreed") {
+    return null;
+  }
+
+  if (LOCATION_FIELDS.has(field) && message === "required") {
+    return "validation.invalid_location";
+  }
+
+  if (field === "additionalInfo" && message === "required") {
+    return "validation.prohibited_word";
+  }
+
+  return message;
+}
+
+function normalizeValidationErrors(
+  errors: ValidationErrorItem[],
+): ValidationErrorItem[] {
+  return errors.flatMap((item) => {
+    const message = normalizeServerValidationMessage(item.field, item.message);
+    if (message === null) return [];
+    return [{ ...item, message }];
+  });
+}
+
 export type ApplyValidationErrorsParams = {
   setError: (
     name: keyof ReportFormValues,
@@ -134,10 +166,13 @@ export function applyValidationErrors(
   errors: ValidationErrorItem[],
   { setError, setSectionServerErrors }: ApplyValidationErrorsParams,
 ): ApplyValidationErrorsResult {
-  const targets = errors.map((e) => resolveValidationErrorTarget(e.field));
+  const normalizedErrors = normalizeValidationErrors(errors);
+  const targets = normalizedErrors.map((e) =>
+    resolveValidationErrorTarget(e.field),
+  );
   const sectionUpdates: Partial<Record<ReportSectionId, string>> = {};
 
-  for (const item of errors) {
+  for (const item of normalizedErrors) {
     const target = resolveValidationErrorTarget(item.field);
 
     if (target.kind === "unknown") continue;

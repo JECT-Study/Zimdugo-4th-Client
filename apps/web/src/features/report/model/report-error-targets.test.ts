@@ -3,6 +3,7 @@ import {
   applyClientValidationIssues,
   applyValidationErrors,
   getEarliestStep,
+  normalizeServerValidationMessage,
   resolveValidationErrorTarget,
   toClientValidationIssues,
 } from "#/features/report/model/report-error-targets";
@@ -84,6 +85,26 @@ describe("getEarliestStep", () => {
   });
 });
 
+describe("normalizeServerValidationMessage", () => {
+  it("위치 field의 required는 invalid_location으로 바꾼다", () => {
+    expect(normalizeServerValidationMessage("roadAddress", "required")).toBe(
+      "validation.invalid_location",
+    );
+  });
+
+  it("additionalInfo의 required는 prohibited_word로 바꾼다", () => {
+    expect(normalizeServerValidationMessage("additionalInfo", "required")).toBe(
+      "validation.prohibited_word",
+    );
+  });
+
+  it("locationConsentAgreed 오류는 UI에 반영하지 않는다", () => {
+    expect(
+      normalizeServerValidationMessage("locationConsentAgreed", "required"),
+    ).toBeNull();
+  });
+});
+
 describe("applyValidationErrors", () => {
   it("일반 field는 setError를 호출한다", () => {
     const setError = vi.fn();
@@ -114,6 +135,35 @@ describe("applyValidationErrors", () => {
 
     expect(setError).not.toHaveBeenCalled();
     expect(setSectionServerErrors).toHaveBeenCalled();
+  });
+
+  it("roadAddress required는 invalid_location으로 setError한다", () => {
+    const setError = vi.fn();
+    const setSectionServerErrors = vi.fn();
+
+    applyValidationErrors(
+      [{ field: "roadAddress", message: "required" }],
+      { setError, setSectionServerErrors },
+    );
+
+    expect(setError).toHaveBeenCalledWith("roadAddress", {
+      type: "server",
+      message: "validation.invalid_location",
+    });
+  });
+
+  it("locationConsentAgreed 오류는 무시한다", () => {
+    const setError = vi.fn();
+    const setSectionServerErrors = vi.fn();
+
+    const result = applyValidationErrors(
+      [{ field: "locationConsentAgreed", message: "required" }],
+      { setError, setSectionServerErrors },
+    );
+
+    expect(setError).not.toHaveBeenCalled();
+    expect(setSectionServerErrors).not.toHaveBeenCalled();
+    expect(result.firstSectionId).toBeNull();
   });
 
   it("unknown field는 setError·section 갱신 없이 hasUnknown을 true로 반환한다", () => {
