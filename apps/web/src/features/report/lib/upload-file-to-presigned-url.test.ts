@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PresignedUploadError,
   UntrustedPresignedUploadUrlError,
+  assertTrustedPresignedUploadUrl,
   uploadFileToPresignedUrl,
 } from "#/features/report/lib/upload-file-to-presigned-url";
 
@@ -51,6 +52,28 @@ describe("uploadFileToPresignedUrl", () => {
     ).rejects.toBeInstanceOf(UntrustedPresignedUploadUrlError);
 
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("S3 호스트명 부분 일치 우회 URL은 거부한다", () => {
+    for (const uploadUrl of [
+      "https://evil.s3-attacker.com/key",
+      "https://s3.amazonaws.com.evil.com/key",
+    ]) {
+      expect(() => assertTrustedPresignedUploadUrl(uploadUrl)).toThrow(
+        UntrustedPresignedUploadUrlError,
+      );
+    }
+  });
+
+  it("정상 S3 호스트명은 허용한다", () => {
+    for (const uploadUrl of [
+      "https://bucket.s3.amazonaws.com/key",
+      "https://bucket.s3.us-east-1.amazonaws.com/key",
+      "https://s3.amazonaws.com/bucket/key",
+      "https://s3.us-west-2.amazonaws.com/bucket/key",
+    ]) {
+      expect(() => assertTrustedPresignedUploadUrl(uploadUrl)).not.toThrow();
+    }
   });
 
   it("S3 응답이 실패하면 PresignedUploadError를 던진다", async () => {

@@ -21,7 +21,8 @@ export class UntrustedPresignedUploadUrlError extends Error {
   }
 }
 
-const TRUSTED_S3_HOST_PATTERN = /(\.s3[.-]|s3\.amazonaws\.com)/i;
+const TRUSTED_S3_HOST_PATTERN =
+  /^(?:[a-z0-9-]+(?:\.[a-z0-9-]+)*\.s3(?:[.-][a-z0-9-]+)?\.amazonaws\.com|s3(?:[.-][a-z0-9-]+)?\.amazonaws\.com)$/i;
 
 export function assertTrustedPresignedUploadUrl(uploadUrl: string): void {
   let parsed: URL;
@@ -35,7 +36,7 @@ export function assertTrustedPresignedUploadUrl(uploadUrl: string): void {
     throw new UntrustedPresignedUploadUrlError();
   }
 
-  if (!TRUSTED_S3_HOST_PATTERN.test(parsed.hostname)) {
+  if (!TRUSTED_S3_HOST_PATTERN.test(parsed.hostname.toLowerCase())) {
     throw new UntrustedPresignedUploadUrlError();
   }
 }
