@@ -168,7 +168,7 @@ describe("applyValidationErrors", () => {
     });
   });
 
-  it("locationConsentAgreed 오류는 무시한다", () => {
+  it("locationConsentAgreed만 오면 agreementConsentRequired와 agreement scroll 대상을 반환한다", () => {
     const setError = vi.fn();
     const setSectionServerErrors = vi.fn();
 
@@ -179,7 +179,9 @@ describe("applyValidationErrors", () => {
 
     expect(setError).not.toHaveBeenCalled();
     expect(setSectionServerErrors).toHaveBeenCalledWith({});
-    expect(result.firstSectionId).toBeNull();
+    expect(result.agreementConsentRequired).toBe(true);
+    expect(result.firstSectionId).toBe("agreement");
+    expect(result.earliestStep).toBeNull();
   });
 
   it("step 1·2 혼합 서버 오류에서 firstSectionId는 step 1 섹션 순서를 따른다", () => {

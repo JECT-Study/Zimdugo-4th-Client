@@ -178,6 +178,7 @@
   "report_submit_success_history_alert": "上报历史功能正在开发中。",
   "report_submit_error_title": "提交失败，请稍后再试。",
   "report_submit_validation_check_title": "请输入正确的信息。",
+  "report_submit_agreement_required": "请同意位置信息的收集和使用。",
   "report_submit_unknown_validation_error": "无法验证输入内容，请输入正确的信息。",
   "report_error_required": "请输入必填项。",
   "report_error_time_pair_required": "请同时填写开始和结束时间。",

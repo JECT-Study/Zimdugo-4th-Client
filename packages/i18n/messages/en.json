@@ -178,6 +178,7 @@
   "report_submit_success_history_alert": "History feature is coming soon.",
   "report_submit_error_title": "We couldn't submit your report. Please try again in a moment.",
   "report_submit_validation_check_title": "Please enter valid information.",
+  "report_submit_agreement_required": "Please agree to location information collection and use.",
   "report_submit_unknown_validation_error": "We couldn't validate your input. Please enter valid information.",
   "report_error_required": "Please enter a required value.",
   "report_error_time_pair_required": "Please enter both start and end times.",

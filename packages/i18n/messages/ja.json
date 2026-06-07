@@ -178,6 +178,7 @@
   "report_submit_success_history_alert": "履歴機能は準備中です。",
   "report_submit_error_title": "報告の送信に失敗しました。しばらくしてから再度お試しください。",
   "report_submit_validation_check_title": "正しい情報を入力してください。",
+  "report_submit_agreement_required": "位置情報の収集と利用に同意してください。",
   "report_submit_unknown_validation_error": "入力内容を確認できませんでした。正しい情報を入力してください。",
   "report_error_required": "必須項目を入力してください。",
   "report_error_time_pair_required": "開始・終了時間を両方入力してください。",

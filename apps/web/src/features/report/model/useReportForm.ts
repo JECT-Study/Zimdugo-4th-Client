@@ -278,14 +278,18 @@ export function useReportForm(): {
           });
 
           pendingValidationNavigationRef.current = {
-            earliestStep: result.earliestStep,
+            earliestStep: result.agreementConsentRequired
+              ? 2
+              : result.earliestStep,
             firstSectionId: result.firstSectionId,
           };
 
           setSubmitErrorMessage(
             result.hasUnknown
               ? m.report_submit_unknown_validation_error()
-              : m.report_submit_validation_check_title(),
+              : result.agreementConsentRequired
+                ? m.report_submit_agreement_required()
+                : m.report_submit_validation_check_title(),
           );
           setIsSubmitErrorPopupOpen(true);
           return;

@@ -186,6 +186,7 @@ export type ApplyValidationErrorsResult = {
   earliestStep: 1 | 2 | null;
   hasUnknown: boolean;
   firstSectionId: ReportSectionId | null;
+  agreementConsentRequired: boolean;
 };
 
 export function applyValidationErrors(
@@ -196,6 +197,9 @@ export function applyValidationErrors(
   setSectionServerErrors({});
 
   const normalizedErrors = normalizeValidationErrors(errors);
+  const agreementConsentRequired =
+    errors.some((item) => item.field === "locationConsentAgreed") &&
+    normalizedErrors.length === 0;
   const targets = normalizedErrors.map((e) =>
     resolveValidationErrorTarget(e.field),
   );
@@ -227,9 +231,17 @@ export function applyValidationErrors(
 
   const earliestStep = getEarliestStep(targets);
   const hasUnknown = targets.some((t) => t.kind === "unknown");
-  const firstSectionId = getEarliestSectionId(targets, earliestStep);
+  const firstSectionId =
+    getEarliestSectionId(targets, earliestStep) ??
+    (agreementConsentRequired ? "agreement" : null);
 
-  return { targets, earliestStep, hasUnknown, firstSectionId };
+  return {
+    targets,
+    earliestStep,
+    hasUnknown,
+    firstSectionId,
+    agreementConsentRequired,
+  };
 }
 
 export function isStep1Field(
