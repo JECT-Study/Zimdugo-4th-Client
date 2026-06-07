@@ -16,6 +16,20 @@ export const timeToMinutes = (time: string): number => {
 
 const timeStringSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
+const httpsImageUrlSchema = z
+  .string()
+  .max(500)
+  .refine(
+    (value) => {
+      try {
+        return new URL(value).protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "https_required" },
+  );
+
 export const reportSchema = z
   .object({
     roadAddress: z.string(),
@@ -34,7 +48,7 @@ export const reportSchema = z
     endTime: timeStringSchema.nullable(),
     sizeTypes: z.array(z.enum(SIZE_TYPES)).max(3),
     additionalInfo: z.string().max(MAX_REPORT_ADDITIONAL_INFO_LENGTH),
-    imageUrl: z.string().max(500).nullable(),
+    imageUrl: z.union([z.null(), httpsImageUrlSchema]),
   })
   .superRefine((data, ctx) => {
     if (!data.roadAddress.trim()) {
@@ -152,6 +166,12 @@ export const reportSchema = z
           message: "range",
         });
       }
+    } else if (data.minPrice !== null || data.maxPrice !== null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["minPrice"],
+        message: "must_be_null",
+      });
     }
 
     const hasStart = data.startTime !== null;

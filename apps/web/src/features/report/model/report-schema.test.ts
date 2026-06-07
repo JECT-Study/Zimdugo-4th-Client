@@ -227,13 +227,37 @@ describe("reportSchema", () => {
     ).toBe(false);
   });
 
-  it("imageUrl은 null 또는 500자 이하 URL을 허용한다", () => {
+  it("imageUrl은 null 또는 https URL이어야 한다", () => {
     expect(parseReportForm(validForm()).success).toBe(true);
     expect(
       reportSchemaSafeParseWithImageUrl("https://example.com/a.jpg"),
     ).toBe(true);
+    expect(reportSchemaSafeParseWithImageUrl("http://example.com/a.jpg")).toBe(
+      false,
+    );
+    expect(reportSchemaSafeParseWithImageUrl("not-a-url")).toBe(false);
     expect(
       reportSchemaSafeParseWithImageUrl(`https://example.com/${"a".repeat(481)}`),
+    ).toBe(false);
+  });
+
+  it("무료(isFree: true)일 때 minPrice·maxPrice는 null이어야 한다", () => {
+    expect(
+      parseReportForm({
+        ...validForm(),
+        isFree: true,
+        minPrice: 1000,
+        maxPrice: null,
+      }).success,
+    ).toBe(false);
+
+    expect(
+      parseReportForm({
+        ...validForm(),
+        isFree: true,
+        minPrice: null,
+        maxPrice: 2000,
+      }).success,
     ).toBe(false);
   });
 });
