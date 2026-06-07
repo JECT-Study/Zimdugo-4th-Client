@@ -2,8 +2,9 @@ import { Button } from "@repo/ui/components/button";
 import {
   IconCamera24,
   IconCaution24,
-  IconNavigationClock24,
+  IconNormalCapacity24,
   IconNormalMapPin24,
+  IconNormalWallet24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
@@ -262,12 +263,12 @@ function FullDetailContent({
               description={locker.floorLabel ?? "B2층"}
             />
             <DetailInfoRow
-              icon={<IconShare24 />}
+              icon={<IconNormalWallet24 />}
               title="가격"
               description={locker.priceLabel ?? "000원 ~ 000원"}
             />
             <DetailInfoRow
-              icon={<IconNavigationClock24 />}
+              icon={<IconNormalCapacity24 />}
               title="사이즈"
               description={locker.sizeLabel ?? "S / M / L / 기타"}
             />
