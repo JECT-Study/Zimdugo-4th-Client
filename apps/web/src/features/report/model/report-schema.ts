@@ -34,7 +34,7 @@ export const reportSchema = z
     endTime: timeStringSchema.nullable(),
     sizeTypes: z.array(z.enum(SIZE_TYPES)).max(3),
     additionalInfo: z.string().max(MAX_REPORT_ADDITIONAL_INFO_LENGTH),
-    imageUrl: z.literal(null),
+    imageUrl: z.string().max(500).nullable(),
   })
   .superRefine((data, ctx) => {
     if (!data.roadAddress.trim()) {

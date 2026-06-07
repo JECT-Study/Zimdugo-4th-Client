@@ -33,8 +33,7 @@ export type ReportFormValues = {
   endTime: string | null;
   sizeTypes: SizeType[];
   additionalInfo: string;
-  /** @todo S3 presigned 업로드 연동 후 `string | null` URL 허용 */
-  imageUrl: null;
+  imageUrl: string | null;
 };
 
 export type LockerReportCreateRequest = ReportFormValues;

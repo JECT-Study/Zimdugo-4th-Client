@@ -31,7 +31,6 @@ export function normalizeReportPayload(
     minPrice,
     maxPrice,
     additionalInfo: values.additionalInfo.trim(),
-    // TODO: S3 presigned 업로드 연동 후 업로드된 URL 반영
-    imageUrl: null,
+    imageUrl: values.imageUrl,
   };
 }

@@ -107,7 +107,17 @@ describe("normalizeReportPayload", () => {
     expect(payload.additionalInfo).toBe("B2 화장실 옆");
   });
 
-  it("imageUrl은 항상 null이다 (TODO: S3 presigned 업로드 연동 후 URL 반영)", () => {
+  it("imageUrl을 폼 값 그대로 payload에 반영한다", () => {
+    const imageUrl = "https://cdn.example.com/locker-report/key.jpg";
+    const payload = normalizeReportPayload({
+      ...baseForm(),
+      imageUrl,
+    });
+
+    expect(payload.imageUrl).toBe(imageUrl);
+  });
+
+  it("imageUrl이 null이면 null로 보낸다", () => {
     const payload = normalizeReportPayload(baseForm());
 
     expect(payload.imageUrl).toBeNull();

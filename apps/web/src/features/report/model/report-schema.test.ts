@@ -213,10 +213,13 @@ describe("reportSchema", () => {
     ).toBe(false);
   });
 
-  it("imageUrl은 null만 허용한다 (TODO: S3 presigned 업로드 연동 후 URL 허용으로 schema·타입 수정 필요)", () => {
+  it("imageUrl은 null 또는 500자 이하 URL을 허용한다", () => {
     expect(parseReportForm(validForm()).success).toBe(true);
     expect(
       reportSchemaSafeParseWithImageUrl("https://example.com/a.jpg"),
+    ).toBe(true);
+    expect(
+      reportSchemaSafeParseWithImageUrl(`https://example.com/${"a".repeat(481)}`),
     ).toBe(false);
   });
 });

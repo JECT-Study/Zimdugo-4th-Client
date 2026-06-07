@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MAX_REPORT_PHOTO_SIZE_BYTES } from "#/features/report/model/report-types";
 import {
   isAcceptedReportPhotoFile,
+  resolveReportPhotoContentType,
   validateReportPhotoFile,
 } from "#/features/report/lib/validate-report-photo-file";
 
@@ -23,6 +24,12 @@ describe("validateReportPhotoFile", () => {
 
     expect(isAcceptedReportPhotoFile(file)).toBe(true);
     expect(validateReportPhotoFile(file)).toEqual({ ok: true });
+  });
+
+  it("MIME이 비어 있으면 확장자로 Content-Type을 추론한다", () => {
+    const file = createFile("photo.jpg", "", 1024);
+
+    expect(resolveReportPhotoContentType(file)).toBe("image/jpeg");
   });
 
   it("hwp 파일은 형식 오류를 반환한다", () => {

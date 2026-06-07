@@ -37,6 +37,26 @@ export const isAcceptedReportPhotoFile = (file: File): boolean => {
   return ALLOWED_IMAGE_EXTENSIONS.has(getFileExtension(file.name));
 };
 
+const EXTENSION_TO_CONTENT_TYPE: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+  bmp: "image/bmp",
+  svg: "image/svg+xml",
+};
+
+export const resolveReportPhotoContentType = (file: File): string => {
+  if (file.type.trim()) {
+    return file.type;
+  }
+
+  return EXTENSION_TO_CONTENT_TYPE[getFileExtension(file.name)] ?? file.type;
+};
+
 export const validateReportPhotoFile = (
   file: File,
 ): ReportPhotoValidationResult => {
