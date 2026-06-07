@@ -20,7 +20,6 @@ interface ReportPriceSectionProps {
   setMinPrice: (val: string) => void;
   maxPrice: string;
   setMaxPrice: (val: string) => void;
-  formatPrice: (val: string) => string;
   sectionServerError?: string;
   onFieldChange?: () => void;
 }
@@ -32,7 +31,6 @@ export function ReportPriceSection({
   setMinPrice,
   maxPrice,
   setMaxPrice,
-  formatPrice,
   sectionServerError,
   onFieldChange,
 }: ReportPriceSectionProps) {
@@ -92,7 +90,7 @@ export function ReportPriceSection({
               placeholder={m.report_price_min_placeholder()}
               value={minPrice}
               onChange={(val) => {
-                setMinPrice(formatPrice(val));
+                setMinPrice(val);
                 onFieldChange?.();
               }}
               inputMode="numeric"
@@ -106,7 +104,7 @@ export function ReportPriceSection({
               placeholder={m.report_price_max_placeholder()}
               value={maxPrice}
               onChange={(val) => {
-                setMaxPrice(formatPrice(val));
+                setMaxPrice(val);
                 onFieldChange?.();
               }}
               inputMode="numeric"

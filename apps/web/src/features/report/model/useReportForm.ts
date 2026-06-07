@@ -63,6 +63,21 @@ type PendingValidationNavigation = {
   firstSectionId: ReportSectionId | null;
 };
 
+/** AnimatePresence exit(200ms) + wait 모드 이후 DOM 마운트 대기 */
+const STEP_TRANSITION_SCROLL_MS = 250;
+
+const scheduleSectionScroll = (
+  scroll: () => void,
+  afterStepTransition: boolean,
+) => {
+  if (afterStepTransition) {
+    window.setTimeout(scroll, STEP_TRANSITION_SCROLL_MS);
+    return;
+  }
+
+  requestAnimationFrame(scroll);
+};
+
 export function useReportForm(): {
   form: UseFormReturn<ReportFormValues>;
   step: number;
@@ -191,11 +206,12 @@ export function useReportForm(): {
 
     if (!pending) return;
 
+    const afterStepTransition = pending.earliestStep === 1 && step === 2;
     if (pending.earliestStep === 1) {
       setStep(1);
     }
 
-    requestAnimationFrame(() => {
+    scheduleSectionScroll(() => {
       if (pending.firstSectionId) {
         scrollToReportSection(pending.firstSectionId);
         return;
@@ -205,8 +221,8 @@ export function useReportForm(): {
       if (sectionIds.length > 0) {
         scrollToEarliestReportSection(sectionIds);
       }
-    });
-  }, [form.formState.errors]);
+    }, afterStepTransition);
+  }, [form.formState.errors, step]);
 
   const handleSubmitErrorPopupOpenChange = useCallback((open: boolean) => {
     setIsSubmitErrorPopupOpen(open);
@@ -290,12 +306,16 @@ export function useReportForm(): {
   );
 
   const scrollToFirstFieldError = useCallback(
-    (errors: FieldErrors<ReportFormValues>) => {
+    (
+      errors: FieldErrors<ReportFormValues>,
+      afterStepTransition = false,
+    ) => {
       const sectionIds = collectErrorSectionIds(errors);
       if (sectionIds.length === 0) return;
-      requestAnimationFrame(() => {
-        scrollToEarliestReportSection(sectionIds);
-      });
+      scheduleSectionScroll(
+        () => scrollToEarliestReportSection(sectionIds),
+        afterStepTransition,
+      );
     },
     [],
   );
@@ -305,18 +325,20 @@ export function useReportForm(): {
       setIsSubmitting(false);
       const sectionIds = applyZodIssuesToUi();
       const hasStep1Error = STEP_1_FIELDS.some((field) => errors[field]);
+      const afterStepTransition = hasStep1Error && step === 2;
       if (hasStep1Error) {
         setStep(1);
       }
       if (sectionIds.length > 0) {
-        requestAnimationFrame(() => {
-          scrollToEarliestReportSection(sectionIds);
-        });
+        scheduleSectionScroll(
+          () => scrollToEarliestReportSection(sectionIds),
+          afterStepTransition,
+        );
         return;
       }
-      scrollToFirstFieldError(errors);
+      scrollToFirstFieldError(errors, afterStepTransition);
     },
-    [applyZodIssuesToUi, scrollToFirstFieldError],
+    [applyZodIssuesToUi, scrollToFirstFieldError, step],
   );
 
   const handleNext = useCallback(async () => {

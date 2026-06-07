@@ -11,6 +11,7 @@ const validForm = (): ReportFormValues => ({
   indoorOutdoorType: "INDOOR",
   lockerType: "SUBWAY_STATION",
   hasFloor: false,
+  isFree: true,
   locationConsentAgreed: true,
 });
 
@@ -100,15 +101,18 @@ describe("reportSchema", () => {
     ).toBe(false);
   });
 
-  it("가격 미선택(isFree: null)이면 가격 검증을 건너뛴다", () => {
-    expect(
-      parseReportForm({
-        ...validForm(),
-        isFree: null,
-        minPrice: null,
-        maxPrice: null,
-      }).success,
-    ).toBe(true);
+  it("가격 유형(isFree) 미선택이면 실패한다", () => {
+    const result = parseReportForm({
+      ...validForm(),
+      isFree: null,
+      minPrice: null,
+      maxPrice: null,
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.some((issue) => issue.path[0] === "isFree")).toBe(
+      true,
+    );
   });
 
   it("유료(isFree: false)일 때 최소·최대 가격은 필수이다", () => {
@@ -158,6 +162,16 @@ describe("reportSchema", () => {
         maxPrice: 3000,
       }).success,
     ).toBe(true);
+  });
+
+  it("운영시간 포맷은 유효한 시·분 범위여야 한다", () => {
+    expect(
+      parseReportForm({
+        ...validForm(),
+        startTime: "29:99",
+        endTime: "18:00",
+      }).success,
+    ).toBe(false);
   });
 
   it("운영시간은 둘 다 비어 있거나 둘 다 입력해야 한다", () => {

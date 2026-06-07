@@ -14,7 +14,7 @@ export const timeToMinutes = (time: string): number => {
   return Number.parseInt(hour, 10) * 60 + Number.parseInt(minute, 10);
 };
 
-const timeStringSchema = z.string().regex(/^\d{2}:\d{2}$/);
+const timeStringSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
 export const reportSchema = z
   .object({
@@ -106,7 +106,13 @@ export const reportSchema = z
       });
     }
 
-    if (data.isFree === false) {
+    if (data.isFree === null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["isFree"],
+        message: "required",
+      });
+    } else if (data.isFree === false) {
       if (data.minPrice === null) {
         ctx.addIssue({
           code: "custom",

@@ -274,7 +274,6 @@ function ReportPage() {
                       setMinPrice={setMinPriceDisplay}
                       maxPrice={maxPriceDisplay}
                       setMaxPrice={setMaxPriceDisplay}
-                      formatPrice={formatPrice}
                       sectionServerError={sectionServerErrors.price}
                       onFieldChange={() => clearSectionError("price")}
                     />
