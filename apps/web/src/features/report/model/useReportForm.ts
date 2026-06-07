@@ -66,18 +66,6 @@ type PendingValidationNavigation = {
 /** AnimatePresence exit(200ms) + wait 모드 이후 DOM 마운트 대기 */
 const STEP_TRANSITION_SCROLL_MS = 250;
 
-const scheduleSectionScroll = (
-  scroll: () => void,
-  afterStepTransition: boolean,
-) => {
-  if (afterStepTransition) {
-    window.setTimeout(scroll, STEP_TRANSITION_SCROLL_MS);
-    return;
-  }
-
-  requestAnimationFrame(scroll);
-};
-
 export function useReportForm(): {
   form: UseFormReturn<ReportFormValues>;
   step: number;
@@ -141,6 +129,35 @@ export function useReportForm(): {
   const pendingValidationNavigationRef = useRef<PendingValidationNavigation | null>(
     null,
   );
+  const scrollTimeoutRef = useRef<number | null>(null);
+
+  const scheduleSectionScroll = useCallback(
+    (scroll: () => void, afterStepTransition: boolean) => {
+      if (scrollTimeoutRef.current !== null) {
+        window.clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+      }
+
+      if (afterStepTransition) {
+        scrollTimeoutRef.current = window.setTimeout(() => {
+          scrollTimeoutRef.current = null;
+          scroll();
+        }, STEP_TRANSITION_SCROLL_MS);
+        return;
+      }
+
+      requestAnimationFrame(scroll);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current !== null) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     uploadedImagesRef.current = uploadedImages;
@@ -222,7 +239,7 @@ export function useReportForm(): {
         scrollToEarliestReportSection(sectionIds);
       }
     }, afterStepTransition);
-  }, [form.formState.errors, step]);
+  }, [form.formState.errors, scheduleSectionScroll, step]);
 
   const handleSubmitErrorPopupOpenChange = useCallback((open: boolean) => {
     if (!open) {
@@ -325,7 +342,7 @@ export function useReportForm(): {
         afterStepTransition,
       );
     },
-    [],
+    [scheduleSectionScroll],
   );
 
   const onInvalid = useCallback(
@@ -346,7 +363,7 @@ export function useReportForm(): {
       }
       scrollToFirstFieldError(errors, afterStepTransition);
     },
-    [applyZodIssuesToUi, scrollToFirstFieldError, step],
+    [applyZodIssuesToUi, scrollToFirstFieldError, scheduleSectionScroll, step],
   );
 
   const handleNext = useCallback(async () => {
