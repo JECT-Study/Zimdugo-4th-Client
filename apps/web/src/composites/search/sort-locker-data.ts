@@ -67,7 +67,7 @@ const cloneLocker = (item: SearchLockerResultItem): SearchLockerResultItem => ({
 });
 
 const cloneResult = (item: SearchResultItem): SearchResultItem => {
-  if (item.suggestType === "LOCKER") return cloneLocker(item);
+  if (item.itemType === "LOCKER") return cloneLocker(item);
 
   return {
     ...item,
@@ -105,7 +105,7 @@ const decorateItems = (
 ): DecoratedResult<SearchResultItem>[] =>
   items.map((item, originalIndex) => {
     const isOpen =
-      item.suggestType === "PLACE"
+      item.itemType === "PLACE"
         ? item.lockers.some((locker) =>
             isOperatingNow(locker.operatingHours, currentTime),
           )
@@ -200,7 +200,7 @@ export const sortLockerData = (
 ): SearchResultItem[] => {
   const clonedItems = items.map(cloneResult);
   const recursivelySortedItems = clonedItems.map((item) => {
-    if (item.suggestType === "LOCKER") return item;
+    if (item.itemType === "LOCKER") return item;
 
     const sortedLockers = sortByOperatingStatus(
       item.lockers,

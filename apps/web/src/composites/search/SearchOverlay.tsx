@@ -3,13 +3,15 @@ import { m } from "@repo/i18n";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import { SearchField } from "@repo/ui/components/search-field";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   SearchAutocompleteItem,
-  SearchListRecent,
   type SearchAutocompleteItemData,
+  getSearchAutocompleteItemKey,
+  SearchListRecent,
 } from "#/entities/search";
 import {
+  autocompleteList,
   backButton,
   backIcon,
   // chipContainer,
@@ -21,8 +23,8 @@ import {
   recentList,
   searchFieldSlot,
   sectionHeader,
-  autocompleteList,
 } from "./SearchOverlay.css.ts";
+import { filterSearchAutocompleteDevItems } from "./search-autocomplete-dev-fixtures";
 
 export interface SearchOverlayProps {
   onClose: () => void;
@@ -55,7 +57,10 @@ export function SearchOverlay({
     { id: 5, query: "잠실 롯데타워", date: "04.20" },
   ]);
   const normalizedQuery = query.trim();
-  const autocompleteItems: SearchAutocompleteItemData[] = [];
+  const autocompleteItems = useMemo(
+    () => filterSearchAutocompleteDevItems(normalizedQuery),
+    [normalizedQuery],
+  );
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -210,7 +215,7 @@ export function SearchOverlay({
           <div className={autocompleteList}>
             {autocompleteItems.map((item) => (
               <SearchAutocompleteItem
-                key={item.id}
+                key={getSearchAutocompleteItemKey(item)}
                 item={item}
                 onPress={handleAutocompleteSelect}
               />

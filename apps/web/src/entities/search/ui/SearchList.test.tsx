@@ -10,16 +10,16 @@ import { SearchListRecent } from "./SearchListRecent";
 import { SearchListResult, SearchLockerResult } from "./SearchListResult";
 
 const PLACE: SearchPlaceResultItem = {
-  suggestType: "PLACE",
-  id: "coex",
+  itemType: "PLACE",
+  placeId: 1,
   title: "코엑스",
   distanceLabel: "120m",
   address: "서울 강남구 영동대로 513",
   distanceMeters: 120,
   lockers: [
     {
-      suggestType: "LOCKER",
-      id: "coex-megabox",
+      itemType: "LOCKER",
+      lockerId: 101,
       title: "코엑스 메가박스 보관함",
       categoryLabel: "복합문화공간",
       updatedLabel: "10분 전 업데이트",
@@ -27,8 +27,8 @@ const PLACE: SearchPlaceResultItem = {
       address: "서울 강남구 영동대로 513",
     },
     {
-      suggestType: "LOCKER",
-      id: "coex-east-gate",
+      itemType: "LOCKER",
+      lockerId: 102,
       title: "코엑스 동문 보관함",
       categoryLabel: "복합문화공간",
       updatedLabel: "1시간 전 업데이트",
@@ -39,8 +39,8 @@ const PLACE: SearchPlaceResultItem = {
 };
 
 const STANDALONE_LOCKER: SearchLockerResultItem = {
-  suggestType: "LOCKER",
-  id: "standalone",
+  itemType: "LOCKER",
+  lockerId: 9001,
   title: "삼성역 독립 보관함",
   categoryLabel: "지하철역",
   updatedLabel: "방금 업데이트",

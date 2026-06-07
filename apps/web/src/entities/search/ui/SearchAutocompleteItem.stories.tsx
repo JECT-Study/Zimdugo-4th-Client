@@ -6,8 +6,8 @@ import {
 } from "./SearchAutocompleteItem";
 
 const PLACE_AUTOCOMPLETE_ITEM: SearchAutocompleteItemData = {
-  id: "sinchon-station-exit-one",
-  suggestType: "PLACE",
+  itemType: "PLACE",
+  placeId: 10,
   title: "신촌역 1번 출구",
   address: "서울 서대문구 창천동",
   updatedLabel: "9시간 전 업데이트",
@@ -16,8 +16,8 @@ const PLACE_AUTOCOMPLETE_ITEM: SearchAutocompleteItemData = {
 };
 
 const LOCKER_AUTOCOMPLETE_ITEM: SearchAutocompleteItemData = {
-  id: "sinchon-station-exit-five-locker",
-  suggestType: "LOCKER",
+  itemType: "LOCKER",
+  lockerId: 11,
   title: "신촌역 5번 출구 B2층 물품보관함",
   address: "서울 서대문구 신촌로 83",
   updatedLabel: "4시간 전 업데이트",

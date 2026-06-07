@@ -9,8 +9,8 @@ import {
 } from "./NavigationPlatformPopup";
 
 const LOCKER_DETAIL: LockerDetailItem = {
-  suggestType: "LOCKER",
-  id: "sinchon-locker",
+  itemType: "LOCKER",
+  lockerId: 11,
   title: "신촌역 5번 출구 B2층 물품보관함",
   categoryLabel: "지하철역",
   updatedLabel: "4시간 전 업데이트",

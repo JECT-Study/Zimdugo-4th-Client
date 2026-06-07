@@ -9,8 +9,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
-  createLockerDetailFromSearchItem,
   createLockerDetailFromAutocompleteItem,
+  createLockerDetailFromSearchItem,
   LockerDetailBottomSheet,
   type LockerDetailItem,
 } from "#/composites/search/LockerDetailBottomSheet";
@@ -22,10 +22,8 @@ import {
 } from "#/composites/search/SearchFilterBottomSheet";
 import { SearchListBottomSheet } from "#/composites/search/SearchListBottomSheet";
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
-import type {
-  SearchLockerResultItem,
-  SearchResultItem,
-} from "#/composites/search/search-list-model";
+import { COEX_SEARCH_DEV_ITEMS } from "#/composites/search/search-list-dev-fixtures";
+import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
@@ -90,7 +88,7 @@ function IndexPage() {
     createDefaultSearchFilters,
   );
   const [selectedSearchPlaceId, setSelectedSearchPlaceId] = useState<
-    string | null
+    number | null
   >(null);
   const [selectedSearchPlaceName, setSelectedSearchPlaceName] = useState<
     string | null
@@ -281,7 +279,7 @@ function IndexPage() {
   const handleSelectSearchAutocomplete = useCallback(
     (item: SearchAutocompleteItemData) => {
       setSearchQuery(item.title);
-      if (item.suggestType === "LOCKER") {
+      if (item.itemType === "LOCKER") {
         setSelectedSearchPlaceId(null);
         setSelectedSearchPlaceName(null);
         setSelectedLockerDetail(createLockerDetailFromAutocompleteItem(item));
@@ -291,7 +289,7 @@ function IndexPage() {
         return;
       }
 
-      setSelectedSearchPlaceId(item.id);
+      setSelectedSearchPlaceId(item.placeId);
       setSelectedSearchPlaceName(item.title);
       setSelectedLockerDetail(null);
       setIsNavigationPopupOpen(false);
@@ -372,9 +370,22 @@ function IndexPage() {
     searchFilters.regionActive ||
     searchFilters.sizePriceActive ||
     searchFilters.placeTypeActive;
-  const selectedSearchPlaceLockers: SearchLockerResultItem[] = [];
-  const searchBottomSheetItems: SearchResultItem[] =
-    selectedSearchPlaceLockers.length > 0 ? selectedSearchPlaceLockers : [];
+  const selectedSearchPlaceLockers =
+    selectedSearchPlaceId && import.meta.env.DEV
+      ? COEX_SEARCH_DEV_ITEMS.flatMap((item) =>
+          item.itemType === "PLACE" && item.placeId === selectedSearchPlaceId
+            ? item.lockers
+            : [],
+        )
+      : [];
+  const searchBottomSheetItems =
+    selectedSearchPlaceLockers.length > 0
+      ? selectedSearchPlaceLockers
+      : selectedSearchPlaceId
+        ? []
+        : import.meta.env.DEV
+          ? COEX_SEARCH_DEV_ITEMS
+          : [];
   const placeResultName =
     selectedSearchPlaceLockers.length > 0 || selectedSearchPlaceId
       ? selectedSearchPlaceName

@@ -1303,6 +1303,73 @@ export function IconThumbnail24({ className }: { className?: string }) {
   );
 }
 
+type SearchRowMarkerFill = "green[500]" | "gray[600]";
+
+const resolveSearchRowMarkerFill = (isClosed?: boolean): SearchRowMarkerFill =>
+  isClosed ? "gray[600]" : "green[500]";
+
+/** 검색 결과 PLACE 행 마커 */
+export function IconSearchPlaceRow14({
+  className,
+  isClosed = false,
+}: {
+  className?: string;
+  isClosed?: boolean;
+}) {
+  return (
+    <IconMarker22
+      size={14}
+      fill={resolveSearchRowMarkerFill(isClosed)}
+      className={className}
+    />
+  );
+}
+
+/** 검색 결과 LOCKER 행 마커 */
+export function IconSearchLockerRow14({
+  className,
+  isClosed = false,
+}: {
+  className?: string;
+  isClosed?: boolean;
+}) {
+  return (
+    <IconMarker22
+      size={14}
+      fill={resolveSearchRowMarkerFill(isClosed)}
+      className={className}
+    />
+  );
+}
+
+/** 검색 자동완성 PLACE 항목 마커 */
+export function IconSearchAutocompletePlace14({
+  className,
+}: {
+  className?: string;
+}) {
+  return <IconMarker22 size={14} className={className} />;
+}
+
+/** 검색 자동완성 LOCKER 항목 마커 */
+export function IconSearchAutocompleteLocker14({
+  className,
+}: {
+  className?: string;
+}) {
+  return <IconMarker22 size={14} className={className} />;
+}
+
+/** 최근 검색어 목록 썸네일 */
+export function IconSearchRecentItem24({ className }: { className?: string }) {
+  return <IconThumbnail24 className={className} />;
+}
+
+/** 보관함 상세 시트 헤더 썸네일 */
+export function IconLockerDetailHeader24({ className }: { className?: string }) {
+  return <IconThumbnail24 className={className} />;
+}
+
 export function IconCircleboxClock32({ className }: { className?: string }) {
   return (
     <CircleBox size={32} className={className}>

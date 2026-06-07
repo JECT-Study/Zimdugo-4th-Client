@@ -1,4 +1,4 @@
-import { IconThumbnail24, IconX16 } from "@repo/ui/tokens/icons";
+import { IconSearchRecentItem24, IconX16 } from "@repo/ui/tokens/icons";
 import type { ReactNode } from "react";
 import { Button, type ButtonProps } from "react-aria-components";
 import {
@@ -41,7 +41,7 @@ export function SearchListRecent({
     <div className={[recentRow, className].filter(Boolean).join(" ")}>
       <Button className={recentLeft} onPress={handlePress}>
         <span className={recentIconSlot}>
-          <IconThumbnail24 />
+          <IconSearchRecentItem24 />
         </span>
         <div className={recentTextCol}>
           <span className={recentLabel}>{children}</span>

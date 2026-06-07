@@ -1,5 +1,6 @@
 export type SearchSortKey = "distance" | "updatedAt" | "price";
 export type SearchSortDirection = "asc" | "desc";
+export type SearchItemType = "PLACE" | "LOCKER";
 
 export interface OperatingHours {
   open: string;
@@ -7,7 +8,6 @@ export interface OperatingHours {
 }
 
 interface SearchResultBase {
-  id: string;
   title: string;
   distanceLabel: string;
   address: string;
@@ -20,7 +20,8 @@ interface SearchResultBase {
 }
 
 export interface SearchLockerResultItem extends SearchResultBase {
-  suggestType: "LOCKER";
+  itemType: "LOCKER";
+  lockerId: number;
   categoryLabel: string;
   updatedLabel: string;
   isFavorite?: boolean;
@@ -33,20 +34,29 @@ export type SearchLockerResultItems = [
 ];
 
 export interface SearchPlaceResultItem extends SearchResultBase {
-  suggestType: "PLACE";
+  itemType: "PLACE";
+  placeId: number;
   lockers: SearchLockerResultItems;
 }
 
 export type SearchResultItem = SearchPlaceResultItem | SearchLockerResultItem;
 
+export const getSearchResultKey = (item: SearchResultItem): string =>
+  item.itemType === "PLACE"
+    ? `place-${item.placeId}`
+    : `locker-${item.lockerId}`;
+
+export const getSearchResultEntityId = (item: SearchResultItem): number =>
+  item.itemType === "PLACE" ? item.placeId : item.lockerId;
+
 const normalizeSearchText = (value: string) => value.trim().toLocaleLowerCase();
 
 const isValidSearchResult = (item: SearchResultItem) =>
-  item.suggestType === "LOCKER" || item.lockers.length >= 2;
+  item.itemType === "LOCKER" || item.lockers.length >= 2;
 
 export const getNextExpandedPlaceId = (
-  currentPlaceId: string | null,
-  requestedPlaceId: string,
+  currentPlaceId: number | null,
+  requestedPlaceId: number,
 ) => (currentPlaceId === requestedPlaceId ? null : requestedPlaceId);
 
 export const filterSearchResults = (
@@ -60,7 +70,7 @@ export const filterSearchResults = (
   return validItems.filter((item) => {
     const itemTargets = [item.title, ...(item.searchKeywords ?? [])];
     const childTargets =
-      item.suggestType === "PLACE"
+      item.itemType === "PLACE"
         ? item.lockers.flatMap((locker) => [
             locker.title,
             ...(locker.searchKeywords ?? []),

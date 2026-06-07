@@ -13,7 +13,7 @@ const LOCKER_MARKER_PATH =
 export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
 
-export const createLockerMarkerIcon = (pin: LockerPinItemResponse): string => {
+export const createMapPinIcon = (pin: LockerPinItemResponse): string => {
   const isPlace = pin.pinType === "PLACE";
   const markerFill = isPlace ? PLACE_MARKER_FILL : LOCKER_MARKER_FILL;
   // PLACE marker badge design is intentionally disabled until the final cluster marker spec lands.
@@ -27,6 +27,15 @@ export const createLockerMarkerIcon = (pin: LockerPinItemResponse): string => {
     ${badgeSvg}
   </svg>`;
 };
+
+/** @deprecated Use createMapPinIcon */
+export const createLockerMarkerIcon = createMapPinIcon;
+
+/** 지도 LOCKER 마커 아이콘 SVG */
+export const createMapLockerPinIcon = createMapPinIcon;
+
+/** 지도 PLACE 마커 아이콘 SVG */
+export const createMapPlacePinIcon = createMapPinIcon;
 
 interface SyncLockerMarkersOptions {
   map: naver.maps.Map;

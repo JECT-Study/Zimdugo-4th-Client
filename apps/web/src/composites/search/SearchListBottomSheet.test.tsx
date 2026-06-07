@@ -6,8 +6,8 @@ import { SearchListBottomSheet } from "./SearchListBottomSheet";
 import type { SearchLockerResultItem } from "./search-list-model";
 
 const LOCKER_ITEM: SearchLockerResultItem = {
-  suggestType: "LOCKER",
-  id: "active-filter-locker",
+  itemType: "LOCKER",
+  lockerId: 1,
   title: "Active Filter Locker",
   categoryLabel: "Museum",
   updatedLabel: "Just now",
@@ -17,8 +17,8 @@ const LOCKER_ITEM: SearchLockerResultItem = {
 
 const PLACE_LOCKER_ITEMS: SearchLockerResultItem[] = [
   {
-    suggestType: "LOCKER",
-    id: "coex-locker-one",
+    itemType: "LOCKER",
+    lockerId: 101,
     title: "Locker One",
     categoryLabel: "Museum",
     updatedLabel: "Just now",
@@ -26,8 +26,8 @@ const PLACE_LOCKER_ITEMS: SearchLockerResultItem[] = [
     address: "Seoul Gangnam",
   },
   {
-    suggestType: "LOCKER",
-    id: "coex-locker-two",
+    itemType: "LOCKER",
+    lockerId: 102,
     title: "Locker Two",
     categoryLabel: "Subway",
     updatedLabel: "1 hour ago",

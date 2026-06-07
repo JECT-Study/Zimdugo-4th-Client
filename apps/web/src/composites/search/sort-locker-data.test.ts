@@ -3,18 +3,19 @@ import type {
   SearchLockerResultItem,
   SearchResultItem,
 } from "./search-list-model";
+import { getSearchResultEntityId } from "./search-list-model";
 import { isOperatingNow, sortLockerData } from "./sort-locker-data";
 
 const createLocker = (
   overrides: Partial<SearchLockerResultItem> &
-    Pick<SearchLockerResultItem, "id">,
+    Pick<SearchLockerResultItem, "lockerId">,
 ): SearchLockerResultItem => {
-  const { id, ...rest } = overrides;
+  const { lockerId, ...rest } = overrides;
 
   return {
-    suggestType: "LOCKER",
-    id,
-    title: overrides.title ?? id,
+    itemType: "LOCKER",
+    lockerId,
+    title: overrides.title ?? `locker-${lockerId}`,
     categoryLabel: "보관함",
     updatedLabel: "방금 업데이트",
     distanceLabel: `${overrides.distanceMeters ?? 0}m`,
@@ -29,15 +30,15 @@ const createLocker = (
 
 const ITEMS: SearchResultItem[] = [
   createLocker({
-    id: "closed-near",
+    lockerId: 1,
     title: "가까운 종료 보관함",
     distanceMeters: 10,
     minPrice: 100,
     operatingHours: { open: "13:00", close: "18:00" },
   }),
   {
-    suggestType: "PLACE",
-    id: "place",
+    itemType: "PLACE",
+    placeId: 10,
     title: "코엑스",
     distanceLabel: "300m",
     address: "서울 강남구 영동대로 513",
@@ -47,14 +48,14 @@ const ITEMS: SearchResultItem[] = [
     searchKeywords: ["COEX"],
     lockers: [
       createLocker({
-        id: "place-closed",
+        lockerId: 11,
         title: "코엑스 종료 보관함",
         distanceMeters: 100,
         minPrice: 1_000,
         operatingHours: { open: "13:00", close: "18:00" },
       }),
       createLocker({
-        id: "place-open",
+        lockerId: 12,
         title: "코엑스 운영 보관함",
         distanceMeters: 500,
         minPrice: 2_000,
@@ -63,7 +64,7 @@ const ITEMS: SearchResultItem[] = [
     ],
   },
   createLocker({
-    id: "open-far",
+    lockerId: 2,
     title: "먼 운영 보관함",
     distanceMeters: 400,
     minPrice: 500,
@@ -92,19 +93,12 @@ describe("sortLockerData", () => {
       new Date("2026-06-07T12:00:00+09:00"),
     );
 
-    expect(sorted.map((item) => item.id)).toEqual([
-      "place",
-      "open-far",
-      "closed-near",
-    ]);
+    expect(sorted.map(getSearchResultEntityId)).toEqual([10, 2, 1]);
 
     const place = sorted[0];
-    expect(place?.suggestType).toBe("PLACE");
-    if (place?.suggestType !== "PLACE") throw new Error("PLACE가 필요합니다.");
-    expect(place.lockers.map((locker) => locker.id)).toEqual([
-      "place-open",
-      "place-closed",
-    ]);
+    expect(place?.itemType).toBe("PLACE");
+    if (place?.itemType !== "PLACE") throw new Error("PLACE가 필요합니다.");
+    expect(place.lockers.map((locker) => locker.lockerId)).toEqual([12, 11]);
   });
 
   it("내림차순에서도 Open과 Closed 그룹을 섞지 않는다", () => {
@@ -115,28 +109,24 @@ describe("sortLockerData", () => {
       new Date("2026-06-07T12:00:00+09:00"),
     );
 
-    expect(sorted.map((item) => item.id)).toEqual([
-      "open-far",
-      "place",
-      "closed-near",
-    ]);
+    expect(sorted.map(getSearchResultEntityId)).toEqual([2, 10, 1]);
   });
 
   it("모든 자식 보관함이 Closed인 PLACE를 Closed 그룹으로 분류한다", () => {
     const allClosedPlace: SearchResultItem = {
-      suggestType: "PLACE",
-      id: "all-closed-place",
+      itemType: "PLACE",
+      placeId: 99,
       title: "모두 종료된 장소",
       distanceLabel: "1m",
       address: "서울 강남구",
       distanceMeters: 1,
       lockers: [
         createLocker({
-          id: "closed-child-one",
+          lockerId: 91,
           operatingHours: { open: "13:00", close: "18:00" },
         }),
         createLocker({
-          id: "closed-child-two",
+          lockerId: 92,
           operatingHours: { open: "13:00", close: "18:00" },
         }),
       ],
@@ -152,38 +142,35 @@ describe("sortLockerData", () => {
       new Date("2026-06-07T12:00:00+09:00"),
     );
 
-    expect(sorted.map((item) => item.id)).toEqual([
-      "open-far",
-      "all-closed-place",
-    ]);
+    expect(sorted.map(getSearchResultEntityId)).toEqual([2, 99]);
   });
 
   it("secondary, 가격, 이름 fallback까지 적용하고 원본을 변경하지 않는다", () => {
     const original = structuredClone(ITEMS);
     const sameDistanceItems: SearchResultItem[] = [
       createLocker({
-        id: "older",
+        lockerId: 201,
         title: "나 보관함",
         distanceMeters: 100,
         updatedAt: "2026-06-06T00:00:00.000Z",
         minPrice: 1_000,
       }),
       createLocker({
-        id: "newer-expensive",
+        lockerId: 202,
         title: "다 보관함",
         distanceMeters: 100,
         updatedAt: "2026-06-07T00:00:00.000Z",
         minPrice: 3_000,
       }),
       createLocker({
-        id: "newer-cheap-b",
+        lockerId: 203,
         title: "가 보관함",
         distanceMeters: 100,
         updatedAt: "2026-06-07T00:00:00.000Z",
         minPrice: 1_000,
       }),
       createLocker({
-        id: "newer-cheap-a",
+        lockerId: 204,
         title: "나 보관함",
         distanceMeters: 100,
         updatedAt: "2026-06-07T00:00:00.000Z",
@@ -198,12 +185,11 @@ describe("sortLockerData", () => {
       new Date("2026-06-07T12:00:00+09:00"),
     );
 
-    expect(sorted.map((item) => item.id)).toEqual([
-      "newer-cheap-b",
-      "newer-cheap-a",
-      "newer-expensive",
-      "older",
-    ]);
+    expect(
+      sorted
+        .filter((item): item is SearchLockerResultItem => item.itemType === "LOCKER")
+        .map((item) => item.lockerId),
+    ).toEqual([203, 204, 202, 201]);
     expect(ITEMS).toEqual(original);
     expect(
       Object.keys(sorted[0] ?? {}).some((key) => key.startsWith("__")),

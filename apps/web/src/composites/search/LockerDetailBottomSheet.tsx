@@ -8,7 +8,7 @@ import {
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
-  IconThumbnail24,
+  IconLockerDetailHeader24,
 } from "@repo/ui/tokens/icons";
 import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
@@ -96,15 +96,16 @@ export const createLockerDetailFromSearchItem = (
 });
 
 export const createLockerDetailFromAutocompleteItem = (
-  item: SearchAutocompleteItemData,
+  item: Extract<SearchAutocompleteItemData, { itemType: "LOCKER" }>,
 ): LockerDetailItem => ({
-  suggestType: "LOCKER",
-  id: item.id,
+  itemType: "LOCKER",
+  lockerId: item.lockerId,
   title: item.title,
   address: item.address,
   categoryLabel: item.categoryLabel,
   updatedLabel: item.updatedLabel,
   distanceLabel: item.distanceLabel,
+  distanceMeters: item.distanceMeters,
   operatingHoursLabel: "운영시간 00:00 ~ 00:00",
   floorLabel: "B2층",
   priceLabel: "000원 ~ 000원",
@@ -250,7 +251,7 @@ function FullDetailContent({
           <ImageReportCard isFull />
           <div className={fullDetailList}>
             <DetailInfoRow
-              icon={<IconThumbnail24 />}
+              icon={<IconLockerDetailHeader24 />}
               title={locker.title}
               description={
                 locker.operatingHoursLabel ?? "운영시간 00:00 ~ 00:00"

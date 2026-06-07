@@ -1,7 +1,8 @@
 import { m } from "@repo/i18n";
 import {
-  IconMarker22,
   IconNormalArrow24,
+  IconSearchLockerRow14,
+  IconSearchPlaceRow14,
   IconStarFilled24,
   IconStarOutline24,
 } from "@repo/ui/tokens/icons";
@@ -12,7 +13,10 @@ import type {
   SearchPlaceResultItem,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
-import { getNextExpandedPlaceId } from "#/composites/search/search-list-model";
+import {
+  getNextExpandedPlaceId,
+  getSearchResultKey,
+} from "#/composites/search/search-list-model";
 import {
   accordionChildren,
   accordionGroup,
@@ -72,17 +76,17 @@ export function SearchListResults({
   favoriteAddLabel,
   favoriteRemoveLabel,
 }: SearchListResultsProps) {
-  const [expandedPlaceId, setExpandedPlaceId] = useState<string | null>(null);
+  const [expandedPlaceId, setExpandedPlaceId] = useState<number | null>(null);
 
   return items.map((item) =>
-    item.suggestType === "PLACE" ? (
+    item.itemType === "PLACE" ? (
       <SearchListResult
-        key={item.id}
+        key={getSearchResultKey(item)}
         item={item}
-        isExpanded={expandedPlaceId === item.id}
+        isExpanded={expandedPlaceId === item.placeId}
         onToggle={() =>
           setExpandedPlaceId((currentId) =>
-            getNextExpandedPlaceId(currentId, item.id),
+            getNextExpandedPlaceId(currentId, item.placeId),
           )
         }
         onLockerPress={onLockerPress}
@@ -92,7 +96,7 @@ export function SearchListResults({
       />
     ) : (
       <SearchLockerResult
-        key={item.id}
+        key={getSearchResultKey(item)}
         item={item}
         onPress={onLockerPress}
         onFavoriteChange={onFavoriteChange}
@@ -112,7 +116,7 @@ export function SearchListResult({
   favoriteAddLabel,
   favoriteRemoveLabel,
 }: SearchListResultProps) {
-  const childrenId = `search-place-lockers-${item.id}`;
+  const childrenId = `search-place-lockers-${item.placeId}`;
 
   return (
     <div className={accordionGroup}>
@@ -159,7 +163,7 @@ export function SearchListResult({
         >
           {item.lockers.map((locker) => (
             <SearchLockerResult
-              key={locker.id}
+              key={getSearchResultKey(locker)}
               item={locker}
               isNested
               onPress={onLockerPress}
@@ -255,6 +259,9 @@ function ResultMarker({
   tone: "place" | "locker" | "standalone";
   isClosed?: boolean;
 }) {
+  const Icon =
+    tone === "place" ? IconSearchPlaceRow14 : IconSearchLockerRow14;
+
   return (
     <span
       className={[
@@ -263,7 +270,7 @@ function ResultMarker({
       ].join(" ")}
       aria-hidden="true"
     >
-      <IconMarker22 size={14} fill={isClosed ? "gray[600]" : "green[500]"} />
+      <Icon isClosed={isClosed} />
     </span>
   );
 }

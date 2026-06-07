@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   filterSearchResults,
   getNextExpandedPlaceId,
+  getSearchResultEntityId,
   type SearchLockerResultItem,
   type SearchPlaceResultItem,
   type SearchResultItem,
@@ -10,8 +11,8 @@ import {
 
 const RESULTS: SearchPlaceResultItem[] = [
   {
-    suggestType: "PLACE",
-    id: "far",
+    itemType: "PLACE",
+    placeId: 100,
     title: "코엑스",
     distanceMeters: 500,
     distanceLabel: "500m",
@@ -20,8 +21,8 @@ const RESULTS: SearchPlaceResultItem[] = [
     minPrice: 3_000,
     lockers: [
       {
-        suggestType: "LOCKER",
-        id: "far-1",
+        itemType: "LOCKER",
+        lockerId: 1001,
         title: "코엑스 메가박스 보관함",
         categoryLabel: "복합문화공간",
         updatedLabel: "6일 전 업데이트",
@@ -29,8 +30,8 @@ const RESULTS: SearchPlaceResultItem[] = [
         address: "서울 강남구 영동대로 513",
       },
       {
-        suggestType: "LOCKER",
-        id: "far-2",
+        itemType: "LOCKER",
+        lockerId: 1002,
         title: "코엑스 동문 보관함",
         categoryLabel: "복합문화공간",
         updatedLabel: "6일 전 업데이트",
@@ -40,8 +41,8 @@ const RESULTS: SearchPlaceResultItem[] = [
     ],
   },
   {
-    suggestType: "PLACE",
-    id: "near",
+    itemType: "PLACE",
+    placeId: 200,
     title: "삼성역",
     searchKeywords: ["코엑스"],
     distanceMeters: 120,
@@ -51,8 +52,8 @@ const RESULTS: SearchPlaceResultItem[] = [
     minPrice: 1_000,
     lockers: [
       {
-        suggestType: "LOCKER",
-        id: "near-1",
+        itemType: "LOCKER",
+        lockerId: 2001,
         title: "삼성역 5번 출구 보관함",
         categoryLabel: "지하철역",
         updatedLabel: "방금 업데이트",
@@ -60,8 +61,8 @@ const RESULTS: SearchPlaceResultItem[] = [
         address: "서울 강남구 테헤란로 538",
       },
       {
-        suggestType: "LOCKER",
-        id: "near-2",
+        itemType: "LOCKER",
+        lockerId: 2002,
         title: "별마당 도서관 보관함",
         categoryLabel: "도서관",
         updatedLabel: "방금 업데이트",
@@ -74,8 +75,8 @@ const RESULTS: SearchPlaceResultItem[] = [
 
 describe("search-list-model", () => {
   it("같은 장소는 접고 다른 장소는 기존 장소를 대신해 펼친다", () => {
-    expect(getNextExpandedPlaceId("coex", "coex")).toBeNull();
-    expect(getNextExpandedPlaceId("coex", "samseong")).toBe("samseong");
+    expect(getNextExpandedPlaceId(158, 158)).toBeNull();
+    expect(getNextExpandedPlaceId(158, 483)).toBe(483);
   });
 
   it("장소명, 검색어, 자식 보관함 이름으로 결과를 필터링한다", () => {
@@ -86,8 +87,8 @@ describe("search-list-model", () => {
 
   it("PLACE에 속하지 않는 독립 보관함도 검색 결과에 유지한다", () => {
     const standalone: SearchLockerResultItem = {
-      suggestType: "LOCKER",
-      id: "standalone",
+      itemType: "LOCKER",
+      lockerId: 9001,
       title: "삼성역 독립 보관함",
       categoryLabel: "지하철역",
       updatedLabel: "방금 업데이트",
@@ -113,6 +114,6 @@ describe("search-list-model", () => {
       RESULTS[1],
       RESULTS[0],
     ]);
-    expect(RESULTS[0]?.id).toBe("far");
+    expect(getSearchResultEntityId(RESULTS[0]!)).toBe(100);
   });
 });
