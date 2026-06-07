@@ -225,6 +225,9 @@ export function useReportForm(): {
   }, [form.formState.errors, step]);
 
   const handleSubmitErrorPopupOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      pendingValidationNavigationRef.current = null;
+    }
     setIsSubmitErrorPopupOpen(open);
   }, []);
 
