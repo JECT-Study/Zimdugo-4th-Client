@@ -168,6 +168,7 @@
   "report_alert_image_only": "Only image files can be uploaded.",
   "report_photo_max_count_exceeded": "You can upload only one photo.",
   "report_photo_max_size_exceeded": "Photos must be 5MB or smaller.",
+  "report_photo_upload_failed": "Photo upload failed. Please try again later.",
   "report_submit_success_title": "Report Completed!",
   "report_submit_success_home": "Back to Home",
   "report_submit_success_history": "View Report History",

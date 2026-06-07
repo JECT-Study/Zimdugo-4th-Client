@@ -14,7 +14,14 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { validateReportPhotoFile } from "#/features/report/lib/validate-report-photo-file";
+import {
+  type ReportPhotoValidationError,
+  validateReportPhotoFile,
+} from "#/features/report/lib/validate-report-photo-file";
+import {
+  ReportPhotoUploadValidationError,
+  uploadReportPhoto,
+} from "#/features/report/lib/upload-report-photo";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
 import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
@@ -39,6 +46,11 @@ import {
   reportDefaultValues,
   STEP_1_FIELDS,
 } from "./report-types";
+
+const getPhotoValidationMessage = (error: ReportPhotoValidationError): string =>
+  error === "invalid_type"
+    ? m.report_alert_image_only()
+    : m.report_photo_max_size_exceeded();
 
 const parsePriceNumber = (formatted: string): number | null => {
   const digits = formatted.replace(/[^0-9]/g, "");
@@ -102,6 +114,7 @@ export function useReportForm(): {
   const [minPriceDisplay, setMinPriceDisplay] = useState("");
   const [maxPriceDisplay, setMaxPriceDisplay] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedPhotoFileRef = useRef<File | null>(null);
   const uploadedImagesRef = useRef(uploadedImages);
 
   useEffect(() => {
@@ -165,7 +178,39 @@ export function useReportForm(): {
     async (data: ReportFormValues) => {
       setIsSubmitting(true);
       try {
-        const payload = normalizeReportPayload(data);
+        let imageUrl: string | null = null;
+        const selectedPhotoFile = selectedPhotoFileRef.current;
+
+        if (selectedPhotoFile) {
+          try {
+            imageUrl = await uploadReportPhoto(selectedPhotoFile);
+          } catch (error) {
+            if (parseReportSubmitFailure(error).kind === "auth") {
+              useAuthPopupStore.getState().openPopup("/report");
+              return;
+            }
+
+            if (error instanceof ReportPhotoUploadValidationError) {
+              setPhotoErrorMessage(
+                getPhotoValidationMessage(error.code),
+              );
+              setIsPhotoErrorPopupOpen(true);
+              requestAnimationFrame(() => {
+                scrollToReportSection("photo");
+              });
+              return;
+            }
+
+            setPhotoErrorMessage(m.report_photo_upload_failed());
+            setIsPhotoErrorPopupOpen(true);
+            requestAnimationFrame(() => {
+              scrollToReportSection("photo");
+            });
+            return;
+          }
+        }
+
+        const payload = normalizeReportPayload({ ...data, imageUrl });
         await createLockerReport(payload);
         setIsPopupOpen(true);
       } catch (error) {
@@ -335,20 +380,23 @@ export function useReportForm(): {
       const validation = validateReportPhotoFile(selectedFile);
 
       if (!validation.ok) {
-        setPhotoErrorMessage(
-          validation.error === "invalid_type"
-            ? m.report_alert_image_only()
-            : m.report_photo_max_size_exceeded(),
-        );
+        setPhotoErrorMessage(getPhotoValidationMessage(validation.error));
         setIsPhotoErrorPopupOpen(true);
         e.target.value = "";
         return;
       }
 
+      const previousPreviewUrl = uploadedImages[0];
+      if (previousPreviewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(previousPreviewUrl);
+      }
+
+      selectedPhotoFileRef.current = selectedFile;
+      setValue("imageUrl", null, { shouldDirty: true });
       setUploadedImages([URL.createObjectURL(selectedFile)]);
       e.target.value = "";
     },
-    [uploadedImages.length],
+    [setValue, uploadedImages],
   );
 
   const handleImageRemove = useCallback(
@@ -357,9 +405,11 @@ export function useReportForm(): {
       if (targetUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(targetUrl);
       }
+      selectedPhotoFileRef.current = null;
+      setValue("imageUrl", null, { shouldDirty: true });
       setUploadedImages((prev) => prev.filter((_, i) => i !== index));
     },
-    [uploadedImages],
+    [setValue, uploadedImages],
   );
 
   const isStep1Valid =

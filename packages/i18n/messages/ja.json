@@ -168,6 +168,7 @@
   "report_alert_image_only": "画像ファイルのみアップロード可能です。",
   "report_photo_max_count_exceeded": "写真は1枚のみアップロードできます。",
   "report_photo_max_size_exceeded": "写真は5MB以下のみアップロードできます。",
+  "report_photo_upload_failed": "写真のアップロードに失敗しました。しばらくしてから再度お試しください。",
   "report_submit_success_title": "情報提供が完了しました！",
   "report_submit_success_home": "ホームに戻る",
   "report_submit_success_history": "履歴を見る",
