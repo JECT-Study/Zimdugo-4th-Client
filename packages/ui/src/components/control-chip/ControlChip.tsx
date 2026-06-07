@@ -1,9 +1,15 @@
+import type { ReactNode } from "react";
 import {
   Button as AriaButton,
   type ButtonProps as AriaButtonProps,
 } from "react-aria-components";
 import { IconNormalArrow24 } from "../../tokens/icons/Icons.tsx";
-import { controlChip, controlChipLabel } from "./ControlChip.css.ts";
+import {
+  controlChip,
+  controlChipIcon,
+  controlChipLabel,
+  visuallyHiddenLabel,
+} from "./ControlChip.css.ts";
 
 type ControlChipVariant = "choice" | "filter" | "sort";
 type ControlChipSize = "small" | "medium";
@@ -18,6 +24,9 @@ export interface ControlChipProps
   isOpen?: boolean;
   sortDirection?: SortDirection;
   className?: string;
+  leadingIcon?: ReactNode;
+  isLabelVisible?: boolean;
+  showsIndicator?: boolean;
 }
 
 export function ControlChip({
@@ -28,12 +37,16 @@ export function ControlChip({
   isOpen = false,
   sortDirection = "none",
   className,
+  leadingIcon,
+  isLabelVisible = true,
+  showsIndicator = true,
   ...props
 }: ControlChipProps) {
   const isFilter = variant === "filter";
   const isSort = variant === "sort";
   const isVisuallyActive = isActive || (isSort && sortDirection !== "none");
-  const shouldShowArrow = isFilter || (isSort && sortDirection !== "none");
+  const shouldShowArrow =
+    showsIndicator && (isFilter || (isSort && sortDirection !== "none"));
   const shouldRotateArrow =
     (isFilter && isOpen) || (isSort && sortDirection === "asc");
 
@@ -46,7 +59,12 @@ export function ControlChip({
       aria-pressed={variant === "choice" ? isVisuallyActive : undefined}
       data-active={isVisuallyActive}
     >
-      <span className={controlChipLabel}>{label}</span>
+      {leadingIcon ? (
+        <span className={controlChipIcon}>{leadingIcon}</span>
+      ) : null}
+      <span className={isLabelVisible ? controlChipLabel : visuallyHiddenLabel}>
+        {label}
+      </span>
       {shouldShowArrow ? (
         <span
           style={{
