@@ -17,12 +17,14 @@ interface ReportLocationSectionProps {
   selectedCoords: { lat: number; lng: number } | null;
   onOpenOverlay: () => void;
   sectionServerError?: string;
+  onFieldChange?: () => void;
 }
 
 export function ReportLocationSection({
   address,
   onOpenOverlay,
   sectionServerError,
+  onFieldChange,
 }: ReportLocationSectionProps) {
   const errorMessage = useReportSectionError(
     ["roadAddress", "latitude", "longitude"],
@@ -62,7 +64,10 @@ export function ReportLocationSection({
           variant="filled"
           intent="neutral"
           size="L"
-          onPress={onOpenOverlay}
+          onPress={() => {
+            onFieldChange?.();
+            onOpenOverlay();
+          }}
         >
           {m.report_location_select_button()}
         </Button>

@@ -96,6 +96,7 @@ export function ReportPriceSection({
                 onFieldChange?.();
               }}
               inputMode="numeric"
+              aria-label={m.report_price_min_input_aria()}
             />
             <span className={priceUnit}>{m.report_price_unit()}</span>
           </div>
@@ -109,6 +110,7 @@ export function ReportPriceSection({
                 onFieldChange?.();
               }}
               inputMode="numeric"
+              aria-label={m.report_price_max_input_aria()}
             />
             <span className={priceUnit}>{m.report_price_unit()}</span>
           </div>

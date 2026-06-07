@@ -224,6 +224,7 @@ function ReportPage() {
                       selectedCoords={selectedCoords}
                       onOpenOverlay={() => setIsAddressOverlayOpen(true)}
                       sectionServerError={sectionServerErrors.location}
+                      onFieldChange={() => clearSectionError("location")}
                     />
                     <ReportFloorSection
                       sectionServerError={sectionServerErrors.floor}
@@ -258,14 +259,13 @@ function ReportPage() {
                       onImageChange={handleImageChange}
                       onImageRemove={handleImageRemove}
                       isSubmitting={isSubmitting}
+                      photoServerError={sectionServerErrors.photo}
                       isAgreed={locationConsentAgreed}
                       setIsAgreed={(val) => {
                         setValue("locationConsentAgreed", val, {
                           shouldDirty: true,
                         });
                       }}
-                      agreementServerError={sectionServerErrors.agreement}
-                      onAgreementChange={() => clearSectionError("agreement")}
                     />
                     <ReportPriceSection
                       priceType={priceType}
@@ -295,6 +295,8 @@ function ReportPage() {
                       setAdditionalInfo={(val) => {
                         setValue("additionalInfo", val, { shouldDirty: true });
                       }}
+                      sectionServerError={sectionServerErrors.additionalInfo}
+                      onFieldChange={() => clearSectionError("additionalInfo")}
                     />
                   </motion.div>
                 )}
@@ -366,11 +368,11 @@ function ReportPage() {
 
         <Popup
           isOpen={isSubmitErrorPopupOpen}
-          onOpenChange={setIsSubmitErrorPopupOpen}
+          onOpenChange={handlers.handleSubmitErrorPopupOpenChange}
           titleText={submitErrorMessage}
           primaryAction={{
             label: m.common_confirm(),
-            onPress: () => setIsSubmitErrorPopupOpen(false),
+            onPress: handlers.handleSubmitErrorPopupConfirm,
           }}
         />
 

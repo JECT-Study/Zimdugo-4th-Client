@@ -537,6 +537,12 @@ export const guideText = style({
 
 export const agreementSection = style({});
 
+export const photoAgreementGroup = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+});
+
 export const nextButton = style({
   width: "100%",
 });
