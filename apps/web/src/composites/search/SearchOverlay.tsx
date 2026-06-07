@@ -4,7 +4,11 @@ import { LabelTitle } from "@repo/ui/components/label-title";
 import { SearchField } from "@repo/ui/components/search-field";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { useEffect, useState } from "react";
-import { SearchListRecent, SearchListResult } from "#/entities/search";
+import {
+  SearchAutocompleteItem,
+  SearchListRecent,
+  type SearchAutocompleteItemData,
+} from "#/entities/search";
 import {
   backButton,
   backIcon,
@@ -17,24 +21,25 @@ import {
   recentList,
   searchFieldSlot,
   sectionHeader,
+  autocompleteList,
 } from "./SearchOverlay.css.ts";
 
 export interface SearchOverlayProps {
   onClose: () => void;
   onSelect: (query: string) => void;
+  onSelectAutocomplete?: (item: SearchAutocompleteItemData) => void;
   initialQuery?: string;
-  onQueryChange?: (query: string) => void;
 }
 
 /**
  * 검색 전용 전체 화면 레이어 컴포넌트.
- * 최근 검색어 관리 및 추천 키워드를 제공하며, 검색어 입력 시 실시간 미리보기를 제공합니다.
+ * 최근 검색어를 관리하고, 검색어 입력 시 자동완성 결과를 표시합니다.
  */
 export function SearchOverlay({
   onClose,
   onSelect,
+  onSelectAutocomplete,
   initialQuery = "",
-  onQueryChange,
 }: SearchOverlayProps) {
   const t = (m ?? {}) as unknown as Record<
     string,
@@ -49,6 +54,8 @@ export function SearchOverlay({
     { id: 4, query: "홍대입구역", date: "04.21" },
     { id: 5, query: "잠실 롯데타워", date: "04.20" },
   ]);
+  const normalizedQuery = query.trim();
+  const autocompleteItems: SearchAutocompleteItemData[] = [];
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -56,7 +63,6 @@ export function SearchOverlay({
 
   const handleQueryChange = (nextQuery: string) => {
     setQuery(nextQuery);
-    onQueryChange?.(nextQuery);
   };
 
   const handleSelect = (selectedQuery: string) => {
@@ -64,8 +70,17 @@ export function SearchOverlay({
     onSelect(selectedQuery);
   };
 
+  const handleAutocompleteSelect = (item: SearchAutocompleteItemData) => {
+    if (onSelectAutocomplete) {
+      handleQueryChange(item.title);
+      onSelectAutocomplete(item);
+      return;
+    }
+
+    handleSelect(item.title);
+  };
+
   const handleBack = () => {
-    handleQueryChange("");
     onClose();
   };
 
@@ -95,12 +110,7 @@ export function SearchOverlay({
     "부산역",
   ]; */
 
-  const searchResults = [
-    { title: "코엑스 메가박스 보관함", dist: "100m", time: "1시간 전" },
-    { title: "코엑스 동문 보관함", dist: "250m", time: "2시간 전" },
-    { title: "코엑스 지하주차장 보관함", dist: "400m", time: "5시간 전" },
-  ];
-  const hasQuery = query.length > 0;
+  const hasQuery = normalizedQuery.length > 0;
 
   return (
     <div className={overlay}>
@@ -173,6 +183,9 @@ export function SearchOverlay({
                     dateLabel={item.date}
                     onPress={() => handleSelect(item.query)}
                     onRemove={() => handleRemoveRecent(item.id)}
+                    removeAriaLabel={
+                      t?.search_recent_remove?.() ?? "최근 검색어 삭제"
+                    }
                   >
                     {item.query}
                   </SearchListRecent>
@@ -193,20 +206,17 @@ export function SearchOverlay({
           </>
         )}
 
-        {hasQuery && (
-          <div className={recentList}>
-            {searchResults.map((result) => (
-              <SearchListResult
-                key={result.title}
-                distanceLabel={result.dist}
-                updatedLabel={result.time}
-                onPress={() => handleSelect(result.title)}
-              >
-                {result.title}
-              </SearchListResult>
+        {hasQuery ? (
+          <div className={autocompleteList}>
+            {autocompleteItems.map((item) => (
+              <SearchAutocompleteItem
+                key={item.id}
+                item={item}
+                onPress={handleAutocompleteSelect}
+              />
             ))}
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   );

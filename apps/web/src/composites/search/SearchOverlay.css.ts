@@ -104,3 +104,9 @@ export const recentList = style({
   width: "100%",
   gap: vars.spacing[8],
 });
+
+export const autocompleteList = style({
+  display: "flex",
+  flexDirection: "column",
+  width: "100%",
+});
