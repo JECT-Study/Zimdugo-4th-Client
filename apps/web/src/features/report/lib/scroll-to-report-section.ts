@@ -12,11 +12,21 @@ export const REPORT_SECTION_ORDER: ReportSectionId[] = [
   "additionalInfo",
 ];
 
+export function getReportSectionScrollBehavior(): ScrollBehavior {
+  if (typeof window === "undefined") return "smooth";
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
+}
+
 export function scrollToReportSection(sectionId: ReportSectionId): void {
   if (typeof document === "undefined") return;
   document
     .querySelector(`[data-section="${sectionId}"]`)
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    ?.scrollIntoView({
+      behavior: getReportSectionScrollBehavior(),
+      block: "start",
+    });
 }
 
 export function scrollToEarliestReportSection(

@@ -136,6 +136,7 @@
   "report_photo_upload": "이미지 업로드",
   "report_photo_uploading": "사진을 업로드하는 중입니다.",
   "report_photo_uploaded_alt": "업로드한 사진 {index}",
+  "report_photo_delete_aria": "업로드한 사진 {index} 삭제",
   "report_section_size": "보관함 규격",
   "report_size_s": "소형",
   "report_size_m": "중형",

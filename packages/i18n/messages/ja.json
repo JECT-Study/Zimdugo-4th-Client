@@ -136,6 +136,7 @@
   "report_photo_upload": "画像アップロード",
   "report_photo_uploading": "写真をアップロードしています。",
   "report_photo_uploaded_alt": "アップロードした写真 {index}",
+  "report_photo_delete_aria": "アップロードした写真 {index}を削除",
   "report_section_size": "ロッカーのサイズ",
   "report_size_s": "小型",
   "report_size_m": "中型",

@@ -136,6 +136,7 @@
   "report_photo_upload": "上传照片",
   "report_photo_uploading": "正在上传照片…",
   "report_photo_uploaded_alt": "已上传照片 {index}",
+  "report_photo_delete_aria": "删除已上传照片 {index}",
   "report_section_size": "寄存柜规格",
   "report_size_s": "小型",
   "report_size_m": "中型",

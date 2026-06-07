@@ -126,6 +126,7 @@ export function ReportPhotoSection({
                 className={imageDeleteButton}
                 onClick={() => onImageRemove(index)}
                 disabled={isSubmitting}
+                aria-label={m.report_photo_delete_aria({ index: index + 1 })}
               >
                 <IconX16 />
               </button>
