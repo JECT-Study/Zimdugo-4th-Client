@@ -134,8 +134,8 @@ describe("report form submit handling", () => {
     const updates: Array<
       Partial<Record<string, string>>
     > = [];
-    const setSectionServerErrors = vi.fn((updater) => {
-      updates.push(updater({}));
+    const setSectionServerErrors = vi.fn((sectionUpdates) => {
+      updates.push(sectionUpdates);
     });
 
     applyValidationErrors(
