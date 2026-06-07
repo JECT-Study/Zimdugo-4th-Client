@@ -8,7 +8,24 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
+import {
+  createLockerDetailFromSearchItem,
+  createLockerDetailFromAutocompleteItem,
+  LockerDetailBottomSheet,
+  type LockerDetailItem,
+} from "#/composites/search/LockerDetailBottomSheet";
+import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
+import {
+  createDefaultSearchFilters,
+  type SearchFilterAppliedState,
+  SearchFilterBottomSheet,
+} from "#/composites/search/SearchFilterBottomSheet";
+import { SearchListBottomSheet } from "#/composites/search/SearchListBottomSheet";
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
+import type {
+  SearchLockerResultItem,
+  SearchResultItem,
+} from "#/composites/search/search-list-model";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
@@ -22,8 +39,10 @@ import {
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
+import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
+import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useSearchStore } from "#/shared/store/search";
 import {
   locationButton,
@@ -44,6 +63,8 @@ function IndexPage() {
   const queryClient = useQueryClient();
   const isSearchOpen = useSearchStore((state) => state.isSearchOpen);
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
+  const sheetMode = useSearchStore((state) => state.sheetMode);
+  const setSheetMode = useSearchStore((state) => state.setSheetMode);
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
@@ -65,6 +86,18 @@ function IndexPage() {
   // 내 위치 버튼 지연 로딩 상태 (Hoisting)
   const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
     useState(false);
+  const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
+    createDefaultSearchFilters,
+  );
+  const [selectedSearchPlaceId, setSelectedSearchPlaceId] = useState<
+    string | null
+  >(null);
+  const [selectedSearchPlaceName, setSelectedSearchPlaceName] = useState<
+    string | null
+  >(null);
+  const [selectedLockerDetail, setSelectedLockerDetail] =
+    useState<LockerDetailItem | null>(null);
+  const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
@@ -224,8 +257,76 @@ function IndexPage() {
   const handleSelectSearch = useCallback(
     (query: string) => {
       setSearchQuery(query);
+      setSelectedSearchPlaceId(null);
+      setSelectedSearchPlaceName(null);
+      setSelectedLockerDetail(null);
+      setIsNavigationPopupOpen(false);
+      setIsSearchOpen(false);
+      setSheetMode("list");
     },
-    [setSearchQuery],
+    [setIsSearchOpen, setSearchQuery, setSheetMode],
+  );
+
+  const handleSelectSearchAutocomplete = useCallback(
+    (item: SearchAutocompleteItemData) => {
+      setSearchQuery(item.title);
+      if (item.suggestType === "LOCKER") {
+        setSelectedSearchPlaceId(null);
+        setSelectedSearchPlaceName(null);
+        setSelectedLockerDetail(createLockerDetailFromAutocompleteItem(item));
+        setIsNavigationPopupOpen(false);
+        setIsSearchOpen(false);
+        setSheetMode("detail");
+        return;
+      }
+
+      setSelectedSearchPlaceId(item.id);
+      setSelectedSearchPlaceName(item.title);
+      setSelectedLockerDetail(null);
+      setIsNavigationPopupOpen(false);
+      setIsSearchOpen(false);
+      setSheetMode("list");
+    },
+    [setIsSearchOpen, setSearchQuery, setSheetMode],
+  );
+
+  const handleOpenLockerDetail = useCallback(
+    (item: SearchLockerResultItem) => {
+      setSelectedLockerDetail(createLockerDetailFromSearchItem(item));
+      setIsNavigationPopupOpen(false);
+      setIsSearchOpen(false);
+      setSheetMode("detail");
+    },
+    [setIsSearchOpen, setSheetMode],
+  );
+
+  const handleDetailFavoriteChange = useCallback(
+    (_item: LockerDetailItem, next: boolean) => {
+      setSelectedLockerDetail((currentDetail) =>
+        currentDetail ? { ...currentDetail, isFavorite: next } : currentDetail,
+      );
+    },
+    [],
+  );
+
+  const handleOpenNavigationPopup = useCallback(() => {
+    setIsNavigationPopupOpen(true);
+  }, []);
+
+  const handleOpenSearchFilter = useCallback(() => {
+    setSheetMode("filter");
+  }, [setSheetMode]);
+
+  const handleResetSearchFilter = useCallback(() => {
+    setSearchFilters(createDefaultSearchFilters());
+  }, []);
+
+  const handleApplySearchFilter = useCallback(
+    (filters: SearchFilterAppliedState) => {
+      setSearchFilters(filters);
+      setSheetMode("list");
+    },
+    [setSheetMode],
   );
 
   // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
@@ -256,6 +357,17 @@ function IndexPage() {
     hasMapError,
     hasMapInstance: !!mapInstance,
   });
+  const isSearchFilterActive =
+    searchFilters.regionActive ||
+    searchFilters.sizePriceActive ||
+    searchFilters.placeTypeActive;
+  const selectedSearchPlaceLockers: SearchLockerResultItem[] = [];
+  const searchBottomSheetItems: SearchResultItem[] =
+    selectedSearchPlaceLockers.length > 0 ? selectedSearchPlaceLockers : [];
+  const placeResultName =
+    selectedSearchPlaceLockers.length > 0 || selectedSearchPlaceId
+      ? selectedSearchPlaceName
+      : null;
 
   return (
     <main className={pageWrapper}>
@@ -342,12 +454,47 @@ function IndexPage() {
         }}
       />
 
+      {sheetMode === "list" && !isSearchOpen ? (
+        <SearchListBottomSheet
+          searchQuery={searchQuery}
+          items={searchBottomSheetItems}
+          appLanguage={normalizeLocale(languageTag()) ?? BASE_LOCALE}
+          isFilterActive={isSearchFilterActive}
+          onOpenFilter={handleOpenSearchFilter}
+          onLockerPress={handleOpenLockerDetail}
+          placeName={placeResultName}
+        />
+      ) : null}
+
+      {sheetMode === "detail" && !isSearchOpen && selectedLockerDetail ? (
+        <LockerDetailBottomSheet
+          locker={selectedLockerDetail}
+          onFavoriteChange={handleDetailFavoriteChange}
+          onNavigate={handleOpenNavigationPopup}
+        />
+      ) : null}
+
+      <NavigationPlatformPopup
+        isOpen={isNavigationPopupOpen}
+        locker={selectedLockerDetail}
+        onOpenChange={setIsNavigationPopupOpen}
+      />
+
+      {sheetMode === "filter" && !isSearchOpen ? (
+        <SearchFilterBottomSheet
+          initialFilters={searchFilters}
+          onCollapseToResults={() => setSheetMode("list")}
+          onReset={handleResetSearchFilter}
+          onApply={handleApplySearchFilter}
+        />
+      ) : null}
+
       {isSearchOpen ? (
         <SearchOverlay
           initialQuery={searchQuery}
           onClose={handleCloseSearch}
           onSelect={handleSelectSearch}
-          onQueryChange={setSearchQuery}
+          onSelectAutocomplete={handleSelectSearchAutocomplete}
         />
       ) : null}
     </main>

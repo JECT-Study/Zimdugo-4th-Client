@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type SheetMode = "idle" | "list" | "filter" | "addressList";
+export type SheetMode = "idle" | "list" | "filter" | "detail" | "addressList";
 
 interface Location {
   lat: number;
