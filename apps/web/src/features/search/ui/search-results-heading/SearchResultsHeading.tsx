@@ -17,7 +17,6 @@ export interface SearchResultsHeadingProps {
 export function SearchResultsHeading({
   queryText,
   titleText,
-  resultCount,
   subtitleText,
   className,
 }: SearchResultsHeadingProps) {
@@ -28,7 +27,6 @@ export function SearchResultsHeading({
     <div className={[root, className].filter(Boolean).join(" ")}>
       <p className={text}>
         <span className={queryEmphasis}>{resolvedTitleText}</span>
-        {resultCount !== undefined ? ` (${resultCount})` : null}
       </p>
       {subtitleText ? <p className={subtitle}>{subtitleText}</p> : null}
     </div>

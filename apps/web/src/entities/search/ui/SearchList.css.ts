@@ -34,7 +34,7 @@ export const placeRow = style({
   display: "flex",
   width: "100%",
   minHeight: "55px",
-  padding: `${vars.spacing[8]} ${vars.spacing[20]}`,
+  padding: `${vars.spacing[8]} 0`,
   boxSizing: "border-box",
 });
 
@@ -52,7 +52,7 @@ export const lockerRow = style({
   justifyContent: "space-between",
   width: "100%",
   minHeight: "73px",
-  padding: `${vars.spacing[8]} ${vars.spacing[20]}`,
+  padding: `${vars.spacing[8]} 0`,
   boxSizing: "border-box",
   gap: vars.spacing[12],
 });
