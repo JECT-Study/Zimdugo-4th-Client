@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PresignedUploadError,
+  UntrustedPresignedUploadUrlError,
   uploadFileToPresignedUrl,
 } from "#/features/report/lib/upload-file-to-presigned-url";
 
@@ -32,10 +33,24 @@ describe("uploadFileToPresignedUrl", () => {
     expect(fetch).toHaveBeenCalledWith(uploadUrl, {
       method: "PUT",
       body: file,
+      credentials: "omit",
+      mode: "cors",
       headers: {
         "Content-Type": "image/jpeg",
       },
     });
+  });
+
+  it("신뢰할 수 없는 uploadUrl이면 fetch 전에 거부한다", async () => {
+    await expect(
+      uploadFileToPresignedUrl({
+        uploadUrl: "https://evil.example.com/key",
+        file,
+        contentType: "image/jpeg",
+      }),
+    ).rejects.toBeInstanceOf(UntrustedPresignedUploadUrlError);
+
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("S3 응답이 실패하면 PresignedUploadError를 던진다", async () => {
