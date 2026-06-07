@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
 
-const VALIDATION_MESSAGE_KEYS = new Set([
+const CLIENT_VALIDATION_MESSAGE_KEYS = new Set([
   "required",
   "pair_required",
   "invalid_range",
@@ -10,12 +10,42 @@ const VALIDATION_MESSAGE_KEYS = new Set([
   "range",
 ]);
 
+const serverInvalidEnumMessage = () => m.report_error_server_invalid_enum();
+
+const SERVER_VALIDATION_MESSAGE_KEYS = {
+  "validation.invalid_enum": serverInvalidEnumMessage,
+  "validation.invalid_enum_value": serverInvalidEnumMessage,
+  "validation.invalid_operating_hours": () =>
+    m.report_error_server_invalid_operating_hours(),
+  "validation.invalid_price": () => m.report_error_server_invalid_price(),
+  "validation.invalid_floor": () => m.report_error_server_invalid_floor(),
+  "validation.invalid_size_types": () =>
+    m.report_error_server_invalid_size_types(),
+  "validation.invalid_image": () => m.report_error_server_invalid_image(),
+  "validation.invalid_location": () => m.report_error_server_invalid_location(),
+  "validation.prohibited_word": () => m.report_error_server_prohibited_word(),
+} as const;
+
+/** FE i18n·Zod 키 매핑. 매칭되지 않으면 서버 raw 문장/키를 그대로 반환한다. */
 export function getReportValidationMessage(message: string): string {
-  if (!VALIDATION_MESSAGE_KEYS.has(message)) {
+  const normalizedMessage = message.trim();
+  if (!normalizedMessage) {
     return message;
   }
 
-  switch (message) {
+  const serverMessage =
+    SERVER_VALIDATION_MESSAGE_KEYS[
+      normalizedMessage as keyof typeof SERVER_VALIDATION_MESSAGE_KEYS
+    ];
+  if (serverMessage) {
+    return serverMessage();
+  }
+
+  if (!CLIENT_VALIDATION_MESSAGE_KEYS.has(normalizedMessage)) {
+    return normalizedMessage;
+  }
+
+  switch (normalizedMessage) {
     case "required":
       return m.report_error_required();
     case "pair_required":
@@ -31,6 +61,6 @@ export function getReportValidationMessage(message: string): string {
     case "range":
       return m.report_error_price_range();
     default:
-      return message;
+      return normalizedMessage;
   }
 }
