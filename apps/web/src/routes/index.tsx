@@ -254,6 +254,17 @@ function IndexPage() {
     setIsSearchOpen(false);
   }, [setIsSearchOpen]);
 
+  const handleExitSearchContext = useCallback(() => {
+    setSearchQuery("");
+    setSelectedSearchPlaceId(null);
+    setSelectedSearchPlaceName(null);
+    setSelectedLockerDetail(null);
+    setIsNavigationPopupOpen(false);
+    setSearchFilters(createDefaultSearchFilters());
+    setIsSearchOpen(false);
+    setSheetMode("idle");
+  }, [setIsSearchOpen, setSearchQuery, setSheetMode]);
+
   const handleSelectSearch = useCallback(
     (query: string) => {
       setSearchQuery(query);
@@ -371,7 +382,12 @@ function IndexPage() {
 
   return (
     <main className={pageWrapper}>
-      <HomeSearchBar onOpenSearch={handleOpenSearch} />
+      <HomeSearchBar
+        onOpenSearch={handleOpenSearch}
+        onCloseSearchContext={handleExitSearchContext}
+        searchQuery={searchQuery}
+        isSearchContextActive={sheetMode !== "idle"}
+      />
 
       {(isRefreshVisualLoading || isLocationDelayedLoading) && (
         <div className={refreshLoadingOverlay}>
@@ -392,7 +408,7 @@ function IndexPage() {
           deviceHeading={deviceHeading}
           isOrientationTracking={isOrientationTracking}
         />
-        <LockerMarkersLayer map={mapInstance} />
+        {sheetMode === "idle" ? <LockerMarkersLayer map={mapInstance} /> : null}
       </NaverMapProvider>
       {isMapLoading && !hasMapError ? (
         <MapControlsSkeleton />

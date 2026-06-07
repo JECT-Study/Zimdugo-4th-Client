@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { SearchField } from "@repo/ui/components/search-field";
-import { IconNormalSearch24 } from "@repo/ui/tokens/icons";
+import { IconNormalSearch24, IconX24 } from "@repo/ui/tokens/icons";
 import { type CSSProperties, useEffect } from "react";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
@@ -9,15 +9,20 @@ import {
   useStyleReadyProbe,
 } from "#/shared/ui/useStyleReadyProbe";
 import {
+  closeButton,
   fallbackButton,
   fallbackIconSlot,
   fallbackLabel,
   searchBarLayer,
   searchField,
+  searchFieldWithClose,
 } from "./HomeSearchBar.css";
 
 export interface HomeSearchBarProps {
   onOpenSearch: () => void;
+  onCloseSearchContext?: () => void;
+  searchQuery?: string;
+  isSearchContextActive?: boolean;
 }
 
 const searchBarLayerFallbackStyle: CSSProperties = {
@@ -92,7 +97,12 @@ const HOME_SEARCH_BAR_STYLE_PROBES: StyleReadyProbe[] = [
 
 let hasHomeSearchBarStyleResolved = false;
 
-export function HomeSearchBar({ onOpenSearch }: HomeSearchBarProps) {
+export function HomeSearchBar({
+  onOpenSearch,
+  onCloseSearchContext,
+  searchQuery = "",
+  isSearchContextActive = false,
+}: HomeSearchBarProps) {
   const shouldProbeStyle = !hasHomeSearchBarStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
     enabled: shouldProbeStyle,
@@ -101,6 +111,10 @@ export function HomeSearchBar({ onOpenSearch }: HomeSearchBarProps) {
 
   const handleOpenSearch = () => {
     onOpenSearch();
+  };
+
+  const handleCloseSearchContext = () => {
+    onCloseSearchContext?.();
   };
 
   useEffect(() => {
@@ -137,15 +151,34 @@ export function HomeSearchBar({ onOpenSearch }: HomeSearchBarProps) {
           </span>
         </button>
       ) : (
-        <SearchField
-          className={searchField}
-          variant="searchHome"
-          searchIconPlacement="left"
-          placeholder={m.search_placeholder()}
-          aria-label={m.search_input_aria()}
-          isReadOnly
-          onFocus={handleOpenSearch}
-        />
+        <>
+          <SearchField
+            className={[
+              searchField,
+              isSearchContextActive ? searchFieldWithClose : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            variant="searchHome"
+            searchIconPlacement="left"
+            placeholder={m.search_placeholder()}
+            aria-label={m.search_input_aria()}
+            value={isSearchContextActive ? searchQuery : undefined}
+            textTone={isSearchContextActive ? "on" : "auto"}
+            isReadOnly
+            onFocus={handleOpenSearch}
+          />
+          {isSearchContextActive ? (
+            <button
+              type="button"
+              className={closeButton}
+              onClick={handleCloseSearchContext}
+              aria-label="홈으로 돌아가기"
+            >
+              <IconX24 />
+            </button>
+          ) : null}
+        </>
       )}
     </div>
   );

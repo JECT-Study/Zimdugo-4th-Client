@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 
 export const searchBarLayer = style({
   position: "absolute",
@@ -8,6 +8,7 @@ export const searchBarLayer = style({
   right: vars.spacing[16],
   zIndex: vars.zIndex.ui,
   display: "flex",
+  alignItems: "center",
   maxWidth: `calc(${vars.layout.containerWidth} - 32px)`,
   margin: "0 auto",
 });
@@ -17,6 +18,38 @@ export const searchField = style({
   flexDirection: "column",
   width: "100%",
   minHeight: "48px",
+});
+
+export const searchFieldWithClose = style({
+  position: "relative",
+});
+
+globalStyle(`${searchFieldWithClose} > div`, {
+  paddingRight: "52px",
+});
+
+export const closeButton = style({
+  position: "absolute",
+  top: "50%",
+  right: vars.spacing[12],
+  transform: "translateY(-50%)",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "32px",
+  height: "32px",
+  padding: 0,
+  border: 0,
+  borderRadius: vars.radius[6],
+  backgroundColor: "transparent",
+  color: vars.color.text.surface,
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
 });
 
 export const fallbackButton = style({
