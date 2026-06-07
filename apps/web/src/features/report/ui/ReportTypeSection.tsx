@@ -7,12 +7,14 @@ interface ReportTypeSectionProps {
   lockerType: string[];
   setLockerType: (val: string[]) => void;
   options: Array<{ label: string; value: string }>;
+  selectionMode?: "single" | "multiple";
 }
 
 export function ReportTypeSection({
   lockerType,
   setLockerType,
   options,
+  selectionMode = "single",
 }: ReportTypeSectionProps) {
   return (
     <section className={section}>
@@ -24,8 +26,10 @@ export function ReportTypeSection({
         <ControlChipGroup
           options={options}
           value={lockerType}
-          onChange={(keys) => setLockerType(keys.slice(-1))}
-          selectionMode="single"
+          onChange={(keys) =>
+            setLockerType(selectionMode === "single" ? keys.slice(-1) : keys)
+          }
+          selectionMode={selectionMode}
           ariaLabel={m.report_type_filter_aria()}
         />
       </div>
