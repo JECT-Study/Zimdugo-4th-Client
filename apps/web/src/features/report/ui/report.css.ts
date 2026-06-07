@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { style } from "@vanilla-extract/css";
+import { keyframes, style } from "@vanilla-extract/css";
 
 export const reportContainer = style({
   width: "100%",
@@ -419,6 +419,10 @@ export const photoUploadArea = style([
         flex: "0 0 343px",
         width: REPORT_PHOTO_TILE_MIN_WIDTH,
       },
+      "&:disabled": {
+        cursor: "not-allowed",
+        opacity: 0.5,
+      },
     },
   },
 ]);
@@ -459,7 +463,37 @@ export const imageDeleteButton = style({
     "&:hover": {
       backgroundColor: "rgba(0, 0, 0, 0.7)",
     },
+    "&:disabled": {
+      cursor: "not-allowed",
+      opacity: 0.5,
+    },
   },
+});
+
+const photoUploadSpinner = keyframes({
+  from: { transform: "rotate(0deg)" },
+  to: { transform: "rotate(360deg)" },
+});
+
+export const photoPreviewUploadOverlay = style({
+  position: "absolute",
+  inset: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "rgba(22, 24, 28, 0.08)",
+  backdropFilter: "blur(2px)",
+  zIndex: 5,
+});
+
+export const photoPreviewUploadSpinner = style({
+  width: "24px",
+  height: "24px",
+  borderRadius: "9999px",
+  border: "3px solid #DEE2E6",
+  borderTopColor: "#495057",
+  animation: `${photoUploadSpinner} 0.8s linear infinite`,
+  backgroundColor: "rgba(255, 255, 255, 0.78)",
 });
 
 export const miniMapContainer = style({

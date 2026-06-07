@@ -257,6 +257,7 @@ function ReportPage() {
                       onImageClick={handleImageClick}
                       onImageChange={handleImageChange}
                       onImageRemove={handleImageRemove}
+                      isSubmitting={isSubmitting}
                       isAgreed={locationConsentAgreed}
                       setIsAgreed={(val) => {
                         setValue("locationConsentAgreed", val, {
@@ -318,10 +319,17 @@ function ReportPage() {
               onPress={() => {
                 void handleNext();
               }}
-              isDisabled={step === 2 ? !validation.isStep2Valid : false}
+              isDisabled={
+                isSubmitting ||
+                (step === 2 ? !validation.isStep2Valid : false)
+              }
               isLoading={isSubmitting}
             >
-              {step === 1 ? m.report_button_next() : m.report_button_submit()}
+              {step === 1
+                ? m.report_button_next()
+                : isSubmitting && uploadedImages.length > 0
+                  ? m.report_button_submit_uploading()
+                  : m.report_button_submit()}
             </Button>
           </div>
         </div>

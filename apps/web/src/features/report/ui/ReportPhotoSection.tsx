@@ -12,6 +12,8 @@ import {
   imageDeleteButton,
   imagePreview,
   imageWrapper,
+  photoPreviewUploadOverlay,
+  photoPreviewUploadSpinner,
   photoUploadArea,
   reportPhotoGallery,
   section,
@@ -24,6 +26,7 @@ interface ReportPhotoSectionProps {
   onImageClick: () => void;
   onImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onImageRemove: (index: number) => void;
+  isSubmitting?: boolean;
   isAgreed: boolean;
   setIsAgreed: (val: boolean) => void;
   agreementServerError?: string;
@@ -36,6 +39,7 @@ export function ReportPhotoSection({
   onImageClick,
   onImageChange,
   onImageRemove,
+  isSubmitting = false,
   isAgreed,
   setIsAgreed,
   agreementServerError,
@@ -46,6 +50,7 @@ export function ReportPhotoSection({
     agreementServerError,
   );
   const agreementErrorId = agreementError ? "report-agreement-error" : undefined;
+  const isPhotoUploading = isSubmitting && uploadedImages.length > 0;
 
   return (
     <section className={section} data-section="photo">
@@ -79,6 +84,7 @@ export function ReportPhotoSection({
             type="button"
             className={photoUploadArea}
             onClick={onImageClick}
+            disabled={isSubmitting}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -98,16 +104,30 @@ export function ReportPhotoSection({
 
         {/* Image Gallery */}
         {uploadedImages.map((url, index) => (
-          <div key={url} className={imageWrapper}>
+          <div
+            key={url}
+            className={imageWrapper}
+            aria-busy={isPhotoUploading ? true : undefined}
+          >
             <img
               src={url}
               alt={m.report_photo_uploaded_alt({ index: index + 1 })}
               className={imagePreview}
             />
+            {isPhotoUploading ? (
+              <div
+                className={photoPreviewUploadOverlay}
+                aria-live="polite"
+                aria-label={m.report_photo_uploading()}
+              >
+                <div className={photoPreviewUploadSpinner} aria-hidden="true" />
+              </div>
+            ) : null}
             <button
               type="button"
               className={imageDeleteButton}
               onClick={() => onImageRemove(index)}
+              disabled={isSubmitting}
             >
               <IconX16 />
             </button>
