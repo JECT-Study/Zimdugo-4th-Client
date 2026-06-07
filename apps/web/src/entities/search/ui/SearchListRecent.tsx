@@ -13,11 +13,12 @@ import {
 } from "./SearchList.css.ts";
 
 export interface SearchListRecentProps {
-  children: ReactNode; // query -> children
+  children: ReactNode;
   dateLabel: string;
   onPress?: () => void;
   onRemove?: () => void;
   className?: string;
+  removeAriaLabel?: string;
 }
 
 export function SearchListRecent({
@@ -26,6 +27,7 @@ export function SearchListRecent({
   onPress,
   onRemove,
   className,
+  removeAriaLabel = "최근 검색어 삭제",
 }: SearchListRecentProps) {
   const handlePress: NonNullable<ButtonProps["onPress"]> = () => {
     onPress?.();
@@ -50,7 +52,7 @@ export function SearchListRecent({
         <Button
           type="button"
           className={removeBtn}
-          aria-label="최근 검색 삭제"
+          aria-label={removeAriaLabel}
           onPress={handleRemovePress}
         >
           <IconX16 />

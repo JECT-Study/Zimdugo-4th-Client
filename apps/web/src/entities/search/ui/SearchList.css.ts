@@ -1,44 +1,185 @@
 import { vars } from "@repo/ui/vars";
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 
-export const rowBase = style({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
+const interactiveRow = {
   width: "100%",
+  padding: 0,
+  border: 0,
+  background: "transparent",
+  color: "inherit",
+  textAlign: "left",
+  cursor: "pointer",
+  outline: "none",
+  borderRadius: "6px",
+  selectors: {
+    "&[data-focus-visible]": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
+} as const;
+
+export const accordionGroup = style({
+  width: "100%",
+});
+
+export const accordionChildren = style({
+  display: "flex",
+  flexDirection: "column",
+  width: `calc(100% - ${vars.spacing[20]})`,
+  marginLeft: vars.spacing[20],
+  borderLeft: `1px solid ${vars.color.palette.gray[300]}`,
+});
+
+export const placeRow = style({
+  display: "flex",
+  width: "100%",
+  minHeight: "55px",
+  padding: `${vars.spacing[8]} ${vars.spacing[20]}`,
   boxSizing: "border-box",
-  minHeight: "56px",
-  padding: "6px 20px", // 8px -> 6px (아이템 간격 12px를 맞추기 위함)
+});
+
+export const placeMain = style({
+  ...interactiveRow,
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
   gap: vars.spacing[12],
 });
 
-export const left = style({
+export const lockerRow = style({
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  width: "100%",
+  minHeight: "73px",
+  padding: `${vars.spacing[8]} ${vars.spacing[20]}`,
+  boxSizing: "border-box",
   gap: vars.spacing[12],
+});
+
+export const nestedLockerRow = style({
+  paddingLeft: vars.spacing[12],
+});
+
+export const lockerMain = style({
+  ...interactiveRow,
   minWidth: 0,
   flex: 1,
 });
 
-export const textCol = style({
+export const resultContent = style({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: vars.spacing[8],
+  minWidth: 0,
+  flex: 1,
+});
+
+export const resultTextColumn = style({
   display: "flex",
   flexDirection: "column",
-  gap: vars.spacing[4],
   alignItems: "flex-start",
   justifyContent: "center",
+  gap: vars.spacing[4],
   minWidth: 0,
+  flex: 1,
 });
 
 export const titleText = style({
-  margin: 0,
+  width: "100%",
+  overflow: "hidden",
+  color: vars.color.text.title,
   fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: 1.2,
-  color: vars.color.text.title,
   whiteSpace: "nowrap",
-  overflow: "hidden",
   textOverflow: "ellipsis",
-  maxWidth: "100%",
+});
+
+export const detailMetaRow = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.spacing[8],
+  minWidth: 0,
+  color: vars.color.text.content,
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.2,
+  whiteSpace: "nowrap",
+});
+
+export const categoryText = style({
+  color: vars.color.text.disable,
+});
+
+export const updatedText = style({
+  overflow: "hidden",
+  color: vars.color.text.disable,
+  textOverflow: "ellipsis",
+});
+
+export const addressText = style({
+  overflow: "hidden",
+  color: vars.color.text.surface,
+  textOverflow: "ellipsis",
+});
+
+export const metaDot = style({
+  flexShrink: 0,
+  color: vars.color.text.disable,
+});
+
+export const markerBadge = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  flexShrink: 0,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.surface,
+});
+
+export const markerPlace = style({});
+export const markerLocker = style({});
+
+globalStyle(`${markerPlace} svg path`, {
+  fill: vars.color.brand.symbol,
+});
+
+export const arrowSlot = style({
+  display: "inline-flex",
+  flexShrink: 0,
+  transition: "transform 160ms ease",
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
+  },
+});
+
+export const arrowExpanded = style({
+  transform: "rotate(180deg)",
+});
+
+export const favoriteBtn = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  flexShrink: 0,
+  padding: 0,
+  border: 0,
+  borderRadius: "6px",
+  background: "transparent",
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&[data-focus-visible]": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
 });
 
 export const recentRow = style({
@@ -46,15 +187,10 @@ export const recentRow = style({
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
-  boxSizing: "border-box",
   minHeight: "32px",
-  padding: "4px 20px", // 상하 4px (아이템 간격 8px 유지)
+  padding: `4px ${vars.spacing[20]}`,
+  boxSizing: "border-box",
   outline: "none",
-  selectors: {
-    "&[data-focus-visible]": {
-      boxShadow: `0 0 0 2px ${vars.color.focus}`,
-    },
-  },
 });
 
 export const recentLeft = style({
@@ -93,12 +229,12 @@ export const recentTextCol = style({
 });
 
 export const recentLabel = style({
+  overflow: "hidden",
+  color: vars.color.text.title,
   fontSize: vars.typography.fontSize[14],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: 1.2,
-  color: vars.color.text.title,
   whiteSpace: "nowrap",
-  overflow: "hidden",
   textOverflow: "ellipsis",
 });
 
@@ -110,8 +246,8 @@ export const recentRight = style({
 });
 
 export const recentDate = style({
-  fontSize: vars.typography.fontSize[12],
   color: vars.color.palette.gray[500],
+  fontSize: vars.typography.fontSize[12],
 });
 
 export const removeBtn = style({
@@ -123,54 +259,8 @@ export const removeBtn = style({
   padding: 0,
   border: "none",
   background: "transparent",
-  cursor: "pointer",
   color: vars.color.palette.gray[500],
-});
-
-export const metaRow = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.spacing[8],
-  flexWrap: "wrap",
-});
-
-export const distance = style({
-  margin: 0,
-  fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.SemiBold,
-  lineHeight: 1.2,
-  color: vars.color.text.content,
-  whiteSpace: "nowrap",
-});
-
-export const dot = style({
-  color: vars.color.palette.gray[600],
-  fontSize: vars.typography.fontSize[14],
-  lineHeight: 1,
-});
-
-export const updated = style({
-  margin: 0,
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
-  color: vars.color.palette.gray[600],
-  whiteSpace: "nowrap",
-});
-
-export const favoriteBtn = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "24px",
-  height: "24px",
-  padding: 0,
-  border: "none",
-  background: "transparent",
-  borderRadius: "6px",
   cursor: "pointer",
-  flexShrink: 0,
-  outline: "none",
 });
 
 export const englishSubtitle = style({});
@@ -178,3 +268,7 @@ export const recentRowEnglish = style({});
 export const resultRowEnglish = style({});
 export const titleTextClass = style({});
 export const metaUpdatedEnglish = style({});
+
+export const closedOpacity = style({
+  opacity: 0.5,
+});

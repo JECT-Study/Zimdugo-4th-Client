@@ -1,16 +1,269 @@
-import type { ReactNode } from "react";
+import { m } from "@repo/i18n";
+import {
+  IconMarker22,
+  IconNormalArrow24,
+  IconStarFilled24,
+  IconStarOutline24,
+} from "@repo/ui/tokens/icons";
+import { useState } from "react";
+import { Button } from "react-aria-components";
+import type {
+  SearchLockerResultItem,
+  SearchPlaceResultItem,
+  SearchResultItem,
+} from "#/composites/search/search-list-model";
+import { getNextExpandedPlaceId } from "#/composites/search/search-list-model";
+import {
+  accordionChildren,
+  accordionGroup,
+  addressText,
+  arrowExpanded,
+  arrowSlot,
+  categoryText,
+  closedOpacity,
+  detailMetaRow,
+  favoriteBtn,
+  lockerMain,
+  lockerRow,
+  markerBadge,
+  markerLocker,
+  markerPlace,
+  metaDot,
+  nestedLockerRow,
+  placeMain,
+  placeRow,
+  resultContent,
+  resultTextColumn,
+  titleText,
+  updatedText,
+} from "./SearchList.css.ts";
 
-export interface SearchListResultProps {
-  children: ReactNode;
-  distanceLabel: string;
-  updatedLabel: string;
-  isFavorite?: boolean;
-  onFavoriteChange?: (next: boolean) => void;
-  onPress?: () => void;
-  className?: string;
+export interface SearchListResultsProps {
+  items: SearchResultItem[];
+  onLockerPress?: (item: SearchLockerResultItem) => void;
+  onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
+  favoriteAddLabel?: string;
+  favoriteRemoveLabel?: string;
 }
 
-export function SearchListResult(_props: SearchListResultProps) {
-  // RowButton 기반 검색 결과 UI는 현재 이슈 커밋 범위에서 제외합니다.
-  return null;
+export interface SearchListResultProps {
+  item: SearchPlaceResultItem;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onLockerPress?: (item: SearchLockerResultItem) => void;
+  onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
+  favoriteAddLabel?: string;
+  favoriteRemoveLabel?: string;
+}
+
+interface SearchLockerResultProps {
+  item: SearchLockerResultItem;
+  isNested?: boolean;
+  onPress?: (item: SearchLockerResultItem) => void;
+  onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
+  favoriteAddLabel?: string;
+  favoriteRemoveLabel?: string;
+}
+
+export function SearchListResults({
+  items,
+  onLockerPress,
+  onFavoriteChange,
+  favoriteAddLabel,
+  favoriteRemoveLabel,
+}: SearchListResultsProps) {
+  const [expandedPlaceId, setExpandedPlaceId] = useState<string | null>(null);
+
+  return items.map((item) =>
+    item.suggestType === "PLACE" ? (
+      <SearchListResult
+        key={item.id}
+        item={item}
+        isExpanded={expandedPlaceId === item.id}
+        onToggle={() =>
+          setExpandedPlaceId((currentId) =>
+            getNextExpandedPlaceId(currentId, item.id),
+          )
+        }
+        onLockerPress={onLockerPress}
+        onFavoriteChange={onFavoriteChange}
+        favoriteAddLabel={favoriteAddLabel}
+        favoriteRemoveLabel={favoriteRemoveLabel}
+      />
+    ) : (
+      <SearchLockerResult
+        key={item.id}
+        item={item}
+        onPress={onLockerPress}
+        onFavoriteChange={onFavoriteChange}
+        favoriteAddLabel={favoriteAddLabel}
+        favoriteRemoveLabel={favoriteRemoveLabel}
+      />
+    ),
+  );
+}
+
+export function SearchListResult({
+  item,
+  isExpanded,
+  onToggle,
+  onLockerPress,
+  onFavoriteChange,
+  favoriteAddLabel,
+  favoriteRemoveLabel,
+}: SearchListResultProps) {
+  const childrenId = `search-place-lockers-${item.id}`;
+
+  return (
+    <div className={accordionGroup}>
+      <div
+        className={[placeRow, item.isOpen === false ? closedOpacity : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <Button
+          className={placeMain}
+          onPress={onToggle}
+          aria-expanded={isExpanded}
+          aria-controls={childrenId}
+          aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
+        >
+          <span className={resultContent}>
+            <ResultMarker tone="place" isClosed={item.isOpen === false} />
+            <span className={resultTextColumn}>
+              <span className={titleText}>{item.title}</span>
+              <span className={detailMetaRow}>
+                <span>{item.distanceLabel}</span>
+                <span className={metaDot} aria-hidden="true">
+                  ·
+                </span>
+                <span className={addressText}>{item.address}</span>
+              </span>
+            </span>
+          </span>
+          <span
+            className={[arrowSlot, isExpanded ? arrowExpanded : ""]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <IconNormalArrow24 direction="down" />
+          </span>
+        </Button>
+      </div>
+
+      {isExpanded ? (
+        <section
+          id={childrenId}
+          className={accordionChildren}
+          aria-label={`${item.title} 보관함 목록`}
+        >
+          {item.lockers.map((locker) => (
+            <SearchLockerResult
+              key={locker.id}
+              item={locker}
+              isNested
+              onPress={onLockerPress}
+              onFavoriteChange={onFavoriteChange}
+              favoriteAddLabel={favoriteAddLabel}
+              favoriteRemoveLabel={favoriteRemoveLabel}
+            />
+          ))}
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+export function SearchLockerResult({
+  item,
+  isNested = false,
+  onPress,
+  onFavoriteChange,
+  favoriteAddLabel,
+  favoriteRemoveLabel,
+}: SearchLockerResultProps) {
+  const messages = m as unknown as Record<string, (() => string) | undefined>;
+  const favoriteLabel = item.isFavorite
+    ? (messages.search_favorite_remove?.() ??
+      favoriteRemoveLabel ??
+      "즐겨찾기 해제")
+    : (messages.search_favorite_add?.() ?? favoriteAddLabel ?? "즐겨찾기 추가");
+
+  const handleFavoritePress = () => {
+    onFavoriteChange?.(item, !item.isFavorite);
+  };
+
+  return (
+    <div
+      className={[
+        lockerRow,
+        isNested ? nestedLockerRow : "",
+        item.isOpen === false ? closedOpacity : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <Button
+        className={lockerMain}
+        onPress={() => onPress?.(item)}
+        aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
+      >
+        <span className={resultContent}>
+          <ResultMarker
+            tone={isNested ? "locker" : "standalone"}
+            isClosed={item.isOpen === false}
+          />
+          <span className={resultTextColumn}>
+            <span className={titleText}>{item.title}</span>
+            <span className={detailMetaRow}>
+              <span className={categoryText}>{item.categoryLabel}</span>
+              <span className={metaDot} aria-hidden="true">
+                ·
+              </span>
+              <span className={updatedText}>{item.updatedLabel}</span>
+            </span>
+            <span className={detailMetaRow}>
+              <span>{item.distanceLabel}</span>
+              <span className={metaDot} aria-hidden="true">
+                ·
+              </span>
+              <span className={addressText}>{item.address}</span>
+            </span>
+          </span>
+        </span>
+      </Button>
+
+      <Button
+        className={favoriteBtn}
+        onPress={handleFavoritePress}
+        aria-label={favoriteLabel}
+      >
+        {item.isFavorite ? (
+          <IconStarFilled24 size={24} />
+        ) : (
+          <IconStarOutline24 size={24} />
+        )}
+      </Button>
+    </div>
+  );
+}
+
+function ResultMarker({
+  tone,
+  isClosed,
+}: {
+  tone: "place" | "locker" | "standalone";
+  isClosed?: boolean;
+}) {
+  return (
+    <span
+      className={[
+        markerBadge,
+        tone === "place" && !isClosed ? markerPlace : markerLocker,
+      ].join(" ")}
+      aria-hidden="true"
+    >
+      <IconMarker22 size={14} fill={isClosed ? "gray[600]" : "green[500]"} />
+    </span>
+  );
 }
