@@ -1,7 +1,10 @@
 import { m } from "@repo/i18n";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { Input } from "@repo/ui/components/input";
-import { LabelTitle } from "@repo/ui/components/label-title";
+import { useReportSectionError } from "#/features/report/model/useReportSectionError";
+import { ReportSectionError } from "./ReportSectionError";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
+import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
   priceInputContainer,
   priceInputRow,
@@ -17,7 +20,8 @@ interface ReportPriceSectionProps {
   setMinPrice: (val: string) => void;
   maxPrice: string;
   setMaxPrice: (val: string) => void;
-  formatPrice: (val: string) => string;
+  sectionServerError?: string;
+  onFieldChange?: () => void;
 }
 
 export function ReportPriceSection({
@@ -27,11 +31,24 @@ export function ReportPriceSection({
   setMinPrice,
   maxPrice,
   setMaxPrice,
-  formatPrice,
+  sectionServerError,
+  onFieldChange,
 }: ReportPriceSectionProps) {
+  const errorMessage = useReportSectionError(
+    ["isFree", "minPrice", "maxPrice"],
+    sectionServerError,
+  );
+  const errorId = errorMessage ? "report-price-error" : undefined;
+
   return (
-    <section className={section}>
-      <LabelTitle size="small">{m.report_section_price()}</LabelTitle>
+    <section
+      className={section}
+      data-section="price"
+      aria-describedby={errorId}
+    >
+      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+        {m.report_section_price()}
+      </ReportSectionTitleRow>
       <div className={priceRow}>
         <Checkbox
           labelText={m.report_price_free()}
@@ -39,10 +56,12 @@ export function ReportPriceSection({
           onSelectedChange={(selected) => {
             if (selected) {
               setPriceType("free");
+              onFieldChange?.();
               return;
             }
             if (priceType === "free") {
               setPriceType("none");
+              onFieldChange?.();
             }
           }}
           labelLocation="right"
@@ -53,10 +72,12 @@ export function ReportPriceSection({
           onSelectedChange={(selected) => {
             if (selected) {
               setPriceType("paid");
+              onFieldChange?.();
               return;
             }
             if (priceType === "paid") {
               setPriceType("none");
+              onFieldChange?.();
             }
           }}
           labelLocation="right"
@@ -68,8 +89,12 @@ export function ReportPriceSection({
             <Input
               placeholder={m.report_price_min_placeholder()}
               value={minPrice}
-              onChange={(val) => setMinPrice(formatPrice(val))}
+              onChange={(val) => {
+                setMinPrice(val);
+                onFieldChange?.();
+              }}
               inputMode="numeric"
+              aria-label={m.report_price_min_input_aria()}
             />
             <span className={priceUnit}>{m.report_price_unit()}</span>
           </div>
@@ -78,13 +103,25 @@ export function ReportPriceSection({
             <Input
               placeholder={m.report_price_max_placeholder()}
               value={maxPrice}
-              onChange={(val) => setMaxPrice(formatPrice(val))}
+              onChange={(val) => {
+                setMaxPrice(val);
+                onFieldChange?.();
+              }}
               inputMode="numeric"
+              aria-label={m.report_price_max_input_aria()}
             />
             <span className={priceUnit}>{m.report_price_unit()}</span>
           </div>
         </div>
       )}
+      <ReportSectionErrorReserve />
+      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
+      <ReportSectionError
+        id={errorId}
+        message={errorMessage}
+        placement="bottom"
+      />
+      */}
     </section>
   );
 }

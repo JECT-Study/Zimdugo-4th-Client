@@ -20,6 +20,7 @@ import {
   myLocationButton,
   overlayContainer,
 } from "./LocationPickerOverlay.css.ts";
+import { ReportPageLoadingOverlay } from "./ReportPageLoadingOverlay";
 
 export interface LocationPickerOverlayProps {
   onClose: () => void;
@@ -27,6 +28,7 @@ export interface LocationPickerOverlayProps {
   initialCoords?: { lat: number; lng: number } | null;
 }
 
+const DEFAULT_COORDS = { lat: 37.4979, lng: 127.0276 }; // 강남역 정중앙
 const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
 
 const loadNaverMapsScript = async () => {
@@ -51,6 +53,11 @@ const loadNaverMapsScript = async () => {
   });
 };
 
+type GeocodeOptions = {
+  retry?: number;
+  onSettled?: () => void;
+};
+
 export function LocationPickerOverlay({
   onSelect,
   initialCoords,
@@ -61,17 +68,16 @@ export function LocationPickerOverlay({
     null,
   );
   const isMountedRef = useRef(true);
+  const hasCompletedInitialSetupRef = useRef(false);
 
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
+  const [isInitialSetupComplete, setIsInitialSetupComplete] = useState(false);
 
   const [currentAddress, setCurrentAddress] = useState(
     m.report_location_select_placeholder(),
   );
-  const [currentCoords, setCurrentCoords] = useState<{
-    lat: number;
-    lng: number;
-  }>(
-    initialCoords || { lat: 37.4979, lng: 127.0276 }, // 강남역 정중앙
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>(
+    initialCoords ?? DEFAULT_COORDS,
   );
 
   const [isMapMoving, setIsMapMoving] = useState(false);
@@ -87,6 +93,14 @@ export function LocationPickerOverlay({
   const [locationPermission, setLocationPermission] = useState<
     "prompt" | "granted" | "denied"
   >("prompt");
+
+  const isMapInteractive = isSdkLoaded && isInitialSetupComplete;
+
+  const completeInitialSetup = useCallback(() => {
+    if (hasCompletedInitialSetupRef.current) return;
+    hasCompletedInitialSetupRef.current = true;
+    setIsInitialSetupComplete(true);
+  }, []);
 
   // 위치 권한 실시간 감지
   useEffect(() => {
@@ -154,15 +168,24 @@ export function LocationPickerOverlay({
   }, []);
 
   const updateAddressFromCoords = useCallback(
-    (lat: number, lng: number, retry = 0) => {
+    (lat: number, lng: number, options?: GeocodeOptions) => {
+      const retry = options?.retry ?? 0;
+      const onSettled = options?.onSettled;
+
       if (!window.naver?.maps?.Service) {
-        // SDK는 로드되었으나 geocoder 서브모듈 초기화가 지연될 경우를 대비한 재시도 로직
-        if (retry >= 20) return;
+        if (retry >= 20) {
+          onSettled?.();
+          return;
+        }
         if (geocodeRetryTimeoutRef.current) {
           clearTimeout(geocodeRetryTimeoutRef.current);
         }
         geocodeRetryTimeoutRef.current = setTimeout(
-          () => updateAddressFromCoords(lat, lng, retry + 1),
+          () =>
+            updateAddressFromCoords(lat, lng, {
+              retry: retry + 1,
+              onSettled,
+            }),
           100,
         );
         return;
@@ -183,49 +206,59 @@ export function LocationPickerOverlay({
         ) => {
           if (!isMountedRef.current) return;
           setIsGeocoding(false);
-          if (status !== window.naver.maps.Service.Status.OK) return;
 
-          const result = response.v2.results[0];
-          if (result) {
-            const region = result.region;
-            const land = result.land;
+          if (status === window.naver.maps.Service.Status.OK) {
+            const result = response.v2.results[0];
+            if (result) {
+              const region = result.region;
+              const land = result.land;
 
-            const area1 = region?.area1?.name || "";
-            const area2 = region?.area2?.name || "";
-            const area3 = region?.area3?.name || "";
-            const landName = land?.name || "";
-            const number1 = land?.number1 || "";
-            const number2 = land?.number2 ? `-${land.number2}` : "";
+              const area1 = region?.area1?.name || "";
+              const area2 = region?.area2?.name || "";
+              const area3 = region?.area3?.name || "";
+              const landName = land?.name || "";
+              const number1 = land?.number1 || "";
+              const number2 = land?.number2 ? `-${land.number2}` : "";
 
-            const addr = `${area1} ${area2} ${area3} ${landName} ${number1}${number2}`;
-            setCurrentAddress(addr.trim().replace(/\s+/g, " "));
+              const addr = `${area1} ${area2} ${area3} ${landName} ${number1}${number2}`;
+              setCurrentAddress(addr.trim().replace(/\s+/g, " "));
+            }
           }
+
+          onSettled?.();
         },
       );
     },
     [],
   );
 
-  // 지도 초기화 및 위치 설정
+  // 지도 초기화 및 초기 위치·주소 설정
   useEffect(() => {
     if (!isSdkLoaded || !mapRef.current || mapInstanceRef.current) return;
 
+    const startCoords = initialCoords ?? DEFAULT_COORDS;
+
     const mapOptions = {
-      center: new window.naver.maps.LatLng(
-        currentCoords.lat,
-        currentCoords.lng,
-      ),
+      center: new window.naver.maps.LatLng(startCoords.lat, startCoords.lng),
       zoom: 17,
       logoControl: false,
       mapDataControl: false,
       scaleControl: false,
       zoomControl: false,
+      draggable: false,
+      scrollWheel: false,
+      pinchZoom: false,
     };
 
     const map = new window.naver.maps.Map(mapRef.current, mapOptions);
     mapInstanceRef.current = map;
 
-    // 만약 초기 좌표가 없다면, 사용자 현재 위치를 탐색하여 지도를 이동시킵니다.
+    const finishInitialGeocode = (lat: number, lng: number) => {
+      updateAddressFromCoords(lat, lng, {
+        onSettled: completeInitialSetup,
+      });
+    };
+
     if (!initialCoords && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -235,26 +268,23 @@ export function LocationPickerOverlay({
           const latLng = new window.naver.maps.LatLng(lat, lng);
           map.panTo(latLng);
           setCurrentCoords({ lat, lng });
-          updateAddressFromCoords(lat, lng);
           setIsCentered(true);
           setLocationPermission("granted");
+          finishInitialGeocode(lat, lng);
         },
         (error) => {
           if (!isMountedRef.current) return;
-          // 권한 거부 등 실패 시 강남역 기본 좌표에 대한 주소 갱신
-          updateAddressFromCoords(currentCoords.lat, currentCoords.lng);
+          finishInitialGeocode(startCoords.lat, startCoords.lng);
           if (error.code === error.PERMISSION_DENIED) {
             setLocationPermission("denied");
           }
         },
       );
     } else {
-      // 초기 좌표가 있거나 geolocation 미지원 환경일 때
-      updateAddressFromCoords(currentCoords.lat, currentCoords.lng);
-      if (initialCoords) setIsCentered(false); // 이미 선택한 위치라면 중앙 고정이 아님
+      finishInitialGeocode(startCoords.lat, startCoords.lng);
+      if (initialCoords) setIsCentered(false);
     }
 
-    // 지도 이벤트 리스너
     window.naver.maps.Event.addListener(map, "dragstart", () => {
       setIsMapMoving(true);
       setIsCentered(false);
@@ -268,52 +298,62 @@ export function LocationPickerOverlay({
       setIsMapMoving(false);
       updateAddressFromCoords(lat, lng);
     });
-  }, [
-    isSdkLoaded,
-    updateAddressFromCoords,
-    currentCoords.lat,
-    currentCoords.lng,
-    initialCoords,
-  ]);
+  }, [completeInitialSetup, initialCoords, isSdkLoaded, updateAddressFromCoords]);
+
+  useEffect(() => {
+    if (!isMapInteractive || !mapInstanceRef.current) return;
+
+    mapInstanceRef.current.setOptions({
+      draggable: true,
+      scrollWheel: true,
+      pinchZoom: true,
+    });
+  }, [isMapInteractive]);
 
   const handleMyLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (!isMountedRef.current) return;
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const latLng = new window.naver.maps.LatLng(lat, lng);
-          mapInstanceRef.current?.panTo(latLng);
-          setIsCentered(true);
-          setLocationPermission("granted");
-        },
-        (error) => {
-          if (!isMountedRef.current) return;
-          setIsCentered(false);
-          if (error.code === error.PERMISSION_DENIED) {
-            setLocationPermission("denied");
-            openPopup();
-          } else {
-            setIsLocationErrorPopupOpen(true);
-          }
-        },
-      );
-    }
+    if (!isMapInteractive || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!isMountedRef.current) return;
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const latLng = new window.naver.maps.LatLng(lat, lng);
+        mapInstanceRef.current?.panTo(latLng);
+        setIsCentered(true);
+        setLocationPermission("granted");
+      },
+      (error) => {
+        if (!isMountedRef.current) return;
+        setIsCentered(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationPermission("denied");
+          openPopup();
+        } else {
+          setIsLocationErrorPopupOpen(true);
+        }
+      },
+    );
   };
 
   const handleConfirm = () => {
     onSelect(currentAddress, currentCoords);
   };
 
+  const isAddressPending =
+    !isMapInteractive || isMapMoving || isGeocoding;
+  const isConfirmDisabled = isAddressPending;
+
   return (
     <div className={overlayContainer}>
       <div className={mapWrapper}>
         <div ref={mapRef} className={map} />
 
+        {!isMapInteractive && <ReportPageLoadingOverlay />}
+
         <div className={centerPinContainer}>
           <IconNavigationPin40
-            className={[centerPin, !isMapMoving ? "bounce" : ""]
+            className={[centerPin, !isMapMoving && isMapInteractive ? "bounce" : ""]
               .filter(Boolean)
               .join(" ")}
           />
@@ -323,6 +363,7 @@ export function LocationPickerOverlay({
           type="button"
           className={myLocationButton}
           onClick={handleMyLocation}
+          disabled={!isMapInteractive}
         >
           <IconCircleboxCrosshair48
             state={
@@ -340,7 +381,7 @@ export function LocationPickerOverlay({
         <div className={addressInfo}>
           <span className={addressLabel}>{m.report_location_selected_label()}</span>
           <div className={addressText}>
-            {isMapMoving || isGeocoding
+            {isAddressPending
               ? m.report_location_loading()
               : currentAddress}
           </div>
@@ -351,9 +392,9 @@ export function LocationPickerOverlay({
           intent="primary"
           size="L"
           onPress={handleConfirm}
-          isDisabled={isMapMoving || isGeocoding}
+          isDisabled={isConfirmDisabled}
         >
-          {isMapMoving || isGeocoding
+          {isAddressPending
             ? m.report_location_confirming()
             : m.report_location_confirm_button()}
         </Button>
