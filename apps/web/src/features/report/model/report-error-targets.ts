@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+import { REPORT_SECTION_ORDER } from "#/features/report/lib/scroll-to-report-section";
 import {
   AGGREGATE_VALIDATION_FIELDS,
   type AggregateValidationField,
@@ -106,6 +108,31 @@ export function getEarliestStep(
   return steps.includes(1) ? 1 : 2;
 }
 
+/** earliestStep 범위 안에서 REPORT_SECTION_ORDER 기준 첫 섹션 */
+export function getEarliestSectionId(
+  targets: ValidationErrorTarget[],
+  earliestStep: 1 | 2 | null,
+): ReportSectionId | null {
+  const scopedTargets =
+    earliestStep != null
+      ? targets.filter((target) => target.step === earliestStep)
+      : targets;
+
+  const sectionSet = new Set(
+    scopedTargets
+      .map((target) => target.sectionId)
+      .filter((sectionId): sectionId is ReportSectionId => sectionId !== null),
+  );
+
+  for (const sectionId of REPORT_SECTION_ORDER) {
+    if (sectionSet.has(sectionId)) {
+      return sectionId;
+    }
+  }
+
+  return null;
+}
+
 export type ValidationErrorItem = {
   field: string;
   message: string;
@@ -148,11 +175,10 @@ export type ApplyValidationErrorsParams = {
     name: keyof ReportFormValues,
     error: { type: string; message: string },
   ) => void;
-  setSectionServerErrors: (
-    updater: (
-      prev: Partial<Record<ReportSectionId, string>>,
-    ) => Partial<Record<ReportSectionId, string>>,
-  ) => void;
+  setSectionServerErrors: Dispatch<
+    SetStateAction<Partial<Record<ReportSectionId, string>>>
+  >;
+  clearErrors?: () => void;
 };
 
 export type ApplyValidationErrorsResult = {
@@ -164,8 +190,11 @@ export type ApplyValidationErrorsResult = {
 
 export function applyValidationErrors(
   errors: ValidationErrorItem[],
-  { setError, setSectionServerErrors }: ApplyValidationErrorsParams,
+  { setError, setSectionServerErrors, clearErrors }: ApplyValidationErrorsParams,
 ): ApplyValidationErrorsResult {
+  clearErrors?.();
+  setSectionServerErrors({});
+
   const normalizedErrors = normalizeValidationErrors(errors);
   const targets = normalizedErrors.map((e) =>
     resolveValidationErrorTarget(e.field),
@@ -193,13 +222,12 @@ export function applyValidationErrors(
   }
 
   if (Object.keys(sectionUpdates).length > 0) {
-    setSectionServerErrors((prev) => ({ ...prev, ...sectionUpdates }));
+    setSectionServerErrors(sectionUpdates);
   }
 
   const earliestStep = getEarliestStep(targets);
   const hasUnknown = targets.some((t) => t.kind === "unknown");
-  const firstSectionId =
-    targets.find((t) => t.sectionId !== null)?.sectionId ?? null;
+  const firstSectionId = getEarliestSectionId(targets, earliestStep);
 
   return { targets, earliestStep, hasUnknown, firstSectionId };
 }
@@ -271,9 +299,7 @@ export function applyClientValidationIssues(
     }
   }
 
-  if (Object.keys(sectionUpdates).length > 0) {
-    setSectionServerErrors((prev) => ({ ...prev, ...sectionUpdates }));
-  }
+  setSectionServerErrors(sectionUpdates);
 
   return sectionOrder;
 }

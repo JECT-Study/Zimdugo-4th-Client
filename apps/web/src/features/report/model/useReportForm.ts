@@ -274,6 +274,7 @@ export function useReportForm(): {
           const result = applyValidationErrors(failure.validationErrors, {
             setError: form.setError,
             setSectionServerErrors,
+            clearErrors: form.clearErrors,
           });
 
           pendingValidationNavigationRef.current = {

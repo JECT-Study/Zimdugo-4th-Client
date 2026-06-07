@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   applyClientValidationIssues,
   applyValidationErrors,
+  getEarliestSectionId,
   getEarliestStep,
   normalizeServerValidationMessage,
   resolveValidationErrorTarget,
@@ -85,6 +86,19 @@ describe("getEarliestStep", () => {
   });
 });
 
+describe("getEarliestSectionId", () => {
+  it("mixed step 오류에서 earliestStep 기준 REPORT_SECTION_ORDER를 따른다", () => {
+    const targets = [
+      resolveValidationErrorTarget("minPrice"),
+      resolveValidationErrorTarget("lockerType"),
+    ];
+
+    expect(getEarliestSectionId(targets, getEarliestStep(targets))).toBe(
+      "classification",
+    );
+  });
+});
+
 describe("normalizeServerValidationMessage", () => {
   it("위치 field의 required는 invalid_location으로 바꾼다", () => {
     expect(normalizeServerValidationMessage("roadAddress", "required")).toBe(
@@ -119,14 +133,13 @@ describe("applyValidationErrors", () => {
       type: "server",
       message: "비어 있을 수 없습니다",
     });
-    expect(setSectionServerErrors).not.toHaveBeenCalled();
+    expect(setSectionServerErrors).toHaveBeenCalledWith({});
+    expect(setSectionServerErrors).toHaveBeenCalledTimes(1);
   });
 
-  it("aggregate field는 sectionServerErrors를 갱신한다", () => {
+  it("aggregate field는 sectionServerErrors를 교체한다", () => {
     const setError = vi.fn();
-    const setSectionServerErrors = vi.fn((updater) =>
-      updater({ classification: "old" }),
-    );
+    const setSectionServerErrors = vi.fn();
 
     applyValidationErrors(
       [{ field: "enumInputValid", message: "validation.invalid_enum" }],
@@ -134,7 +147,10 @@ describe("applyValidationErrors", () => {
     );
 
     expect(setError).not.toHaveBeenCalled();
-    expect(setSectionServerErrors).toHaveBeenCalled();
+    expect(setSectionServerErrors).toHaveBeenCalledWith({});
+    expect(setSectionServerErrors).toHaveBeenCalledWith({
+      classification: "validation.invalid_enum",
+    });
   });
 
   it("roadAddress required는 invalid_location으로 setError한다", () => {
@@ -162,8 +178,24 @@ describe("applyValidationErrors", () => {
     );
 
     expect(setError).not.toHaveBeenCalled();
-    expect(setSectionServerErrors).not.toHaveBeenCalled();
+    expect(setSectionServerErrors).toHaveBeenCalledWith({});
     expect(result.firstSectionId).toBeNull();
+  });
+
+  it("step 1·2 혼합 서버 오류에서 firstSectionId는 step 1 섹션 순서를 따른다", () => {
+    const setError = vi.fn();
+    const setSectionServerErrors = vi.fn();
+
+    const result = applyValidationErrors(
+      [
+        { field: "minPrice", message: "required" },
+        { field: "lockerType", message: "required" },
+      ],
+      { setError, setSectionServerErrors },
+    );
+
+    expect(result.earliestStep).toBe(1);
+    expect(result.firstSectionId).toBe("classification");
   });
 
   it("unknown field는 setError·section 갱신 없이 hasUnknown을 true로 반환한다", () => {
@@ -176,7 +208,7 @@ describe("applyValidationErrors", () => {
     );
 
     expect(setError).not.toHaveBeenCalled();
-    expect(setSectionServerErrors).not.toHaveBeenCalled();
+    expect(setSectionServerErrors).toHaveBeenCalledWith({});
     expect(result.hasUnknown).toBe(true);
   });
 });
@@ -194,10 +226,7 @@ describe("toClientValidationIssues", () => {
 describe("applyClientValidationIssues", () => {
   it("Zod field 오류를 sectionServerErrors와 setError에 반영한다", () => {
     const setError = vi.fn();
-    const updates: Array<Partial<Record<string, string>>> = [];
-    const setSectionServerErrors = vi.fn((updater) => {
-      updates.push(updater({}));
-    });
+    const setSectionServerErrors = vi.fn();
 
     const sectionIds = applyClientValidationIssues(
       [{ path: ["endTime"], message: "invalid_range" }],
@@ -209,16 +238,15 @@ describe("applyClientValidationIssues", () => {
       type: "custom",
       message: "invalid_range",
     });
-    expect(updates.at(-1)?.time).toBe("invalid_range");
+    expect(setSectionServerErrors).toHaveBeenCalledWith({
+      time: "invalid_range",
+    });
     expect(sectionIds).toEqual(["time"]);
   });
 
   it("step 필터로 해당 단계 오류만 반영한다", () => {
     const setError = vi.fn();
-    const updates: Array<Partial<Record<string, string>>> = [];
-    const setSectionServerErrors = vi.fn((updater) => {
-      updates.push(updater({}));
-    });
+    const setSectionServerErrors = vi.fn();
 
     applyClientValidationIssues(
       [
@@ -234,6 +262,8 @@ describe("applyClientValidationIssues", () => {
       message: "required",
     });
     expect(setError).not.toHaveBeenCalledWith("endTime", expect.anything());
-    expect(updates.at(-1)).toEqual({ classification: "required" });
+    expect(setSectionServerErrors).toHaveBeenCalledWith({
+      classification: "required",
+    });
   });
 });
