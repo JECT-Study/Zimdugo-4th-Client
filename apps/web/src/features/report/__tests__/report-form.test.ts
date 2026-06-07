@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
 import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
-import { collectErrorSectionIds } from "#/features/report/lib/report-field-errors";
+import { collectErrorSectionIds, mergeErrorSectionIds } from "#/features/report/lib/report-field-errors";
 import { applyValidationErrors } from "#/features/report/model/report-error-targets";
 import { parseReportForm } from "#/features/report/model/report-schema";
 import {
@@ -87,6 +87,15 @@ describe("report form multi-step validation", () => {
     });
 
     expect(sectionIds).toContain("classification");
+  });
+
+  it("aggregate sectionServerErrors는 field error와 합쳐 scroll 대상을 만든다", () => {
+    const sectionIds = mergeErrorSectionIds(
+      {},
+      { classification: "validation.invalid_enum" },
+    );
+
+    expect(sectionIds).toEqual(["classification"]);
   });
 
   it("Step 1 field 오류 존재 여부를 판별해 Step 2 유지/복귀를 결정한다", () => {

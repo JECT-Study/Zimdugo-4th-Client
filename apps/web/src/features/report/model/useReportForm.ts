@@ -25,7 +25,7 @@ import {
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
 import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
-import { collectErrorSectionIds } from "#/features/report/lib/report-field-errors";
+import { collectErrorSectionIds, mergeErrorSectionIds } from "#/features/report/lib/report-field-errors";
 import {
   scrollToEarliestReportSection,
   scrollToReportSection,
@@ -130,6 +130,7 @@ export function useReportForm(): {
     null,
   );
   const scrollTimeoutRef = useRef<number | null>(null);
+  const sectionServerErrorsRef = useRef(sectionServerErrors);
 
   const scheduleSectionScroll = useCallback(
     (scroll: () => void, afterStepTransition: boolean) => {
@@ -150,6 +151,10 @@ export function useReportForm(): {
     },
     [],
   );
+
+  useEffect(() => {
+    sectionServerErrorsRef.current = sectionServerErrors;
+  }, [sectionServerErrors]);
 
   useEffect(() => {
     return () => {
@@ -234,7 +239,10 @@ export function useReportForm(): {
         return;
       }
 
-      const sectionIds = collectErrorSectionIds(form.formState.errors);
+      const sectionIds = mergeErrorSectionIds(
+        form.formState.errors,
+        sectionServerErrorsRef.current,
+      );
       if (sectionIds.length > 0) {
         scrollToEarliestReportSection(sectionIds);
       }

@@ -19,3 +19,18 @@ export function collectErrorSectionIds(
 
   return [...sectionIds];
 }
+
+export function mergeErrorSectionIds(
+  errors: FieldErrors<ReportFormValues>,
+  sectionServerErrors: Partial<Record<ReportSectionId, string>>,
+): ReportSectionId[] {
+  const sectionIds = new Set(collectErrorSectionIds(errors));
+
+  for (const sectionId of Object.keys(
+    sectionServerErrors,
+  ) as ReportSectionId[]) {
+    sectionIds.add(sectionId);
+  }
+
+  return [...sectionIds];
+}
