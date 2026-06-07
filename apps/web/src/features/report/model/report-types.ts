@@ -33,7 +33,7 @@ export type ReportFormValues = {
   endTime: string | null;
   sizeTypes: SizeType[];
   additionalInfo: string;
-  /** @todo ZIM-?? S3 presigned 업로드 연동 후 `string | null` URL 허용 */
+  /** @todo S3 presigned 업로드 연동 후 `string | null` URL 허용 */
   imageUrl: null;
 };
 
@@ -105,6 +105,24 @@ export const AGGREGATE_VALIDATION_FIELDS = [
 ] as const;
 
 export type AggregateValidationField = (typeof AGGREGATE_VALIDATION_FIELDS)[number];
+
+export type UploadCategory = "PROFILE" | "LOCKER_REPORT";
+
+export const UPLOAD_CATEGORY_LOCKER_REPORT =
+  "LOCKER_REPORT" as const satisfies UploadCategory;
+
+export type UploadCreateRequest = {
+  category: UploadCategory;
+  fileName: string;
+  contentType: string;
+};
+
+export type UploadCreateData = {
+  uploadUrl: string;
+  fileUrl: string;
+  key: string;
+  expiresAt: string;
+};
 
 export type RestResponse<T> = {
   code: string;
