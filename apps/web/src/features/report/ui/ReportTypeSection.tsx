@@ -1,17 +1,18 @@
 import { m } from "@repo/i18n";
 import { ControlChipGroup } from "@repo/ui/components/control-chip-group";
 import { LabelTitle } from "@repo/ui/components/label-title";
+import type { LockerType } from "#/features/report/model/report-types";
 import { placeType, requiredMark, section } from "./report.css.ts";
 
 interface ReportTypeSectionProps {
-  lockerType: string[];
-  setLockerType: (val: string[]) => void;
-  options: Array<{ label: string; value: string }>;
+  lockerType: LockerType | null;
+  onChange: (value: LockerType | null) => void;
+  options: Array<{ label: string; value: LockerType }>;
 }
 
 export function ReportTypeSection({
   lockerType,
-  setLockerType,
+  onChange,
   options,
 }: ReportTypeSectionProps) {
   return (
@@ -23,8 +24,11 @@ export function ReportTypeSection({
       <div className={placeType}>
         <ControlChipGroup
           options={options}
-          value={lockerType}
-          onChange={(keys) => setLockerType(keys.slice(-1))}
+          value={lockerType ? [lockerType] : []}
+          onChange={(keys) => {
+            const next = keys.at(-1);
+            onChange(next ? (next as LockerType) : null);
+          }}
           selectionMode="single"
           ariaLabel={m.report_type_filter_aria()}
         />
