@@ -140,6 +140,11 @@ export interface LockerSuggestDataRaw {
 }
 
 export interface PlaceLockersDataRaw {
+  placeId: number;
+  placeName: string;
+  roadAddress: string;
+  latitude: number;
+  longitude: number;
   bounds: LockerBoundsRaw;
   lockers: LockerNestedRaw[];
 }
@@ -156,17 +161,34 @@ export interface LockerDetailRaw {
   placeName?: string;
   roadAddress: string;
   lockerType: string;
+  indoorOutdoorType?: string;
+  groundLevelType?: string;
+  floor?: number;
   minPrice?: number;
+  maxPrice?: number;
+  lockerSizes?: string[];
   latitude: number;
   longitude: number;
   distanceMeters?: number;
   updatedAt?: string;
   isFavorite?: boolean;
+  startTime?: string;
+  endTime?: string;
+  detailInfo?: string;
+  imageUrl?: string;
+  accurateVoteCount?: number;
+  inaccurateVoteCount?: number;
+  /** @deprecated Swagger는 operatingHours 대신 startTime/endTime */
   operatingHours?: LockerOperatingHoursRaw | null;
+  /** @deprecated Swagger는 floor 사용 */
   floorLabel?: string;
+  /** @deprecated Swagger는 lockerSizes 사용 */
   sizeLabel?: string;
+  /** @deprecated Swagger는 detailInfo 사용 */
   detailHelpText?: string;
+  /** @deprecated Swagger는 accurateVoteCount 사용 */
   accurateCount?: number;
+  /** @deprecated Swagger는 inaccurateVoteCount 사용 */
   inaccurateCount?: number;
 }
 
@@ -279,10 +301,9 @@ export const getLockerSuggest = async (
   params: GetLockerSuggestParams,
 ): Promise<LockerSuggestDataRaw> => {
   const { signal, ...queryParams } = params;
-  const { data: response } = await httpGet<BackendResponse<LockerSuggestDataRaw>>(
-    "/api/v1/lockers/suggest",
-    { params: queryParams, signal },
-  );
+  const { data: response } = await httpGet<
+    BackendResponse<LockerSuggestDataRaw>
+  >("/api/v1/lockers/suggest", { params: queryParams, signal });
 
   return unwrapBackendData(response);
 };
@@ -291,10 +312,9 @@ export const getPlaceLockers = async (
   params: GetPlaceLockersParams,
 ): Promise<PlaceLockersDataRaw> => {
   const { placeId, signal, ...queryParams } = params;
-  const { data: response } = await httpGet<BackendResponse<PlaceLockersDataRaw>>(
-    `/api/v1/places/${placeId}`,
-    { params: queryParams, signal },
-  );
+  const { data: response } = await httpGet<
+    BackendResponse<PlaceLockersDataRaw>
+  >(`/api/v1/places/${placeId}`, { params: queryParams, signal });
 
   return unwrapBackendData(response);
 };

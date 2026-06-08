@@ -60,21 +60,10 @@ const toSvgDataUrl = (svg: string): string =>
 /**
  * Icon option caches.
  *
- * PLACE icons (`{ content: string }`) contain no SDK-specific objects and are
- * safe to share across any maps instance, so they live in a plain module-level
- * Map keyed by `iconSignature` ("PLACE:<lockerCount>").
- *
- * LOCKER icons (`{ url, size, scaledSize, origin, anchor }`) use SDK
- * constructor values (`maps.Size`, `maps.Point`) that are tied to a particular
- * naver.maps instance. A WeakMap keyed by the maps instance holds a per-instance
- * inner Map, so different maps instances (e.g., unit tests with mocked SDKs)
- * never share cached values.
- *
- * With ~11 possible combinations total (1 LOCKER + ~10 PLACE variants), the
- * caches will be populated once and then reused for every subsequent marker
- * creation, avoiding redundant SVG string generation and SDK object allocation.
+ * Marker icons use image URLs derived from SVG so PLACE/LOCKER pins both
+ * receive click events reliably. Options are cached per maps instance via
+ * WeakMap because SDK objects (`maps.Size`, `maps.Point`) are instance-bound.
  */
-type PlaceIconOptions = { content: string };
 type LockerIconOptions = {
   url: string;
   size: naver.maps.Size;
@@ -83,7 +72,6 @@ type LockerIconOptions = {
   anchor: naver.maps.Point;
 };
 
-const placeIconCache = new Map<string, PlaceIconOptions>();
 const lockerIconCache = new WeakMap<
   typeof naver.maps,
   Map<string, LockerIconOptions>
@@ -92,21 +80,9 @@ const lockerIconCache = new WeakMap<
 const createMarkerIconOptions = (
   pin: LockerPinItemResponse,
   maps: typeof naver.maps,
-): PlaceIconOptions | LockerIconOptions => {
+): LockerIconOptions => {
   const key = getPinIconSignature(pin);
 
-  if (pin.pinType === "PLACE") {
-    const cached = placeIconCache.get(key);
-    if (cached) return cached;
-
-    const options: PlaceIconOptions = {
-      content: createLockerMarkerIcon(pin),
-    };
-    placeIconCache.set(key, options);
-    return options;
-  }
-
-  // LOCKER — keyed by maps instance via WeakMap
   let innerMap = lockerIconCache.get(maps);
   if (!innerMap) {
     innerMap = new Map<string, LockerIconOptions>();
@@ -144,10 +120,28 @@ const createLockerMarker = ({
 }) =>
   new maps.Marker({
     map,
+    clickable: true,
     title: pin.pinType === "LOCKER" ? "보관함" : "보관함 모음",
     position: new maps.LatLng(pin.latitude, pin.longitude),
     icon: createMarkerIconOptions(pin, maps),
   });
+
+const attachMarkerSelectListener = (
+  entry: LockerMarkerEntry,
+  maps: typeof naver.maps,
+  pin: LockerPinItemResponse,
+  onSelectLocker: (pinType: "LOCKER" | "PLACE", id: number) => void,
+) => {
+  if (entry.listener) {
+    maps.Event.removeListener(entry.listener);
+  }
+
+  entry.listener = maps.Event.addListener(entry.marker, "click", () => {
+    const id = pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId;
+    if (id == null) return;
+    onSelectLocker(pin.pinType, id);
+  });
+};
 
 const clearMarkerEntry = (
   entry: LockerMarkerEntry,
@@ -179,7 +173,10 @@ export const syncLockerMarkers = ({
   const nextPinIds = new Set(lockers.map(getPinId));
 
   // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
-  const mapBounds = map.getBounds?.() as naver.maps.LatLngBounds | null | undefined;
+  const mapBounds = map.getBounds?.() as
+    | naver.maps.LatLngBounds
+    | null
+    | undefined;
   const ne = mapBounds?.getNE?.();
   const sw = mapBounds?.getSW?.();
   let expandedBounds: naver.maps.LatLngBounds | null = null;
@@ -222,9 +219,16 @@ export const syncLockerMarkers = ({
         existingEntry.marker.setIcon?.(createMarkerIconOptions(pin, maps));
         existingEntry.iconSignature = iconSignature;
       }
-      
+
       if (existingEntry.marker.getVisible() !== isVisible) {
         existingEntry.marker.setVisible(isVisible);
+      }
+
+      if (onSelectLocker) {
+        attachMarkerSelectListener(existingEntry, maps, pin, onSelectLocker);
+      } else if (existingEntry.listener) {
+        maps.Event.removeListener(existingEntry.listener);
+        existingEntry.listener = undefined;
       }
 
       continue;
@@ -232,7 +236,7 @@ export const syncLockerMarkers = ({
 
     const marker = createLockerMarker({ map, maps, pin });
     marker.setVisible(isVisible);
-    
+
     const entry: LockerMarkerEntry = {
       marker,
       iconSignature,
@@ -240,10 +244,7 @@ export const syncLockerMarkers = ({
     };
 
     if (onSelectLocker) {
-      entry.listener = maps.Event.addListener(marker, "click", () => {
-        const id = pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId;
-        onSelectLocker(pin.pinType, id);
-      });
+      attachMarkerSelectListener(entry, maps, pin, onSelectLocker);
     }
 
     registry.set(pinId, entry);

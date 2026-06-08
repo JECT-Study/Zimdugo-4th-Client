@@ -19,6 +19,7 @@ import type {
   LockerKeywordItemRaw,
   LockerNestedRaw,
   LockerSuggestItemRaw,
+  PlaceLockersDataRaw,
 } from "./lockers";
 
 export interface LockerKeywordViewModel {
@@ -28,6 +29,11 @@ export interface LockerKeywordViewModel {
 }
 
 export interface PlaceLockersViewModel {
+  placeId: number;
+  placeName: string;
+  roadAddress: string;
+  latitude: number;
+  longitude: number;
   bounds: LockerBoundsRaw;
   lockers: SearchLockerResultItem[];
 }
@@ -39,6 +45,8 @@ const toSearchLockerResultItem = (
   lockerId: raw.lockerId,
   title: raw.lockerName,
   address: raw.roadAddress,
+  latitude: raw.latitude,
+  longitude: raw.longitude,
   categoryLabel: getLockerTypeLabel(raw.lockerType),
   updatedLabel: formatUpdatedLabel(raw.updatedAt),
   distanceLabel: formatDistanceMeters(raw.distanceMeters),
@@ -63,6 +71,8 @@ const toSearchPlaceResultItem = (
     placeId: raw.placeId,
     title: raw.placeName,
     address: raw.roadAddress,
+    latitude: raw.latitude,
+    longitude: raw.longitude,
     distanceLabel: formatDistanceMeters(raw.distanceMeters),
     distanceMeters: raw.distanceMeters,
     updatedAt: raw.updatedAt,
@@ -83,6 +93,8 @@ const toTopLevelLockerResultItem = (
     lockerId: raw.lockerId,
     title: raw.lockerName,
     address: raw.roadAddress,
+    latitude: raw.latitude,
+    longitude: raw.longitude,
     categoryLabel: getLockerTypeLabel(raw.lockerType),
     updatedLabel: formatUpdatedLabel(raw.updatedAt),
     distanceLabel: formatDistanceMeters(raw.distanceMeters),
@@ -114,10 +126,14 @@ export const toLockerKeywordViewModel = (payload: {
   items: toSearchKeywordItems(payload.items),
 });
 
-export const toPlaceLockersViewModel = (payload: {
-  bounds: LockerBoundsRaw;
-  lockers: LockerNestedRaw[];
-}): PlaceLockersViewModel => ({
+export const toPlaceLockersViewModel = (
+  payload: PlaceLockersDataRaw,
+): PlaceLockersViewModel => ({
+  placeId: payload.placeId,
+  placeName: payload.placeName,
+  roadAddress: payload.roadAddress,
+  latitude: payload.latitude,
+  longitude: payload.longitude,
   bounds: payload.bounds,
   lockers: payload.lockers.map(toSearchLockerResultItem),
 });
@@ -163,11 +179,51 @@ export const toSearchAutocompleteItems = (
     .map(toSearchAutocompleteItem)
     .filter((item): item is SearchAutocompleteItemData => item !== null);
 
+const formatLockerPriceLabel = (
+  minPrice?: number,
+  maxPrice?: number,
+): string | undefined => {
+  if (minPrice === undefined && maxPrice === undefined) {
+    return undefined;
+  }
+
+  const minLabel =
+    minPrice !== undefined
+      ? `${minPrice.toLocaleString("ko-KR")}원`
+      : undefined;
+  const maxLabel =
+    maxPrice !== undefined
+      ? `${maxPrice.toLocaleString("ko-KR")}원`
+      : undefined;
+
+  if (minLabel && maxLabel) {
+    return `${minLabel} ~ ${maxLabel}`;
+  }
+
+  return minLabel ?? maxLabel;
+};
+
+const formatOperatingHoursLabel = (
+  raw: LockerDetailRaw,
+): string | undefined => {
+  if (raw.startTime && raw.endTime) {
+    return `운영시간 ${raw.startTime} ~ ${raw.endTime}`;
+  }
+
+  if (raw.operatingHours) {
+    return `운영시간 ${raw.operatingHours.open} ~ ${raw.operatingHours.close}`;
+  }
+
+  return undefined;
+};
+
 export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   itemType: "LOCKER",
   lockerId: raw.lockerId,
   title: raw.lockerName,
   address: raw.roadAddress,
+  latitude: raw.latitude,
+  longitude: raw.longitude,
   categoryLabel: getLockerTypeLabel(raw.lockerType),
   updatedLabel: formatUpdatedLabel(raw.updatedAt),
   distanceLabel:
@@ -178,18 +234,16 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   updatedAt: raw.updatedAt,
   minPrice: raw.minPrice,
   isFavorite: raw.isFavorite,
-  operatingHoursLabel: raw.operatingHours
-    ? `운영시간 ${raw.operatingHours.open} ~ ${raw.operatingHours.close}`
-    : undefined,
-  floorLabel: raw.floorLabel,
-  priceLabel:
-    raw.minPrice !== undefined
-      ? `${raw.minPrice.toLocaleString("ko-KR")}원 ~`
-      : undefined,
-  sizeLabel: raw.sizeLabel,
-  detailHelpText: raw.detailHelpText,
-  accurateCount: raw.accurateCount,
-  inaccurateCount: raw.inaccurateCount,
+  operatingHoursLabel: formatOperatingHoursLabel(raw),
+  floorLabel: raw.floor !== undefined ? `${raw.floor}층` : raw.floorLabel,
+  priceLabel: formatLockerPriceLabel(raw.minPrice, raw.maxPrice),
+  sizeLabel:
+    raw.lockerSizes && raw.lockerSizes.length > 0
+      ? raw.lockerSizes.join(", ")
+      : raw.sizeLabel,
+  detailHelpText: raw.detailInfo ?? raw.detailHelpText,
+  accurateCount: raw.accurateVoteCount ?? raw.accurateCount,
+  inaccurateCount: raw.inaccurateVoteCount ?? raw.inaccurateCount,
   lastUpdatedLabel: raw.updatedAt
     ? `최근 업데이트 ${formatUpdatedLabel(raw.updatedAt)}`
     : undefined,

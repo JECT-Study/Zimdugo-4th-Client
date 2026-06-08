@@ -3,7 +3,9 @@ import { ControlChip } from "@repo/ui/components/control-chip";
 import { IconFilter14 } from "@repo/ui/tokens/icons";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { NonSearch, SearchListResults } from "#/entities/search";
+import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
+import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
 import {
   type EnglishSubPolicy,
   resolveEnglishSubVisibility,
@@ -51,6 +53,9 @@ export interface SearchListBottomSheetProps {
   placeName?: string | null;
   onLockerPress?: (item: SearchLockerResultItem) => void;
   onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
@@ -91,6 +96,9 @@ export function SearchListBottomSheet({
   placeName = null,
   onLockerPress,
   onFavoriteChange,
+  isLoading = false,
+  isError = false,
+  onRetry,
   minSnapPoint,
   snapPoint,
   maxSnapPoint,
@@ -129,7 +137,10 @@ export function SearchListBottomSheet({
       new Date(),
     );
   }, [activeSort, filteredItems]);
-  const hasResult = visibleItems.length > 0;
+  const isPlaceScope = Boolean(placeName);
+  const hasResult = !isLoading && !isError && visibleItems.length > 0;
+  const showEmpty = !isLoading && !isError && visibleItems.length === 0;
+  const showResultHeader = hasResult || isPlaceScope;
   const showEnglishSub = resolveEnglishSubVisibility({
     appLanguage,
     policy: englishSubPolicy,
@@ -148,7 +159,8 @@ export function SearchListBottomSheet({
       messages.search_sort_price?.() ?? SORT_LABEL_FALLBACKS[appLanguage].price,
   };
   const resultTitleText = placeName
-    ? `"${placeName}"에 위치한 보관함입니다.`
+    ? (messages.search_place_lockers_title?.({ place: placeName }) ??
+      `"${placeName}"에 위치한 보관함입니다.`)
     : undefined;
 
   const handleSortPress = (key: SearchSortKey) => {
@@ -177,12 +189,12 @@ export function SearchListBottomSheet({
       onSnapChange={onSnapChange}
     >
       <div className={sheetColumn}>
-        {hasResult ? (
+        {showResultHeader ? (
           <div className={resultHeader}>
             <SearchResultsHeading
               queryText={searchQuery}
               titleText={resultTitleText}
-              resultCount={visibleItems.length}
+              resultCount={hasResult ? visibleItems.length : undefined}
             />
             <div className={resultSortRow}>
               {onOpenFilter ? (
@@ -221,7 +233,13 @@ export function SearchListBottomSheet({
             .join(" ")}
         >
           {children ??
-            (hasResult ? (
+            (isLoading ? (
+              <SearchResultListSkeleton />
+            ) : isError ? (
+              <div className={emptyState}>
+                <SearchAsyncFeedback variant="result-error" onRetry={onRetry} />
+              </div>
+            ) : hasResult ? (
               <div className={listStack}>
                 <SearchListResults
                   items={visibleItems}
@@ -233,14 +251,14 @@ export function SearchListBottomSheet({
                   }
                 />
               </div>
-            ) : (
+            ) : showEmpty ? (
               <div className={emptyState}>
                 <NonSearch
                   query={searchQuery}
                   showEnglishSub={showEnglishSub}
                 />
               </div>
-            ))}
+            ) : null)}
         </div>
       </div>
     </DraggableBottomSheet>

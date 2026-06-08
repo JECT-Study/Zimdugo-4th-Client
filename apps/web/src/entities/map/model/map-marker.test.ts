@@ -202,7 +202,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.scaledSize).toBeInstanceOf(FakeSize);
   });
 
-  it("keeps content icon option for place marker badges", () => {
+  it("uses an image icon option for place markers", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -215,10 +215,13 @@ describe("syncLockerMarkers", () => {
     });
 
     const options = FakeMarker.instances[0]?.options as {
-      icon?: { content?: string };
+      icon?: { url?: string };
     };
 
-    expect(options.icon?.content).toContain('data-type="PLACE"');
+    expect(options.icon?.url).toContain("data:image/svg+xml");
+    expect(decodeURIComponent(options.icon?.url ?? "")).toContain(
+      'data-type="PLACE"',
+    );
   });
 
   it("passes pin type and id when a locker marker is clicked", () => {

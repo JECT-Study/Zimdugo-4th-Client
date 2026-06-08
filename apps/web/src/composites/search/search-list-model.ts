@@ -11,6 +11,8 @@ interface SearchResultBase {
   title: string;
   distanceLabel: string;
   address: string;
+  latitude?: number;
+  longitude?: number;
   distanceMeters?: number;
   updatedAt?: string;
   minPrice?: number;
@@ -58,6 +60,18 @@ export const getNextExpandedPlaceId = (
   currentPlaceId: number | null,
   requestedPlaceId: number,
 ) => (currentPlaceId === requestedPlaceId ? null : requestedPlaceId);
+
+export const findPlaceTitleInSearchResults = (
+  items: SearchResultItem[],
+  placeId: number,
+): string | null => {
+  const place = items.find(
+    (item): item is SearchPlaceResultItem =>
+      item.itemType === "PLACE" && item.placeId === placeId,
+  );
+
+  return place?.title ?? null;
+};
 
 export const filterSearchResults = (
   items: SearchResultItem[],

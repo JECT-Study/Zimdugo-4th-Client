@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { toLockerKeywordViewModel } from "./locker-adapters";
-import type { LockerKeywordDataRaw } from "./lockers";
+import {
+  toLockerDetailItem,
+  toLockerKeywordViewModel,
+  toPlaceLockersViewModel,
+} from "./locker-adapters";
+import type {
+  LockerDetailRaw,
+  LockerKeywordDataRaw,
+  PlaceLockersDataRaw,
+} from "./lockers";
 
 const GANGNAM_KEYWORD_RESPONSE: LockerKeywordDataRaw = {
   count: 4,
@@ -84,5 +92,75 @@ describe("locker-adapters", () => {
       expect(viewModel.items[1].lockerId).toBe(515);
       expect(viewModel.items[1].distanceMeters).toBe(238);
     }
+  });
+
+  it("place lockers 응답을 place 메타 + locker 리스트로 변환한다", () => {
+    const raw: PlaceLockersDataRaw = {
+      placeId: 158,
+      placeName: "강남역 1, 12번 출구",
+      roadAddress: "서울특별시 강남구 강남대로 지하396(역삼동)",
+      latitude: 37.497958,
+      longitude: 127.027539,
+      bounds: {
+        swLat: 37.496068,
+        swLng: 127.027539,
+        neLat: 37.517185,
+        neLng: 127.04122,
+      },
+      lockers: [
+        {
+          lockerId: 167,
+          lockerName: "강남역 1, 12번 출구 지하",
+          roadAddress: "서울특별시 강남구 강남대로 지하396(역삼동)",
+          lockerType: "SUBWAY_STATION",
+          minPrice: 2200,
+          latitude: 37.497958,
+          longitude: 127.027539,
+          distanceMeters: 16,
+          updatedAt: "2026-05-31T14:59:09.298782",
+          isFavorite: false,
+        },
+      ],
+    };
+
+    const viewModel = toPlaceLockersViewModel(raw);
+
+    expect(viewModel.placeId).toBe(158);
+    expect(viewModel.placeName).toBe("강남역 1, 12번 출구");
+    expect(viewModel.lockers).toHaveLength(1);
+    expect(viewModel.lockers[0]?.lockerId).toBe(167);
+  });
+
+  it("locker detail Swagger 필드를 UI 모델로 변환한다", () => {
+    const raw: LockerDetailRaw = {
+      lockerId: 515,
+      lockerName: "강남역 4번 출구 지하 1층",
+      roadAddress: "서울특별시 강남구 강남대로 지하396",
+      lockerType: "SUBWAY_STATION",
+      latitude: 37.496068,
+      longitude: 127.028506,
+      minPrice: 3000,
+      maxPrice: 5000,
+      floor: 1,
+      lockerSizes: ["SMALL", "MEDIUM"],
+      startTime: "06:00",
+      endTime: "23:00",
+      detailInfo: "지하 1층 안내 데스크 옆",
+      accurateVoteCount: 12,
+      inaccurateVoteCount: 1,
+      updatedAt: "2026-05-31T14:59:09",
+      isFavorite: false,
+    };
+
+    const detail = toLockerDetailItem(raw);
+
+    expect(detail.title).toBe("강남역 4번 출구 지하 1층");
+    expect(detail.operatingHoursLabel).toBe("운영시간 06:00 ~ 23:00");
+    expect(detail.floorLabel).toBe("1층");
+    expect(detail.priceLabel).toBe("3,000원 ~ 5,000원");
+    expect(detail.sizeLabel).toBe("SMALL, MEDIUM");
+    expect(detail.detailHelpText).toBe("지하 1층 안내 데스크 옆");
+    expect(detail.accurateCount).toBe(12);
+    expect(detail.inaccurateCount).toBe(1);
   });
 });

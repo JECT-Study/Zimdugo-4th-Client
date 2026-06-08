@@ -22,6 +22,25 @@ export const contentStack = style({
   minHeight: 0,
 });
 
+export const detailHeader = style({
+  display: "flex",
+  alignItems: "center",
+  width: "100%",
+  height: "32px",
+});
+
+export const backButton = style({
+  width: "32px",
+  minWidth: "32px",
+  height: "32px",
+  padding: 0,
+  color: vars.color.text.title,
+});
+
+export const backIcon = style({
+  flexShrink: 0,
+});
+
 export const fullContentScroll = style({
   flex: 1,
   minHeight: 0,

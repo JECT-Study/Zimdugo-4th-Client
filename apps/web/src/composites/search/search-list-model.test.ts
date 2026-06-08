@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   filterSearchResults,
+  findPlaceTitleInSearchResults,
   getNextExpandedPlaceId,
   getSearchResultEntityId,
   type SearchLockerResultItem,
@@ -115,5 +116,10 @@ describe("search-list-model", () => {
       RESULTS[0],
     ]);
     expect(getSearchResultEntityId(RESULTS[0]!)).toBe(100);
+  });
+
+  it("키워드 결과에서 placeId로 장소명을 찾는다", () => {
+    expect(findPlaceTitleInSearchResults(RESULTS, 100)).toBe("코엑스");
+    expect(findPlaceTitleInSearchResults(RESULTS, 999)).toBeNull();
   });
 });

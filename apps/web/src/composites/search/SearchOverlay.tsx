@@ -5,11 +5,15 @@ import { SearchField } from "@repo/ui/components/search-field";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { useEffect, useMemo, useState } from "react";
 import {
+  getSearchAutocompleteItemKey,
   SearchAutocompleteItem,
   type SearchAutocompleteItemData,
-  getSearchAutocompleteItemKey,
   SearchListRecent,
 } from "#/entities/search";
+import { useLockerSuggest } from "#/features/search/hooks/useSearch";
+import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
+import { SearchSuggestListSkeleton } from "#/features/search/ui/search-skeleton/SearchSuggestListSkeleton";
+import { useDebouncedValue } from "#/shared/hooks/useDebouncedValue";
 import {
   autocompleteList,
   backButton,
@@ -24,13 +28,18 @@ import {
   searchFieldSlot,
   sectionHeader,
 } from "./SearchOverlay.css.ts";
-import { filterSearchAutocompleteDevItems } from "./search-autocomplete-dev-fixtures";
+
+const SUGGEST_MIN_QUERY_LENGTH = 2;
 
 export interface SearchOverlayProps {
-  onClose: () => void;
+  onClose: (draft?: string) => void;
   onSelect: (query: string) => void;
-  onSelectAutocomplete?: (item: SearchAutocompleteItemData) => void;
+  onSelectAutocomplete?: (
+    item: SearchAutocompleteItemData,
+    sourceQuery: string,
+  ) => void;
   initialQuery?: string;
+  searchCoordinates: { lat: number; lng: number };
 }
 
 /**
@@ -42,6 +51,7 @@ export function SearchOverlay({
   onSelect,
   onSelectAutocomplete,
   initialQuery = "",
+  searchCoordinates,
 }: SearchOverlayProps) {
   const t = (m ?? {}) as unknown as Record<
     string,
@@ -57,10 +67,41 @@ export function SearchOverlay({
     { id: 5, query: "잠실 롯데타워", date: "04.20" },
   ]);
   const normalizedQuery = query.trim();
-  const autocompleteItems = useMemo(
-    () => filterSearchAutocompleteDevItems(normalizedQuery),
-    [normalizedQuery],
+  const debouncedQuery = useDebouncedValue(normalizedQuery, 300);
+  const suggestParams = useMemo(
+    () =>
+      debouncedQuery.length >= SUGGEST_MIN_QUERY_LENGTH
+        ? {
+            keyword: debouncedQuery,
+            lat: searchCoordinates.lat,
+            lng: searchCoordinates.lng,
+          }
+        : null,
+    [debouncedQuery, searchCoordinates.lat, searchCoordinates.lng],
   );
+  const {
+    data: autocompleteItems = [],
+    isFetching,
+    isError,
+    isFetched,
+    refetch,
+  } = useLockerSuggest(suggestParams);
+
+  const isSuggestEligible = normalizedQuery.length >= SUGGEST_MIN_QUERY_LENGTH;
+  const isDebouncing = isSuggestEligible && normalizedQuery !== debouncedQuery;
+  const showSuggestLoading = isSuggestEligible && (isDebouncing || isFetching);
+  const showSuggestError = isSuggestEligible && isError && !showSuggestLoading;
+  const showSuggestEmpty =
+    isSuggestEligible &&
+    isFetched &&
+    !showSuggestLoading &&
+    !showSuggestError &&
+    autocompleteItems.length === 0;
+  const showSuggestResults =
+    isSuggestEligible &&
+    !showSuggestLoading &&
+    !showSuggestError &&
+    autocompleteItems.length > 0;
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -77,8 +118,7 @@ export function SearchOverlay({
 
   const handleAutocompleteSelect = (item: SearchAutocompleteItemData) => {
     if (onSelectAutocomplete) {
-      handleQueryChange(item.title);
-      onSelectAutocomplete(item);
+      onSelectAutocomplete(item, query);
       return;
     }
 
@@ -86,7 +126,7 @@ export function SearchOverlay({
   };
 
   const handleBack = () => {
-    onClose();
+    onClose(query);
   };
 
   const handleRemoveRecent = (id: number) => {
@@ -213,13 +253,28 @@ export function SearchOverlay({
 
         {hasQuery ? (
           <div className={autocompleteList}>
-            {autocompleteItems.map((item) => (
-              <SearchAutocompleteItem
-                key={getSearchAutocompleteItemKey(item)}
-                item={item}
-                onPress={handleAutocompleteSelect}
+            {!isSuggestEligible ? (
+              <SearchAsyncFeedback variant="suggest-min-length" />
+            ) : null}
+            {showSuggestLoading ? <SearchSuggestListSkeleton /> : null}
+            {showSuggestError ? (
+              <SearchAsyncFeedback
+                variant="suggest-error"
+                onRetry={() => void refetch()}
               />
-            ))}
+            ) : null}
+            {showSuggestEmpty ? (
+              <SearchAsyncFeedback variant="suggest-empty" />
+            ) : null}
+            {showSuggestResults
+              ? autocompleteItems.map((item) => (
+                  <SearchAutocompleteItem
+                    key={getSearchAutocompleteItemKey(item)}
+                    item={item}
+                    onPress={handleAutocompleteSelect}
+                  />
+                ))
+              : null}
           </div>
         ) : null}
       </main>

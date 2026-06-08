@@ -2,7 +2,12 @@ import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { SearchField } from "@repo/ui/components/search-field";
 import { IconNormalSearch24, IconX24 } from "@repo/ui/tokens/icons";
-import { type CSSProperties, useEffect } from "react";
+import {
+  type CSSProperties,
+  type MouseEvent,
+  type PointerEvent,
+  useEffect,
+} from "react";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   type StyleReadyProbe,
@@ -113,8 +118,15 @@ export function HomeSearchBar({
     onOpenSearch();
   };
 
-  const handleCloseSearchContext = () => {
+  const handleCloseSearchContext = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     onCloseSearchContext?.();
+  };
+
+  const handleClosePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   useEffect(() => {
@@ -163,7 +175,7 @@ export function HomeSearchBar({
             searchIconPlacement="left"
             placeholder={m.search_placeholder()}
             aria-label={m.search_input_aria()}
-            value={isSearchContextActive ? searchQuery : undefined}
+            value={isSearchContextActive ? searchQuery : ""}
             textTone={isSearchContextActive ? "on" : "auto"}
             isReadOnly
             onFocus={handleOpenSearch}
@@ -172,6 +184,7 @@ export function HomeSearchBar({
             <button
               type="button"
               className={closeButton}
+              onPointerDown={handleClosePointerDown}
               onClick={handleCloseSearchContext}
               aria-label="홈으로 돌아가기"
             >

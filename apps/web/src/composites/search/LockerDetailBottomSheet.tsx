@@ -2,13 +2,14 @@ import { Button } from "@repo/ui/components/button";
 import {
   IconCamera24,
   IconCaution24,
+  IconChevronLeft13,
+  IconLockerDetailHeader24,
   IconNormalCapacity24,
   IconNormalMapPin24,
   IconNormalWallet24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
-  IconLockerDetailHeader24,
 } from "@repo/ui/tokens/icons";
 import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
@@ -17,8 +18,11 @@ import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {
   actionRow,
   addressText,
+  backButton,
+  backIcon,
   contentStack,
   detailDescription,
+  detailHeader,
   detailIcon,
   detailItem,
   detailItemContent,
@@ -69,6 +73,7 @@ export interface LockerDetailItem extends SearchLockerResultItem {
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
   onFavoriteChange?: (item: LockerDetailItem, next: boolean) => void;
+  onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
   onNavigate?: (item: LockerDetailItem) => void;
   minSnapPoint?: number;
@@ -119,6 +124,7 @@ export const createLockerDetailFromAutocompleteItem = (
 export function LockerDetailBottomSheet({
   locker,
   onFavoriteChange,
+  onBack,
   onShare,
   onNavigate,
   minSnapPoint,
@@ -142,6 +148,10 @@ export function LockerDetailBottomSheet({
 
   const handleFavoritePress = () => {
     onFavoriteChange?.(locker, !locker.isFavorite);
+  };
+
+  const handleBack = () => {
+    onBack?.();
   };
 
   const handleShare = () => {
@@ -183,6 +193,7 @@ export function LockerDetailBottomSheet({
           <FullDetailContent
             locker={locker}
             detailHelpText={detailHelpText}
+            onBack={handleBack}
             onShare={handleShare}
             onNavigate={handleNavigate}
           />
@@ -192,6 +203,7 @@ export function LockerDetailBottomSheet({
             detailHelpText={detailHelpText}
             favoriteLabel={favoriteLabel}
             onFavoritePress={handleFavoritePress}
+            onBack={handleBack}
             onShare={handleShare}
             onNavigate={handleNavigate}
           />
@@ -206,6 +218,7 @@ function HalfDetailContent({
   detailHelpText,
   favoriteLabel,
   onFavoritePress,
+  onBack,
   onShare,
   onNavigate,
 }: {
@@ -213,11 +226,13 @@ function HalfDetailContent({
   detailHelpText: string;
   favoriteLabel: string;
   onFavoritePress: () => void;
+  onBack: () => void;
   onShare: () => void;
   onNavigate: () => void;
 }) {
   return (
     <div className={contentStack}>
+      <DetailBackButton onBack={onBack} />
       <SummarySection
         locker={locker}
         detailHelpText={detailHelpText}
@@ -233,11 +248,13 @@ function HalfDetailContent({
 function FullDetailContent({
   locker,
   detailHelpText,
+  onBack,
   onShare,
   onNavigate,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
+  onBack: () => void;
   onShare: () => void;
   onNavigate: () => void;
 }) {
@@ -248,6 +265,7 @@ function FullDetailContent({
     <>
       <div className={fullContentScroll}>
         <div className={contentStack}>
+          <DetailBackButton onBack={onBack} />
           <ImageReportCard isFull />
           <div className={fullDetailList}>
             <DetailInfoRow
@@ -299,6 +317,23 @@ function FullDetailContent({
         <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
       </div>
     </>
+  );
+}
+
+function DetailBackButton({ onBack }: { onBack: () => void }) {
+  return (
+    <div className={detailHeader}>
+      <Button
+        variant="ghost"
+        intent="neutral"
+        size="S"
+        className={backButton}
+        onPress={onBack}
+        aria-label="뒤로가기"
+      >
+        <IconChevronLeft13 className={backIcon} />
+      </Button>
+    </div>
   );
 }
 

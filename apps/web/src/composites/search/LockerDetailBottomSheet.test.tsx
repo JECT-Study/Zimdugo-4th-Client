@@ -71,4 +71,16 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.getByText("부정확한 정보에요 5")).toBeTruthy();
     expect(screen.getByText("최근 업데이트 2026-05-16 16:25")).toBeTruthy();
   });
+
+  it("calls onBack when the back button is pressed", () => {
+    const handleBack = vi.fn();
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onBack={handleBack} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "뒤로가기" }));
+
+    expect(handleBack).toHaveBeenCalledTimes(1);
+  });
 });
