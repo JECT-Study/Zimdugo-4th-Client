@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
-import { ReportPriceSection } from "#/features/report/ui/ReportPriceSection";
+import { ReportPriceSectionView } from "#/features/report/ui/ReportPriceSection";
 import { ReportTypeSection } from "#/features/report/ui/ReportTypeSection";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {
@@ -20,6 +20,10 @@ import {
   sheetColumn,
   sizeCardSlot,
 } from "./SearchFilterBottomSheet.css.ts";
+import {
+  normalizeSearchFilterPriceRange,
+  validateSearchFilterPrice,
+} from "./search-filter-price-validation";
 
 type SearchFilterPriceType = "free" | "paid" | "none";
 
@@ -83,6 +87,9 @@ export function SearchFilterBottomSheet({
   const [selectedSizes, setSelectedSizes] = useState<SizeCardType[]>(
     restoredFilters.selectedSizes,
   );
+  const [priceErrorMessage, setPriceErrorMessage] = useState<
+    string | undefined
+  >();
 
   const indoorOutdoorOptions = [
     {
@@ -183,6 +190,7 @@ export function SearchFilterBottomSheet({
     setPriceType("none");
     setMinPrice("");
     setMaxPrice("");
+    setPriceErrorMessage(undefined);
     setIndoorOutdoor([]);
     setPlaceType([]);
     setSelectedSizes([]);
@@ -190,6 +198,24 @@ export function SearchFilterBottomSheet({
   };
 
   const handleApply = () => {
+    const nextPriceErrorMessage = validateSearchFilterPrice({
+      priceType,
+      minPrice,
+      maxPrice,
+      messages: {
+        invalidRange: () =>
+          t.search_filter_error_price_range?.() ??
+          "올바른 가격 범위를 입력해주세요.",
+      },
+    });
+
+    if (nextPriceErrorMessage) {
+      setPriceErrorMessage(nextPriceErrorMessage);
+      return;
+    }
+
+    setPriceErrorMessage(undefined);
+
     const hasPriceFilter =
       priceType !== "none" || minPrice.length > 0 || maxPrice.length > 0;
 
@@ -205,6 +231,18 @@ export function SearchFilterBottomSheet({
       placeTypeState,
       selectedSizes,
     });
+  };
+
+  const handleNormalizePriceRange = (changedField: "min" | "max") => {
+    const normalizedRange = normalizeSearchFilterPriceRange({
+      minPrice,
+      maxPrice,
+      changedField,
+    });
+
+    setMinPrice(normalizedRange.minPrice);
+    setMaxPrice(normalizedRange.maxPrice);
+    setPriceErrorMessage(undefined);
   };
 
   return (
@@ -236,14 +274,30 @@ export function SearchFilterBottomSheet({
           </div>
 
           <div className={[sectionGap24].join(" ")}>
-            <ReportPriceSection
+            <ReportPriceSectionView
               priceType={priceType}
-              setPriceType={setPriceType}
+              setPriceType={(nextPriceType) => {
+                setPriceType(nextPriceType);
+                if (nextPriceType !== "paid") {
+                  setMinPrice("");
+                  setMaxPrice("");
+                }
+                setPriceErrorMessage(undefined);
+              }}
               minPrice={minPrice}
-              setMinPrice={setMinPrice}
+              setMinPrice={(nextMinPrice) => {
+                setMinPrice(nextMinPrice);
+                setPriceErrorMessage(undefined);
+              }}
               maxPrice={maxPrice}
-              setMaxPrice={setMaxPrice}
+              setMaxPrice={(nextMaxPrice) => {
+                setMaxPrice(nextMaxPrice);
+                setPriceErrorMessage(undefined);
+              }}
+              errorMessage={priceErrorMessage}
               formatPrice={formatPriceInput}
+              onMinPriceBlur={() => handleNormalizePriceRange("min")}
+              onMaxPriceBlur={() => handleNormalizePriceRange("max")}
             />
           </div>
 

@@ -2,7 +2,6 @@ import { m } from "@repo/i18n";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { Input } from "@repo/ui/components/input";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
-import { ReportSectionError } from "./ReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
@@ -22,22 +21,37 @@ interface ReportPriceSectionProps {
   setMaxPrice: (val: string) => void;
   sectionServerError?: string;
   onFieldChange?: () => void;
+  formatPrice?: (val: string) => string;
+  onMinPriceBlur?: () => void;
+  onMaxPriceBlur?: () => void;
 }
 
-export function ReportPriceSection({
+interface ReportPriceSectionViewProps extends ReportPriceSectionProps {
+  errorMessage?: string;
+}
+
+export function ReportPriceSection(props: ReportPriceSectionProps) {
+  const errorMessage = useReportSectionError(
+    ["isFree", "minPrice", "maxPrice"],
+    props.sectionServerError,
+  );
+
+  return <ReportPriceSectionView {...props} errorMessage={errorMessage} />;
+}
+
+export function ReportPriceSectionView({
   priceType,
   setPriceType,
   minPrice,
   setMinPrice,
   maxPrice,
   setMaxPrice,
-  sectionServerError,
+  errorMessage,
   onFieldChange,
-}: ReportPriceSectionProps) {
-  const errorMessage = useReportSectionError(
-    ["isFree", "minPrice", "maxPrice"],
-    sectionServerError,
-  );
+  formatPrice,
+  onMinPriceBlur,
+  onMaxPriceBlur,
+}: ReportPriceSectionViewProps) {
   const errorId = errorMessage ? "report-price-error" : undefined;
 
   return (
@@ -90,11 +104,12 @@ export function ReportPriceSection({
               placeholder={m.report_price_min_placeholder()}
               value={minPrice}
               onChange={(val) => {
-                setMinPrice(val);
+                setMinPrice(formatPrice?.(val) ?? val);
                 onFieldChange?.();
               }}
               inputMode="numeric"
               aria-label={m.report_price_min_input_aria()}
+              onBlur={() => onMinPriceBlur?.()}
             />
             <span className={priceUnit}>{m.report_price_unit()}</span>
           </div>
@@ -104,11 +119,12 @@ export function ReportPriceSection({
               placeholder={m.report_price_max_placeholder()}
               value={maxPrice}
               onChange={(val) => {
-                setMaxPrice(val);
+                setMaxPrice(formatPrice?.(val) ?? val);
                 onFieldChange?.();
               }}
               inputMode="numeric"
               aria-label={m.report_price_max_input_aria()}
+              onBlur={() => onMaxPriceBlur?.()}
             />
             <span className={priceUnit}>{m.report_price_unit()}</span>
           </div>
