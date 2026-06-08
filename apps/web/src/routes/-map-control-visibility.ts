@@ -4,6 +4,16 @@ interface ShouldShowMapControlsOptions {
   hasMapInstance: boolean;
 }
 
+interface ShouldShowHomeSearchBarOptions {
+  hasMapError: boolean;
+}
+
+export const shouldShowHomeSearchBar = ({
+  hasMapError,
+}: ShouldShowHomeSearchBarOptions) => {
+  return !hasMapError;
+};
+
 export const shouldShowMapControls = ({
   isMapLoading,
   hasMapError,

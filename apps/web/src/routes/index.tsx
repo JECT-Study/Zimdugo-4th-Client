@@ -53,7 +53,10 @@ import {
   refreshLoadingOverlay,
   refreshLoadingSpinner,
 } from "./-index.css";
-import { shouldShowMapControls } from "./-map-control-visibility";
+import {
+  shouldShowHomeSearchBar,
+  shouldShowMapControls,
+} from "./-map-control-visibility";
 
 export const Route = createFileRoute("/")({ component: IndexPage });
 
@@ -366,6 +369,7 @@ function IndexPage() {
     hasMapError,
     hasMapInstance: !!mapInstance,
   });
+  const shouldRenderHomeSearchBar = shouldShowHomeSearchBar({ hasMapError });
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizePriceActive ||
@@ -393,12 +397,14 @@ function IndexPage() {
 
   return (
     <main className={pageWrapper}>
-      <HomeSearchBar
-        onOpenSearch={handleOpenSearch}
-        onCloseSearchContext={handleExitSearchContext}
-        searchQuery={searchQuery}
-        isSearchContextActive={sheetMode !== "idle"}
-      />
+      {shouldRenderHomeSearchBar ? (
+        <HomeSearchBar
+          onOpenSearch={handleOpenSearch}
+          onCloseSearchContext={handleExitSearchContext}
+          searchQuery={searchQuery}
+          isSearchContextActive={sheetMode !== "idle"}
+        />
+      ) : null}
 
       {(isRefreshVisualLoading || isLocationDelayedLoading) && (
         <div className={refreshLoadingOverlay}>
