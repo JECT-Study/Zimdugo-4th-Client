@@ -7,7 +7,8 @@
 import { createApiClient, createApiMethods } from "@repo/libs/axios";
 
 // API 기본 URL (환경변수 또는 기본값 사용)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://api.zimdugo.com";
 
 // API 클라이언트 생성
 export const apiClient = createApiClient(API_BASE_URL);
