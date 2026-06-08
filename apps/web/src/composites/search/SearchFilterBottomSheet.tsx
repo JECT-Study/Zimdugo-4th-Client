@@ -7,6 +7,7 @@ import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { ReportPriceSectionView } from "#/features/report/ui/ReportPriceSection";
+import type { LockerType } from "#/features/report/model/report-types";
 import { ReportTypeSection } from "#/features/report/ui/ReportTypeSection";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {
@@ -42,6 +43,8 @@ export interface SearchFilterAppliedState {
 export interface SearchFilterBottomSheetProps {
   className?: string;
   initialFilters?: SearchFilterAppliedState;
+  /** map place: 단일 선택. search keyword: 다중 선택(기본) */
+  placeTypeSelectionMode?: "single" | "multiple";
   onCollapseToResults?: () => void;
   onReset?: () => void;
   onApply?: (filters: SearchFilterAppliedState) => void;
@@ -62,6 +65,7 @@ export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
 export function SearchFilterBottomSheet({
   className,
   initialFilters,
+  placeTypeSelectionMode = "multiple",
   onCollapseToResults,
   onReset,
   onApply,
@@ -323,12 +327,21 @@ export function SearchFilterBottomSheet({
           </div>
 
           <div className={sectionGap24}>
-            <ReportTypeSection
-              lockerType={placeTypeState}
-              setLockerType={setPlaceType}
-              options={placeTypeOptions}
-              selectionMode="multiple"
-            />
+            {placeTypeSelectionMode === "single" ? (
+              <ReportTypeSection
+                lockerType={(placeTypeState[0] as LockerType | undefined) ?? null}
+                onChange={(value) => setPlaceType(value ? [value] : [])}
+                options={placeTypeOptions}
+                selectionMode="single"
+              />
+            ) : (
+              <ReportTypeSection
+                lockerType={placeTypeState}
+                setLockerType={setPlaceType}
+                options={placeTypeOptions}
+                selectionMode="multiple"
+              />
+            )}
           </div>
         </div>
 

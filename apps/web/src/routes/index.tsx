@@ -20,10 +20,7 @@ import {
 } from "#/composites/search/SearchFilterBottomSheet";
 import { SearchListBottomSheet } from "#/composites/search/SearchListBottomSheet";
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
-import {
-  findPlaceTitleInSearchResults,
-  type SearchLockerResultItem,
-} from "#/composites/search/search-list-model";
+import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
@@ -40,6 +37,7 @@ import {
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
+import { useLockerDetail } from "#/features/search/hooks/useLockerDetail";
 import {
   useLockerKeywordSearch,
   usePlaceLockers,
@@ -55,12 +53,26 @@ import {
   type SearchSelectionState,
   syncSearchDraft,
 } from "#/features/search/model/search-selection";
-import { toLockerDetailItem } from "#/shared/api/locker-adapters";
-import { getLockerDetail } from "#/shared/api/lockers";
+import {
+  type AppMapContext,
+  createKeywordDetailBackTarget,
+  createPlaceDetailBackTarget,
+  createSearchDetailBackTarget,
+  type MapDetailBack,
+  type OverlayReturnContext,
+  type SearchDetailBackTarget,
+  type SearchListKind,
+  resolveActivePlaceId,
+  resolveOverlayReturnContext,
+  shouldFetchKeywordSearch,
+  shouldFetchPlaceLockers,
+  shouldShowIdleMarkers,
+  shouldShowSearchMarkers,
+} from "#/features/search/model/sheet-session";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
-import { type SheetMode, useSearchStore } from "#/shared/store/search";
+import { useSearchStore } from "#/shared/store/search";
 import {
   locationButton,
   locationControlStack,
@@ -80,12 +92,6 @@ import {
 export const Route = createFileRoute("/")({ component: IndexPage });
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
-type DetailBackMode = Exclude<SheetMode, "detail">;
-
-interface SelectedPlace {
-  placeId: number;
-  placeName: string;
-}
 
 function IndexPage() {
   const queryClient = useQueryClient();
@@ -117,13 +123,21 @@ function IndexPage() {
   const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
     createDefaultSearchFilters,
   );
+  const [activeLockerId, setActiveLockerId] = useState<number | null>(null);
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(null);
-  const [detailBackMode, setDetailBackMode] = useState<DetailBackMode>("idle");
-  const [searchDraft, setSearchDraft] = useState("");
-  const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(
+  const [context, setContext] = useState<AppMapContext>("idle");
+  const [overlayReturnContext, setOverlayReturnContext] =
+    useState<OverlayReturnContext>("idle");
+  const [listKind, setListKind] = useState<SearchListKind | null>(null);
+  const [searchPlaceId, setSearchPlaceId] = useState<number | null>(null);
+  const [mapPlaceId, setMapPlaceId] = useState<number | null>(null);
+  const [searchDetailBack, setSearchDetailBack] =
+    useState<SearchDetailBackTarget | null>(null);
+  const [mapDetailBack, setMapDetailBack] = useState<MapDetailBack | null>(
     null,
   );
+  const [searchDraft, setSearchDraft] = useState("");
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
@@ -273,9 +287,42 @@ function IndexPage() {
     setMapInstance(map);
   }, []);
 
+  const resetMapContext = useCallback(() => {
+    setMapPlaceId(null);
+    setActiveLockerId(null);
+    setSelectedLockerDetail(null);
+    setMapDetailBack(null);
+    setSearchFilters(createDefaultSearchFilters());
+    setIsNavigationPopupOpen(false);
+    setSheetMode("idle");
+    setContext("idle");
+  }, [setSheetMode]);
+
+  const resetSearchContext = useCallback(() => {
+    setSearchQuery("");
+    setSearchDraft("");
+    setSearchFilters(createDefaultSearchFilters());
+    setListKind(null);
+    setSearchPlaceId(null);
+    setSearchDetailBack(null);
+    setActiveLockerId(null);
+    setSelectedLockerDetail(null);
+    setIsNavigationPopupOpen(false);
+    setSheetMode("idle");
+    setContext("idle");
+    setIsSearchOpen(false);
+  }, [setIsSearchOpen, setSearchQuery, setSheetMode]);
+
   const handleOpenSearch = useCallback(() => {
+    const returnContext = resolveOverlayReturnContext(context);
+
+    if (context === "map") {
+      resetMapContext();
+    }
+
+    setOverlayReturnContext(returnContext);
     setIsSearchOpen(true);
-  }, [setIsSearchOpen]);
+  }, [context, resetMapContext, setIsSearchOpen]);
 
   const handleCloseSearch = useCallback(
     (draft?: string) => {
@@ -283,21 +330,13 @@ function IndexPage() {
         setSearchDraft(draft.trim());
       }
       setIsSearchOpen(false);
+      // overlayReturnContext === "search" → 시트·query 유지 (state 변경 없음)
+      void overlayReturnContext;
     },
-    [setIsSearchOpen],
+    [overlayReturnContext, setIsSearchOpen],
   );
 
-  const handleExitSearchContext = useCallback(() => {
-    setSearchQuery("");
-    setSearchDraft("");
-    setSelectedPlace(null);
-    setSelectedLockerDetail(null);
-    setDetailBackMode("idle");
-    setIsNavigationPopupOpen(false);
-    setSearchFilters(createDefaultSearchFilters());
-    setIsSearchOpen(false);
-    setSheetMode("idle");
-  }, [setIsSearchOpen, setSearchQuery, setSheetMode]);
+  const handleExitSearchContext = resetSearchContext;
 
   const searchCoordinates = useMemo(() => {
     if (location) {
@@ -312,13 +351,36 @@ function IndexPage() {
     return DEFAULT_SEARCH_COORDINATES;
   }, [location, mapInstance]);
 
-  const shouldFetchSearchListData =
-    sheetMode === "list" ||
-    sheetMode === "filter" ||
-    (sheetMode === "detail" && detailBackMode !== "idle");
+  const activePlaceId = useMemo(
+    () =>
+      resolveActivePlaceId({
+        context,
+        listKind,
+        searchPlaceId,
+        mapPlaceId,
+      }),
+    [context, listKind, mapPlaceId, searchPlaceId],
+  );
+
+  const shouldFetchKeywordList = shouldFetchKeywordSearch({
+    context,
+    listKind,
+    sheetMode,
+    searchDetailBack,
+    searchQuery,
+  });
+
+  const shouldFetchPlaceList = shouldFetchPlaceLockers({
+    context,
+    listKind,
+    sheetMode,
+    searchDetailBack,
+    mapDetailBack,
+    activePlaceId,
+  });
 
   const keywordSearchParams = useMemo(() => {
-    if (!shouldFetchSearchListData || selectedPlace || !searchQuery.trim()) {
+    if (!shouldFetchKeywordList) {
       return null;
     }
 
@@ -333,27 +395,26 @@ function IndexPage() {
     searchCoordinates.lng,
     searchFilters,
     searchQuery,
-    selectedPlace,
-    shouldFetchSearchListData,
+    shouldFetchKeywordList,
   ]);
 
   const placeLockersParams = useMemo(() => {
-    if (!shouldFetchSearchListData || !selectedPlace) {
+    if (!shouldFetchPlaceList || activePlaceId == null) {
       return null;
     }
 
     return {
-      placeId: selectedPlace.placeId,
+      placeId: activePlaceId,
       lat: searchCoordinates.lat,
       lng: searchCoordinates.lng,
       ...toLockerSearchFilterParams(searchFilters),
     };
   }, [
+    activePlaceId,
     searchCoordinates.lat,
     searchCoordinates.lng,
     searchFilters,
-    selectedPlace,
-    shouldFetchSearchListData,
+    shouldFetchPlaceList,
   ]);
 
   const {
@@ -370,17 +431,38 @@ function IndexPage() {
     refetch: refetchPlaceLockers,
   } = usePlaceLockers(placeLockersParams);
 
+  const lockerDetailParams = useMemo(
+    () =>
+      activeLockerId != null
+        ? {
+            lockerId: activeLockerId,
+            lat: searchCoordinates.lat,
+            lng: searchCoordinates.lng,
+          }
+        : null,
+    [activeLockerId, searchCoordinates.lat, searchCoordinates.lng],
+  );
+
+  const { data: lockerDetail, isError: isLockerDetailError } =
+    useLockerDetail(lockerDetailParams);
+
   const searchResultPins = useMemo(() => {
-    if (selectedPlace) {
+    if (context === "search" && listKind === "place") {
       return searchLockerItemsToPins(placeLockersResults?.lockers ?? []);
     }
 
     return searchResultItemsToPins(keywordSearchResults?.items ?? []);
   }, [
+    context,
     keywordSearchResults?.items,
+    listKind,
     placeLockersResults?.lockers,
-    selectedPlace,
   ]);
+
+  const activePlaceName =
+    context === "map" || listKind === "place"
+      ? (placeLockersResults?.placeName ?? null)
+      : null;
 
   const applySearchSelection = useCallback(
     (selection: SearchSelectionState) => {
@@ -391,66 +473,35 @@ function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    async (lockerId: number, options: { backMode?: DetailBackMode } = {}) => {
-      try {
-        const raw = await getLockerDetail({
-          lockerId,
-          lat: searchCoordinates.lat,
-          lng: searchCoordinates.lng,
-        });
-        const detail = toLockerDetailItem(raw);
-        setSelectedLockerDetail(detail);
-        setDetailBackMode(
-          options.backMode ??
-            (sheetMode === "detail" ? detailBackMode : sheetMode),
-        );
-        setIsNavigationPopupOpen(false);
-        setIsSearchOpen(false);
-        setSheetMode("detail");
-
-        if (
-          mapInstance &&
-          detail.latitude !== undefined &&
-          detail.longitude !== undefined
-        ) {
-          focusNaverMapOnCoordinates({
-            map: mapInstance,
-            coordinates: {
-              lat: detail.latitude,
-              lng: detail.longitude,
-            },
-          });
-        }
-      } catch {
-        // API 실패 시 detail 시트는 열지 않는다.
-      }
+    (lockerId: number) => {
+      setSelectedLockerDetail(null);
+      setActiveLockerId(lockerId);
+      setIsNavigationPopupOpen(false);
+      setIsSearchOpen(false);
+      setSheetMode("detail");
     },
-    [
-      mapInstance,
-      searchCoordinates.lat,
-      searchCoordinates.lng,
-      detailBackMode,
-      setIsSearchOpen,
-      setSheetMode,
-      sheetMode,
-    ],
+    [setIsSearchOpen, setSheetMode],
   );
 
-  const openPlaceLockers = useCallback(
+  const openSearchPlaceList = useCallback(
     (
-      place: SelectedPlace,
-      options: { applySelection?: boolean; draft?: string } = {},
+      placeId: number,
+      options: { applySelection?: boolean; draft?: string; placeName?: string } = {},
     ) => {
-      if (options.applySelection) {
+      if (options.applySelection && options.placeName) {
         applySearchSelection(
           createPlaceSearchSelection(
             options.draft ?? searchDraft,
-            place.placeName,
+            options.placeName,
           ),
         );
       }
 
-      setSelectedPlace(place);
+      setContext("search");
+      setListKind("place");
+      setSearchPlaceId(placeId);
+      setSearchDetailBack(null);
+      setActiveLockerId(null);
       setSelectedLockerDetail(null);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
@@ -459,10 +510,28 @@ function IndexPage() {
     [applySearchSelection, searchDraft, setIsSearchOpen, setSheetMode],
   );
 
+  const openMapPlaceList = useCallback(
+    (placeId: number) => {
+      setContext("map");
+      setMapPlaceId(placeId);
+      setMapDetailBack(null);
+      setActiveLockerId(null);
+      setSelectedLockerDetail(null);
+      setIsNavigationPopupOpen(false);
+      setIsSearchOpen(false);
+      setSheetMode("list");
+    },
+    [setIsSearchOpen, setSheetMode],
+  );
+
   const handleSelectSearch = useCallback(
     (query: string) => {
       applySearchSelection(createKeywordSearchSelection(query));
-      setSelectedPlace(null);
+      setContext("search");
+      setListKind("keyword");
+      setSearchPlaceId(null);
+      setSearchDetailBack(null);
+      setActiveLockerId(null);
       setSelectedLockerDetail(null);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
@@ -474,59 +543,84 @@ function IndexPage() {
   const handleSelectSearchAutocomplete = useCallback(
     (item: SearchAutocompleteItemData, sourceQuery: string) => {
       if (item.itemType === "LOCKER") {
-        setSelectedPlace(null);
+        setContext("search");
+        setListKind("keyword");
+        setSearchPlaceId(null);
         setSearchDraft(syncSearchDraft(sourceQuery).searchDraft);
-        void openLockerDetailById(item.lockerId, { backMode: "list" });
+        setSearchDetailBack(createKeywordDetailBackTarget());
+        void openLockerDetailById(item.lockerId);
         return;
       }
 
-      openPlaceLockers(
-        { placeId: item.placeId, placeName: item.title },
-        { applySelection: true, draft: sourceQuery },
-      );
+      openSearchPlaceList(item.placeId, {
+        applySelection: true,
+        draft: sourceQuery,
+        placeName: item.title,
+      });
     },
-    [openLockerDetailById, openPlaceLockers],
+    [openLockerDetailById, openSearchPlaceList],
   );
 
   const handleOpenLockerDetail = useCallback(
     (item: SearchLockerResultItem) => {
-      void openLockerDetailById(item.lockerId, { backMode: "list" });
+      if (context === "map") {
+        setMapDetailBack("placeList");
+      } else if (context === "search") {
+        setSearchDetailBack(
+          listKind === "place" && searchPlaceId != null
+            ? createPlaceDetailBackTarget(searchPlaceId)
+            : createKeywordDetailBackTarget(),
+        );
+      }
+
+      void openLockerDetailById(item.lockerId);
     },
-    [openLockerDetailById],
+    [context, listKind, openLockerDetailById, searchPlaceId],
   );
 
-  const handleMapPinSelect = useCallback(
+  const handleIdlePinSelect = useCallback(
     (pinType: "LOCKER" | "PLACE", id: number) => {
-      if (pinType === "PLACE") {
-        const placeName =
-          findPlaceTitleInSearchResults(
-            keywordSearchResults?.items ?? [],
-            id,
-          ) ??
-          selectedPlace?.placeName ??
-          "";
-
-        openPlaceLockers({ placeId: id, placeName });
+      if (context !== "idle") {
         return;
       }
 
-      void openLockerDetailById(id, {
-        backMode:
-          sheetMode === "detail"
-            ? detailBackMode
-            : sheetMode === "idle"
-              ? "idle"
-              : sheetMode,
-      });
+      if (pinType === "PLACE") {
+        openMapPlaceList(id);
+        return;
+      }
+
+      setContext("map");
+      setMapDetailBack("idle");
+      void openLockerDetailById(id);
     },
-    [
-      detailBackMode,
-      keywordSearchResults?.items,
-      openLockerDetailById,
-      openPlaceLockers,
-      selectedPlace?.placeName,
-      sheetMode,
-    ],
+    [context, openLockerDetailById, openMapPlaceList],
+  );
+
+  const handleSearchMarkerSelect = useCallback(
+    (pinType: "LOCKER" | "PLACE", id: number) => {
+      if (context !== "search") {
+        return;
+      }
+
+      if (pinType === "PLACE") {
+        setListKind("place");
+        setSearchPlaceId(id);
+        setActiveLockerId(null);
+        setSearchDetailBack(null);
+        setSelectedLockerDetail(null);
+        setSheetMode("list");
+        return;
+      }
+
+      setSearchDetailBack(
+        createSearchDetailBackTarget({
+          listKind: listKind ?? "keyword",
+          placeId: listKind === "place" ? searchPlaceId : null,
+        }),
+      );
+      void openLockerDetailById(id);
+    },
+    [context, listKind, openLockerDetailById, searchPlaceId, setSheetMode],
   );
 
   const handleDetailFavoriteChange = useCallback(
@@ -543,18 +637,38 @@ function IndexPage() {
   }, []);
 
   const handleBackFromDetail = useCallback(() => {
+    setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setIsNavigationPopupOpen(false);
 
-    if (detailBackMode === "idle") {
-      setSearchQuery("");
-      setSearchDraft("");
-      setSelectedPlace(null);
-      setSearchFilters(createDefaultSearchFilters());
+    if (context === "map") {
+      if (mapDetailBack === "idle") {
+        resetMapContext();
+        return;
+      }
+
+      setSheetMode("list");
+      return;
     }
 
-    setSheetMode(detailBackMode);
-  }, [detailBackMode, setSearchQuery, setSheetMode]);
+    if (searchDetailBack) {
+      setListKind(searchDetailBack.listKind);
+      setSearchPlaceId(searchDetailBack.placeId);
+    }
+
+    setSheetMode("list");
+  }, [context, mapDetailBack, resetMapContext, searchDetailBack, setSheetMode]);
+
+  const handleBackFromMapPlaceSheet = useCallback(() => {
+    resetMapContext();
+  }, [resetMapContext]);
+
+  const handleBackToKeywordList = useCallback(() => {
+    setSearchQuery(searchDraft);
+    setListKind("keyword");
+    setSearchPlaceId(null);
+    setSheetMode("list");
+  }, [searchDraft, setSearchQuery, setSheetMode]);
 
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
@@ -571,6 +685,62 @@ function IndexPage() {
     },
     [setSheetMode],
   );
+
+  useEffect(() => {
+    if (!lockerDetail) {
+      return;
+    }
+
+    setSelectedLockerDetail(lockerDetail);
+
+    if (
+      mapInstance &&
+      lockerDetail.latitude !== undefined &&
+      lockerDetail.longitude !== undefined
+    ) {
+      focusNaverMapOnCoordinates({
+        map: mapInstance,
+        coordinates: {
+          lat: lockerDetail.latitude,
+          lng: lockerDetail.longitude,
+        },
+      });
+    }
+  }, [lockerDetail, mapInstance]);
+
+  useEffect(() => {
+    if (!isLockerDetailError || sheetMode !== "detail") {
+      return;
+    }
+
+    setActiveLockerId(null);
+    setSelectedLockerDetail(null);
+
+    if (context === "map") {
+      if (mapDetailBack === "idle") {
+        resetMapContext();
+        return;
+      }
+
+      setSheetMode("list");
+      return;
+    }
+
+    if (searchDetailBack) {
+      setListKind(searchDetailBack.listKind);
+      setSearchPlaceId(searchDetailBack.placeId);
+    }
+
+    setSheetMode("list");
+  }, [
+    context,
+    isLockerDetailError,
+    mapDetailBack,
+    resetMapContext,
+    searchDetailBack,
+    setSheetMode,
+    sheetMode,
+  ]);
 
   // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
   useEffect(() => {
@@ -600,7 +770,7 @@ function IndexPage() {
       return;
     }
 
-    const bounds = selectedPlace
+    const bounds = activePlaceId
       ? placeLockersResults?.bounds
       : keywordSearchResults?.bounds;
 
@@ -616,7 +786,7 @@ function IndexPage() {
     keywordSearchResults?.bounds,
     mapInstance,
     placeLockersResults?.bounds,
-    selectedPlace,
+    activePlaceId,
     sheetMode,
   ]);
 
@@ -630,21 +800,34 @@ function IndexPage() {
     searchFilters.regionActive ||
     searchFilters.sizePriceActive ||
     searchFilters.placeTypeActive;
-  const searchBottomSheetItems = selectedPlace
+  const isPlaceListScope = activePlaceId != null;
+  const searchBottomSheetItems = isPlaceListScope
     ? (placeLockersResults?.lockers ?? [])
     : (keywordSearchResults?.items ?? []);
-  const isSearchListLoading = selectedPlace
+  const isSearchListLoading = isPlaceListScope
     ? isPlaceLockersPending
     : isKeywordSearchPending;
-  const isSearchListError = selectedPlace
+  const isSearchListError = isPlaceListScope
     ? isPlaceLockersError
     : isKeywordSearchError;
-  const refetchSearchList = selectedPlace
+  const refetchSearchList = isPlaceListScope
     ? refetchPlaceLockers
     : refetchKeywordSearch;
-  const shouldRenderSearchResultMarkers =
-    sheetMode !== "idle" &&
-    (sheetMode !== "detail" || detailBackMode !== "idle");
+  const showIdleMarkers = shouldShowIdleMarkers({ context, sheetMode });
+  const showSearchMarkers = shouldShowSearchMarkers({
+    context,
+    sheetMode,
+    searchDetailBack,
+  });
+  const showPlaceSheetBack =
+    context === "map" || (context === "search" && listKind === "place");
+  const listHeaderLeadingPress = showPlaceSheetBack
+    ? context === "map"
+      ? handleBackFromMapPlaceSheet
+      : handleBackToKeywordList
+    : undefined;
+  const filterPlaceTypeMode =
+    context === "map" || listKind === "place" ? "single" : "multiple";
 
   return (
     <main className={pageWrapper}>
@@ -653,7 +836,7 @@ function IndexPage() {
           onOpenSearch={handleOpenSearch}
           onCloseSearchContext={handleExitSearchContext}
           searchQuery={searchQuery}
-          isSearchContextActive={sheetMode !== "idle"}
+          isSearchContextActive={context === "search"}
         />
       ) : null}
 
@@ -676,16 +859,16 @@ function IndexPage() {
           deviceHeading={deviceHeading}
           isOrientationTracking={isOrientationTracking}
         />
-        {sheetMode === "idle" ? (
+        {showIdleMarkers ? (
           <LockerMarkersLayer
             map={mapInstance}
-            onSelectPin={handleMapPinSelect}
+            onSelectPin={handleIdlePinSelect}
           />
-        ) : shouldRenderSearchResultMarkers ? (
+        ) : showSearchMarkers ? (
           <SearchResultMarkersLayer
             map={mapInstance}
             pins={searchResultPins}
-            onSelectLocker={handleMapPinSelect}
+            onSelectLocker={handleSearchMarkerSelect}
           />
         ) : null}
       </NaverMapProvider>
@@ -753,7 +936,7 @@ function IndexPage() {
         <SearchListBottomSheet
           searchQuery={searchQuery}
           items={searchBottomSheetItems}
-          placeName={selectedPlace?.placeName ?? null}
+          placeName={activePlaceName}
           appLanguage={normalizeLocale(languageTag()) ?? BASE_LOCALE}
           isFilterActive={isSearchFilterActive}
           isLoading={isSearchListLoading}
@@ -761,6 +944,8 @@ function IndexPage() {
           onRetry={() => void refetchSearchList()}
           onOpenFilter={handleOpenSearchFilter}
           onLockerPress={handleOpenLockerDetail}
+          showHeaderBack={showPlaceSheetBack}
+          onHeaderBackPress={listHeaderLeadingPress}
         />
       ) : null}
 
@@ -782,6 +967,7 @@ function IndexPage() {
       {sheetMode === "filter" && !isSearchOpen ? (
         <SearchFilterBottomSheet
           initialFilters={searchFilters}
+          placeTypeSelectionMode={filterPlaceTypeMode}
           onCollapseToResults={() => setSheetMode("list")}
           onReset={handleResetSearchFilter}
           onApply={handleApplySearchFilter}

@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
 import { ControlChip } from "@repo/ui/components/control-chip";
-import { IconFilter14 } from "@repo/ui/tokens/icons";
+import { IconChevronLeft13, IconFilter14 } from "@repo/ui/tokens/icons";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { NonSearch, SearchListResults } from "#/entities/search";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
@@ -18,6 +18,8 @@ import {
   filterChip,
   listScrollArea,
   listStack,
+  headerLeadingButton,
+  headerLeadingRow,
   resultHeader,
   resultScrollArea,
   resultSortRow,
@@ -56,6 +58,8 @@ export interface SearchListBottomSheetProps {
   isLoading?: boolean;
   isError?: boolean;
   onRetry?: () => void;
+  showHeaderBack?: boolean;
+  onHeaderBackPress?: () => void;
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
@@ -99,6 +103,8 @@ export function SearchListBottomSheet({
   isLoading = false,
   isError = false,
   onRetry,
+  showHeaderBack = false,
+  onHeaderBackPress,
   minSnapPoint,
   snapPoint,
   maxSnapPoint,
@@ -159,8 +165,7 @@ export function SearchListBottomSheet({
       messages.search_sort_price?.() ?? SORT_LABEL_FALLBACKS[appLanguage].price,
   };
   const resultTitleText = placeName
-    ? (messages.search_place_lockers_title?.({ place: placeName }) ??
-      `"${placeName}"에 위치한 보관함입니다.`)
+    ? m.search_place_lockers_title({ place: placeName })
     : undefined;
 
   const handleSortPress = (key: SearchSortKey) => {
@@ -191,11 +196,23 @@ export function SearchListBottomSheet({
       <div className={sheetColumn}>
         {showResultHeader ? (
           <div className={resultHeader}>
-            <SearchResultsHeading
-              queryText={searchQuery}
-              titleText={resultTitleText}
-              resultCount={hasResult ? visibleItems.length : undefined}
-            />
+            <div className={headerLeadingRow}>
+              {showHeaderBack && onHeaderBackPress ? (
+                <button
+                  type="button"
+                  className={headerLeadingButton}
+                  onClick={onHeaderBackPress}
+                  aria-label="뒤로"
+                >
+                  <IconChevronLeft13 />
+                </button>
+              ) : null}
+              <SearchResultsHeading
+                queryText={searchQuery}
+                titleText={resultTitleText}
+                resultCount={hasResult ? visibleItems.length : undefined}
+              />
+            </div>
             <div className={resultSortRow}>
               {onOpenFilter ? (
                 <ControlChip

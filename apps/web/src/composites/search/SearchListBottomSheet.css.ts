@@ -34,6 +34,28 @@ export const listStack = style({
   gap: vars.spacing[4],
 });
 
+export const headerLeadingRow = style({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: vars.spacing[8],
+});
+
+export const headerLeadingButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: "32px",
+  height: "32px",
+  marginTop: "2px",
+  padding: 0,
+  border: "none",
+  borderRadius: vars.radius[8],
+  backgroundColor: "transparent",
+  color: vars.color.text.title,
+  cursor: "pointer",
+});
+
 export const resultHeader = style({
   display: "flex",
   flexDirection: "column",
