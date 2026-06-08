@@ -74,6 +74,26 @@ describe("sheet-session v2", () => {
         searchQuery: "강남",
       }),
     ).toBe(false);
+
+    expect(
+      shouldFetchKeywordSearch({
+        context: "search",
+        listKind: "place",
+        sheetMode: "list",
+        searchDetailBack: null,
+        searchQuery: "강남역",
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldFetchKeywordSearch({
+        context: "search",
+        listKind: "keyword",
+        sheetMode: "detail",
+        searchDetailBack: createKeywordDetailBackTarget(),
+        searchQuery: "강남",
+      }),
+    ).toBe(true);
   });
 
   it("place lockers fetch 조건을 판별한다", () => {
@@ -125,6 +145,44 @@ describe("sheet-session v2", () => {
         context: "search",
         sheetMode: "detail",
         searchDetailBack: null,
+      }),
+    ).toBe(false);
+    expect(
+      shouldShowSearchMarkers({
+        context: "map",
+        sheetMode: "list",
+        searchDetailBack: null,
+      }),
+    ).toBe(false);
+    expect(
+      shouldShowSearchMarkers({
+        context: "search",
+        sheetMode: "detail",
+        searchDetailBack: createKeywordDetailBackTarget(),
+      }),
+    ).toBe(true);
+  });
+
+  it("map detail에서 place lockers fetch를 유지한다", () => {
+    expect(
+      shouldFetchPlaceLockers({
+        context: "map",
+        listKind: null,
+        sheetMode: "detail",
+        searchDetailBack: null,
+        mapDetailBack: "placeList",
+        activePlaceId: 42,
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldFetchPlaceLockers({
+        context: "map",
+        listKind: null,
+        sheetMode: "detail",
+        searchDetailBack: null,
+        mapDetailBack: "idle",
+        activePlaceId: 42,
       }),
     ).toBe(false);
   });
