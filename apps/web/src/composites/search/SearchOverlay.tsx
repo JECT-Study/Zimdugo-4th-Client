@@ -38,8 +38,6 @@ import {
   header,
   overlay,
   recentList,
-  querySubmitFeedback as querySubmitFeedbackText,
-  searchFieldColumn,
   searchFieldSlot,
   sectionHeader,
 } from "./SearchOverlay.css.ts";
@@ -223,39 +221,22 @@ export function SearchOverlay({
           <IconChevronLeft13 className={backIcon} />
         </button>
         <div className={searchFieldSlot}>
-          <div className={searchFieldColumn}>
-            <SearchField
-              autoFocus
-              value={query}
-              maxLength={SEARCH_QUERY_MAX_LENGTH}
-              onChange={handleQueryChange}
-              onBlur={handleQueryBlur}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  handleSelect(applyTrimToQuery());
-                }
-              }}
-              placeholder={m.search_placeholder()}
-              searchIconPlacement="left"
-              variant="searchHome"
-              aria-label={m.search_input_aria()}
-              aria-describedby={
-                queryIssue === "invalid-format"
-                  ? "search-query-submit-feedback"
-                  : undefined
+          <SearchField
+            autoFocus
+            value={query}
+            maxLength={SEARCH_QUERY_MAX_LENGTH}
+            onChange={handleQueryChange}
+            onBlur={handleQueryBlur}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                handleSelect(applyTrimToQuery());
               }
-            />
-            {queryIssue === "invalid-format" ? (
-              <p
-                id="search-query-submit-feedback"
-                className={querySubmitFeedbackText}
-                role="status"
-                aria-live="polite"
-              >
-                {m.search_query_rejected_invalid_chars()}
-              </p>
-            ) : null}
-          </div>
+            }}
+            placeholder={m.search_placeholder()}
+            searchIconPlacement="left"
+            variant="searchHome"
+            aria-label={m.search_input_aria()}
+          />
         </div>
       </header>
 
@@ -322,6 +303,9 @@ export function SearchOverlay({
 
         {hasQuery ? (
           <div className={autocompleteList}>
+            {queryIssue === "invalid-format" ? (
+              <SearchAsyncFeedback variant="suggest-invalid-format" />
+            ) : null}
             {queryIssue === "too-short" ? (
               <SearchAsyncFeedback variant="suggest-min-length" />
             ) : null}

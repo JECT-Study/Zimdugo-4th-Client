@@ -12,6 +12,7 @@ import {
 
 export type SearchAsyncFeedbackVariant =
   | "suggest-min-length"
+  | "suggest-invalid-format"
   | "suggest-empty"
   | "suggest-error"
   | "result-error";
@@ -29,6 +30,14 @@ export function SearchAsyncFeedback({
     return (
       <div className={root}>
         <p className={hint}>{m.search_suggest_min_length()}</p>
+      </div>
+    );
+  }
+
+  if (variant === "suggest-invalid-format") {
+    return (
+      <div className={root}>
+        <p className={hint}>{m.search_query_invalid_chars()}</p>
       </div>
     );
   }

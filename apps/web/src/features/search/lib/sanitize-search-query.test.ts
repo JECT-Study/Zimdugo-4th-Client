@@ -33,6 +33,10 @@ describe("sanitize-search-query", () => {
   it("well-formed 검사는 trim된 문자열 기준으로 형식만 판별한다", () => {
     expect(isSearchQueryDraftWellFormed("강남")).toBe(true);
     expect(isSearchQueryDraftWellFormed("강남 역")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("COEX 코엑스 123")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("北京")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("とうきょう")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("강ㄴ남")).toBe(true);
     expect(isSearchQueryDraftWellFormed("강남  역")).toBe(false);
     expect(isSearchQueryDraftWellFormed("강남!")).toBe(false);
     expect(isSearchQueryDraftWellFormed("ㄱㄴㄷ")).toBe(false);
@@ -44,6 +48,7 @@ describe("sanitize-search-query", () => {
     expect(getSearchQueryIssue("가")).toBe("too-short");
     expect(getSearchQueryIssue("강남")).toBeNull();
     expect(getSearchQueryIssue("강남!")).toBe("invalid-format");
+    expect(getSearchQueryIssue("강ㄴ남")).toBeNull();
     expect(getSearchQueryIssue("!!!")).toBe("invalid-format");
     expect(getSearchQueryIssue("ㄱㅏ")).toBe("invalid-format");
   });

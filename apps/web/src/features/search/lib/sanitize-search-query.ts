@@ -1,9 +1,25 @@
 export const SEARCH_QUERY_MIN_LENGTH = 2;
 export const SEARCH_QUERY_MAX_LENGTH = 30;
 
-/** 한글 완성형, 영문, 숫자, CJK, 히라가나·가타카나, 공백만 허용 (초성·이모지·특수문자 제외) */
+/** 한글 완성형, 영문, 숫자, CJK, 히라가나·가타카나, 공백 */
 const ALLOWED_SEARCH_QUERY_CHAR =
   /[0-9A-Za-z\uAC00-\uD7A3\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF ]/;
+
+const COMPLETE_HANGUL_SYLLABLE = /[\uAC00-\uD7A3]/;
+
+/** 완성형 한글이 있을 때만 허용 — IME 조합 중 ㄱ·ㅏ·ㄴ 같은 자모 */
+const HANGUL_JAMO_CHAR =
+  /[\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
+
+const isAllowedSearchQueryChar = (char: string, draft: string): boolean => {
+  if (ALLOWED_SEARCH_QUERY_CHAR.test(char)) {
+    return true;
+  }
+
+  return (
+    COMPLETE_HANGUL_SYLLABLE.test(draft) && HANGUL_JAMO_CHAR.test(char)
+  );
+};
 
 const capSearchQueryLength = (raw: string): string =>
   raw.slice(0, SEARCH_QUERY_MAX_LENGTH);
@@ -29,7 +45,7 @@ export const isSearchQueryDraftWellFormed = (draft: string): boolean => {
     return false;
   }
 
-  return [...draft].every((char) => ALLOWED_SEARCH_QUERY_CHAR.test(char));
+  return [...draft].every((char) => isAllowedSearchQueryChar(char, draft));
 };
 
 export type SearchQueryIssue = "too-short" | "invalid-format";

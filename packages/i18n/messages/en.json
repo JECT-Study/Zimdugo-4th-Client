@@ -90,7 +90,7 @@
   "search_favorite_add": "Add to favorites",
   "search_favorite_remove": "Remove from favorites",
   "search_suggest_min_length": "Enter at least 2 characters.",
-  "search_query_rejected_invalid_chars": "Only unsupported characters were entered. Search with Korean, English, or numbers.",
+  "search_query_invalid_chars": "Your search includes unsupported characters. You can search with Korean, English, Japanese, Chinese, or numbers.",
   "search_suggest_empty": "No matching places or lockers.",
   "search_suggest_error_title": "Couldn't load suggestions",
   "search_suggest_error_helper": "Check your network connection and try again.",

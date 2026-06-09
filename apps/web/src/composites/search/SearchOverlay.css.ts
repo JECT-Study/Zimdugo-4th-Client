@@ -32,23 +32,6 @@ export const searchFieldSlot = style({
   alignItems: "center",
 });
 
-export const searchFieldColumn = style({
-  flex: 1,
-  minWidth: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: vars.spacing[4],
-});
-
-export const querySubmitFeedback = style({
-  margin: 0,
-  padding: `0 ${vars.spacing[4]}`,
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Regular,
-  color: vars.color.text.surface,
-  lineHeight: 1.4,
-});
-
 export const backButton = style({
   background: "none",
   border: "none",
