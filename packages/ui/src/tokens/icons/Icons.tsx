@@ -462,12 +462,38 @@ export function IconNormalMapPin24({
   className?: string;
   state?: "default" | "active" | "fill";
 }) {
+  if (state === "active") {
+    return (
+      <svg
+        className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        width={24}
+        height={24}
+        aria-hidden
+      >
+        <title>지도 핀</title>
+        <path
+          d="M18.364 17.364L12 23.7279L5.63604 17.364C2.12132 13.8492 2.12132 8.15076 5.63604 4.63604C9.15076 1.12132 14.8492 1.12132 18.364 4.63604C21.8787 8.15076 21.8787 13.8492 18.364 17.364Z"
+          fill={color.palette.gray[100]}
+        />
+        <path
+          d="M12 23.7279L18.364 17.364C21.8787 13.8492 21.8787 8.15076 18.364 4.63604C14.8492 1.12132 9.15076 1.12132 5.63604 4.63604C2.12132 8.15076 2.12132 13.8492 5.63604 17.364L12 23.7279ZM12 20.8995L7.05025 15.9497C4.33103 13.2304 4.33103 8.76959 7.05025 6.05025C9.76959 3.33103 14.2304 3.33103 16.9497 6.05025C19.669 8.76959 19.669 13.2304 16.9497 15.9497L12 20.8995Z"
+          fill={color.palette.gray[600]}
+        />
+        <path
+          d="M12 15C14.2091 15 16 13.2091 16 11C16 8.79086 14.2091 7 12 7C9.79086 7 8 8.79086 8 11C8 13.2091 9.79086 15 12 15ZM12 13C10.8954 13 10 12.1046 10 11C10 9.89543 10.8954 9 12 9C13.1046 9 14 9.89543 14 11C14 12.1046 13.1046 13 12 13Z"
+          fill={color.palette.gray[600]}
+        />
+      </svg>
+    );
+  }
+
   const fill =
     state === "fill"
       ? color.palette.green[500]
-      : state === "active"
-        ? color.palette.gray[600]
-        : color.palette.gray[800];
+      : color.palette.gray[800];
   return (
     <svg
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
@@ -1367,7 +1393,11 @@ export function IconSearchRecentItem24({ className }: { className?: string }) {
 
 /** 보관함 상세 시트 헤더 썸네일 */
 export function IconLockerDetailHeader24({ className }: { className?: string }) {
-  return <IconThumbnail24 className={className} />;
+  return (
+    <CircleBox size={24} className={className}>
+      <IconMarker22 size={14} fill="green[500]" className={iconSvgFixed} />
+    </CircleBox>
+  );
 }
 
 export function IconCircleboxClock32({ className }: { className?: string }) {

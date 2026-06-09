@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { NonSearch, SearchListResults } from "#/entities/search";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
+import { inSheetHeader } from "#/features/search/ui/search-results-heading/SearchResultsHeading.css.ts";
 import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
 import {
   type EnglishSubPolicy,
@@ -20,6 +21,7 @@ import {
   listStack,
   headerLeadingButton,
   headerLeadingRow,
+  headerTitleSlot,
   resultHeader,
   resultScrollArea,
   resultSortRow,
@@ -207,11 +209,14 @@ export function SearchListBottomSheet({
                   <IconChevronLeft13 />
                 </button>
               ) : null}
-              <SearchResultsHeading
-                queryText={searchQuery}
-                titleText={resultTitleText}
-                resultCount={hasResult ? visibleItems.length : undefined}
-              />
+              <div className={headerTitleSlot}>
+                <SearchResultsHeading
+                  className={inSheetHeader}
+                  queryText={searchQuery}
+                  titleText={resultTitleText}
+                  resultCount={hasResult ? visibleItems.length : undefined}
+                />
+              </div>
             </div>
             <div className={resultSortRow}>
               {onOpenFilter ? (

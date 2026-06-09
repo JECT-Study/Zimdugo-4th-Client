@@ -36,8 +36,9 @@ export const listStack = style({
 
 export const headerLeadingRow = style({
   display: "flex",
-  alignItems: "flex-start",
+  alignItems: "center",
   gap: vars.spacing[8],
+  width: "100%",
 });
 
 export const headerLeadingButton = style({
@@ -47,13 +48,17 @@ export const headerLeadingButton = style({
   flexShrink: 0,
   width: "32px",
   height: "32px",
-  marginTop: "2px",
   padding: 0,
   border: "none",
   borderRadius: vars.radius[8],
   backgroundColor: "transparent",
   color: vars.color.text.title,
   cursor: "pointer",
+});
+
+export const headerTitleSlot = style({
+  flex: 1,
+  minWidth: 0,
 });
 
 export const resultHeader = style({

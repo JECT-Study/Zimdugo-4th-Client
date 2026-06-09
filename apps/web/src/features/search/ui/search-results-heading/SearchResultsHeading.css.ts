@@ -8,6 +8,13 @@ export const root = style({
   paddingRight: vars.spacing[16],
 });
 
+export const inSheetHeader = style({
+  flex: 1,
+  minWidth: 0,
+  paddingLeft: 0,
+  paddingRight: 0,
+});
+
 export const text = style({
   margin: 0,
   fontSize: vars.typography.fontSize[16],
