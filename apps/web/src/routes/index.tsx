@@ -58,6 +58,10 @@ import {
   syncSearchDraft,
 } from "#/features/search/model/search-selection";
 import {
+  getDetailFocusBottomInsetPx,
+  getSearchBoundsBottomPadding,
+} from "#/features/search/model/map-viewport-policy";
+import {
   type AppMapContext,
   createKeywordDetailBackTarget,
   createPlaceDetailBackTarget,
@@ -96,10 +100,6 @@ import {
 export const Route = createFileRoute("/")({ component: IndexPage });
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
-const DETAIL_HALF_BOTTOM_INSET_PX = 380;
-const SEARCH_LIST_SNAP_POINT_PX = 331;
-const MAP_BOUNDS_VISIBLE_GAP_PX = 24;
-const MIN_MAP_BOUNDS_BOTTOM_PADDING_PX = 120;
 
 const mergeLockerDetailWithPreviousDistance = (
   detail: LockerDetailItem,
@@ -651,7 +651,7 @@ function IndexPage() {
         focusNaverMapOnCoordinates({
           map: mapInstanceRef.current,
           coordinates: { lat: pin.latitude, lng: pin.longitude },
-          bottomInsetPx: DETAIL_HALF_BOTTOM_INSET_PX,
+          bottomInsetPx: getDetailFocusBottomInsetPx(),
         });
       }
       void openLockerDetailById(id);
@@ -680,7 +680,7 @@ function IndexPage() {
         focusNaverMapOnCoordinates({
           map: mapInstanceRef.current,
           coordinates: { lat: pin.latitude, lng: pin.longitude },
-          bottomInsetPx: DETAIL_HALF_BOTTOM_INSET_PX,
+          bottomInsetPx: getDetailFocusBottomInsetPx(),
         });
       }
       void openLockerDetailById(id);
@@ -799,7 +799,7 @@ function IndexPage() {
           lat: lockerDetail.latitude,
           lng: lockerDetail.longitude,
         },
-        bottomInsetPx: DETAIL_HALF_BOTTOM_INSET_PX,
+        bottomInsetPx: getDetailFocusBottomInsetPx(),
       });
     }
   }, [lockerDetail, mapInstance]);
@@ -874,13 +874,10 @@ function IndexPage() {
       return;
     }
 
-    const bottomPadding =
-      sheetMode === "list"
-        ? Math.max(
-            MIN_MAP_BOUNDS_BOTTOM_PADDING_PX,
-            windowHeight - SEARCH_LIST_SNAP_POINT_PX + MAP_BOUNDS_VISIBLE_GAP_PX,
-          )
-        : undefined;
+    const bottomPadding = getSearchBoundsBottomPadding({
+      sheetMode,
+      windowHeight,
+    });
 
     fitNaverMapToBounds({
       map: mapInstance,
