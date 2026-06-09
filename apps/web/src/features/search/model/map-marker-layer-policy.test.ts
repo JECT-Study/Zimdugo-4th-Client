@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { resolveMapMarkerLayer } from "./map-marker-layer-policy";
 
 describe("resolveMapMarkerLayer", () => {
-  it("shows idle markers only on the idle map", () => {
+  it("idle 지도에서만 idle 마커를 표시한다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
@@ -16,7 +16,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("idle");
   });
 
-  it("shows search markers while search results are visible", () => {
+  it("검색 결과가 보일 때 검색 마커를 표시한다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "search",
@@ -29,7 +29,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("search");
   });
 
-  it("keeps place list markers in map context", () => {
+  it("map context 장소 리스트에서 장소 마커를 유지한다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -42,7 +42,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("mapPlace");
   });
 
-  it("keeps place markers when map detail can return to the place list", () => {
+  it("map 상세가 장소 리스트로 돌아갈 수 있으면 장소 마커를 유지한다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -55,7 +55,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("mapPlace");
   });
 
-  it("shows the selected map detail pin for idle-pin detail", () => {
+  it("idle 핀 상세에서는 선택된 map 상세 핀을 표시한다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -68,7 +68,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("selectedMapDetail");
   });
 
-  it("returns null when no layer should be visible", () => {
+  it("표시할 레이어가 없으면 null을 반환한다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -81,7 +81,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBeNull();
   });
 
-  it("hides every marker layer while the search overlay is open", () => {
+  it("검색 오버레이가 열려 있으면 모든 마커 레이어를 숨긴다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
@@ -94,7 +94,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBeNull();
   });
 
-  it("does not show markers in address list mode", () => {
+  it("주소 리스트 모드에서는 마커를 표시하지 않는다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
