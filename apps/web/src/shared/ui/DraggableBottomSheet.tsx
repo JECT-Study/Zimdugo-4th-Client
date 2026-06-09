@@ -50,7 +50,7 @@ export function DraggableBottomSheet({
     controls.start({ y: currentSnap });
   }, [currentSnap, controls]);
 
-  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handleDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
     dragControls.start(event);
   };
 
@@ -124,7 +124,7 @@ export function DraggableBottomSheet({
       }}
       transition={{ type: "spring", damping: 30, stiffness: 200 }}
     >
-      <div className={dragHandleZone} onPointerDown={startDrag} />
+      <div className={dragHandleZone} onPointerDown={handleDragStart} />
       <div className={interactiveContent}>
         <BottomSheetFrame layout="nav">{children}</BottomSheetFrame>
       </div>
