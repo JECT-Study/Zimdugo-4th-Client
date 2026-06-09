@@ -5,9 +5,7 @@ import { LabelTitle } from "@repo/ui/components/label-title";
 import { useEffect, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
-import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
-import { SearchFilterPriceSection } from "./SearchFilterPriceSection";
 import {
   applyButton,
   bottomActionBar,
@@ -19,20 +17,11 @@ import {
   sheetColumn,
   sizeCardSlot,
 } from "./SearchFilterBottomSheet.css.ts";
-import {
-  normalizeSearchFilterPriceRange,
-  validateSearchFilterPrice,
-} from "./search-filter-price-validation";
-
-type SearchFilterPriceType = "free" | "paid" | "none";
 
 export interface SearchFilterAppliedState {
   regionActive: boolean;
-  sizePriceActive: boolean;
+  sizeActive: boolean;
   placeTypeActive: boolean;
-  priceType: SearchFilterPriceType;
-  minPrice: string;
-  maxPrice: string;
   indoorOutdoorState: string[];
   placeTypeState: string[];
   selectedSizes: SizeCardType[];
@@ -50,11 +39,8 @@ const DEFAULT_SNAP_POINT = 52;
 
 export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
   regionActive: false,
-  sizePriceActive: false,
+  sizeActive: false,
   placeTypeActive: false,
-  priceType: "none",
-  minPrice: "",
-  maxPrice: "",
   indoorOutdoorState: [],
   placeTypeState: [],
   selectedSizes: [],
@@ -73,11 +59,6 @@ export function SearchFilterBottomSheet({
   >;
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
   const [collapsedSnap, setCollapsedSnap] = useState(760);
-  const [priceType, setPriceType] = useState<SearchFilterPriceType>(
-    restoredFilters.priceType,
-  );
-  const [minPrice, setMinPrice] = useState(restoredFilters.minPrice);
-  const [maxPrice, setMaxPrice] = useState(restoredFilters.maxPrice);
   const [indoorOutdoorState, setIndoorOutdoor] = useState<string[]>(
     restoredFilters.indoorOutdoorState,
   );
@@ -87,9 +68,6 @@ export function SearchFilterBottomSheet({
   const [selectedSizes, setSelectedSizes] = useState<SizeCardType[]>(
     restoredFilters.selectedSizes,
   );
-  const [priceErrorMessage, setPriceErrorMessage] = useState<
-    string | undefined
-  >();
 
   const indoorOutdoorOptions = [
     {
@@ -178,19 +156,12 @@ export function SearchFilterBottomSheet({
   useEffect(() => {
     if (!initialFilters) return;
 
-    setPriceType(initialFilters.priceType);
-    setMinPrice(initialFilters.minPrice);
-    setMaxPrice(initialFilters.maxPrice);
     setIndoorOutdoor(initialFilters.indoorOutdoorState);
     setPlaceType(initialFilters.placeTypeState);
     setSelectedSizes(initialFilters.selectedSizes);
   }, [initialFilters]);
 
   const handleReset = () => {
-    setPriceType("none");
-    setMinPrice("");
-    setMaxPrice("");
-    setPriceErrorMessage(undefined);
     setIndoorOutdoor([]);
     setPlaceType([]);
     setSelectedSizes([]);
@@ -198,50 +169,14 @@ export function SearchFilterBottomSheet({
   };
 
   const handleApply = () => {
-    const nextPriceErrorMessage = validateSearchFilterPrice({
-      priceType,
-      minPrice,
-      maxPrice,
-      messages: {
-        invalidRange: () =>
-          t.search_filter_error_price_range?.() ??
-          "올바른 가격 범위를 입력해주세요.",
-      },
-    });
-
-    if (nextPriceErrorMessage) {
-      setPriceErrorMessage(nextPriceErrorMessage);
-      return;
-    }
-
-    setPriceErrorMessage(undefined);
-
-    const hasPriceFilter =
-      priceType !== "none" || minPrice.length > 0 || maxPrice.length > 0;
-
     onApply?.({
       regionActive: indoorOutdoorState.length > 0,
-      sizePriceActive: hasPriceFilter || selectedSizes.length > 0,
+      sizeActive: selectedSizes.length > 0,
       placeTypeActive: placeTypeState.length > 0,
-      priceType,
-      minPrice,
-      maxPrice,
       indoorOutdoorState,
       placeTypeState,
       selectedSizes,
     });
-  };
-
-  const handleNormalizePriceRange = (changedField: "min" | "max") => {
-    const normalizedRange = normalizeSearchFilterPriceRange({
-      minPrice,
-      maxPrice,
-      changedField,
-    });
-
-    setMinPrice(normalizedRange.minPrice);
-    setMaxPrice(normalizedRange.maxPrice);
-    setPriceErrorMessage(undefined);
   };
 
   return (
@@ -272,34 +207,6 @@ export function SearchFilterBottomSheet({
             </div>
           </div>
 
-          <div className={[sectionGap24].join(" ")}>
-            <SearchFilterPriceSection
-              priceType={priceType}
-              setPriceType={(nextPriceType) => {
-                setPriceType(nextPriceType);
-                if (nextPriceType !== "paid") {
-                  setMinPrice("");
-                  setMaxPrice("");
-                }
-                setPriceErrorMessage(undefined);
-              }}
-              minPrice={minPrice}
-              setMinPrice={(nextMinPrice) => {
-                setMinPrice(nextMinPrice);
-                setPriceErrorMessage(undefined);
-              }}
-              maxPrice={maxPrice}
-              setMaxPrice={(nextMaxPrice) => {
-                setMaxPrice(nextMaxPrice);
-                setPriceErrorMessage(undefined);
-              }}
-              errorMessage={priceErrorMessage}
-              formatPrice={formatPriceInput}
-              onMinPriceBlur={() => handleNormalizePriceRange("min")}
-              onMaxPriceBlur={() => handleNormalizePriceRange("max")}
-            />
-          </div>
-
           <div className={[section, sectionGap24].join(" ")}>
             <LabelTitle size="small">
               {t.search_filter_section_indoor_outdoor_short?.() ??
@@ -311,7 +218,7 @@ export function SearchFilterBottomSheet({
                 options={indoorOutdoorOptions}
                 value={indoorOutdoorState}
                 onChange={setIndoorOutdoor}
-                selectionMode="single"
+                selectionMode="multiple"
                 ariaLabel={
                   t.search_filter_section_indoor_outdoor_short?.() ??
                   t.search_filter_section_indoor_outdoor?.() ??
@@ -331,8 +238,8 @@ export function SearchFilterBottomSheet({
               <ControlChipGroup
                 options={placeTypeOptions}
                 value={placeTypeState}
-                onChange={(keys) => setPlaceType(keys.slice(-1))}
-                selectionMode="single"
+                onChange={setPlaceType}
+                selectionMode="multiple"
                 ariaLabel={
                   t.search_filter_section_locker_type_short?.() ??
                   t.search_filter_section_locker_type?.() ??

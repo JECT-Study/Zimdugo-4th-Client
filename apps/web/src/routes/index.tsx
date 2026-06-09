@@ -1015,7 +1015,7 @@ function IndexPage() {
   const shouldRenderHomeSearchBar = shouldShowHomeSearchBar({ hasMapError });
   const isSearchFilterActive =
     searchFilters.regionActive ||
-    searchFilters.sizePriceActive ||
+    searchFilters.sizeActive ||
     searchFilters.placeTypeActive;
   const isPlaceListScope = activePlaceId != null;
   const searchBottomSheetItems = isPlaceListScope

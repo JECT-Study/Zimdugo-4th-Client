@@ -51,43 +51,6 @@ globalStyle(`${indoorOutdoor} button`, {
   fontSize: "12px",
 });
 
-export const priceRow = style({
-  display: "flex",
-  gap: vars.spacing[16],
-  alignItems: "center",
-  justifyContent: "center",
-  width: "100%",
-});
-
-export const priceInputRow = style({
-  display: "flex",
-  gap: vars.spacing[8],
-  alignItems: "center",
-  width: "100%",
-});
-
-export const priceInputContainer = style({
-  flex: 1,
-  minWidth: 0,
-  position: "relative",
-});
-
-export const priceUnit = style({
-  position: "absolute",
-  right: vars.spacing[12],
-  top: "50%",
-  transform: "translateY(-50%)",
-  fontSize: vars.typography.fontSize[14],
-  color: vars.color.palette.gray[600],
-  pointerEvents: "none",
-});
-
-export const priceErrorText = style({
-  margin: 0,
-  fontSize: vars.typography.fontSize[12],
-  color: vars.color.palette.red[300],
-});
-
 export const bottomActionBar = style({
   display: "flex",
   gap: vars.spacing[8],

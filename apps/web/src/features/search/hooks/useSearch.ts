@@ -52,8 +52,8 @@ export function usePlaceLockers(params: GetPlaceLockersParams | null) {
       params?.lat,
       params?.lng,
       params?.sizeTypes,
-      params?.lockerType,
-      params?.indoorOutdoorType,
+      params?.lockerTypes,
+      params?.indoorOutdoorTypes,
     ],
     queryFn: ({ signal }) => {
       if (!params) {

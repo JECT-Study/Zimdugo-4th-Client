@@ -35,44 +35,37 @@ const toSearchSizeTypes = (
     .map((value) => SIZE_FILTER_TO_API[value])
     .filter((value): value is "SMALL" | "MEDIUM" | "BIG" => !!value);
 
-const parsePriceInput = (value: string): number | undefined => {
-  const normalized = value.replace(/[^\d]/g, "");
-  if (!normalized) return undefined;
+const toIndoorOutdoorTypes = (
+  indoorOutdoorState: string[],
+): Array<"INDOOR" | "OUTDOOR"> =>
+  indoorOutdoorState
+    .map((value) => INDOOR_OUTDOOR_FILTER_TO_API[value])
+    .filter((value): value is "INDOOR" | "OUTDOOR" => !!value);
 
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : undefined;
-};
+const toLockerTypes = (placeTypeState: string[]): LockerType[] =>
+  placeTypeState
+    .map((value) => PLACE_FILTER_TO_LOCKER_TYPE[value])
+    .filter((value): value is LockerType => !!value);
 
 export const toLockerSearchFilterParams = (
   filters: SearchFilterAppliedState,
 ): LockerSearchFilterParams => {
   const params: LockerSearchFilterParams = {};
 
-  if (filters.sizePriceActive) {
-    if (filters.selectedSizes.length > 0) {
-      params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
-    }
-
-    if (filters.priceType === "free") {
-      params.isFree = true;
-    } else if (filters.priceType === "paid") {
-      const minPrice = parsePriceInput(filters.minPrice);
-      const maxPrice = parsePriceInput(filters.maxPrice);
-      if (minPrice !== undefined) params.minPrice = minPrice;
-      if (maxPrice !== undefined) params.maxPrice = maxPrice;
-    }
+  if (filters.sizeActive && filters.selectedSizes.length > 0) {
+    params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
   }
 
-  if (filters.indoorOutdoorState.length > 0) {
-    params.indoorOutdoorTypes = filters.indoorOutdoorState
-      .map((value) => INDOOR_OUTDOOR_FILTER_TO_API[value])
-      .filter((value): value is "INDOOR" | "OUTDOOR" => !!value);
+  const indoorOutdoorTypes = toIndoorOutdoorTypes(filters.indoorOutdoorState);
+  if (indoorOutdoorTypes.length > 0) {
+    params.indoorOutdoorTypes = indoorOutdoorTypes;
   }
 
-  if (filters.placeTypeActive && filters.placeTypeState.length > 0) {
-    params.lockerTypes = filters.placeTypeState
-      .map((value) => PLACE_FILTER_TO_LOCKER_TYPE[value])
-      .filter((value): value is LockerType => !!value);
+  if (filters.placeTypeActive) {
+    const lockerTypes = toLockerTypes(filters.placeTypeState);
+    if (lockerTypes.length > 0) {
+      params.lockerTypes = lockerTypes;
+    }
   }
 
   return params;
@@ -83,23 +76,18 @@ export const toPlaceLockersFilterParams = (
 ): PlaceLockersFilterParams => {
   const params: PlaceLockersFilterParams = {};
 
-  if (filters.sizePriceActive && filters.selectedSizes.length > 0) {
+  if (filters.sizeActive && filters.selectedSizes.length > 0) {
     params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
   }
 
-  if (filters.indoorOutdoorState.length > 0) {
-    const indoorOutdoorType =
-      INDOOR_OUTDOOR_FILTER_TO_API[filters.indoorOutdoorState[0]];
-    if (indoorOutdoorType) {
-      params.indoorOutdoorType = indoorOutdoorType;
-    }
+  const indoorOutdoorTypes = toIndoorOutdoorTypes(filters.indoorOutdoorState);
+  if (indoorOutdoorTypes.length > 0) {
+    params.indoorOutdoorTypes = indoorOutdoorTypes;
   }
 
-  if (filters.placeTypeState.length > 0) {
-    const lockerType = PLACE_FILTER_TO_LOCKER_TYPE[filters.placeTypeState[0]];
-    if (lockerType) {
-      params.lockerType = lockerType;
-    }
+  const lockerTypes = toLockerTypes(filters.placeTypeState);
+  if (lockerTypes.length > 0) {
+    params.lockerTypes = lockerTypes;
   }
 
   return params;

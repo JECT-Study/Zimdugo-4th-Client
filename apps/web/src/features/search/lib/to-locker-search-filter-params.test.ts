@@ -9,14 +9,11 @@ const createFilters = (
   overrides: Partial<SearchFilterAppliedState> = {},
 ): SearchFilterAppliedState => ({
   regionActive: true,
-  sizePriceActive: true,
+  sizeActive: true,
   placeTypeActive: true,
   selectedSizes: ["S", "L"],
-  priceType: "paid",
-  minPrice: "1,000",
-  maxPrice: "2,000",
   indoorOutdoorState: ["indoor", "outdoor"],
-  placeTypeState: ["subway"],
+  placeTypeState: ["museum", "subway"],
   ...overrides,
 });
 
@@ -24,20 +21,18 @@ describe("toLockerSearchFilterParams", () => {
   it("keyword 검색 API용 복수 필터 파라미터를 만든다", () => {
     expect(toLockerSearchFilterParams(createFilters())).toEqual({
       sizeTypes: ["SMALL", "BIG"],
-      minPrice: 1000,
-      maxPrice: 2000,
       indoorOutdoorTypes: ["INDOOR", "OUTDOOR"],
-      lockerTypes: ["SUBWAY_STATION"],
+      lockerTypes: ["MUSEUM", "SUBWAY_STATION"],
     });
   });
 });
 
 describe("toPlaceLockersFilterParams", () => {
-  it("place lockers API 스펙에 맞는 단수 필터 파라미터만 만든다", () => {
+  it("place lockers API에도 복수 필터 파라미터를 전달한다", () => {
     expect(toPlaceLockersFilterParams(createFilters())).toEqual({
       sizeTypes: ["SMALL", "BIG"],
-      indoorOutdoorType: "INDOOR",
-      lockerType: "SUBWAY_STATION",
+      indoorOutdoorTypes: ["INDOOR", "OUTDOOR"],
+      lockerTypes: ["MUSEUM", "SUBWAY_STATION"],
     });
   });
 

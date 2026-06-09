@@ -208,8 +208,8 @@ export interface LockerSearchFilterParams {
 
 export interface PlaceLockersFilterParams {
   sizeTypes?: string[];
-  indoorOutdoorType?: string;
-  lockerType?: string;
+  indoorOutdoorTypes?: string[];
+  lockerTypes?: string[];
 }
 
 export interface GetLockerPinsParams {
