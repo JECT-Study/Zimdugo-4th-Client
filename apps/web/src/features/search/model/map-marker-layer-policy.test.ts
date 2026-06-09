@@ -8,6 +8,7 @@ describe("resolveMapMarkerLayer", () => {
       resolveMapMarkerLayer({
         context: "idle",
         sheetMode: "idle",
+        isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: null,
         selectedMapDetailPinCount: 0,
@@ -20,6 +21,7 @@ describe("resolveMapMarkerLayer", () => {
       resolveMapMarkerLayer({
         context: "search",
         sheetMode: "list",
+        isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: null,
         selectedMapDetailPinCount: 0,
@@ -32,6 +34,7 @@ describe("resolveMapMarkerLayer", () => {
       resolveMapMarkerLayer({
         context: "map",
         sheetMode: "list",
+        isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: null,
         selectedMapDetailPinCount: 0,
@@ -44,6 +47,7 @@ describe("resolveMapMarkerLayer", () => {
       resolveMapMarkerLayer({
         context: "map",
         sheetMode: "detail",
+        isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: "placeList",
         selectedMapDetailPinCount: 1,
@@ -56,6 +60,7 @@ describe("resolveMapMarkerLayer", () => {
       resolveMapMarkerLayer({
         context: "map",
         sheetMode: "detail",
+        isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: "idle",
         selectedMapDetailPinCount: 1,
@@ -68,8 +73,35 @@ describe("resolveMapMarkerLayer", () => {
       resolveMapMarkerLayer({
         context: "map",
         sheetMode: "detail",
+        isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: "idle",
+        selectedMapDetailPinCount: 0,
+      }),
+    ).toBeNull();
+  });
+
+  it("hides every marker layer while the search overlay is open", () => {
+    expect(
+      resolveMapMarkerLayer({
+        context: "idle",
+        sheetMode: "idle",
+        isSearchOpen: true,
+        searchDetailBack: null,
+        mapDetailBack: null,
+        selectedMapDetailPinCount: 0,
+      }),
+    ).toBeNull();
+  });
+
+  it("does not show markers in address list mode", () => {
+    expect(
+      resolveMapMarkerLayer({
+        context: "idle",
+        sheetMode: "addressList",
+        isSearchOpen: false,
+        searchDetailBack: null,
+        mapDetailBack: null,
         selectedMapDetailPinCount: 0,
       }),
     ).toBeNull();

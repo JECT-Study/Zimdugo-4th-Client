@@ -16,16 +16,22 @@ export type MapMarkerLayerKind =
 export const resolveMapMarkerLayer = ({
   context,
   sheetMode,
+  isSearchOpen,
   searchDetailBack,
   mapDetailBack,
   selectedMapDetailPinCount,
 }: {
   context: AppMapContext;
   sheetMode: SheetModeForContext;
+  isSearchOpen: boolean;
   searchDetailBack: SearchDetailBackTarget | null;
   mapDetailBack: MapDetailBack | null;
   selectedMapDetailPinCount: number;
 }): MapMarkerLayerKind | null => {
+  if (isSearchOpen) {
+    return null;
+  }
+
   if (shouldShowIdleMarkers({ context, sheetMode })) {
     return "idle";
   }
