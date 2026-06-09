@@ -279,7 +279,7 @@ type OpenNavigationOptions = {
   isDocumentHidden?: () => boolean;
   addVisibilityListener?: (
     listener: () => void,
-  ) => (() => void) | void;
+  ) => (() => void) | undefined;
 };
 
 export const openNavigationPlatformLinks = (
@@ -337,15 +337,18 @@ export const openNavigationPlatformLinks = (
     removeVisibilityListener();
   };
 
-  removeVisibilityListener =
-    options.addVisibilityListener?.(handleVisibilityChange) ??
-    (() => {
-      if (typeof document === "undefined") {
-        return;
-      }
+  const defaultRemoveVisibilityListener = () => {
+    if (typeof document === "undefined") {
+      return;
+    }
 
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    });
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+
+  const customRemoveVisibilityListener =
+    options.addVisibilityListener?.(handleVisibilityChange);
+  removeVisibilityListener =
+    customRemoveVisibilityListener ?? defaultRemoveVisibilityListener;
 
   if (!options.addVisibilityListener && typeof document !== "undefined") {
     document.addEventListener("visibilitychange", handleVisibilityChange);
