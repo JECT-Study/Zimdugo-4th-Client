@@ -1,30 +1,30 @@
 export const SEARCH_HISTORY_STORAGE_KEY = "search_history";
 export const SEARCH_HISTORY_MAX_ENTRIES = 20;
 
-export type SearchHistoryKeywordEntry = {
+export interface SearchHistoryKeywordEntry {
   kind: "keyword";
   id: string;
   query: string;
   searchedAt: string;
-};
+}
 
-export type SearchHistoryLockerEntry = {
+export interface SearchHistoryLockerEntry {
   kind: "locker";
   id: string;
   lockerId: number;
   title: string;
   searchDraft: string;
   searchedAt: string;
-};
+}
 
-export type SearchHistoryPlaceEntry = {
+export interface SearchHistoryPlaceEntry {
   kind: "place";
   id: string;
   placeId: number;
   title: string;
   searchDraft: string;
   searchedAt: string;
-};
+}
 
 export type SearchHistoryEntry =
   | SearchHistoryKeywordEntry
