@@ -7,7 +7,7 @@ import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { ReportPriceSectionView } from "#/features/report/ui/ReportPriceSection";
-import type { LockerType } from "#/features/report/model/report-types";
+import type { LockerType } from "#/shared/types/locker-type";
 import { ReportTypeSection } from "#/features/report/ui/ReportTypeSection";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {

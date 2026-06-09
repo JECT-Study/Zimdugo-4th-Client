@@ -1,8 +1,10 @@
-import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import {
+  formatPriceInput,
   REPORT_PRICE_MAX,
-  REPORT_PRICE_MIN,
-} from "#/features/report/model/report-types";
+} from "#/features/report/lib/sanitizePriceInput";
+
+/** 검색 필터 가격 입력 하한 (제보 가격 정책과 동일) */
+const SEARCH_FILTER_PRICE_MIN = 1_000;
 
 type SearchFilterPriceType = "free" | "paid" | "none";
 
@@ -33,7 +35,7 @@ const parseOptionalPrice = (value: string): number | null => {
 
 const formatNormalizedPrice = (value: number): string =>
   formatPriceInput(
-    String(Math.min(Math.max(value, REPORT_PRICE_MIN), REPORT_PRICE_MAX)),
+    String(Math.min(Math.max(value, SEARCH_FILTER_PRICE_MIN), REPORT_PRICE_MAX)),
   );
 
 export const normalizeSearchFilterPriceRange = ({
@@ -45,11 +47,17 @@ export const normalizeSearchFilterPriceRange = ({
   let maxValue = parseOptionalPrice(formatPriceInput(maxPrice));
 
   if (minValue !== null && !Number.isNaN(minValue)) {
-    minValue = Math.min(Math.max(minValue, REPORT_PRICE_MIN), REPORT_PRICE_MAX);
+    minValue = Math.min(
+      Math.max(minValue, SEARCH_FILTER_PRICE_MIN),
+      REPORT_PRICE_MAX,
+    );
   }
 
   if (maxValue !== null && !Number.isNaN(maxValue)) {
-    maxValue = Math.min(Math.max(maxValue, REPORT_PRICE_MIN), REPORT_PRICE_MAX);
+    maxValue = Math.min(
+      Math.max(maxValue, SEARCH_FILTER_PRICE_MIN),
+      REPORT_PRICE_MAX,
+    );
   }
 
   if (minValue !== null && maxValue !== null && minValue > maxValue) {
@@ -85,7 +93,7 @@ export const validateSearchFilterPrice = ({
     return messages.invalidRange();
   }
 
-  if (minValue < REPORT_PRICE_MIN || maxValue > REPORT_PRICE_MAX) {
+  if (minValue < SEARCH_FILTER_PRICE_MIN || maxValue > REPORT_PRICE_MAX) {
     return messages.invalidRange();
   }
 

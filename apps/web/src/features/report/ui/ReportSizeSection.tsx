@@ -14,7 +14,7 @@ export function ReportSizeSection({
   setSelectedSizes,
 }: ReportSizeSectionProps) {
   return (
-    <section className={section} data-section="size">
+    <section className={section}>
       <LabelTitle size="small">{m.report_section_size()}</LabelTitle>
       <SizeList
         labels={{

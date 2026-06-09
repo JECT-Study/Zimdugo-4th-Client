@@ -1,5 +1,5 @@
 import { m } from "@repo/i18n";
-import type { LockerType } from "#/features/report/model/report-types";
+import type { LockerType } from "#/shared/types/locker-type";
 
 const LOCKER_TYPE_LABEL_GETTERS: Record<LockerType, () => string> = {
   MUSEUM: () => m.search_filter_place_museum_short(),

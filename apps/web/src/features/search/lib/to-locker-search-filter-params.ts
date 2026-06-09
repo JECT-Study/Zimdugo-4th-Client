@@ -1,6 +1,6 @@
 import type { SearchFilterAppliedState } from "#/composites/search/SearchFilterBottomSheet";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
-import type { LockerType } from "#/features/report/model/report-types";
+import type { LockerType } from "#/shared/types/locker-type";
 import type {
   LockerSearchFilterParams,
   PlaceLockersFilterParams,
