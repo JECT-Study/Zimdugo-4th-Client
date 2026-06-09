@@ -8,11 +8,11 @@ import {
 } from "./map-viewport-policy";
 
 describe("map-viewport-policy", () => {
-  it("returns the shared detail half-sheet inset", () => {
+  it("상세 하프 시트 공통 inset을 반환한다", () => {
     expect(getDetailFocusBottomInsetPx()).toBe(DETAIL_HALF_BOTTOM_INSET_PX);
   });
 
-  it("uses the search list half-sheet height as bounds bottom padding", () => {
+  it("검색 리스트 하프 시트 높이를 bounds 하단 패딩으로 사용한다", () => {
     expect(
       getSearchBoundsBottomPadding({
         sheetMode: "list",
@@ -21,7 +21,7 @@ describe("map-viewport-policy", () => {
     ).toBe(493);
   });
 
-  it("keeps a minimum bottom padding for short viewports", () => {
+  it("짧은 뷰포트에서는 최소 하단 패딩을 유지한다", () => {
     expect(
       getSearchBoundsBottomPadding({
         sheetMode: "list",
@@ -30,7 +30,7 @@ describe("map-viewport-policy", () => {
     ).toBe(MIN_MAP_BOUNDS_BOTTOM_PADDING_PX);
   });
 
-  it("does not override bounds padding outside the list sheet", () => {
+  it("리스트 시트가 아니면 bounds 패딩을 덮어쓰지 않는다", () => {
     expect(
       getSearchBoundsBottomPadding({
         sheetMode: "filter",

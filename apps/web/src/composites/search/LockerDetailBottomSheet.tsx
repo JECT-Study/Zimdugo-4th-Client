@@ -14,6 +14,8 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
+import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
+import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   formatLockerOperatingHoursLabel,
@@ -76,8 +78,12 @@ export interface LockerDetailItem extends SearchLockerResultItem {
   lastUpdatedLabel?: string;
 }
 
+export type LockerDetailLoadState = "ready" | "loading" | "error";
+
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
+  loadState?: LockerDetailLoadState;
+  onRetry?: () => void;
   onFavoriteChange?: (item: LockerDetailItem, next: boolean) => void;
   onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
@@ -128,6 +134,13 @@ export const createLockerDetailPlaceholder = (
   detailHelpText: "",
 });
 
+export const createLockerDetailFromHistoryEntry = (
+  entry: Pick<SearchHistoryLockerEntry, "lockerId" | "title">,
+): LockerDetailItem => ({
+  ...createLockerDetailPlaceholder(entry.lockerId),
+  title: entry.title,
+});
+
 export const createLockerDetailFromAutocompleteItem = (
   item: Extract<SearchAutocompleteItemData, { itemType: "LOCKER" }>,
 ): LockerDetailItem => ({
@@ -145,6 +158,8 @@ export const createLockerDetailFromAutocompleteItem = (
 
 export function LockerDetailBottomSheet({
   locker,
+  loadState = "ready",
+  onRetry,
   onFavoriteChange,
   onBack,
   onShare,
@@ -211,7 +226,9 @@ export function LockerDetailBottomSheet({
           .filter(Boolean)
           .join(" ")}
       >
-        {isFull ? (
+        {loadState === "error" ? (
+          <LockerDetailErrorContent onBack={handleBack} onRetry={onRetry} />
+        ) : isFull ? (
           <FullDetailContent
             locker={locker}
             detailHelpText={detailHelpText}
@@ -231,6 +248,23 @@ export function LockerDetailBottomSheet({
         )}
       </div>
     </DraggableBottomSheet>
+  );
+}
+
+function LockerDetailErrorContent({
+  onBack,
+  onRetry,
+}: {
+  onBack: () => void;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className={contentStack}>
+      <div className={summaryRow}>
+        <DetailBackButton onBack={onBack} />
+      </div>
+      <SearchAsyncFeedback variant="result-error" onRetry={onRetry} />
+    </div>
   );
 }
 

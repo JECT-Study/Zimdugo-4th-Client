@@ -1,16 +1,18 @@
 import { m } from "@repo/i18n";
-import { IconCaution24, IconNormalSearch24 } from "@repo/ui/tokens/icons";
+import { Button } from "@repo/ui/components/button";
+import { IconNormalSearch24 } from "@repo/ui/tokens/icons";
 import {
+  errorActions,
   helper,
   hint,
   iconSlot,
-  retryButton,
   root,
   title,
 } from "./SearchAsyncFeedback.css.ts";
 
 export type SearchAsyncFeedbackVariant =
   | "suggest-min-length"
+  | "suggest-invalid-format"
   | "suggest-empty"
   | "suggest-error"
   | "result-error";
@@ -32,6 +34,14 @@ export function SearchAsyncFeedback({
     );
   }
 
+  if (variant === "suggest-invalid-format") {
+    return (
+      <div className={root}>
+        <p className={hint}>{m.search_query_invalid_chars()}</p>
+      </div>
+    );
+  }
+
   if (variant === "suggest-empty") {
     return (
       <div className={root}>
@@ -47,9 +57,6 @@ export function SearchAsyncFeedback({
 
   return (
     <div className={root} role="alert">
-      <span className={iconSlot} aria-hidden="true">
-        <IconCaution24 state="error" />
-      </span>
       <p className={title}>
         {isSuggestError
           ? m.search_suggest_error_title()
@@ -61,14 +68,16 @@ export function SearchAsyncFeedback({
           : m.search_result_error_helper()}
       </p>
       {onRetry ? (
-        <button
-          type="button"
-          className={retryButton}
-          onClick={onRetry}
-          aria-label={m.map_error_retry_aria()}
-        >
-          {m.map_error_retry()}
-        </button>
+        <div className={errorActions}>
+          <Button
+            variant="filled"
+            intent="primary"
+            size="S"
+            onPress={onRetry}
+          >
+            {m.map_error_retry()}
+          </Button>
+        </div>
       ) : null}
     </div>
   );

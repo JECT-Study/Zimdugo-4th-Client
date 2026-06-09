@@ -90,6 +90,7 @@
   "search_favorite_add": "添加收藏",
   "search_favorite_remove": "取消收藏",
   "search_suggest_min_length": "请输入至少2个字符。",
+  "search_query_invalid_chars": "包含不支持的字符。请按正确格式重新输入。",
   "search_suggest_empty": "没有匹配的场所或储物柜。",
   "search_suggest_error_title": "无法加载搜索建议",
   "search_suggest_error_helper": "请检查网络连接后重试。",

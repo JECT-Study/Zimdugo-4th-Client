@@ -90,6 +90,7 @@
   "search_favorite_add": "즐겨찾기 추가",
   "search_favorite_remove": "즐겨찾기 해제",
   "search_suggest_min_length": "검색어를 2글자 이상 입력해주세요.",
+  "search_query_invalid_chars": "허용하지 않는 문자를 포함하고 있어요. 올바른 형태로 다시 입력해주세요.",
   "search_suggest_empty": "일치하는 장소나 보관함이 없어요.",
   "search_suggest_error_title": "자동완성을 불러오지 못했어요",
   "search_suggest_error_helper": "네트워크 상태를 확인한 뒤 다시 시도해주세요.",

@@ -10,7 +10,21 @@ import {
   type SearchAutocompleteItemData,
   SearchListRecent,
 } from "#/entities/search";
+import {
+  formatSearchHistoryDateLabel,
+  getSearchHistoryEntryLabel,
+  type SearchHistoryEntry,
+} from "#/features/search/model/search-history";
 import { useLockerSuggest } from "#/features/search/hooks/useSearch";
+import {
+  capSearchQueryDraft,
+  getSearchQueryIssue,
+  getValidatedSearchQuery,
+  isSearchQuerySubmittable,
+  resolveSearchQuerySubmitAttempt,
+  SEARCH_QUERY_MAX_LENGTH,
+  trimSearchQueryDraft,
+} from "#/features/search/lib/sanitize-search-query";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchSuggestListSkeleton } from "#/features/search/ui/search-skeleton/SearchSuggestListSkeleton";
 import { useDebouncedValue } from "#/shared/hooks/useDebouncedValue";
@@ -29,8 +43,6 @@ import {
   sectionHeader,
 } from "./SearchOverlay.css.ts";
 
-const SUGGEST_MIN_QUERY_LENGTH = 2;
-
 export interface SearchOverlayProps {
   onClose: (draft?: string) => void;
   onSelect: (query: string) => void;
@@ -38,6 +50,10 @@ export interface SearchOverlayProps {
     item: SearchAutocompleteItemData,
     sourceQuery: string,
   ) => void;
+  onSelectHistory?: (entry: SearchHistoryEntry) => void;
+  recentEntries?: SearchHistoryEntry[];
+  onRemoveRecent: (id: string) => void;
+  onClearRecent: () => void;
   initialQuery?: string;
   searchCoordinates: { lat: number; lng: number };
 }
@@ -50,26 +66,33 @@ export function SearchOverlay({
   onClose,
   onSelect,
   onSelectAutocomplete,
+  onSelectHistory,
+  recentEntries = [],
+  onRemoveRecent,
+  onClearRecent,
   initialQuery = "",
   searchCoordinates,
 }: SearchOverlayProps) {
-  const [query, setQuery] = useState(initialQuery);
-
-  const [recentSearches, setRecentSearches] = useState<
-    Array<{ id: number; query: string; date: string }>
-  >([]);
-  const normalizedQuery = query.trim();
-  const debouncedQuery = useDebouncedValue(normalizedQuery, 300);
+  const [query, setQuery] = useState(() => trimSearchQueryDraft(initialQuery));
+  const queryIssue = useMemo(() => getSearchQueryIssue(query), [query]);
+  const validatedQuery = useMemo(() => getValidatedSearchQuery(query), [query]);
+  const isQueryValid = useMemo(() => isSearchQuerySubmittable(query), [query]);
+  const debouncedQuery = useDebouncedValue(isQueryValid ? query : "", 300);
   const suggestParams = useMemo(
     () =>
-      debouncedQuery.length >= SUGGEST_MIN_QUERY_LENGTH
+      isQueryValid && debouncedQuery.length > 0
         ? {
             keyword: debouncedQuery,
             lat: searchCoordinates.lat,
             lng: searchCoordinates.lng,
           }
         : null,
-    [debouncedQuery, searchCoordinates.lat, searchCoordinates.lng],
+    [
+      debouncedQuery,
+      isQueryValid,
+      searchCoordinates.lat,
+      searchCoordinates.lng,
+    ],
   );
   const {
     data: autocompleteItems = [],
@@ -79,8 +102,8 @@ export function SearchOverlay({
     refetch,
   } = useLockerSuggest(suggestParams);
 
-  const isSuggestEligible = normalizedQuery.length >= SUGGEST_MIN_QUERY_LENGTH;
-  const isDebouncing = isSuggestEligible && normalizedQuery !== debouncedQuery;
+  const isSuggestEligible = isQueryValid;
+  const isDebouncing = isSuggestEligible && query !== debouncedQuery;
   const showSuggestLoading = isSuggestEligible && (isDebouncing || isFetching);
   const showSuggestError = isSuggestEligible && isError && !showSuggestLoading;
   const showSuggestEmpty =
@@ -95,17 +118,52 @@ export function SearchOverlay({
     !showSuggestError &&
     autocompleteItems.length > 0;
 
-  useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
+  const applyTrimToQuery = (rawQuery: string = query): string => {
+    const trimmed = trimSearchQueryDraft(rawQuery);
+
+    if (trimmed !== query) {
+      setQuery(trimmed);
+    }
+
+    return trimmed;
+  };
 
   const handleQueryChange = (nextQuery: string) => {
-    setQuery(nextQuery);
+    setQuery(capSearchQueryDraft(nextQuery));
+  };
+
+  const handleQueryBlur = () => {
+    applyTrimToQuery();
+  };
+
+  const handleSubmitQuery = () => {
+    const trimmed = applyTrimToQuery();
+
+    if (!isSearchQuerySubmittable(trimmed)) {
+      return;
+    }
+
+    const attempt = resolveSearchQuerySubmitAttempt(trimmed);
+
+    if (!attempt.ok) {
+      return;
+    }
+
+    onSelect(attempt.query);
   };
 
   const handleSelect = (selectedQuery: string) => {
-    handleQueryChange(selectedQuery);
-    onSelect(selectedQuery);
+    if (!isSearchQuerySubmittable(selectedQuery)) {
+      return;
+    }
+
+    const attempt = resolveSearchQuerySubmitAttempt(selectedQuery);
+
+    if (!attempt.ok) {
+      return;
+    }
+
+    onSelect(attempt.query);
   };
 
   const handleAutocompleteSelect = (item: SearchAutocompleteItemData) => {
@@ -121,13 +179,36 @@ export function SearchOverlay({
     onClose(query);
   };
 
-  const handleRemoveRecent = (id: number) => {
-    setRecentSearches((prev) => prev.filter((item) => item.id !== id));
+  const handleRemoveRecent = (id: string) => {
+    onRemoveRecent(id);
   };
 
   const handleClearAll = () => {
-    setRecentSearches([]);
+    onClearRecent();
   };
+
+  const handleSelectHistory = (entry: SearchHistoryEntry) => {
+    if (onSelectHistory) {
+      onSelectHistory(entry);
+      return;
+    }
+
+    if (entry.kind === "keyword") {
+      handleSelect(entry.query);
+    }
+  };
+
+  useEffect(() => {
+    if (!validatedQuery || validatedQuery === query) {
+      return;
+    }
+
+    setQuery(validatedQuery);
+  }, [query, validatedQuery]);
+
+  useEffect(() => {
+    setQuery(trimSearchQueryDraft(initialQuery));
+  }, [initialQuery]);
 
   /* const popularKeywords = [
     "코엑스",
@@ -147,7 +228,7 @@ export function SearchOverlay({
     "부산역",
   ]; */
 
-  const hasQuery = normalizedQuery.length > 0;
+  const hasQuery = query.length > 0;
 
   return (
     <div className={overlay}>
@@ -164,14 +245,16 @@ export function SearchOverlay({
           <SearchField
             autoFocus
             value={query}
+            maxLength={SEARCH_QUERY_MAX_LENGTH}
             onChange={handleQueryChange}
+            onBlur={handleQueryBlur}
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                const nextQuery = (query || "").trim();
-                if (nextQuery) {
-                  handleSelect(nextQuery);
-                }
+              if (event.key !== "Enter" && event.key !== "NumpadEnter") {
+                return;
               }
+
+              event.preventDefault();
+              handleSubmitQuery();
             }}
             placeholder={m.search_placeholder()}
             searchIconPlacement="left"
@@ -188,7 +271,7 @@ export function SearchOverlay({
               <LabelTitle size="large">
                 {m.search_recent_title()}
               </LabelTitle>
-              {recentSearches.length > 0 && (
+              {recentEntries.length > 0 && (
                 <button
                   type="button"
                   className={deleteAllButton}
@@ -213,18 +296,17 @@ export function SearchOverlay({
             </div> */}
 
             <div className={recentList}>
-              {recentSearches.length > 0 ? (
-                recentSearches.map((item) => (
+              {recentEntries.length > 0 ? (
+                recentEntries.map((entry) => (
                   <SearchListRecent
-                    key={item.id}
-                    dateLabel={item.date}
-                    onPress={() => handleSelect(item.query)}
-                    onRemove={() => handleRemoveRecent(item.id)}
-                    removeAriaLabel={
-                      m.search_recent_remove()
-                    }
+                    key={entry.id}
+                    historyKind={entry.kind}
+                    dateLabel={formatSearchHistoryDateLabel(entry.searchedAt)}
+                    onPress={() => handleSelectHistory(entry)}
+                    onRemove={() => handleRemoveRecent(entry.id)}
+                    removeAriaLabel={m.search_recent_remove()}
                   >
-                    {item.query}
+                    {getSearchHistoryEntryLabel(entry)}
                   </SearchListRecent>
                 ))
               ) : (
@@ -245,7 +327,10 @@ export function SearchOverlay({
 
         {hasQuery ? (
           <div className={autocompleteList}>
-            {!isSuggestEligible ? (
+            {queryIssue === "invalid-format" ? (
+              <SearchAsyncFeedback variant="suggest-invalid-format" />
+            ) : null}
+            {queryIssue === "too-short" ? (
               <SearchAsyncFeedback variant="suggest-min-length" />
             ) : null}
             {showSuggestLoading ? <SearchSuggestListSkeleton /> : null}

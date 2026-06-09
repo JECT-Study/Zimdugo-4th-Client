@@ -58,6 +58,8 @@ export function Input({
   searchIconPlacement = "none",
   textTone = "auto",
   className,
+  onKeyDown,
+  onKeyUp,
   ...props
 }: InputProps) {
   const [value, setValue] = useState<string>(
@@ -140,6 +142,8 @@ export function Input({
                 <AriaInput
                   className={[inputText, toneClass].filter(Boolean).join(" ")}
                   placeholder={placeholder}
+                  onKeyDown={onKeyDown}
+                  onKeyUp={onKeyUp}
                 />
               </div>
               {showRightSearch ? (
