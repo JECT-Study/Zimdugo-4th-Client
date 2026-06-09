@@ -69,6 +69,7 @@
   "search_filter_back_to_results": "결과로 돌아가기",
   "search_filter_reset": "초기화",
   "search_filter_view_lockers": "보관함 보기",
+  "search_filter_view_lockers_count": "{count}개의 보관함 보기",
   "search_filter_error_price_required": "올바른 가격 범위를 입력해주세요.",
   "search_filter_error_price_min": "올바른 가격 범위를 입력해주세요.",
   "search_filter_error_price_max": "올바른 가격 범위를 입력해주세요.",

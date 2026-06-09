@@ -28,7 +28,6 @@ import {
   sheetColumn,
 } from "./SearchListBottomSheet.css.ts";
 import {
-  filterSearchResults,
   type SearchLockerResultItem,
   type SearchResultItem,
   type SearchSortDirection,
@@ -111,10 +110,6 @@ export function SearchListBottomSheet({
   );
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
 
-  const filteredItems = useMemo(
-    () => filterSearchResults(items, placeName ? "" : searchQuery),
-    [items, placeName, searchQuery],
-  );
   const visibleItems = useMemo(() => {
     const primarySortType: Record<SearchSortKey, LockerPrimarySortType> = {
       distance: "DISTANCE",
@@ -131,12 +126,12 @@ export function SearchListBottomSheet({
     };
 
     return sortLockerData(
-      filteredItems,
+      items,
       primarySortType[resolvedSort.key],
       sortDirection[resolvedSort.direction],
       new Date(),
     );
-  }, [activeSort, filteredItems]);
+  }, [activeSort, items]);
   const isPlaceScope = Boolean(placeName);
   const hasResult = !isLoading && !isError && visibleItems.length > 0;
   const showEmpty = !isLoading && !isError && visibleItems.length === 0;

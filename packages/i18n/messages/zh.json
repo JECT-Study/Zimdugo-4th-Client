@@ -69,6 +69,7 @@
   "search_filter_back_to_results": "返回结果",
   "search_filter_reset": "重置",
   "search_filter_view_lockers": "查看寄存柜",
+  "search_filter_view_lockers_count": "查看{count}个寄存柜",
   "search_filter_error_price_required": "请输入有效的价格范围。",
   "search_filter_error_price_min": "请输入有效的价格范围。",
   "search_filter_error_price_max": "请输入有效的价格范围。",

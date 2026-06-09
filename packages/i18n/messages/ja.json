@@ -69,6 +69,7 @@
   "search_filter_back_to_results": "結果に戻る",
   "search_filter_reset": "リセット",
   "search_filter_view_lockers": "ロッカーを見る",
+  "search_filter_view_lockers_count": "{count}件のロッカーを見る",
   "search_filter_error_price_required": "有効な料金範囲を入力してください。",
   "search_filter_error_price_min": "有効な料金範囲を入力してください。",
   "search_filter_error_price_max": "有効な料金範囲を入力してください。",

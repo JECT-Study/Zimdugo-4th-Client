@@ -277,7 +277,7 @@ function FullDetailContent({
   onShare: () => void;
   onNavigate: () => void;
 }) {
-  const showFeedbackVotes =
+  const hasFeedbackVotes =
     locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
 
   return (
@@ -294,18 +294,11 @@ function FullDetailContent({
               }
               trailing={[locker.categoryLabel, locker.distanceLabel]}
             />
-            {locker.floorLabel ? (
-              <DetailInfoRow
-                icon={<IconNormalMapPin24 state="active" />}
-                title={locker.address}
-                description={locker.floorLabel}
-              />
-            ) : (
-              <DetailInfoRow
-                icon={<IconNormalMapPin24 state="active" />}
-                title={locker.address}
-              />
-            )}
+            <DetailInfoRow
+              icon={<IconNormalMapPin24 state="active" />}
+              title={locker.address}
+              description={locker.floorLabel}
+            />
             <DetailInfoRow
               icon={<IconNormalWallet24 />}
               title="가격"
@@ -328,7 +321,7 @@ function FullDetailContent({
               descriptionClassName={detailDescriptionMultiline}
             />
           </div>
-          {showFeedbackVotes ? (
+          {hasFeedbackVotes ? (
             <div className={feedbackRow}>
               {locker.accurateCount !== undefined ? (
                 <button type="button" className={feedbackButton}>

@@ -30,6 +30,7 @@ export interface SearchFilterAppliedState {
 export interface SearchFilterBottomSheetProps {
   className?: string;
   initialFilters?: SearchFilterAppliedState;
+  lockerCount?: number;
   onCollapseToResults?: () => void;
   onReset?: () => void;
   onApply?: (filters: SearchFilterAppliedState) => void;
@@ -49,6 +50,7 @@ export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
 export function SearchFilterBottomSheet({
   className,
   initialFilters,
+  lockerCount,
   onCollapseToResults,
   onReset,
   onApply,
@@ -64,6 +66,23 @@ export function SearchFilterBottomSheet({
   const [selectedSizes, setSelectedSizes] = useState<SizeCardType[]>(
     restoredFilters.selectedSizes,
   );
+
+  useEffect(() => {
+    const updateCollapsedSnap = () => {
+      setCollapsedSnap(window.innerHeight - 24);
+    };
+    updateCollapsedSnap();
+    window.addEventListener("resize", updateCollapsedSnap);
+    return () => window.removeEventListener("resize", updateCollapsedSnap);
+  }, []);
+
+  useEffect(() => {
+    if (!initialFilters) return;
+
+    setIndoorOutdoor(initialFilters.indoorOutdoorState);
+    setPlaceType(initialFilters.placeTypeState);
+    setSelectedSizes(initialFilters.selectedSizes);
+  }, [initialFilters]);
 
   const indoorOutdoorOptions = [
     {
@@ -120,22 +139,10 @@ export function SearchFilterBottomSheet({
     },
   ];
 
-  useEffect(() => {
-    const updateCollapsedSnap = () => {
-      setCollapsedSnap(window.innerHeight - 24);
-    };
-    updateCollapsedSnap();
-    window.addEventListener("resize", updateCollapsedSnap);
-    return () => window.removeEventListener("resize", updateCollapsedSnap);
-  }, []);
-
-  useEffect(() => {
-    if (!initialFilters) return;
-
-    setIndoorOutdoor(initialFilters.indoorOutdoorState);
-    setPlaceType(initialFilters.placeTypeState);
-    setSelectedSizes(initialFilters.selectedSizes);
-  }, [initialFilters]);
+  const applyButtonLabel =
+    lockerCount != null && lockerCount >= 0
+      ? m.search_filter_view_lockers_count({ count: String(lockerCount) })
+      : m.search_filter_view_lockers();
 
   const handleReset = () => {
     setIndoorOutdoor([]);
@@ -235,7 +242,7 @@ export function SearchFilterBottomSheet({
             size="L"
             onPress={handleApply}
           >
-            {m.search_filter_view_lockers()}
+            {applyButtonLabel}
           </Button>
         </div>
       </div>

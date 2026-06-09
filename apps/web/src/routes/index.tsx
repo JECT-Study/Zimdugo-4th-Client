@@ -1021,6 +1021,9 @@ function IndexPage() {
   const searchBottomSheetItems = isPlaceListScope
     ? (placeLockersResults?.lockers ?? [])
     : (keywordSearchResults?.items ?? []);
+  const searchFilterLockerCount = isPlaceListScope
+    ? placeLockersResults?.lockers.length
+    : keywordSearchResults?.count;
   const isSearchListLoading = shouldShowSearchListLoading({
     isPlaceListScope,
     shouldFetchPlaceList,
@@ -1227,6 +1230,7 @@ function IndexPage() {
       {sheetMode === "filter" && !isSearchOpen ? (
         <SearchFilterBottomSheet
           initialFilters={searchFilters}
+          lockerCount={searchFilterLockerCount}
           onCollapseToResults={() => setSheetMode("list")}
           onReset={handleResetSearchFilter}
           onApply={handleApplySearchFilter}

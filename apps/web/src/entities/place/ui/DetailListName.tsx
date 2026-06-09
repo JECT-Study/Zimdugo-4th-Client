@@ -37,15 +37,22 @@ export function DetailListName({
         ) : null}
       </div>
       <div className={metaRow}>
-        <span>{distanceLabel}</span>
-        <span className={metaDot} aria-hidden="true">
-          ·
-        </span>
-        <span>{categoryLabel}</span>
-        <span className={metaDot} aria-hidden="true">
-          ·
-        </span>
-        <span>{detailLabel}</span>
+        {[distanceLabel, categoryLabel, detailLabel]
+          .filter(Boolean)
+          .flatMap((label, index) =>
+            index > 0
+              ? [
+                  <span
+                    key={`dot-${index}`}
+                    className={metaDot}
+                    aria-hidden="true"
+                  >
+                    ·
+                  </span>,
+                  <span key={`label-${index}`}>{label}</span>,
+                ]
+              : [<span key={`label-${index}`}>{label}</span>],
+          )}
       </div>
     </>
   );
