@@ -40,7 +40,7 @@ export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
         toLockerKeywordViewModel,
       );
     },
-    enabled: !!params?.keyword.trim(),
+    enabled: !!params?.keyword?.trim(),
   });
 }
 
@@ -85,6 +85,6 @@ export function useLockerSuggest(params: GetLockerSuggestParams | null) {
         toSearchAutocompleteItems(data.items),
       );
     },
-    enabled: !!params?.keyword.trim(),
+    enabled: !!params?.keyword?.trim(),
   });
 }
