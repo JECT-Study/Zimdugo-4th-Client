@@ -1,31 +1,78 @@
+import { m } from "@repo/i18n";
+
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
+const JUST_NOW_THRESHOLD_MS = 5 * MINUTE_MS;
+const DAYS_PER_MONTH = 30;
+const DAYS_PER_YEAR = 365;
+
+const parseUpdatedTimestamp = (
+  updatedAt: string | undefined,
+): number | null => {
+  if (!updatedAt) return null;
+
+  const timestamp = Date.parse(updatedAt);
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const formatAbsoluteDateTime = (timestamp: number): string => {
+  const date = new Date(timestamp);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hour}:${minute}`;
+};
 
 export const formatUpdatedLabel = (
   updatedAt: string | undefined,
   now: Date = new Date(),
 ): string => {
-  if (!updatedAt) return "";
-
-  const timestamp = Date.parse(updatedAt);
-  if (!Number.isFinite(timestamp)) return "";
+  const timestamp = parseUpdatedTimestamp(updatedAt);
+  if (timestamp === null) return "";
 
   const diffMs = Math.max(0, now.getTime() - timestamp);
-  if (diffMs < MINUTE_MS) return "방금 업데이트";
+  if (diffMs < JUST_NOW_THRESHOLD_MS) {
+    return m.time_updated_just_now();
+  }
 
   const minutes = Math.floor(diffMs / MINUTE_MS);
-  if (minutes < 60) return `${minutes}분 전 업데이트`;
+  if (minutes < 60) {
+    return m.time_updated_minutes_ago({ minutes: String(minutes) });
+  }
 
   const hours = Math.floor(diffMs / HOUR_MS);
-  if (hours < 24) return `${hours}시간 전 업데이트`;
+  if (hours < 24) {
+    return m.time_updated_hours_ago({ hours: String(hours) });
+  }
 
   const days = Math.floor(diffMs / DAY_MS);
-  if (days < 7) return `${days}일 전 업데이트`;
+  if (days < DAYS_PER_MONTH) {
+    return m.time_updated_days_ago({ days: String(days) });
+  }
 
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(timestamp));
+  if (days < DAYS_PER_YEAR) {
+    return m.time_updated_months_ago({
+      months: String(Math.floor(days / DAYS_PER_MONTH)),
+    });
+  }
+
+  return m.time_updated_years_ago({
+    years: String(Math.floor(days / DAYS_PER_YEAR)),
+  });
+};
+
+export const formatLastUpdatedLabel = (
+  updatedAt: string | undefined,
+): string => {
+  const timestamp = parseUpdatedTimestamp(updatedAt);
+  if (timestamp === null) return "";
+
+  return m.locker_detail_last_updated({
+    datetime: formatAbsoluteDateTime(timestamp),
+  });
 };

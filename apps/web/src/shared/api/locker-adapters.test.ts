@@ -164,6 +164,7 @@ describe("locker-adapters", () => {
     expect(detail.detailHelpText).toBe("지하 1층 안내 데스크 옆");
     expect(detail.accurateCount).toBe(12);
     expect(detail.inaccurateCount).toBe(1);
+    expect(detail.lastUpdatedLabel).toBe("최근 업데이트 2026-05-31 14:59");
   });
 
   it("운영시간·가격이 없으면 미제공 문구로 변환한다", () => {

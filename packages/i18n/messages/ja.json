@@ -223,5 +223,12 @@
   "locker_detail_operating_hours_not_provided": "営業時間未提供",
   "locker_detail_price_not_provided": "料金未提供",
   "locker_detail_price_range": "{min} ~ {max}",
-  "locker_detail_price_from": "{min} ~"
+  "locker_detail_price_from": "{min} ~",
+  "time_updated_just_now": "たった今更新",
+  "time_updated_minutes_ago": "{minutes}分前に更新",
+  "time_updated_hours_ago": "{hours}時間前に更新",
+  "time_updated_days_ago": "{days}日前に更新",
+  "time_updated_months_ago": "{months}ヶ月前に更新",
+  "time_updated_years_ago": "{years}年前に更新",
+  "locker_detail_last_updated": "最終更新 {datetime}"
 }

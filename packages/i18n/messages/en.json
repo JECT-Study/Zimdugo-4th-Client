@@ -223,5 +223,12 @@
   "locker_detail_operating_hours_not_provided": "Hours not provided",
   "locker_detail_price_not_provided": "Price not provided",
   "locker_detail_price_range": "{min} – {max}",
-  "locker_detail_price_from": "From {min}"
+  "locker_detail_price_from": "From {min}",
+  "time_updated_just_now": "Updated just now",
+  "time_updated_minutes_ago": "Updated {minutes}m ago",
+  "time_updated_hours_ago": "Updated {hours}h ago",
+  "time_updated_days_ago": "Updated {days}d ago",
+  "time_updated_months_ago": "Updated {months}mo ago",
+  "time_updated_years_ago": "Updated {years}y ago",
+  "locker_detail_last_updated": "Last updated {datetime}"
 }
