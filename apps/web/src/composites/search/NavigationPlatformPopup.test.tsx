@@ -16,6 +16,14 @@ const LOCKER_DETAIL: LockerDetailItem = {
   updatedLabel: "4시간 전 업데이트",
   distanceLabel: "210m",
   address: "서울 서대문구 신촌로 83",
+  latitude: 37.5559,
+  longitude: 126.9364,
+};
+
+const NAVIGATION_ORIGIN = {
+  lat: 37.5012,
+  lng: 127.0396,
+  label: "현재 위치",
 };
 
 describe("NavigationPlatformPopup", () => {
@@ -24,6 +32,7 @@ describe("NavigationPlatformPopup", () => {
       <NavigationPlatformPopup
         isOpen
         locker={LOCKER_DETAIL}
+        navigationOrigin={NAVIGATION_ORIGIN}
         onOpenChange={() => undefined}
       />,
     );
@@ -37,15 +46,28 @@ describe("NavigationPlatformPopup", () => {
     ).toBeTruthy();
   });
 
-  it("builds platform search urls from the selected locker", () => {
-    expect(getNavigationPlatformUrl("naver", LOCKER_DETAIL)).toContain(
-      "map.naver.com",
-    );
-    expect(getNavigationPlatformUrl("google", LOCKER_DETAIL)).toContain(
-      "google.com/maps/search",
+  it("builds directions urls with origin and destination coordinates", () => {
+    expect(
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).toContain("map.naver.com/p/directions/");
+    expect(
+      getNavigationPlatformUrl("google", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).toContain("google.com/maps/dir/");
+    expect(
+      getNavigationPlatformUrl("google", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).toContain(
+      `origin=${NAVIGATION_ORIGIN.lat},${NAVIGATION_ORIGIN.lng}`,
     );
     expect(
-      decodeURIComponent(getNavigationPlatformUrl("google", LOCKER_DETAIL)),
-    ).toContain(LOCKER_DETAIL.address);
+      getNavigationPlatformUrl("google", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).toContain("destination=37.5559,126.9364");
   });
 });

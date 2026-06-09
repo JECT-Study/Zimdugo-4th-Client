@@ -1,5 +1,12 @@
 import { Button as UiButton } from "@repo/ui/components/button";
 import {
+  getNavigationPlatformLinks,
+  hasNavigationDestination,
+  openNavigationPlatformLinks,
+  type NavigationPlatform,
+  type NavigationPoint,
+} from "#/features/search/lib/navigation-platform-links";
+import {
   Button as AriaButton,
   Dialog,
   Modal,
@@ -17,7 +24,10 @@ import {
   title,
 } from "./NavigationPlatformPopup.css.ts";
 
-export type NavigationPlatform = "naver" | "google";
+export type { NavigationPlatform } from "#/features/search/lib/navigation-platform-links";
+export {
+  getNavigationPlatformUrl,
+} from "#/features/search/lib/navigation-platform-links";
 
 const NAVER_MAP_ICON_URL =
   "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/e2/75/2d/e2752d44-f2c7-ac4e-ff75-8b9ac83cd62c/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-85-220.png/512x512bb.jpg";
@@ -28,6 +38,7 @@ const GOOGLE_MAPS_ICON_URL =
 export interface NavigationPlatformPopupProps {
   isOpen: boolean;
   locker: LockerDetailItem | null;
+  navigationOrigin: NavigationPoint;
   onOpenChange: (isOpen: boolean) => void;
   onSelectPlatform?: (
     platform: NavigationPlatform,
@@ -36,31 +47,23 @@ export interface NavigationPlatformPopupProps {
   ) => void;
 }
 
-export const getNavigationPlatformUrl = (
-  platform: NavigationPlatform,
-  locker: LockerDetailItem,
-) => {
-  const query = encodeURIComponent(`${locker.title} ${locker.address}`.trim());
-
-  if (platform === "naver") {
-    return `https://map.naver.com/p/search/${query}`;
-  }
-
-  return `https://www.google.com/maps/search/?api=1&query=${query}`;
-};
-
 export function NavigationPlatformPopup({
   isOpen,
   locker,
+  navigationOrigin,
   onOpenChange,
   onSelectPlatform,
 }: NavigationPlatformPopupProps) {
   const handleSelectPlatform = (platform: NavigationPlatform) => {
-    if (!locker) return;
+    if (!locker || !hasNavigationDestination(locker)) return;
 
-    const url = getNavigationPlatformUrl(platform, locker);
-    onSelectPlatform?.(platform, url, locker);
-    window.location.href = url;
+    const links = getNavigationPlatformLinks(platform, locker, {
+      navigationOrigin,
+    });
+    if (!links) return;
+
+    onSelectPlatform?.(platform, links.webUrl, locker);
+    openNavigationPlatformLinks(links, { platform });
     onOpenChange(false);
   };
 

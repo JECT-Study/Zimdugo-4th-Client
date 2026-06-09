@@ -20,6 +20,11 @@ import {
 } from "#/composites/search/LockerDetailBottomSheet";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
+  DEFAULT_NAVIGATION_ORIGIN,
+  resolveNavigationOriginWithPermissionRequest,
+  type NavigationPoint,
+} from "#/features/search/lib/navigation-platform-links";
+import {
   createDefaultSearchFilters,
   type SearchFilterAppliedState,
   SearchFilterBottomSheet,
@@ -210,6 +215,9 @@ function IndexPage() {
     clear: clearSearchHistory,
   } = useSearchHistory();
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
+  const [navigationOriginForDirections, setNavigationOriginForDirections] =
+    useState<NavigationPoint | null>(null);
+  const isResolvingNavigationOriginRef = useRef(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
@@ -893,14 +901,44 @@ function IndexPage() {
     [],
   );
 
-  const handleOpenNavigationPopup = useCallback(() => {
-    setIsNavigationPopupOpen(true);
+  const handleOpenNavigationPopup = useCallback(async () => {
+    if (isResolvingNavigationOriginRef.current) {
+      return;
+    }
+
+    isResolvingNavigationOriginRef.current = true;
+
+    try {
+      const { origin, permissionDenied } =
+        await resolveNavigationOriginWithPermissionRequest();
+
+      setNavigationOriginForDirections(origin);
+
+      if (permissionDenied) {
+        openLocationPopup();
+      } else if (!isTracking) {
+        startTracking();
+      }
+
+      setIsNavigationPopupOpen(true);
+    } finally {
+      isResolvingNavigationOriginRef.current = false;
+    }
+  }, [isTracking, openLocationPopup, startTracking]);
+
+  const handleNavigationPopupOpenChange = useCallback((isOpen: boolean) => {
+    setIsNavigationPopupOpen(isOpen);
+
+    if (!isOpen) {
+      setNavigationOriginForDirections(null);
+    }
   }, []);
 
   const handleBackFromDetail = useCallback(() => {
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setIsNavigationPopupOpen(false);
+    setNavigationOriginForDirections(null);
 
     if (context === "map") {
       if (mapDetailBack === "idle") {
@@ -1306,7 +1344,10 @@ function IndexPage() {
       <NavigationPlatformPopup
         isOpen={isNavigationPopupOpen}
         locker={selectedLockerDetail}
-        onOpenChange={setIsNavigationPopupOpen}
+        navigationOrigin={
+          navigationOriginForDirections ?? DEFAULT_NAVIGATION_ORIGIN
+        }
+        onOpenChange={handleNavigationPopupOpenChange}
       />
 
       {sheetMode === "filter" && !isSearchOpen ? (
