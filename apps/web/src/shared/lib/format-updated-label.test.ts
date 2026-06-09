@@ -77,6 +77,14 @@ describe("formatUpdatedLabel", () => {
     expect(formatUpdatedLabel(undefined, NOW)).toBe("");
     expect(formatUpdatedLabel("invalid", NOW)).toBe("");
   });
+
+  it("마이크로초 단위 updatedAt도 파싱해 상대 시간을 표시한다", () => {
+    setLanguageTag("ko");
+
+    expect(
+      formatUpdatedLabel("2026-06-07T11:56:00.298782Z", NOW),
+    ).toBe("방금 업데이트");
+  });
 });
 
 describe("formatLastUpdatedLabel", () => {
@@ -93,5 +101,13 @@ describe("formatLastUpdatedLabel", () => {
 
     expect(formatLastUpdatedLabel(undefined)).toBe("");
     expect(formatLastUpdatedLabel("invalid")).toBe("");
+  });
+
+  it("마이크로초 단위 updatedAt도 파싱해 절대 시간 라벨을 표시한다", () => {
+    setLanguageTag("ko");
+
+    expect(formatLastUpdatedLabel("2026-05-31T14:59:09.298782")).toBe(
+      "최근 업데이트 2026-05-31 14:59",
+    );
   });
 });

@@ -7,12 +7,19 @@ const JUST_NOW_THRESHOLD_MS = 5 * MINUTE_MS;
 const DAYS_PER_MONTH = 30;
 const DAYS_PER_YEAR = 365;
 
+const normalizeUpdatedAtForParsing = (updatedAt: string): string =>
+  updatedAt.replace(
+    /^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})\.(\d+)(.*)$/,
+    (_match, dateTime: string, fraction: string, rest: string) =>
+      `${dateTime}.${fraction.slice(0, 3).padEnd(3, "0")}${rest}`,
+  );
+
 const parseUpdatedTimestamp = (
   updatedAt: string | undefined,
 ): number | null => {
   if (!updatedAt) return null;
 
-  const timestamp = Date.parse(updatedAt);
+  const timestamp = Date.parse(normalizeUpdatedAtForParsing(updatedAt));
   return Number.isFinite(timestamp) ? timestamp : null;
 };
 
