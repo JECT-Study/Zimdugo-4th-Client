@@ -22,7 +22,7 @@ const LOCKER_DETAIL: LockerDetailItem = {
 };
 
 describe("LockerDetailBottomSheet", () => {
-  it("renders the half detail summary and actions", () => {
+  it("하프 시트 요약과 액션 버튼을 렌더링한다", () => {
     render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
 
     expect(screen.getByText(LOCKER_DETAIL.title)).toBeTruthy();
@@ -32,7 +32,23 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.getByRole("button", { name: "길찾기" })).toBeTruthy();
   });
 
-  it("separates favorite, share, and navigate actions", () => {
+  it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {
+    const handleRetry = vi.fn();
+
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        loadState="error"
+        onRetry={handleRetry}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(handleRetry).toHaveBeenCalledOnce();
+  });
+
+  it("즐겨찾기·공유·길찾기 동작을 분리한다", () => {
     const handleFavoriteChange = vi.fn();
     const handleShare = vi.fn();
     const handleNavigate = vi.fn();
@@ -55,7 +71,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(handleNavigate).toHaveBeenCalledWith(LOCKER_DETAIL);
   });
 
-  it("renders the full detail content when the sheet starts at the full snap point", () => {
+  it("풀 스냅 시 전체 상세 콘텐츠를 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet
         locker={LOCKER_DETAIL}
@@ -73,7 +89,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.getByText("최근 업데이트 2026-05-16 16:25")).toBeTruthy();
   });
 
-  it("calls onBack when the back button is pressed", () => {
+  it("뒤로가기 버튼을 누르면 onBack을 호출한다", () => {
     const handleBack = vi.fn();
 
     render(

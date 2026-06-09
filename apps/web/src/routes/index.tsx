@@ -10,11 +10,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
   createLockerDetailFromAutocompleteItem,
+  createLockerDetailFromHistoryEntry,
   createLockerDetailFromPin,
   createLockerDetailPlaceholder,
   createLockerDetailFromSearchItem,
   LockerDetailBottomSheet,
   type LockerDetailItem,
+  type LockerDetailLoadState,
 } from "#/composites/search/LockerDetailBottomSheet";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
@@ -41,7 +43,10 @@ import {
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
-import { useLockerDetail } from "#/features/search/hooks/useLockerDetail";
+import {
+  LOCKER_DETAIL_QUERY_KEY,
+  useLockerDetail,
+} from "#/features/search/hooks/useLockerDetail";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import {
   useLockerKeywordSearch,
@@ -58,10 +63,10 @@ import {
 } from "#/features/search/lib/to-locker-search-filter-params";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
+  applyLockerSearchDraft,
   createKeywordSearchSelection,
   createPlaceSearchSelection,
   type SearchSelectionState,
-  syncSearchDraft,
 } from "#/features/search/model/search-selection";
 import {
   getDetailFocusBottomInsetPx,
@@ -518,8 +523,36 @@ function IndexPage() {
     [activeLockerId, searchCoordinates.lat, searchCoordinates.lng],
   );
 
-  const { data: lockerDetail, isError: isLockerDetailError } =
-    useLockerDetail(lockerDetailParams);
+  const {
+    data: lockerDetail,
+    isError: isLockerDetailError,
+    isPending: isLockerDetailPending,
+    isFetching: isLockerDetailFetching,
+    refetch: refetchLockerDetail,
+  } = useLockerDetail(lockerDetailParams);
+
+  const lockerDetailLoadState = useMemo((): LockerDetailLoadState => {
+    if (sheetMode !== "detail" || activeLockerId == null) {
+      return "ready";
+    }
+
+    if (isLockerDetailError) {
+      return "error";
+    }
+
+    if ((isLockerDetailPending || isLockerDetailFetching) && !lockerDetail) {
+      return "loading";
+    }
+
+    return "ready";
+  }, [
+    activeLockerId,
+    isLockerDetailError,
+    isLockerDetailFetching,
+    isLockerDetailPending,
+    lockerDetail,
+    sheetMode,
+  ]);
 
   const searchResultPins = useMemo(() => {
     if (context === "search" && listKind === "place") {
@@ -636,7 +669,9 @@ function IndexPage() {
         setContext("search");
         setListKind("keyword");
         setSearchPlaceId(null);
-        setSearchDraft(syncSearchDraft(sourceQuery).searchDraft);
+        const lockerSearchSelection = applyLockerSearchDraft(sourceQuery);
+        setSearchDraft(lockerSearchSelection.searchDraft);
+        setSearchQuery(lockerSearchSelection.searchQuery);
         setSearchDetailBack(createKeywordDetailBackTarget());
         openLockerDetailById(
           item.lockerId,
@@ -657,7 +692,7 @@ function IndexPage() {
         placeName: item.title,
       });
     },
-    [openLockerDetailById, openSearchPlaceList, recordSearchHistory],
+    [openLockerDetailById, openSearchPlaceList, recordSearchHistory, setSearchQuery],
   );
 
   const handleSelectSearchHistory = useCallback(
@@ -677,9 +712,17 @@ function IndexPage() {
         setContext("search");
         setListKind("keyword");
         setSearchPlaceId(null);
-        setSearchDraft(syncSearchDraft(entry.searchDraft).searchDraft);
+        const lockerSearchSelection = applyLockerSearchDraft(entry.searchDraft);
+        setSearchDraft(lockerSearchSelection.searchDraft);
+        setSearchQuery(lockerSearchSelection.searchQuery);
         setSearchDetailBack(createKeywordDetailBackTarget());
-        openLockerDetailById(entry.lockerId);
+        openLockerDetailById(
+          entry.lockerId,
+          createLockerDetailFromHistoryEntry(entry),
+        );
+        void queryClient.invalidateQueries({
+          queryKey: [LOCKER_DETAIL_QUERY_KEY, entry.lockerId],
+        });
         return;
       }
 
@@ -699,7 +742,9 @@ function IndexPage() {
       handleSelectSearch,
       openLockerDetailById,
       openSearchPlaceList,
+      queryClient,
       recordSearchHistory,
+      setSearchQuery,
     ],
   );
 
@@ -919,39 +964,6 @@ function IndexPage() {
       });
     }
   }, [lockerDetail, mapInstance]);
-
-  useEffect(() => {
-    if (!isLockerDetailError || sheetMode !== "detail") {
-      return;
-    }
-
-    setActiveLockerId(null);
-    setSelectedLockerDetail(null);
-
-    if (context === "map") {
-      if (mapDetailBack === "idle") {
-        resetMapContext();
-        return;
-      }
-
-      setSheetMode("list");
-      return;
-    }
-
-    if (searchDetailBack) {
-      setListKind(searchDetailBack.listKind);
-      setSearchPlaceId(searchDetailBack.placeId);
-    }
-
-    setSheetMode("list");
-  }, [
-    context,
-    isLockerDetailError,
-    mapDetailBack,
-    resetMapContext,
-    searchDetailBack,
-    sheetMode,
-  ]);
 
   useEffect(() => {
     if (sheetMode === "idle") {
@@ -1276,6 +1288,8 @@ function IndexPage() {
       {sheetMode === "detail" && !isSearchOpen && selectedLockerDetail ? (
         <LockerDetailBottomSheet
           locker={selectedLockerDetail}
+          loadState={lockerDetailLoadState}
+          onRetry={() => void refetchLockerDetail()}
           onFavoriteChange={handleDetailFavoriteChange}
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
