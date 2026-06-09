@@ -1,3 +1,5 @@
+import { type ReactNode, useEffect, useState } from "react";
+import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import {
   IconCamera24,
@@ -11,7 +13,6 @@ import {
   IconStarFilled24,
   IconStarOutline24,
 } from "@repo/ui/tokens/icons";
-import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
@@ -177,10 +178,11 @@ export function LockerDetailBottomSheet({
   const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 52;
   const [currentSnapPoint, setCurrentSnapPoint] = useState(resolvedSnapPoint);
 
-  const favoriteLabel = locker.isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가";
+  const favoriteLabel = locker.isFavorite
+    ? m.search_favorite_remove()
+    : m.search_favorite_add();
   const detailHelpText =
-    locker.detailHelpText ??
-    "물품보관함의 상세 위치 및 추가 요금 정보를 알려주세요.";
+    locker.detailHelpText ?? m.locker_detail_detail_help();
   const isFull = currentSnapPoint <= resolvedMinSnapPoint + 24;
 
   const handleFavoritePress = () => {
@@ -335,21 +337,21 @@ function FullDetailContent({
             />
             <DetailInfoRow
               icon={<IconNormalWallet24 />}
-              title="가격"
+              title={m.locker_detail_price_section()}
               description={locker.priceLabel ?? formatLockerPriceLabel()}
               iconTone="neutral"
             />
             {locker.sizeLabel ? (
               <DetailInfoRow
                 icon={<IconNormalCapacity24 />}
-                title="사이즈"
+                title={m.locker_detail_size_section()}
                 description={locker.sizeLabel}
                 iconTone="neutral"
               />
             ) : null}
             <DetailInfoRow
               icon={<IconCaution24 />}
-              title="보관함 상세 정보"
+              title={m.locker_detail_info_section()}
               description={detailHelpText}
               iconTone="neutral"
               descriptionClassName={detailDescriptionMultiline}
@@ -359,7 +361,9 @@ function FullDetailContent({
             <div className={feedbackRow}>
               {locker.accurateCount !== undefined ? (
                 <button type="button" className={feedbackButton}>
-                  정확한 정보에요 {locker.accurateCount}
+                  {m.locker_detail_feedback_accurate({
+                    count: String(locker.accurateCount),
+                  })}
                 </button>
               ) : null}
               {locker.inaccurateCount !== undefined ? (
@@ -367,7 +371,9 @@ function FullDetailContent({
                   type="button"
                   className={[feedbackButton, feedbackButtonNegative].join(" ")}
                 >
-                  부정확한 정보에요 {locker.inaccurateCount}
+                  {m.locker_detail_feedback_inaccurate({
+                    count: String(locker.inaccurateCount),
+                  })}
                 </button>
               ) : null}
             </div>
@@ -392,7 +398,7 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
       size="S"
       className={backButton}
       onPress={onBack}
-      aria-label="뒤로가기"
+      aria-label={m.locker_detail_back_aria()}
     >
       <IconChevronLeft13 className={backIcon} />
     </Button>
@@ -413,7 +419,10 @@ function SummarySection({
   leadingBack?: ReactNode;
 }) {
   return (
-    <section className={summarySection} aria-label="보관함 요약 정보">
+    <section
+      className={summarySection}
+      aria-label={m.locker_detail_summary_aria()}
+    >
       <div className={summaryRow}>
         {leadingBack}
         <div className={summaryTextColumn}>
@@ -518,7 +527,7 @@ function ActionRow({
           " ",
         )}
         onPress={onShare}
-        aria-label="공유하기"
+        aria-label={m.locker_detail_share_aria()}
       >
         <IconShare24 />
       </Button>
@@ -532,7 +541,7 @@ function ActionRow({
         ].join(" ")}
         onPress={onNavigate}
       >
-        길찾기
+        {m.locker_detail_navigate()}
       </Button>
     </div>
   );
@@ -572,8 +581,8 @@ function ImageReportCard({ isFull = false }: { isFull?: boolean }) {
     >
       <IconCamera24 />
       <div className={imageReportText}>
-        <span>아직 이미지가 없어요.</span>
-        <span>제보하기를 통해 등록할 수 있어요!</span>
+        <span>{m.locker_detail_no_image_title()}</span>
+        <span>{m.locker_detail_no_image_helper()}</span>
       </div>
     </div>
   );

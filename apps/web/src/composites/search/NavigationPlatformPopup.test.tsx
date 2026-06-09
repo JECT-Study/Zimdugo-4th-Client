@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
+import { setLanguageTag } from "@repo/i18n";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as navigationPlatformLinks from "#/features/search/lib/navigation-platform-links";
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
 import {
@@ -28,6 +29,10 @@ const NAVIGATION_ORIGIN = {
 };
 
 describe("NavigationPlatformPopup", () => {
+  beforeEach(() => {
+    setLanguageTag("ko");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

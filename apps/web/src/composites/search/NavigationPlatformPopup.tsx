@@ -1,4 +1,5 @@
 import { Button as UiButton } from "@repo/ui/components/button";
+import { m } from "@repo/i18n";
 import {
   getNavigationPlatformLinks,
   hasNavigationDestination,
@@ -84,7 +85,7 @@ export function NavigationPlatformPopup({
         if (!links) return;
 
         onSelectPlatform?.(platform, links.webUrl, locker);
-        openNavigationPlatformLinks(links, { platform });
+        openNavigationPlatformLinks(links);
         onOpenChange(false);
       })
       .finally(() => {
@@ -100,13 +101,13 @@ export function NavigationPlatformPopup({
       isDismissable
     >
       <Modal>
-        <Dialog className={dialog} aria-label="길찾기 플랫폼 선택">
-          <h2 className={title}>어떤 지도로 길찾기 할까요?</h2>
+        <Dialog className={dialog} aria-label={m.navigation_platform_dialog_aria()}>
+          <h2 className={title}>{m.navigation_platform_title()}</h2>
           <div className={platformGrid}>
             <AriaButton
               className={platformButton}
               onPress={() => handleSelectPlatform("naver")}
-              aria-label="네이버맵으로 길찾기"
+              aria-label={m.navigation_platform_naver_aria()}
             >
               <img
                 className={platformIcon}
@@ -114,12 +115,12 @@ export function NavigationPlatformPopup({
                 alt=""
                 aria-hidden="true"
               />
-              <span className={platformLabel}>네이버맵</span>
+              <span className={platformLabel}>{m.navigation_platform_naver()}</span>
             </AriaButton>
             <AriaButton
               className={platformButton}
               onPress={() => handleSelectPlatform("google")}
-              aria-label="구글맵스로 길찾기"
+              aria-label={m.navigation_platform_google_aria()}
             >
               <img
                 className={platformIcon}
@@ -127,7 +128,7 @@ export function NavigationPlatformPopup({
                 alt=""
                 aria-hidden="true"
               />
-              <span className={platformLabel}>구글맵스</span>
+              <span className={platformLabel}>{m.navigation_platform_google()}</span>
             </AriaButton>
           </div>
           <UiButton
@@ -137,7 +138,7 @@ export function NavigationPlatformPopup({
             className={cancelButton}
             onPress={() => onOpenChange(false)}
           >
-            닫기
+            {m.navigation_platform_close()}
           </UiButton>
         </Dialog>
       </Modal>

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from "vitest";
+import { setLanguageTag } from "@repo/i18n";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import {
   DEFAULT_NAVIGATION_ORIGIN,
@@ -43,6 +44,10 @@ const linkOptions = (navigationOrigin = resolveNavigationOrigin(CURRENT_ORIGIN))
 });
 
 describe("navigation-platform-links", () => {
+  beforeEach(() => {
+    setLanguageTag("ko");
+  });
+
   it("이미 알고 있는 위치가 있으면 GPS 재요청 없이 출발지를 반환한다", async () => {
     await expect(
       resolveNavigationOriginWithPermissionRequest({
@@ -205,6 +210,8 @@ describe("navigation-platform-links", () => {
 
     expect(links?.appUrl).toContain("intent://route/public?");
     expect(links?.appUrl).toContain(`slat=${DEFAULT_NAVIGATION_ORIGIN.lat}`);
+    expect(links?.appUrl).toContain("action=android.intent.action.VIEW");
+    expect(links?.appUrl).toContain("category=android.intent.category.BROWSABLE");
     expect(links?.appUrl).toContain("scheme=nmap");
     expect(links?.appUrl).toContain("package=com.nhn.android.nmap");
     expect(links?.appUrl).toContain("browser_fallback_url=");
@@ -230,7 +237,7 @@ describe("navigation-platform-links", () => {
     expect(links?.webUrl).toContain("/-/transit");
   });
 
-  it("데스크톱에서는 웹 URL만 연다", () => {
+  it("길찾기 열기는 모바일·데스크톱 모두 웹 URL을 사용한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks(
       "naver",
@@ -238,92 +245,35 @@ describe("navigation-platform-links", () => {
       linkOptions(),
     );
 
-    openNavigationPlatformLinks(links!, {
-      platform: "naver",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-      assign,
-    });
+    openNavigationPlatformLinks(links!, { assign });
 
     expect(assign).toHaveBeenCalledTimes(1);
     expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 
-  it("Android 네이버맵은 intent URL만 열고 JS 폴백 타이머를 사용하지 않는다", () => {
+  it("Android UA에서도 길찾기 열기는 웹 URL을 사용한다", () => {
     const assign = vi.fn();
-    const setTimeoutFn = vi.fn();
     const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (Linux; Android 14)",
     });
 
-    openNavigationPlatformLinks(links!, {
-      platform: "naver",
-      userAgent: "Mozilla/5.0 (Linux; Android 14)",
-      assign,
-      setTimeoutFn,
-    });
+    openNavigationPlatformLinks(links!, { assign });
 
     expect(assign).toHaveBeenCalledTimes(1);
-    expect(assign).toHaveBeenCalledWith(links?.appUrl);
-    expect(setTimeoutFn).not.toHaveBeenCalled();
+    expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 
-  it("모바일 네이버맵은 앱 URL을 먼저 열고 앱 미설치 시 웹으로 폴백한다", () => {
-    vi.useFakeTimers();
-
+  it("iOS UA에서도 길찾기 열기는 웹 URL을 사용한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });
 
-    openNavigationPlatformLinks(links!, {
-      platform: "naver",
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-      assign,
-      isDocumentHidden: () => false,
-    });
+    openNavigationPlatformLinks(links!, { assign });
 
     expect(assign).toHaveBeenCalledTimes(1);
-    expect(assign).toHaveBeenCalledWith(links?.appUrl);
-
-    vi.runAllTimers();
-
-    expect(assign).toHaveBeenCalledTimes(2);
-    expect(assign).toHaveBeenLastCalledWith(links?.webUrl);
-
-    vi.useRealTimers();
-  });
-
-  it("모바일에서 앱이 열리면 웹 폴백을 취소한다", () => {
-    vi.useFakeTimers();
-
-    const assign = vi.fn();
-    let hidden = false;
-    let visibilityListener: (() => void) | undefined;
-    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
-      ...linkOptions(),
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-    });
-
-    openNavigationPlatformLinks(links!, {
-      platform: "naver",
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-      assign,
-      isDocumentHidden: () => hidden,
-      addVisibilityListener: (listener) => {
-        visibilityListener = listener;
-        return () => undefined;
-      },
-    });
-
-    hidden = true;
-    visibilityListener?.();
-    vi.runAllTimers();
-
-    expect(assign).toHaveBeenCalledTimes(1);
-    expect(assign).toHaveBeenCalledWith(links?.appUrl);
-
-    vi.useRealTimers();
+    expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 });

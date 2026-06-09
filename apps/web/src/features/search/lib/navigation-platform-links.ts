@@ -1,4 +1,5 @@
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import { m } from "@repo/i18n";
 import { getCurrentMapCoordinates } from "#/entities/map/model/current-location";
 
 export type NavigationPlatform = "naver" | "google";
@@ -14,7 +15,14 @@ export type NavigationPlatformLinks = {
   webUrl: string;
 };
 
-/** 위치 미동의·미수신 시 길찾기 출발지 폴백 */
+/** 위치 미동의·미수신 시 길찾기 출발지 폴백 (좌표 고정, 라벨은 i18n) */
+export const getDefaultNavigationOrigin = (): NavigationPoint => ({
+  lat: 37.498095,
+  lng: 127.02761,
+  label: m.navigation_default_origin(),
+});
+
+/** @deprecated 테스트 고정값용. 런타임에는 getDefaultNavigationOrigin() 사용 */
 export const DEFAULT_NAVIGATION_ORIGIN: NavigationPoint = {
   lat: 37.498095,
   lng: 127.02761,
@@ -23,7 +31,6 @@ export const DEFAULT_NAVIGATION_ORIGIN: NavigationPoint = {
 
 const NAVER_MAP_ANDROID_PACKAGE = "com.nhn.android.nmap";
 const DEFAULT_WEB_ORIGIN = "https://zimdugo.com";
-const APP_FALLBACK_DELAY_MS = 1500;
 
 /** 길찾기 출발지 결정용 GPS 옵션 (모바일 콜드 스타트 고려) */
 export const NAVIGATION_ORIGIN_POSITION_OPTIONS: PositionOptions = {
@@ -34,9 +41,6 @@ export const NAVIGATION_ORIGIN_POSITION_OPTIONS: PositionOptions = {
 
 const isAndroidUserAgent = (userAgent: string): boolean =>
   /Android/i.test(userAgent);
-
-const isMobileUserAgent = (userAgent: string): boolean =>
-  /Android|iPhone|iPad|iPod/i.test(userAgent);
 
 export const hasNavigationDestination = (
   locker: LockerDetailItem,
@@ -53,9 +57,9 @@ export const resolveNavigationOrigin = (
     ? {
         lat: location.lat,
         lng: location.lng,
-        label: "현재 위치",
+        label: m.navigation_current_location(),
       }
-    : DEFAULT_NAVIGATION_ORIGIN;
+    : getDefaultNavigationOrigin();
 
 export type ResolveNavigationOriginResult = {
   origin: NavigationPoint;
@@ -110,7 +114,7 @@ export const resolveNavigationOriginWithPermissionRequest = async (
     };
   } catch (error) {
     return {
-      origin: DEFAULT_NAVIGATION_ORIGIN,
+      origin: getDefaultNavigationOrigin(),
       permissionDenied: isGeolocationPermissionDenied(error),
     };
   }
@@ -194,7 +198,7 @@ const buildNaverAndroidIntentUrl = (
   webUrl: string,
 ): string => {
   const fallback = encodeURIComponent(webUrl);
-  return `intent://${appPath}#Intent;scheme=nmap;package=${NAVER_MAP_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
+  return `intent://${appPath}#Intent;scheme=nmap;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=${NAVER_MAP_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
 };
 
 const buildNaverWebDirectionsSegment = (point: NavigationPoint): string => {
@@ -271,95 +275,19 @@ export const getNavigationPlatformUrl = (
   getNavigationPlatformLinks(platform, locker, options)?.webUrl ?? null;
 
 type OpenNavigationOptions = {
-  platform: NavigationPlatform;
-  userAgent?: string;
   assign?: (url: string) => void;
-  setTimeoutFn?: typeof setTimeout;
-  clearTimeoutFn?: typeof clearTimeout;
-  isDocumentHidden?: () => boolean;
-  addVisibilityListener?: (
-    listener: () => void,
-  ) => (() => void) | undefined;
 };
 
+/** 모바일 브라우저(Android/iOS)에서는 nmap/intent가 검색 앱 등으로 잘못 연결될 수 있어 웹 URL만 연다. */
 export const openNavigationPlatformLinks = (
   links: NavigationPlatformLinks,
-  options: OpenNavigationOptions,
+  options: OpenNavigationOptions = {},
 ): void => {
   const assign =
     options.assign ??
     ((url: string) => {
       window.location.href = url;
     });
-  const userAgent =
-    options.userAgent ??
-    (typeof navigator !== "undefined" ? navigator.userAgent : "");
 
-  if (options.platform === "google" || !isMobileUserAgent(userAgent)) {
-    assign(links.webUrl);
-    return;
-  }
-
-  if (isAndroidUserAgent(userAgent)) {
-    assign(links.appUrl);
-    return;
-  }
-
-  const setTimeoutFn =
-    options.setTimeoutFn ??
-    (typeof window !== "undefined"
-      ? window.setTimeout.bind(window)
-      : setTimeout);
-  const clearTimeoutFn =
-    options.clearTimeoutFn ??
-    (typeof window !== "undefined"
-      ? window.clearTimeout.bind(window)
-      : clearTimeout);
-
-  let didHide = false;
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  const isDocumentHidden =
-    options.isDocumentHidden ??
-    (() =>
-      typeof document !== "undefined" && document.visibilityState === "hidden");
-
-  let removeVisibilityListener = () => undefined;
-
-  const handleVisibilityChange = () => {
-    if (!isDocumentHidden()) {
-      return;
-    }
-
-    didHide = true;
-    if (timeoutId !== undefined) {
-      clearTimeoutFn(timeoutId);
-    }
-    removeVisibilityListener();
-  };
-
-  const defaultRemoveVisibilityListener = () => {
-    if (typeof document === "undefined") {
-      return;
-    }
-
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
-  };
-
-  const customRemoveVisibilityListener =
-    options.addVisibilityListener?.(handleVisibilityChange);
-  removeVisibilityListener =
-    customRemoveVisibilityListener ?? defaultRemoveVisibilityListener;
-
-  if (!options.addVisibilityListener && typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-  }
-
-  assign(links.appUrl);
-
-  timeoutId = setTimeoutFn(() => {
-    removeVisibilityListener();
-    if (!didHide) {
-      assign(links.webUrl);
-    }
-  }, APP_FALLBACK_DELAY_MS);
+  assign(links.webUrl);
 };
