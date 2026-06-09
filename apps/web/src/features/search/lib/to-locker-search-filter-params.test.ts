@@ -40,4 +40,17 @@ describe("toPlaceLockersFilterParams", () => {
       lockerType: "SUBWAY_STATION",
     });
   });
+
+  it("알 수 없는 필터 키는 API 파라미터로 보내지 않는다", () => {
+    expect(
+      toPlaceLockersFilterParams(
+        createFilters({
+          indoorOutdoorState: ["unknown"],
+          placeTypeState: ["invalid"],
+        }),
+      ),
+    ).toEqual({
+      sizeTypes: ["SMALL", "BIG"],
+    });
+  });
 });
