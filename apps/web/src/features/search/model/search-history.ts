@@ -1,3 +1,5 @@
+import { capSearchQueryDraft } from "../lib/sanitize-search-query";
+
 export const SEARCH_HISTORY_STORAGE_KEY = "search_history";
 export const SEARCH_HISTORY_MAX_ENTRIES = 20;
 
@@ -46,7 +48,8 @@ export type SearchHistoryInput =
       searchDraft: string;
     };
 
-const normalizeKeyword = (query: string): string => query.trim().toLowerCase();
+const keywordHistoryKey = (query: string): string =>
+  capSearchQueryDraft(query).toLowerCase();
 
 export const getSearchHistoryEntryId = (
   input: Pick<SearchHistoryInput, "kind"> &
@@ -56,7 +59,7 @@ export const getSearchHistoryEntryId = (
 ): string => {
   switch (input.kind) {
     case "keyword":
-      return `keyword:${normalizeKeyword(input.query ?? "")}`;
+      return `keyword:${keywordHistoryKey(input.query ?? "")}`;
     case "locker":
       return `locker:${input.lockerId}`;
     case "place":
@@ -75,7 +78,7 @@ export const createSearchHistoryEntry = (
       return {
         kind: "keyword",
         id,
-        query: input.query.trim(),
+        query: capSearchQueryDraft(input.query),
         searchedAt,
       };
     case "locker":
@@ -84,7 +87,7 @@ export const createSearchHistoryEntry = (
         id,
         lockerId: input.lockerId,
         title: input.title,
-        searchDraft: input.searchDraft.trim(),
+        searchDraft: capSearchQueryDraft(input.searchDraft),
         searchedAt,
       };
     case "place":
@@ -93,7 +96,7 @@ export const createSearchHistoryEntry = (
         id,
         placeId: input.placeId,
         title: input.title,
-        searchDraft: input.searchDraft.trim(),
+        searchDraft: capSearchQueryDraft(input.searchDraft),
         searchedAt,
       };
   }

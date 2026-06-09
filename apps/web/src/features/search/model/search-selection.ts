@@ -1,15 +1,17 @@
+import { capSearchQueryDraft } from "../lib/sanitize-search-query";
+
 export interface SearchSelectionState {
   searchDraft: string;
   searchQuery: string;
 }
 
-export const trimSearchDraft = (draft: string): string => draft.trim();
+export const trimSearchDraft = (draft: string): string => capSearchQueryDraft(draft);
 
 const createUnifiedSearchSelection = (input: string): SearchSelectionState => {
-  const trimmed = trimSearchDraft(input);
+  const query = capSearchQueryDraft(input);
   return {
-    searchDraft: trimmed,
-    searchQuery: trimmed,
+    searchDraft: query,
+    searchQuery: query,
   };
 };
 
@@ -19,7 +21,7 @@ export const createPlaceSearchSelection = (
   draft: string,
   placeTitle: string,
 ): SearchSelectionState => ({
-  searchDraft: trimSearchDraft(draft),
+  searchDraft: capSearchQueryDraft(draft),
   searchQuery: placeTitle,
 });
 

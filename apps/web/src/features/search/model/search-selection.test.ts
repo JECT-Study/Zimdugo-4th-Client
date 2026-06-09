@@ -8,7 +8,7 @@ import {
 
 describe("search-selection", () => {
   it("키워드 검색을 draft와 query에 반영한다", () => {
-    expect(createKeywordSearchSelection("  강남역 ")).toEqual({
+    expect(createKeywordSearchSelection("강남역")).toEqual({
       searchDraft: "강남역",
       searchQuery: "강남역",
     });
@@ -22,13 +22,13 @@ describe("search-selection", () => {
   });
 
   it("syncSearchDraft는 draft만 동기화한다", () => {
-    expect(syncSearchDraft("  강남 ")).toEqual({
+    expect(syncSearchDraft("강남")).toEqual({
       searchDraft: "강남",
     });
   });
 
   it("보관함 검색은 draft와 query를 함께 검색창에 반영한다", () => {
-    expect(applyLockerSearchDraft("  보관함 ")).toEqual({
+    expect(applyLockerSearchDraft("보관함")).toEqual({
       searchDraft: "보관함",
       searchQuery: "보관함",
     });

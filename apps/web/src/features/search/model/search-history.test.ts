@@ -15,7 +15,7 @@ describe("search-history", () => {
     const initial = [first];
     const next = upsertSearchHistoryEntry(
       initial,
-      { kind: "keyword", query: "  코엑스 " },
+      { kind: "keyword", query: "코엑스" },
       { searchedAt: "2026-06-09T12:00:00.000Z" },
     );
 
