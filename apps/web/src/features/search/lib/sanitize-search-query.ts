@@ -64,12 +64,12 @@ export const getSearchQueryIssue = (raw: string): SearchQueryIssue | null => {
     return null;
   }
 
-  if (!isSearchQueryDraftWellFormed(draft)) {
-    return "invalid-format";
-  }
-
   if (draft.length < SEARCH_QUERY_MIN_LENGTH) {
     return "too-short";
+  }
+
+  if (!isSearchQueryDraftWellFormed(draft)) {
+    return "invalid-format";
   }
 
   return null;

@@ -46,6 +46,7 @@ describe("sanitize-search-query", () => {
   it("입력 이슈를 길이 부족과 형식 오류로 구분한다", () => {
     expect(getSearchQueryIssue("")).toBeNull();
     expect(getSearchQueryIssue("가")).toBe("too-short");
+    expect(getSearchQueryIssue("!")).toBe("too-short");
     expect(getSearchQueryIssue("강남")).toBeNull();
     expect(getSearchQueryIssue("강남!")).toBe("invalid-format");
     expect(getSearchQueryIssue("강ㄴ남")).toBeNull();
