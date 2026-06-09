@@ -313,7 +313,7 @@ export function SearchFilterBottomSheet({
                 options={indoorOutdoorOptions}
                 value={indoorOutdoorState}
                 onChange={setIndoorOutdoor}
-                selectionMode="multiple"
+                selectionMode="single"
                 ariaLabel={
                   t.search_filter_section_indoor_outdoor_short?.() ??
                   t.search_filter_section_indoor_outdoor?.() ??
