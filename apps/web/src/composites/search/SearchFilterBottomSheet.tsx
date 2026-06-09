@@ -30,7 +30,6 @@ export interface SearchFilterAppliedState {
 export interface SearchFilterBottomSheetProps {
   className?: string;
   initialFilters?: SearchFilterAppliedState;
-  lockerCount?: number;
   onCollapseToResults?: () => void;
   onReset?: () => void;
   onApply?: (filters: SearchFilterAppliedState) => void;
@@ -50,7 +49,6 @@ export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
 export function SearchFilterBottomSheet({
   className,
   initialFilters,
-  lockerCount,
   onCollapseToResults,
   onReset,
   onApply,
@@ -138,11 +136,6 @@ export function SearchFilterBottomSheet({
       value: "other",
     },
   ];
-
-  const applyButtonLabel =
-    lockerCount != null && lockerCount >= 0
-      ? m.search_filter_view_lockers_count({ count: String(lockerCount) })
-      : m.search_filter_view_lockers();
 
   const handleReset = () => {
     setIndoorOutdoor([]);
@@ -242,7 +235,7 @@ export function SearchFilterBottomSheet({
             size="L"
             onPress={handleApply}
           >
-            {applyButtonLabel}
+            {m.search_filter_view_lockers()}
           </Button>
         </div>
       </div>

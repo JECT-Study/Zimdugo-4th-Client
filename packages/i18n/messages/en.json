@@ -69,7 +69,6 @@
   "search_filter_back_to_results": "Back to Results",
   "search_filter_reset": "Reset",
   "search_filter_view_lockers": "View Lockers",
-  "search_filter_view_lockers_count": "View {count} lockers",
   "search_filter_error_price_required": "Enter a valid price range.",
   "search_filter_error_price_min": "Enter a valid price range.",
   "search_filter_error_price_max": "Enter a valid price range.",
