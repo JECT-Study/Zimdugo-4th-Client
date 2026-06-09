@@ -61,6 +61,7 @@ import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
 } from "#/features/search/model/map-viewport-policy";
+import { resolveMapMarkerLayer } from "#/features/search/model/map-marker-layer-policy";
 import {
   type AppMapContext,
   createKeywordDetailBackTarget,
@@ -74,8 +75,6 @@ import {
   resolveOverlayReturnContext,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
-  shouldShowIdleMarkers,
-  shouldShowSearchMarkers,
 } from "#/features/search/model/sheet-session";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
@@ -916,17 +915,6 @@ function IndexPage() {
   const refetchSearchList = isPlaceListScope
     ? refetchPlaceLockers
     : refetchKeywordSearch;
-  const showIdleMarkers = shouldShowIdleMarkers({ context, sheetMode });
-  const showSearchMarkers = shouldShowSearchMarkers({
-    context,
-    sheetMode,
-    searchDetailBack,
-  });
-  const showMapPlaceMarkers =
-    context === "map" &&
-    (sheetMode === "list" ||
-      sheetMode === "filter" ||
-      (sheetMode === "detail" && mapDetailBack === "placeList"));
   const selectedMapDetailPins = useMemo(() => {
     if (context !== "map" || sheetMode !== "detail") {
       return [];
@@ -954,6 +942,13 @@ function IndexPage() {
       },
     ];
   }, [context, selectedLockerDetail, selectedMapPin, sheetMode]);
+  const markerLayer = resolveMapMarkerLayer({
+    context,
+    sheetMode,
+    searchDetailBack,
+    mapDetailBack,
+    selectedMapDetailPinCount: selectedMapDetailPins.length,
+  });
   const showPlaceSheetBack =
     context === "map" || (context === "search" && listKind === "place");
   const listHeaderLeadingPress = showPlaceSheetBack
@@ -992,24 +987,24 @@ function IndexPage() {
           deviceHeading={deviceHeading}
           isOrientationTracking={isOrientationTracking}
         />
-        {showIdleMarkers ? (
+        {markerLayer === "idle" ? (
           <LockerMarkersLayer
             map={mapInstance}
             onSelectPin={handleIdlePinSelect}
           />
-        ) : showSearchMarkers ? (
+        ) : markerLayer === "search" ? (
           <SearchResultMarkersLayer
             map={mapInstance}
             pins={searchResultPins}
             onSelectLocker={handleSearchMarkerSelect}
           />
-        ) : showMapPlaceMarkers ? (
+        ) : markerLayer === "mapPlace" ? (
           <SearchResultMarkersLayer
             map={mapInstance}
             pins={mapPlacePins}
             onSelectLocker={handleMapPlaceMarkerSelect}
           />
-        ) : selectedMapDetailPins.length > 0 ? (
+        ) : markerLayer === "selectedMapDetail" ? (
           <SearchResultMarkersLayer
             map={mapInstance}
             pins={selectedMapDetailPins}
