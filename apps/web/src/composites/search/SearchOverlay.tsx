@@ -77,10 +77,7 @@ export function SearchOverlay({
   const queryIssue = useMemo(() => getSearchQueryIssue(query), [query]);
   const validatedQuery = useMemo(() => getValidatedSearchQuery(query), [query]);
   const isQueryValid = useMemo(() => isSearchQuerySubmittable(query), [query]);
-  const debouncedQuery = useDebouncedValue(
-    isQueryValid && validatedQuery ? validatedQuery : "",
-    300,
-  );
+  const debouncedQuery = useDebouncedValue(validatedQuery ?? "", 300);
   const suggestParams = useMemo(
     () =>
       isQueryValid && debouncedQuery.length > 0
