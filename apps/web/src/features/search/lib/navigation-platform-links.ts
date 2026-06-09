@@ -142,8 +142,29 @@ const resolveWebOrigin = (webOrigin?: string): string => {
   return DEFAULT_WEB_ORIGIN;
 };
 
+const NAVER_WEB_COORDINATE_SCALE = 20037508.342789244;
+const NAVER_WEB_LATITUDE_LIMIT = 85.05112878;
+
 const formatNavigationCoordinate = (value: number): string =>
   value.toFixed(7);
+
+/** 네이버 지도 웹 길찾기 URL은 WGS84가 아닌 EPSG:3857 좌표를 사용한다. */
+export const wgs84ToEpsg3857 = (
+  lat: number,
+  lng: number,
+): { x: number; y: number } => {
+  const clampedLat = Math.max(
+    Math.min(lat, NAVER_WEB_LATITUDE_LIMIT),
+    -NAVER_WEB_LATITUDE_LIMIT,
+  );
+  const x = (lng * NAVER_WEB_COORDINATE_SCALE) / 180;
+  const y =
+    (Math.log(Math.tan(((90 + clampedLat) * Math.PI) / 360)) *
+      NAVER_WEB_COORDINATE_SCALE) /
+    Math.PI;
+
+  return { x, y };
+};
 
 const buildNaverRouteQuery = (
   origin: NavigationPoint,
@@ -176,18 +197,19 @@ const buildNaverAndroidIntentUrl = (
   return `intent://${appPath}#Intent;scheme=nmap;package=${NAVER_MAP_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
 };
 
-const buildDirectionsSegment = (point: NavigationPoint): string =>
-  [
-    formatNavigationCoordinate(point.lat),
-    formatNavigationCoordinate(point.lng),
-    encodeURIComponent(point.label),
-  ].join(",");
+const buildNaverWebDirectionsSegment = (point: NavigationPoint): string => {
+  const { x, y } = wgs84ToEpsg3857(point.lat, point.lng);
+
+  return [String(x), String(y), encodeURIComponent(point.label), "", "ADDRESS"].join(
+    ",",
+  );
+};
 
 const buildNaverWebUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
 ): string =>
-  `https://map.naver.com/p/directions/${buildDirectionsSegment(origin)}/${buildDirectionsSegment(destination)}/-/transit`;
+  `https://map.naver.com/p/directions/${buildNaverWebDirectionsSegment(origin)}/${buildNaverWebDirectionsSegment(destination)}/-/transit`;
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,

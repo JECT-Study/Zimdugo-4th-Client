@@ -57,6 +57,16 @@ describe("NavigationPlatformPopup", () => {
       }),
     ).toContain("map.naver.com/p/directions/");
     expect(
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).toContain("14130495.411131293,4516877.948521413");
+    expect(
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).toContain(",,ADDRESS");
+    expect(
       getNavigationPlatformUrl("google", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),

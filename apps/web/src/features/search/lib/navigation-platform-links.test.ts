@@ -11,6 +11,7 @@ import {
   openNavigationPlatformLinks,
   resolveNavigationOrigin,
   resolveNavigationOriginWithPermissionRequest,
+  wgs84ToEpsg3857,
 } from "./navigation-platform-links";
 
 const LOCKER_WITHOUT_COORDS: LockerDetailItem = {
@@ -157,6 +158,23 @@ describe("navigation-platform-links", () => {
     ).toBe(links?.webUrl ?? null);
   });
 
+  it("네이버 지도 웹 길찾기는 WGS84를 EPSG:3857로 변환해 ADDRESS 세그먼트를 만든다", () => {
+    const cityHall = wgs84ToEpsg3857(37.5666103, 126.9783882);
+
+    expect(cityHall.x).toBeCloseTo(14135169.516, 2);
+    expect(cityHall.y).toBeCloseTo(4518382, 2);
+
+    expect(
+      wgs84ToEpsg3857(
+        LOCKER_WITH_COORDS.latitude!,
+        LOCKER_WITH_COORDS.longitude!,
+      ),
+    ).toEqual({
+      x: 14130495.411131293,
+      y: 4516877.948521413,
+    });
+  });
+
   it("네이버맵 iOS는 출발지·도착지가 포함된 길찾기 앱 스킴을 만든다", () => {
     const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
       ...linkOptions(),
@@ -164,7 +182,8 @@ describe("navigation-platform-links", () => {
     });
 
     expect(links?.webUrl).toContain("map.naver.com/p/directions/");
-    expect(links?.webUrl).toContain("37.5559000,126.9364000");
+    expect(links?.webUrl).toContain("14130495.411131293,4516877.948521413");
+    expect(links?.webUrl).toContain(",,ADDRESS");
     expect(links?.appUrl).toContain("nmap://route/public?");
     expect(links?.appUrl).not.toMatch(/route\/public\?[^#]*\?/);
     expect(links?.appUrl).toContain(`slat=${CURRENT_ORIGIN.lat.toFixed(7)}`);
@@ -193,7 +212,8 @@ describe("navigation-platform-links", () => {
       links?.webUrl ?? "",
     );
     expect(links?.webUrl).toContain("map.naver.com/p/directions/");
-    expect(links?.webUrl).toContain("37.5559000,126.9364000");
+    expect(links?.webUrl).toContain("14130495.411131293,4516877.948521413");
+    expect(links?.webUrl).toContain(",,ADDRESS");
   });
 
   it("네이버맵 데스크톱 웹도 p/directions 길찾기 URL을 만든다", () => {
@@ -202,9 +222,11 @@ describe("navigation-platform-links", () => {
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     });
 
+    const originEpsg = wgs84ToEpsg3857(CURRENT_ORIGIN.lat, CURRENT_ORIGIN.lng);
+
     expect(links?.webUrl).toContain("map.naver.com/p/directions/");
-    expect(links?.webUrl).toContain(`${CURRENT_ORIGIN.lat.toFixed(7)}`);
-    expect(links?.webUrl).toContain(`${CURRENT_ORIGIN.lng.toFixed(7)}`);
+    expect(links?.webUrl).toContain(`${originEpsg.x},${originEpsg.y}`);
+    expect(links?.webUrl).toContain("14130495.411131293,4516877.948521413");
     expect(links?.webUrl).toContain("/-/transit");
   });
 
