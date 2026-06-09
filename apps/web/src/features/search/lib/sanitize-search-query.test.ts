@@ -54,10 +54,20 @@ describe("sanitize-search-query", () => {
     expect(getSearchQueryIssue("ㄱㅏ")).toBe("invalid-format");
   });
 
+  it("공백만 있는 draft는 유효하지 않다", () => {
+    expect(getValidatedSearchQuery("   ")).toBeNull();
+    expect(isSearchQuerySubmittable("   ")).toBe(false);
+    expect(resolveSearchQuerySubmitAttempt("   ")).toEqual({
+      ok: false,
+      reason: "too-short",
+    });
+  });
+
   it("규칙을 통과한 draft만 자동완성·제출 가능하다", () => {
     expect(isSearchQueryDraftValid("강남")).toBe(true);
     expect(isSearchQueryDraftValid("강남!")).toBe(false);
     expect(isSearchQuerySubmittable("가")).toBe(false);
+    expect(isSearchQuerySubmittable("강남!")).toBe(false);
     expect(isSearchQuerySubmittable("강남")).toBe(true);
     expect(SEARCH_QUERY_MIN_LENGTH).toBe(2);
     expect(SEARCH_QUERY_MAX_LENGTH).toBe(30);

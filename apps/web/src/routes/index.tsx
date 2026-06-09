@@ -57,6 +57,7 @@ import {
   searchLockerItemsToPins,
   searchResultItemsToPins,
 } from "#/features/search/lib/search-result-pins";
+import { resolveSearchQuerySubmitAttempt } from "#/features/search/lib/sanitize-search-query";
 import {
   toLockerSearchFilterParams,
   toPlaceLockersFilterParams,
@@ -641,8 +642,14 @@ function IndexPage() {
 
   const handleSelectSearch = useCallback(
     (query: string) => {
-      recordSearchHistory({ kind: "keyword", query });
-      applySearchSelection(createKeywordSearchSelection(query));
+      const attempt = resolveSearchQuerySubmitAttempt(query);
+
+      if (!attempt.ok) {
+        return;
+      }
+
+      recordSearchHistory({ kind: "keyword", query: attempt.query });
+      applySearchSelection(createKeywordSearchSelection(attempt.query));
       setContext("search");
       setListKind("keyword");
       setSearchPlaceId(null);

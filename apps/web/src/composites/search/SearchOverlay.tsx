@@ -20,6 +20,7 @@ import {
   capSearchQueryDraft,
   getSearchQueryIssue,
   getValidatedSearchQuery,
+  isSearchQuerySubmittable,
   resolveSearchQuerySubmitAttempt,
   SEARCH_QUERY_MAX_LENGTH,
   trimSearchQueryDraft,
@@ -75,7 +76,7 @@ export function SearchOverlay({
   const [query, setQuery] = useState(() => trimSearchQueryDraft(initialQuery));
   const queryIssue = useMemo(() => getSearchQueryIssue(query), [query]);
   const validatedQuery = useMemo(() => getValidatedSearchQuery(query), [query]);
-  const isQueryValid = validatedQuery !== null;
+  const isQueryValid = useMemo(() => isSearchQuerySubmittable(query), [query]);
   const debouncedQuery = useDebouncedValue(isQueryValid ? query : "", 300);
   const suggestParams = useMemo(
     () =>
@@ -135,7 +136,27 @@ export function SearchOverlay({
     applyTrimToQuery();
   };
 
+  const handleSubmitQuery = () => {
+    const trimmed = applyTrimToQuery();
+
+    if (!isSearchQuerySubmittable(trimmed)) {
+      return;
+    }
+
+    const attempt = resolveSearchQuerySubmitAttempt(trimmed);
+
+    if (!attempt.ok) {
+      return;
+    }
+
+    onSelect(attempt.query);
+  };
+
   const handleSelect = (selectedQuery: string) => {
+    if (!isSearchQuerySubmittable(selectedQuery)) {
+      return;
+    }
+
     const attempt = resolveSearchQuerySubmitAttempt(selectedQuery);
 
     if (!attempt.ok) {
@@ -228,9 +249,12 @@ export function SearchOverlay({
             onChange={handleQueryChange}
             onBlur={handleQueryBlur}
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                handleSelect(applyTrimToQuery());
+              if (event.key !== "Enter" && event.key !== "NumpadEnter") {
+                return;
               }
+
+              event.preventDefault();
+              handleSubmitQuery();
             }}
             placeholder={m.search_placeholder()}
             searchIconPlacement="left"

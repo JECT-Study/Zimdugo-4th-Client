@@ -89,7 +89,13 @@ export const getValidatedSearchQuery = (raw: string): string | null => {
     return null;
   }
 
-  return trimSearchQueryDraft(raw);
+  const trimmed = trimSearchQueryDraft(raw);
+
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  return trimmed;
 };
 
 export type SearchQuerySubmitRejectReason = SearchQueryIssue;
