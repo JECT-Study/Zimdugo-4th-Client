@@ -1,7 +1,10 @@
 import type { SearchFilterAppliedState } from "#/composites/search/SearchFilterBottomSheet";
-import { cardsToSizeTypes } from "#/features/report/lib/size-type-map";
+import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import type { LockerType } from "#/features/report/model/report-types";
-import type { LockerSearchFilterParams } from "#/shared/api/lockers";
+import type {
+  LockerSearchFilterParams,
+  PlaceLockersFilterParams,
+} from "#/shared/api/lockers";
 
 const PLACE_FILTER_TO_LOCKER_TYPE: Record<string, LockerType> = {
   museum: "MUSEUM",
@@ -19,6 +22,19 @@ const INDOOR_OUTDOOR_FILTER_TO_API: Record<string, "INDOOR" | "OUTDOOR"> = {
   outdoor: "OUTDOOR",
 };
 
+const SIZE_FILTER_TO_API: Record<SizeCardType, "SMALL" | "MEDIUM" | "BIG"> = {
+  S: "SMALL",
+  M: "MEDIUM",
+  L: "BIG",
+};
+
+const toSearchSizeTypes = (
+  selectedSizes: SizeCardType[],
+): Array<"SMALL" | "MEDIUM" | "BIG"> =>
+  selectedSizes
+    .map((value) => SIZE_FILTER_TO_API[value])
+    .filter((value): value is "SMALL" | "MEDIUM" | "BIG" => !!value);
+
 const parsePriceInput = (value: string): number | undefined => {
   const normalized = value.replace(/[^\d]/g, "");
   if (!normalized) return undefined;
@@ -34,7 +50,7 @@ export const toLockerSearchFilterParams = (
 
   if (filters.sizePriceActive) {
     if (filters.selectedSizes.length > 0) {
-      params.sizeTypes = cardsToSizeTypes(filters.selectedSizes);
+      params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
     }
 
     if (filters.priceType === "free") {
@@ -57,6 +73,27 @@ export const toLockerSearchFilterParams = (
     params.lockerTypes = filters.placeTypeState
       .map((value) => PLACE_FILTER_TO_LOCKER_TYPE[value])
       .filter((value): value is LockerType => !!value);
+  }
+
+  return params;
+};
+
+export const toPlaceLockersFilterParams = (
+  filters: SearchFilterAppliedState,
+): PlaceLockersFilterParams => {
+  const params: PlaceLockersFilterParams = {};
+
+  if (filters.sizePriceActive && filters.selectedSizes.length > 0) {
+    params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
+  }
+
+  if (filters.regionActive && filters.indoorOutdoorState.length > 0) {
+    params.indoorOutdoorType =
+      INDOOR_OUTDOOR_FILTER_TO_API[filters.indoorOutdoorState[0]];
+  }
+
+  if (filters.placeTypeActive && filters.placeTypeState.length > 0) {
+    params.lockerType = PLACE_FILTER_TO_LOCKER_TYPE[filters.placeTypeState[0]];
   }
 
   return params;

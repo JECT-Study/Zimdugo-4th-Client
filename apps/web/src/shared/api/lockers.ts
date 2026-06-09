@@ -206,6 +206,12 @@ export interface LockerSearchFilterParams {
   isFree?: boolean;
 }
 
+export interface PlaceLockersFilterParams {
+  sizeTypes?: string[];
+  indoorOutdoorType?: string;
+  lockerType?: string;
+}
+
 export interface GetLockerPinsParams {
   lat: number;
   lng: number;
@@ -227,7 +233,7 @@ export interface GetLockerSuggestParams extends LockerSearchLocationParams {
 
 export interface GetPlaceLockersParams
   extends LockerSearchLocationParams,
-    LockerSearchFilterParams {
+    PlaceLockersFilterParams {
   placeId: number;
   signal?: AbortSignal;
 }
