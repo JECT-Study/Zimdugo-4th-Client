@@ -28,9 +28,14 @@ const getDistanceMeters = (
   const fromLat = toRadians(from.lat);
   const toLat = toRadians(to.lat);
 
-  const haversine =
-    Math.sin(latDelta / 2) ** 2 +
-    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(lngDelta / 2) ** 2;
+  const haversine = Math.min(
+    1,
+    Math.max(
+      0,
+      Math.sin(latDelta / 2) ** 2 +
+        Math.cos(fromLat) * Math.cos(toLat) * Math.sin(lngDelta / 2) ** 2,
+    ),
+  );
 
   return (
     2 *
