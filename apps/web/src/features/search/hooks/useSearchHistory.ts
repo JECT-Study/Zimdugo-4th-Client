@@ -1,8 +1,10 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { SEARCH_HISTORY_STORAGE_KEY } from "../model/search-history";
 import type { SearchHistoryEntry, SearchHistoryInput } from "../model/search-history";
 import {
   appendSearchHistoryEntry,
   clearSearchHistoryEntries,
+  invalidateSearchHistoryCache,
   readSearchHistoryEntries,
   removeSearchHistoryEntry,
 } from "../model/search-history-storage";
@@ -11,8 +13,23 @@ const listeners = new Set<() => void>();
 
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === SEARCH_HISTORY_STORAGE_KEY) {
+      invalidateSearchHistoryCache();
+      listener();
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", handleStorage);
+  }
+
   return () => {
     listeners.delete(listener);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", handleStorage);
+    }
   };
 };
 

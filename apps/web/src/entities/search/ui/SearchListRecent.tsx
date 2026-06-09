@@ -30,7 +30,7 @@ export interface SearchListRecentProps {
   removeAriaLabel?: string;
 }
 
-const RecentHistoryIcon = ({ kind }: { kind: SearchListRecentKind }) => {
+function RecentHistoryIcon({ kind }: { kind: SearchListRecentKind }) {
   switch (kind) {
     case "locker":
       return <IconLockerDetailHeader24 />;
@@ -43,7 +43,7 @@ const RecentHistoryIcon = ({ kind }: { kind: SearchListRecentKind }) => {
     default:
       return <IconSearchRecentItem24 />;
   }
-};
+}
 
 export function SearchListRecent({
   children,

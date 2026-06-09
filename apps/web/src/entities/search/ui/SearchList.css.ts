@@ -223,6 +223,11 @@ export const recentIconSlot = style({
 });
 
 export const recentPlaceIcon = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
   borderRadius: vars.radius.max,
   backgroundColor: vars.color.bg.surface,
 });

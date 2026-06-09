@@ -11,6 +11,11 @@ const EMPTY_SEARCH_HISTORY: SearchHistoryEntry[] = [];
 let cachedRaw: string | null = null;
 let cachedSnapshot: SearchHistoryEntry[] = EMPTY_SEARCH_HISTORY;
 
+export const invalidateSearchHistoryCache = (): void => {
+  cachedRaw = null;
+  cachedSnapshot = EMPTY_SEARCH_HISTORY;
+};
+
 const syncSnapshotFromStorage = (): SearchHistoryEntry[] => {
   if (typeof window === "undefined") {
     return EMPTY_SEARCH_HISTORY;
