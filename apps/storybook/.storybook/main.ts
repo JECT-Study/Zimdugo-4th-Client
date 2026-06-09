@@ -8,6 +8,7 @@ const webI18nEntry = fileURLToPath(
 const webI18nServerEntry = fileURLToPath(
   new URL("../../web/src/i18n-server.ts", import.meta.url),
 );
+const webSrcRoot = fileURLToPath(new URL("../../web/src", import.meta.url));
 
 const config: StorybookConfig = {
   stories: [
@@ -34,6 +35,8 @@ const config: StorybookConfig = {
       alias: [
         { find: "@repo/i18n/server", replacement: webI18nServerEntry },
         { find: "@repo/i18n", replacement: webI18nEntry },
+        { find: "#", replacement: webSrcRoot },
+        { find: "@", replacement: webSrcRoot },
         ...aliases,
       ],
     };
