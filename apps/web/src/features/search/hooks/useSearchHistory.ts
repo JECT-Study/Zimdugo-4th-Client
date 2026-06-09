@@ -11,32 +11,49 @@ import {
 
 const listeners = new Set<() => void>();
 
-const subscribe = (listener: () => void) => {
-  listeners.add(listener);
-
-  const handleStorage = (event: StorageEvent) => {
-    if (event.key === SEARCH_HISTORY_STORAGE_KEY) {
-      invalidateSearchHistoryCache();
-      listener();
-    }
-  };
-
-  if (typeof window !== "undefined") {
-    window.addEventListener("storage", handleStorage);
-  }
-
-  return () => {
-    listeners.delete(listener);
-    if (typeof window !== "undefined") {
-      window.removeEventListener("storage", handleStorage);
-    }
-  };
-};
+let isStorageListenerRegistered = false;
 
 const notify = () => {
   for (const listener of listeners) {
     listener();
   }
+};
+
+const handleStorage = (event: StorageEvent) => {
+  if (event.key !== SEARCH_HISTORY_STORAGE_KEY) {
+    return;
+  }
+
+  invalidateSearchHistoryCache();
+  notify();
+};
+
+const ensureStorageListener = () => {
+  if (typeof window === "undefined" || isStorageListenerRegistered) {
+    return;
+  }
+
+  window.addEventListener("storage", handleStorage);
+  isStorageListenerRegistered = true;
+};
+
+const removeStorageListenerIfIdle = () => {
+  if (typeof window === "undefined" || !isStorageListenerRegistered || listeners.size > 0) {
+    return;
+  }
+
+  window.removeEventListener("storage", handleStorage);
+  isStorageListenerRegistered = false;
+};
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  ensureStorageListener();
+
+  return () => {
+    listeners.delete(listener);
+    removeStorageListenerIfIdle();
+  };
 };
 
 const SERVER_SNAPSHOT: SearchHistoryEntry[] = [];
