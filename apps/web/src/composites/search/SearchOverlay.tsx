@@ -77,7 +77,7 @@ export function SearchOverlay({
   const queryIssue = useMemo(() => getSearchQueryIssue(query), [query]);
   const validatedQuery = useMemo(() => getValidatedSearchQuery(query), [query]);
   const isQueryValid = useMemo(() => isSearchQuerySubmittable(query), [query]);
-  const debouncedQuery = useDebouncedValue(isQueryValid ? query : "", 300);
+  const debouncedQuery = useDebouncedValue(validatedQuery ?? "", 300);
   const suggestParams = useMemo(
     () =>
       isQueryValid && debouncedQuery.length > 0
@@ -103,7 +103,8 @@ export function SearchOverlay({
   } = useLockerSuggest(suggestParams);
 
   const isSuggestEligible = isQueryValid;
-  const isDebouncing = isSuggestEligible && query !== debouncedQuery;
+  const isDebouncing =
+    isSuggestEligible && validatedQuery !== debouncedQuery;
   const showSuggestLoading = isSuggestEligible && (isDebouncing || isFetching);
   const showSuggestError = isSuggestEligible && isError && !showSuggestLoading;
   const showSuggestEmpty =
@@ -197,14 +198,6 @@ export function SearchOverlay({
       handleSelect(entry.query);
     }
   };
-
-  useEffect(() => {
-    if (!validatedQuery || validatedQuery === query) {
-      return;
-    }
-
-    setQuery(validatedQuery);
-  }, [query, validatedQuery]);
 
   useEffect(() => {
     setQuery(trimSearchQueryDraft(initialQuery));

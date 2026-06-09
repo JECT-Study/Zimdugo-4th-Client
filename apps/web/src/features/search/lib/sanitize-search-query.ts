@@ -11,13 +11,36 @@ const COMPLETE_HANGUL_SYLLABLE = /[\uAC00-\uD7A3]/;
 const HANGUL_JAMO_CHAR =
   /[\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
 
-const isAllowedSearchQueryChar = (char: string, draft: string): boolean => {
+const isHangulJamoOnlyDraft = (draft: string): boolean =>
+  draft.length > 0 &&
+  [...draft].every((char) => HANGUL_JAMO_CHAR.test(char));
+
+/** index부터 끝까지 자모만 이어지는지 — 다음 음절 IME 조합 구간 */
+const isTrailingHangulJamoSuffix = (draft: string, fromIndex: number): boolean =>
+  [...draft.slice(fromIndex)].every((char) => HANGUL_JAMO_CHAR.test(char));
+
+const isAllowedSearchQueryChar = (
+  char: string,
+  draft: string,
+  index: number,
+): boolean => {
   if (ALLOWED_SEARCH_QUERY_CHAR.test(char)) {
     return true;
   }
 
+  if (!HANGUL_JAMO_CHAR.test(char)) {
+    return false;
+  }
+
+  // IME 초기: ㄱ·ㄱㅏ처럼 자모만 있는 단계
+  if (isHangulJamoOnlyDraft(draft)) {
+    return true;
+  }
+
+  // 완성형 뒤 꼬리 자모만 허용 (강ㄴ O, 강ㄴ남 X)
   return (
-    COMPLETE_HANGUL_SYLLABLE.test(draft) && HANGUL_JAMO_CHAR.test(char)
+    COMPLETE_HANGUL_SYLLABLE.test(draft) &&
+    isTrailingHangulJamoSuffix(draft, index)
   );
 };
 
@@ -45,7 +68,14 @@ export const isSearchQueryDraftWellFormed = (draft: string): boolean => {
     return false;
   }
 
-  return [...draft].every((char) => isAllowedSearchQueryChar(char, draft));
+  // 완성형 없이 자모만 2글자 이상 — IME 중간 단계가 아닌 잘못된 조합(ㄱㄴㄷ, ㄱㅏ 등)
+  if (isHangulJamoOnlyDraft(draft) && draft.length >= 2) {
+    return false;
+  }
+
+  return [...draft].every((char, index) =>
+    isAllowedSearchQueryChar(char, draft, index),
+  );
 };
 
 export type SearchQueryIssue = "too-short" | "invalid-format";
