@@ -55,7 +55,7 @@ describe("NavigationPlatformPopup", () => {
       getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("map.naver.com/index.nhn");
+    ).toContain("map.naver.com/p/directions/");
     expect(
       getNavigationPlatformUrl("google", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,

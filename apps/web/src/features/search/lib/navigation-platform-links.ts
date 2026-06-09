@@ -126,7 +126,7 @@ export const getLockerNavigationDestination = (
   return {
     lat: locker.latitude,
     lng: locker.longitude,
-    label: locker.title,
+    label: locker.address?.trim() || locker.title,
   };
 };
 
@@ -142,24 +142,29 @@ const resolveWebOrigin = (webOrigin?: string): string => {
   return DEFAULT_WEB_ORIGIN;
 };
 
-const buildNaverAppName = (webOrigin: string): string =>
-  encodeURIComponent(webOrigin);
+const formatNavigationCoordinate = (value: number): string =>
+  value.toFixed(7);
 
-const buildNaverAppPath = (
+const buildNaverRouteQuery = (
   origin: NavigationPoint,
   destination: NavigationPoint,
   appName: string,
 ): string =>
   [
-    "route/public",
-    `slat=${origin.lat}`,
-    `slng=${origin.lng}`,
+    `slat=${formatNavigationCoordinate(origin.lat)}`,
+    `slng=${formatNavigationCoordinate(origin.lng)}`,
     `sname=${encodeURIComponent(origin.label)}`,
-    `dlat=${destination.lat}`,
-    `dlng=${destination.lng}`,
+    `dlat=${formatNavigationCoordinate(destination.lat)}`,
+    `dlng=${formatNavigationCoordinate(destination.lng)}`,
     `dname=${encodeURIComponent(destination.label)}`,
-    `appname=${appName}`,
-  ].join("?");
+    `appname=${encodeURIComponent(appName)}`,
+  ].join("&");
+
+const buildNaverAppPath = (
+  origin: NavigationPoint,
+  destination: NavigationPoint,
+  appName: string,
+): string => `route/public?${buildNaverRouteQuery(origin, destination, appName)}`;
 
 const buildNaverAppUrl = (appPath: string): string => `nmap://${appPath}`;
 
@@ -171,51 +176,18 @@ const buildNaverAndroidIntentUrl = (
   return `intent://${appPath}#Intent;scheme=nmap;package=${NAVER_MAP_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
 };
 
-const buildNaverMobileWebUrl = (
-  origin: NavigationPoint,
-  destination: NavigationPoint,
-): string => {
-  const params = new URLSearchParams({
-    menu: "route",
-    sname: origin.label,
-    sx: String(origin.lng),
-    sy: String(origin.lat),
-    ename: destination.label,
-    ex: String(destination.lng),
-    ey: String(destination.lat),
-    pathType: "0",
-    showMap: "true",
-  });
-
-  return `https://m.map.naver.com/route.nhn?${params.toString()}`;
-};
-
-const buildNaverDesktopWebUrl = (
-  origin: NavigationPoint,
-  destination: NavigationPoint,
-): string => {
-  const params = new URLSearchParams({
-    slng: String(origin.lng),
-    slat: String(origin.lat),
-    stext: origin.label,
-    elng: String(destination.lng),
-    elat: String(destination.lat),
-    etext: destination.label,
-    menu: "route",
-    pathType: "1",
-  });
-
-  return `https://map.naver.com/index.nhn?${params.toString()}`;
-};
+const buildDirectionsSegment = (point: NavigationPoint): string =>
+  [
+    formatNavigationCoordinate(point.lat),
+    formatNavigationCoordinate(point.lng),
+    encodeURIComponent(point.label),
+  ].join(",");
 
 const buildNaverWebUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
-  userAgent: string,
 ): string =>
-  isMobileUserAgent(userAgent)
-    ? buildNaverMobileWebUrl(origin, destination)
-    : buildNaverDesktopWebUrl(origin, destination);
+  `https://map.naver.com/p/directions/${buildDirectionsSegment(origin)}/${buildDirectionsSegment(destination)}/-/transit`;
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
@@ -254,18 +226,14 @@ export const getNavigationPlatformLinks = (
     (typeof navigator !== "undefined" ? navigator.userAgent : "");
   const webUrl =
     platform === "naver"
-      ? buildNaverWebUrl(navigationOrigin, destination, userAgent)
+      ? buildNaverWebUrl(navigationOrigin, destination)
       : buildGoogleWebUrl(navigationOrigin, destination);
 
   if (platform === "google") {
     return { appUrl: webUrl, webUrl };
   }
 
-  const appPath = buildNaverAppPath(
-    navigationOrigin,
-    destination,
-    buildNaverAppName(webOrigin),
-  );
+  const appPath = buildNaverAppPath(navigationOrigin, destination, webOrigin);
   const appUrl = isAndroidUserAgent(userAgent)
     ? buildNaverAndroidIntentUrl(appPath, webUrl)
     : buildNaverAppUrl(appPath);

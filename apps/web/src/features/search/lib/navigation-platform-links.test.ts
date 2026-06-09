@@ -163,15 +163,18 @@ describe("navigation-platform-links", () => {
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });
 
-    expect(links?.webUrl).toContain("m.map.naver.com/route.nhn");
-    expect(links?.webUrl).toContain(`sy=${CURRENT_ORIGIN.lat}`);
-    expect(links?.webUrl).toContain(`sx=${CURRENT_ORIGIN.lng}`);
+    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
+    expect(links?.webUrl).toContain("37.5559000,126.9364000");
     expect(links?.appUrl).toContain("nmap://route/public?");
-    expect(links?.appUrl).toContain(`slat=${CURRENT_ORIGIN.lat}`);
-    expect(links?.appUrl).toContain(`slng=${CURRENT_ORIGIN.lng}`);
-    expect(links?.appUrl).toContain("dlat=37.5559");
-    expect(links?.appUrl).toContain("dlng=126.9364");
+    expect(links?.appUrl).not.toMatch(/route\/public\?[^#]*\?/);
+    expect(links?.appUrl).toContain(`slat=${CURRENT_ORIGIN.lat.toFixed(7)}`);
+    expect(links?.appUrl).toContain(`slng=${CURRENT_ORIGIN.lng.toFixed(7)}`);
+    expect(links?.appUrl).toContain("dlat=37.5559000");
+    expect(links?.appUrl).toContain("dlng=126.9364000");
     expect(decodeURIComponent(links?.appUrl ?? "")).toContain("현재 위치");
+    expect(decodeURIComponent(links?.appUrl ?? "")).toContain(
+      LOCKER_WITH_COORDS.address,
+    );
     expect(decodeURIComponent(links?.appUrl ?? "")).toContain(WEB_ORIGIN);
   });
 
@@ -189,21 +192,20 @@ describe("navigation-platform-links", () => {
     expect(decodeURIComponent(links?.appUrl ?? "")).toContain(
       links?.webUrl ?? "",
     );
-    expect(links?.webUrl).toContain("m.map.naver.com/route.nhn");
-    expect(links?.webUrl).toContain(`sy=${DEFAULT_NAVIGATION_ORIGIN.lat}`);
-    expect(links?.webUrl).toContain(`sx=${DEFAULT_NAVIGATION_ORIGIN.lng}`);
+    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
+    expect(links?.webUrl).toContain("37.5559000,126.9364000");
   });
 
-  it("네이버맵 데스크톱 웹은 index.nhn 길찾기 URL을 만든다", () => {
+  it("네이버맵 데스크톱 웹도 p/directions 길찾기 URL을 만든다", () => {
     const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     });
 
-    expect(links?.webUrl).toContain("map.naver.com/index.nhn");
-    expect(links?.webUrl).toContain(`slat=${CURRENT_ORIGIN.lat}`);
-    expect(links?.webUrl).toContain(`slng=${CURRENT_ORIGIN.lng}`);
-    expect(links?.webUrl).toContain("menu=route");
+    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
+    expect(links?.webUrl).toContain(`${CURRENT_ORIGIN.lat.toFixed(7)}`);
+    expect(links?.webUrl).toContain(`${CURRENT_ORIGIN.lng.toFixed(7)}`);
+    expect(links?.webUrl).toContain("/-/transit");
   });
 
   it("데스크톱에서는 웹 URL만 연다", () => {
