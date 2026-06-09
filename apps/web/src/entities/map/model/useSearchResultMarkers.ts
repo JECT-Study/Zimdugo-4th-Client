@@ -11,7 +11,11 @@ export interface UseSearchResultMarkersOptions {
   maps: typeof naver.maps | null;
   pins: LockerPinItemResponse[];
   enabled?: boolean;
-  onSelectLocker?: (pinType: "LOCKER" | "PLACE", id: number) => void;
+  onSelectLocker?: (
+    pinType: "LOCKER" | "PLACE",
+    id: number,
+    pin: LockerPinItemResponse,
+  ) => void;
 }
 
 export const useSearchResultMarkers = ({
@@ -41,7 +45,8 @@ export const useSearchResultMarkers = ({
       map,
       maps,
       lockers: pins,
-      onSelectLocker: (pinType, id) => onSelectLockerRef.current?.(pinType, id),
+      onSelectLocker: (pinType, id, pin) =>
+        onSelectLockerRef.current?.(pinType, id, pin),
       registry: markerRegistryRef.current,
     });
   }, [enabled, map, maps, pins]);

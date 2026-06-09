@@ -89,6 +89,18 @@ const expectedInitialViewport: MapViewport = {
 };
 
 describe("subscribeMapIdle", () => {
+  it("emits current viewport immediately after subscription", () => {
+    const mapsState: FakeMapsState = { handlers: [], removed: [] };
+    const { map } = createFakeMap();
+    const maps = createFakeMaps(mapsState);
+    const onSettle = vi.fn();
+
+    subscribeMapIdle({ map, maps, onSettle });
+
+    expect(onSettle).toHaveBeenCalledTimes(1);
+    expect(onSettle).toHaveBeenCalledWith(expectedInitialViewport);
+  });
+
   it("첫 idle 이벤트에 현재 viewport 스냅샷을 발행한다", () => {
     const mapsState: FakeMapsState = { handlers: [], removed: [] };
     const { map } = createFakeMap();
@@ -257,7 +269,7 @@ describe("subscribeMapIdle", () => {
     fake.state.bounds = null as unknown as FakeLatLngBounds;
     mapsState.handlers[0]?.();
 
-    expect(onSettle).toHaveBeenCalledTimes(1);
+    expect(onSettle).toHaveBeenCalledTimes(2);
     expect(onSettle).toHaveBeenLastCalledWith(
       expect.objectContaining({
         center: { lat: 37.4979, lng: 127.0276 },

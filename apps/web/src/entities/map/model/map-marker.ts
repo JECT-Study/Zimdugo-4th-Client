@@ -41,7 +41,11 @@ interface SyncLockerMarkersOptions {
   map: naver.maps.Map;
   maps: typeof naver.maps;
   lockers: LockerPinItemResponse[];
-  onSelectLocker?: (pinType: "LOCKER" | "PLACE", id: number) => void;
+  onSelectLocker?: (
+    pinType: "LOCKER" | "PLACE",
+    id: number,
+    pin: LockerPinItemResponse,
+  ) => void;
   registry?: LockerMarkerRegistry;
 }
 
@@ -130,7 +134,11 @@ const attachMarkerSelectListener = (
   entry: LockerMarkerEntry,
   maps: typeof naver.maps,
   pin: LockerPinItemResponse,
-  onSelectLocker: (pinType: "LOCKER" | "PLACE", id: number) => void,
+  onSelectLocker: (
+    pinType: "LOCKER" | "PLACE",
+    id: number,
+    pin: LockerPinItemResponse,
+  ) => void,
 ) => {
   if (entry.listener) {
     maps.Event.removeListener(entry.listener);
@@ -139,7 +147,7 @@ const attachMarkerSelectListener = (
   entry.listener = maps.Event.addListener(entry.marker, "click", () => {
     const id = pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId;
     if (id == null) return;
-    onSelectLocker(pin.pinType, id);
+    onSelectLocker(pin.pinType, id, pin);
   });
 };
 

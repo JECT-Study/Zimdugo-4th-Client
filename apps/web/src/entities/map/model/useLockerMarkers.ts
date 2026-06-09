@@ -103,7 +103,11 @@ export const getLockerPinQueryFromViewport = (
 export interface UseLockerMarkersOptions {
   map: naver.maps.Map | null;
   maps: typeof naver.maps | null;
-  onSelectLocker?: (pinType: "LOCKER" | "PLACE", id: number) => void;
+  onSelectLocker?: (
+    pinType: "LOCKER" | "PLACE",
+    id: number,
+    pin: LockerPinItemResponse,
+  ) => void;
 }
 
 export const useLockerMarkers = ({
@@ -120,8 +124,12 @@ export const useLockerMarkers = ({
   }, [onSelectLocker]);
 
   const handleSelectLocker = useCallback(
-    (pinType: "LOCKER" | "PLACE", id: number) => {
-      onSelectLockerRef.current?.(pinType, id);
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin: LockerPinItemResponse,
+    ) => {
+      onSelectLockerRef.current?.(pinType, id, pin);
     },
     [],
   );
