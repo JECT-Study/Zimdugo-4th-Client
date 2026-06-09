@@ -78,13 +78,25 @@ const isGeolocationPermissionDenied = (error: unknown): boolean => {
   );
 };
 
-/** 길찾기 직전에 위치 권한을 한 번 더 요청하고 출발지를 결정한다. */
-export const resolveNavigationOriginWithPermissionRequest = async (options?: {
+type ResolveNavigationOriginOptions = {
+  knownLocation?: { lat: number; lng: number } | null;
   getCurrentCoordinates?: (
     positionOptions?: PositionOptions,
   ) => Promise<{ lat: number; lng: number }>;
   positionOptions?: PositionOptions;
-}): Promise<ResolveNavigationOriginResult> => {
+};
+
+/** 길찾기 직전에 위치 권한을 한 번 더 요청하고 출발지를 결정한다. */
+export const resolveNavigationOriginWithPermissionRequest = async (
+  options?: ResolveNavigationOriginOptions,
+): Promise<ResolveNavigationOriginResult> => {
+  if (options?.knownLocation) {
+    return {
+      origin: resolveNavigationOrigin(options.knownLocation),
+      permissionDenied: false,
+    };
+  }
+
   const getCurrentCoordinates =
     options?.getCurrentCoordinates ?? getCurrentMapCoordinates;
   const positionOptions =
@@ -159,20 +171,65 @@ const buildNaverAndroidIntentUrl = (
   return `intent://${appPath}#Intent;scheme=nmap;package=${NAVER_MAP_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
 };
 
-const buildDirectionsSegment = (point: NavigationPoint): string =>
-  `${point.lat},${point.lng},${encodeURIComponent(point.label)}`;
+const buildNaverMobileWebUrl = (
+  origin: NavigationPoint,
+  destination: NavigationPoint,
+): string => {
+  const params = new URLSearchParams({
+    menu: "route",
+    sname: origin.label,
+    sx: String(origin.lng),
+    sy: String(origin.lat),
+    ename: destination.label,
+    ex: String(destination.lng),
+    ey: String(destination.lat),
+    pathType: "0",
+    showMap: "true",
+  });
+
+  return `https://m.map.naver.com/route.nhn?${params.toString()}`;
+};
+
+const buildNaverDesktopWebUrl = (
+  origin: NavigationPoint,
+  destination: NavigationPoint,
+): string => {
+  const params = new URLSearchParams({
+    slng: String(origin.lng),
+    slat: String(origin.lat),
+    stext: origin.label,
+    elng: String(destination.lng),
+    elat: String(destination.lat),
+    etext: destination.label,
+    menu: "route",
+    pathType: "1",
+  });
+
+  return `https://map.naver.com/index.nhn?${params.toString()}`;
+};
 
 const buildNaverWebUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
+  userAgent: string,
 ): string =>
-  `https://map.naver.com/p/directions/${buildDirectionsSegment(origin)}/${buildDirectionsSegment(destination)}/-/transit`;
+  isMobileUserAgent(userAgent)
+    ? buildNaverMobileWebUrl(origin, destination)
+    : buildNaverDesktopWebUrl(origin, destination);
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
-): string =>
-  `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}`;
+): string => {
+  const params = new URLSearchParams({
+    api: "1",
+    origin: `${origin.lat},${origin.lng}`,
+    destination: `${destination.lat},${destination.lng}`,
+    travelmode: "transit",
+  });
+
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+};
 
 export type NavigationPlatformLinkOptions = {
   navigationOrigin: NavigationPoint;
@@ -197,7 +254,7 @@ export const getNavigationPlatformLinks = (
     (typeof navigator !== "undefined" ? navigator.userAgent : "");
   const webUrl =
     platform === "naver"
-      ? buildNaverWebUrl(navigationOrigin, destination)
+      ? buildNaverWebUrl(navigationOrigin, destination, userAgent)
       : buildGoogleWebUrl(navigationOrigin, destination);
 
   if (platform === "google") {
@@ -242,7 +299,7 @@ export const openNavigationPlatformLinks = (
   const assign =
     options.assign ??
     ((url: string) => {
-      window.location.assign(url);
+      window.location.href = url;
     });
   const userAgent =
     options.userAgent ??

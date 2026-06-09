@@ -55,24 +55,63 @@ describe("NavigationPlatformPopup", () => {
       getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("map.naver.com/p/directions/");
+    ).toContain("map.naver.com/index.nhn");
     expect(
       getNavigationPlatformUrl("google", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
     ).toContain("google.com/maps/dir/");
     expect(
-      getNavigationPlatformUrl("google", LOCKER_DETAIL, {
-        navigationOrigin: NAVIGATION_ORIGIN,
-      }),
+      decodeURIComponent(
+        getNavigationPlatformUrl("google", LOCKER_DETAIL, {
+          navigationOrigin: NAVIGATION_ORIGIN,
+        }) ?? "",
+      ),
     ).toContain(
       `origin=${NAVIGATION_ORIGIN.lat},${NAVIGATION_ORIGIN.lng}`,
     );
     expect(
-      getNavigationPlatformUrl("google", LOCKER_DETAIL, {
-        navigationOrigin: NAVIGATION_ORIGIN,
-      }),
+      decodeURIComponent(
+        getNavigationPlatformUrl("google", LOCKER_DETAIL, {
+          navigationOrigin: NAVIGATION_ORIGIN,
+        }) ?? "",
+      ),
     ).toContain("destination=37.5559,126.9364");
+  });
+
+  it("이미 알고 있는 위치가 있으면 GPS 재요청 없이 길찾기를 연다", async () => {
+    const getCurrentCoordinates = vi.fn(async () => {
+      throw new Error("should not request geolocation");
+    });
+
+    vi.spyOn(
+      navigationPlatformLinks,
+      "resolveNavigationOriginWithPermissionRequest",
+    ).mockImplementationOnce((options) =>
+      navigationPlatformLinks.resolveNavigationOriginWithPermissionRequest({
+        ...options,
+        getCurrentCoordinates,
+      }),
+    );
+    vi.spyOn(
+      navigationPlatformLinks,
+      "openNavigationPlatformLinks",
+    ).mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "구글맵스로 길찾기" }));
+
+    await waitFor(() => {
+      expect(getCurrentCoordinates).not.toHaveBeenCalled();
+    });
   });
 
   it("지도 플랫폼 선택 시 위치 권한을 요청한다", async () => {
@@ -105,6 +144,9 @@ describe("NavigationPlatformPopup", () => {
       expect(
         navigationPlatformLinks.resolveNavigationOriginWithPermissionRequest,
       ).toHaveBeenCalledTimes(1);
+      expect(
+        navigationPlatformLinks.resolveNavigationOriginWithPermissionRequest,
+      ).toHaveBeenCalledWith({ knownLocation: null });
     });
     expect(onSelectPlatform).toHaveBeenCalledWith(
       "google",

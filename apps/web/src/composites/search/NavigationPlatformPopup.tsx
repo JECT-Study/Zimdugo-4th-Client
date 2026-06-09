@@ -5,6 +5,7 @@ import {
   openNavigationPlatformLinks,
   resolveNavigationOriginWithPermissionRequest,
   type NavigationPlatform,
+  type ResolveNavigationOriginResult,
 } from "#/features/search/lib/navigation-platform-links";
 import {
   Button as AriaButton,
@@ -40,7 +41,9 @@ let isResolvingNavigationOrigin = false;
 export interface NavigationPlatformPopupProps {
   isOpen: boolean;
   locker: LockerDetailItem | null;
+  knownLocation?: { lat: number; lng: number } | null;
   onOpenChange: (isOpen: boolean) => void;
+  onOriginResolved?: (result: ResolveNavigationOriginResult) => void;
   onSelectPlatform?: (
     platform: NavigationPlatform,
     url: string,
@@ -51,10 +54,12 @@ export interface NavigationPlatformPopupProps {
 export function NavigationPlatformPopup({
   isOpen,
   locker,
+  knownLocation = null,
   onOpenChange,
+  onOriginResolved,
   onSelectPlatform,
 }: NavigationPlatformPopupProps) {
-  const handleSelectPlatform = async (platform: NavigationPlatform) => {
+  const handleSelectPlatform = (platform: NavigationPlatform) => {
     if (
       !locker ||
       !hasNavigationDestination(locker) ||
@@ -65,19 +70,26 @@ export function NavigationPlatformPopup({
 
     isResolvingNavigationOrigin = true;
 
-    try {
-      const { origin } = await resolveNavigationOriginWithPermissionRequest();
-      const links = getNavigationPlatformLinks(platform, locker, {
-        navigationOrigin: origin,
-      });
-      if (!links) return;
+    const originTask = resolveNavigationOriginWithPermissionRequest({
+      knownLocation,
+    });
 
-      onSelectPlatform?.(platform, links.webUrl, locker);
-      openNavigationPlatformLinks(links, { platform });
-      onOpenChange(false);
-    } finally {
-      isResolvingNavigationOrigin = false;
-    }
+    void originTask
+      .then((result) => {
+        onOriginResolved?.(result);
+
+        const links = getNavigationPlatformLinks(platform, locker, {
+          navigationOrigin: result.origin,
+        });
+        if (!links) return;
+
+        onSelectPlatform?.(platform, links.webUrl, locker);
+        openNavigationPlatformLinks(links, { platform });
+        onOpenChange(false);
+      })
+      .finally(() => {
+        isResolvingNavigationOrigin = false;
+      });
   };
 
   return (
@@ -93,7 +105,7 @@ export function NavigationPlatformPopup({
           <div className={platformGrid}>
             <AriaButton
               className={platformButton}
-              onPress={() => void handleSelectPlatform("naver")}
+              onPress={() => handleSelectPlatform("naver")}
               aria-label="네이버맵으로 길찾기"
             >
               <img
@@ -106,7 +118,7 @@ export function NavigationPlatformPopup({
             </AriaButton>
             <AriaButton
               className={platformButton}
-              onPress={() => void handleSelectPlatform("google")}
+              onPress={() => handleSelectPlatform("google")}
               aria-label="구글맵스로 길찾기"
             >
               <img

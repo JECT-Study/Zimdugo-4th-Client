@@ -42,6 +42,24 @@ const linkOptions = (navigationOrigin = resolveNavigationOrigin(CURRENT_ORIGIN))
 });
 
 describe("navigation-platform-links", () => {
+  it("이미 알고 있는 위치가 있으면 GPS 재요청 없이 출발지를 반환한다", async () => {
+    await expect(
+      resolveNavigationOriginWithPermissionRequest({
+        knownLocation: CURRENT_ORIGIN,
+        getCurrentCoordinates: async () => {
+          throw new Error("should not request geolocation");
+        },
+      }),
+    ).resolves.toEqual({
+      origin: {
+        lat: CURRENT_ORIGIN.lat,
+        lng: CURRENT_ORIGIN.lng,
+        label: "현재 위치",
+      },
+      permissionDenied: false,
+    });
+  });
+
   it("길찾기 직전에 위치 권한을 요청해 출발지를 결정한다", async () => {
     await expect(
       resolveNavigationOriginWithPermissionRequest({
@@ -128,10 +146,12 @@ describe("navigation-platform-links", () => {
 
     expect(links?.appUrl).toBe(links?.webUrl);
     expect(links?.webUrl).toContain("google.com/maps/dir/");
-    expect(links?.webUrl).toContain(
+    expect(decodeURIComponent(links?.webUrl ?? "")).toContain(
       `origin=${CURRENT_ORIGIN.lat},${CURRENT_ORIGIN.lng}`,
     );
-    expect(links?.webUrl).toContain("destination=37.5559,126.9364");
+    expect(decodeURIComponent(links?.webUrl ?? "")).toContain(
+      "destination=37.5559,126.9364",
+    );
     expect(
       getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
     ).toBe(links?.webUrl ?? null);
@@ -143,8 +163,9 @@ describe("navigation-platform-links", () => {
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });
 
-    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
-    expect(links?.webUrl).toContain(`${CURRENT_ORIGIN.lat},${CURRENT_ORIGIN.lng}`);
+    expect(links?.webUrl).toContain("m.map.naver.com/route.nhn");
+    expect(links?.webUrl).toContain(`sy=${CURRENT_ORIGIN.lat}`);
+    expect(links?.webUrl).toContain(`sx=${CURRENT_ORIGIN.lng}`);
     expect(links?.appUrl).toContain("nmap://route/public?");
     expect(links?.appUrl).toContain(`slat=${CURRENT_ORIGIN.lat}`);
     expect(links?.appUrl).toContain(`slng=${CURRENT_ORIGIN.lng}`);
@@ -168,7 +189,21 @@ describe("navigation-platform-links", () => {
     expect(decodeURIComponent(links?.appUrl ?? "")).toContain(
       links?.webUrl ?? "",
     );
-    expect(decodeURIComponent(links?.webUrl ?? "")).toContain("강남역 11번 출구");
+    expect(links?.webUrl).toContain("m.map.naver.com/route.nhn");
+    expect(links?.webUrl).toContain(`sy=${DEFAULT_NAVIGATION_ORIGIN.lat}`);
+    expect(links?.webUrl).toContain(`sx=${DEFAULT_NAVIGATION_ORIGIN.lng}`);
+  });
+
+  it("네이버맵 데스크톱 웹은 index.nhn 길찾기 URL을 만든다", () => {
+    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
+      ...linkOptions(),
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    });
+
+    expect(links?.webUrl).toContain("map.naver.com/index.nhn");
+    expect(links?.webUrl).toContain(`slat=${CURRENT_ORIGIN.lat}`);
+    expect(links?.webUrl).toContain(`slng=${CURRENT_ORIGIN.lng}`);
+    expect(links?.webUrl).toContain("menu=route");
   });
 
   it("데스크톱에서는 웹 URL만 연다", () => {
