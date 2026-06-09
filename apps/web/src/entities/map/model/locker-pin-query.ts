@@ -4,8 +4,15 @@ import type { MapViewport } from "./map-idle-controller";
 const EARTH_RADIUS_METERS = 6_371_000;
 const LOCKER_PIN_COORDINATE_PRECISION = 4;
 const LOCKER_PIN_RADIUS_BUCKET_METERS = 50;
-export const MAX_LOCKER_PIN_RADIUS_METERS = 10_000;
+/** 서버 `/api/v1/lockers/pin` radius 상한 (m) */
+export const MAX_LOCKER_PIN_RADIUS_METERS = 7_000;
 const SEARCH_BAR_RESERVED_TOP_PX = 136;
+
+export interface LockerPinQueryViewport {
+  lat: number;
+  lng: number;
+  radius: number;
+}
 
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
@@ -13,11 +20,12 @@ const roundCoordinate = (value: number): number =>
   Number(value.toFixed(LOCKER_PIN_COORDINATE_PRECISION));
 
 const roundRadius = (value: number): number =>
-  Math.min(
-    Math.ceil(value / LOCKER_PIN_RADIUS_BUCKET_METERS) *
-      LOCKER_PIN_RADIUS_BUCKET_METERS,
-    MAX_LOCKER_PIN_RADIUS_METERS,
-  );
+  Math.ceil(value / LOCKER_PIN_RADIUS_BUCKET_METERS) *
+  LOCKER_PIN_RADIUS_BUCKET_METERS;
+
+export const isLockerPinQueryWithinCapacity = (
+  query: Pick<LockerPinQueryViewport, "radius">,
+): boolean => query.radius <= MAX_LOCKER_PIN_RADIUS_METERS;
 
 const getDistanceMeters = (
   from: MapViewport["center"],
@@ -43,12 +51,6 @@ const getDistanceMeters = (
     Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
   );
 };
-
-export interface LockerPinQueryViewport {
-  lat: number;
-  lng: number;
-  radius: number;
-}
 
 export const getLockerPinQueryFromViewport = (
   viewport: MapViewport,

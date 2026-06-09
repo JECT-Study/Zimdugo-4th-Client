@@ -53,10 +53,6 @@ export function SearchFilterBottomSheet({
   onReset,
   onApply,
 }: SearchFilterBottomSheetProps) {
-  const t = (m ?? {}) as unknown as Record<
-    string,
-    (inputs?: Record<string, string>) => string
-  >;
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
   const [collapsedSnap, setCollapsedSnap] = useState(760);
   const [indoorOutdoorState, setIndoorOutdoor] = useState<string[]>(
@@ -72,74 +68,54 @@ export function SearchFilterBottomSheet({
   const indoorOutdoorOptions = [
     {
       label:
-        t.search_filter_indoor_short?.() ??
-        t.search_filter_indoor?.() ??
-        "실내",
+        m.search_filter_indoor_short(),
       value: "indoor",
     },
     {
       label:
-        t.search_filter_outdoor_short?.() ??
-        t.search_filter_outdoor?.() ??
-        "실외",
+        m.search_filter_outdoor_short(),
       value: "outdoor",
     },
   ];
   const placeTypeOptions = [
     {
       label:
-        t.search_filter_place_museum_short?.() ??
-        t.search_filter_place_museum?.() ??
-        "박물관",
+        m.search_filter_place_museum_short(),
       value: "museum",
     },
     {
       label:
-        t.search_filter_place_subway_short?.() ??
-        t.search_filter_place_subway?.() ??
-        "지하철역",
+        m.search_filter_place_subway_short(),
       value: "subway",
     },
     {
       label:
-        t.search_filter_place_department_short?.() ??
-        t.search_filter_place_department?.() ??
-        "백화점",
+        m.search_filter_place_department_short(),
       value: "department",
     },
     {
       label:
-        t.search_filter_place_convenience_short?.() ??
-        t.search_filter_place_convenience?.() ??
-        "편의점",
+        m.search_filter_place_convenience_short(),
       value: "convenience",
     },
     {
       label:
-        t.search_filter_place_public_short?.() ??
-        t.search_filter_place_public?.() ??
-        "공공기관",
+        m.search_filter_place_public_short(),
       value: "public",
     },
     {
       label:
-        t.search_filter_place_private_short?.() ??
-        t.search_filter_place_private?.() ??
-        "사설 보관함",
+        m.search_filter_place_private_short(),
       value: "private",
     },
     {
       label:
-        t.search_filter_place_train_short?.() ??
-        t.search_filter_place_train?.() ??
-        "기차역",
+        m.search_filter_place_train_short(),
       value: "train",
     },
     {
       label:
-        t.search_filter_place_other_short?.() ??
-        t.search_filter_place_other?.() ??
-        "기타",
+        m.search_filter_place_other_short(),
       value: "other",
     },
   ];
@@ -197,9 +173,9 @@ export function SearchFilterBottomSheet({
             <div className={sizeCardSlot}>
               <SizeList
                 labels={{
-                  S: t.search_filter_size_small?.() ?? "소형",
-                  M: t.search_filter_size_medium?.() ?? "중형",
-                  L: t.search_filter_size_large?.() ?? "대형",
+                  S: m.search_filter_size_small(),
+                  M: m.search_filter_size_medium(),
+                  L: m.search_filter_size_large(),
                 }}
                 value={selectedSizes}
                 onChange={setSelectedSizes}
@@ -209,9 +185,7 @@ export function SearchFilterBottomSheet({
 
           <div className={[section, sectionGap24].join(" ")}>
             <LabelTitle size="small">
-              {t.search_filter_section_indoor_outdoor_short?.() ??
-                t.search_filter_section_indoor_outdoor?.() ??
-                "실내/실외"}
+              {m.search_filter_section_indoor_outdoor_short()}
             </LabelTitle>
             <div className={indoorOutdoor}>
               <ControlChipGroup
@@ -220,9 +194,7 @@ export function SearchFilterBottomSheet({
                 onChange={setIndoorOutdoor}
                 selectionMode="multiple"
                 ariaLabel={
-                  t.search_filter_section_indoor_outdoor_short?.() ??
-                  t.search_filter_section_indoor_outdoor?.() ??
-                  "실내 실외 필터"
+                  m.search_filter_section_indoor_outdoor_short()
                 }
               />
             </div>
@@ -230,9 +202,7 @@ export function SearchFilterBottomSheet({
 
           <div className={[section, sectionGap24].join(" ")}>
             <LabelTitle size="small">
-              {t.search_filter_section_locker_type_short?.() ??
-                t.search_filter_section_locker_type?.() ??
-                "보관함 유형"}
+              {m.search_filter_section_locker_type_short()}
             </LabelTitle>
             <div className={indoorOutdoor}>
               <ControlChipGroup
@@ -241,9 +211,7 @@ export function SearchFilterBottomSheet({
                 onChange={setPlaceType}
                 selectionMode="multiple"
                 ariaLabel={
-                  t.search_filter_section_locker_type_short?.() ??
-                  t.search_filter_section_locker_type?.() ??
-                  "보관함 유형 필터"
+                  m.search_filter_section_locker_type_short()
                 }
               />
             </div>
@@ -258,7 +226,7 @@ export function SearchFilterBottomSheet({
             size="L"
             onPress={handleReset}
           >
-            {t.search_filter_reset?.() ?? "초기화"}
+            {m.search_filter_reset()}
           </Button>
           <Button
             className={applyButton}
@@ -267,7 +235,7 @@ export function SearchFilterBottomSheet({
             size="L"
             onPress={handleApply}
           >
-            {t.search_filter_view_lockers?.() ?? "보관함 보기"}
+            {m.search_filter_view_lockers()}
           </Button>
         </div>
       </div>

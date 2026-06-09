@@ -5,6 +5,7 @@ import type { MapViewport } from "./map-idle-controller";
 import {
   getLockerPinQueryFromViewport,
   getRadiusFromViewport,
+  isLockerPinQueryWithinCapacity,
   type LockerPinQueryViewport,
 } from "./locker-pin-query";
 import {
@@ -18,7 +19,11 @@ import {
 } from "#/shared/api/lockers";
 
 export const LOCKER_PINS_QUERY_KEY = "lockerPins";
-export { getLockerPinQueryFromViewport, getRadiusFromViewport };
+export {
+  getLockerPinQueryFromViewport,
+  getRadiusFromViewport,
+  isLockerPinQueryWithinCapacity,
+};
 export type { LockerPinQueryViewport };
 
 export interface UseLockerMarkersOptions {
@@ -59,6 +64,9 @@ export const useLockerMarkers = ({
     () => (viewport ? getLockerPinQueryFromViewport(viewport) : undefined),
     [viewport],
   );
+  const canFetchLockerPins =
+    lockerPinQuery !== undefined &&
+    isLockerPinQueryWithinCapacity(lockerPinQuery);
 
   // 1. 지도 idle 이벤트 구독 (뷰포트 상태 업데이트만 담당)
   useEffect(() => {
@@ -92,7 +100,7 @@ export const useLockerMarkers = ({
         signal,
       });
     },
-    enabled: !!viewport,
+    enabled: canFetchLockerPins,
     staleTime: 1000 * 60 * 5, // 5분 캐싱
     gcTime: 1000 * 60 * 5,
     placeholderData: (prev) => prev,
@@ -101,7 +109,12 @@ export const useLockerMarkers = ({
   // 3. 서버에서 받아온 데이터를 지도 마커와 동기화
   // viewport가 변경될 때마다(드래그 등) 화면 밖 마커 컬링 로직이 수행되도록 의존성 추가
   useEffect(() => {
-    if (!map || !maps || !lockers) return;
+    if (!map || !maps) return;
+
+    if (!canFetchLockerPins || !lockers) {
+      clearLockerMarkers(markerRegistryRef.current, maps);
+      return;
+    }
 
     syncLockerMarkers({
       map,
@@ -110,7 +123,7 @@ export const useLockerMarkers = ({
       onSelectLocker: handleSelectLocker,
       registry: markerRegistryRef.current,
     });
-  }, [map, maps, lockers, handleSelectLocker, viewport]);
+  }, [map, maps, lockers, handleSelectLocker, viewport, canFetchLockerPins]);
 
   useEffect(() => {
     return () => {

@@ -53,19 +53,11 @@ export function SearchOverlay({
   initialQuery = "",
   searchCoordinates,
 }: SearchOverlayProps) {
-  const t = (m ?? {}) as unknown as Record<
-    string,
-    (inputs?: Record<string, string>) => string
-  >;
   const [query, setQuery] = useState(initialQuery);
 
-  const [recentSearches, setRecentSearches] = useState([
-    { id: 1, query: "강남역", date: "04.24" },
-    { id: 2, query: "역삼역 보관함", date: "04.23" },
-    { id: 3, query: "코엑스 짐보관", date: "04.22" },
-    { id: 4, query: "홍대입구역", date: "04.21" },
-    { id: 5, query: "잠실 롯데타워", date: "04.20" },
-  ]);
+  const [recentSearches, setRecentSearches] = useState<
+    Array<{ id: number; query: string; date: string }>
+  >([]);
   const normalizedQuery = query.trim();
   const debouncedQuery = useDebouncedValue(normalizedQuery, 300);
   const suggestParams = useMemo(
@@ -164,7 +156,7 @@ export function SearchOverlay({
           type="button"
           className={backButton}
           onClick={handleBack}
-          aria-label={t?.search_close_aria?.() ?? "닫기"}
+          aria-label={m.search_close_aria()}
         >
           <IconChevronLeft13 className={backIcon} />
         </button>
@@ -181,10 +173,10 @@ export function SearchOverlay({
                 }
               }
             }}
-            placeholder={t?.search_placeholder?.() ?? "검색어를 입력하세요"}
+            placeholder={m.search_placeholder()}
             searchIconPlacement="left"
             variant="searchHome"
-            aria-label={t?.search_input_aria?.() ?? "검색어 입력"}
+            aria-label={m.search_input_aria()}
           />
         </div>
       </header>
@@ -194,7 +186,7 @@ export function SearchOverlay({
           <>
             <div className={sectionHeader}>
               <LabelTitle size="large">
-                {t?.search_recent_title?.() ?? "최근 검색어"}
+                {m.search_recent_title()}
               </LabelTitle>
               {recentSearches.length > 0 && (
                 <button
@@ -202,7 +194,7 @@ export function SearchOverlay({
                   className={deleteAllButton}
                   onClick={handleClearAll}
                 >
-                  {t?.search_delete_all?.() ?? "전체 삭제"}
+                  {m.search_delete_all()}
                 </button>
               )}
             </div>
@@ -229,7 +221,7 @@ export function SearchOverlay({
                     onPress={() => handleSelect(item.query)}
                     onRemove={() => handleRemoveRecent(item.id)}
                     removeAriaLabel={
-                      t?.search_recent_remove?.() ?? "최근 검색어 삭제"
+                      m.search_recent_remove()
                     }
                   >
                     {item.query}
@@ -244,7 +236,7 @@ export function SearchOverlay({
                     fontSize: "14px",
                   }}
                 >
-                  {t?.search_no_recent?.() ?? "최근 검색 내역이 없습니다."}
+                  {m.search_no_recent()}
                 </div>
               )}
             </div>
