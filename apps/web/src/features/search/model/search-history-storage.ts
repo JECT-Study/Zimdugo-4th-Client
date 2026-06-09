@@ -16,22 +16,23 @@ const syncSnapshotFromStorage = (): SearchHistoryEntry[] => {
     return EMPTY_SEARCH_HISTORY;
   }
 
-  const raw = window.localStorage.getItem(SEARCH_HISTORY_STORAGE_KEY) ?? "";
-
-  if (raw === cachedRaw) {
-    return cachedSnapshot;
-  }
-
-  cachedRaw = raw;
-
-  if (!raw) {
-    cachedSnapshot = EMPTY_SEARCH_HISTORY;
-    return cachedSnapshot;
-  }
-
   try {
+    const raw = window.localStorage.getItem(SEARCH_HISTORY_STORAGE_KEY) ?? "";
+
+    if (raw === cachedRaw) {
+      return cachedSnapshot;
+    }
+
+    cachedRaw = raw;
+
+    if (!raw) {
+      cachedSnapshot = EMPTY_SEARCH_HISTORY;
+      return cachedSnapshot;
+    }
+
     cachedSnapshot = parseSearchHistoryEntries(JSON.parse(raw));
   } catch {
+    cachedRaw = "";
     cachedSnapshot = EMPTY_SEARCH_HISTORY;
   }
 
@@ -46,10 +47,14 @@ export const writeSearchHistoryEntries = (entries: SearchHistoryEntry[]): void =
     return;
   }
 
-  const raw = JSON.stringify(entries);
-  window.localStorage.setItem(SEARCH_HISTORY_STORAGE_KEY, raw);
-  cachedRaw = raw;
-  cachedSnapshot = entries;
+  try {
+    const raw = JSON.stringify(entries);
+    window.localStorage.setItem(SEARCH_HISTORY_STORAGE_KEY, raw);
+    cachedRaw = raw;
+    cachedSnapshot = entries;
+  } catch {
+    // QuotaExceededError·SecurityError 등 — 검색 흐름은 유지하고 저장만 생략
+  }
 };
 
 export const appendSearchHistoryEntry = (
