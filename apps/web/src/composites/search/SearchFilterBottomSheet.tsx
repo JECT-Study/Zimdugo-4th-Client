@@ -48,6 +48,8 @@ export interface SearchFilterBottomSheetProps {
   onApply?: (filters: SearchFilterAppliedState) => void;
 }
 
+const DEFAULT_SNAP_POINT = 52;
+
 export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
   regionActive: false,
   sizePriceActive: false,
@@ -71,7 +73,6 @@ export function SearchFilterBottomSheet({
     string,
     (inputs?: Record<string, string>) => string
   >;
-  const DEFAULT_SNAP_POINT = 52;
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
   const [collapsedSnap, setCollapsedSnap] = useState(760);
   const [priceType, setPriceType] = useState<SearchFilterPriceType>(
