@@ -98,13 +98,7 @@ export const createLockerDetailFromSearchItem = (
         item.operatingHours.close,
       )
     : formatLockerOperatingHoursLabel(),
-  floorLabel: "B2층",
   priceLabel: formatLockerPriceLabel(item.minPrice),
-  sizeLabel: "S / M / L / 기타",
-  detailHelpText: "물품보관함의 상세 위치 및 추가 요금 정보를 알려주세요.",
-  accurateCount: 78,
-  inaccurateCount: 5,
-  lastUpdatedLabel: "최근 업데이트 2026-05-16 16:25",
 });
 
 /** 지도 핀 선택 직후 API 응답 전에 쓰는 낙관적 상세 */
@@ -146,13 +140,7 @@ export const createLockerDetailFromAutocompleteItem = (
   distanceLabel: item.distanceLabel,
   distanceMeters: item.distanceMeters,
   operatingHoursLabel: formatLockerOperatingHoursLabel(),
-  floorLabel: "B2층",
   priceLabel: formatLockerPriceLabel(),
-  sizeLabel: "S / M / L / 기타",
-  detailHelpText: "물품보관함의 상세 위치 및 추가 요금 정보를 알려주세요.",
-  accurateCount: 78,
-  inaccurateCount: 5,
-  lastUpdatedLabel: "최근 업데이트 2026-05-16 16:25",
 });
 
 export function LockerDetailBottomSheet({
@@ -289,8 +277,8 @@ function FullDetailContent({
   onShare: () => void;
   onNavigate: () => void;
 }) {
-  const accurateCount = locker.accurateCount ?? 78;
-  const inaccurateCount = locker.inaccurateCount ?? 5;
+  const hasFeedbackVotes =
+    locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
 
   return (
     <>
@@ -309,7 +297,7 @@ function FullDetailContent({
             <DetailInfoRow
               icon={<IconNormalMapPin24 state="active" />}
               title={locker.address}
-              description={locker.floorLabel ?? "B2층"}
+              description={locker.floorLabel}
             />
             <DetailInfoRow
               icon={<IconNormalWallet24 />}
@@ -317,12 +305,14 @@ function FullDetailContent({
               description={locker.priceLabel ?? formatLockerPriceLabel()}
               iconTone="neutral"
             />
-            <DetailInfoRow
-              icon={<IconNormalCapacity24 />}
-              title="사이즈"
-              description={locker.sizeLabel ?? "S / M / L / 기타"}
-              iconTone="neutral"
-            />
+            {locker.sizeLabel ? (
+              <DetailInfoRow
+                icon={<IconNormalCapacity24 />}
+                title="사이즈"
+                description={locker.sizeLabel}
+                iconTone="neutral"
+              />
+            ) : null}
             <DetailInfoRow
               icon={<IconCaution24 />}
               title="보관함 상세 정보"
@@ -331,20 +321,26 @@ function FullDetailContent({
               descriptionClassName={detailDescriptionMultiline}
             />
           </div>
-          <div className={feedbackRow}>
-            <button type="button" className={feedbackButton}>
-              정확한 정보에요 {accurateCount}
-            </button>
-            <button
-              type="button"
-              className={[feedbackButton, feedbackButtonNegative].join(" ")}
-            >
-              부정확한 정보에요 {inaccurateCount}
-            </button>
-          </div>
-          <p className={recentUpdatedText}>
-            {locker.lastUpdatedLabel ?? "최근 업데이트 2026-05-16 16:25"}
-          </p>
+          {hasFeedbackVotes ? (
+            <div className={feedbackRow}>
+              {locker.accurateCount !== undefined ? (
+                <button type="button" className={feedbackButton}>
+                  정확한 정보에요 {locker.accurateCount}
+                </button>
+              ) : null}
+              {locker.inaccurateCount !== undefined ? (
+                <button
+                  type="button"
+                  className={[feedbackButton, feedbackButtonNegative].join(" ")}
+                >
+                  부정확한 정보에요 {locker.inaccurateCount}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {locker.lastUpdatedLabel ? (
+            <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
+          ) : null}
         </div>
       </div>
       <div className={fullActionBar}>
@@ -425,7 +421,7 @@ function DetailInfoRow({
 }: {
   icon: ReactNode;
   title: string;
-  description: string;
+  description?: string;
   trailing?: [string, string];
   iconTone?: "brand" | "neutral";
   descriptionClassName?: string;
@@ -446,13 +442,15 @@ function DetailInfoRow({
           </span>
           <div className={detailTextColumn}>
             <span className={detailTitle}>{title}</span>
-            <span
-              className={[detailDescription, descriptionClassName]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {description}
-            </span>
+            {description ? (
+              <span
+                className={[detailDescription, descriptionClassName]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {description}
+              </span>
+            ) : null}
           </div>
         </div>
         {trailing ? (

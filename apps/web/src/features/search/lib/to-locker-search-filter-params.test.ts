@@ -20,7 +20,7 @@ const createFilters = (
 describe("toLockerSearchFilterParams", () => {
   it("keyword 검색 API용 복수 필터 파라미터를 만든다", () => {
     expect(toLockerSearchFilterParams(createFilters())).toEqual({
-      sizeTypes: ["SMALL", "BIG"],
+      sizeTypes: ["SMALL", "LARGE"],
       indoorOutdoorTypes: ["INDOOR", "OUTDOOR"],
       lockerTypes: ["MUSEUM", "SUBWAY_STATION"],
     });
@@ -30,7 +30,7 @@ describe("toLockerSearchFilterParams", () => {
 describe("toPlaceLockersFilterParams", () => {
   it("place lockers API에도 복수 필터 파라미터를 전달한다", () => {
     expect(toPlaceLockersFilterParams(createFilters())).toEqual({
-      sizeTypes: ["SMALL", "BIG"],
+      sizeTypes: ["SMALL", "LARGE"],
       indoorOutdoorTypes: ["INDOOR", "OUTDOOR"],
       lockerTypes: ["MUSEUM", "SUBWAY_STATION"],
     });
@@ -45,7 +45,7 @@ describe("toPlaceLockersFilterParams", () => {
         }),
       ),
     ).toEqual({
-      sizeTypes: ["SMALL", "BIG"],
+      sizeTypes: ["SMALL", "LARGE"],
     });
   });
 });

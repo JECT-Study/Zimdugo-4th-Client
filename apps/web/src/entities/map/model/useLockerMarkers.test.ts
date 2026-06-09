@@ -24,6 +24,8 @@ vi.mock("@repo/ui/vars", () => ({
 import {
   getLockerPinQueryFromViewport,
   getRadiusFromViewport,
+  isLockerPinQueryWithinCapacity,
+  MAX_LOCKER_PIN_RADIUS_METERS,
 } from "./locker-pin-query";
 
 describe("getRadiusFromViewport", () => {
@@ -108,7 +110,7 @@ describe("getLockerPinQueryFromViewport", () => {
     expect(nextQuery).toEqual(baseQuery);
   });
 
-  it("API가 허용하는 최대 radius를 넘지 않는다", () => {
+  it("넓은 뷰포트는 실제 radius를 유지하고 capacity 초과 시 fetch 대상이 아니다", () => {
     const query = getLockerPinQueryFromViewport({
       center: { lat: 37.5, lng: 127.0 },
       zoom: 10,
@@ -122,6 +124,25 @@ describe("getLockerPinQueryFromViewport", () => {
       },
     });
 
-    expect(query.radius).toBe(10_000);
+    expect(query.radius).toBeGreaterThan(MAX_LOCKER_PIN_RADIUS_METERS);
+    expect(isLockerPinQueryWithinCapacity(query)).toBe(false);
+  });
+
+  it("뷰포트가 좁을 때는 상한값으로 고정하지 않는다", () => {
+    const query = getLockerPinQueryFromViewport({
+      center: { lat: 37.5, lng: 127.0 },
+      zoom: 15,
+      bounds: {
+        northEast: { lat: 37.510002, lng: 127.010002 },
+        southWest: { lat: 37.490002, lng: 126.990002 },
+      },
+      size: {
+        width: 375,
+        height: 812,
+      },
+    });
+
+    expect(query.radius).toBeLessThan(7_000);
+    expect(query.radius).toBeGreaterThan(0);
   });
 });

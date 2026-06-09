@@ -1,5 +1,5 @@
 import type { SearchFilterAppliedState } from "#/composites/search/SearchFilterBottomSheet";
-import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
+import { cardsToSizeTypes } from "#/entities/locker/lib/cards-to-size-types";
 import type { LockerType } from "#/shared/types/locker-type";
 import type {
   LockerSearchFilterParams,
@@ -22,19 +22,6 @@ const INDOOR_OUTDOOR_FILTER_TO_API: Record<string, "INDOOR" | "OUTDOOR"> = {
   outdoor: "OUTDOOR",
 };
 
-const SIZE_FILTER_TO_API: Record<SizeCardType, "SMALL" | "MEDIUM" | "BIG"> = {
-  S: "SMALL",
-  M: "MEDIUM",
-  L: "BIG",
-};
-
-const toSearchSizeTypes = (
-  selectedSizes: SizeCardType[],
-): Array<"SMALL" | "MEDIUM" | "BIG"> =>
-  selectedSizes
-    .map((value) => SIZE_FILTER_TO_API[value])
-    .filter((value): value is "SMALL" | "MEDIUM" | "BIG" => !!value);
-
 const toIndoorOutdoorTypes = (
   indoorOutdoorState: string[],
 ): Array<"INDOOR" | "OUTDOOR"> =>
@@ -53,7 +40,7 @@ export const toLockerSearchFilterParams = (
   const params: LockerSearchFilterParams = {};
 
   if (filters.sizeActive && filters.selectedSizes.length > 0) {
-    params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
+    params.sizeTypes = cardsToSizeTypes(filters.selectedSizes);
   }
 
   const indoorOutdoorTypes = toIndoorOutdoorTypes(filters.indoorOutdoorState);
@@ -77,7 +64,7 @@ export const toPlaceLockersFilterParams = (
   const params: PlaceLockersFilterParams = {};
 
   if (filters.sizeActive && filters.selectedSizes.length > 0) {
-    params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
+    params.sizeTypes = cardsToSizeTypes(filters.selectedSizes);
   }
 
   const indoorOutdoorTypes = toIndoorOutdoorTypes(filters.indoorOutdoorState);

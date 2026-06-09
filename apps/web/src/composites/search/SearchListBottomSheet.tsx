@@ -28,7 +28,6 @@ import {
   sheetColumn,
 } from "./SearchListBottomSheet.css.ts";
 import {
-  filterSearchResults,
   type SearchLockerResultItem,
   type SearchResultItem,
   type SearchSortDirection,
@@ -74,13 +73,6 @@ interface ActiveSort {
   direction: SearchSortDirection;
 }
 
-const SORT_LABEL_FALLBACKS: Record<AppLocale, Record<SearchSortKey, string>> = {
-  ko: { distance: "거리순", updatedAt: "최신순", price: "가격순" },
-  en: { distance: "Distance", updatedAt: "Recent", price: "Price" },
-  ja: { distance: "距離順", updatedAt: "新着順", price: "価格順" },
-  zh: { distance: "按距离", updatedAt: "按最新", price: "按价格" },
-};
-
 const FAVORITE_LABEL_FALLBACKS: Record<
   AppLocale,
   { add: string; remove: string }
@@ -113,16 +105,11 @@ export function SearchListBottomSheet({
   onSnapChange,
   children,
 }: SearchListBottomSheetProps) {
-  const messages = m as unknown as Record<string, (() => string) | undefined>;
   const [windowHeight, setWindowHeight] = useState(
     typeof window !== "undefined" ? window.innerHeight : 800,
   );
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
 
-  const filteredItems = useMemo(
-    () => filterSearchResults(items, placeName ? "" : searchQuery),
-    [items, placeName, searchQuery],
-  );
   const visibleItems = useMemo(() => {
     const primarySortType: Record<SearchSortKey, LockerPrimarySortType> = {
       distance: "DISTANCE",
@@ -139,12 +126,12 @@ export function SearchListBottomSheet({
     };
 
     return sortLockerData(
-      filteredItems,
+      items,
       primarySortType[resolvedSort.key],
       sortDirection[resolvedSort.direction],
       new Date(),
     );
-  }, [activeSort, filteredItems]);
+  }, [activeSort, items]);
   const isPlaceScope = Boolean(placeName);
   const hasResult = !isLoading && !isError && visibleItems.length > 0;
   const showEmpty = !isLoading && !isError && visibleItems.length === 0;
@@ -157,14 +144,9 @@ export function SearchListBottomSheet({
   const resolvedSnapPoint = snapPoint ?? 331;
   const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 44;
   const sortLabels: Record<SearchSortKey, string> = {
-    distance:
-      messages.search_sort_distance?.() ??
-      SORT_LABEL_FALLBACKS[appLanguage].distance,
-    updatedAt:
-      messages.search_sort_recent?.() ??
-      SORT_LABEL_FALLBACKS[appLanguage].updatedAt,
-    price:
-      messages.search_sort_price?.() ?? SORT_LABEL_FALLBACKS[appLanguage].price,
+    distance: m.search_sort_distance(),
+    updatedAt: m.search_sort_recent(),
+    price: m.search_sort_price(),
   };
   const resultTitleText = placeName
     ? m.search_place_lockers_title({ place: placeName })

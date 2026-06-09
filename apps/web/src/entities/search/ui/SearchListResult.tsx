@@ -186,12 +186,9 @@ export function SearchLockerResult({
   favoriteAddLabel,
   favoriteRemoveLabel,
 }: SearchLockerResultProps) {
-  const messages = m as unknown as Record<string, (() => string) | undefined>;
   const favoriteLabel = item.isFavorite
-    ? (messages.search_favorite_remove?.() ??
-      favoriteRemoveLabel ??
-      "즐겨찾기 해제")
-    : (messages.search_favorite_add?.() ?? favoriteAddLabel ?? "즐겨찾기 추가");
+    ? (favoriteRemoveLabel ?? m.search_favorite_remove())
+    : (favoriteAddLabel ?? m.search_favorite_add());
 
   const handleFavoritePress = () => {
     onFavoriteChange?.(item, !item.isFavorite);
