@@ -32,5 +32,10 @@ export function normalizeReportPayload(
     maxPrice,
     additionalInfo: values.additionalInfo.trim(),
     imageUrl: values.imageUrl,
+    floorInputValid: true,
+    enumInputValid: true,
+    priceInputValid: true,
+    operatingHoursValid: true,
+    sizeTypesValid: true,
   };
 }

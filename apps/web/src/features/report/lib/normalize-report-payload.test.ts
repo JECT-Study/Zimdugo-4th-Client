@@ -89,6 +89,16 @@ describe("normalizeReportPayload", () => {
     expect(payload.sizeTypes).toEqual(["SMALL", "LARGE"]);
   });
 
+  it("API validation flag를 true로 포함한다", () => {
+    const payload = normalizeReportPayload(baseForm());
+
+    expect(payload.floorInputValid).toBe(true);
+    expect(payload.enumInputValid).toBe(true);
+    expect(payload.priceInputValid).toBe(true);
+    expect(payload.operatingHoursValid).toBe(true);
+    expect(payload.sizeTypesValid).toBe(true);
+  });
+
   it("startTime과 endTime을 HH:mm 형식 그대로 유지한다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),

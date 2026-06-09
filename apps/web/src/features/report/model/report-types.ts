@@ -36,7 +36,13 @@ export type ReportFormValues = {
   imageUrl: string | null;
 };
 
-export type LockerReportCreateRequest = ReportFormValues;
+export type LockerReportCreateRequest = ReportFormValues & {
+  floorInputValid: boolean;
+  enumInputValid: boolean;
+  priceInputValid: boolean;
+  operatingHoursValid: boolean;
+  sizeTypesValid: boolean;
+};
 
 export type ReportSectionId =
   | "location"

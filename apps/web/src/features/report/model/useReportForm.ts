@@ -38,6 +38,7 @@ import {
   toClientValidationIssues,
 } from "./report-error-targets";
 import { parseReportForm, reportSchema } from "./report-schema";
+import { useAuthStore } from "#/shared/store/authStore";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import {
   MAX_REPORT_PHOTOS,
@@ -101,6 +102,7 @@ export function useReportForm(): {
   };
   validation: { isStep1Valid: boolean; isStep2Valid: boolean };
 } {
+  const userId = useAuthStore((state) => state.userId);
   const form = useForm<ReportFormValues>({
     defaultValues: reportDefaultValues,
     resolver: zodResolver(reportSchema),
@@ -293,7 +295,12 @@ export function useReportForm(): {
         }
 
         const payload = normalizeReportPayload({ ...data, imageUrl });
-        await createLockerReport(payload);
+        if (userId == null) {
+          useAuthPopupStore.getState().openPopup("/report");
+          return;
+        }
+
+        await createLockerReport(payload, { userId });
         setIsPopupOpen(true);
       } catch (error) {
         const failure = parseReportSubmitFailure(error);
@@ -335,7 +342,7 @@ export function useReportForm(): {
         setIsSubmitting(false);
       }
     },
-    [form],
+    [form, userId],
   );
 
   const scrollToFirstFieldError = useCallback(
