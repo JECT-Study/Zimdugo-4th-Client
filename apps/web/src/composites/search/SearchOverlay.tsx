@@ -16,6 +16,14 @@ import {
   type SearchHistoryEntry,
 } from "#/features/search/model/search-history";
 import { useLockerSuggest } from "#/features/search/hooks/useSearch";
+import {
+  capSearchQueryDraft,
+  getSearchQueryIssue,
+  getValidatedSearchQuery,
+  resolveSearchQuerySubmitAttempt,
+  SEARCH_QUERY_MAX_LENGTH,
+  trimSearchQueryDraft,
+} from "#/features/search/lib/sanitize-search-query";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchSuggestListSkeleton } from "#/features/search/ui/search-skeleton/SearchSuggestListSkeleton";
 import { useDebouncedValue } from "#/shared/hooks/useDebouncedValue";
@@ -30,11 +38,11 @@ import {
   header,
   overlay,
   recentList,
+  querySubmitFeedback as querySubmitFeedbackText,
+  searchFieldColumn,
   searchFieldSlot,
   sectionHeader,
 } from "./SearchOverlay.css.ts";
-
-const SUGGEST_MIN_QUERY_LENGTH = 2;
 
 export interface SearchOverlayProps {
   onClose: (draft?: string) => void;
@@ -66,19 +74,26 @@ export function SearchOverlay({
   initialQuery = "",
   searchCoordinates,
 }: SearchOverlayProps) {
-  const [query, setQuery] = useState(initialQuery);
-  const normalizedQuery = query.trim();
-  const debouncedQuery = useDebouncedValue(normalizedQuery, 300);
+  const [query, setQuery] = useState(() => trimSearchQueryDraft(initialQuery));
+  const queryIssue = useMemo(() => getSearchQueryIssue(query), [query]);
+  const validatedQuery = useMemo(() => getValidatedSearchQuery(query), [query]);
+  const isQueryValid = validatedQuery !== null;
+  const debouncedQuery = useDebouncedValue(isQueryValid ? query : "", 300);
   const suggestParams = useMemo(
     () =>
-      debouncedQuery.length >= SUGGEST_MIN_QUERY_LENGTH
+      isQueryValid && debouncedQuery.length > 0
         ? {
             keyword: debouncedQuery,
             lat: searchCoordinates.lat,
             lng: searchCoordinates.lng,
           }
         : null,
-    [debouncedQuery, searchCoordinates.lat, searchCoordinates.lng],
+    [
+      debouncedQuery,
+      isQueryValid,
+      searchCoordinates.lat,
+      searchCoordinates.lng,
+    ],
   );
   const {
     data: autocompleteItems = [],
@@ -88,8 +103,8 @@ export function SearchOverlay({
     refetch,
   } = useLockerSuggest(suggestParams);
 
-  const isSuggestEligible = normalizedQuery.length >= SUGGEST_MIN_QUERY_LENGTH;
-  const isDebouncing = isSuggestEligible && normalizedQuery !== debouncedQuery;
+  const isSuggestEligible = isQueryValid;
+  const isDebouncing = isSuggestEligible && query !== debouncedQuery;
   const showSuggestLoading = isSuggestEligible && (isDebouncing || isFetching);
   const showSuggestError = isSuggestEligible && isError && !showSuggestLoading;
   const showSuggestEmpty =
@@ -104,13 +119,32 @@ export function SearchOverlay({
     !showSuggestError &&
     autocompleteItems.length > 0;
 
+  const applyTrimToQuery = (rawQuery: string = query): string => {
+    const trimmed = trimSearchQueryDraft(rawQuery);
+
+    if (trimmed !== query) {
+      setQuery(trimmed);
+    }
+
+    return trimmed;
+  };
+
   const handleQueryChange = (nextQuery: string) => {
-    setQuery(nextQuery);
+    setQuery(capSearchQueryDraft(nextQuery));
+  };
+
+  const handleQueryBlur = () => {
+    applyTrimToQuery();
   };
 
   const handleSelect = (selectedQuery: string) => {
-    handleQueryChange(selectedQuery);
-    onSelect(selectedQuery);
+    const attempt = resolveSearchQuerySubmitAttempt(selectedQuery);
+
+    if (!attempt.ok) {
+      return;
+    }
+
+    onSelect(attempt.query);
   };
 
   const handleAutocompleteSelect = (item: SearchAutocompleteItemData) => {
@@ -146,7 +180,15 @@ export function SearchOverlay({
   };
 
   useEffect(() => {
-    setQuery(initialQuery);
+    if (!validatedQuery || validatedQuery === query) {
+      return;
+    }
+
+    setQuery(validatedQuery);
+  }, [query, validatedQuery]);
+
+  useEffect(() => {
+    setQuery(trimSearchQueryDraft(initialQuery));
   }, [initialQuery]);
 
   /* const popularKeywords = [
@@ -167,7 +209,7 @@ export function SearchOverlay({
     "부산역",
   ]; */
 
-  const hasQuery = normalizedQuery.length > 0;
+  const hasQuery = query.length > 0;
 
   return (
     <div className={overlay}>
@@ -181,23 +223,39 @@ export function SearchOverlay({
           <IconChevronLeft13 className={backIcon} />
         </button>
         <div className={searchFieldSlot}>
-          <SearchField
-            autoFocus
-            value={query}
-            onChange={handleQueryChange}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                const nextQuery = (query || "").trim();
-                if (nextQuery) {
-                  handleSelect(nextQuery);
+          <div className={searchFieldColumn}>
+            <SearchField
+              autoFocus
+              value={query}
+              maxLength={SEARCH_QUERY_MAX_LENGTH}
+              onChange={handleQueryChange}
+              onBlur={handleQueryBlur}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSelect(applyTrimToQuery());
                 }
+              }}
+              placeholder={m.search_placeholder()}
+              searchIconPlacement="left"
+              variant="searchHome"
+              aria-label={m.search_input_aria()}
+              aria-describedby={
+                queryIssue === "invalid-format"
+                  ? "search-query-submit-feedback"
+                  : undefined
               }
-            }}
-            placeholder={m.search_placeholder()}
-            searchIconPlacement="left"
-            variant="searchHome"
-            aria-label={m.search_input_aria()}
-          />
+            />
+            {queryIssue === "invalid-format" ? (
+              <p
+                id="search-query-submit-feedback"
+                className={querySubmitFeedbackText}
+                role="status"
+                aria-live="polite"
+              >
+                {m.search_query_rejected_invalid_chars()}
+              </p>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -264,7 +322,7 @@ export function SearchOverlay({
 
         {hasQuery ? (
           <div className={autocompleteList}>
-            {!isSuggestEligible ? (
+            {queryIssue === "too-short" ? (
               <SearchAsyncFeedback variant="suggest-min-length" />
             ) : null}
             {showSuggestLoading ? <SearchSuggestListSkeleton /> : null}
