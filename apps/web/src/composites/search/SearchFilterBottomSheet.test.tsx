@@ -21,7 +21,7 @@ describe("SearchFilterBottomSheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "보관함 보기" }));
 
     expect(handleApply).toHaveBeenCalledWith({
-      regionActive: false,
+      regionActive: true,
       sizePriceActive: true,
       placeTypeActive: true,
       priceType: "free",

@@ -221,10 +221,9 @@ export function SearchFilterBottomSheet({
       priceType !== "none" || minPrice.length > 0 || maxPrice.length > 0;
 
     onApply?.({
-      regionActive: false,
+      regionActive: indoorOutdoorState.length > 0,
       sizePriceActive: hasPriceFilter || selectedSizes.length > 0,
-      placeTypeActive:
-        indoorOutdoorState.length > 0 || placeTypeState.length > 0,
+      placeTypeActive: placeTypeState.length > 0,
       priceType,
       minPrice,
       maxPrice,

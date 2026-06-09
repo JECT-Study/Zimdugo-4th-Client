@@ -63,7 +63,7 @@ export const toLockerSearchFilterParams = (
     }
   }
 
-  if (filters.regionActive && filters.indoorOutdoorState.length > 0) {
+  if (filters.indoorOutdoorState.length > 0) {
     params.indoorOutdoorTypes = filters.indoorOutdoorState
       .map((value) => INDOOR_OUTDOOR_FILTER_TO_API[value])
       .filter((value): value is "INDOOR" | "OUTDOOR" => !!value);
@@ -87,13 +87,19 @@ export const toPlaceLockersFilterParams = (
     params.sizeTypes = toSearchSizeTypes(filters.selectedSizes);
   }
 
-  if (filters.regionActive && filters.indoorOutdoorState.length > 0) {
-    params.indoorOutdoorType =
+  if (filters.indoorOutdoorState.length > 0) {
+    const indoorOutdoorType =
       INDOOR_OUTDOOR_FILTER_TO_API[filters.indoorOutdoorState[0]];
+    if (indoorOutdoorType) {
+      params.indoorOutdoorType = indoorOutdoorType;
+    }
   }
 
-  if (filters.placeTypeActive && filters.placeTypeState.length > 0) {
-    params.lockerType = PLACE_FILTER_TO_LOCKER_TYPE[filters.placeTypeState[0]];
+  if (filters.placeTypeState.length > 0) {
+    const lockerType = PLACE_FILTER_TO_LOCKER_TYPE[filters.placeTypeState[0]];
+    if (lockerType) {
+      params.lockerType = lockerType;
+    }
   }
 
   return params;
