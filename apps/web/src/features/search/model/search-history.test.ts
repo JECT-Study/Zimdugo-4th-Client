@@ -24,7 +24,7 @@ describe("search-history", () => {
     expect(next[0]?.searchedAt).toBe("2026-06-09T12:00:00.000Z");
   });
 
-  it("locker·place는 id 기준으로 dedup한다", () => {
+  it("locker는 id 기준으로 dedup한다", () => {
     const entries = upsertSearchHistoryEntry([], {
       kind: "locker",
       lockerId: 10,
@@ -42,6 +42,28 @@ describe("search-history", () => {
     expect(next[0]?.kind).toBe("locker");
     if (next[0]?.kind === "locker") {
       expect(next[0].searchDraft).toBe("강남역");
+    }
+  });
+
+  it("place는 id 기준으로 dedup한다", () => {
+    const entries = upsertSearchHistoryEntry([], {
+      kind: "place",
+      placeId: 7,
+      title: "코엑스",
+      searchDraft: "삼성",
+    });
+    const next = upsertSearchHistoryEntry(entries, {
+      kind: "place",
+      placeId: 7,
+      title: "코엑스몰",
+      searchDraft: "삼성역",
+    });
+
+    expect(next).toHaveLength(1);
+    expect(next[0]?.kind).toBe("place");
+    if (next[0]?.kind === "place") {
+      expect(next[0].searchDraft).toBe("삼성역");
+      expect(next[0].title).toBe("코엑스몰");
     }
   });
 
