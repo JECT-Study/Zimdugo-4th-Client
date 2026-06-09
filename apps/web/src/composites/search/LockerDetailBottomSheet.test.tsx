@@ -14,7 +14,7 @@ const LOCKER_DETAIL: LockerDetailItem = {
   distanceLabel: "210m",
   address: "서울 서대문구 신촌로 83",
   floorLabel: "B2층",
-  priceLabel: "000원 ~ 000원",
+  priceLabel: "가격 미제공",
   sizeLabel: "S / M / L / 기타",
   accurateCount: 78,
   inaccurateCount: 5,
@@ -64,6 +64,7 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
+    expect(screen.queryByRole("button", { name: "뒤로가기" })).toBeNull();
     expect(screen.getByText("가격")).toBeTruthy();
     expect(screen.getByText("사이즈")).toBeTruthy();
     expect(screen.getByText("보관함 상세 정보")).toBeTruthy();

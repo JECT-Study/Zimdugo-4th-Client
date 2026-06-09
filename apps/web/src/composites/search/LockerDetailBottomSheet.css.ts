@@ -34,6 +34,8 @@ export const backButton = style({
   minWidth: "32px",
   height: "32px",
   padding: 0,
+  alignSelf: "start",
+  flexShrink: 0,
   color: vars.color.text.title,
 });
 
@@ -64,9 +66,10 @@ export const summarySection = style({
 });
 
 export const summaryRow = style({
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "space-between",
+  display: "grid",
+  gridTemplateColumns: "32px minmax(0, 1fr) 32px",
+  columnGap: vars.spacing[8],
+  alignItems: "start",
   width: "100%",
   padding: `${vars.spacing[8]} ${vars.spacing[4]}`,
   boxSizing: "border-box",
@@ -78,11 +81,12 @@ export const summaryTextColumn = style({
   gap: vars.spacing[4],
   minWidth: 0,
   flex: 1,
-  paddingRight: vars.spacing[12],
+  paddingRight: 0,
 });
 
 export const lockerTitle = style({
   overflow: "hidden",
+  margin: 0,
   color: vars.color.text.title,
   fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.SemiBold,
@@ -96,10 +100,11 @@ export const metaRow = style({
   alignItems: "center",
   gap: vars.spacing[8],
   minWidth: 0,
+  overflow: "hidden",
   color: vars.color.text.disable,
   fontSize: vars.typography.fontSize[12],
   fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
+  lineHeight: "18px",
 });
 
 export const distanceRow = style({
@@ -107,6 +112,7 @@ export const distanceRow = style({
 });
 
 export const addressText = style({
+  minWidth: 0,
   overflow: "hidden",
   color: vars.color.text.surface,
   whiteSpace: "nowrap",
@@ -128,6 +134,7 @@ export const favoriteButton = style({
   width: "32px",
   height: "32px",
   padding: 0,
+  alignSelf: "start",
   flexShrink: 0,
   border: 0,
   borderRadius: vars.radius[6],
@@ -144,12 +151,15 @@ export const divider = style({
 });
 
 export const helperText = style({
+  overflow: "hidden",
   margin: 0,
-  padding: `0 ${vars.spacing[4]}`,
+  padding: `0 calc(${vars.spacing[4]} + 32px + ${vars.spacing[8]})`,
   color: vars.color.text.surface,
   fontSize: vars.typography.fontSize[12],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: 1.2,
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
 });
 
 export const imageReportCard = style({
@@ -263,10 +273,11 @@ export const detailIcon = style({
   width: "24px",
   height: "24px",
   flexShrink: 0,
-  color: vars.color.text.surface,
 });
 
-globalStyle(`${detailIcon} svg path`, {
+export const detailIconNeutral = style({});
+
+globalStyle(`${detailIconNeutral} svg path`, {
   fill: vars.color.text.surface,
 });
 
@@ -296,6 +307,14 @@ export const detailDescription = style({
   lineHeight: 1.2,
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
+});
+
+export const detailDescriptionMultiline = style({
+  overflow: "visible",
+  whiteSpace: "normal",
+  textOverflow: "clip",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
 });
 
 export const detailTrailing = style({

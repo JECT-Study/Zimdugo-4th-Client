@@ -14,6 +14,10 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
+import {
+  formatLockerOperatingHoursLabel,
+  formatLockerPriceLabel,
+} from "#/shared/lib/locker-detail-labels";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {
   actionRow,
@@ -22,8 +26,9 @@ import {
   backIcon,
   contentStack,
   detailDescription,
-  detailHeader,
+  detailDescriptionMultiline,
   detailIcon,
+  detailIconNeutral,
   detailItem,
   detailItemContent,
   detailLeading,
@@ -87,17 +92,36 @@ export const createLockerDetailFromSearchItem = (
 ): LockerDetailItem => ({
   ...item,
   operatingHoursLabel: item.operatingHours
-    ? `운영시간 ${item.operatingHours.open} ~ ${item.operatingHours.close}`
-    : "운영시간 00:00 ~ 00:00",
+    ? formatLockerOperatingHoursLabel(
+        item.operatingHours.open,
+        item.operatingHours.close,
+      )
+    : formatLockerOperatingHoursLabel(),
   floorLabel: "B2층",
-  priceLabel: item.minPrice
-    ? `${item.minPrice.toLocaleString("ko-KR")}원 ~`
-    : "000원 ~ 000원",
+  priceLabel: formatLockerPriceLabel(item.minPrice),
   sizeLabel: "S / M / L / 기타",
   detailHelpText: "물품보관함의 상세 위치 및 추가 요금 정보를 알려주세요.",
   accurateCount: 78,
   inaccurateCount: 5,
   lastUpdatedLabel: "최근 업데이트 2026-05-16 16:25",
+});
+
+/** API 응답 전 마커 등 lockerId만 알 때 쓰는 플레이스홀더 */
+export const createLockerDetailPlaceholder = (
+  lockerId: number,
+): LockerDetailItem => ({
+  itemType: "LOCKER",
+  lockerId,
+  title: "…",
+  address: "",
+  categoryLabel: "",
+  updatedLabel: "",
+  distanceLabel: "",
+  operatingHoursLabel: formatLockerOperatingHoursLabel(),
+  floorLabel: "",
+  priceLabel: formatLockerPriceLabel(),
+  sizeLabel: "",
+  detailHelpText: "",
 });
 
 export const createLockerDetailFromAutocompleteItem = (
@@ -111,9 +135,9 @@ export const createLockerDetailFromAutocompleteItem = (
   updatedLabel: item.updatedLabel,
   distanceLabel: item.distanceLabel,
   distanceMeters: item.distanceMeters,
-  operatingHoursLabel: "운영시간 00:00 ~ 00:00",
+  operatingHoursLabel: formatLockerOperatingHoursLabel(),
   floorLabel: "B2층",
-  priceLabel: "000원 ~ 000원",
+  priceLabel: formatLockerPriceLabel(),
   sizeLabel: "S / M / L / 기타",
   detailHelpText: "물품보관함의 상세 위치 및 추가 요금 정보를 알려주세요.",
   accurateCount: 78,
@@ -193,7 +217,6 @@ export function LockerDetailBottomSheet({
           <FullDetailContent
             locker={locker}
             detailHelpText={detailHelpText}
-            onBack={handleBack}
             onShare={handleShare}
             onNavigate={handleNavigate}
           />
@@ -232,12 +255,12 @@ function HalfDetailContent({
 }) {
   return (
     <div className={contentStack}>
-      <DetailBackButton onBack={onBack} />
       <SummarySection
         locker={locker}
         detailHelpText={detailHelpText}
         favoriteLabel={favoriteLabel}
         onFavoritePress={onFavoritePress}
+        leadingBack={<DetailBackButton onBack={onBack} />}
       />
       <ImageReportCard />
       <ActionRow onShare={onShare} onNavigate={onNavigate} />
@@ -248,13 +271,11 @@ function HalfDetailContent({
 function FullDetailContent({
   locker,
   detailHelpText,
-  onBack,
   onShare,
   onNavigate,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
-  onBack: () => void;
   onShare: () => void;
   onNavigate: () => void;
 }) {
@@ -265,14 +286,13 @@ function FullDetailContent({
     <>
       <div className={fullContentScroll}>
         <div className={contentStack}>
-          <DetailBackButton onBack={onBack} />
           <ImageReportCard isFull />
           <div className={fullDetailList}>
             <DetailInfoRow
               icon={<IconLockerDetailHeader24 />}
               title={locker.title}
               description={
-                locker.operatingHoursLabel ?? "운영시간 00:00 ~ 00:00"
+                locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
               }
               trailing={[locker.categoryLabel, locker.distanceLabel]}
             />
@@ -284,17 +304,21 @@ function FullDetailContent({
             <DetailInfoRow
               icon={<IconNormalWallet24 />}
               title="가격"
-              description={locker.priceLabel ?? "000원 ~ 000원"}
+              description={locker.priceLabel ?? formatLockerPriceLabel()}
+              iconTone="neutral"
             />
             <DetailInfoRow
               icon={<IconNormalCapacity24 />}
               title="사이즈"
               description={locker.sizeLabel ?? "S / M / L / 기타"}
+              iconTone="neutral"
             />
             <DetailInfoRow
               icon={<IconCaution24 />}
               title="보관함 상세 정보"
               description={detailHelpText}
+              iconTone="neutral"
+              descriptionClassName={detailDescriptionMultiline}
             />
           </div>
           <div className={feedbackRow}>
@@ -322,18 +346,16 @@ function FullDetailContent({
 
 function DetailBackButton({ onBack }: { onBack: () => void }) {
   return (
-    <div className={detailHeader}>
-      <Button
-        variant="ghost"
-        intent="neutral"
-        size="S"
-        className={backButton}
-        onPress={onBack}
-        aria-label="뒤로가기"
-      >
-        <IconChevronLeft13 className={backIcon} />
-      </Button>
-    </div>
+    <Button
+      variant="ghost"
+      intent="neutral"
+      size="S"
+      className={backButton}
+      onPress={onBack}
+      aria-label="뒤로가기"
+    >
+      <IconChevronLeft13 className={backIcon} />
+    </Button>
   );
 }
 
@@ -342,15 +364,18 @@ function SummarySection({
   detailHelpText,
   favoriteLabel,
   onFavoritePress,
+  leadingBack,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
   favoriteLabel: string;
   onFavoritePress: () => void;
+  leadingBack?: ReactNode;
 }) {
   return (
     <section className={summarySection} aria-label="보관함 요약 정보">
       <div className={summaryRow}>
+        {leadingBack}
         <div className={summaryTextColumn}>
           <h2 className={lockerTitle}>{locker.title}</h2>
           <InlineMeta left={locker.categoryLabel} right={locker.updatedLabel} />
@@ -385,22 +410,39 @@ function DetailInfoRow({
   title,
   description,
   trailing,
+  iconTone = "brand",
+  descriptionClassName,
 }: {
   icon: ReactNode;
   title: string;
   description: string;
   trailing?: [string, string];
+  iconTone?: "brand" | "neutral";
+  descriptionClassName?: string;
 }) {
+  const iconClassName = [
+    detailIcon,
+    iconTone === "neutral" ? detailIconNeutral : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className={detailItem}>
       <div className={detailItemContent}>
         <div className={detailLeading}>
-          <span className={detailIcon} aria-hidden="true">
+          <span className={iconClassName} aria-hidden="true">
             {icon}
           </span>
           <div className={detailTextColumn}>
             <span className={detailTitle}>{title}</span>
-            <span className={detailDescription}>{description}</span>
+            <span
+              className={[detailDescription, descriptionClassName]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {description}
+            </span>
           </div>
         </div>
         {trailing ? (
@@ -463,10 +505,17 @@ function InlineMeta({
   right: ReactNode;
   className?: string;
 }) {
+  const hasLeft =
+    typeof left === "string" ? left.trim().length > 0 : left != null;
+  const hasRight =
+    typeof right === "string" ? right.trim().length > 0 : right != null;
+
   return (
     <div className={[metaRow, className].filter(Boolean).join(" ")}>
-      {left}
-      <span className={metaDot} aria-hidden="true" />
+      {hasLeft ? left : null}
+      {hasLeft && hasRight ? (
+        <span className={metaDot} aria-hidden="true" />
+      ) : null}
       {right}
     </div>
   );

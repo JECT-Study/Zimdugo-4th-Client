@@ -9,6 +9,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
+  createLockerDetailFromAutocompleteItem,
+  createLockerDetailPlaceholder,
+  createLockerDetailFromSearchItem,
   LockerDetailBottomSheet,
   type LockerDetailItem,
 } from "#/composites/search/LockerDetailBottomSheet";
@@ -47,6 +50,7 @@ import {
   searchResultItemsToPins,
 } from "#/features/search/lib/search-result-pins";
 import { toLockerSearchFilterParams } from "#/features/search/lib/to-locker-search-filter-params";
+import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   createKeywordSearchSelection,
   createPlaceSearchSelection,
@@ -92,6 +96,25 @@ import {
 export const Route = createFileRoute("/")({ component: IndexPage });
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
+const DETAIL_HALF_BOTTOM_INSET_PX = 380;
+const SEARCH_LIST_SNAP_POINT_PX = 331;
+const MAP_BOUNDS_VISIBLE_GAP_PX = 24;
+const MIN_MAP_BOUNDS_BOTTOM_PADDING_PX = 120;
+
+const mergeLockerDetailWithPreviousDistance = (
+  detail: LockerDetailItem,
+  previousDetail: LockerDetailItem | null,
+): LockerDetailItem => {
+  if (!previousDetail || previousDetail.lockerId !== detail.lockerId) {
+    return detail;
+  }
+
+  return {
+    ...detail,
+    distanceLabel: detail.distanceLabel || previousDetail.distanceLabel,
+    distanceMeters: detail.distanceMeters ?? previousDetail.distanceMeters,
+  };
+};
 
 function IndexPage() {
   const queryClient = useQueryClient();
@@ -107,6 +130,9 @@ function IndexPage() {
   // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [hasMapError, setHasMapError] = useState(false);
+  const [windowHeight, setWindowHeight] = useState(
+    typeof window !== "undefined" ? window.innerHeight : 800,
+  );
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
 
@@ -126,6 +152,8 @@ function IndexPage() {
   const [activeLockerId, setActiveLockerId] = useState<number | null>(null);
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(null);
+  const [selectedMapPin, setSelectedMapPin] =
+    useState<LockerPinItemResponse | null>(null);
   const [context, setContext] = useState<AppMapContext>("idle");
   const [overlayReturnContext, setOverlayReturnContext] =
     useState<OverlayReturnContext>("idle");
@@ -155,6 +183,12 @@ function IndexPage() {
 
   // 위치 및 방향 트래킹
   const [isCameraCentered, setIsCameraCentered] = useState(false);
+  useEffect(() => {
+    const handleResize = () => setWindowHeight(window.innerHeight);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const { permission, isTracking, location, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
   const {
@@ -291,6 +325,7 @@ function IndexPage() {
     setMapPlaceId(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
+    setSelectedMapPin(null);
     setMapDetailBack(null);
     setSearchFilters(createDefaultSearchFilters());
     setIsNavigationPopupOpen(false);
@@ -307,6 +342,7 @@ function IndexPage() {
     setSearchDetailBack(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
+    setSelectedMapPin(null);
     setIsNavigationPopupOpen(false);
     setSheetMode("idle");
     setContext("idle");
@@ -458,6 +494,10 @@ function IndexPage() {
     listKind,
     placeLockersResults?.lockers,
   ]);
+  const mapPlacePins = useMemo(
+    () => searchLockerItemsToPins(placeLockersResults?.lockers ?? []),
+    [placeLockersResults?.lockers],
+  );
 
   const activePlaceName =
     context === "map" || listKind === "place"
@@ -473,8 +513,10 @@ function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    (lockerId: number) => {
-      setSelectedLockerDetail(null);
+    (lockerId: number, optimisticDetail?: LockerDetailItem) => {
+      setSelectedLockerDetail(
+        optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
+      );
       setActiveLockerId(lockerId);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
@@ -517,6 +559,7 @@ function IndexPage() {
       setMapDetailBack(null);
       setActiveLockerId(null);
       setSelectedLockerDetail(null);
+      setSelectedMapPin(null);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
       setSheetMode("list");
@@ -533,6 +576,7 @@ function IndexPage() {
       setSearchDetailBack(null);
       setActiveLockerId(null);
       setSelectedLockerDetail(null);
+      setSelectedMapPin(null);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
       setSheetMode("list");
@@ -548,7 +592,10 @@ function IndexPage() {
         setSearchPlaceId(null);
         setSearchDraft(syncSearchDraft(sourceQuery).searchDraft);
         setSearchDetailBack(createKeywordDetailBackTarget());
-        void openLockerDetailById(item.lockerId);
+        openLockerDetailById(
+          item.lockerId,
+          createLockerDetailFromAutocompleteItem(item),
+        );
         return;
       }
 
@@ -573,14 +620,52 @@ function IndexPage() {
         );
       }
 
-      void openLockerDetailById(item.lockerId);
+      openLockerDetailById(
+        item.lockerId,
+        createLockerDetailFromSearchItem(item),
+      );
     },
     [context, listKind, openLockerDetailById, searchPlaceId],
   );
 
   const handleIdlePinSelect = useCallback(
-    (pinType: "LOCKER" | "PLACE", id: number) => {
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin?: LockerPinItemResponse,
+    ) => {
       if (context !== "idle") {
+        return;
+      }
+
+      if (pinType === "PLACE") {
+        setSelectedMapPin(null);
+        openMapPlaceList(id);
+        return;
+      }
+
+      setSelectedMapPin(pin ?? null);
+      setContext("map");
+      setMapDetailBack("idle");
+      if (pin && mapInstanceRef.current) {
+        focusNaverMapOnCoordinates({
+          map: mapInstanceRef.current,
+          coordinates: { lat: pin.latitude, lng: pin.longitude },
+          bottomInsetPx: DETAIL_HALF_BOTTOM_INSET_PX,
+        });
+      }
+      void openLockerDetailById(id);
+    },
+    [context, openLockerDetailById, openMapPlaceList],
+  );
+
+  const handleMapPlaceMarkerSelect = useCallback(
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin?: LockerPinItemResponse,
+    ) => {
+      if (context !== "map") {
         return;
       }
 
@@ -589,8 +674,15 @@ function IndexPage() {
         return;
       }
 
-      setContext("map");
-      setMapDetailBack("idle");
+      setSelectedMapPin(pin ?? null);
+      setMapDetailBack("placeList");
+      if (pin && mapInstanceRef.current) {
+        focusNaverMapOnCoordinates({
+          map: mapInstanceRef.current,
+          coordinates: { lat: pin.latitude, lng: pin.longitude },
+          bottomInsetPx: DETAIL_HALF_BOTTOM_INSET_PX,
+        });
+      }
       void openLockerDetailById(id);
     },
     [context, openLockerDetailById, openMapPlaceList],
@@ -608,6 +700,7 @@ function IndexPage() {
         setActiveLockerId(null);
         setSearchDetailBack(null);
         setSelectedLockerDetail(null);
+        setSelectedMapPin(null);
         setSheetMode("list");
         return;
       }
@@ -691,7 +784,9 @@ function IndexPage() {
       return;
     }
 
-    setSelectedLockerDetail(lockerDetail);
+    setSelectedLockerDetail((previousDetail) =>
+      mergeLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
+    );
 
     if (
       mapInstance &&
@@ -704,6 +799,7 @@ function IndexPage() {
           lat: lockerDetail.latitude,
           lng: lockerDetail.longitude,
         },
+        bottomInsetPx: DETAIL_HALF_BOTTOM_INSET_PX,
       });
     }
   }, [lockerDetail, mapInstance]);
@@ -778,9 +874,18 @@ function IndexPage() {
       return;
     }
 
+    const bottomPadding =
+      sheetMode === "list"
+        ? Math.max(
+            MIN_MAP_BOUNDS_BOTTOM_PADDING_PX,
+            windowHeight - SEARCH_LIST_SNAP_POINT_PX + MAP_BOUNDS_VISIBLE_GAP_PX,
+          )
+        : undefined;
+
     fitNaverMapToBounds({
       map: mapInstance,
       bounds,
+      bottomPadding,
     });
   }, [
     keywordSearchResults?.bounds,
@@ -788,6 +893,7 @@ function IndexPage() {
     placeLockersResults?.bounds,
     activePlaceId,
     sheetMode,
+    windowHeight,
   ]);
 
   const shouldRenderMapControls = shouldShowMapControls({
@@ -819,6 +925,38 @@ function IndexPage() {
     sheetMode,
     searchDetailBack,
   });
+  const showMapPlaceMarkers =
+    context === "map" &&
+    (sheetMode === "list" ||
+      sheetMode === "filter" ||
+      (sheetMode === "detail" && mapDetailBack === "placeList"));
+  const selectedMapDetailPins = useMemo(() => {
+    if (context !== "map" || sheetMode !== "detail") {
+      return [];
+    }
+
+    if (selectedMapPin) {
+      return [selectedMapPin];
+    }
+
+    if (
+      selectedLockerDetail?.lockerId == null ||
+      selectedLockerDetail.latitude === undefined ||
+      selectedLockerDetail.longitude === undefined
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        pinType: "LOCKER" as const,
+        lockerId: selectedLockerDetail.lockerId,
+        placeId: null,
+        latitude: selectedLockerDetail.latitude,
+        longitude: selectedLockerDetail.longitude,
+      },
+    ];
+  }, [context, selectedLockerDetail, selectedMapPin, sheetMode]);
   const showPlaceSheetBack =
     context === "map" || (context === "search" && listKind === "place");
   const listHeaderLeadingPress = showPlaceSheetBack
@@ -826,8 +964,6 @@ function IndexPage() {
       ? handleBackFromMapPlaceSheet
       : handleBackToKeywordList
     : undefined;
-  const filterPlaceTypeMode =
-    context === "map" || listKind === "place" ? "single" : "multiple";
 
   return (
     <main className={pageWrapper}>
@@ -869,6 +1005,18 @@ function IndexPage() {
             map={mapInstance}
             pins={searchResultPins}
             onSelectLocker={handleSearchMarkerSelect}
+          />
+        ) : showMapPlaceMarkers ? (
+          <SearchResultMarkersLayer
+            map={mapInstance}
+            pins={mapPlacePins}
+            onSelectLocker={handleMapPlaceMarkerSelect}
+          />
+        ) : selectedMapDetailPins.length > 0 ? (
+          <SearchResultMarkersLayer
+            map={mapInstance}
+            pins={selectedMapDetailPins}
+            onSelectLocker={handleIdlePinSelect}
           />
         ) : null}
       </NaverMapProvider>
@@ -967,7 +1115,6 @@ function IndexPage() {
       {sheetMode === "filter" && !isSearchOpen ? (
         <SearchFilterBottomSheet
           initialFilters={searchFilters}
-          placeTypeSelectionMode={filterPlaceTypeMode}
           onCollapseToResults={() => setSheetMode("list")}
           onReset={handleResetSearchFilter}
           onApply={handleApplySearchFilter}
@@ -992,7 +1139,11 @@ function LockerMarkersLayer({
   onSelectPin,
 }: {
   map: naver.maps.Map | null;
-  onSelectPin?: (pinType: "LOCKER" | "PLACE", id: number) => void;
+  onSelectPin?: (
+    pinType: "LOCKER" | "PLACE",
+    id: number,
+    pin: LockerPinItemResponse,
+  ) => void;
 }) {
   const { maps } = useNaverMapSdk();
 
@@ -1008,7 +1159,11 @@ function SearchResultMarkersLayer({
 }: {
   map: naver.maps.Map | null;
   pins: ReturnType<typeof searchResultItemsToPins>;
-  onSelectLocker: (pinType: "LOCKER" | "PLACE", id: number) => void;
+  onSelectLocker: (
+    pinType: "LOCKER" | "PLACE",
+    id: number,
+    pin: LockerPinItemResponse,
+  ) => void;
 }) {
   const { maps } = useNaverMapSdk();
 
