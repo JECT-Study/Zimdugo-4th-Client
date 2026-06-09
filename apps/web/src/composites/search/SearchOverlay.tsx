@@ -45,8 +45,8 @@ export interface SearchOverlayProps {
   ) => void;
   onSelectHistory?: (entry: SearchHistoryEntry) => void;
   recentEntries?: SearchHistoryEntry[];
-  onRemoveRecent?: (id: string) => void;
-  onClearRecent?: () => void;
+  onRemoveRecent: (id: string) => void;
+  onClearRecent: () => void;
   initialQuery?: string;
   searchCoordinates: { lat: number; lng: number };
 }
@@ -131,11 +131,11 @@ export function SearchOverlay({
   };
 
   const handleRemoveRecent = (id: string) => {
-    onRemoveRecent?.(id);
+    onRemoveRecent(id);
   };
 
   const handleClearAll = () => {
-    onClearRecent?.();
+    onClearRecent();
   };
 
   const handleSelectHistory = (entry: SearchHistoryEntry) => {
