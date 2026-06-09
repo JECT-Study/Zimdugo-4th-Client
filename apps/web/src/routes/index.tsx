@@ -627,6 +627,18 @@ function IndexPage() {
     [context, listKind, openLockerDetailById, searchPlaceId],
   );
 
+  const focusMapOnLockerPin = useCallback((pin?: LockerPinItemResponse) => {
+    if (!pin || !mapInstanceRef.current) {
+      return;
+    }
+
+    focusNaverMapOnCoordinates({
+      map: mapInstanceRef.current,
+      coordinates: { lat: pin.latitude, lng: pin.longitude },
+      bottomInsetPx: getDetailFocusBottomInsetPx(),
+    });
+  }, []);
+
   const handleIdlePinSelect = useCallback(
     (
       pinType: "LOCKER" | "PLACE",
@@ -646,16 +658,10 @@ function IndexPage() {
       setSelectedMapPin(pin ?? null);
       setContext("map");
       setMapDetailBack("idle");
-      if (pin && mapInstanceRef.current) {
-        focusNaverMapOnCoordinates({
-          map: mapInstanceRef.current,
-          coordinates: { lat: pin.latitude, lng: pin.longitude },
-          bottomInsetPx: getDetailFocusBottomInsetPx(),
-        });
-      }
+      focusMapOnLockerPin(pin);
       void openLockerDetailById(id);
     },
-    [context, openLockerDetailById, openMapPlaceList],
+    [context, focusMapOnLockerPin, openLockerDetailById, openMapPlaceList],
   );
 
   const handleMapPlaceMarkerSelect = useCallback(
@@ -675,20 +681,18 @@ function IndexPage() {
 
       setSelectedMapPin(pin ?? null);
       setMapDetailBack("placeList");
-      if (pin && mapInstanceRef.current) {
-        focusNaverMapOnCoordinates({
-          map: mapInstanceRef.current,
-          coordinates: { lat: pin.latitude, lng: pin.longitude },
-          bottomInsetPx: getDetailFocusBottomInsetPx(),
-        });
-      }
+      focusMapOnLockerPin(pin);
       void openLockerDetailById(id);
     },
-    [context, openLockerDetailById, openMapPlaceList],
+    [context, focusMapOnLockerPin, openLockerDetailById, openMapPlaceList],
   );
 
   const handleSearchMarkerSelect = useCallback(
-    (pinType: "LOCKER" | "PLACE", id: number) => {
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin?: LockerPinItemResponse,
+    ) => {
       if (context !== "search") {
         return;
       }
@@ -710,9 +714,17 @@ function IndexPage() {
           placeId: listKind === "place" ? searchPlaceId : null,
         }),
       );
+      focusMapOnLockerPin(pin);
       void openLockerDetailById(id);
     },
-    [context, listKind, openLockerDetailById, searchPlaceId, setSheetMode],
+    [
+      context,
+      focusMapOnLockerPin,
+      listKind,
+      openLockerDetailById,
+      searchPlaceId,
+      setSheetMode,
+    ],
   );
 
   const handleDetailFavoriteChange = useCallback(
