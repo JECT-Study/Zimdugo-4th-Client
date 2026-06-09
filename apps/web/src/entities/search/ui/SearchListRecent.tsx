@@ -1,4 +1,9 @@
-import { IconSearchRecentItem24, IconX16 } from "@repo/ui/tokens/icons";
+import {
+  IconLockerDetailHeader24,
+  IconSearchAutocompletePlace14,
+  IconSearchRecentItem24,
+  IconX16,
+} from "@repo/ui/tokens/icons";
 import type { ReactNode } from "react";
 import { Button, type ButtonProps } from "react-aria-components";
 import {
@@ -6,24 +11,44 @@ import {
   recentIconSlot,
   recentLabel,
   recentLeft,
+  recentPlaceIcon,
   recentRight,
   recentRow,
   recentTextCol,
   removeBtn,
 } from "./SearchList.css.ts";
 
+export type SearchListRecentKind = "keyword" | "locker" | "place";
+
 export interface SearchListRecentProps {
   children: ReactNode;
   dateLabel: string;
+  historyKind?: SearchListRecentKind;
   onPress?: () => void;
   onRemove?: () => void;
   className?: string;
   removeAriaLabel?: string;
 }
 
+const RecentHistoryIcon = ({ kind }: { kind: SearchListRecentKind }) => {
+  switch (kind) {
+    case "locker":
+      return <IconLockerDetailHeader24 />;
+    case "place":
+      return (
+        <span className={recentPlaceIcon}>
+          <IconSearchAutocompletePlace14 />
+        </span>
+      );
+    default:
+      return <IconSearchRecentItem24 />;
+  }
+};
+
 export function SearchListRecent({
   children,
   dateLabel,
+  historyKind = "keyword",
   onPress,
   onRemove,
   className,
@@ -41,7 +66,7 @@ export function SearchListRecent({
     <div className={[recentRow, className].filter(Boolean).join(" ")}>
       <Button className={recentLeft} onPress={handlePress}>
         <span className={recentIconSlot}>
-          <IconSearchRecentItem24 />
+          <RecentHistoryIcon kind={historyKind} />
         </span>
         <div className={recentTextCol}>
           <span className={recentLabel}>{children}</span>

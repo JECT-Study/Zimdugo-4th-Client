@@ -222,6 +222,15 @@ export const recentIconSlot = style({
   flexShrink: 0,
 });
 
+export const recentPlaceIcon = style({
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.surface,
+});
+
+globalStyle(`${recentPlaceIcon} svg path`, {
+  fill: vars.color.brand.symbol,
+});
+
 export const recentTextCol = style({
   display: "flex",
   flexDirection: "column",

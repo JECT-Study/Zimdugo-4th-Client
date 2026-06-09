@@ -10,6 +10,11 @@ import {
   type SearchAutocompleteItemData,
   SearchListRecent,
 } from "#/entities/search";
+import {
+  formatSearchHistoryDateLabel,
+  getSearchHistoryEntryLabel,
+  type SearchHistoryEntry,
+} from "#/features/search/model/search-history";
 import { useLockerSuggest } from "#/features/search/hooks/useSearch";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchSuggestListSkeleton } from "#/features/search/ui/search-skeleton/SearchSuggestListSkeleton";
@@ -38,6 +43,10 @@ export interface SearchOverlayProps {
     item: SearchAutocompleteItemData,
     sourceQuery: string,
   ) => void;
+  onSelectHistory?: (entry: SearchHistoryEntry) => void;
+  recentEntries?: SearchHistoryEntry[];
+  onRemoveRecent?: (id: string) => void;
+  onClearRecent?: () => void;
   initialQuery?: string;
   searchCoordinates: { lat: number; lng: number };
 }
@@ -50,14 +59,14 @@ export function SearchOverlay({
   onClose,
   onSelect,
   onSelectAutocomplete,
+  onSelectHistory,
+  recentEntries = [],
+  onRemoveRecent,
+  onClearRecent,
   initialQuery = "",
   searchCoordinates,
 }: SearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery);
-
-  const [recentSearches, setRecentSearches] = useState<
-    Array<{ id: number; query: string; date: string }>
-  >([]);
   const normalizedQuery = query.trim();
   const debouncedQuery = useDebouncedValue(normalizedQuery, 300);
   const suggestParams = useMemo(
@@ -121,12 +130,23 @@ export function SearchOverlay({
     onClose(query);
   };
 
-  const handleRemoveRecent = (id: number) => {
-    setRecentSearches((prev) => prev.filter((item) => item.id !== id));
+  const handleRemoveRecent = (id: string) => {
+    onRemoveRecent?.(id);
   };
 
   const handleClearAll = () => {
-    setRecentSearches([]);
+    onClearRecent?.();
+  };
+
+  const handleSelectHistory = (entry: SearchHistoryEntry) => {
+    if (onSelectHistory) {
+      onSelectHistory(entry);
+      return;
+    }
+
+    if (entry.kind === "keyword") {
+      handleSelect(entry.query);
+    }
   };
 
   /* const popularKeywords = [
@@ -188,7 +208,7 @@ export function SearchOverlay({
               <LabelTitle size="large">
                 {m.search_recent_title()}
               </LabelTitle>
-              {recentSearches.length > 0 && (
+              {recentEntries.length > 0 && (
                 <button
                   type="button"
                   className={deleteAllButton}
@@ -213,18 +233,17 @@ export function SearchOverlay({
             </div> */}
 
             <div className={recentList}>
-              {recentSearches.length > 0 ? (
-                recentSearches.map((item) => (
+              {recentEntries.length > 0 ? (
+                recentEntries.map((entry) => (
                   <SearchListRecent
-                    key={item.id}
-                    dateLabel={item.date}
-                    onPress={() => handleSelect(item.query)}
-                    onRemove={() => handleRemoveRecent(item.id)}
-                    removeAriaLabel={
-                      m.search_recent_remove()
-                    }
+                    key={entry.id}
+                    historyKind={entry.kind}
+                    dateLabel={formatSearchHistoryDateLabel(entry.searchedAt)}
+                    onPress={() => handleSelectHistory(entry)}
+                    onRemove={() => handleRemoveRecent(entry.id)}
+                    removeAriaLabel={m.search_recent_remove()}
                   >
-                    {item.query}
+                    {getSearchHistoryEntryLabel(entry)}
                   </SearchListRecent>
                 ))
               ) : (

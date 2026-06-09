@@ -42,10 +42,12 @@ import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMark
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useLockerDetail } from "#/features/search/hooks/useLockerDetail";
+import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import {
   useLockerKeywordSearch,
   usePlaceLockers,
 } from "#/features/search/hooks/useSearch";
+import type { SearchHistoryEntry } from "#/features/search/model/search-history";
 import {
   searchLockerItemsToPins,
   searchResultItemsToPins,
@@ -195,6 +197,12 @@ function IndexPage() {
     () => readRestoredMapSheetSession()?.mapDetailBack ?? null,
   );
   const [searchDraft, setSearchDraft] = useState("");
+  const {
+    entries: searchHistoryEntries,
+    record: recordSearchHistory,
+    remove: removeSearchHistory,
+    clear: clearSearchHistory,
+  } = useSearchHistory();
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
@@ -600,6 +608,7 @@ function IndexPage() {
 
   const handleSelectSearch = useCallback(
     (query: string) => {
+      recordSearchHistory({ kind: "keyword", query });
       applySearchSelection(createKeywordSearchSelection(query));
       setContext("search");
       setListKind("keyword");
@@ -612,12 +621,18 @@ function IndexPage() {
       setIsSearchOpen(false);
       setSheetMode("list");
     },
-    [applySearchSelection, setIsSearchOpen, setSheetMode],
+    [applySearchSelection, recordSearchHistory, setIsSearchOpen, setSheetMode],
   );
 
   const handleSelectSearchAutocomplete = useCallback(
     (item: SearchAutocompleteItemData, sourceQuery: string) => {
       if (item.itemType === "LOCKER") {
+        recordSearchHistory({
+          kind: "locker",
+          lockerId: item.lockerId,
+          title: item.title,
+          searchDraft: sourceQuery,
+        });
         setContext("search");
         setListKind("keyword");
         setSearchPlaceId(null);
@@ -630,13 +645,62 @@ function IndexPage() {
         return;
       }
 
+      recordSearchHistory({
+        kind: "place",
+        placeId: item.placeId,
+        title: item.title,
+        searchDraft: sourceQuery,
+      });
       openSearchPlaceList(item.placeId, {
         applySelection: true,
         draft: sourceQuery,
         placeName: item.title,
       });
     },
-    [openLockerDetailById, openSearchPlaceList],
+    [openLockerDetailById, openSearchPlaceList, recordSearchHistory],
+  );
+
+  const handleSelectSearchHistory = useCallback(
+    (entry: SearchHistoryEntry) => {
+      if (entry.kind === "keyword") {
+        handleSelectSearch(entry.query);
+        return;
+      }
+
+      if (entry.kind === "locker") {
+        recordSearchHistory({
+          kind: "locker",
+          lockerId: entry.lockerId,
+          title: entry.title,
+          searchDraft: entry.searchDraft,
+        });
+        setContext("search");
+        setListKind("keyword");
+        setSearchPlaceId(null);
+        setSearchDraft(syncSearchDraft(entry.searchDraft).searchDraft);
+        setSearchDetailBack(createKeywordDetailBackTarget());
+        openLockerDetailById(entry.lockerId);
+        return;
+      }
+
+      recordSearchHistory({
+        kind: "place",
+        placeId: entry.placeId,
+        title: entry.title,
+        searchDraft: entry.searchDraft,
+      });
+      openSearchPlaceList(entry.placeId, {
+        applySelection: true,
+        draft: entry.searchDraft,
+        placeName: entry.title,
+      });
+    },
+    [
+      handleSelectSearch,
+      openLockerDetailById,
+      openSearchPlaceList,
+      recordSearchHistory,
+    ],
   );
 
   const handleOpenLockerDetail = useCallback(
@@ -1237,9 +1301,13 @@ function IndexPage() {
         <SearchOverlay
           initialQuery={searchDraft}
           searchCoordinates={searchCoordinates}
+          recentEntries={searchHistoryEntries}
           onClose={handleCloseSearch}
           onSelect={handleSelectSearch}
           onSelectAutocomplete={handleSelectSearchAutocomplete}
+          onSelectHistory={handleSelectSearchHistory}
+          onRemoveRecent={removeSearchHistory}
+          onClearRecent={clearSearchHistory}
         />
       ) : null}
     </main>
