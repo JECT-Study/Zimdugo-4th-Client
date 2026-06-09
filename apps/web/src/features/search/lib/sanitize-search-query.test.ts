@@ -19,6 +19,13 @@ describe("sanitize-search-query", () => {
     expect(capSearchQueryDraft("코엑스😀")).toBe("코엑스😀");
   });
 
+  it("입력 중 단일 공백은 유지하고 trim은 blur·제출 시에만 적용한다", () => {
+    expect(capSearchQueryDraft("강남 ")).toBe("강남 ");
+    expect(getSearchQueryIssue("강남 ")).toBeNull();
+    expect(getValidatedSearchQuery("강남 ")).toBe("강남");
+    expect(getSearchQueryIssue("강남 역")).toBeNull();
+  });
+
   it("검증 시 trim하고 통과하면 trim된 검색어를 반환한다", () => {
     expect(trimSearchQueryDraft("  강남역  ")).toBe("강남역");
     expect(getValidatedSearchQuery("  강남역  ")).toBe("강남역");
@@ -36,7 +43,8 @@ describe("sanitize-search-query", () => {
     expect(isSearchQueryDraftWellFormed("COEX 코엑스 123")).toBe(true);
     expect(isSearchQueryDraftWellFormed("北京")).toBe(true);
     expect(isSearchQueryDraftWellFormed("とうきょう")).toBe(true);
-    expect(isSearchQueryDraftWellFormed("강ㄴ남")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("강ㄴ")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("강ㄴ남")).toBe(false);
     expect(isSearchQueryDraftWellFormed("강남  역")).toBe(false);
     expect(isSearchQueryDraftWellFormed("강남!")).toBe(false);
     expect(isSearchQueryDraftWellFormed("ㄱㄴㄷ")).toBe(false);
@@ -49,7 +57,8 @@ describe("sanitize-search-query", () => {
     expect(getSearchQueryIssue("!")).toBe("too-short");
     expect(getSearchQueryIssue("강남")).toBeNull();
     expect(getSearchQueryIssue("강남!")).toBe("invalid-format");
-    expect(getSearchQueryIssue("강ㄴ남")).toBeNull();
+    expect(getSearchQueryIssue("강ㄴ")).toBeNull();
+    expect(getSearchQueryIssue("강ㄴ남")).toBe("invalid-format");
     expect(getSearchQueryIssue("!!!")).toBe("invalid-format");
     expect(getSearchQueryIssue("ㄱㅏ")).toBe("invalid-format");
   });
@@ -88,6 +97,10 @@ describe("sanitize-search-query", () => {
       reason: "too-short",
     });
     expect(resolveSearchQuerySubmitAttempt("강남!")).toEqual({
+      ok: false,
+      reason: "invalid-format",
+    });
+    expect(resolveSearchQuerySubmitAttempt("강ㄴ남")).toEqual({
       ok: false,
       reason: "invalid-format",
     });
