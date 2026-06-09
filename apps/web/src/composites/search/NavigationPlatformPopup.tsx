@@ -36,7 +36,7 @@ const NAVER_MAP_ICON_URL =
 const GOOGLE_MAPS_ICON_URL =
   "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/f1/56/40/f15640e5-527f-1000-045f-0a4c71df9286/maps_2025-0-0-1x_U007epad-0-0-0-1-0-0-sRGB-0-0-85-220.png/512x512bb.jpg";
 
-let isResolvingNavigationOrigin = false;
+const resolvingNavigationLockerIds = new Set<number>();
 
 export interface NavigationPlatformPopupProps {
   isOpen: boolean;
@@ -60,15 +60,15 @@ export function NavigationPlatformPopup({
   onSelectPlatform,
 }: NavigationPlatformPopupProps) {
   const handleSelectPlatform = (platform: NavigationPlatform) => {
-    if (
-      !locker ||
-      !hasNavigationDestination(locker) ||
-      isResolvingNavigationOrigin
-    ) {
+    if (!locker || !hasNavigationDestination(locker)) {
       return;
     }
 
-    isResolvingNavigationOrigin = true;
+    if (resolvingNavigationLockerIds.has(locker.lockerId)) {
+      return;
+    }
+
+    resolvingNavigationLockerIds.add(locker.lockerId);
 
     const originTask = resolveNavigationOriginWithPermissionRequest({
       knownLocation,
@@ -88,7 +88,7 @@ export function NavigationPlatformPopup({
         onOpenChange(false);
       })
       .finally(() => {
-        isResolvingNavigationOrigin = false;
+        resolvingNavigationLockerIds.delete(locker.lockerId);
       });
   };
 
