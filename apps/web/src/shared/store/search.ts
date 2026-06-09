@@ -1,7 +1,5 @@
 import { create } from "zustand";
 
-export type SheetMode = "idle" | "list" | "filter" | "detail" | "addressList";
-
 interface Location {
   lat: number;
   lng: number;
@@ -10,13 +8,11 @@ interface Location {
 
 interface SearchState {
   isSearchOpen: boolean;
-  sheetMode: SheetMode;
   searchQuery: string;
   selectedLocation: Location | null;
   locations: Location[];
   lockerLocations: Location[];
   setIsSearchOpen: (open: boolean) => void;
-  setSheetMode: (mode: SheetMode) => void;
   setSearchQuery: (query: string) => void;
   setSelectedLocation: (location: Location | null) => void;
   setLocations: (locations: Location[]) => void;
@@ -26,13 +22,11 @@ interface SearchState {
 
 export const useSearchStore = create<SearchState>((set) => ({
   isSearchOpen: false,
-  sheetMode: "idle",
   searchQuery: "",
   selectedLocation: null,
   locations: [],
   lockerLocations: [],
   setIsSearchOpen: (open) => set({ isSearchOpen: open }),
-  setSheetMode: (mode) => set({ sheetMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedLocation: (location) => set({ selectedLocation: location }),
   setLocations: (locations) => set({ locations }),
@@ -40,7 +34,6 @@ export const useSearchStore = create<SearchState>((set) => ({
   reset: () =>
     set({
       isSearchOpen: false,
-      sheetMode: "idle",
       searchQuery: "",
       selectedLocation: null,
       locations: [],

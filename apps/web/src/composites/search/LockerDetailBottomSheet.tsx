@@ -14,6 +14,7 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
+import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
@@ -104,6 +105,15 @@ export const createLockerDetailFromSearchItem = (
   accurateCount: 78,
   inaccurateCount: 5,
   lastUpdatedLabel: "최근 업데이트 2026-05-16 16:25",
+});
+
+/** 지도 핀 선택 직후 API 응답 전에 쓰는 낙관적 상세 */
+export const createLockerDetailFromPin = (
+  pin: Extract<LockerPinItemResponse, { pinType: "LOCKER" }>,
+): LockerDetailItem => ({
+  ...createLockerDetailPlaceholder(pin.lockerId),
+  latitude: pin.latitude,
+  longitude: pin.longitude,
 });
 
 /** API 응답 전 마커 등 lockerId만 알 때 쓰는 플레이스홀더 */

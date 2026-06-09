@@ -37,7 +37,12 @@ export const createSearchDetailBackTarget = (input: {
   placeId: input.listKind === "place" ? input.placeId : null,
 });
 
-export type SheetModeForContext = "idle" | "list" | "filter" | "detail";
+export type SheetModeForContext =
+  | "idle"
+  | "list"
+  | "filter"
+  | "detail"
+  | "addressList";
 
 export const resolveActivePlaceId = (input: {
   context: AppMapContext;
@@ -127,6 +132,39 @@ export const shouldShowSearchMarkers = (input: {
 
   if (input.sheetMode === "detail") {
     return input.searchDetailBack !== null;
+  }
+
+  return true;
+};
+
+/** fetch가 비활성화된 쿼리는 isPending이 true로 남아 스켈레톤이 멈추지 않을 수 있다 */
+export const shouldShowSearchListLoading = (input: {
+  isPlaceListScope: boolean;
+  shouldFetchPlaceList: boolean;
+  shouldFetchKeywordList: boolean;
+  isPlaceLockersPending: boolean;
+  isKeywordSearchPending: boolean;
+}): boolean =>
+  input.isPlaceListScope
+    ? input.shouldFetchPlaceList && input.isPlaceLockersPending
+    : input.shouldFetchKeywordList && input.isKeywordSearchPending;
+
+export const isRenderableSheetSession = (input: {
+  sheetMode: SheetModeForContext;
+  selectedLockerDetail: { lockerId: number } | null;
+  shouldFetchKeywordList: boolean;
+  shouldFetchPlaceList: boolean;
+}): boolean => {
+  if (input.sheetMode === "idle") {
+    return false;
+  }
+
+  if (input.sheetMode === "detail") {
+    return input.selectedLockerDetail != null;
+  }
+
+  if (input.sheetMode === "list" || input.sheetMode === "filter") {
+    return input.shouldFetchKeywordList || input.shouldFetchPlaceList;
   }
 
   return true;

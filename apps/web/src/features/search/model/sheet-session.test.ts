@@ -3,11 +3,13 @@ import {
   createKeywordDetailBackTarget,
   createPlaceDetailBackTarget,
   createSearchDetailBackTarget,
+  isRenderableSheetSession,
   resolveActivePlaceId,
   resolveOverlayReturnContext,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
   shouldShowIdleMarkers,
+  shouldShowSearchListLoading,
   shouldShowSearchMarkers,
 } from "./sheet-session";
 
@@ -161,6 +163,57 @@ describe("sheet-session v2", () => {
         searchDetailBack: createKeywordDetailBackTarget(),
       }),
     ).toBe(true);
+  });
+
+  it("fetch가 비활성화된 검색 리스트는 로딩 스켈레톤을 보여주지 않는다", () => {
+    expect(
+      shouldShowSearchListLoading({
+        isPlaceListScope: false,
+        shouldFetchKeywordList: false,
+        shouldFetchPlaceList: false,
+        isPlaceLockersPending: true,
+        isKeywordSearchPending: true,
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldShowSearchListLoading({
+        isPlaceListScope: true,
+        shouldFetchKeywordList: false,
+        shouldFetchPlaceList: true,
+        isPlaceLockersPending: true,
+        isKeywordSearchPending: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("렌더 불가 시트 세션을 판별한다", () => {
+    expect(
+      isRenderableSheetSession({
+        sheetMode: "detail",
+        selectedLockerDetail: { lockerId: 1 },
+        shouldFetchKeywordList: false,
+        shouldFetchPlaceList: false,
+      }),
+    ).toBe(true);
+
+    expect(
+      isRenderableSheetSession({
+        sheetMode: "detail",
+        selectedLockerDetail: null,
+        shouldFetchKeywordList: false,
+        shouldFetchPlaceList: false,
+      }),
+    ).toBe(false);
+
+    expect(
+      isRenderableSheetSession({
+        sheetMode: "list",
+        selectedLockerDetail: null,
+        shouldFetchKeywordList: false,
+        shouldFetchPlaceList: false,
+      }),
+    ).toBe(false);
   });
 
   it("map detail에서 place lockers fetch를 유지한다", () => {
