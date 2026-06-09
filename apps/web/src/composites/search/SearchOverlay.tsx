@@ -104,10 +104,6 @@ export function SearchOverlay({
     !showSuggestError &&
     autocompleteItems.length > 0;
 
-  useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
-
   const handleQueryChange = (nextQuery: string) => {
     setQuery(nextQuery);
   };
@@ -148,6 +144,10 @@ export function SearchOverlay({
       handleSelect(entry.query);
     }
   };
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   /* const popularKeywords = [
     "코엑스",
