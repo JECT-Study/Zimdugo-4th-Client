@@ -44,14 +44,6 @@ export const hint = style({
   lineHeight: 1.5,
 });
 
-export const retryButton = style({
+export const errorActions = style({
   marginTop: vars.spacing[4],
-  padding: `${vars.spacing[8]} ${vars.spacing[16]}`,
-  border: `1px solid ${vars.color.palette.gray[300]}`,
-  borderRadius: "8px",
-  backgroundColor: vars.color.bg.default,
-  color: vars.color.text.title,
-  fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.Medium,
-  cursor: "pointer",
 });
