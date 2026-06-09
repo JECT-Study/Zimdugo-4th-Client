@@ -24,7 +24,7 @@ vi.mock("@repo/ui/vars", () => ({
 import {
   getLockerPinQueryFromViewport,
   getRadiusFromViewport,
-} from "./useLockerMarkers";
+} from "./locker-pin-query";
 
 describe("getRadiusFromViewport", () => {
   it("상단 검색 영역을 제외한 유효 지도 영역의 radius를 계산한다", () => {
@@ -106,5 +106,22 @@ describe("getLockerPinQueryFromViewport", () => {
     });
 
     expect(nextQuery).toEqual(baseQuery);
+  });
+
+  it("API가 허용하는 최대 radius를 넘지 않는다", () => {
+    const query = getLockerPinQueryFromViewport({
+      center: { lat: 37.5, lng: 127.0 },
+      zoom: 10,
+      bounds: {
+        northEast: { lat: 37.65, lng: 127.15 },
+        southWest: { lat: 37.35, lng: 126.85 },
+      },
+      size: {
+        width: 375,
+        height: 812,
+      },
+    });
+
+    expect(query.radius).toBe(10_000);
   });
 });

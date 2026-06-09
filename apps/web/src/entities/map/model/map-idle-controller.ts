@@ -135,6 +135,7 @@ export const subscribeMapIdle = ({
   };
 
   const listener = maps.Event.addListener(map, "idle", handler);
+  handler();
 
   return () => {
     isCancelled = true;

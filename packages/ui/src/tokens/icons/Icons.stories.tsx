@@ -41,9 +41,11 @@ import {
   IconNavigationRefresh24,
   IconNavigationSearch24,
   IconNormalArrow24,
+  IconNormalCapacity24,
   IconNormalMapPin24,
   IconNormalProfile,
   IconNormalSearch24,
+  IconNormalWallet24,
   IconPencil24,
   IconShare24,
   IconSizeL,
@@ -645,6 +647,12 @@ export const Normal: Story = {
       <Cell name="share">
         <IconShare24 />
       </Cell>
+      <Cell name="wallet">
+        <IconNormalWallet24 />
+      </Cell>
+      <Cell name="capacity">
+        <IconNormalCapacity24 />
+      </Cell>
       <Cell name="thumbUp">
         <IconThumbUp24 />
       </Cell>
@@ -971,6 +979,12 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="share">
           <IconShare24 />
+        </Cell>
+        <Cell name="wallet">
+          <IconNormalWallet24 />
+        </Cell>
+        <Cell name="capacity">
+          <IconNormalCapacity24 />
         </Cell>
         <Cell name="thumbUp">
           <IconThumbUp24 />

@@ -11,6 +11,17 @@ declare namespace naver.maps {
     refresh(noEffect?: boolean): void;
     setSize(size: Size): void;
     destroy(): void;
+    fitBounds?(
+      bounds: LatLngBounds,
+      margins?:
+        | number
+        | {
+            top?: number;
+            right?: number;
+            bottom?: number;
+            left?: number;
+          },
+    ): void;
   }
   class Size {
     constructor(width: number, height: number);

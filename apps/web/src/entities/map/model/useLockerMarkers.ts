@@ -3,107 +3,32 @@ import { useQuery } from "@tanstack/react-query";
 import { subscribeMapIdle } from "./map-idle-controller";
 import type { MapViewport } from "./map-idle-controller";
 import {
+  getLockerPinQueryFromViewport,
+  getRadiusFromViewport,
+  type LockerPinQueryViewport,
+} from "./locker-pin-query";
+import {
   clearLockerMarkers,
   syncLockerMarkers,
   type LockerMarkerRegistry,
 } from "./map-marker";
-import { getLockerPins, getRadiusFromZoom } from "#/shared/api/lockers";
+import {
+  getLockerPins,
+  type LockerPinItemResponse,
+} from "#/shared/api/lockers";
 
 export const LOCKER_PINS_QUERY_KEY = "lockerPins";
-
-const EARTH_RADIUS_METERS = 6_371_000;
-const LOCKER_PIN_COORDINATE_PRECISION = 4;
-const LOCKER_PIN_RADIUS_BUCKET_METERS = 50;
-const SEARCH_BAR_RESERVED_TOP_PX = 136;
-
-const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
-
-const roundCoordinate = (value: number): number =>
-  Number(value.toFixed(LOCKER_PIN_COORDINATE_PRECISION));
-
-const roundRadius = (value: number): number =>
-  Math.ceil(value / LOCKER_PIN_RADIUS_BUCKET_METERS) *
-  LOCKER_PIN_RADIUS_BUCKET_METERS;
-
-const getDistanceMeters = (
-  from: MapViewport["center"],
-  to: MapViewport["center"],
-): number => {
-  const latDelta = toRadians(to.lat - from.lat);
-  const lngDelta = toRadians(to.lng - from.lng);
-  const fromLat = toRadians(from.lat);
-  const toLat = toRadians(to.lat);
-
-  const haversine =
-    Math.sin(latDelta / 2) ** 2 +
-    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(lngDelta / 2) ** 2;
-
-  return (
-    2 *
-    EARTH_RADIUS_METERS *
-    Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
-  );
-};
-
-export const getRadiusFromViewport = (viewport: MapViewport): number => {
-  return getLockerPinQueryFromViewport(viewport).radius;
-};
-
-export interface LockerPinQueryViewport {
-  lat: number;
-  lng: number;
-  radius: number;
-}
-
-export const getLockerPinQueryFromViewport = (
-  viewport: MapViewport,
-): LockerPinQueryViewport => {
-  const fallbackRadius = getRadiusFromZoom(viewport.zoom);
-  const { northEast, southWest } = viewport.bounds;
-  const topInsetRatio =
-    viewport.size && viewport.size.height > 0
-      ? Math.min(SEARCH_BAR_RESERVED_TOP_PX / viewport.size.height, 0.45)
-      : 0;
-  const effectiveNorthEast = {
-    lat:
-      northEast.lat -
-      (northEast.lat - southWest.lat) * topInsetRatio,
-    lng: northEast.lng,
-  };
-  const queryCenter = {
-    lat: (effectiveNorthEast.lat + southWest.lat) / 2,
-    lng: (effectiveNorthEast.lng + southWest.lng) / 2,
-  };
-  const radiusFromBounds = Math.ceil(
-    Math.max(
-      getDistanceMeters(queryCenter, effectiveNorthEast),
-      getDistanceMeters(queryCenter, {
-        lat: effectiveNorthEast.lat,
-        lng: southWest.lng,
-      }),
-      getDistanceMeters(queryCenter, {
-        lat: southWest.lat,
-        lng: effectiveNorthEast.lng,
-      }),
-      getDistanceMeters(queryCenter, southWest),
-    ),
-  );
-
-  return {
-    lat: roundCoordinate(queryCenter.lat),
-    lng: roundCoordinate(queryCenter.lng),
-    radius: roundRadius(
-      radiusFromBounds > 0
-        ? Math.max(radiusFromBounds, fallbackRadius)
-        : fallbackRadius,
-    ),
-  };
-};
+export { getLockerPinQueryFromViewport, getRadiusFromViewport };
+export type { LockerPinQueryViewport };
 
 export interface UseLockerMarkersOptions {
   map: naver.maps.Map | null;
   maps: typeof naver.maps | null;
-  onSelectLocker?: (pinType: "LOCKER" | "PLACE", id: number) => void;
+  onSelectLocker?: (
+    pinType: "LOCKER" | "PLACE",
+    id: number,
+    pin: LockerPinItemResponse,
+  ) => void;
 }
 
 export const useLockerMarkers = ({
@@ -120,8 +45,12 @@ export const useLockerMarkers = ({
   }, [onSelectLocker]);
 
   const handleSelectLocker = useCallback(
-    (pinType: "LOCKER" | "PLACE", id: number) => {
-      onSelectLockerRef.current?.(pinType, id);
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin: LockerPinItemResponse,
+    ) => {
+      onSelectLockerRef.current?.(pinType, id, pin);
     },
     [],
   );

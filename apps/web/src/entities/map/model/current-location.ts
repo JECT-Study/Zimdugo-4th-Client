@@ -9,6 +9,7 @@ export interface FocusNaverMapOptions {
   map: naver.maps.Map | null | undefined;
   coordinates: MapCoordinates | null | undefined;
   maps?: typeof naver.maps | null;
+  bottomInsetPx?: number;
 }
 
 export const DEFAULT_CURRENT_LOCATION_OPTIONS: PositionOptions = {
@@ -95,11 +96,28 @@ export const focusNaverMapOnCoordinates = ({
   map,
   coordinates,
   maps = typeof window !== "undefined" ? window.naver?.maps : null,
+  bottomInsetPx = 0,
 }: FocusNaverMapOptions) => {
   if (!map || !coordinates || !maps) {
     return false;
   }
 
-  map.panTo(new maps.LatLng(coordinates.lat, coordinates.lng));
+  const size = map.getSize?.();
+  const bounds = map.getBounds?.();
+  const ne = bounds?.getNE?.();
+  const sw = bounds?.getSW?.();
+  const viewportHeight = size?.height ?? 0;
+  const latitudeSpan =
+    ne && sw ? Math.abs(ne.lat() - sw.lat()) : 0;
+  const verticalOffsetRatio =
+    bottomInsetPx > 0 && viewportHeight > 0
+      ? Math.min(bottomInsetPx / 2 / viewportHeight, 0.35)
+      : 0;
+  const adjustedLatitude =
+    latitudeSpan > 0
+      ? coordinates.lat - latitudeSpan * verticalOffsetRatio
+      : coordinates.lat;
+
+  map.panTo(new maps.LatLng(adjustedLatitude, coordinates.lng));
   return true;
 };
