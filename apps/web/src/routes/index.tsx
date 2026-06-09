@@ -19,6 +19,7 @@ import {
   type LockerDetailLoadState,
 } from "#/composites/search/LockerDetailBottomSheet";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
+import type { ResolveNavigationOriginResult } from "#/features/search/lib/navigation-platform-links";
 import {
   createDefaultSearchFilters,
   type SearchFilterAppliedState,
@@ -897,6 +898,24 @@ function IndexPage() {
     setIsNavigationPopupOpen(true);
   }, []);
 
+  const navigationKnownLocation = useMemo(
+    () => (permission === "granted" && location ? location : null),
+    [permission, location],
+  );
+
+  const handleNavigationOriginResolved = useCallback(
+    (result: ResolveNavigationOriginResult) => {
+      if (result.origin.label === "현재 위치") {
+        startTracking();
+      }
+    },
+    [startTracking],
+  );
+
+  const handleNavigationPopupOpenChange = useCallback((isOpen: boolean) => {
+    setIsNavigationPopupOpen(isOpen);
+  }, []);
+
   const handleBackFromDetail = useCallback(() => {
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -1306,7 +1325,9 @@ function IndexPage() {
       <NavigationPlatformPopup
         isOpen={isNavigationPopupOpen}
         locker={selectedLockerDetail}
-        onOpenChange={setIsNavigationPopupOpen}
+        knownLocation={navigationKnownLocation}
+        onOriginResolved={handleNavigationOriginResolved}
+        onOpenChange={handleNavigationPopupOpenChange}
       />
 
       {sheetMode === "filter" && !isSearchOpen ? (

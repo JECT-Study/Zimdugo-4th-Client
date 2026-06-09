@@ -11,7 +11,10 @@ import type {
   SearchAutocompletePlaceItem,
 } from "#/entities/search";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
-import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
+import {
+  formatLastUpdatedLabel,
+  formatUpdatedLabel,
+} from "#/shared/lib/format-updated-label";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
@@ -225,7 +228,5 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   detailHelpText: raw.detailInfo ?? raw.detailHelpText,
   accurateCount: raw.accurateVoteCount ?? raw.accurateCount,
   inaccurateCount: raw.inaccurateVoteCount ?? raw.inaccurateCount,
-  lastUpdatedLabel: raw.updatedAt
-    ? `최근 업데이트 ${formatUpdatedLabel(raw.updatedAt)}`
-    : undefined,
+  lastUpdatedLabel: formatLastUpdatedLabel(raw.updatedAt) || undefined,
 });

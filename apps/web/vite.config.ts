@@ -32,6 +32,7 @@ const prerenderRoutes = ["/"].flatMap((path) =>
 
 const config = defineConfig({
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: [
       { find: "@repo/i18n/server", replacement: appI18nServerEntry },
       { find: "@repo/i18n", replacement: appI18nEntry },

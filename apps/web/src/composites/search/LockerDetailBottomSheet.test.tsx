@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { setLanguageTag } from "@repo/i18n";
+import { fireEvent, render, screen, within, cleanup } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
+  DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
+    <div data-testid="mock-draggable-bottom-sheet">{children}</div>
+  ),
+}));
+
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
 import { LockerDetailBottomSheet } from "./LockerDetailBottomSheet";
 
@@ -21,15 +30,27 @@ const LOCKER_DETAIL: LockerDetailItem = {
   lastUpdatedLabel: "최근 업데이트 2026-05-16 16:25",
 };
 
+const getSheetRoot = () =>
+  within(screen.getByTestId("mock-draggable-bottom-sheet"));
+
 describe("LockerDetailBottomSheet", () => {
+  beforeEach(() => {
+    setLanguageTag("ko");
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
   it("하프 시트 요약과 액션 버튼을 렌더링한다", () => {
     render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    const sheet = getSheetRoot();
 
-    expect(screen.getByText(LOCKER_DETAIL.title)).toBeTruthy();
-    expect(screen.getByText("아직 이미지가 없어요.")).toBeTruthy();
-    expect(screen.getByText("제보하기를 통해 등록할 수 있어요!")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "공유하기" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "길찾기" })).toBeTruthy();
+    expect(sheet.getByText(LOCKER_DETAIL.title)).toBeTruthy();
+    expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
+    expect(sheet.getByText("제보하기를 통해 등록할 수 있어요!")).toBeTruthy();
+    expect(sheet.getByRole("button", { name: "공유하기" })).toBeTruthy();
+    expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
   });
 
   it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {
@@ -42,9 +63,10 @@ describe("LockerDetailBottomSheet", () => {
         onRetry={handleRetry}
       />,
     );
+    const sheet = getSheetRoot();
 
-    expect(screen.getByRole("alert")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(sheet.getByRole("alert")).toBeTruthy();
+    fireEvent.click(sheet.getByRole("button", { name: "다시 시도" }));
     expect(handleRetry).toHaveBeenCalledOnce();
   });
 
@@ -61,10 +83,11 @@ describe("LockerDetailBottomSheet", () => {
         onNavigate={handleNavigate}
       />,
     );
+    const sheet = getSheetRoot();
 
-    fireEvent.click(screen.getByRole("button", { name: "즐겨찾기 추가" }));
-    fireEvent.click(screen.getByRole("button", { name: "공유하기" }));
-    fireEvent.click(screen.getByRole("button", { name: "길찾기" }));
+    fireEvent.click(sheet.getByRole("button", { name: "즐겨찾기 추가" }));
+    fireEvent.click(sheet.getByRole("button", { name: "공유하기" }));
+    fireEvent.click(sheet.getByRole("button", { name: "길찾기" }));
 
     expect(handleFavoriteChange).toHaveBeenCalledWith(LOCKER_DETAIL, true);
     expect(handleShare).toHaveBeenCalledWith(LOCKER_DETAIL);
@@ -79,14 +102,15 @@ describe("LockerDetailBottomSheet", () => {
         snapPoint={44}
       />,
     );
+    const sheet = getSheetRoot();
 
-    expect(screen.queryByRole("button", { name: "뒤로가기" })).toBeNull();
-    expect(screen.getByText("가격")).toBeTruthy();
-    expect(screen.getByText("사이즈")).toBeTruthy();
-    expect(screen.getByText("보관함 상세 정보")).toBeTruthy();
-    expect(screen.getByText("정확한 정보에요 78")).toBeTruthy();
-    expect(screen.getByText("부정확한 정보에요 5")).toBeTruthy();
-    expect(screen.getByText("최근 업데이트 2026-05-16 16:25")).toBeTruthy();
+    expect(sheet.queryByRole("button", { name: "뒤로가기" })).toBeNull();
+    expect(sheet.getByText("가격")).toBeTruthy();
+    expect(sheet.getByText("사이즈")).toBeTruthy();
+    expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
+    expect(sheet.getByText("정확한 정보에요 78")).toBeTruthy();
+    expect(sheet.getByText("부정확한 정보에요 5")).toBeTruthy();
+    expect(sheet.getByText("최근 업데이트 2026-05-16 16:25")).toBeTruthy();
   });
 
   it("뒤로가기 버튼을 누르면 onBack을 호출한다", () => {
@@ -95,8 +119,9 @@ describe("LockerDetailBottomSheet", () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onBack={handleBack} />,
     );
+    const sheet = getSheetRoot();
 
-    fireEvent.click(screen.getByRole("button", { name: "뒤로가기" }));
+    fireEvent.click(sheet.getByRole("button", { name: "뒤로가기" }));
 
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
