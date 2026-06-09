@@ -217,5 +217,10 @@
   "report_history_item_floor_unit": "층",
   "address_search_title": "주소 검색",
   "address_search_sdk_loading": "지도 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.",
-  "address_search_not_found": "주소의 위치를 찾을 수 없습니다. 다른 주소를 선택해주세요."
+  "address_search_not_found": "주소의 위치를 찾을 수 없습니다. 다른 주소를 선택해주세요.",
+  "locker_detail_operating_hours": "운영시간 {open} ~ {close}",
+  "locker_detail_operating_hours_not_provided": "운영시간 미제공",
+  "locker_detail_price_not_provided": "가격 미제공",
+  "locker_detail_price_range": "{min} ~ {max}",
+  "locker_detail_price_from": "{min} ~"
 }

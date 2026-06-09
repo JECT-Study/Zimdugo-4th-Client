@@ -43,8 +43,6 @@ export interface SearchFilterAppliedState {
 export interface SearchFilterBottomSheetProps {
   className?: string;
   initialFilters?: SearchFilterAppliedState;
-  /** map place: 단일 선택. search keyword: 다중 선택(기본) */
-  placeTypeSelectionMode?: "single" | "multiple";
   onCollapseToResults?: () => void;
   onReset?: () => void;
   onApply?: (filters: SearchFilterAppliedState) => void;
@@ -65,7 +63,6 @@ export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
 export function SearchFilterBottomSheet({
   className,
   initialFilters,
-  placeTypeSelectionMode = "multiple",
   onCollapseToResults,
   onReset,
   onApply,
@@ -327,21 +324,18 @@ export function SearchFilterBottomSheet({
           </div>
 
           <div className={sectionGap24}>
-            {placeTypeSelectionMode === "single" ? (
-              <ReportTypeSection
-                lockerType={(placeTypeState[0] as LockerType | undefined) ?? null}
-                onChange={(value) => setPlaceType(value ? [value] : [])}
-                options={placeTypeOptions}
-                selectionMode="single"
-              />
-            ) : (
-              <ReportTypeSection
-                lockerType={placeTypeState}
-                setLockerType={setPlaceType}
-                options={placeTypeOptions}
-                selectionMode="multiple"
-              />
-            )}
+            <ReportTypeSection
+              title={
+                t.search_filter_section_locker_type_short?.() ??
+                t.search_filter_section_locker_type?.() ??
+                "보관함 유형"
+              }
+              showRequiredMark={false}
+              lockerType={(placeTypeState[0] as LockerType | undefined) ?? null}
+              onChange={(value) => setPlaceType(value ? [value] : [])}
+              options={placeTypeOptions}
+              selectionMode="single"
+            />
           </div>
         </div>
 

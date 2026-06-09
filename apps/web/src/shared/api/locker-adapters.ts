@@ -12,6 +12,10 @@ import type {
 } from "#/entities/search";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
+import {
+  formatLockerOperatingHoursLabel,
+  formatLockerPriceLabel,
+} from "#/shared/lib/locker-detail-labels";
 import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 import type {
   LockerBoundsRaw,
@@ -179,42 +183,19 @@ export const toSearchAutocompleteItems = (
     .map(toSearchAutocompleteItem)
     .filter((item): item is SearchAutocompleteItemData => item !== null);
 
-const formatLockerPriceLabel = (
-  minPrice?: number,
-  maxPrice?: number,
-): string | undefined => {
-  if (minPrice === undefined && maxPrice === undefined) {
-    return undefined;
-  }
-
-  const minLabel =
-    minPrice !== undefined
-      ? `${minPrice.toLocaleString("ko-KR")}원`
-      : undefined;
-  const maxLabel =
-    maxPrice !== undefined
-      ? `${maxPrice.toLocaleString("ko-KR")}원`
-      : undefined;
-
-  if (minLabel && maxLabel) {
-    return `${minLabel} ~ ${maxLabel}`;
-  }
-
-  return minLabel ?? maxLabel;
-};
-
-const formatOperatingHoursLabel = (
-  raw: LockerDetailRaw,
-): string | undefined => {
+const formatOperatingHoursLabel = (raw: LockerDetailRaw): string => {
   if (raw.startTime && raw.endTime) {
-    return `운영시간 ${raw.startTime} ~ ${raw.endTime}`;
+    return formatLockerOperatingHoursLabel(raw.startTime, raw.endTime);
   }
 
   if (raw.operatingHours) {
-    return `운영시간 ${raw.operatingHours.open} ~ ${raw.operatingHours.close}`;
+    return formatLockerOperatingHoursLabel(
+      raw.operatingHours.open,
+      raw.operatingHours.close,
+    );
   }
 
-  return undefined;
+  return formatLockerOperatingHoursLabel();
 };
 
 export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({

@@ -1,3 +1,4 @@
+import { setLanguageTag } from "@repo/i18n";
 import { describe, expect, it } from "vitest";
 import {
   toLockerDetailItem,
@@ -132,6 +133,7 @@ describe("locker-adapters", () => {
   });
 
   it("locker detail Swagger 필드를 UI 모델로 변환한다", () => {
+    setLanguageTag("ko");
     const raw: LockerDetailRaw = {
       lockerId: 515,
       lockerName: "강남역 4번 출구 지하 1층",
@@ -162,5 +164,22 @@ describe("locker-adapters", () => {
     expect(detail.detailHelpText).toBe("지하 1층 안내 데스크 옆");
     expect(detail.accurateCount).toBe(12);
     expect(detail.inaccurateCount).toBe(1);
+  });
+
+  it("운영시간·가격이 없으면 미제공 문구로 변환한다", () => {
+    setLanguageTag("ko");
+
+    const detail = toLockerDetailItem({
+      lockerId: 1,
+      lockerName: "테스트 보관함",
+      roadAddress: "서울",
+      lockerType: "SUBWAY_STATION",
+      latitude: 37.5,
+      longitude: 127.0,
+      isFavorite: false,
+    });
+
+    expect(detail.operatingHoursLabel).toBe("운영시간 미제공");
+    expect(detail.priceLabel).toBe("가격 미제공");
   });
 });

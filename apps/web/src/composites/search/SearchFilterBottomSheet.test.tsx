@@ -28,7 +28,7 @@ describe("SearchFilterBottomSheet", () => {
       minPrice: "",
       maxPrice: "",
       indoorOutdoorState: ["indoor"],
-      placeTypeState: ["museum", "subway"],
+      placeTypeState: ["subway"],
       selectedSizes: [],
     });
   });
