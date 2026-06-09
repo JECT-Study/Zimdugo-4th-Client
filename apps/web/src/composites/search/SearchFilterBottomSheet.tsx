@@ -6,10 +6,8 @@ import { useEffect, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
-import { ReportPriceSectionView } from "#/features/report/ui/ReportPriceSection";
-import type { LockerType } from "#/shared/types/locker-type";
-import { ReportTypeSection } from "#/features/report/ui/ReportTypeSection";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
+import { SearchFilterPriceSection } from "./SearchFilterPriceSection";
 import {
   applyButton,
   bottomActionBar,
@@ -275,7 +273,7 @@ export function SearchFilterBottomSheet({
           </div>
 
           <div className={[sectionGap24].join(" ")}>
-            <ReportPriceSectionView
+            <SearchFilterPriceSection
               priceType={priceType}
               setPriceType={(nextPriceType) => {
                 setPriceType(nextPriceType);
@@ -323,19 +321,25 @@ export function SearchFilterBottomSheet({
             </div>
           </div>
 
-          <div className={sectionGap24}>
-            <ReportTypeSection
-              title={
-                t.search_filter_section_locker_type_short?.() ??
+          <div className={[section, sectionGap24].join(" ")}>
+            <LabelTitle size="small">
+              {t.search_filter_section_locker_type_short?.() ??
                 t.search_filter_section_locker_type?.() ??
-                "보관함 유형"
-              }
-              showRequiredMark={false}
-              lockerType={(placeTypeState[0] as LockerType | undefined) ?? null}
-              onChange={(value) => setPlaceType(value ? [value] : [])}
-              options={placeTypeOptions}
-              selectionMode="single"
-            />
+                "보관함 유형"}
+            </LabelTitle>
+            <div className={indoorOutdoor}>
+              <ControlChipGroup
+                options={placeTypeOptions}
+                value={placeTypeState}
+                onChange={(keys) => setPlaceType(keys.slice(-1))}
+                selectionMode="single"
+                ariaLabel={
+                  t.search_filter_section_locker_type_short?.() ??
+                  t.search_filter_section_locker_type?.() ??
+                  "보관함 유형 필터"
+                }
+              />
+            </div>
           </div>
         </div>
 
