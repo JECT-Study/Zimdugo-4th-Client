@@ -7,6 +7,7 @@ import {
   getNavigationPlatformLinks,
   getNavigationPlatformUrl,
   hasNavigationDestination,
+  NAVIGATION_ORIGIN_POSITION_OPTIONS,
   openNavigationPlatformLinks,
   resolveNavigationOrigin,
   resolveNavigationOriginWithPermissionRequest,
@@ -79,6 +80,22 @@ describe("navigation-platform-links", () => {
       origin: DEFAULT_NAVIGATION_ORIGIN,
       permissionDenied: false,
     });
+  });
+
+  it("길찾기 출발지 조회 시 5초 타임아웃 옵션을 전달한다", async () => {
+    const getCurrentCoordinates = vi.fn(async () => ({
+      lat: 37.5012,
+      lng: 127.0396,
+    }));
+
+    await resolveNavigationOriginWithPermissionRequest({
+      getCurrentCoordinates,
+    });
+
+    expect(getCurrentCoordinates).toHaveBeenCalledWith(
+      NAVIGATION_ORIGIN_POSITION_OPTIONS,
+    );
+    expect(NAVIGATION_ORIGIN_POSITION_OPTIONS.timeout).toBe(5_000);
   });
 
   it("출발지는 현재 위치를 우선하고 없으면 강남역 11번 출구로 폴백한다", () => {
@@ -170,6 +187,26 @@ describe("navigation-platform-links", () => {
 
     expect(assign).toHaveBeenCalledTimes(1);
     expect(assign).toHaveBeenCalledWith(links?.webUrl);
+  });
+
+  it("Android 네이버맵은 intent URL만 열고 JS 폴백 타이머를 사용하지 않는다", () => {
+    const assign = vi.fn();
+    const setTimeoutFn = vi.fn();
+    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
+      ...linkOptions(),
+      userAgent: "Mozilla/5.0 (Linux; Android 14)",
+    });
+
+    openNavigationPlatformLinks(links!, {
+      platform: "naver",
+      userAgent: "Mozilla/5.0 (Linux; Android 14)",
+      assign,
+      setTimeoutFn,
+    });
+
+    expect(assign).toHaveBeenCalledTimes(1);
+    expect(assign).toHaveBeenCalledWith(links?.appUrl);
+    expect(setTimeoutFn).not.toHaveBeenCalled();
   });
 
   it("모바일 네이버맵은 앱 URL을 먼저 열고 앱 미설치 시 웹으로 폴백한다", () => {

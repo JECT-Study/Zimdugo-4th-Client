@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import * as navigationPlatformLinks from "#/features/search/lib/navigation-platform-links";
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
 import {
   getNavigationPlatformUrl,
@@ -27,12 +28,15 @@ const NAVIGATION_ORIGIN = {
 };
 
 describe("NavigationPlatformPopup", () => {
-  it("renders two navigation platform choices", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("네이버맵·구글맵스 길찾기 선택지를 렌더링한다", () => {
     render(
       <NavigationPlatformPopup
         isOpen
         locker={LOCKER_DETAIL}
-        navigationOrigin={NAVIGATION_ORIGIN}
         onOpenChange={() => undefined}
       />,
     );
@@ -46,7 +50,7 @@ describe("NavigationPlatformPopup", () => {
     ).toBeTruthy();
   });
 
-  it("builds directions urls with origin and destination coordinates", () => {
+  it("출발지·도착지 좌표로 길찾기 URL을 만든다", () => {
     expect(
       getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
@@ -69,5 +73,43 @@ describe("NavigationPlatformPopup", () => {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
     ).toContain("destination=37.5559,126.9364");
+  });
+
+  it("지도 플랫폼 선택 시 위치 권한을 요청한다", async () => {
+    const onSelectPlatform = vi.fn();
+
+    vi.spyOn(
+      navigationPlatformLinks,
+      "resolveNavigationOriginWithPermissionRequest",
+    ).mockResolvedValueOnce({
+      origin: NAVIGATION_ORIGIN,
+      permissionDenied: false,
+    });
+    vi.spyOn(
+      navigationPlatformLinks,
+      "openNavigationPlatformLinks",
+    ).mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "구글맵스로 길찾기" }));
+
+    await waitFor(() => {
+      expect(
+        navigationPlatformLinks.resolveNavigationOriginWithPermissionRequest,
+      ).toHaveBeenCalledTimes(1);
+    });
+    expect(onSelectPlatform).toHaveBeenCalledWith(
+      "google",
+      expect.stringContaining("google.com/maps/dir/"),
+      LOCKER_DETAIL,
+    );
   });
 });

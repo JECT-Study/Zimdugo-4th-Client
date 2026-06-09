@@ -3,8 +3,8 @@ import {
   getNavigationPlatformLinks,
   hasNavigationDestination,
   openNavigationPlatformLinks,
+  resolveNavigationOriginWithPermissionRequest,
   type NavigationPlatform,
-  type NavigationPoint,
 } from "#/features/search/lib/navigation-platform-links";
 import {
   Button as AriaButton,
@@ -35,10 +35,11 @@ const NAVER_MAP_ICON_URL =
 const GOOGLE_MAPS_ICON_URL =
   "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/f1/56/40/f15640e5-527f-1000-045f-0a4c71df9286/maps_2025-0-0-1x_U007epad-0-0-0-1-0-0-sRGB-0-0-85-220.png/512x512bb.jpg";
 
+let isResolvingNavigationOrigin = false;
+
 export interface NavigationPlatformPopupProps {
   isOpen: boolean;
   locker: LockerDetailItem | null;
-  navigationOrigin: NavigationPoint;
   onOpenChange: (isOpen: boolean) => void;
   onSelectPlatform?: (
     platform: NavigationPlatform,
@@ -50,21 +51,33 @@ export interface NavigationPlatformPopupProps {
 export function NavigationPlatformPopup({
   isOpen,
   locker,
-  navigationOrigin,
   onOpenChange,
   onSelectPlatform,
 }: NavigationPlatformPopupProps) {
-  const handleSelectPlatform = (platform: NavigationPlatform) => {
-    if (!locker || !hasNavigationDestination(locker)) return;
+  const handleSelectPlatform = async (platform: NavigationPlatform) => {
+    if (
+      !locker ||
+      !hasNavigationDestination(locker) ||
+      isResolvingNavigationOrigin
+    ) {
+      return;
+    }
 
-    const links = getNavigationPlatformLinks(platform, locker, {
-      navigationOrigin,
-    });
-    if (!links) return;
+    isResolvingNavigationOrigin = true;
 
-    onSelectPlatform?.(platform, links.webUrl, locker);
-    openNavigationPlatformLinks(links, { platform });
-    onOpenChange(false);
+    try {
+      const { origin } = await resolveNavigationOriginWithPermissionRequest();
+      const links = getNavigationPlatformLinks(platform, locker, {
+        navigationOrigin: origin,
+      });
+      if (!links) return;
+
+      onSelectPlatform?.(platform, links.webUrl, locker);
+      openNavigationPlatformLinks(links, { platform });
+      onOpenChange(false);
+    } finally {
+      isResolvingNavigationOrigin = false;
+    }
   };
 
   return (
@@ -80,7 +93,7 @@ export function NavigationPlatformPopup({
           <div className={platformGrid}>
             <AriaButton
               className={platformButton}
-              onPress={() => handleSelectPlatform("naver")}
+              onPress={() => void handleSelectPlatform("naver")}
               aria-label="네이버맵으로 길찾기"
             >
               <img
@@ -93,7 +106,7 @@ export function NavigationPlatformPopup({
             </AriaButton>
             <AriaButton
               className={platformButton}
-              onPress={() => handleSelectPlatform("google")}
+              onPress={() => void handleSelectPlatform("google")}
               aria-label="구글맵스로 길찾기"
             >
               <img

@@ -25,6 +25,13 @@ const NAVER_MAP_ANDROID_PACKAGE = "com.nhn.android.nmap";
 const DEFAULT_WEB_ORIGIN = "https://zimdugo.com";
 const APP_FALLBACK_DELAY_MS = 1500;
 
+/** 길찾기 출발지 결정용 GPS 옵션 (모바일 콜드 스타트 고려) */
+export const NAVIGATION_ORIGIN_POSITION_OPTIONS: PositionOptions = {
+  enableHighAccuracy: false,
+  maximumAge: 60_000,
+  timeout: 5_000,
+};
+
 const isAndroidUserAgent = (userAgent: string): boolean =>
   /Android/i.test(userAgent);
 
@@ -73,13 +80,18 @@ const isGeolocationPermissionDenied = (error: unknown): boolean => {
 
 /** 길찾기 직전에 위치 권한을 한 번 더 요청하고 출발지를 결정한다. */
 export const resolveNavigationOriginWithPermissionRequest = async (options?: {
-  getCurrentCoordinates?: () => Promise<{ lat: number; lng: number }>;
+  getCurrentCoordinates?: (
+    positionOptions?: PositionOptions,
+  ) => Promise<{ lat: number; lng: number }>;
+  positionOptions?: PositionOptions;
 }): Promise<ResolveNavigationOriginResult> => {
   const getCurrentCoordinates =
     options?.getCurrentCoordinates ?? getCurrentMapCoordinates;
+  const positionOptions =
+    options?.positionOptions ?? NAVIGATION_ORIGIN_POSITION_OPTIONS;
 
   try {
-    const coordinates = await getCurrentCoordinates();
+    const coordinates = await getCurrentCoordinates(positionOptions);
     return {
       origin: resolveNavigationOrigin(coordinates),
       permissionDenied: false,
@@ -238,6 +250,11 @@ export const openNavigationPlatformLinks = (
 
   if (options.platform === "google" || !isMobileUserAgent(userAgent)) {
     assign(links.webUrl);
+    return;
+  }
+
+  if (isAndroidUserAgent(userAgent)) {
+    assign(links.appUrl);
     return;
   }
 
