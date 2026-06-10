@@ -26,11 +26,19 @@ describe("favorite-locker-session", () => {
     expect(baseline.get(1)).toBe(false);
   });
 
-  it("pending overlay가 서버 isFavorite보다 우선한다", () => {
+  it("pending overlay가 baseline·서버 isFavorite보다 우선한다", () => {
     const pending = new Map([[2, true]]);
+    const baseline = new Map([[2, false]]);
 
-    expect(getEffectiveFavorite(pending, 2, false)).toBe(true);
-    expect(getEffectiveFavorite(pending, 3, true)).toBe(true);
+    expect(getEffectiveFavorite(pending, baseline, 2, false)).toBe(true);
+  });
+
+  it("pending이 없으면 baseline이 서버 isFavorite보다 우선한다", () => {
+    const pending = new Map<number, boolean>();
+    const baseline = new Map([[1, true]]);
+
+    expect(getEffectiveFavorite(pending, baseline, 1, false)).toBe(true);
+    expect(getEffectiveFavorite(pending, baseline, 2, true)).toBe(true);
   });
 
   it("baseline과 같아지면 pending에서 제거한다", () => {

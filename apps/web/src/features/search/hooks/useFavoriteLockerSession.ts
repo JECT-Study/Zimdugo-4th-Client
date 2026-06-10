@@ -54,7 +54,12 @@ export function useFavoriteLockerSession() {
 
   const getEffectiveIsFavorite = useCallback(
     (lockerId: number, serverIsFavorite?: boolean) =>
-      getEffectiveFavorite(pending, lockerId, serverIsFavorite),
+      getEffectiveFavorite(
+        pending,
+        baselineRef.current,
+        lockerId,
+        serverIsFavorite,
+      ),
     [pending],
   );
 

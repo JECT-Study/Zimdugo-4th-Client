@@ -37,11 +37,16 @@ export function toggleFavoritePending(
 
 export function getEffectiveFavorite(
   pending: FavoriteLockerPending,
+  baseline: FavoriteLockerBaseline,
   lockerId: number,
   serverIsFavorite: boolean | undefined,
 ): boolean {
   if (pending.has(lockerId)) {
     return pending.get(lockerId) ?? false;
+  }
+
+  if (baseline.has(lockerId)) {
+    return baseline.get(lockerId) ?? false;
   }
 
   return serverIsFavorite ?? false;
