@@ -64,10 +64,11 @@ export function useFavoriteLockerSession() {
           baselineRef.current,
           locker.lockerId,
           locker.isFavorite,
+          pending.has(locker.lockerId),
         );
       });
     },
-    [],
+    [pending],
   );
 
   const syncBaselineFromLockerDetail = useCallback(
@@ -80,9 +81,10 @@ export function useFavoriteLockerSession() {
         baselineRef.current,
         locker.lockerId,
         locker.isFavorite,
+        pending.has(locker.lockerId),
       );
     },
-    [],
+    [pending],
   );
 
   const toggle = useCallback(

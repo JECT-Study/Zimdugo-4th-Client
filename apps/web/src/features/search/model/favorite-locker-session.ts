@@ -10,8 +10,9 @@ export function seedFavoriteBaseline(
   baseline: FavoriteLockerBaseline,
   lockerId: number,
   serverIsFavorite: boolean | undefined,
+  isPending = false,
 ): void {
-  if (!baseline.has(lockerId)) {
+  if (!isPending || !baseline.has(lockerId)) {
     baseline.set(lockerId, serverIsFavorite ?? false);
   }
 }
