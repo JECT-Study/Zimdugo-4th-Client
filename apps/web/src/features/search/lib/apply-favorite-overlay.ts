@@ -9,10 +9,10 @@ export type ResolveEffectiveFavorite = (
   serverIsFavorite: boolean | undefined,
 ) => boolean;
 
-const withFavoriteOverlay = (
-  locker: SearchLockerResultItem,
+const withFavoriteOverlay = <T extends SearchLockerResultItem>(
+  locker: T,
   resolveEffectiveFavorite: ResolveEffectiveFavorite,
-): SearchLockerResultItem => ({
+): T => ({
   ...locker,
   isFavorite: resolveEffectiveFavorite(locker.lockerId, locker.isFavorite),
 });
@@ -36,7 +36,7 @@ export const applyFavoriteOverlayToSearchResultItems = (
       ...item,
       lockers: item.lockers.map((locker) =>
         withFavoriteOverlay(locker, resolveEffectiveFavorite),
-      ) as typeof item.lockers,
+      ),
     };
   });
 
