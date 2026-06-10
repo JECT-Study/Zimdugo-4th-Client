@@ -955,7 +955,6 @@ function IndexPage() {
     mapDetailBack,
     resetMapContext,
     searchDetailBack,
-    setSheetMode,
   ]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
@@ -968,7 +967,7 @@ function IndexPage() {
     setListKind("keyword");
     setSearchPlaceId(null);
     setSheetMode("list");
-  }, [flushFavoriteChanges, searchDraft, setSearchQuery, setSheetMode]);
+  }, [flushFavoriteChanges, searchDraft]);
 
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
@@ -1169,7 +1168,6 @@ function IndexPage() {
     );
   }, [
     favoriteSession.getEffectiveIsFavorite,
-    favoriteSession.pending,
     isPlaceListScope,
     searchBottomSheetItems,
   ]);
@@ -1183,11 +1181,7 @@ function IndexPage() {
       selectedLockerDetail,
       favoriteSession.getEffectiveIsFavorite,
     );
-  }, [
-    favoriteSession.getEffectiveIsFavorite,
-    favoriteSession.pending,
-    selectedLockerDetail,
-  ]);
+  }, [favoriteSession.getEffectiveIsFavorite, selectedLockerDetail]);
 
   const isSearchListLoading = shouldShowSearchListLoading({
     isPlaceListScope,
