@@ -16,6 +16,10 @@ export function useUpdateMeProfile() {
       return patchMeProfile(userId, body);
     },
     onSuccess: (data) => {
+      if (userId == null) {
+        return;
+      }
+
       queryClient.setQueryData(userProfileQueryKey(userId), data);
     },
   });
