@@ -193,7 +193,7 @@ interface MenuRowProps {
 
 function MenuRow({ label, countLabel }: MenuRowProps) {
   return (
-    <div className={menuRow} aria-disabled="true">
+    <div className={menuRow} aria-disabled>
       <span className={menuRowLabel}>{label}</span>
       <span className={menuRowCount}>{countLabel}</span>
     </div>
