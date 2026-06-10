@@ -46,6 +46,7 @@ export function useFavoriteLockerSession() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const openAuthPopup = useAuthPopupStore((state) => state.openPopup);
   const baselineRef = useRef(new Map<number, boolean>());
   const [pending, setPending] = useState<FavoriteLockerPending>(
     () => new Map(),
@@ -90,7 +91,7 @@ export function useFavoriteLockerSession() {
   const toggle = useCallback(
     (lockerId: number, next: boolean): boolean => {
       if (!isAuthenticated || userId == null) {
-        useAuthPopupStore.getState().openPopup("/");
+        openAuthPopup("/");
         return false;
       }
 
@@ -104,7 +105,7 @@ export function useFavoriteLockerSession() {
       );
       return true;
     },
-    [isAuthenticated, userId],
+    [isAuthenticated, openAuthPopup, userId],
   );
 
   const flush = useCallback(async (): Promise<{ hadChanges: boolean }> => {
