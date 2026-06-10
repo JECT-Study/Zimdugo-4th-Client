@@ -41,13 +41,13 @@ export function ProfileImage({
   const { data: user } = useUser(userId);
   const src = initialSrc ?? user?.profileImageUrl;
 
+  const handleSetImageError = () => {
+    setHasError(true);
+  };
+
   useEffect(() => {
     setHasError(false);
   }, [src]);
-
-  const handleError = () => {
-    setHasError(true);
-  };
 
   const showImage = src && !hasError;
   const sizeValue = typeof size === "number" ? `${size}px` : size;
@@ -67,7 +67,7 @@ export function ProfileImage({
           src={src}
           alt={alt}
           className={styles.profileImageContent}
-          onError={handleError}
+          onError={handleSetImageError}
         />
       ) : (
         <IconCamera24 className={styles.profileImageIcon} />
