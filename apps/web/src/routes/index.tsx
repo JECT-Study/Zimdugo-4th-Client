@@ -27,7 +27,10 @@ import {
 } from "#/composites/search/SearchFilterBottomSheet";
 import { SearchListBottomSheet } from "#/composites/search/SearchListBottomSheet";
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
-import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
+import type {
+  SearchLockerResultItem,
+  SearchResultItem,
+} from "#/composites/search/search-list-model";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
@@ -44,10 +47,16 @@ import {
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
+import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
   useLockerDetail,
 } from "#/features/search/hooks/useLockerDetail";
+import {
+  applyFavoriteOverlayToLockerDetail,
+  applyFavoriteOverlayToLockerItems,
+  applyFavoriteOverlayToSearchResultItems,
+} from "#/features/search/lib/apply-favorite-overlay";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import {
   useLockerKeywordSearch,
@@ -139,6 +148,14 @@ const mergeLockerDetailWithPreviousDistance = (
 
 function IndexPage() {
   const queryClient = useQueryClient();
+  const favoriteSession = useFavoriteLockerSession();
+  const flushFavoriteChangesRef = useRef(favoriteSession.flush);
+  flushFavoriteChangesRef.current = favoriteSession.flush;
+
+  const flushFavoriteChanges = useCallback(
+    () => flushFavoriteChangesRef.current(),
+    [],
+  );
   const isSearchOpen = useSearchStore((state) => state.isSearchOpen);
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
   const searchQuery = useSearchStore((state) => state.searchQuery);
@@ -365,7 +382,8 @@ function IndexPage() {
     setMapInstance(map);
   }, []);
 
-  const resetMapContext = useCallback(() => {
+  const resetMapContext = useCallback(async () => {
+    await flushFavoriteChanges();
     setMapPlaceId(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -376,9 +394,10 @@ function IndexPage() {
     setSheetMode("idle");
     setContext("idle");
     writeMapSheetSessionSnapshot(null);
-  }, []);
+  }, [flushFavoriteChanges]);
 
-  const resetSearchContext = useCallback(() => {
+  const resetSearchContext = useCallback(async () => {
+    await flushFavoriteChanges();
     setSearchQuery("");
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
@@ -393,7 +412,7 @@ function IndexPage() {
     setContext("idle");
     setIsSearchOpen(false);
     writeMapSheetSessionSnapshot(null);
-  }, [setIsSearchOpen, setSearchQuery]);
+  }, [flushFavoriteChanges, setIsSearchOpen, setSearchQuery]);
 
   const handleOpenSearch = useCallback(() => {
     const returnContext = resolveOverlayReturnContext(context);
@@ -587,7 +606,8 @@ function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    (lockerId: number, optimisticDetail?: LockerDetailItem) => {
+    async (lockerId: number, optimisticDetail?: LockerDetailItem) => {
+      await flushFavoriteChanges();
       setSelectedLockerDetail(
         optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
       );
@@ -596,7 +616,7 @@ function IndexPage() {
       setIsSearchOpen(false);
       setSheetMode("detail");
     },
-    [setIsSearchOpen, setSheetMode],
+    [flushFavoriteChanges, setIsSearchOpen, setSheetMode],
   );
 
   const openSearchPlaceList = useCallback(
@@ -885,15 +905,6 @@ function IndexPage() {
     ],
   );
 
-  const handleDetailFavoriteChange = useCallback(
-    (_item: LockerDetailItem, next: boolean) => {
-      setSelectedLockerDetail((currentDetail) =>
-        currentDetail ? { ...currentDetail, isFavorite: next } : currentDetail,
-      );
-    },
-    [],
-  );
-
   const handleOpenNavigationPopup = useCallback(() => {
     setIsNavigationPopupOpen(true);
   }, []);
@@ -916,7 +927,8 @@ function IndexPage() {
     setIsNavigationPopupOpen(isOpen);
   }, []);
 
-  const handleBackFromDetail = useCallback(() => {
+  const handleBackFromDetail = useCallback(async () => {
+    await flushFavoriteChanges();
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setIsNavigationPopupOpen(false);
@@ -937,18 +949,25 @@ function IndexPage() {
     }
 
     setSheetMode("list");
-  }, [context, mapDetailBack, resetMapContext, searchDetailBack, setSheetMode]);
+  }, [
+    context,
+    flushFavoriteChanges,
+    mapDetailBack,
+    resetMapContext,
+    searchDetailBack,
+  ]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
     resetMapContext();
   }, [resetMapContext]);
 
-  const handleBackToKeywordList = useCallback(() => {
+  const handleBackToKeywordList = useCallback(async () => {
+    await flushFavoriteChanges();
     setSearchQuery(searchDraft);
     setListKind("keyword");
     setSearchPlaceId(null);
     setSheetMode("list");
-  }, [searchDraft, setSearchQuery, setSheetMode]);
+  }, [flushFavoriteChanges, searchDraft]);
 
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
@@ -1123,6 +1142,47 @@ function IndexPage() {
   const searchBottomSheetItems = isPlaceListScope
     ? (placeLockersResults?.lockers ?? [])
     : (keywordSearchResults?.items ?? []);
+
+  useEffect(() => {
+    favoriteSession.syncBaselineFromSearchData(searchBottomSheetItems);
+  }, [
+    favoriteSession.syncBaselineFromSearchData,
+    searchBottomSheetItems,
+  ]);
+
+  useEffect(() => {
+    favoriteSession.syncBaselineFromLockerDetail(lockerDetail);
+  }, [favoriteSession.syncBaselineFromLockerDetail, lockerDetail]);
+
+  const searchBottomSheetDisplayItems = useMemo((): SearchResultItem[] => {
+    if (isPlaceListScope) {
+      return applyFavoriteOverlayToLockerItems(
+        searchBottomSheetItems as SearchLockerResultItem[],
+        favoriteSession.getEffectiveIsFavorite,
+      );
+    }
+
+    return applyFavoriteOverlayToSearchResultItems(
+      searchBottomSheetItems as SearchResultItem[],
+      favoriteSession.getEffectiveIsFavorite,
+    );
+  }, [
+    favoriteSession.getEffectiveIsFavorite,
+    isPlaceListScope,
+    searchBottomSheetItems,
+  ]);
+
+  const displayedLockerDetail = useMemo(() => {
+    if (!selectedLockerDetail) {
+      return null;
+    }
+
+    return applyFavoriteOverlayToLockerDetail(
+      selectedLockerDetail,
+      favoriteSession.getEffectiveIsFavorite,
+    );
+  }, [favoriteSession.getEffectiveIsFavorite, selectedLockerDetail]);
+
   const isSearchListLoading = shouldShowSearchListLoading({
     isPlaceListScope,
     shouldFetchPlaceList,
@@ -1297,7 +1357,7 @@ function IndexPage() {
       {sheetMode === "list" && !isSearchOpen ? (
         <SearchListBottomSheet
           searchQuery={searchQuery}
-          items={searchBottomSheetItems}
+          items={searchBottomSheetDisplayItems}
           placeName={activePlaceName}
           appLanguage={normalizeLocale(languageTag()) ?? BASE_LOCALE}
           isFilterActive={isSearchFilterActive}
@@ -1306,17 +1366,18 @@ function IndexPage() {
           onRetry={() => void refetchSearchList()}
           onOpenFilter={handleOpenSearchFilter}
           onLockerPress={handleOpenLockerDetail}
+          onFavoriteChange={favoriteSession.handleSearchFavoriteChange}
           showHeaderBack={showPlaceSheetBack}
           onHeaderBackPress={listHeaderLeadingPress}
         />
       ) : null}
 
-      {sheetMode === "detail" && !isSearchOpen && selectedLockerDetail ? (
+      {sheetMode === "detail" && !isSearchOpen && displayedLockerDetail ? (
         <LockerDetailBottomSheet
-          locker={selectedLockerDetail}
+          locker={displayedLockerDetail}
           loadState={lockerDetailLoadState}
           onRetry={() => void refetchLockerDetail()}
-          onFavoriteChange={handleDetailFavoriteChange}
+          onFavoriteChange={favoriteSession.handleDetailFavoriteChange}
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
         />
@@ -1324,7 +1385,7 @@ function IndexPage() {
 
       <NavigationPlatformPopup
         isOpen={isNavigationPopupOpen}
-        locker={selectedLockerDetail}
+        locker={displayedLockerDetail}
         knownLocation={navigationKnownLocation}
         onOriginResolved={handleNavigationOriginResolved}
         onOpenChange={handleNavigationPopupOpenChange}
