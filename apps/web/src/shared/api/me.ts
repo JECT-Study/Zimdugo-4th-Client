@@ -16,7 +16,7 @@ export type PatchMeProfileBody = {
 };
 
 const unwrapBackendData = <T>(response: BackendResponse<T> | undefined): T => {
-  if (!response?.data) {
+  if (response?.data == null) {
     throw new Error(response?.message ?? "API response data is missing.");
   }
 
