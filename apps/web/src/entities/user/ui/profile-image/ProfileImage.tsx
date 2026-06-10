@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconCamera24 } from "@repo/ui/tokens/icons";
 import { useUser } from "../../hooks/useUser.ts";
 import * as styles from "./ProfileImage.css.ts";
@@ -40,6 +40,10 @@ export function ProfileImage({
   const [hasError, setHasError] = useState(false);
   const { data: user } = useUser(userId);
   const src = initialSrc ?? user?.profileImageUrl;
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
 
   const handleError = () => {
     setHasError(true);
