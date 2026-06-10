@@ -51,6 +51,8 @@ export function useFavoriteLockerSession() {
   const [pending, setPending] = useState<FavoriteLockerPending>(
     () => new Map(),
   );
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
 
   const getEffectiveIsFavorite = useCallback(
     (lockerId: number, serverIsFavorite?: boolean) =>
@@ -70,11 +72,10 @@ export function useFavoriteLockerSession() {
           baselineRef.current,
           locker.lockerId,
           locker.isFavorite,
-          pending.has(locker.lockerId),
         );
       });
     },
-    [pending],
+    [],
   );
 
   const syncBaselineFromLockerDetail = useCallback(
@@ -87,10 +88,9 @@ export function useFavoriteLockerSession() {
         baselineRef.current,
         locker.lockerId,
         locker.isFavorite,
-        pending.has(locker.lockerId),
       );
     },
-    [pending],
+    [],
   );
 
   const toggle = useCallback(
@@ -114,13 +114,15 @@ export function useFavoriteLockerSession() {
   );
 
   const flush = useCallback(async (): Promise<{ hadChanges: boolean }> => {
-    if (!isAuthenticated || userId == null || pending.size === 0) {
+    const currentPending = pendingRef.current;
+
+    if (!isAuthenticated || userId == null || currentPending.size === 0) {
       return { hadChanges: false };
     }
 
     const operations = buildFavoriteFlushOperations(
       baselineRef.current,
-      pending,
+      currentPending,
     );
     if (operations.length === 0) {
       setPending(new Map());
@@ -153,7 +155,7 @@ export function useFavoriteLockerSession() {
     });
 
     if (succeededLockerIds.length > 0) {
-      const pendingSnapshot = new Map(pending);
+      const pendingSnapshot = new Map(currentPending);
       const nextState = applySuccessfulFlush(
         baselineRef.current,
         pendingSnapshot,
@@ -191,7 +193,7 @@ export function useFavoriteLockerSession() {
     }
 
     return { hadChanges: true };
-  }, [isAuthenticated, pending, queryClient, userId]);
+  }, [isAuthenticated, queryClient, userId]);
 
   const handleSearchFavoriteChange = useCallback(
     (item: SearchLockerResultItem, next: boolean) => {

@@ -9,21 +9,21 @@ import {
 } from "./favorite-locker-session";
 
 describe("favorite-locker-session", () => {
-  it("pending이 없으면 서버 isFavorite로 baseline을 동기화한다", () => {
+  it("baseline이 없을 때만 서버 isFavorite로 시드한다", () => {
     const baseline = new Map<number, boolean>();
 
     seedFavoriteBaseline(baseline, 1, false);
     seedFavoriteBaseline(baseline, 1, true);
 
-    expect(baseline.get(1)).toBe(true);
+    expect(baseline.get(1)).toBe(false);
   });
 
-  it("pending 중인 locker는 baseline을 덮어쓰지 않는다", () => {
-    const baseline = new Map<number, boolean>([[1, false]]);
+  it("flush 후 stale 서버 isFavorite로 baseline을 덮어쓰지 않는다", () => {
+    const baseline = new Map<number, boolean>([[1, true]]);
 
-    seedFavoriteBaseline(baseline, 1, true, true);
+    seedFavoriteBaseline(baseline, 1, false);
 
-    expect(baseline.get(1)).toBe(false);
+    expect(baseline.get(1)).toBe(true);
   });
 
   it("pending overlay가 baseline·서버 isFavorite보다 우선한다", () => {
