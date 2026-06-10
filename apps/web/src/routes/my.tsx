@@ -153,7 +153,7 @@ function MyPage() {
             className={logoutButton}
             onPress={handleLogout}
           >
-            로그아웃
+            {m.my_logout()}
           </Button>
         </div>
       </main>
