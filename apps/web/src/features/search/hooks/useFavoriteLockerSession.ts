@@ -145,13 +145,23 @@ export function useFavoriteLockerSession() {
     });
 
     if (succeededLockerIds.length > 0) {
+      const pendingSnapshot = new Map(pending);
       const nextState = applySuccessfulFlush(
         baselineRef.current,
-        pending,
+        pendingSnapshot,
         succeededLockerIds,
       );
       baselineRef.current = nextState.baseline;
-      setPending(nextState.pending);
+
+      setPending((currentPending) => {
+        const updatedPending = new Map(currentPending);
+        for (const lockerId of succeededLockerIds) {
+          if (updatedPending.get(lockerId) === pendingSnapshot.get(lockerId)) {
+            updatedPending.delete(lockerId);
+          }
+        }
+        return updatedPending;
+      });
 
       await Promise.all([
         queryClient.invalidateQueries({
