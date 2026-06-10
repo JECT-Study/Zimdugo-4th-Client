@@ -550,9 +550,6 @@ export const agreementCheckRow = style({
     '&[data-disabled="true"]': {
       cursor: "not-allowed",
     },
-    '&[data-disabled="true"] span': {
-      opacity: 0.5,
-    },
   },
 });
 
@@ -561,6 +558,11 @@ export const agreementLabel = style({
   fontSize: vars.typography.fontSize[14],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: "1.2",
+  selectors: {
+    [`${agreementCheckRow}[data-disabled="true"] &`]: {
+      opacity: 0.5,
+    },
+  },
 });
 
 export const privacyPolicyLink = style({
