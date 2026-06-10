@@ -32,6 +32,20 @@ export const Route = createFileRoute("/my")({
   component: MyPage,
 });
 
+interface MenuRowProps {
+  label: string;
+  countLabel: string;
+}
+
+function MenuRow({ label, countLabel }: MenuRowProps) {
+  return (
+    <div className={menuRow} aria-disabled>
+      <span className={menuRowLabel}>{label}</span>
+      <span className={menuRowCount}>{countLabel}</span>
+    </div>
+  );
+}
+
 function MyPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -182,20 +196,6 @@ function MyPage() {
           onPress: () => setIsErrorPopupOpen(false),
         }}
       />
-    </div>
-  );
-}
-
-interface MenuRowProps {
-  label: string;
-  countLabel: string;
-}
-
-function MenuRow({ label, countLabel }: MenuRowProps) {
-  return (
-    <div className={menuRow} aria-disabled>
-      <span className={menuRowLabel}>{label}</span>
-      <span className={menuRowCount}>{countLabel}</span>
     </div>
   );
 }
