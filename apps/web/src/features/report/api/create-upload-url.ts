@@ -21,11 +21,13 @@ export class InvalidUploadCreateResponseError extends Error {
 }
 
 export async function createUploadUrl(
+  userId: number,
   payload: UploadCreateRequest,
 ): Promise<UploadCreateData> {
   const response = await apiClient.post<RestResponse<UploadCreateData>>(
     "/api/v1/uploads",
     payload,
+    { params: { userId } },
   );
 
   const parsed = uploadCreateDataSchema.safeParse(response.data.data);

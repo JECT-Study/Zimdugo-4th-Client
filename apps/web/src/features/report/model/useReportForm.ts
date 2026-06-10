@@ -286,7 +286,7 @@ export function useReportForm(): {
 
         if (selectedPhotoFile) {
           try {
-            imageUrl = await uploadReportPhoto(selectedPhotoFile);
+            imageUrl = await uploadReportPhoto(userId, selectedPhotoFile);
           } catch (error) {
             if (parseReportSubmitFailure(error).kind === "auth") {
               useAuthPopupStore.getState().openPopup("/report");

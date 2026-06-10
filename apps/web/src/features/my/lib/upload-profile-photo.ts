@@ -1,0 +1,53 @@
+import { createUploadUrl } from "#/features/report/api/create-upload-url";
+import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
+import {
+  type ProfilePhotoValidationError,
+  resolveProfilePhotoContentType,
+  validateProfilePhotoFile,
+} from "#/features/my/lib/validate-profile-photo-file";
+import {
+  MAX_REPORT_PHOTO_SIZE_BYTES,
+  UPLOAD_CATEGORY_PROFILE,
+} from "#/features/report/model/report-types";
+import { prepareProfileImageFile } from "#/features/my/lib/prepare-profile-image-file";
+
+export class ProfilePhotoUploadValidationError extends Error {
+  readonly code: ProfilePhotoValidationError;
+
+  constructor(code: ProfilePhotoValidationError) {
+    super(code);
+    this.name = "ProfilePhotoUploadValidationError";
+    this.code = code;
+  }
+}
+
+export async function uploadProfilePhoto(
+  userId: number,
+  file: File,
+): Promise<string> {
+  const validation = validateProfilePhotoFile(file);
+  if (!validation.ok) {
+    throw new ProfilePhotoUploadValidationError(validation.error);
+  }
+
+  const preparedFile = await prepareProfileImageFile(file);
+
+  if (preparedFile.size > MAX_REPORT_PHOTO_SIZE_BYTES) {
+    throw new ProfilePhotoUploadValidationError("max_size");
+  }
+
+  const contentType = resolveProfilePhotoContentType(preparedFile);
+  const { uploadUrl, fileUrl } = await createUploadUrl(userId, {
+    category: UPLOAD_CATEGORY_PROFILE,
+    fileName: preparedFile.name,
+    contentType,
+  });
+
+  await uploadFileToPresignedUrl({
+    uploadUrl,
+    file: preparedFile,
+    contentType,
+  });
+
+  return fileUrl;
+}

@@ -38,9 +38,11 @@ describe("createUploadUrl", () => {
       contentType: "image/jpeg",
     };
 
-    await expect(createUploadUrl(payload)).resolves.toEqual(uploadData);
+    await expect(createUploadUrl(7, payload)).resolves.toEqual(uploadData);
 
-    expect(apiClient.post).toHaveBeenCalledWith("/api/v1/uploads", payload);
+    expect(apiClient.post).toHaveBeenCalledWith("/api/v1/uploads", payload, {
+      params: { userId: 7 },
+    });
   });
 
   it("응답 data 형식이 올바르지 않으면 InvalidUploadCreateResponseError를 던진다", async () => {
@@ -60,7 +62,7 @@ describe("createUploadUrl", () => {
     });
 
     await expect(
-      createUploadUrl({
+      createUploadUrl(7, {
         category: UPLOAD_CATEGORY_LOCKER_REPORT,
         fileName: "locker-photo.jpg",
         contentType: "image/jpeg",

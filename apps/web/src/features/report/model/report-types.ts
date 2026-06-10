@@ -116,6 +116,9 @@ export type UploadCategory = "PROFILE" | "LOCKER_REPORT";
 export const UPLOAD_CATEGORY_LOCKER_REPORT =
   "LOCKER_REPORT" as const satisfies UploadCategory;
 
+export const UPLOAD_CATEGORY_PROFILE =
+  "PROFILE" as const satisfies UploadCategory;
+
 export type UploadCreateRequest = {
   category: UploadCategory;
   fileName: string;
