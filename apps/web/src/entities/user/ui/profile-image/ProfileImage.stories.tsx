@@ -1,5 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ProfileImage } from "./ProfileImage.tsx";
+
+const storyQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 const meta = {
   title: "Entities/User/ProfileImage",
@@ -7,6 +16,13 @@ const meta = {
   parameters: {
     layout: "centered",
   },
+  decorators: [
+    (Story) => (
+      <QueryClientProvider client={storyQueryClient}>
+        <Story />
+      </QueryClientProvider>
+    ),
+  ],
   args: {
     src: "https://picsum.photos/200",
     alt: "프로필 이미지",

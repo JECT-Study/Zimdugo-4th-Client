@@ -5,11 +5,11 @@ import * as styles from "./ProfileImage.css.ts";
 
 export interface ProfileImageProps {
   /**
-   * 사용자 ID (엔티티 로직 결합 시 사용)
+   * 사용자 ID. src가 없을 때 프로필 이미지 URL을 조회합니다.
    */
-  userId?: string;
+  userId?: number | null;
   /**
-   * 이미지 소스 URL (직접 주입 시 우선순위 높음)
+   * 이미지 소스 URL. 직접 주입 시 API 조회보다 우선합니다.
    */
   src?: string;
   /**
@@ -26,9 +26,9 @@ export interface ProfileImageProps {
   className?: string;
 }
 
-/** 
+/**
  * 사용자 프로필 이미지 엔티티 컴포넌트.
- * userId가 제공되면 실시간으로 사용자 데이터를 조회(useQuery)하여 이미지를 표시합니다.
+ * userId가 제공되면 useUser로 프로필 이미지 URL을 조회합니다.
  */
 export function ProfileImage({
   userId,
@@ -38,10 +38,7 @@ export function ProfileImage({
   className,
 }: ProfileImageProps) {
   const [hasError, setHasError] = useState(false);
-  
-  // FSD Entity Pattern: 엔티티 전용 훅(useQuery)을 사용하여 데이터와 로직을 결합
-  const { data: user } = useUser(userId ?? "");
-  
+  const { data: user } = useUser(userId);
   const src = initialSrc ?? user?.profileImageUrl;
 
   const handleError = () => {
