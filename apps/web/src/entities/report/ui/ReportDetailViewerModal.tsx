@@ -10,8 +10,8 @@ import {
   fieldLabel,
   fieldList,
   fieldValue,
+  closeButton,
   footer,
-  footerButton,
   header,
   overlay,
   panel,
@@ -31,9 +31,6 @@ export interface ReportDetailViewerModalProps {
   titleText: string;
   detail: MyLockerReportDetail | null;
   loadState: ReportDetailViewerLoadState;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  isDeletePending?: boolean;
   className?: string;
 }
 
@@ -43,9 +40,6 @@ export function ReportDetailViewerModal({
   titleText,
   detail,
   loadState,
-  onEdit,
-  onDelete,
-  isDeletePending = false,
   className,
 }: ReportDetailViewerModalProps) {
   const sections =
@@ -125,24 +119,13 @@ export function ReportDetailViewerModal({
           {loadState === "ready" && detail != null ? (
             <div className={footer}>
               <Button
-                className={footerButton}
-                variant="outline"
+                className={closeButton}
+                variant="filled"
                 intent="neutral"
                 size="L"
-                onPress={onDelete}
-                isDisabled={isDeletePending || onDelete == null}
+                onPress={handleClose}
               >
-                {m.my_report_detail_delete()}
-              </Button>
-              <Button
-                className={footerButton}
-                variant="filled"
-                intent="primary"
-                size="L"
-                onPress={onEdit}
-                isDisabled={onEdit == null}
-              >
-                {m.my_report_detail_edit()}
+                {m.my_report_detail_close()}
               </Button>
             </div>
           ) : null}

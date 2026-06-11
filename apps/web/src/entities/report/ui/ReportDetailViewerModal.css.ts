@@ -104,14 +104,12 @@ export const photoPlaceholder = style({
 });
 
 export const footer = style({
-  display: "flex",
-  gap: vars.spacing[8],
   flexShrink: 0,
   padding: `${vars.spacing[12]} ${vars.spacing[20]} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[12]})`,
   borderTop: `1px solid ${vars.color.palette.gray[200]}`,
   backgroundColor: vars.color.bg.default,
 });
 
-export const footerButton = style({
-  flex: 1,
+export const closeButton = style({
+  width: "100%",
 });
