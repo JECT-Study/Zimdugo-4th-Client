@@ -5,7 +5,7 @@ import {
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
@@ -125,7 +125,41 @@ import {
   shouldShowMapControls,
 } from "./-map-control-visibility";
 
-export const Route = createFileRoute("/")({ component: IndexPage });
+const parseOpenLockerId = (search: Record<string, unknown>): number | undefined => {
+  const raw = search.openLockerId;
+  const parsed =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string" && raw.trim()
+        ? Number(raw)
+        : undefined;
+
+  return typeof parsed === "number" && Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : undefined;
+};
+
+type LockerDetailSnap = "full" | "half";
+
+const parseDetailSnap = (
+  search: Record<string, unknown>,
+): LockerDetailSnap | undefined =>
+  search.detailSnap === "full" ? "full" : undefined;
+
+export const Route = createFileRoute("/")({
+  component: IndexPage,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { openLockerId?: number; detailSnap?: LockerDetailSnap } => {
+    const openLockerId = parseOpenLockerId(search);
+    if (openLockerId == null) {
+      return {};
+    }
+
+    const detailSnap = parseDetailSnap(search);
+    return detailSnap ? { openLockerId, detailSnap } : { openLockerId };
+  },
+});
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
 
@@ -147,6 +181,10 @@ const mergeLockerDetailWithPreviousDistance = (
 };
 
 function IndexPage() {
+  const navigate = useNavigate();
+  const { openLockerId, detailSnap } = Route.useSearch();
+  const handledOpenLockerIdRef = useRef<number | null>(null);
+  const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const queryClient = useQueryClient();
   const favoriteSession = useFavoriteLockerSession();
   const flushFavoriteChangesRef = useRef(favoriteSession.flush);
@@ -606,7 +644,11 @@ function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    async (lockerId: number, optimisticDetail?: LockerDetailItem) => {
+    async (
+      lockerId: number,
+      optimisticDetail?: LockerDetailItem,
+      options?: { detailSnap?: LockerDetailSnap },
+    ) => {
       await flushFavoriteChanges();
       setSelectedLockerDetail(
         optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
@@ -614,10 +656,27 @@ function IndexPage() {
       setActiveLockerId(lockerId);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
+      setLockerDetailOpensFull(options?.detailSnap === "full");
       setSheetMode("detail");
     },
     [flushFavoriteChanges, setIsSearchOpen, setSheetMode],
   );
+
+  useEffect(() => {
+    if (openLockerId == null) {
+      return;
+    }
+
+    if (handledOpenLockerIdRef.current === openLockerId) {
+      return;
+    }
+
+    handledOpenLockerIdRef.current = openLockerId;
+    void openLockerDetailById(openLockerId, undefined, {
+      detailSnap: detailSnap ?? "half",
+    });
+    navigate({ to: "/", search: {}, replace: true });
+  }, [detailSnap, navigate, openLockerDetailById, openLockerId]);
 
   const openSearchPlaceList = useCallback(
     (
@@ -1380,6 +1439,7 @@ function IndexPage() {
           onFavoriteChange={favoriteSession.handleDetailFavoriteChange}
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
+          snapPoint={lockerDetailOpensFull ? 44 : undefined}
         />
       ) : null}
 
