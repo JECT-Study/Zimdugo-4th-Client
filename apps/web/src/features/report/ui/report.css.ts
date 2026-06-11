@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { style } from "@vanilla-extract/css";
+import { keyframes, style } from "@vanilla-extract/css";
 
 export const reportContainer = style({
   width: "100%",
@@ -69,12 +69,85 @@ export const section = style({
   gap: "14px",
 });
 
+export const classificationSection = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "32px",
+  width: "100%",
+});
+
+export const sectionTitleRow = style({
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: vars.spacing[8],
+  width: "100%",
+});
+
+export const sectionTitleLabel = style({
+  flex: "0 0 auto",
+  width: "auto",
+});
+
+export const sectionErrorTextBottom = style({
+  margin: 0,
+  marginTop: vars.spacing[8],
+  fontSize: vars.typography.fontSize[12],
+  lineHeight: vars.typography.lineHeight.normal,
+  minHeight: vars.typography.lineHeight.normal,
+  color: vars.color.palette.red[300],
+  textAlign: "center",
+});
+
+export const sectionErrorTextInline = style({
+  margin: 0,
+  flex: "1 1 auto",
+  minWidth: 0,
+  alignSelf: "center",
+  fontSize: vars.typography.fontSize[12],
+  lineHeight: vars.typography.lineHeight.normal,
+  color: vars.color.palette.red[300],
+  textAlign: "right",
+  wordBreak: "keep-all",
+});
+
+/** 하단 에러 영역과 동일한 높이 — 제목 옆 배치 시 섹션 간 gap 유지용 */
+export const sectionErrorReserve = style({
+  margin: 0,
+  marginTop: vars.spacing[8],
+  fontSize: vars.typography.fontSize[12],
+  lineHeight: vars.typography.lineHeight.normal,
+  minHeight: vars.typography.lineHeight.normal,
+  flexShrink: 0,
+});
+
+/** @deprecated 롤백용 — `sectionErrorTextBottom` 또는 `sectionErrorTextInline` 사용 */
+export const sectionErrorText = sectionErrorTextBottom;
+
 export const sectionGap24 = style({
   marginTop: vars.spacing[24],
 });
 
 export const placeType = style({
   marginTop: 0,
+});
+
+export const indoorOutdoorControl = style({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: vars.spacing[16],
+  width: "256px",
+  maxWidth: "100%",
+  margin: "0 auto",
+  padding: 0,
+  border: 0,
+  minInlineSize: 0,
+});
+
+export const indoorOutdoorChip = style({
+  width: "120px",
+  maxWidth: "calc(50% - 8px)",
 });
 
 export const photoSectionContent = style({
@@ -349,6 +422,10 @@ export const photoUploadArea = style([
         flex: "0 0 343px",
         width: REPORT_PHOTO_TILE_MIN_WIDTH,
       },
+      "&:disabled": {
+        cursor: "not-allowed",
+        opacity: 0.5,
+      },
     },
   },
 ]);
@@ -389,7 +466,37 @@ export const imageDeleteButton = style({
     "&:hover": {
       backgroundColor: "rgba(0, 0, 0, 0.7)",
     },
+    "&:disabled": {
+      cursor: "not-allowed",
+      opacity: 0.5,
+    },
   },
+});
+
+const photoUploadSpinner = keyframes({
+  from: { transform: "rotate(0deg)" },
+  to: { transform: "rotate(360deg)" },
+});
+
+export const photoPreviewUploadOverlay = style({
+  position: "absolute",
+  inset: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "rgba(22, 24, 28, 0.08)",
+  backdropFilter: "blur(2px)",
+  zIndex: 5,
+});
+
+export const photoPreviewUploadSpinner = style({
+  width: "24px",
+  height: "24px",
+  borderRadius: "9999px",
+  border: "3px solid #DEE2E6",
+  borderTopColor: "#495057",
+  animation: `${photoUploadSpinner} 0.8s linear infinite`,
+  backgroundColor: "rgba(255, 255, 255, 0.78)",
 });
 
 export const miniMapContainer = style({
@@ -431,10 +538,88 @@ export const guideText = style({
   fontSize: "14px",
 });
 
-export const agreementSection = style({});
+export const agreementSection = style({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  gap: vars.spacing[8],
+});
+
+export const agreementCheckRow = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.spacing[8],
+  selectors: {
+    '&[data-disabled="true"]': {
+      cursor: "not-allowed",
+    },
+  },
+});
+
+export const agreementLabel = style({
+  color: vars.color.text.surface,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: "1.2",
+  selectors: {
+    [`${agreementCheckRow}[data-disabled="true"] &`]: {
+      opacity: 0.5,
+    },
+  },
+});
+
+export const privacyPolicyLink = style({
+  color: vars.color.palette.gray[600],
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: "1.2",
+  textDecorationLine: "underline",
+  textUnderlinePosition: "from-font",
+  background: "none",
+  border: "none",
+  padding: 0,
+  cursor: "pointer",
+});
+
+export const photoAgreementGroup = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+});
 
 export const nextButton = style({
   width: "100%",
+});
+
+export const submitActionFrame = style({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: vars.spacing[16],
+  width: "100%",
+});
+
+export const submitSubButton = style({
+  margin: 0,
+  width: "auto",
+  minHeight: "auto",
+  padding: 0,
+  color: "#8E8E8E",
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: "1.2",
+  letterSpacing: 0,
+  textAlign: "center",
+  textDecorationLine: "underline",
+  textUnderlinePosition: "from-font",
+  whiteSpace: "nowrap",
+  backgroundColor: "transparent",
+  selectors: {
+    "&[data-disabled]": {
+      opacity: 0.5,
+      cursor: "not-allowed",
+    },
+  },
 });
 
 export const priceRow = style({

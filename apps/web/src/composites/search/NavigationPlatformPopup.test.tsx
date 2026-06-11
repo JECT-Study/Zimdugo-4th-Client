@@ -37,7 +37,7 @@ describe("NavigationPlatformPopup", () => {
     vi.restoreAllMocks();
   });
 
-  it("네이버맵·구글맵스 길찾기 선택지를 렌더링한다", () => {
+  it("카카오맵·구글맵스 길찾기 선택지를 렌더링한다", () => {
     render(
       <NavigationPlatformPopup
         isOpen
@@ -48,7 +48,7 @@ describe("NavigationPlatformPopup", () => {
 
     expect(screen.getByText("어떤 지도로 길찾기 할까요?")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "네이버맵으로 길찾기" }),
+      screen.getByRole("button", { name: "카카오맵으로 길찾기" }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "구글맵스로 길찾기" }),
@@ -57,20 +57,20 @@ describe("NavigationPlatformPopup", () => {
 
   it("출발지·도착지 좌표로 길찾기 URL을 만든다", () => {
     expect(
-      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("map.naver.com/p/directions/");
+    ).toContain("map.kakao.com/link/from/");
     expect(
-      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("14130495.411131293,4516877.948521413");
+    ).toContain("/to/");
     expect(
-      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain(",,ADDRESS");
+    ).not.toContain("/by/");
     expect(
       getNavigationPlatformUrl("google", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,

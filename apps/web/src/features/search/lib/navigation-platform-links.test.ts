@@ -12,7 +12,6 @@ import {
   openNavigationPlatformLinks,
   resolveNavigationOrigin,
   resolveNavigationOriginWithPermissionRequest,
-  wgs84ToEpsg3857,
 } from "./navigation-platform-links";
 
 const LOCKER_WITHOUT_COORDS: LockerDetailItem = {
@@ -163,84 +162,37 @@ describe("navigation-platform-links", () => {
     ).toBe(links?.webUrl ?? null);
   });
 
-  it("네이버 지도 웹 길찾기는 WGS84를 EPSG:3857로 변환해 ADDRESS 세그먼트를 만든다", () => {
-    const cityHall = wgs84ToEpsg3857(37.5666103, 126.9783882);
-
-    expect(cityHall.x).toBeCloseTo(14135169.516, 2);
-    expect(cityHall.y).toBeCloseTo(4518382, 2);
-
-    expect(
-      wgs84ToEpsg3857(
-        LOCKER_WITH_COORDS.latitude!,
-        LOCKER_WITH_COORDS.longitude!,
-      ),
-    ).toEqual({
-      x: 14130495.411131293,
-      y: 4516877.948521413,
-    });
-  });
-
-  it("네이버맵 iOS는 출발지·도착지가 포함된 길찾기 앱 스킴을 만든다", () => {
-    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
+  it("카카오맵은 map.kakao.com/link 웹 URL을 사용한다", () => {
+    const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });
 
-    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
-    expect(links?.webUrl).toContain("14130495.411131293,4516877.948521413");
-    expect(links?.webUrl).toContain(",,ADDRESS");
-    expect(links?.appUrl).toContain("nmap://route/public?");
-    expect(links?.appUrl).not.toMatch(/route\/public\?[^#]*\?/);
-    expect(links?.appUrl).toContain(`slat=${CURRENT_ORIGIN.lat.toFixed(7)}`);
-    expect(links?.appUrl).toContain(`slng=${CURRENT_ORIGIN.lng.toFixed(7)}`);
-    expect(links?.appUrl).toContain("dlat=37.5559000");
-    expect(links?.appUrl).toContain("dlng=126.9364000");
-    expect(decodeURIComponent(links?.appUrl ?? "")).toContain("현재 위치");
-    expect(decodeURIComponent(links?.appUrl ?? "")).toContain(
-      LOCKER_WITH_COORDS.address,
-    );
-    expect(decodeURIComponent(links?.appUrl ?? "")).toContain(WEB_ORIGIN);
+    expect(links?.appUrl).toBe(links?.webUrl);
+    expect(links?.webUrl).toContain("map.kakao.com/link/from/");
+    expect(links?.webUrl).toContain("/to/");
+    expect(links?.webUrl).not.toContain("m.map.kakao.com/scheme/route");
+    expect(links?.webUrl).not.toContain("nmap://");
+    expect(links?.webUrl).not.toContain("intent://");
   });
 
-  it("네이버맵 Android는 intent URL과 browser_fallback_url을 포함한다", () => {
-    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
+  it("카카오맵 Android도 map.kakao.com/link 웹 URL을 사용한다", () => {
+    const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(resolveNavigationOrigin(null)),
       userAgent: "Mozilla/5.0 (Linux; Android 14)",
     });
 
-    expect(links?.appUrl).toContain("intent://route/public?");
-    expect(links?.appUrl).toContain(`slat=${DEFAULT_NAVIGATION_ORIGIN.lat}`);
-    expect(links?.appUrl).toContain("action=android.intent.action.VIEW");
-    expect(links?.appUrl).toContain("category=android.intent.category.BROWSABLE");
-    expect(links?.appUrl).toContain("scheme=nmap");
-    expect(links?.appUrl).toContain("package=com.nhn.android.nmap");
-    expect(links?.appUrl).toContain("browser_fallback_url=");
-    expect(decodeURIComponent(links?.appUrl ?? "")).toContain(
-      links?.webUrl ?? "",
+    expect(links?.appUrl).toBe(links?.webUrl);
+    expect(links?.webUrl).toContain("map.kakao.com/link/from/");
+    expect(links?.webUrl).toContain(
+      encodeURIComponent(DEFAULT_NAVIGATION_ORIGIN.label),
     );
-    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
-    expect(links?.webUrl).toContain("14130495.411131293,4516877.948521413");
-    expect(links?.webUrl).toContain(",,ADDRESS");
   });
 
-  it("네이버맵 데스크톱 웹도 p/directions 길찾기 URL을 만든다", () => {
-    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
-      ...linkOptions(),
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    });
-
-    const originEpsg = wgs84ToEpsg3857(CURRENT_ORIGIN.lat, CURRENT_ORIGIN.lng);
-
-    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
-    expect(links?.webUrl).toContain(`${originEpsg.x},${originEpsg.y}`);
-    expect(links?.webUrl).toContain("14130495.411131293,4516877.948521413");
-    expect(links?.webUrl).toContain("/-/transit");
-  });
-
-  it("길찾기 열기는 모바일·데스크톱 모두 웹 URL을 사용한다", () => {
+  it("길찾기 열기는 데스크톱에서 웹 URL을 사용한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks(
-      "naver",
+      "kakao",
       LOCKER_WITH_COORDS,
       linkOptions(),
     );
@@ -251,9 +203,9 @@ describe("navigation-platform-links", () => {
     expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 
-  it("Android UA에서도 길찾기 열기는 웹 URL을 사용한다", () => {
+  it("Android UA에서도 웹 URL을 사용한다", () => {
     const assign = vi.fn();
-    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
+    const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (Linux; Android 14)",
     });
@@ -264,9 +216,9 @@ describe("navigation-platform-links", () => {
     expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 
-  it("iOS UA에서도 길찾기 열기는 웹 URL을 사용한다", () => {
+  it("iOS UA에서도 웹 URL을 사용한다", () => {
     const assign = vi.fn();
-    const links = getNavigationPlatformLinks("naver", LOCKER_WITH_COORDS, {
+    const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });

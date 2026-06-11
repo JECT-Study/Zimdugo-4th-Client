@@ -1,15 +1,28 @@
 import { m } from "@repo/i18n";
 import { type ChangeEvent, useCallback, useRef, useState } from "react";
-import { MAX_REPORT_PHOTO_SIZE_BYTES } from "#/features/report/model/useReportForm";
-import { readImageFileAsDataUrl } from "#/features/my/lib/read-image-file-as-data-url";
 import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
+import {
+  ProfilePhotoUploadValidationError,
+  uploadProfilePhoto,
+} from "#/features/my/lib/upload-profile-photo";
+import type { ProfilePhotoValidationError } from "#/features/my/lib/validate-profile-photo-file";
+import { useAuthStore } from "#/shared/store/authStore";
+
+const getProfilePhotoValidationMessage = (
+  error: ProfilePhotoValidationError,
+): string =>
+  error === "invalid_type"
+    ? m.my_profile_image_invalid()
+    : m.report_photo_max_size_exceeded();
 
 export function useProfileImageChange() {
+  const userId = useAuthStore((state) => state.userId);
   const [isConfirmPopupOpen, setIsConfirmPopupOpen] = useState(false);
   const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { mutate: updateProfile, isPending: isUpdatingProfileImage } =
+  const { mutateAsync: updateProfile, isPending: isUpdatingProfileImage } =
     useUpdateMeProfile();
 
   const openConfirmPopup = useCallback(() => {
@@ -26,39 +39,28 @@ export function useProfileImageChange() {
       const file = event.target.files?.[0];
       event.target.value = "";
 
-      if (!file) {
+      if (!file || userId == null) {
         return;
       }
 
-      if (!file.type.startsWith("image/")) {
-        setErrorMessage(m.my_profile_image_invalid());
-        setIsErrorPopupOpen(true);
-        return;
-      }
-
-      if (file.size > MAX_REPORT_PHOTO_SIZE_BYTES) {
-        setErrorMessage(m.report_photo_max_size_exceeded());
-        setIsErrorPopupOpen(true);
-        return;
-      }
-
+      setIsUploadingProfileImage(true);
       try {
-        const profileImageUrl = await readImageFileAsDataUrl(file);
-        updateProfile(
-          { profileImageUrl },
-          {
-            onError: () => {
-              setErrorMessage(m.my_profile_image_update_failed());
-              setIsErrorPopupOpen(true);
-            },
-          },
-        );
-      } catch {
-        setErrorMessage(m.my_profile_image_read_failed());
+        const profileImageUrl = await uploadProfilePhoto(userId, file);
+
+        await updateProfile({ profileImageUrl });
+      } catch (error) {
+        if (error instanceof ProfilePhotoUploadValidationError) {
+          setErrorMessage(getProfilePhotoValidationMessage(error.code));
+        } else {
+          setErrorMessage(m.my_profile_image_update_failed());
+        }
+
         setIsErrorPopupOpen(true);
+      } finally {
+        setIsUploadingProfileImage(false);
       }
     },
-    [updateProfile],
+    [updateProfile, userId],
   );
 
   return {
@@ -68,7 +70,7 @@ export function useProfileImageChange() {
     setIsErrorPopupOpen,
     errorMessage,
     fileInputRef,
-    isUpdatingProfileImage,
+    isUpdatingProfileImage: isUploadingProfileImage || isUpdatingProfileImage,
     openConfirmPopup,
     handleConfirmChange,
     handleFileChange,

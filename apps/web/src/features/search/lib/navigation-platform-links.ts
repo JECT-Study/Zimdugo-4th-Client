@@ -2,7 +2,7 @@ import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomShe
 import { m } from "@repo/i18n";
 import { getCurrentMapCoordinates } from "#/entities/map/model/current-location";
 
-export type NavigationPlatform = "naver" | "google";
+export type NavigationPlatform = "kakao" | "google";
 
 export type NavigationPoint = {
   lat: number;
@@ -29,18 +29,12 @@ export const DEFAULT_NAVIGATION_ORIGIN: NavigationPoint = {
   label: "강남역 11번 출구",
 };
 
-const NAVER_MAP_ANDROID_PACKAGE = "com.nhn.android.nmap";
-const DEFAULT_WEB_ORIGIN = "https://zimdugo.com";
-
 /** 길찾기 출발지 결정용 GPS 옵션 (모바일 콜드 스타트 고려) */
 export const NAVIGATION_ORIGIN_POSITION_OPTIONS: PositionOptions = {
   enableHighAccuracy: false,
   maximumAge: 60_000,
   timeout: 5_000,
 };
-
-const isAndroidUserAgent = (userAgent: string): boolean =>
-  /Android/i.test(userAgent);
 
 export const hasNavigationDestination = (
   locker: LockerDetailItem,
@@ -134,86 +128,21 @@ export const getLockerNavigationDestination = (
   };
 };
 
-const resolveWebOrigin = (webOrigin?: string): string => {
-  if (webOrigin) {
-    return webOrigin;
-  }
-
-  if (typeof window !== "undefined" && window.location.origin) {
-    return window.location.origin;
-  }
-
-  return DEFAULT_WEB_ORIGIN;
-};
-
-const NAVER_WEB_COORDINATE_SCALE = 20037508.342789244;
-const NAVER_WEB_LATITUDE_LIMIT = 85.05112878;
-
 const formatNavigationCoordinate = (value: number): string =>
-  value.toFixed(7);
+  value.toFixed(5);
 
-/** 네이버 지도 웹 길찾기 URL은 WGS84가 아닌 EPSG:3857 좌표를 사용한다. */
-export const wgs84ToEpsg3857 = (
-  lat: number,
-  lng: number,
-): { x: number; y: number } => {
-  const clampedLat = Math.max(
-    Math.min(lat, NAVER_WEB_LATITUDE_LIMIT),
-    -NAVER_WEB_LATITUDE_LIMIT,
-  );
-  const x = (lng * NAVER_WEB_COORDINATE_SCALE) / 180;
-  const y =
-    (Math.log(Math.tan(((90 + clampedLat) * Math.PI) / 360)) *
-      NAVER_WEB_COORDINATE_SCALE) /
-    Math.PI;
-
-  return { x, y };
-};
-
-const buildNaverRouteQuery = (
-  origin: NavigationPoint,
-  destination: NavigationPoint,
-  appName: string,
-): string =>
+const buildKakaoRoutePoint = (point: NavigationPoint): string =>
   [
-    `slat=${formatNavigationCoordinate(origin.lat)}`,
-    `slng=${formatNavigationCoordinate(origin.lng)}`,
-    `sname=${encodeURIComponent(origin.label)}`,
-    `dlat=${formatNavigationCoordinate(destination.lat)}`,
-    `dlng=${formatNavigationCoordinate(destination.lng)}`,
-    `dname=${encodeURIComponent(destination.label)}`,
-    `appname=${encodeURIComponent(appName)}`,
-  ].join("&");
+    encodeURIComponent(point.label),
+    formatNavigationCoordinate(point.lat),
+    formatNavigationCoordinate(point.lng),
+  ].join(",");
 
-const buildNaverAppPath = (
-  origin: NavigationPoint,
-  destination: NavigationPoint,
-  appName: string,
-): string => `route/public?${buildNaverRouteQuery(origin, destination, appName)}`;
-
-const buildNaverAppUrl = (appPath: string): string => `nmap://${appPath}`;
-
-const buildNaverAndroidIntentUrl = (
-  appPath: string,
-  webUrl: string,
-): string => {
-  const fallback = encodeURIComponent(webUrl);
-  return `intent://${appPath}#Intent;scheme=nmap;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=${NAVER_MAP_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
-};
-
-const buildNaverWebDirectionsSegment = (point: NavigationPoint): string => {
-  const { x, y } = wgs84ToEpsg3857(point.lat, point.lng);
-
-  return [String(x), String(y), encodeURIComponent(point.label), "", "ADDRESS"].join(
-    ",",
-  );
-};
-
-const buildNaverWebUrl = (
+const buildKakaoWebUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
 ): string =>
-  `https://map.naver.com/p/directions/${buildNaverWebDirectionsSegment(origin)}/${buildNaverWebDirectionsSegment(destination)}/-/transit`;
+  `https://map.kakao.com/link/from/${buildKakaoRoutePoint(origin)}/to/${buildKakaoRoutePoint(destination)}`;
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
@@ -246,25 +175,13 @@ export const getNavigationPlatformLinks = (
   }
 
   const { navigationOrigin } = options;
-  const webOrigin = resolveWebOrigin(options.webOrigin);
-  const userAgent =
-    options.userAgent ??
-    (typeof navigator !== "undefined" ? navigator.userAgent : "");
+
   const webUrl =
-    platform === "naver"
-      ? buildNaverWebUrl(navigationOrigin, destination)
+    platform === "kakao"
+      ? buildKakaoWebUrl(navigationOrigin, destination)
       : buildGoogleWebUrl(navigationOrigin, destination);
 
-  if (platform === "google") {
-    return { appUrl: webUrl, webUrl };
-  }
-
-  const appPath = buildNaverAppPath(navigationOrigin, destination, webOrigin);
-  const appUrl = isAndroidUserAgent(userAgent)
-    ? buildNaverAndroidIntentUrl(appPath, webUrl)
-    : buildNaverAppUrl(appPath);
-
-  return { appUrl, webUrl };
+  return { appUrl: webUrl, webUrl };
 };
 
 export const getNavigationPlatformUrl = (
@@ -278,7 +195,6 @@ type OpenNavigationOptions = {
   assign?: (url: string) => void;
 };
 
-/** 모바일 브라우저(Android/iOS)에서는 nmap/intent가 검색 앱 등으로 잘못 연결될 수 있어 웹 URL만 연다. */
 export const openNavigationPlatformLinks = (
   links: NavigationPlatformLinks,
   options: OpenNavigationOptions = {},

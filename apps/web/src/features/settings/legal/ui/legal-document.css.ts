@@ -63,16 +63,3 @@ export const paragraph = style({
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: "1.2",
 });
-
-export const noticeText = style({
-  margin: `0 0 ${vars.spacing[16]}`,
-  color: vars.color.palette.red[300],
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: "1.2",
-});
-
-export const noticeEmphasis = style({
-  textDecoration: "underline",
-  textUnderlineOffset: "2px",
-});

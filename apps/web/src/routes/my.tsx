@@ -132,7 +132,7 @@ function MyPage() {
             ref={fileInputRef}
             className={hiddenFileInput}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
             onChange={(event) => {
               void handleFileChange(event);
             }}
