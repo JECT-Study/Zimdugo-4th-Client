@@ -1074,6 +1074,7 @@ function IndexPage() {
 
   const handleBackFromDetail = useCallback(async () => {
     await flushFavoriteChanges();
+    setLockerDetailOpensFull(false);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setIsNavigationPopupOpen(false);
@@ -1526,7 +1527,7 @@ function IndexPage() {
           onFavoriteChange={favoriteSession.handleDetailFavoriteChange}
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
-          snapPoint={lockerDetailOpensFull ? 44 : undefined}
+          initialSnapPoint={lockerDetailOpensFull ? 44 : undefined}
         />
       ) : null}
 

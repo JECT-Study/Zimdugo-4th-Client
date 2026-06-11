@@ -91,6 +91,8 @@ export interface LockerDetailBottomSheetProps {
   onNavigate?: (item: LockerDetailItem) => void;
   minSnapPoint?: number;
   snapPoint?: number;
+  /** 풀 스냅으로 열 때만 지정. 하프 스냅은 snapPoint에 유지 */
+  initialSnapPoint?: number;
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
 }
@@ -167,6 +169,7 @@ export function LockerDetailBottomSheet({
   onNavigate,
   minSnapPoint,
   snapPoint,
+  initialSnapPoint,
   maxSnapPoint,
   onSnapChange,
 }: LockerDetailBottomSheetProps) {
@@ -174,9 +177,12 @@ export function LockerDetailBottomSheet({
     typeof window !== "undefined" ? window.innerHeight : 812,
   );
   const resolvedSnapPoint = snapPoint ?? Math.max(44, windowHeight - 380);
+  const resolvedInitialSnapPoint = initialSnapPoint ?? resolvedSnapPoint;
   const resolvedMinSnapPoint = minSnapPoint ?? 44;
   const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 52;
-  const [currentSnapPoint, setCurrentSnapPoint] = useState(resolvedSnapPoint);
+  const [currentSnapPoint, setCurrentSnapPoint] = useState(
+    resolvedInitialSnapPoint,
+  );
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
@@ -207,8 +213,8 @@ export function LockerDetailBottomSheet({
   };
 
   useEffect(() => {
-    setCurrentSnapPoint(resolvedSnapPoint);
-  }, [resolvedSnapPoint]);
+    setCurrentSnapPoint(resolvedInitialSnapPoint);
+  }, [locker.lockerId, resolvedInitialSnapPoint]);
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
@@ -218,7 +224,9 @@ export function LockerDetailBottomSheet({
 
   return (
     <DraggableBottomSheet
+      key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
       snapPoint={resolvedSnapPoint}
+      initialSnapPoint={initialSnapPoint}
       minSnapPoint={resolvedMinSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       onSnapChange={handleSnapChange}
