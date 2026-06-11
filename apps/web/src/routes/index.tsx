@@ -159,6 +159,14 @@ function IndexPage() {
   const { openLockerId, detailSnap, focusLat, focusLng } = Route.useSearch();
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
+  const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+  const mapInitialCenter = useMemo(() => {
+    if (focusLat != null && focusLng != null) {
+      return { lat: focusLat, lng: focusLng };
+    }
+
+    return deepLinkMapCenterRef.current;
+  }, [focusLat, focusLng]);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
     lat: number;
@@ -397,6 +405,18 @@ function IndexPage() {
   const handleMapLoad = useCallback((map: naver.maps.Map | null) => {
     mapInstanceRef.current = map;
     setMapInstance(map);
+
+    const pin = pendingDeepLinkFocusPinRef.current;
+    if (!map || !pin) {
+      return;
+    }
+
+    focusNaverMapOnCoordinates({
+      map,
+      coordinates: { lat: pin.latitude, lng: pin.longitude },
+      bottomInsetPx: getDetailFocusBottomInsetPx(),
+    });
+    pendingDeepLinkFocusPinRef.current = null;
   }, []);
 
   const resetMapContext = useCallback(async () => {
@@ -855,6 +875,10 @@ function IndexPage() {
           : undefined;
 
       if (pin) {
+        deepLinkMapCenterRef.current = {
+          lat: pin.latitude,
+          lng: pin.longitude,
+        };
         setContext("map");
         setMapDetailBack("idle");
         setSelectedMapPin(pin);
@@ -931,6 +955,7 @@ function IndexPage() {
     }
 
     setLockerDetailQueryOrigin(null);
+    deepLinkMapCenterRef.current = null;
   }, [activeLockerId, sheetMode]);
 
   const handleIdlePinSelect = useCallback(
@@ -1387,6 +1412,7 @@ function IndexPage() {
           onLoad={handleMapLoad}
           onLoadingChange={setIsMapLoading}
           onErrorChange={setHasMapError}
+          initialCenter={mapInitialCenter}
         />
         <MyLocationMarker
           map={mapInstance}
