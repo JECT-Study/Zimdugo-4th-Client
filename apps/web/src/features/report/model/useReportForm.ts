@@ -31,7 +31,9 @@ import {
   scrollToEarliestReportSection,
   scrollToReportSection,
 } from "#/features/report/lib/scroll-to-report-section";
+import { updateMyLockerReport } from "#/features/my/api/my-locker-report-mutations";
 import { postLockerReport } from "#/features/report/api/create-locker-report";
+import { consumeReportEditSession } from "#/features/report/lib/report-edit-session";
 import {
   clearReportPrivacyNavigationHold,
   consumeReportPrivacyNavigationState,
@@ -130,6 +132,7 @@ export function useReportForm(): {
   const [submitErrorMessage, setSubmitErrorMessage] = useState("");
   const [photoErrorMessage, setPhotoErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<number | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [minPriceDisplay, setMinPriceDisplay] = useState("");
   const [maxPriceDisplay, setMaxPriceDisplay] = useState("");
@@ -188,7 +191,29 @@ export function useReportForm(): {
       setUploadedImages(restored.uploadedImages);
       selectedPhotoFileRef.current = restored.selectedPhotoFile;
       clearReportPrivacyNavigationHold();
+      return;
     }
+
+    const editSession = consumeReportEditSession();
+    if (!editSession) {
+      return;
+    }
+
+    setEditingReportId(editSession.reportId);
+    form.reset(editSession.values);
+    setMinPriceDisplay(
+      editSession.values.minPrice != null
+        ? formatPriceInput(String(editSession.values.minPrice))
+        : "",
+    );
+    setMaxPriceDisplay(
+      editSession.values.maxPrice != null
+        ? formatPriceInput(String(editSession.values.maxPrice))
+        : "",
+    );
+    setUploadedImages(
+      editSession.values.imageUrl ? [editSession.values.imageUrl] : [],
+    );
   }, [form]);
 
   useEffect(() => {
@@ -372,7 +397,13 @@ export function useReportForm(): {
         }
 
         const payload = normalizeReportPayload({ ...data, imageUrl });
-        await postLockerReport(payload, { userId });
+
+        if (editingReportId != null) {
+          await updateMyLockerReport(editingReportId, payload);
+        } else {
+          await postLockerReport(payload, { userId });
+        }
+
         setIsPopupOpen(true);
       } catch (error) {
         const failure = parseReportSubmitFailure(error);
@@ -414,7 +445,7 @@ export function useReportForm(): {
         setIsSubmitting(false);
       }
     },
-    [form, userId],
+    [editingReportId, form, userId],
   );
 
   const scrollToFirstFieldError = useCallback(

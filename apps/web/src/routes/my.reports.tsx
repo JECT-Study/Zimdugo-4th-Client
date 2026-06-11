@@ -2,21 +2,27 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
-import type { UseQueryResult } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
-import { ReportListItem } from "#/entities/report";
+import {
+  ReportDetailViewerModal,
+  type ReportDetailViewerLoadState,
+  ReportListItem,
+} from "#/entities/report";
+import { deleteMyLockerReport } from "#/features/my/api/my-locker-report-mutations";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
-import { useReportHistoryList } from "#/features/my/hooks/useReportHistoryList";
+import {
+  REPORT_HISTORY_LIST_QUERY_KEY,
+  useReportHistoryList,
+} from "#/features/my/hooks/useReportHistoryList";
+import { MY_PAGE_SUMMARY_QUERY_KEY } from "#/features/my/hooks/useMyPageSummary";
+import { mapReportDetailToFormValues } from "#/features/my/lib/map-report-detail-to-form";
 import { formatReportListDetailText } from "#/features/my/lib/format-report-list-labels";
-import { formatReportDetailRows } from "#/features/my/lib/format-report-detail-labels";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { summaryText } from "#/features/my/ui/my-list.css.ts";
-import {
-  getMyLockerReportDetail,
-  type MyLockerReportDetail,
-} from "#/shared/api/my-page";
+import { stashReportEditSession } from "#/features/report/lib/report-edit-session";
+import { getMyLockerReportDetail } from "#/shared/api/my-page";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
 import { requireAuthenticatedMyRoute } from "./-my-auth";
 import {
@@ -34,42 +40,45 @@ export const Route = createFileRoute("/my/reports")({
   component: MyReportsPage,
 });
 
-const buildReportDetailHelperText = (
-  detailQuery: UseQueryResult<MyLockerReportDetail>,
-) => {
-  if (detailQuery.isPending) {
-    return m.my_summary_loading();
-  }
-
-  if (detailQuery.isError) {
-    return m.my_list_error_title();
-  }
-
-  if (!detailQuery.data) {
-    return undefined;
-  }
-
-  const detail = detailQuery.data;
-  const rows = formatReportDetailRows(detail);
-  const lines = [
-    detail.roadAddress,
-    "",
-    ...rows.map((row) => `${row.label}: ${row.value}`),
-  ];
-
-  return lines.join("\n");
-};
+const MY_REPORT_DETAIL_QUERY_KEY = "my-report-detail";
 
 function MyReportsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const listQuery = useReportHistoryList();
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [deleteTargetReportId, setDeleteTargetReportId] = useState<
+    number | null
+  >(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
+    null,
+  );
 
   const detailQuery = useQuery({
-    queryKey: ["my-report-detail", selectedReportId],
+    queryKey: [MY_REPORT_DETAIL_QUERY_KEY, selectedReportId],
     queryFn: ({ signal }) =>
       getMyLockerReportDetail(selectedReportId!, signal),
     enabled: selectedReportId != null,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (reportId: number) => deleteMyLockerReport(reportId),
+    onSuccess: async () => {
+      setSelectedReportId(null);
+      setDeleteTargetReportId(null);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [REPORT_HISTORY_LIST_QUERY_KEY],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [MY_PAGE_SUMMARY_QUERY_KEY],
+        }),
+      ]);
+    },
+    onError: () => {
+      setDeleteTargetReportId(null);
+      setDeleteErrorMessage(m.my_report_detail_delete_failed());
+    },
   });
 
   const items = listQuery.data?.pages.flatMap((page) => page.items) ?? [];
@@ -99,13 +108,61 @@ function MyReportsPage() {
     setSelectedReportId(reportId);
   };
 
-  const handlePopupOpenChange = (open: boolean) => {
-    if (!open) setSelectedReportId(null);
+  const handleViewerOpenChange = (open: boolean) => {
+    if (!open) {
+      setSelectedReportId(null);
+    }
   };
 
-  const handleConfirmPopup = () => {
+  const handleEditReport = () => {
+    if (!detailQuery.data) {
+      return;
+    }
+
+    stashReportEditSession({
+      reportId: detailQuery.data.reportId,
+      values: mapReportDetailToFormValues(detailQuery.data),
+    });
     setSelectedReportId(null);
+    navigate({ to: "/report" });
   };
+
+  const handleDeleteRequest = () => {
+    if (selectedReportId == null) {
+      return;
+    }
+
+    setDeleteTargetReportId(selectedReportId);
+  };
+
+  const handleDeletePopupOpenChange = (open: boolean) => {
+    if (!open && !deleteMutation.isPending) {
+      setDeleteTargetReportId(null);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetReportId == null) {
+      return;
+    }
+
+    deleteMutation.mutate(deleteTargetReportId);
+  };
+
+  const handleDeleteErrorPopupOpenChange = (open: boolean) => {
+    if (!open) {
+      setDeleteErrorMessage(null);
+    }
+  };
+
+  const viewerLoadState: ReportDetailViewerLoadState =
+    selectedReportId == null
+      ? "idle"
+      : detailQuery.isPending
+        ? "loading"
+        : detailQuery.isError
+          ? "error"
+          : "ready";
 
   const isInitialLoading = listQuery.isPending;
   const isError = listQuery.isError && items.length === 0;
@@ -189,14 +246,39 @@ function MyReportsPage() {
         ) : null}
       </main>
 
-      <Popup
+      <ReportDetailViewerModal
         isOpen={selectedReportId != null}
-        onOpenChange={handlePopupOpenChange}
+        onOpenChange={handleViewerOpenChange}
         titleText={detailQuery.data?.lockerName ?? m.my_report_history_title()}
-        helperText={buildReportDetailHelperText(detailQuery)}
+        detail={detailQuery.data ?? null}
+        loadState={viewerLoadState}
+        onEdit={handleEditReport}
+        onDelete={handleDeleteRequest}
+        isDeletePending={deleteMutation.isPending}
+      />
+
+      <Popup
+        isOpen={deleteTargetReportId != null}
+        onOpenChange={handleDeletePopupOpenChange}
+        titleText={m.my_report_detail_delete_title()}
+        helperText={m.my_report_detail_delete_helper()}
+        primaryAction={{
+          label: m.my_report_detail_delete_confirm(),
+          onPress: handleConfirmDelete,
+        }}
+        secondaryAction={{
+          label: m.my_report_detail_delete_cancel(),
+          onPress: () => setDeleteTargetReportId(null),
+        }}
+      />
+
+      <Popup
+        isOpen={deleteErrorMessage != null}
+        onOpenChange={handleDeleteErrorPopupOpenChange}
+        titleText={deleteErrorMessage ?? ""}
         primaryAction={{
           label: m.common_confirm(),
-          onPress: handleConfirmPopup,
+          onPress: () => setDeleteErrorMessage(null),
         }}
       />
     </div>
