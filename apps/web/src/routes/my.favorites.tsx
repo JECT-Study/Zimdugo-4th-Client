@@ -16,6 +16,7 @@ import {
   childContent,
   childEmpty,
   childList,
+  childListItem,
   childLoadMoreSlot,
   childPage,
   header,
@@ -114,7 +115,7 @@ function MyFavoritesPage() {
           <section aria-label={m.my_favorites_list_aria()}>
             <ul className={childList}>
               {filteredItems.map((item, index) => (
-                <li key={item.lockerId}>
+                <li key={item.lockerId} className={childListItem}>
                   <FavoriteListItem
                     titleText={item.lockerName}
                     distanceLabel={

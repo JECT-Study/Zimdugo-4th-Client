@@ -1,13 +1,8 @@
 ﻿import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
-import {
-  IconMarker22,
-  IconStarFilled24,
-  IconStarOutline24,
-} from "@repo/ui/tokens/icons";
+import { IconStarFilled24, IconStarOutline24 } from "@repo/ui/tokens/icons";
 import {
   favoriteButton,
-  markerBadge,
   metaDot,
   metaRow,
   primaryMetaText,
@@ -52,9 +47,6 @@ export function FavoriteListItem({
 
   const content = (
     <>
-      <span className={markerBadge} aria-hidden="true">
-        <IconMarker22 size={24} />
-      </span>
       <span className={textColumn}>
         <span className={titleGroup}>
           <span className={titleLabel}>{titleText}</span>

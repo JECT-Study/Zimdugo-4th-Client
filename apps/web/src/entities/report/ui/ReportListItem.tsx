@@ -1,5 +1,4 @@
 ﻿import { Button } from "@repo/ui/components/button";
-import { IconNormalMapPin24 } from "@repo/ui/tokens/icons";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
 import {
   bodyRow,
@@ -7,8 +6,6 @@ import {
   detailColumn,
   helperText,
   imageFrameSlot,
-  locationIcon,
-  metaDot,
   metaRow,
   reportStatus,
   root,
@@ -53,7 +50,6 @@ export function ReportListItem({
         <span className={titleLabel}>{titleText}</span>
         <span className={metaRow}>
           <span>{locationLabel}</span>
-          <span className={metaDot} aria-hidden="true" />
           <span>{updatedLabel}</span>
         </span>
       </span>
@@ -70,9 +66,6 @@ export function ReportListItem({
           className={imageFrameSlot}
         />
         <span className={detailColumn}>
-          <span className={locationIcon} aria-hidden="true">
-            <IconNormalMapPin24 state="active" />
-          </span>
           <span className={helperText}>{detailText}</span>
         </span>
       </span>

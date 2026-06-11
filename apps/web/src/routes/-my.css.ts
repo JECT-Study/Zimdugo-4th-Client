@@ -159,6 +159,14 @@ export const childList = style({
   flexDirection: "column",
   gap: vars.spacing[8],
   width: "100%",
+  margin: 0,
+  padding: 0,
+  listStyle: "none",
+});
+
+export const childListItem = style({
+  width: "100%",
+  minWidth: 0,
 });
 
 export const childEmpty = style({

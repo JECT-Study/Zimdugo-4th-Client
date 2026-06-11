@@ -61,14 +61,6 @@ export const metaRow = style({
   whiteSpace: "nowrap",
 });
 
-export const metaDot = style({
-  width: "2px",
-  height: "2px",
-  flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.text.disable,
-});
-
 export const reportStatus = style({
   display: "inline-flex",
   alignItems: "center",
@@ -110,25 +102,15 @@ export const bodyRow = style({
 });
 
 export const detailColumn = style({
-  display: "grid",
-  gridTemplateColumns: "24px minmax(0, 1fr)",
+  display: "flex",
+  flexDirection: "column",
   alignContent: "start",
-  gap: vars.spacing[8],
   minWidth: 0,
   paddingTop: vars.spacing[4],
 });
 
 export const imageFrameSlot = style({
   gridColumn: "auto",
-});
-
-export const locationIcon = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "24px",
-  height: "24px",
-  flexShrink: 0,
 });
 
 export const helperText = style({

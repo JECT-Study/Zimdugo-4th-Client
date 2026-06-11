@@ -23,6 +23,7 @@ import {
   childContent,
   childEmpty,
   childList,
+  childListItem,
   childLoadMoreSlot,
   childPage,
   header,
@@ -153,7 +154,7 @@ function MyReportsPage() {
           <section aria-label={m.my_report_history_list_aria()}>
             <ul className={childList}>
               {items.map((item) => (
-                <li key={item.reportId}>
+                <li key={item.reportId} className={childListItem}>
                   <ReportListItem
                     titleText={item.lockerName}
                     locationLabel={item.roadAddress}
