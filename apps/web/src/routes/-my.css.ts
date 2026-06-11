@@ -97,7 +97,7 @@ export const menuRow = style({
   border: 0,
   borderBottom: `1px solid ${vars.color.border.hover}`,
   backgroundColor: "transparent",
-  cursor: "default",
+  cursor: "pointer",
   textAlign: "left",
   boxSizing: "border-box",
   selectors: {
