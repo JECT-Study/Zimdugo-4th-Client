@@ -7,8 +7,6 @@ import {
   documentBox,
   header,
   introText,
-  noticeEmphasis,
-  noticeText,
   page,
   paragraph,
   section,
@@ -51,23 +49,12 @@ export function LegalDocumentPage({
       <main className={content}>
         <p className={introText}>{legalDocument.intro}</p>
 
-        <p className={noticeText}>
-          {legalDocument.notice.prefix}
-          <span className={noticeEmphasis}>
-            {legalDocument.notice.emphasis}
-          </span>
-          {legalDocument.notice.suffix}
-        </p>
-
         <article className={documentBox}>
           {legalDocument.sections.map((item) => (
             <section key={item.title} className={section}>
               <h2 className={sectionTitle}>{item.title}</h2>
               {item.paragraphs.map((itemParagraph) => (
-                <p
-                  key={`${item.title}-${itemParagraph}`}
-                  className={paragraph}
-                >
+                <p key={`${item.title}-${itemParagraph}`} className={paragraph}>
                   {itemParagraph}
                 </p>
               ))}
