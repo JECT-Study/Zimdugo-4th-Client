@@ -281,7 +281,7 @@ export function useReportForm(): {
 
       setIsSubmitting(true);
       try {
-        let imageUrl: string | null = null;
+        let imageUrl: string | null = data.imageUrl;
         const selectedPhotoFile = selectedPhotoFileRef.current;
 
         if (selectedPhotoFile) {
