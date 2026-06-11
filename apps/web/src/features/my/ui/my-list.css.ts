@@ -124,8 +124,8 @@ export const undoToast = style({
   gap: vars.spacing[12],
   padding: `${vars.spacing[12]} ${vars.spacing[16]}`,
   borderRadius: vars.radius[8],
-  backgroundColor: vars.color.palette.gray[900],
-  color: vars.color.text.inverse,
+  backgroundColor: vars.color.palette.gray[800],
+  color: vars.color.text.white,
   boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
 });
 
@@ -139,7 +139,7 @@ export const undoToastMessage = style({
 export const undoToastAction = style({
   border: 0,
   background: "transparent",
-  color: vars.color.palette.lime[400],
+  color: vars.color.text.brand,
   fontSize: vars.typography.fontSize[14],
   fontWeight: vars.typography.fontWeight.SemiBold,
   cursor: "pointer",
