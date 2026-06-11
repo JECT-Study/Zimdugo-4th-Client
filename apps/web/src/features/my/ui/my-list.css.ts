@@ -144,6 +144,12 @@ export const undoToastAction = style({
   fontWeight: vars.typography.fontWeight.SemiBold,
   cursor: "pointer",
   whiteSpace: "nowrap",
+  selectors: {
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "2px",
+    },
+  },
 });
 
 export const reportDetailRow = style({
