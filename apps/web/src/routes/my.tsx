@@ -56,10 +56,10 @@ function MyPage() {
     pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
   const isMyRoot = normalizedPath === "/my";
 
-  if (!isMyRoot) {
-    return <Outlet />;
-  }
+  return isMyRoot ? <MyRootPage /> : <Outlet />;
+}
 
+function MyRootPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const userId = useAuthStore((state) => state.userId);
@@ -129,6 +129,14 @@ function MyPage() {
     logout();
   };
 
+  const handleOpenFavorites = () => {
+    navigate({ to: "/my/favorites" });
+  };
+
+  const handleOpenReports = () => {
+    navigate({ to: "/my/reports" });
+  };
+
   return (
     <div className={page}>
       <Header
@@ -174,12 +182,12 @@ function MyPage() {
           <MenuRow
             label={m.my_menu_favorite()}
             countLabel={favoriteCountLabel}
-            onPress={() => navigate({ to: "/my/favorites" })}
+            onPress={handleOpenFavorites}
           />
           <MenuRow
             label={m.my_menu_report_history()}
             countLabel={reportCountLabel}
-            onPress={() => navigate({ to: "/my/reports" })}
+            onPress={handleOpenReports}
           />
         </section>
 
