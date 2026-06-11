@@ -6,7 +6,7 @@ import { placeType, requiredMark, section } from "./report.css.ts";
 
 interface ReportTypeSectionBaseProps {
   title?: string;
-  showRequiredMark?: boolean;
+  isRequiredMarkVisible?: boolean;
 }
 
 interface ReportTypeSingleSectionProps extends ReportTypeSectionBaseProps {
@@ -29,7 +29,7 @@ type ReportTypeSectionProps =
 
 export function ReportTypeSection(props: ReportTypeSectionProps) {
   const isMultiple = props.selectionMode === "multiple";
-  const showRequiredMark = props.showRequiredMark ?? true;
+  const isRequiredMarkVisible = props.isRequiredMarkVisible ?? true;
   const title = props.title ?? m.report_section_type();
   const value = isMultiple
     ? props.lockerType
@@ -51,7 +51,9 @@ export function ReportTypeSection(props: ReportTypeSectionProps) {
     <section className={section}>
       <LabelTitle size="small">
         {title}
-        {showRequiredMark ? <span className={requiredMark}>*</span> : null}
+        {isRequiredMarkVisible ? (
+          <span className={requiredMark}>*</span>
+        ) : null}
       </LabelTitle>
       <div className={placeType}>
         <ControlChipGroup
