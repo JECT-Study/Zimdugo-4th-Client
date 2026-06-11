@@ -1,5 +1,6 @@
 import { m } from "@repo/i18n";
 import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
+import { formatLockerPriceLabel } from "#/shared/lib/locker-detail-labels";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
 
 const formatFloorLabel = (detail: MyLockerReportDetail): string => {
@@ -9,6 +10,10 @@ const formatFloorLabel = (detail: MyLockerReportDetail): string => {
 
   if (detail.floorNumber == null) {
     return "-";
+  }
+
+  if (detail.floorType == null) {
+    return `${detail.floorNumber}${m.report_history_item_floor_unit()}`;
   }
 
   const scopeLabel =
@@ -24,25 +29,10 @@ const formatPriceLabel = (detail: MyLockerReportDetail): string => {
     return m.report_price_free();
   }
 
-  if (detail.minPrice == null && detail.maxPrice == null) {
-    return m.locker_detail_price_not_provided();
-  }
-
-  if (
-    detail.minPrice != null &&
-    detail.maxPrice != null &&
-    detail.minPrice !== detail.maxPrice
-  ) {
-    return m.locker_detail_price_range({
-      min: String(detail.minPrice),
-      max: String(detail.maxPrice),
-    });
-  }
-
-  const price = detail.minPrice ?? detail.maxPrice;
-  return price == null
-    ? m.locker_detail_price_not_provided()
-    : `${price.toLocaleString()}원`;
+  return formatLockerPriceLabel(
+    detail.minPrice ?? undefined,
+    detail.maxPrice ?? undefined,
+  );
 };
 
 export const formatReportDetailRows = (detail: MyLockerReportDetail) => [
