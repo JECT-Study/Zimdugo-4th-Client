@@ -27,7 +27,7 @@ const SERVER_VALIDATION_MESSAGE_KEYS = {
 } as const;
 
 /** FE i18n·Zod 키 매핑. 매칭되지 않으면 서버 raw 문장/키를 그대로 반환한다. */
-export function getReportValidationMessage(message: string): string {
+export const getReportValidationMessage = (message: string): string => {
   const normalizedMessage = message.trim();
   if (!normalizedMessage) {
     return message;
@@ -63,4 +63,4 @@ export function getReportValidationMessage(message: string): string {
     default:
       return normalizedMessage;
   }
-}
+};
