@@ -24,6 +24,7 @@ import {
 } from "#/features/report/lib/upload-report-photo";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
+import { requiresExifConsent } from "#/features/report/lib/requires-exif-consent";
 import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
 import { collectErrorSectionIds, mergeErrorSectionIds } from "#/features/report/lib/report-field-errors";
 import {
@@ -209,6 +210,19 @@ export function useReportForm(): {
   const indoorOutdoorType = useWatch({ control, name: "indoorOutdoorType" });
   const locationConsentAgreed =
     useWatch({ control, name: "locationConsentAgreed" }) ?? false;
+  const imageUrl = useWatch({ control, name: "imageUrl" }) ?? null;
+
+  useEffect(() => {
+    if (
+      uploadedImages.length === 0 &&
+      selectedPhotoFileRef.current === null &&
+      imageUrl !== null
+    ) {
+      setValue("imageUrl", null, { shouldDirty: true });
+      setValue("locationConsentAgreed", false, { shouldDirty: true });
+      form.clearErrors("locationConsentAgreed");
+    }
+  }, [form, imageUrl, setValue, uploadedImages]);
 
   const clearSectionError = useCallback(
     (sectionId: ReportSectionId) => {
@@ -226,13 +240,32 @@ export function useReportForm(): {
     [form],
   );
 
+  const getExifConsentRequirement = useCallback(() => {
+    return requiresExifConsent({
+      imageUrl: form.getValues("imageUrl"),
+      uploadedImageCount: uploadedImagesRef.current.length,
+      hasSelectedPhotoFile: selectedPhotoFileRef.current !== null,
+    });
+  }, [form]);
+
   const applyZodIssuesToUi = useCallback(
     (stepFilter?: 1 | 2) => {
       const parsed = parseReportForm(form.getValues());
       if (parsed.success) return [];
 
+      const shouldRequireExifConsent = getExifConsentRequirement();
+      const issues = toClientValidationIssues(parsed.error.issues).filter(
+        (issue) => {
+          if (issue.path[0] !== "locationConsentAgreed") {
+            return true;
+          }
+
+          return shouldRequireExifConsent;
+        },
+      );
+
       return applyClientValidationIssues(
-        toClientValidationIssues(parsed.error.issues),
+        issues,
         {
           setError: form.setError,
           setSectionServerErrors,
@@ -240,7 +273,7 @@ export function useReportForm(): {
         stepFilter ? { step: stepFilter } : undefined,
       );
     },
-    [form],
+    [form, getExifConsentRequirement],
   );
 
   const handleBack = useCallback(() => {
@@ -289,11 +322,12 @@ export function useReportForm(): {
         return;
       }
 
-      const hasReportPhoto =
-        selectedPhotoFileRef.current !== null ||
-        uploadedImagesRef.current.length > 0 ||
-        data.imageUrl !== null;
-      if (hasReportPhoto && !data.locationConsentAgreed) {
+      const shouldRequireExifConsent = requiresExifConsent({
+        imageUrl: data.imageUrl,
+        uploadedImageCount: uploadedImagesRef.current.length,
+        hasSelectedPhotoFile: selectedPhotoFileRef.current !== null,
+      });
+      if (shouldRequireExifConsent && !data.locationConsentAgreed) {
         pendingValidationNavigationRef.current = {
           earliestStep: 2,
           firstSectionId: "agreement",
@@ -551,16 +585,21 @@ export function useReportForm(): {
       selectedPhotoFileRef.current = null;
       setValue("imageUrl", null, { shouldDirty: true });
       setValue("locationConsentAgreed", false, { shouldDirty: true });
+      form.clearErrors("locationConsentAgreed");
       setUploadedImages((prev) => prev.filter((_, i) => i !== index));
       clearSectionError("photo");
     },
-    [clearSectionError, setValue, uploadedImages],
+    [clearSectionError, form, setValue, uploadedImages],
   );
 
   const isStep1Valid =
     !!roadAddress.trim() && lockerType !== null && indoorOutdoorType !== null;
-  const hasUploadedReportPhoto = uploadedImages.length > 0;
-  const isStep2Valid = !hasUploadedReportPhoto || locationConsentAgreed;
+  const shouldRequireExifConsent = requiresExifConsent({
+    imageUrl,
+    uploadedImageCount: uploadedImages.length,
+    hasSelectedPhotoFile: selectedPhotoFileRef.current !== null,
+  });
+  const isStep2Valid = !shouldRequireExifConsent || locationConsentAgreed;
 
   return {
     form,

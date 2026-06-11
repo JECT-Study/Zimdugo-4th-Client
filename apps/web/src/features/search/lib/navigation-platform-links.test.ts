@@ -162,41 +162,30 @@ describe("navigation-platform-links", () => {
     ).toBe(links?.webUrl ?? null);
   });
 
-  it("카카오맵은 앱 딥링크와 웹 지도 URL을 분리해 만든다", () => {
+  it("카카오맵은 map.kakao.com/link 웹 URL을 사용한다", () => {
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });
 
-    expect(links?.appUrl).toMatch(
-      /^http:\/\/m\.map\.kakao\.com\/scheme\/route\?/,
-    );
+    expect(links?.appUrl).toBe(links?.webUrl);
     expect(links?.webUrl).toContain("map.kakao.com/link/from/");
     expect(links?.webUrl).toContain("/to/");
+    expect(links?.webUrl).not.toContain("m.map.kakao.com/scheme/route");
     expect(links?.webUrl).not.toContain("nmap://");
     expect(links?.webUrl).not.toContain("intent://");
-
-    const appUrl = new URL(links?.appUrl ?? "");
-    expect(appUrl.searchParams.get("sp")).toBe(
-      `${CURRENT_ORIGIN.lat.toFixed(5)},${CURRENT_ORIGIN.lng.toFixed(5)}`,
-    );
-    expect(appUrl.searchParams.get("ep")).toBe(
-      `${LOCKER_WITH_COORDS.latitude!.toFixed(5)},${LOCKER_WITH_COORDS.longitude!.toFixed(5)}`,
-    );
   });
 
-  it("카카오맵 Android도 앱 딥링크와 웹 지도 URL을 분리해 만든다", () => {
+  it("카카오맵 Android도 map.kakao.com/link 웹 URL을 사용한다", () => {
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(resolveNavigationOrigin(null)),
       userAgent: "Mozilla/5.0 (Linux; Android 14)",
     });
 
-    expect(links?.appUrl).toContain("http://m.map.kakao.com/scheme/route?");
+    expect(links?.appUrl).toBe(links?.webUrl);
     expect(links?.webUrl).toContain("map.kakao.com/link/from/");
-
-    const appUrl = new URL(links?.appUrl ?? "");
-    expect(appUrl.searchParams.get("sp")).toBe(
-      `${DEFAULT_NAVIGATION_ORIGIN.lat.toFixed(5)},${DEFAULT_NAVIGATION_ORIGIN.lng.toFixed(5)}`,
+    expect(links?.webUrl).toContain(
+      encodeURIComponent(DEFAULT_NAVIGATION_ORIGIN.label),
     );
   });
 
@@ -208,44 +197,35 @@ describe("navigation-platform-links", () => {
       linkOptions(),
     );
 
-    openNavigationPlatformLinks(links!, {
-      assign,
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    });
+    openNavigationPlatformLinks(links!, { assign });
 
     expect(assign).toHaveBeenCalledTimes(1);
     expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 
-  it("Android UA에서는 앱 딥링크를 먼저 연다", () => {
+  it("Android UA에서도 웹 URL을 사용한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (Linux; Android 14)",
     });
 
-    openNavigationPlatformLinks(links!, {
-      assign,
-      userAgent: "Mozilla/5.0 (Linux; Android 14)",
-    });
+    openNavigationPlatformLinks(links!, { assign });
 
     expect(assign).toHaveBeenCalledTimes(1);
-    expect(assign).toHaveBeenCalledWith(links?.appUrl);
+    expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 
-  it("iOS UA에서는 앱 딥링크를 먼저 연다", () => {
+  it("iOS UA에서도 웹 URL을 사용한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });
 
-    openNavigationPlatformLinks(links!, {
-      assign,
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-    });
+    openNavigationPlatformLinks(links!, { assign });
 
     expect(assign).toHaveBeenCalledTimes(1);
-    expect(assign).toHaveBeenCalledWith(links?.appUrl);
+    expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 });
