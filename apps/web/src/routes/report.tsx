@@ -40,6 +40,7 @@ import {
   reportContainer,
   reportHeader,
   submitActionFrame,
+  submitSubButton,
   stepWrapper,
 } from "#/features/report/ui/report.css.ts";
 import { useAuthStore } from "#/shared/store/authStore";
@@ -320,6 +321,22 @@ function ReportPage() {
             }
           >
             <div className={submitActionFrame}>
+              {step === 2 && (
+                <Button
+                  variant="ghost"
+                  intent="neutral"
+                  size="L"
+                  className={submitSubButton}
+                  onPress={() => {
+                    void handleNext();
+                  }}
+                  isDisabled={
+                    isSubmitting || !validation.isStep2Valid
+                  }
+                >
+                  {m.report_submit_with_current_info()}
+                </Button>
+              )}
               <Button
                 className={nextButton}
                 variant="filled"
@@ -338,7 +355,7 @@ function ReportPage() {
                   ? m.report_button_next()
                   : isSubmitting && uploadedImages.length > 0
                     ? m.report_button_submit_uploading()
-                    : m.report_submit_with_current_info()}
+                    : m.report_button_submit()}
               </Button>
             </div>
           </div>

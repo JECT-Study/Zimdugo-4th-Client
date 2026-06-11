@@ -598,6 +598,9 @@ export const submitActionFrame = style({
 
 export const submitSubButton = style({
   margin: 0,
+  width: "auto",
+  minHeight: "auto",
+  padding: 0,
   color: "#8E8E8E",
   fontSize: vars.typography.fontSize[12],
   fontWeight: vars.typography.fontWeight.Medium,
@@ -607,6 +610,13 @@ export const submitSubButton = style({
   textDecorationLine: "underline",
   textUnderlinePosition: "from-font",
   whiteSpace: "nowrap",
+  backgroundColor: "transparent",
+  selectors: {
+    "&[data-disabled]": {
+      opacity: 0.5,
+      cursor: "not-allowed",
+    },
+  },
 });
 
 export const priceRow = style({

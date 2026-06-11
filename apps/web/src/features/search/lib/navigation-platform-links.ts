@@ -131,7 +131,14 @@ export const getLockerNavigationDestination = (
 const formatNavigationCoordinate = (value: number): string =>
   value.toFixed(5);
 
-const buildKakaoWebUrl = (
+const buildKakaoRoutePoint = (point: NavigationPoint): string =>
+  [
+    encodeURIComponent(point.label),
+    formatNavigationCoordinate(point.lat),
+    formatNavigationCoordinate(point.lng),
+  ].join(",");
+
+const buildKakaoAppUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
 ): string => {
@@ -142,6 +149,12 @@ const buildKakaoWebUrl = (
 
   return `http://m.map.kakao.com/scheme/route?${params.toString()}`;
 };
+
+const buildKakaoWebUrl = (
+  origin: NavigationPoint,
+  destination: NavigationPoint,
+): string =>
+  `https://map.kakao.com/link/from/${buildKakaoRoutePoint(origin)}/to/${buildKakaoRoutePoint(destination)}`;
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
@@ -174,11 +187,15 @@ export const getNavigationPlatformLinks = (
   }
 
   const { navigationOrigin } = options;
-  const webUrl =
-    platform === "kakao"
-      ? buildKakaoWebUrl(navigationOrigin, destination)
-      : buildGoogleWebUrl(navigationOrigin, destination);
 
+  if (platform === "kakao") {
+    return {
+      appUrl: buildKakaoAppUrl(navigationOrigin, destination),
+      webUrl: buildKakaoWebUrl(navigationOrigin, destination),
+    };
+  }
+
+  const webUrl = buildGoogleWebUrl(navigationOrigin, destination);
   return { appUrl: webUrl, webUrl };
 };
 
@@ -189,11 +206,25 @@ export const getNavigationPlatformUrl = (
 ): string | null =>
   getNavigationPlatformLinks(platform, locker, options)?.webUrl ?? null;
 
-type OpenNavigationOptions = {
-  assign?: (url: string) => void;
+const APP_DEEP_LINK_FALLBACK_MS = 1_500;
+
+const isMobileUserAgent = (userAgent?: string): boolean => {
+  const ua =
+    userAgent ??
+    (typeof navigator !== "undefined" ? navigator.userAgent : "");
+
+  return /Android|iPhone|iPad|iPod/i.test(ua);
 };
 
-/** 모바일 브라우저(Android/iOS)에서는 nmap/intent가 검색 앱 등으로 잘못 연결될 수 있어 웹 URL만 연다. */
+type OpenNavigationOptions = {
+  assign?: (url: string) => void;
+  userAgent?: string;
+};
+
+/**
+ * 모바일에서는 앱 딥링크를 먼저 시도하고, 앱 미설치 시 웹 지도 URL로 폴백한다.
+ * scheme/route 페이지를 웹 URL로 직접 열면 앱 설치 안내가 뜨기 때문에 webUrl은 map.kakao.com/link를 사용한다.
+ */
 export const openNavigationPlatformLinks = (
   links: NavigationPlatformLinks,
   options: OpenNavigationOptions = {},
@@ -204,5 +235,24 @@ export const openNavigationPlatformLinks = (
       window.location.href = url;
     });
 
-  assign(links.webUrl);
+  const shouldTryAppDeepLink =
+    links.appUrl !== links.webUrl && isMobileUserAgent(options.userAgent);
+
+  if (!shouldTryAppDeepLink) {
+    assign(links.webUrl);
+    return;
+  }
+
+  const timerId = window.setTimeout(() => {
+    assign(links.webUrl);
+  }, APP_DEEP_LINK_FALLBACK_MS);
+
+  const clearFallback = () => {
+    window.clearTimeout(timerId);
+  };
+
+  window.addEventListener("pagehide", clearFallback, { once: true });
+  window.addEventListener("blur", clearFallback, { once: true });
+
+  assign(links.appUrl);
 };
