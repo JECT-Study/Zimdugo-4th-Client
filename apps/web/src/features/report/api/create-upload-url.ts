@@ -20,7 +20,7 @@ export class InvalidUploadCreateResponseError extends Error {
   }
 }
 
-export async function createUploadUrl(
+export async function postUploadUrl(
   userId: number,
   payload: UploadCreateRequest,
 ): Promise<UploadCreateData> {

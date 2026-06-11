@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createUploadUrl } from "#/features/report/api/create-upload-url";
+import { postUploadUrl } from "#/features/report/api/create-upload-url";
 import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import {
   ReportPhotoUploadValidationError,
@@ -8,7 +8,7 @@ import {
 import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/features/report/model/report-types";
 
 vi.mock("#/features/report/api/create-upload-url", () => ({
-  createUploadUrl: vi.fn(),
+  postUploadUrl: vi.fn(),
 }));
 
 vi.mock("#/features/report/lib/upload-file-to-presigned-url", () => ({
@@ -19,12 +19,12 @@ describe("uploadReportPhoto", () => {
   const file = new File(["photo"], "locker-photo.jpg", { type: "image/jpeg" });
 
   beforeEach(() => {
-    vi.mocked(createUploadUrl).mockReset();
+    vi.mocked(postUploadUrl).mockReset();
     vi.mocked(uploadFileToPresignedUrl).mockReset();
   });
 
   it("LOCKER_REPORT presigned URL 발급 후 S3 업로드하고 fileUrl을 반환한다", async () => {
-    vi.mocked(createUploadUrl).mockResolvedValue({
+    vi.mocked(postUploadUrl).mockResolvedValue({
       uploadUrl: "https://bucket.s3.amazonaws.com/key?X-Amz-Signature=abc",
       fileUrl: "https://cdn.example.com/locker-report/key.jpg",
       key: "locker-report/uuid/locker-photo.jpg",
@@ -36,7 +36,7 @@ describe("uploadReportPhoto", () => {
       "https://cdn.example.com/locker-report/key.jpg",
     );
 
-    expect(createUploadUrl).toHaveBeenCalledWith(7, {
+    expect(postUploadUrl).toHaveBeenCalledWith(7, {
       category: UPLOAD_CATEGORY_LOCKER_REPORT,
       fileName: "locker-photo.jpg",
       contentType: "image/jpeg",
@@ -58,7 +58,7 @@ describe("uploadReportPhoto", () => {
       code: "invalid_type",
     } satisfies Partial<ReportPhotoUploadValidationError>);
 
-    expect(createUploadUrl).not.toHaveBeenCalled();
+    expect(postUploadUrl).not.toHaveBeenCalled();
     expect(uploadFileToPresignedUrl).not.toHaveBeenCalled();
   });
 });

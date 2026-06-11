@@ -1,4 +1,4 @@
-import { createUploadUrl } from "#/features/report/api/create-upload-url";
+import { postUploadUrl } from "#/features/report/api/create-upload-url";
 import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import {
   type ReportPhotoValidationError,
@@ -27,7 +27,7 @@ export async function uploadReportPhoto(
   }
 
   const contentType = resolveReportPhotoContentType(file);
-  const { uploadUrl, fileUrl } = await createUploadUrl(userId, {
+  const { uploadUrl, fileUrl } = await postUploadUrl(userId, {
     category: UPLOAD_CATEGORY_LOCKER_REPORT,
     fileName: file.name,
     contentType,

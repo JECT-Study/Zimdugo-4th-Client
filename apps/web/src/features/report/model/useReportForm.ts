@@ -30,7 +30,7 @@ import {
   scrollToEarliestReportSection,
   scrollToReportSection,
 } from "#/features/report/lib/scroll-to-report-section";
-import { createLockerReport } from "#/features/report/api/create-locker-report";
+import { postLockerReport } from "#/features/report/api/create-locker-report";
 import {
   applyValidationErrors,
   applyClientValidationIssues,
@@ -314,7 +314,7 @@ export function useReportForm(): {
         }
 
         const payload = normalizeReportPayload({ ...data, imageUrl });
-        await createLockerReport(payload, { userId });
+        await postLockerReport(payload, { userId });
         setIsPopupOpen(true);
       } catch (error) {
         const failure = parseReportSubmitFailure(error);

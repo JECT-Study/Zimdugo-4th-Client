@@ -1,4 +1,4 @@
-import { createUploadUrl } from "#/features/report/api/create-upload-url";
+import { postUploadUrl } from "#/features/report/api/create-upload-url";
 import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import {
   type ProfilePhotoValidationError,
@@ -37,7 +37,7 @@ export async function uploadProfilePhoto(
   }
 
   const contentType = resolveProfilePhotoContentType(preparedFile);
-  const { uploadUrl, fileUrl } = await createUploadUrl(userId, {
+  const { uploadUrl, fileUrl } = await postUploadUrl(userId, {
     category: UPLOAD_CATEGORY_PROFILE,
     fileName: preparedFile.name,
     contentType,

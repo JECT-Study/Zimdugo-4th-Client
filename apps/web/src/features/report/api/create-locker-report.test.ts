@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createLockerReport } from "#/features/report/api/create-locker-report";
+import { postLockerReport } from "#/features/report/api/create-locker-report";
 import type { LockerReportCreateRequest } from "#/features/report/model/report-types";
 import { apiClient } from "#/shared/lib/apiClient";
 
@@ -36,7 +36,7 @@ const payload = {
   sizeTypesValid: true,
 } satisfies LockerReportCreateRequest;
 
-describe("createLockerReport", () => {
+describe("postLockerReport", () => {
   beforeEach(() => {
     postMock.mockReset();
   });
@@ -52,7 +52,7 @@ describe("createLockerReport", () => {
       },
     });
 
-    await createLockerReport(payload, { userId: 7 });
+    await postLockerReport(payload, { userId: 7 });
 
     expect(apiClient.post).toHaveBeenCalledWith(
       "/api/v1/locker-reports",

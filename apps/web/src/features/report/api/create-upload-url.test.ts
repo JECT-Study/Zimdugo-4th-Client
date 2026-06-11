@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { InvalidUploadCreateResponseError, createUploadUrl } from "#/features/report/api/create-upload-url";
+import { InvalidUploadCreateResponseError, postUploadUrl } from "#/features/report/api/create-upload-url";
 import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/features/report/model/report-types";
 import { apiClient } from "#/shared/lib/apiClient";
 
@@ -9,7 +9,7 @@ vi.mock("#/shared/lib/apiClient", () => ({
   },
 }));
 
-describe("createUploadUrl", () => {
+describe("postUploadUrl", () => {
   beforeEach(() => {
     vi.mocked(apiClient.post).mockReset();
   });
@@ -38,7 +38,7 @@ describe("createUploadUrl", () => {
       contentType: "image/jpeg",
     };
 
-    await expect(createUploadUrl(7, payload)).resolves.toEqual(uploadData);
+    await expect(postUploadUrl(7, payload)).resolves.toEqual(uploadData);
 
     expect(apiClient.post).toHaveBeenCalledWith("/api/v1/uploads", payload, {
       params: { userId: 7 },
@@ -62,7 +62,7 @@ describe("createUploadUrl", () => {
     });
 
     await expect(
-      createUploadUrl(7, {
+      postUploadUrl(7, {
         category: UPLOAD_CATEGORY_LOCKER_REPORT,
         fileName: "locker-photo.jpg",
         contentType: "image/jpeg",

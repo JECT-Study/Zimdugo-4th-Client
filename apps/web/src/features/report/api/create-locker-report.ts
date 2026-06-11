@@ -5,7 +5,7 @@ import type {
   RestResponse,
 } from "#/features/report/model/report-types";
 
-export async function createLockerReport(
+export async function postLockerReport(
   payload: LockerReportCreateRequest,
   { userId }: { userId: number },
 ): Promise<RestResponse<LockerReportCreateResponse>> {
