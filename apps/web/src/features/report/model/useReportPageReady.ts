@@ -33,11 +33,13 @@ const isReportBottomBarReady = (element: HTMLElement) => {
 
 const isReportStepWrapperReady = (element: HTMLElement) => {
   const style = window.getComputedStyle(element);
+  const gapPx = Number.parseFloat(style.gap);
 
   return (
     style.display === "flex" &&
     style.flexDirection === "column" &&
-    style.gap === "32px"
+    !Number.isNaN(gapPx) &&
+    gapPx >= 32
   );
 };
 
