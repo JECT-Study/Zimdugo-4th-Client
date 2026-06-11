@@ -2,10 +2,11 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useUser } from "#/entities/user/hooks/useUser";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
+import { useMyPageSummary } from "#/features/my/hooks/useMyPageSummary";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
 import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
 import { useAuth } from "#/shared/hooks/useAuth";
@@ -35,23 +36,36 @@ export const Route = createFileRoute("/my")({
 interface MenuRowProps {
   label: string;
   countLabel: string;
+  onPress: () => void;
 }
 
-function MenuRow({ label, countLabel }: MenuRowProps) {
+function MenuRow({ label, countLabel, onPress }: MenuRowProps) {
   return (
-    <div className={menuRow} aria-disabled>
+    <button type="button" className={menuRow} onClick={onPress}>
       <span className={menuRowLabel}>{label}</span>
       <span className={menuRowCount}>{countLabel}</span>
-    </div>
+    </button>
   );
 }
 
 function MyPage() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const normalizedPath =
+    pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
+  const isMyRoot = normalizedPath === "/my";
+
+  if (!isMyRoot) {
+    return <Outlet />;
+  }
+
   const navigate = useNavigate();
   const { logout } = useAuth();
   const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
   const { data: profile, isPending: isProfilePending } = useUser(userId);
+  const { data: summary, isPending: isSummaryPending } = useMyPageSummary();
   const { mutate: updateProfile } = useUpdateMeProfile();
   const {
     isConfirmPopupOpen,
@@ -96,8 +110,16 @@ function MyPage() {
     );
   };
 
-  const favoriteCountLabel = m.my_summary_favorite_count({ count: "0" });
-  const reportCountLabel = m.my_summary_report_count({ count: "0" });
+  const favoriteCountLabel = isSummaryPending
+    ? m.my_summary_loading()
+    : m.my_summary_favorite_count({
+        count: String(summary?.favoriteLockerCount ?? 0),
+      });
+  const reportCountLabel = isSummaryPending
+    ? m.my_summary_loading()
+    : m.my_summary_report_count({
+        count: String(summary?.lockerReportCount ?? 0),
+      });
 
   const handleBack = () => {
     navigate({ to: "/" });
@@ -152,10 +174,12 @@ function MyPage() {
           <MenuRow
             label={m.my_menu_favorite()}
             countLabel={favoriteCountLabel}
+            onPress={() => navigate({ to: "/my/favorites" })}
           />
           <MenuRow
             label={m.my_menu_report_history()}
             countLabel={reportCountLabel}
+            onPress={() => navigate({ to: "/my/reports" })}
           />
         </section>
 
