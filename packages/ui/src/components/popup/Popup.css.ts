@@ -25,27 +25,6 @@ export const dialog = style({
   boxSizing: "border-box",
   outline: "none",
   textAlign: "center",
-  position: "relative", // 닫기 버튼 배치를 위해 추가
-});
-
-export const closeButton = style({
-  position: "absolute",
-  top: "12px",
-  right: "12px",
-  width: "32px",
-  height: "32px",
-  borderRadius: "50%",
-  border: `1px solid ${vars.color.palette.gray[200]}`, // #E5E5E5와 유사
-  backgroundColor: "transparent",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: vars.color.palette.gray[500],
-  cursor: "pointer",
-  padding: 0,
-  ":hover": {
-    backgroundColor: vars.color.palette.gray[100],
-  },
 });
 
 const containerBase = style({
@@ -176,7 +155,4 @@ export const primaryButtonItem = style([
   },
 ]);
 
-export const secondaryButtonItem = style([
-  popupButtonBase,
-  { width: "79px" },
-]);
+export const secondaryButtonItem = style([popupButtonBase, { width: "79px" }]);

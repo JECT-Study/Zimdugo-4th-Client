@@ -1,22 +1,26 @@
 import type { ReactNode } from "react";
-import { Dialog, Modal, ModalOverlay, Button as AriaButton } from "react-aria-components";
+import {
+  Button as AriaButton,
+  Dialog,
+  Modal,
+  ModalOverlay,
+} from "react-aria-components";
+import { IconCaution24 } from "../../tokens/icons/Icons.tsx";
 import { Button } from "../button/Button.tsx";
-import { IconCaution24, IconX24 } from "../../tokens/icons/Icons.tsx";
 import {
   actionsContainer,
-  secondaryButtonItem,
-  primaryButtonItem,
+  bottomSection,
   buttonRow,
   container,
-  bottomSection,
-  helperArea,
   dialog,
   helper,
+  helperArea,
   iconWrapper,
   overlay,
+  primaryButtonItem,
+  secondaryButtonItem,
   subActionText,
   title,
-  closeButton,
 } from "./Popup.css.ts";
 
 export interface PopupProps {
@@ -86,66 +90,65 @@ export function Popup({
             };
 
             return (
-              <>
-                <AriaButton
-                  className={closeButton}
-                  onPress={() => onOpenChange(false)}
-                  aria-label="닫기"
+              <div
+                className={
+                  hasMiddleElement ? container.withMiddle : container.default
+                }
+              >
+                {/* 기본 Caution 아이콘을 초록색으로 표현하기 위해 state 생략 또는 커스텀 */}
+                <div className={iconWrapper}>{icon || <IconCaution24 />}</div>
+
+                <div className={title}>{titleText}</div>
+
+                <div
+                  className={
+                    hasMiddleElement
+                      ? bottomSection.withMiddle
+                      : bottomSection.default
+                  }
                 >
-                  <IconX24 />
-                </AriaButton>
-                <div className={hasMiddleElement ? container.withMiddle : container.default}>
-                  {/* 기본 Caution 아이콘을 초록색으로 표현하기 위해 state 생략 또는 커스텀 */}
-                  <div className={iconWrapper}>
-                    {icon || <IconCaution24 />}
-                  </div>
+                  {hasMiddleElement && (
+                    <div className={helperArea}>
+                      {hasHelper && <div className={helper}>{helperText}</div>}
 
-                  <div className={title}>{titleText}</div>
-
-                  <div className={hasMiddleElement ? bottomSection.withMiddle : bottomSection.default}>
-                    {hasMiddleElement && (
-                      <div className={helperArea}>
-                        {hasHelper && <div className={helper}>{helperText}</div>}
-
-                        {hasSubAction && (
-                          <AriaButton
-                            className={subActionText}
-                            onPress={handleSubAction}
-                          >
-                            {subAction.label}
-                          </AriaButton>
-                        )}
-                      </div>
-                    )}
-
-                    <div className={actionsContainer}>
-                      <div className={buttonRow}>
-                        {secondaryAction && (
-                          <Button
-                            className={secondaryButtonItem}
-                            variant="filled"
-                            intent="neutral"
-                            size="S"
-                            onPress={handleSecondary}
-                          >
-                            {secondaryAction.label}
-                          </Button>
-                        )}
-                        <Button
-                          className={primaryButtonItem}
-                          variant="filled"
-                          intent="primary"
-                          size={secondaryAction ? "S" : "L"}
-                          data-size={secondaryAction ? "S" : "L"}
-                          onPress={handlePrimary}
+                      {hasSubAction && (
+                        <AriaButton
+                          className={subActionText}
+                          onPress={handleSubAction}
                         >
-                          {primaryAction.label}
+                          {subAction.label}
+                        </AriaButton>
+                      )}
+                    </div>
+                  )}
+
+                  <div className={actionsContainer}>
+                    <div className={buttonRow}>
+                      {secondaryAction && (
+                        <Button
+                          className={secondaryButtonItem}
+                          variant="filled"
+                          intent="neutral"
+                          size="S"
+                          onPress={handleSecondary}
+                        >
+                          {secondaryAction.label}
                         </Button>
-                      </div>
+                      )}
+                      <Button
+                        className={primaryButtonItem}
+                        variant="filled"
+                        intent="primary"
+                        size={secondaryAction ? "S" : "L"}
+                        data-size={secondaryAction ? "S" : "L"}
+                        onPress={handlePrimary}
+                      >
+                        {primaryAction.label}
+                      </Button>
                     </div>
                   </div>
                 </div>
-              </>
+              </div>
             );
           }}
         </Dialog>
