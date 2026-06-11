@@ -144,18 +144,18 @@ export function ReportPhotoSection({
             data-disabled={isAgreementDisabled ? "true" : "false"}
           >
             <Checkbox
-              aria-label="업로드 사진의 EXIF(촬영 위치 등) 수집·이용 동의"
+              aria-label={m.report_photo_exif_agreement_aria()}
               isSelected={isAgreed}
               onSelectedChange={setIsAgreed}
               labelLocation="none"
               isDisabled={isAgreementDisabled}
             />
             <span className={agreementLabel}>
-              업로드 사진의 EXIF(촬영 위치 등) 수집·이용에 동의합니다 (필수)
+              {m.report_photo_exif_agreement_label()}
             </span>
           </div>
           <a className={privacyPolicyLink} href="/settings/privacy">
-            [개인정보처리방침 보기]
+            {m.report_photo_privacy_policy_link()}
           </a>
         </div>
       </div>
