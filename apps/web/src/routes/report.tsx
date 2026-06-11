@@ -314,7 +314,9 @@ function ReportPage() {
           >
             <div className={submitActionFrame}>
               {step === 2 && (
-                <p className={submitSubButton}>현재 정보로 제보하기</p>
+                <p className={submitSubButton}>
+                  {m.report_submit_with_current_info()}
+                </p>
               )}
               <Button
                 className={nextButton}

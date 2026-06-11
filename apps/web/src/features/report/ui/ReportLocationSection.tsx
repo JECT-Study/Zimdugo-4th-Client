@@ -32,6 +32,11 @@ export function ReportLocationSection({
   );
   const errorId = errorMessage ? "report-location-error" : undefined;
 
+  const handleOpenLocationOverlay = () => {
+    onFieldChange?.();
+    onOpenOverlay();
+  };
+
   return (
     <section
       className={section}
@@ -64,10 +69,7 @@ export function ReportLocationSection({
           variant="filled"
           intent="neutral"
           size="L"
-          onPress={() => {
-            onFieldChange?.();
-            onOpenOverlay();
-          }}
+          onPress={handleOpenLocationOverlay}
         >
           {m.report_location_select_button()}
         </Button>

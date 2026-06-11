@@ -107,7 +107,7 @@ export function NavigationPlatformPopup({
             <AriaButton
               className={platformButton}
               onPress={() => handleSelectPlatform("kakao")}
-              aria-label={m.navigation_platform_naver_aria()}
+              aria-label={m.navigation_platform_kakao_aria()}
             >
               <img
                 className={platformIcon}
@@ -115,7 +115,7 @@ export function NavigationPlatformPopup({
                 alt=""
                 aria-hidden="true"
               />
-              <span className={platformLabel}>{m.navigation_platform_naver()}</span>
+              <span className={platformLabel}>{m.navigation_platform_kakao()}</span>
             </AriaButton>
             <AriaButton
               className={platformButton}

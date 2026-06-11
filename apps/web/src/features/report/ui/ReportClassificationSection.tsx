@@ -25,6 +25,22 @@ export function ReportClassificationSection({
   );
   const errorId = errorMessage ? "report-classification-error" : undefined;
 
+  const handleIndoorOutdoorChange = (
+    onChange: (value: ReportFormValues["indoorOutdoorType"]) => void,
+    value: ReportFormValues["indoorOutdoorType"],
+  ) => {
+    onChange(value);
+    onFieldChange?.();
+  };
+
+  const handleLockerTypeChange = (
+    onChange: (value: ReportFormValues["lockerType"]) => void,
+    value: ReportFormValues["lockerType"],
+  ) => {
+    onChange(value);
+    onFieldChange?.();
+  };
+
   return (
     <div
       className={classificationSection}
@@ -39,10 +55,9 @@ export function ReportClassificationSection({
             value={field.value ?? null}
             sectionErrorMessage={errorMessage}
             sectionErrorId={errorId}
-            onChange={(value) => {
-              field.onChange(value);
-              onFieldChange?.();
-            }}
+            onChange={(value) =>
+              handleIndoorOutdoorChange(field.onChange, value)
+            }
           />
         )}
       />
@@ -52,10 +67,7 @@ export function ReportClassificationSection({
         render={({ field }) => (
           <ReportTypeSection
             lockerType={field.value ?? null}
-            onChange={(value) => {
-              field.onChange(value);
-              onFieldChange?.();
-            }}
+            onChange={(value) => handleLockerTypeChange(field.onChange, value)}
             options={lockerTypeOptions}
           />
         )}
