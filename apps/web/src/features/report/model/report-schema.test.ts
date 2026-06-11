@@ -101,16 +101,27 @@ describe("reportSchema", () => {
     ).toBe(false);
   });
 
-  it("가격 유형(isFree) 미선택이면 실패한다", () => {
+  it("가격 유형(isFree) 미선택이면 통과한다", () => {
+    expect(
+      parseReportForm({
+        ...validForm(),
+        isFree: null,
+        minPrice: null,
+        maxPrice: null,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("가격 유형 미선택인데 minPrice·maxPrice가 있으면 실패한다", () => {
     const result = parseReportForm({
       ...validForm(),
       isFree: null,
-      minPrice: null,
+      minPrice: 1000,
       maxPrice: null,
     });
     expect(result.success).toBe(false);
     if (result.success) return;
-    expect(result.error.issues.some((issue) => issue.path[0] === "isFree")).toBe(
+    expect(result.error.issues.some((issue) => issue.path[0] === "minPrice")).toBe(
       true,
     );
   });

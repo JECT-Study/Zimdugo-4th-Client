@@ -121,11 +121,13 @@ export const reportSchema = z
     }
 
     if (data.isFree === null) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["isFree"],
-        message: "required",
-      });
+      if (data.minPrice !== null || data.maxPrice !== null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["minPrice"],
+          message: "must_be_null",
+        });
+      }
     } else if (data.isFree === false) {
       if (data.minPrice === null) {
         ctx.addIssue({
