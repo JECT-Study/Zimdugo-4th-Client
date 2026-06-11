@@ -32,6 +32,12 @@ import {
 } from "#/features/report/lib/scroll-to-report-section";
 import { postLockerReport } from "#/features/report/api/create-locker-report";
 import {
+  clearReportPrivacyNavigationHold,
+  consumeReportPrivacyNavigationState,
+  shouldPreserveReportBlobUrlsOnUnmount,
+  stashReportStateForPrivacyPolicy,
+} from "#/features/report/lib/report-privacy-navigation";
+import {
   applyValidationErrors,
   applyClientValidationIssues,
   getSectionAnchorFields,
@@ -99,6 +105,7 @@ export function useReportForm(): {
     clearSectionError: (sectionId: ReportSectionId) => void;
     handleSubmitErrorPopupConfirm: () => void;
     handleSubmitErrorPopupOpenChange: (open: boolean) => void;
+    preparePrivacyPolicyNavigation: () => void;
   };
   validation: { isStep1Valid: boolean; isStep2Valid: boolean };
 } {
@@ -171,7 +178,24 @@ export function useReportForm(): {
   }, [uploadedImages]);
 
   useEffect(() => {
+    const restored = consumeReportPrivacyNavigationState();
+    if (restored) {
+      setStep(restored.step);
+      form.reset(restored.values);
+      setMinPriceDisplay(restored.minPriceDisplay);
+      setMaxPriceDisplay(restored.maxPriceDisplay);
+      setUploadedImages(restored.uploadedImages);
+      selectedPhotoFileRef.current = restored.selectedPhotoFile;
+      clearReportPrivacyNavigationHold();
+    }
+  }, [form]);
+
+  useEffect(() => {
     return () => {
+      if (shouldPreserveReportBlobUrlsOnUnmount()) {
+        return;
+      }
+
       for (const url of uploadedImagesRef.current) {
         if (url.startsWith("blob:")) {
           URL.revokeObjectURL(url);
@@ -507,6 +531,17 @@ export function useReportForm(): {
     [clearSectionError, setValue, uploadedImages],
   );
 
+  const preparePrivacyPolicyNavigation = useCallback(() => {
+    stashReportStateForPrivacyPolicy({
+      step,
+      values: form.getValues(),
+      minPriceDisplay,
+      maxPriceDisplay,
+      uploadedImages,
+      selectedPhotoFile: selectedPhotoFileRef.current,
+    });
+  }, [form, maxPriceDisplay, minPriceDisplay, step, uploadedImages]);
+
   const handleImageRemove = useCallback(
     (index: number) => {
       const targetUrl = uploadedImages[index];
@@ -559,6 +594,7 @@ export function useReportForm(): {
       clearSectionError,
       handleSubmitErrorPopupConfirm,
       handleSubmitErrorPopupOpenChange,
+      preparePrivacyPolicyNavigation,
     },
     validation: { isStep1Valid, isStep2Valid },
   };

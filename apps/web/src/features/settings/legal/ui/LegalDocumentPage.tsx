@@ -1,6 +1,7 @@
 import { Header } from "@repo/ui/components/layout/header";
 import { useNavigate } from "@tanstack/react-router";
 import type { LegalDocument } from "../model/legal-documents";
+import type { LegalReturnSearch } from "../model/legal-return-search";
 import {
   content,
   documentBox,
@@ -16,10 +17,26 @@ import {
 
 interface LegalDocumentPageProps {
   legalDocument: LegalDocument;
+  returnSearch?: LegalReturnSearch;
 }
 
-export function LegalDocumentPage({ legalDocument }: LegalDocumentPageProps) {
+export function LegalDocumentPage({
+  legalDocument,
+  returnSearch,
+}: LegalDocumentPageProps) {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (returnSearch?.returnTo) {
+      navigate({
+        to: returnSearch.returnTo,
+        ...(returnSearch.step === 2 ? { search: { step: 2 } } : {}),
+      });
+      return;
+    }
+
+    navigate({ to: "/settings" });
+  };
 
   return (
     <div className={page}>
@@ -28,7 +45,7 @@ export function LegalDocumentPage({ legalDocument }: LegalDocumentPageProps) {
         leading="back"
         titleType="text"
         title={legalDocument.title}
-        onBack={() => navigate({ to: "/settings" })}
+        onBack={handleBack}
       />
 
       <main className={content}>

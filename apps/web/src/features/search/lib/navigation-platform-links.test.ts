@@ -162,39 +162,43 @@ describe("navigation-platform-links", () => {
     ).toBe(links?.webUrl ?? null);
   });
 
-  it("카카오맵은 출발지·도착지가 포함된 웹 길찾기 URL을 만든다", () => {
+  it("카카오맵은 m.map.kakao.com scheme/route 딥링크 URL을 만든다", () => {
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
     });
 
     expect(links?.appUrl).toBe(links?.webUrl);
-    expect(links?.webUrl).toContain("map.kakao.com/link/from/");
-    expect(links?.webUrl).toContain("/to/");
-    expect(links?.webUrl).not.toContain("/by/");
+    expect(links?.webUrl).toMatch(
+      /^http:\/\/m\.map\.kakao\.com\/scheme\/route\?/,
+    );
+
+    const url = new URL(links?.webUrl ?? "");
+    expect(url.searchParams.get("sp")).toBe(
+      `${CURRENT_ORIGIN.lat.toFixed(5)},${CURRENT_ORIGIN.lng.toFixed(5)}`,
+    );
+    expect(url.searchParams.get("ep")).toBe(
+      `${LOCKER_WITH_COORDS.latitude!.toFixed(5)},${LOCKER_WITH_COORDS.longitude!.toFixed(5)}`,
+    );
+    expect(links?.webUrl).not.toContain("map.kakao.com/link/");
     expect(links?.webUrl).not.toContain("nmap://");
     expect(links?.webUrl).not.toContain("intent://");
-    expect(decodeURIComponent(links?.webUrl ?? "")).toContain(
-      `현재 위치,${CURRENT_ORIGIN.lat.toFixed(7)},${CURRENT_ORIGIN.lng.toFixed(7)}`,
-    );
-    expect(decodeURIComponent(links?.webUrl ?? "")).toContain(
-      `${LOCKER_WITH_COORDS.address},37.5559000,126.9364000`,
-    );
   });
 
-  it("카카오맵 Android도 웹 길찾기 URL만 사용한다", () => {
+  it("카카오맵 Android도 m.map.kakao.com scheme/route URL을 사용한다", () => {
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(resolveNavigationOrigin(null)),
       userAgent: "Mozilla/5.0 (Linux; Android 14)",
     });
 
     expect(links?.appUrl).toBe(links?.webUrl);
-    expect(links?.webUrl).toContain("map.kakao.com/link/from/");
-    expect(links?.webUrl).toContain("/to/");
-    expect(links?.webUrl).not.toContain("/by/");
-    expect(decodeURIComponent(links?.webUrl ?? "")).toContain(
-      `${DEFAULT_NAVIGATION_ORIGIN.label},${DEFAULT_NAVIGATION_ORIGIN.lat.toFixed(7)},${DEFAULT_NAVIGATION_ORIGIN.lng.toFixed(7)}`,
+    expect(links?.webUrl).toContain("http://m.map.kakao.com/scheme/route?");
+
+    const url = new URL(links?.webUrl ?? "");
+    expect(url.searchParams.get("sp")).toBe(
+      `${DEFAULT_NAVIGATION_ORIGIN.lat.toFixed(5)},${DEFAULT_NAVIGATION_ORIGIN.lng.toFixed(5)}`,
     );
+    expect(links?.webUrl).not.toContain("map.kakao.com/link/");
   });
 
   it("길찾기 열기는 모바일·데스크톱 모두 웹 URL을 사용한다", () => {

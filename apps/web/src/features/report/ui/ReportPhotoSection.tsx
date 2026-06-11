@@ -1,7 +1,9 @@
 import { m } from "@repo/i18n";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { IconX16 } from "@repo/ui/tokens/icons";
+import { useNavigate } from "@tanstack/react-router";
 import type { ChangeEvent, RefObject } from "react";
+import { buildLegalReturnSearch } from "#/features/settings/legal/model/legal-return-search";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { MAX_REPORT_PHOTOS } from "../model/report-types";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
@@ -32,6 +34,7 @@ interface ReportPhotoSectionProps {
   photoServerError?: string;
   isAgreed: boolean;
   setIsAgreed: (val: boolean) => void;
+  onPrivacyPolicyNavigate?: () => void;
 }
 
 export function ReportPhotoSection({
@@ -44,7 +47,9 @@ export function ReportPhotoSection({
   photoServerError,
   isAgreed,
   setIsAgreed,
+  onPrivacyPolicyNavigate,
 }: ReportPhotoSectionProps) {
+  const navigate = useNavigate();
   const photoError = useReportSectionError(["imageUrl"], photoServerError);
   const photoErrorId = photoError ? "report-photo-error" : undefined;
   const isPhotoUploading = isSubmitting && uploadedImages.length > 0;
@@ -154,9 +159,19 @@ export function ReportPhotoSection({
               {m.report_photo_exif_agreement_label()}
             </span>
           </div>
-          <a className={privacyPolicyLink} href="/settings/privacy">
+          <button
+            type="button"
+            className={privacyPolicyLink}
+            onClick={() => {
+              onPrivacyPolicyNavigate?.();
+              navigate({
+                to: "/settings/privacy",
+                search: buildLegalReturnSearch("/report", 2),
+              });
+            }}
+          >
             {m.report_photo_privacy_policy_link()}
-          </a>
+          </button>
         </div>
       </div>
       <ReportSectionErrorReserve />

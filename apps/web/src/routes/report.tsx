@@ -40,7 +40,6 @@ import {
   reportContainer,
   reportHeader,
   submitActionFrame,
-  submitSubButton,
   stepWrapper,
 } from "#/features/report/ui/report.css.ts";
 import { useAuthStore } from "#/shared/store/authStore";
@@ -60,6 +59,12 @@ const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
 ];
 
 export const Route = createFileRoute("/report")({
+  validateSearch: (search: Record<string, unknown>): { step?: 2 } => {
+    if (search.step === "2" || search.step === 2) {
+      return { step: 2 };
+    }
+    return {};
+  },
   beforeLoad: ({ location, preload }) => {
     if (!useAuthStore.getState().isAuthenticated) {
       if (typeof window !== "undefined" && !preload) {
@@ -144,6 +149,7 @@ function ReportPage() {
     setMaxPriceDisplay,
     handlePriceTypeChange,
     clearSectionError,
+    preparePrivacyPolicyNavigation,
   } = handlers;
 
   const handleExitBack = () => {
@@ -266,6 +272,7 @@ function ReportPage() {
                           shouldDirty: true,
                         });
                       }}
+                      onPrivacyPolicyNavigate={preparePrivacyPolicyNavigation}
                     />
                     <ReportPriceSection
                       priceType={priceType}
@@ -313,11 +320,6 @@ function ReportPage() {
             }
           >
             <div className={submitActionFrame}>
-              {step === 2 && (
-                <p className={submitSubButton}>
-                  {m.report_submit_with_current_info()}
-                </p>
-              )}
               <Button
                 className={nextButton}
                 variant="filled"
@@ -336,7 +338,7 @@ function ReportPage() {
                   ? m.report_button_next()
                   : isSubmitting && uploadedImages.length > 0
                     ? m.report_button_submit_uploading()
-                    : m.report_button_submit()}
+                    : m.report_submit_with_current_info()}
               </Button>
             </div>
           </div>

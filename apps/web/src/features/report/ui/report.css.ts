@@ -572,6 +572,10 @@ export const privacyPolicyLink = style({
   lineHeight: "1.2",
   textDecorationLine: "underline",
   textUnderlinePosition: "from-font",
+  background: "none",
+  border: "none",
+  padding: 0,
+  cursor: "pointer",
 });
 
 export const photoAgreementGroup = style({

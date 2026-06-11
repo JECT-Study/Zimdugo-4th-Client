@@ -129,20 +129,19 @@ export const getLockerNavigationDestination = (
 };
 
 const formatNavigationCoordinate = (value: number): string =>
-  value.toFixed(7);
-
-const buildKakaoRoutePoint = (point: NavigationPoint): string =>
-  [
-    encodeURIComponent(point.label),
-    formatNavigationCoordinate(point.lat),
-    formatNavigationCoordinate(point.lng),
-  ].join(",");
+  value.toFixed(5);
 
 const buildKakaoWebUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
-): string =>
-  `https://map.kakao.com/link/from/${buildKakaoRoutePoint(origin)}/to/${buildKakaoRoutePoint(destination)}`;
+): string => {
+  const params = new URLSearchParams({
+    sp: `${formatNavigationCoordinate(origin.lat)},${formatNavigationCoordinate(origin.lng)}`,
+    ep: `${formatNavigationCoordinate(destination.lat)},${formatNavigationCoordinate(destination.lng)}`,
+  });
+
+  return `http://m.map.kakao.com/scheme/route?${params.toString()}`;
+};
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
