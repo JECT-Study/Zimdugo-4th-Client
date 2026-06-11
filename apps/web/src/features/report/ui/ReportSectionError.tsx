@@ -12,6 +12,10 @@ export function ReportSectionError({
   id,
   placement = "title",
 }: ReportSectionErrorProps) {
+  if (placement === "title" && !message) {
+    return null;
+  }
+
   const className =
     placement === "bottom" ? sectionErrorTextBottom : sectionErrorTextInline;
 
