@@ -28,17 +28,7 @@ export function useFavoriteRemoval() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const pendingRemovalRef = useRef<PendingFavoriteRemoval | null>(null);
 
-  const clearPendingRemoval = useCallback(() => {
-    const pending = pendingRemovalRef.current;
-    if (!pending) return;
-    window.clearTimeout(pending.timeoutId);
-    pendingRemovalRef.current = null;
-    setUndoItem(null);
-  }, []);
-
-  useEffect(() => () => clearPendingRemoval(), [clearPendingRemoval]);
-
-  const flushRemoval = useCallback(
+  const deleteFavoriteLocker = useCallback(
     async (lockerId: number) => {
       if (userId == null) return;
 
@@ -53,23 +43,43 @@ export function useFavoriteRemoval() {
           }),
         ]);
       } catch {
-        const pending = pendingRemovalRef.current;
-        if (pending?.item.lockerId === lockerId) {
-          setHiddenLockerIds((current) => {
-            const next = new Set(current);
-            next.delete(lockerId);
-            return next;
-          });
-          setErrorMessage("delete_failed");
-        }
+        setHiddenLockerIds((current) => {
+          const next = new Set(current);
+          next.delete(lockerId);
+          return next;
+        });
+        setErrorMessage("delete_failed");
       }
     },
     [queryClient, userId],
   );
 
+  const clearPendingTimer = useCallback(() => {
+    const pending = pendingRemovalRef.current;
+    if (!pending) return null;
+
+    window.clearTimeout(pending.timeoutId);
+    pendingRemovalRef.current = null;
+    setUndoItem(null);
+    return pending.item;
+  }, []);
+
+  const commitPendingRemoval = useCallback(async () => {
+    const item = clearPendingTimer();
+    if (!item) return;
+    await deleteFavoriteLocker(item.lockerId);
+  }, [clearPendingTimer, deleteFavoriteLocker]);
+
+  useEffect(
+    () => () => {
+      void commitPendingRemoval();
+    },
+    [commitPendingRemoval],
+  );
+
   const requestRemoval = useCallback(
     (item: FavoriteLockerListItem, index: number) => {
-      clearPendingRemoval();
+      void commitPendingRemoval();
       setErrorMessage(null);
       setHiddenLockerIds((current) => new Set(current).add(item.lockerId));
       setUndoItem(item);
@@ -77,25 +87,25 @@ export function useFavoriteRemoval() {
       const timeoutId = window.setTimeout(() => {
         pendingRemovalRef.current = null;
         setUndoItem(null);
-        void flushRemoval(item.lockerId);
+        void deleteFavoriteLocker(item.lockerId);
       }, UNDO_TIMEOUT_MS);
 
       pendingRemovalRef.current = { item, index, timeoutId };
     },
-    [clearPendingRemoval, flushRemoval],
+    [commitPendingRemoval, deleteFavoriteLocker],
   );
 
   const undoRemoval = useCallback(() => {
     const pending = pendingRemovalRef.current;
     if (!pending) return;
 
-    clearPendingRemoval();
+    clearPendingTimer();
     setHiddenLockerIds((current) => {
       const next = new Set(current);
       next.delete(pending.item.lockerId);
       return next;
     });
-  }, [clearPendingRemoval]);
+  }, [clearPendingTimer]);
 
   const visibleItems =
     listQuery.data?.pages.flatMap((page) => page.items) ?? [];
