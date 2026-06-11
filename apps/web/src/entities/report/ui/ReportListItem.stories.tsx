@@ -8,12 +8,12 @@ const meta = {
     layout: "centered",
   },
   args: {
-    titleText: "?좎큿??5踰?異쒓뎄 B2痢?臾쇳뭹蹂닿???,
-    locationLabel: "?쒖슱 ?쒕?臾멸뎄 ?좎큿濡?83",
-    detailText:
-      "5踰?異쒓뎄 諛⑺뼢 媛쒖같援щ? 吏???쇱そ ?듬줈 ?앹뿉 ?덉뼱?? ?꾧툑 寃곗젣??遺덇??섍퀬 移대뱶 寃곗젣留?媛?ν빐??",
+    titleText: "Sinchon Station Exit 5 B2 Locker",
+    locationLabel: "83 Sinchon-ro, Seodaemun-gu, Seoul",
+    detailText: "Near exit 5. Card payment only.",
     updatedLabel: "1hr ago",
     status: "pending",
+    statusLabel: "Pending review",
   },
   decorators: [
     (Story) => (
@@ -32,11 +32,13 @@ export const Default: Story = {};
 export const Approved: Story = {
   args: {
     status: "approved",
+    statusLabel: "Approved",
   },
 };
 
 export const Rejected: Story = {
   args: {
     status: "rejected",
+    statusLabel: "Rejected",
   },
 };

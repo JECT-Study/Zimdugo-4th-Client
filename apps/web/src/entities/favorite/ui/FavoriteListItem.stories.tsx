@@ -8,7 +8,7 @@ const meta = {
     layout: "centered",
   },
   args: {
-    titleText: "?좎큿??5踰덉텧援?,
+    titleText: "Sinchon Station Locker 5",
     englishCaption: "Exit 5 of Sinchon Station",
     distanceLabel: "1.3km",
     updatedLabel: "1hr ago",
