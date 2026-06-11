@@ -664,6 +664,7 @@ function IndexPage() {
 
   useEffect(() => {
     if (openLockerId == null) {
+      handledOpenLockerIdRef.current = null;
       return;
     }
 
@@ -672,10 +673,17 @@ function IndexPage() {
     }
 
     handledOpenLockerIdRef.current = openLockerId;
-    void openLockerDetailById(openLockerId, undefined, {
+    openLockerDetailById(openLockerId, undefined, {
       detailSnap: detailSnap ?? "half",
-    });
-    navigate({ to: "/", search: {}, replace: true });
+    })
+      .then(() => {
+        navigate({ to: "/", search: {}, replace: true });
+      })
+      .catch((error) => {
+        console.error("Failed to open locker detail from deep link:", error);
+        handledOpenLockerIdRef.current = null;
+        navigate({ to: "/", search: {}, replace: true });
+      });
   }, [detailSnap, navigate, openLockerDetailById, openLockerId]);
 
   const openSearchPlaceList = useCallback(
