@@ -80,6 +80,13 @@ export const reportPageLoadingBackdropStyle: CSSProperties = {
   WebkitBackdropFilter: "blur(2px)",
 };
 
+export const reportPageSpinnerKeyframes = `
+@keyframes report-page-spinner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+`;
+
 export const reportPageLoadingSpinnerStyle: CSSProperties = {
   position: "relative",
   width: "34px",
