@@ -581,12 +581,7 @@ function IndexPage() {
       lat: origin.lat,
       lng: origin.lng,
     };
-  }, [
-    activeLockerId,
-    lockerDetailQueryOrigin,
-    searchCoordinates.lat,
-    searchCoordinates.lng,
-  ]);
+  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates]);
 
   const {
     data: lockerDetail,
