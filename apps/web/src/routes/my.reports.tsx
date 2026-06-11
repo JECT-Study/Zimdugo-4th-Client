@@ -47,6 +47,10 @@ const buildReportDetailHelperText = (
     return m.my_summary_loading();
   }
 
+  if (detailQuery.isError) {
+    return m.my_list_error_title();
+  }
+
   if (!detailQuery.data) {
     return undefined;
   }
