@@ -9,7 +9,16 @@ const ALLOWED_IMAGE_EXTENSIONS = new Set([
   "heic",
   "heif",
   "bmp",
-  "svg",
+]);
+
+const ALLOWED_IMAGE_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "image/bmp",
 ]);
 
 export type ReportPhotoValidationError = "invalid_type" | "max_size";
@@ -30,8 +39,10 @@ const getFileExtension = (fileName: string): string => {
 };
 
 export const isAcceptedReportPhotoFile = (file: File): boolean => {
-  if (file.type.startsWith("image/")) {
-    return true;
+  const contentType = file.type.trim().toLowerCase();
+
+  if (contentType) {
+    return ALLOWED_IMAGE_CONTENT_TYPES.has(contentType);
   }
 
   return ALLOWED_IMAGE_EXTENSIONS.has(getFileExtension(file.name));
@@ -46,12 +57,13 @@ const EXTENSION_TO_CONTENT_TYPE: Record<string, string> = {
   heic: "image/heic",
   heif: "image/heif",
   bmp: "image/bmp",
-  svg: "image/svg+xml",
 };
 
 export const resolveReportPhotoContentType = (file: File): string => {
-  if (file.type.trim()) {
-    return file.type;
+  const contentType = file.type.trim().toLowerCase();
+
+  if (contentType && ALLOWED_IMAGE_CONTENT_TYPES.has(contentType)) {
+    return contentType;
   }
 
   return EXTENSION_TO_CONTENT_TYPE[getFileExtension(file.name)] ?? file.type;

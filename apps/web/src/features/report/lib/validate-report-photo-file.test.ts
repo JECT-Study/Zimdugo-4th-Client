@@ -32,6 +32,16 @@ describe("validateReportPhotoFile", () => {
     expect(resolveReportPhotoContentType(file)).toBe("image/jpeg");
   });
 
+  it("image/* 단축 통과 없이 허용되지 않은 MIME은 거부한다", () => {
+    const file = createFile("photo.svg", "image/svg+xml", 1024);
+
+    expect(isAcceptedReportPhotoFile(file)).toBe(false);
+    expect(validateReportPhotoFile(file)).toEqual({
+      ok: false,
+      error: "invalid_type",
+    });
+  });
+
   it("hwp 파일은 형식 오류를 반환한다", () => {
     const file = createFile("document.hwp", "application/x-hwp", 6735 * 1024);
 
