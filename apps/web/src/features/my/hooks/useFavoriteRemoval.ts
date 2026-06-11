@@ -1,8 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import type { FavoriteLockerListItem } from "#/shared/api/my-page";
-import { removeFavoriteLocker } from "#/shared/api/favorite-lockers";
-import { useAuthStore } from "#/shared/store/authStore";
 import {
   FAVORITE_LOCKER_LIST_QUERY_KEY,
   useFavoriteLockerList,
@@ -19,8 +18,14 @@ interface PendingFavoriteRemoval {
 
 export function useFavoriteRemoval() {
   const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.userId);
   const listQuery = useFavoriteLockerList();
+  const {
+    pending,
+    flush,
+    getEffectiveIsFavorite,
+    syncBaselineFromLockerItems,
+    toggle,
+  } = useFavoriteLockerSession();
   const [hiddenLockerIds, setHiddenLockerIds] = useState<Set<number>>(
     () => new Set(),
   );
@@ -28,30 +33,52 @@ export function useFavoriteRemoval() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const pendingRemovalRef = useRef<PendingFavoriteRemoval | null>(null);
 
-  const deleteFavoriteLocker = useCallback(
-    async (lockerId: number) => {
-      if (userId == null) return;
+  useEffect(() => {
+    const items = listQuery.data?.pages.flatMap((page) => page.items) ?? [];
+    syncBaselineFromLockerItems(items);
+  }, [listQuery.data, syncBaselineFromLockerItems]);
 
-      try {
-        await removeFavoriteLocker(userId, lockerId);
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: [FAVORITE_LOCKER_LIST_QUERY_KEY],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: [MY_PAGE_SUMMARY_QUERY_KEY],
-          }),
-        ]);
-      } catch {
-        setHiddenLockerIds((current) => {
-          const next = new Set(current);
-          next.delete(lockerId);
-          return next;
-        });
-        setErrorMessage("delete_failed");
+  const invalidateMyFavoriteQueries = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: [FAVORITE_LOCKER_LIST_QUERY_KEY],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: [MY_PAGE_SUMMARY_QUERY_KEY],
+      }),
+    ]);
+  }, [queryClient]);
+
+  const flushRemoval = useCallback(
+    async (lockerId: number) => {
+      const wasPendingRemove = pending.get(lockerId) === false;
+
+      if (!wasPendingRemove && pending.size === 0) {
+        return;
       }
+
+      await flush();
+
+      if (!wasPendingRemove) {
+        return;
+      }
+
+      const removeSucceeded =
+        getEffectiveIsFavorite(lockerId, true) === false;
+
+      if (removeSucceeded) {
+        await invalidateMyFavoriteQueries();
+        return;
+      }
+
+      setHiddenLockerIds((current) => {
+        const next = new Set(current);
+        next.delete(lockerId);
+        return next;
+      });
+      setErrorMessage("delete_failed");
     },
-    [queryClient, userId],
+    [pending, flush, getEffectiveIsFavorite, invalidateMyFavoriteQueries],
   );
 
   const clearPendingTimer = useCallback(() => {
@@ -67,8 +94,8 @@ export function useFavoriteRemoval() {
   const commitPendingRemoval = useCallback(async () => {
     const item = clearPendingTimer();
     if (!item) return;
-    await deleteFavoriteLocker(item.lockerId);
-  }, [clearPendingTimer, deleteFavoriteLocker]);
+    await flushRemoval(item.lockerId);
+  }, [clearPendingTimer, flushRemoval]);
 
   useEffect(
     () => () => {
@@ -81,18 +108,23 @@ export function useFavoriteRemoval() {
     (item: FavoriteLockerListItem, index: number) => {
       void commitPendingRemoval();
       setErrorMessage(null);
+
+      if (!toggle(item.lockerId, false)) {
+        return;
+      }
+
       setHiddenLockerIds((current) => new Set(current).add(item.lockerId));
       setUndoItem(item);
 
       const timeoutId = window.setTimeout(() => {
         pendingRemovalRef.current = null;
         setUndoItem(null);
-        void deleteFavoriteLocker(item.lockerId);
+        void flushRemoval(item.lockerId);
       }, UNDO_TIMEOUT_MS);
 
       pendingRemovalRef.current = { item, index, timeoutId };
     },
-    [commitPendingRemoval, deleteFavoriteLocker],
+    [commitPendingRemoval, flushRemoval, toggle],
   );
 
   const undoRemoval = useCallback(() => {
@@ -100,12 +132,25 @@ export function useFavoriteRemoval() {
     if (!pending) return;
 
     clearPendingTimer();
+    toggle(pending.item.lockerId, true);
     setHiddenLockerIds((current) => {
       const next = new Set(current);
       next.delete(pending.item.lockerId);
       return next;
     });
-  }, [clearPendingTimer]);
+  }, [clearPendingTimer, toggle]);
+
+  const handleFavoriteChange = useCallback(
+    (item: FavoriteLockerListItem, index: number, next: boolean) => {
+      if (next) {
+        toggle(item.lockerId, true);
+        return;
+      }
+
+      requestRemoval(item, index);
+    },
+    [requestRemoval, toggle],
+  );
 
   const visibleItems =
     listQuery.data?.pages.flatMap((page) => page.items) ?? [];
@@ -120,7 +165,8 @@ export function useFavoriteRemoval() {
     undoItem,
     errorMessage,
     setErrorMessage,
-    requestRemoval,
+    getEffectiveIsFavorite,
+    handleFavoriteChange,
     undoRemoval,
   };
 }

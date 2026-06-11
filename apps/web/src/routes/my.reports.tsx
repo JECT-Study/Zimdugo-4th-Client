@@ -6,25 +6,18 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
+import { ReportListItem } from "#/entities/report";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { useReportHistoryList } from "#/features/my/hooks/useReportHistoryList";
+import { formatReportListDetailText } from "#/features/my/lib/format-report-list-labels";
 import { formatReportDetailRows } from "#/features/my/lib/format-report-detail-labels";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
-import {
-  listCard,
-  listCardAddress,
-  listCardPressable,
-  listCardMeta,
-  listCardTitle,
-  summaryText,
-} from "#/features/my/ui/my-list.css.ts";
+import { summaryText } from "#/features/my/ui/my-list.css.ts";
 import {
   getMyLockerReportDetail,
   type MyLockerReportDetail,
 } from "#/shared/api/my-page";
-import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
-import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 import { requireAuthenticatedMyRoute } from "./-my-auth";
 import {
   childContent,
@@ -80,16 +73,38 @@ function MyReportsPage() {
 
   const items = listQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const totalCount = listQuery.data?.pages[0]?.totalCount ?? 0;
+  const canLoadMore =
+    listQuery.hasNextPage === true && !listQuery.isFetchingNextPage;
 
   const handleLoadMore = useCallback(() => {
-    if (!listQuery.hasNextPage || listQuery.isFetchingNextPage) return;
+    if (!canLoadMore) return;
     void listQuery.fetchNextPage();
-  }, [listQuery]);
+  }, [canLoadMore, listQuery]);
 
   const sentinelRef = useInfiniteScrollSentinel({
-    enabled: listQuery.hasNextPage === true && !listQuery.isFetchingNextPage,
+    enabled: canLoadMore,
     onIntersect: handleLoadMore,
   });
+
+  const handleBack = () => {
+    navigate({ to: "/my" });
+  };
+
+  const handleGoReport = () => {
+    navigate({ to: "/report" });
+  };
+
+  const handleSelectReport = (reportId: number) => {
+    setSelectedReportId(reportId);
+  };
+
+  const handlePopupOpenChange = (open: boolean) => {
+    if (!open) setSelectedReportId(null);
+  };
+
+  const handleConfirmPopup = () => {
+    setSelectedReportId(null);
+  };
 
   const isInitialLoading = listQuery.isPending;
   const isError = listQuery.isError && items.length === 0;
@@ -102,7 +117,7 @@ function MyReportsPage() {
         leading="back"
         titleType="text"
         title={m.my_report_history_title()}
-        onBack={() => navigate({ to: "/my" })}
+        onBack={handleBack}
       />
 
       <main className={childContent}>
@@ -127,7 +142,7 @@ function MyReportsPage() {
               variant="filled"
               intent="primary"
               size="S"
-              onPress={() => navigate({ to: "/report" })}
+              onPress={handleGoReport}
             >
               {m.my_history_go_report()}
             </Button>
@@ -139,27 +154,17 @@ function MyReportsPage() {
             <ul className={childList}>
               {items.map((item) => (
                 <li key={item.reportId}>
-                  <div className={listCard}>
-                    <button
-                      type="button"
-                      className={listCardPressable}
-                      onClick={() => setSelectedReportId(item.reportId)}
-                    >
-                      <span className={listCardTitle}>{item.lockerName}</span>
-                      <span className={listCardAddress}>{item.roadAddress}</span>
-                      <span className={listCardMeta}>
-                        <span>{getLockerTypeLabel(item.lockerType)}</span>
-                        {item.distanceMeters > 0 ? (
-                          <span>
-                            {formatDistanceMeters(item.distanceMeters)}
-                          </span>
-                        ) : null}
-                        {item.updatedAt ? (
-                          <span>{formatUpdatedLabel(item.updatedAt)}</span>
-                        ) : null}
-                      </span>
-                    </button>
-                  </div>
+                  <ReportListItem
+                    titleText={item.lockerName}
+                    locationLabel={item.roadAddress}
+                    detailText={formatReportListDetailText(item)}
+                    updatedLabel={
+                      item.updatedAt
+                        ? formatUpdatedLabel(item.updatedAt)
+                        : "-"
+                    }
+                    onPress={() => handleSelectReport(item.reportId)}
+                  />
                 </li>
               ))}
             </ul>
@@ -185,14 +190,12 @@ function MyReportsPage() {
 
       <Popup
         isOpen={selectedReportId != null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedReportId(null);
-        }}
+        onOpenChange={handlePopupOpenChange}
         titleText={detailQuery.data?.lockerName ?? m.my_report_history_title()}
         helperText={buildReportDetailHelperText(detailQuery)}
         primaryAction={{
           label: m.common_confirm(),
-          onPress: () => setSelectedReportId(null),
+          onPress: handleConfirmPopup,
         }}
       />
     </div>

@@ -4,21 +4,13 @@ import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
+import { FavoriteListItem } from "#/entities/favorite";
 import { useFavoriteRemoval } from "#/features/my/hooks/useFavoriteRemoval";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { MyUndoToast } from "#/features/my/ui/MyUndoToast";
-import {
-  listCard,
-  listCardAddress,
-  listCardPressable,
-  listCardDeleteButton,
-  listCardMeta,
-  listCardTitle,
-} from "#/features/my/ui/my-list.css.ts";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
-import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 import { requireAuthenticatedMyRoute } from "./-my-auth";
 import {
   childContent,
@@ -42,25 +34,50 @@ function MyFavoritesPage() {
     undoItem,
     errorMessage,
     setErrorMessage,
-    requestRemoval,
+    getEffectiveIsFavorite,
+    handleFavoriteChange,
     undoRemoval,
   } = useFavoriteRemoval();
 
+  const canLoadMore =
+    listQuery.hasNextPage === true && !listQuery.isFetchingNextPage;
+
   const handleLoadMore = useCallback(() => {
-    if (!listQuery.hasNextPage || listQuery.isFetchingNextPage) return;
+    if (!canLoadMore) return;
     void listQuery.fetchNextPage();
-  }, [listQuery]);
+  }, [canLoadMore, listQuery]);
 
   const sentinelRef = useInfiniteScrollSentinel({
-    enabled: listQuery.hasNextPage === true && !listQuery.isFetchingNextPage,
+    enabled: canLoadMore,
     onIntersect: handleLoadMore,
   });
 
-  const handleLockerPress = (lockerId: number) => {
+  const handleBack = () => {
+    navigate({ to: "/my" });
+  };
+
+  const handleLockerPress = (item: {
+    lockerId: number;
+    latitude: number;
+    longitude: number;
+  }) => {
     navigate({
       to: "/",
-      search: { openLockerId: lockerId, detailSnap: "full" },
+      search: {
+        openLockerId: item.lockerId,
+        detailSnap: "full",
+        focusLat: item.latitude,
+        focusLng: item.longitude,
+      },
     });
+  };
+
+  const handleErrorPopupOpenChange = (open: boolean) => {
+    if (!open) setErrorMessage(null);
+  };
+
+  const handleConfirmError = () => {
+    setErrorMessage(null);
   };
 
   const isInitialLoading = listQuery.isPending;
@@ -75,7 +92,7 @@ function MyFavoritesPage() {
         leading="back"
         titleType="text"
         title={m.my_menu_favorite()}
-        onBack={() => navigate({ to: "/my" })}
+        onBack={handleBack}
       />
 
       <main className={childContent}>
@@ -98,34 +115,27 @@ function MyFavoritesPage() {
             <ul className={childList}>
               {filteredItems.map((item, index) => (
                 <li key={item.lockerId}>
-                  <div className={listCard}>
-                    <button
-                      type="button"
-                      className={listCardPressable}
-                      onClick={() => handleLockerPress(item.lockerId)}
-                    >
-                      <span className={listCardTitle}>{item.lockerName}</span>
-                      <span className={listCardAddress}>{item.roadAddress}</span>
-                      <span className={listCardMeta}>
-                        <span>{getLockerTypeLabel(item.lockerType)}</span>
-                        {item.distanceMeters > 0 ? (
-                          <span>
-                            {formatDistanceMeters(item.distanceMeters)}
-                          </span>
-                        ) : null}
-                        {item.updatedAt ? (
-                          <span>{formatUpdatedLabel(item.updatedAt)}</span>
-                        ) : null}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className={listCardDeleteButton}
-                      onClick={() => requestRemoval(item, index)}
-                    >
-                      {m.my_favorite_delete()}
-                    </button>
-                  </div>
+                  <FavoriteListItem
+                    titleText={item.lockerName}
+                    distanceLabel={
+                      item.distanceMeters > 0
+                        ? formatDistanceMeters(item.distanceMeters)
+                        : "-"
+                    }
+                    updatedLabel={
+                      item.updatedAt
+                        ? formatUpdatedLabel(item.updatedAt)
+                        : "-"
+                    }
+                    isFavorite={getEffectiveIsFavorite(
+                      item.lockerId,
+                      item.isFavorite,
+                    )}
+                    onPress={() => handleLockerPress(item)}
+                    onFavoriteChange={(next) =>
+                      handleFavoriteChange(item, index, next)
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -159,13 +169,11 @@ function MyFavoritesPage() {
 
       <Popup
         isOpen={errorMessage != null}
-        onOpenChange={(open) => {
-          if (!open) setErrorMessage(null);
-        }}
+        onOpenChange={handleErrorPopupOpenChange}
         titleText={m.my_favorite_delete_failed()}
         primaryAction={{
           label: m.common_confirm(),
-          onPress: () => setErrorMessage(null),
+          onPress: handleConfirmError,
         }}
       />
     </div>
