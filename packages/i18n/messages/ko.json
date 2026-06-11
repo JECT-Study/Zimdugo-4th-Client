@@ -230,7 +230,7 @@
   "my_favorite_delete": "삭제",
   "my_favorite_delete_toast": "즐겨찾기에서 삭제했습니다",
   "my_favorite_delete_undo": "실행 취소",
-  "my_favorite_delete_failed": "삭제에 실패했습니다. 잠시 후 다시 시도해주세요",
+  "my_favorite_delete_failed": "삭제에 실패했습니다. 잠시 후 다시 시도해주세요.",
   "my_list_error_title": "내역을 불러오지 못했습니다",
   "my_menu_report_history": "제보 히스토리",
   "my_summary_favorite_count": "{count}개",
