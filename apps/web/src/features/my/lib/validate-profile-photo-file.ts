@@ -27,11 +27,8 @@ const getFileExtension = (fileName: string): string => {
 export const isAcceptedProfilePhotoFile = (file: File): boolean => {
   const contentType = file.type.trim().toLowerCase();
 
-  if (
-    contentType &&
-    ALLOWED_PROFILE_IMAGE_CONTENT_TYPES.has(contentType)
-  ) {
-    return true;
+  if (contentType) {
+    return ALLOWED_PROFILE_IMAGE_CONTENT_TYPES.has(contentType);
   }
 
   return ALLOWED_PROFILE_IMAGE_EXTENSIONS.has(getFileExtension(file.name));

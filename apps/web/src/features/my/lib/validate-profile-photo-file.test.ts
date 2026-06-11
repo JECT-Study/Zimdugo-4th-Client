@@ -48,6 +48,18 @@ describe("validateProfilePhotoFile", () => {
     });
   });
 
+  it("허용 MIME과 다른 확장자 조합은 거부한다", () => {
+    const file = new File(["doc"], "profile.jpg", {
+      type: "application/pdf",
+    });
+
+    expect(isAcceptedProfilePhotoFile(file)).toBe(false);
+    expect(validateProfilePhotoFile(file)).toEqual({
+      ok: false,
+      error: "invalid_type",
+    });
+  });
+
   it("MIME 타입이 없어도 확장자로 content type을 추론한다", () => {
     const file = new File(["photo"], "profile.jpeg", { type: "" });
 
