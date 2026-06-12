@@ -56,4 +56,20 @@ describe("ReportDetailViewerModal", () => {
     ).toBeTruthy();
     expect(document.querySelector('[data-slot="legacy-header"]')).toBeNull();
   });
+
+  it("이미지가 없으면 history 전용 문구만 표시한다", () => {
+    render(
+      <ReportDetailViewerModal
+        isOpen
+        onOpenChange={vi.fn()}
+        titleText={REPORT_DETAIL.lockerName}
+        detail={REPORT_DETAIL}
+        loadState="ready"
+      />,
+    );
+
+    expect(screen.getByText("이미지 없음")).toBeTruthy();
+    expect(screen.queryByText("아직 이미지가 없어요.")).toBeNull();
+    expect(screen.queryByText("제보하기를 통해 등록할 수 있어요!")).toBeNull();
+  });
 });

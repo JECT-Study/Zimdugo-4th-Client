@@ -240,6 +240,7 @@
   "my_summary_loading": "…",
   "my_report_history_title": "제보 히스토리",
   "my_report_history_list_aria": "제보 히스토리 목록",
+  "my_report_image_empty": "이미지 없음",
   "report_item_aria_label": "{title}, {location}, {updated}",
   "my_report_history_load_more": "더 보기",
   "my_report_history_total": "총 {count}개의 보관함을 제보했어요",

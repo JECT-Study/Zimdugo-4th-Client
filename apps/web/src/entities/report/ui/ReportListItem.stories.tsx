@@ -9,6 +9,8 @@ const DEFAULT_ARGS = {
   locationLabel: "서울 서대문구 신촌로 83",
   detailText: "무인 보관함",
   updatedLabel: "1시간 전",
+  imageTitleText: "이미지 없음",
+  imageHelperText: "",
 } satisfies ReportListItemProps;
 
 const meta = {

@@ -240,6 +240,7 @@
   "my_summary_loading": "…",
   "my_report_history_title": "上报历史",
   "my_report_history_list_aria": "上报历史列表",
+  "my_report_image_empty": "暂无图片",
   "report_item_aria_label": "{title}，{location}，{updated}",
   "my_report_history_load_more": "加载更多",
   "my_report_history_total": "您共上报了 {count} 个寄存柜",
