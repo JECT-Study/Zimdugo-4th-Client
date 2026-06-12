@@ -29,4 +29,15 @@ describe("locker-detail-labels", () => {
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000원 ~ 5,000원");
     expect(formatLockerPriceLabel(3000)).toBe("3,000원 ~");
   });
+
+  it("비한국어 가격 단위는 KRW로 표시한다", () => {
+    setLanguageTag("en");
+    expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW – 5,000 KRW");
+
+    setLanguageTag("ja");
+    expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW ~ 5,000 KRW");
+
+    setLanguageTag("zh");
+    expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW ~ 5,000 KRW");
+  });
 });
