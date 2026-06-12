@@ -189,7 +189,7 @@ function IndexPage() {
   flushVoteChangesRef.current = voteSession.flush;
 
   const flushLockerSheetMutations = useCallback(async () => {
-    await Promise.all([
+    await Promise.allSettled([
       flushFavoriteChangesRef.current(),
       flushVoteChangesRef.current(),
     ]);
