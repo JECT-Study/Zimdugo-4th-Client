@@ -83,6 +83,9 @@ export function ReportDetailViewerModal({
             {loadState === "error" ? (
               <p className={stateMessage}>{m.my_list_error_title()}</p>
             ) : null}
+            {loadState === "ready" && detail == null ? (
+              <p className={stateMessage}>{m.my_list_error_title()}</p>
+            ) : null}
 
             {loadState === "ready" && detail != null ? (
               <>
