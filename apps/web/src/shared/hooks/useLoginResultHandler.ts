@@ -1,11 +1,14 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { useLoginResultStore } from "../store/loginResultStore";
 import { authService } from "../../features/auth/sign-in/api/authService";
+import { invalidatePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { useAuthStore } from "../store/authStore";
 
 export const useLoginResultHandler = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   // @tanstack/react-router의 useSearch는 strict: false일 때 location.search 전체를 반환합니다.
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const code = search.code as string | undefined;
@@ -22,7 +25,8 @@ export const useLoginResultHandler = () => {
             // 소셜 인증 후 받아온 쿠키(RT)를 이용해 즉시 AT 발급 시도
             const authData = await authService.refresh();
             useAuthStore.getState().setAuth(authData);
-            
+            await invalidatePersonalizedQueries(queryClient);
+
             // 성공 시: 즉시 목적지(없으면 메인 "/")로 완전히 이동한 후 팝업 표출
             await navigate({ to: returnPath as any, replace: true });
             useLoginResultStore.getState().open("success");
@@ -40,7 +44,7 @@ export const useLoginResultHandler = () => {
 
       handleLoginResult();
     }
-  }, [code, navigate, returnPath]);
+  }, [code, navigate, queryClient, returnPath]);
 };
 
 // ... 외부 헬퍼 함수

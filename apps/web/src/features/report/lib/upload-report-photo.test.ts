@@ -32,11 +32,11 @@ describe("uploadReportPhoto", () => {
     });
     vi.mocked(uploadFileToPresignedUrl).mockResolvedValue(undefined);
 
-    await expect(uploadReportPhoto(7, file)).resolves.toBe(
+    await expect(uploadReportPhoto(file)).resolves.toBe(
       "https://cdn.example.com/locker-report/key.jpg",
     );
 
-    expect(postUploadUrl).toHaveBeenCalledWith(7, {
+    expect(postUploadUrl).toHaveBeenCalledWith({
       category: UPLOAD_CATEGORY_LOCKER_REPORT,
       fileName: "locker-photo.jpg",
       contentType: "image/jpeg",
@@ -53,7 +53,7 @@ describe("uploadReportPhoto", () => {
       type: "application/x-hwp",
     });
 
-    await expect(uploadReportPhoto(7, invalidFile)).rejects.toMatchObject({
+    await expect(uploadReportPhoto(invalidFile)).rejects.toMatchObject({
       name: "ReportPhotoUploadValidationError",
       code: "invalid_type",
     } satisfies Partial<ReportPhotoUploadValidationError>);

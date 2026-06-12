@@ -37,9 +37,8 @@ function MyPage() {
 function MyRootPage() {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
-  const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
-  const { data: profile, isPending: isProfilePending } = useUser(userId);
+  const { data: profile, isPending: isProfilePending } = useUser(isAuthenticated);
   const { data: summary, isPending: isSummaryPending } = useMyPageSummary();
   const { mutate: updateProfile } = useUpdateMeProfile();
   const {
@@ -132,7 +131,7 @@ function MyRootPage() {
     }
   }, [isAuthenticated, navigate]);
 
-  if (userId == null || isProfilePending || !isNicknameInitialized) {
+  if (!isAuthenticated || isProfilePending || !isNicknameInitialized) {
     return <MyPageSkeleton />;
   }
 

@@ -145,6 +145,14 @@ export const statusVariants = styleVariants({
   },
 });
 
+export const thumbnailImage = style({
+  width: "76px",
+  height: "76px",
+  borderRadius: vars.radius[8],
+  objectFit: "cover",
+  flexShrink: 0,
+});
+
 export const imageFrameSlot = style({
   gridColumn: "auto",
 });

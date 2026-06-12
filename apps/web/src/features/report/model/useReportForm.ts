@@ -110,7 +110,7 @@ export function useReportForm(): {
   };
   validation: { isStep1Valid: boolean; isStep2Valid: boolean };
 } {
-  const userId = useAuthStore((state) => state.userId);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const form = useForm<ReportFormValues>({
     defaultValues: reportDefaultValues,
     resolver: zodResolver(reportSchema),
@@ -317,7 +317,7 @@ export function useReportForm(): {
 
   const onSubmit = useCallback(
     async (data: ReportFormValues) => {
-      if (userId == null) {
+      if (!isAuthenticated) {
         useAuthPopupStore.getState().openPopup("/report");
         return;
       }
@@ -344,7 +344,7 @@ export function useReportForm(): {
 
         if (selectedPhotoFile) {
           try {
-            imageUrl = await uploadReportPhoto(userId, selectedPhotoFile);
+            imageUrl = await uploadReportPhoto(selectedPhotoFile);
           } catch (error) {
             if (parseReportSubmitFailure(error).kind === "auth") {
               useAuthPopupStore.getState().openPopup("/report");
@@ -372,7 +372,7 @@ export function useReportForm(): {
         }
 
         const payload = normalizeReportPayload({ ...data, imageUrl });
-        await postLockerReport(payload, { userId });
+        await postLockerReport(payload);
         setIsPopupOpen(true);
       } catch (error) {
         const failure = parseReportSubmitFailure(error);
@@ -414,7 +414,7 @@ export function useReportForm(): {
         setIsSubmitting(false);
       }
     },
-    [form, userId],
+    [form, isAuthenticated],
   );
 
   const scrollToFirstFieldError = useCallback(

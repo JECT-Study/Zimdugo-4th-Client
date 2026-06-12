@@ -34,6 +34,7 @@ export interface MyLockerReportHistoryItem {
   longitude: number;
   distanceMeters: number;
   updatedAt: string;
+  imageUrl?: string | null;
 }
 
 export interface MyLockerReportDetail {

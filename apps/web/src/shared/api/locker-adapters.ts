@@ -234,7 +234,7 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   detailHelpText: raw.detailInfo ?? raw.detailHelpText,
   accurateCount: raw.accurateVoteCount ?? raw.accurateCount,
   inaccurateCount: raw.inaccurateVoteCount ?? raw.inaccurateCount,
-  isAccurateVoted: raw.isAccurateVoted,
-  isInaccurateVoted: raw.isInaccurateVoted,
+  isAccurateVoted: raw.isAccurateVoted ?? false,
+  isInaccurateVoted: raw.isInaccurateVoted ?? false,
   lastUpdatedLabel: formatLastUpdatedLabel(raw.updatedAt) || undefined,
 });

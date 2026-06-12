@@ -24,25 +24,23 @@ const unwrapBackendData = <T>(response: BackendResponse<T> | undefined): T => {
 };
 
 export const getMeProfile = async (
-  userId: number,
   signal?: AbortSignal,
 ): Promise<MeProfileData> => {
   const { data: response } = await apiClient.get<BackendResponse<MeProfileData>>(
     "/api/v1/me",
-    { params: { userId }, signal },
+    { signal },
   );
 
   return unwrapBackendData(response);
 };
 
 export const patchMeProfile = async (
-  userId: number,
   body: PatchMeProfileBody,
   signal?: AbortSignal,
 ): Promise<MeProfileData> => {
   const { data: response } = await apiClient.patch<
     BackendResponse<MeProfileData>
-  >("/api/v1/me", body, { params: { userId }, signal });
+  >("/api/v1/me", body, { signal });
 
   return unwrapBackendData(response);
 };

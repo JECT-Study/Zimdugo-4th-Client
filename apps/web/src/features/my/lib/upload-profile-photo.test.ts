@@ -39,12 +39,12 @@ describe("uploadProfilePhoto", () => {
     });
     vi.mocked(uploadFileToPresignedUrl).mockResolvedValue(undefined);
 
-    await expect(uploadProfilePhoto(7, file)).resolves.toBe(
+    await expect(uploadProfilePhoto( file)).resolves.toBe(
       "https://cdn.example.com/profile/key.jpg",
     );
 
     expect(prepareProfileImageFile).toHaveBeenCalledWith(file);
-    expect(postUploadUrl).toHaveBeenCalledWith(7, {
+    expect(postUploadUrl).toHaveBeenCalledWith({
       category: UPLOAD_CATEGORY_PROFILE,
       fileName: "profile-photo.jpg",
       contentType: "image/jpeg",
@@ -61,7 +61,7 @@ describe("uploadProfilePhoto", () => {
       type: "application/x-hwp",
     });
 
-    await expect(uploadProfilePhoto(7, invalidFile)).rejects.toMatchObject({
+    await expect(uploadProfilePhoto( invalidFile)).rejects.toMatchObject({
       name: "ProfilePhotoUploadValidationError",
       code: "invalid_type",
     } satisfies Partial<ProfilePhotoUploadValidationError>);
@@ -74,7 +74,7 @@ describe("uploadProfilePhoto", () => {
   it("GIF, WebP 등 대표 포맷이 아닌 이미지는 거부한다", async () => {
     const webpFile = new File(["webp"], "profile.webp", { type: "image/webp" });
 
-    await expect(uploadProfilePhoto(7, webpFile)).rejects.toMatchObject({
+    await expect(uploadProfilePhoto( webpFile)).rejects.toMatchObject({
       name: "ProfilePhotoUploadValidationError",
       code: "invalid_type",
     } satisfies Partial<ProfilePhotoUploadValidationError>);
@@ -93,7 +93,7 @@ describe("uploadProfilePhoto", () => {
     });
     vi.mocked(prepareProfileImageFile).mockResolvedValue(oversizedFile);
 
-    await expect(uploadProfilePhoto(7, file)).rejects.toMatchObject({
+    await expect(uploadProfilePhoto( file)).rejects.toMatchObject({
       name: "ProfilePhotoUploadValidationError",
       code: "max_size",
     } satisfies Partial<ProfilePhotoUploadValidationError>);

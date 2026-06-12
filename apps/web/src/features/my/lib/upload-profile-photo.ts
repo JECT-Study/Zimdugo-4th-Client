@@ -21,10 +21,7 @@ export class ProfilePhotoUploadValidationError extends Error {
   }
 }
 
-export async function uploadProfilePhoto(
-  userId: number,
-  file: File,
-): Promise<string> {
+export async function uploadProfilePhoto(file: File): Promise<string> {
   const validation = validateProfilePhotoFile(file);
   if (!validation.ok) {
     throw new ProfilePhotoUploadValidationError(validation.error);
@@ -37,7 +34,7 @@ export async function uploadProfilePhoto(
   }
 
   const contentType = resolveProfilePhotoContentType(preparedFile);
-  const { uploadUrl, fileUrl } = await postUploadUrl(userId, {
+  const { uploadUrl, fileUrl } = await postUploadUrl({
     category: UPLOAD_CATEGORY_PROFILE,
     fileName: preparedFile.name,
     contentType,

@@ -1,4 +1,4 @@
-import { httpGet } from "../lib/axios";
+import { httpGet } from "#/shared/lib/apiClient";
 
 interface LockerPinBase {
   latitude: number;
@@ -243,7 +243,6 @@ export interface GetPlaceLockersParams
 
 export interface GetLockerDetailParams extends LockerSearchLocationParams {
   lockerId: number;
-  userId?: number;
   signal?: AbortSignal;
 }
 

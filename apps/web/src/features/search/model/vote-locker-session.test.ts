@@ -34,31 +34,6 @@ describe("vote-locker-session", () => {
     ).toBeNull();
   });
 
-  it("서버가 투표 플래그를 생략하면 기존 baseline 투표 상태를 유지한다", () => {
-    const baseline = new Map([
-      [
-        1,
-        { vote: "CORRECT" as const, accurateCount: 3, inaccurateCount: 1 },
-      ],
-    ]);
-
-    seedVoteBaseline(
-      baseline,
-      1,
-      {
-        accurateCount: 4,
-        inaccurateCount: 1,
-      },
-      false,
-    );
-
-    expect(baseline.get(1)).toEqual({
-      vote: "CORRECT",
-      accurateCount: 4,
-      inaccurateCount: 1,
-    });
-  });
-
   it("펜딩 중인 변경 사항이 없을 때만 서버 투표 상태로 baseline을 갱신한다", () => {
     const baseline = new Map();
 

@@ -7,13 +7,10 @@ import type {
 
 export async function postLockerReport(
   payload: LockerReportCreateRequest,
-  { userId }: { userId: number },
 ): Promise<RestResponse<LockerReportCreateResponse>> {
   const response = await apiClient.post<
     RestResponse<LockerReportCreateResponse>
-  >("/api/v1/locker-reports", payload, {
-    params: { userId },
-  });
+  >("/api/v1/locker-reports", payload);
 
   return response.data;
 }

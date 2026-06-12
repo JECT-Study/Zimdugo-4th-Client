@@ -1,4 +1,4 @@
-import { createApiClient } from "@repo/libs/axios";
+import { createApiClient, createApiMethods } from "@repo/libs/axios";
 import { useAuthStore } from "#/shared/store/authStore";
 import { authService } from "#/features/auth/sign-in/api/authService";
 
@@ -40,3 +40,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export const { httpGet, httpPost, httpPut, httpPatch, httpDelete } =
+  createApiMethods(apiClient);
