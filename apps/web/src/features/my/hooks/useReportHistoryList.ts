@@ -1,10 +1,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getMyLockerReportHistory } from "#/shared/api/my-page";
+import { getMyListPageSize } from "../lib/pagination-helpers";
 import { useMyListLocation } from "./useMyListLocation";
 
 export const REPORT_HISTORY_LIST_QUERY_KEY = "report-history-list";
-
-const getPageSize = (pageIndex: number) => (pageIndex === 0 ? 20 : 10);
 
 export function useReportHistoryList() {
   const { data: location } = useMyListLocation();
@@ -18,7 +17,7 @@ export function useReportHistoryList() {
         lat: location!.lat,
         lng: location!.lng,
         page: pageParam,
-        size: getPageSize(pageParam),
+        size: getMyListPageSize(pageParam),
         signal,
       }),
     getNextPageParam: (lastPage, _pages, lastPageParam) =>
