@@ -1,15 +1,19 @@
 import { m } from "@repo/i18n";
 import { useEffect, useRef, useState } from "react";
 
+import {
+  getMapContainerSize,
+  hasUsableMapContainerSize,
+  waitForUsableMapContainerSize,
+} from "../model/map-container-layout";
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+} from "../model/map-viewport-bootstrap";
 import { useNaverMapSdk } from "../model/NaverMapProvider";
 import { MapError } from "./MapError";
 import { MapSkeleton } from "./map-skeleton/MapSkeleton";
 import { canvas, root } from "./NaverMapCanvas.css";
-
-const DEFAULT_CENTER = {
-  lat: 37.4979,
-  lng: 127.0276,
-};
 
 const MAP_AUTH_ERROR_SIGNATURES = [
   "VITE_NAVER_MAP_CLIENT_ID",
@@ -40,6 +44,8 @@ export interface NaverMapCanvasProps {
   onErrorChange?: (hasError: boolean) => void;
   initialCenter?: MapCanvasCoordinates | null;
   initialZoom?: number;
+  /** remount 트리거 — refresh·탭 복귀 후 안정적인 destroy/create */
+  instanceKey?: number;
 }
 
 export function NaverMapCanvas({
@@ -47,7 +53,8 @@ export function NaverMapCanvas({
   onLoadingChange,
   onErrorChange,
   initialCenter = null,
-  initialZoom = 15,
+  initialZoom = DEFAULT_MAP_ZOOM,
+  instanceKey = 0,
 }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
@@ -81,41 +88,69 @@ export function NaverMapCanvas({
   useEffect(() => {
     if (!isReady || !maps || !containerRef.current) return;
 
-    setMapInitError(null);
-
+    const container = containerRef.current;
+    let cancelled = false;
     let resizeObserver: ResizeObserver | null = null;
+    let refreshFrameId = 0;
 
-    try {
-      const bootstrapCenter = initialCenterRef.current ?? DEFAULT_CENTER;
-      const map = new maps.Map(containerRef.current, {
-        center: new maps.LatLng(bootstrapCenter.lat, bootstrapCenter.lng),
-        zoom: initialZoomRef.current,
-        zoomControl: false,
-        scaleControl: true,
-        mapDataControl: false,
-      });
-      mapRef.current = map;
-      onLoadRef.current?.(map);
+    const initMap = async () => {
+      setMapInitError(null);
 
-      resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          if (mapRef.current) {
-            const { width, height } = entry.contentRect;
-            mapRef.current.setSize(new maps.Size(width, height));
-          }
+      let size = getMapContainerSize(container);
+      if (!hasUsableMapContainerSize(size)) {
+        size = await waitForUsableMapContainerSize(container);
+      }
+      if (cancelled) return;
+
+      try {
+        const bootstrapCenter = initialCenterRef.current ?? DEFAULT_MAP_CENTER;
+        const map = new maps.Map(container, {
+          center: new maps.LatLng(bootstrapCenter.lat, bootstrapCenter.lng),
+          zoom: initialZoomRef.current,
+          zoomControl: false,
+          scaleControl: true,
+          mapDataControl: false,
+        });
+
+        if (cancelled) {
+          map.destroy();
+          return;
         }
-      });
-      resizeObserver.observe(containerRef.current);
-    } catch (nextError) {
-      onLoadRef.current?.(null);
-      setMapInitError(
-        nextError instanceof Error
-          ? nextError.message
-          : m.map_error_initialization_message(),
-      );
-    }
+
+        map.setSize(new maps.Size(size.width, size.height));
+        mapRef.current = map;
+        onLoadRef.current?.(map);
+
+        refreshFrameId = requestAnimationFrame(() => {
+          if (cancelled || mapRef.current !== map) return;
+          map.refresh();
+        });
+
+        resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            if (mapRef.current) {
+              const { width, height } = entry.contentRect;
+              mapRef.current.setSize(new maps.Size(width, height));
+            }
+          }
+        });
+        resizeObserver.observe(container);
+      } catch (nextError) {
+        if (cancelled) return;
+        onLoadRef.current?.(null);
+        setMapInitError(
+          nextError instanceof Error
+            ? nextError.message
+            : m.map_error_initialization_message(),
+        );
+      }
+    };
+
+    void initMap();
 
     return () => {
+      cancelled = true;
+      cancelAnimationFrame(refreshFrameId);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
@@ -125,7 +160,7 @@ export function NaverMapCanvas({
         onLoadRef.current?.(null);
       }
     };
-  }, [isReady, maps]);
+  }, [isReady, maps, instanceKey]);
 
   useEffect(() => {
     onLoadingChangeRef.current?.(isLoading);
