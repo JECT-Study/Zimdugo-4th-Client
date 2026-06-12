@@ -1,4 +1,5 @@
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
+import { sortSizeTypes } from "./sort-size-types";
 
 export type LockerSizeApiType = "SMALL" | "MEDIUM" | "LARGE";
 
@@ -12,6 +13,8 @@ const SIZE_CARD_TO_API: Record<SizeCardType, LockerSizeApiType> = {
 export const cardsToSizeTypes = (
   selectedSizes: SizeCardType[],
 ): LockerSizeApiType[] =>
-  selectedSizes
-    .map((value) => SIZE_CARD_TO_API[value])
-    .filter((value): value is LockerSizeApiType => !!value);
+  sortSizeTypes(
+    selectedSizes
+      .map((value) => SIZE_CARD_TO_API[value])
+      .filter((value): value is LockerSizeApiType => !!value),
+  );
