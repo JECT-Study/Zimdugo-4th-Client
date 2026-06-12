@@ -1,3 +1,4 @@
+import type { MapViewportCoord } from "./map-idle-controller";
 import type { LocationPermissionState } from "./useLocationTracking";
 
 export const DEFAULT_MAP_CENTER = {
@@ -9,11 +10,6 @@ export const DEFAULT_MAP_ZOOM = 15;
 
 export const MAP_VIEWPORT_STALE_MS = 30 * 60 * 1000;
 export const MAP_VIEWPORT_STALE_DISTANCE_M = 2000;
-
-export interface MapViewportCoord {
-  lat: number;
-  lng: number;
-}
 
 export interface MapViewportCache {
   center: MapViewportCoord;

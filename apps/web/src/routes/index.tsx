@@ -44,6 +44,7 @@ import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-locatio
 import { fitNaverMapToBounds } from "#/entities/map/model/map-bounds";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import {
+  LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
@@ -170,17 +171,6 @@ function IndexPage() {
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const [mapRemountKey, setMapRemountKey] = useState(0);
-  const mapBootstrap = useMemo(() => {
-    const deepLinkCenter =
-      focusLat != null && focusLng != null
-        ? { lat: focusLat, lng: focusLng }
-        : deepLinkMapCenterRef.current;
-
-    return resolveMapBootstrapViewport({
-      deepLinkCenter,
-      cache: useMapViewportStore.getState().cache,
-    });
-  }, [focusLat, focusLng, mapRemountKey]);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
     lat: number;
@@ -312,6 +302,20 @@ function IndexPage() {
   const { permission, isTracking, location, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
 
+  const mapBootstrap = useMemo(() => {
+    const deepLinkCenter =
+      focusLat != null && focusLng != null
+        ? { lat: focusLat, lng: focusLng }
+        : deepLinkMapCenterRef.current;
+
+    return resolveMapBootstrapViewport({
+      deepLinkCenter,
+      cache: useMapViewportStore.getState().cache,
+      permission,
+      gps: permission === "granted" && location ? location : null,
+    });
+  }, [focusLat, focusLng, mapRemountKey, permission, location]);
+
   useEffect(() => {
     if (restoredCameraTrackingRef.current || !mapBootstrap.restoreCameraCentered) {
       return;
@@ -385,6 +389,10 @@ function IndexPage() {
     );
 
     setMapRemountKey((key) => key + 1);
+    void queryClient.invalidateQueries({
+      queryKey: [LOCKER_PINS_QUERY_KEY],
+      refetchType: "active",
+    });
 
     refreshTimersRef.current.interval = window.setInterval(() => {
       setRefreshCooldownRemaining((prev) => {
@@ -396,7 +404,7 @@ function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing]);
+  }, [isRefreshing, queryClient]);
 
   // 언마운트 시 리프레시 타이머 클린업
   useEffect(() => {
