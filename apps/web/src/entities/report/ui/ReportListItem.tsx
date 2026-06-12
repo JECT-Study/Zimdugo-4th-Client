@@ -9,6 +9,7 @@ import {
   chevron,
   content,
   imageFrameSlot,
+  thumbnailImage,
   metaDetail,
   metaDot,
   metaRow,
@@ -32,6 +33,7 @@ export interface ReportListItemProps {
   statusLabel?: string;
   imageTitleText?: string;
   imageHelperText?: string;
+  imageUrl?: string | null;
   onPress?: () => void;
   className?: string;
 }
@@ -45,6 +47,7 @@ export function ReportListItem({
   statusLabel,
   imageTitleText,
   imageHelperText,
+  imageUrl,
   onPress,
   className,
 }: ReportListItemProps) {
@@ -62,12 +65,20 @@ export function ReportListItem({
       ) : null}
 
       <span className={bodyContent}>
-        <LockerImageReportFrame
-          size="compact"
-          titleText={imageTitleText}
-          helperText={imageHelperText}
-          className={imageFrameSlot}
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            className={thumbnailImage}
+          />
+        ) : (
+          <LockerImageReportFrame
+            size="compact"
+            titleText={imageTitleText}
+            helperText={imageHelperText}
+            className={imageFrameSlot}
+          />
+        )}
         <span className={textColumn}>
           <span className={titleLabel} title={titleText}>
             {titleText}

@@ -145,6 +145,7 @@ function MyReportsPage() {
                     updatedLabel={
                       item.updatedAt ? formatUpdatedLabel(item.updatedAt) : "-"
                     }
+                    imageUrl={item.imageUrl}
                     imageTitleText={m.my_report_image_empty()}
                     imageHelperText=""
                     onPress={() => handleSelectReport(item.reportId)}
