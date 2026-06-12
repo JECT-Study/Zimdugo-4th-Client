@@ -271,7 +271,7 @@
   "address_search_not_found": "无法找到该地址的位置，请选择其他地址。",
   "locker_detail_operating_hours": "{open} ~ {close}",
   "locker_detail_operating_hours_not_provided": "营业时间未提供",
-  "locker_detail_price_not_provided": "价格未提供",
+  "locker_detail_price_not_provided": "未提供",
   "locker_detail_price_range": "{min} ~ {max}",
   "locker_detail_price_from": "{min} ~",
   "time_updated_just_now": "刚刚更新",

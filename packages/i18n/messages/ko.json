@@ -271,7 +271,7 @@
   "address_search_not_found": "주소의 위치를 찾을 수 없습니다. 다른 주소를 선택해주세요.",
   "locker_detail_operating_hours": "{open} ~ {close}",
   "locker_detail_operating_hours_not_provided": "운영시간 미제공",
-  "locker_detail_price_not_provided": "가격 미제공",
+  "locker_detail_price_not_provided": "미제공",
   "locker_detail_price_range": "{min} ~ {max}",
   "locker_detail_price_from": "{min} ~",
   "time_updated_just_now": "방금 업데이트",

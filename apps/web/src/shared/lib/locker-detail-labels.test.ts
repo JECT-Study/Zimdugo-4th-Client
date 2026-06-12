@@ -1,8 +1,10 @@
 import { setLanguageTag } from "@repo/i18n";
 import { describe, expect, it } from "vitest";
 import {
+  formatLockerFloorLabel,
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
+  formatLockerSizeTypesLabel,
 } from "./locker-detail-labels";
 
 describe("locker-detail-labels", () => {
@@ -10,14 +12,28 @@ describe("locker-detail-labels", () => {
     setLanguageTag("ko");
 
     expect(formatLockerOperatingHoursLabel()).toBe("운영시간 미제공");
-    expect(formatLockerPriceLabel()).toBe("가격 미제공");
+    expect(formatLockerPriceLabel()).toBe("미제공");
   });
 
   it("영어 미제공 문구를 반환한다", () => {
     setLanguageTag("en");
 
     expect(formatLockerOperatingHoursLabel()).toBe("Hours not provided");
-    expect(formatLockerPriceLabel()).toBe("Price not provided");
+    expect(formatLockerPriceLabel()).toBe("Not provided");
+  });
+
+  it("층수·규격을 로케일에 맞게 포맷한다", () => {
+    setLanguageTag("ko");
+
+    expect(formatLockerFloorLabel(1)).toBe("1층");
+    expect(formatLockerFloorLabel(2, "UNDERGROUND")).toBe("B2층");
+    expect(formatLockerSizeTypesLabel(["LARGE", "SMALL"])).toBe(
+      "소형, 대형",
+    );
+
+    setLanguageTag("en");
+    expect(formatLockerFloorLabel(1)).toBe("1F");
+    expect(formatLockerSizeTypesLabel(["MEDIUM"])).toBe("Medium");
   });
 
   it("운영시간·가격 범위를 포맷한다", () => {

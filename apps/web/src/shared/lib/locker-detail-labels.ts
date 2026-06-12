@@ -1,4 +1,5 @@
 import { languageTag, m } from "@repo/i18n";
+import { sortSizeTypes } from "#/entities/locker/lib/sort-size-types";
 import type { AppLocale } from "#/shared/i18n/locales";
 
 const NUMBER_LOCALE_BY_TAG: Record<AppLocale, string> = {
@@ -18,6 +19,40 @@ const formatCurrencyAmount = (amount: number): string => {
 
 const trimTimeSeconds = (time: string): string =>
   /^\d{1,2}:\d{2}:\d{2}$/.test(time) ? time.slice(0, 5) : time;
+
+export const formatLockerFloorLabel = (
+  floor?: number,
+  groundLevelType?: string,
+  fallback?: string,
+): string => {
+  if (floor === undefined) {
+    return fallback ?? "";
+  }
+
+  const unit = m.report_floor_unit();
+  if (groundLevelType === "UNDERGROUND") {
+    return `B${floor}${unit}`;
+  }
+
+  return `${floor}${unit}`;
+};
+
+export const formatLockerSizeTypesLabel = (
+  sizeTypes: readonly string[],
+): string => {
+  if (sizeTypes.length === 0) {
+    return "";
+  }
+
+  return sortSizeTypes(sizeTypes)
+    .map((sizeType) => {
+      if (sizeType === "SMALL") return m.report_size_s();
+      if (sizeType === "MEDIUM") return m.report_size_m();
+      if (sizeType === "LARGE") return m.report_size_l();
+      return sizeType;
+    })
+    .join(", ");
+};
 
 export const formatLockerOperatingHoursLabel = (
   open?: string,

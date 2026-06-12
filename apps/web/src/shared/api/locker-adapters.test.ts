@@ -160,7 +160,7 @@ describe("locker-adapters", () => {
     expect(detail.operatingHoursLabel).toBe("06:00 ~ 23:00");
     expect(detail.floorLabel).toBe("1층");
     expect(detail.priceLabel).toBe("3,000원 ~ 5,000원");
-    expect(detail.sizeLabel).toBe("SMALL, MEDIUM");
+    expect(detail.sizeLabel).toBe("소형, 중형");
     expect(detail.detailHelpText).toBe("지하 1층 안내 데스크 옆");
     expect(detail.accurateCount).toBe(12);
     expect(detail.inaccurateCount).toBe(1);
@@ -181,6 +181,6 @@ describe("locker-adapters", () => {
     });
 
     expect(detail.operatingHoursLabel).toBe("운영시간 미제공");
-    expect(detail.priceLabel).toBe("가격 미제공");
+    expect(detail.priceLabel).toBe("미제공");
   });
 });
