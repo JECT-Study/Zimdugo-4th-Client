@@ -169,6 +169,7 @@ function IndexPage() {
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+  const [mapRemountKey, setMapRemountKey] = useState(0);
   const mapBootstrap = useMemo(() => {
     const deepLinkCenter =
       focusLat != null && focusLng != null
@@ -179,8 +180,7 @@ function IndexPage() {
       deepLinkCenter,
       cache: useMapViewportStore.getState().cache,
     });
-  }, [focusLat, focusLng]);
-  const [mapRemountKey, setMapRemountKey] = useState(0);
+  }, [focusLat, focusLng, mapRemountKey]);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
     lat: number;
@@ -398,16 +398,9 @@ function IndexPage() {
     }, 1000);
   }, [isRefreshing]);
 
-  // 언마운트 시 viewport 저장·리프레시 타이머 클린업
+  // 언마운트 시 리프레시 타이머 클린업
   useEffect(() => {
     return () => {
-      const map = mapInstanceRef.current;
-      if (map) {
-        useMapViewportStore
-          .getState()
-          .saveFromMap(map, isCameraCenteredRef.current);
-      }
-
       window.clearTimeout(refreshTimersRef.current.spinning);
       window.clearTimeout(refreshTimersRef.current.visual);
       window.clearInterval(refreshTimersRef.current.interval);
@@ -1510,7 +1503,6 @@ function IndexPage() {
       <NaverMapProvider language={languageTag()}>
         <NaverMapCanvas
           key={mapRemountKey}
-          instanceKey={mapRemountKey}
           onLoad={handleMapLoad}
           onLoadingChange={setIsMapLoading}
           onErrorChange={setHasMapError}

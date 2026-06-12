@@ -115,7 +115,7 @@ export const resolveMapBootstrapViewport = ({
     return {
       center: cache.center,
       zoom: cache.zoom,
-      restoreCameraCentered: true,
+      restoreCameraCentered: false,
     };
   }
 

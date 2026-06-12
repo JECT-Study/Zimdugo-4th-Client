@@ -45,6 +45,42 @@ describe("map-viewport-bootstrap", () => {
     expect(result.zoom).toBe(13);
   });
 
+  it("wasCameraCentered여도 권한이 없으면 추적 모드를 복원하지 않는다", () => {
+    const cache = createCache({
+      wasCameraCentered: true,
+      zoom: 16,
+    });
+
+    const result = resolveMapBootstrapViewport({
+      cache,
+      permission: "denied",
+      gps: { lat: 37.5005, lng: 127.0005 },
+      now: cache.savedAt + 1_000,
+    });
+
+    expect(result.restoreCameraCentered).toBe(false);
+    expect(result.center).toEqual(cache.center);
+    expect(result.zoom).toBe(16);
+  });
+
+  it("wasCameraCentered여도 GPS가 없으면 추적 모드를 복원하지 않는다", () => {
+    const cache = createCache({
+      wasCameraCentered: true,
+      zoom: 16,
+    });
+
+    const result = resolveMapBootstrapViewport({
+      cache,
+      permission: "granted",
+      gps: null,
+      now: cache.savedAt + 1_000,
+    });
+
+    expect(result.restoreCameraCentered).toBe(false);
+    expect(result.center).toEqual(cache.center);
+    expect(result.zoom).toBe(16);
+  });
+
   it("wasCameraCentered 캐시와 GPS가 있으면 추적 모드를 복원한다", () => {
     const cache = createCache({
       wasCameraCentered: true,

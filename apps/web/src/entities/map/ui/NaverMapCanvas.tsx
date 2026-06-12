@@ -44,8 +44,6 @@ export interface NaverMapCanvasProps {
   onErrorChange?: (hasError: boolean) => void;
   initialCenter?: MapCanvasCoordinates | null;
   initialZoom?: number;
-  /** remount 트리거 — refresh·탭 복귀 후 안정적인 destroy/create */
-  instanceKey?: number;
 }
 
 export function NaverMapCanvas({
@@ -54,7 +52,6 @@ export function NaverMapCanvas({
   onErrorChange,
   initialCenter = null,
   initialZoom = DEFAULT_MAP_ZOOM,
-  instanceKey = 0,
 }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
@@ -160,7 +157,7 @@ export function NaverMapCanvas({
         onLoadRef.current?.(null);
       }
     };
-  }, [isReady, maps, instanceKey]);
+  }, [isReady, maps]);
 
   useEffect(() => {
     onLoadingChangeRef.current?.(isLoading);
