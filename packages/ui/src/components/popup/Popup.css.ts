@@ -1,6 +1,9 @@
 import { style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "../../vars.css.ts";
 
+/** dialog 240px − 좌우 padding 18px × 2 */
+const POPUP_CONTENT_WIDTH = "204px";
+
 export const overlay = style({
   position: "fixed",
   inset: 0,
@@ -15,7 +18,9 @@ export const overlay = style({
 export const dialog = style({
   display: "flex",
   width: "240px",
-  height: "164px",
+  minWidth: "240px",
+  minHeight: "164px",
+  height: "auto",
   padding: "16px 18px", // 좌우 패딩 18px로 조정
   flexDirection: "column",
   justifyContent: "flex-end",
@@ -28,8 +33,9 @@ export const dialog = style({
 });
 
 const containerBase = style({
-  width: "204px", // 240 - 18*2 = 204px 확보
-  height: "132px",
+  width: POPUP_CONTENT_WIDTH,
+  minHeight: "132px",
+  height: "auto",
   flexShrink: 0,
   display: "flex",
   flexDirection: "column",
@@ -43,7 +49,7 @@ export const container = styleVariants({
 });
 
 const bottomSectionBase = style({
-  width: "204px", // 상위 컨테이너와 동일하게 204px로 확장
+  width: POPUP_CONTENT_WIDTH,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -54,7 +60,8 @@ export const bottomSection = styleVariants({
   withMiddle: [
     bottomSectionBase,
     {
-      height: "54px",
+      minHeight: "54px",
+      height: "auto",
       justifyContent: "flex-end",
       gap: "8px",
     },
@@ -63,10 +70,13 @@ export const bottomSection = styleVariants({
 
 export const helperArea = style({
   width: "100%",
-  height: "14px",
+  minHeight: "14px",
+  height: "auto",
   display: "flex",
-  alignItems: "center",
+  flexDirection: "column",
+  alignItems: "stretch",
   justifyContent: "center",
+  gap: "2px",
 });
 
 export const iconWrapper = style({
@@ -90,6 +100,7 @@ export const title = style({
   textAlign: "center",
   width: "100%",
   wordBreak: "keep-all",
+  textWrap: "balance",
 });
 
 export const helper = style({
@@ -100,6 +111,8 @@ export const helper = style({
   lineHeight: "120%",
   textAlign: "center",
   width: "100%",
+  margin: 0,
+  wordBreak: "keep-all",
 });
 
 export const subActionText = style({
@@ -141,18 +154,20 @@ export const buttonRow = style({
 const popupButtonBase = style({
   boxSizing: "border-box",
   whiteSpace: "nowrap",
-  flex: "none",
+  minWidth: 0,
 });
 
 export const primaryButtonItem = style([
   popupButtonBase,
   {
+    flex: 1,
     selectors: {
-      "&[data-size='S']": { width: "79px" },
-      "&[data-size='L']": { width: "204px" },
-      "&:not([data-size])": { width: "79px" },
+      "&[data-size='L']": {
+        flex: "none",
+        width: POPUP_CONTENT_WIDTH,
+      },
     },
   },
 ]);
 
-export const secondaryButtonItem = style([popupButtonBase, { width: "79px" }]);
+export const secondaryButtonItem = style([popupButtonBase, { flex: 1 }]);

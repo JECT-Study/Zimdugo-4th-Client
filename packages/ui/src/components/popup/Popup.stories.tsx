@@ -48,7 +48,8 @@ export const DoubleHelper: Story = {
   name: "Double + Helper",
   args: {
     titleText: "Delete service",
-    helperText: "This action cannot be undone.",
+    helperText:
+      "This action cannot be undone and all personal information will be removed immediately.",
     secondaryAction: { label: "Cancel", onPress: action },
     primaryAction: { label: "Delete", onPress: action },
   },
