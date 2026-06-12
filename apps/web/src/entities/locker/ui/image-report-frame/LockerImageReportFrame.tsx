@@ -16,10 +16,13 @@ export interface LockerImageReportFrameProps {
   className?: string;
 }
 
+const DEFAULT_NO_IMAGE_TITLE = m.locker_detail_no_image_title();
+const DEFAULT_NO_IMAGE_HELPER = m.locker_detail_no_image_helper();
+
 export function LockerImageReportFrame({
   size = "half",
-  titleText = m.locker_detail_no_image_title(),
-  helperText = m.locker_detail_no_image_helper(),
+  titleText = DEFAULT_NO_IMAGE_TITLE,
+  helperText = DEFAULT_NO_IMAGE_HELPER,
   className,
 }: LockerImageReportFrameProps) {
   return (
