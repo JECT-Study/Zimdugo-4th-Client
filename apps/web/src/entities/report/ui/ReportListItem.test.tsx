@@ -45,4 +45,20 @@ describe("ReportListItem", () => {
     );
     expect(screen.getByText(longDetail).getAttribute("title")).toBe(longDetail);
   });
+
+  it("상태 배지를 메타 행과 분리한 상단 오른쪽 행에 표시한다", () => {
+    const { container } = render(
+      <ReportListItem
+        {...REPORT_ITEM_PROPS}
+        status="approved"
+        statusLabel="승인"
+      />,
+    );
+
+    const statusRow = container.querySelector('[data-slot="status-row"]');
+    const metaRow = container.querySelector('[data-slot="meta-row"]');
+
+    expect(statusRow?.textContent).toContain("승인");
+    expect(metaRow?.textContent).not.toContain("승인");
+  });
 });

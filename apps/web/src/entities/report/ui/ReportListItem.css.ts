@@ -30,6 +30,21 @@ export const cardButton = style({
 });
 
 export const content = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[8],
+  width: "100%",
+  minWidth: 0,
+});
+
+export const statusRow = style({
+  display: "flex",
+  justifyContent: "flex-end",
+  width: "100%",
+  minWidth: 0,
+});
+
+export const bodyContent = style({
   display: "grid",
   gridTemplateColumns: "76px minmax(0, 1fr) 20px",
   alignItems: "center",
