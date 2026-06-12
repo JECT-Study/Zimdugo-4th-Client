@@ -129,13 +129,14 @@ export const reportStatus = style({
 
 export const statusVariants = styleVariants({
   pending: {
-    backgroundColor: vars.color.bg.default,
-    color: vars.color.palette.green[500],
-  },
-  approved: {
     borderColor: vars.color.border.action,
     backgroundColor: vars.color.bg.default,
     color: vars.color.text.content,
+  },
+  approved: {
+    borderColor: vars.color.palette.green[500],
+    backgroundColor: vars.color.bg.default,
+    color: vars.color.palette.green[500],
   },
   rejected: {
     borderColor: vars.color.danger.default,

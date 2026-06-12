@@ -1,5 +1,15 @@
-﻿import type { Meta, StoryObj } from "@storybook/react";
-import { ReportListItem } from "./ReportListItem.tsx";
+import type { Meta, StoryObj } from "@storybook/react";
+import {
+  ReportListItem,
+  type ReportListItemProps,
+} from "./ReportListItem.tsx";
+
+const DEFAULT_ARGS = {
+  titleText: "신촌역 5번 출구 B2 보관함",
+  locationLabel: "서울 서대문구 신촌로 83",
+  detailText: "무인 보관함",
+  updatedLabel: "1시간 전",
+} satisfies ReportListItemProps;
 
 const meta = {
   title: "Entities/Report/ReportListItem",
@@ -7,63 +17,47 @@ const meta = {
   parameters: {
     layout: "centered",
   },
-  args: {
-    titleText: "Sinchon Station Exit 5 B2 Locker",
-    locationLabel: "83 Sinchon-ro, Seodaemun-gu, Seoul",
-    detailText: "Near exit 5. Card payment only.",
-    updatedLabel: "1hr ago",
-    status: "pending",
-    statusLabel: "Pending review",
-  },
-  decorators: [
-    (Story) => (
-      <div style={{ width: 335 }}>
-        <Story />
-      </div>
-    ),
-  ],
+  args: DEFAULT_ARGS,
 } satisfies Meta<typeof ReportListItem>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const renderSingleItem = (args: ReportListItemProps) => (
+  <div style={{ width: 335 }}>
+    <ReportListItem {...args} />
+  </div>
+);
+
 export const Default: Story = {
-  args: {
-    titleText: "신촌역 5번 출구 B2 보관함",
-    locationLabel: "서울 서대문구 신촌로 83",
-    detailText: "무인 보관함",
-    updatedLabel: "1시간 전",
-    status: undefined,
-    statusLabel: undefined,
-  },
+  render: renderSingleItem,
 };
 
-export const Approved: Story = {
-  args: {
-    status: "approved",
-    statusLabel: "승인",
-  },
-};
-
-export const Rejected: Story = {
-  args: {
-    status: "rejected",
-    statusLabel: "반려",
-  },
-};
-
-export const Pending: Story = {
-  args: {
-    titleText: "신촌역 5번 출구 B2 보관함",
-    locationLabel: "서울 서대문구 신촌로 83",
-    detailText: "무인 보관함",
-    updatedLabel: "1시간 전",
-    status: "pending",
-    statusLabel: "검토 중",
-  },
+export const Status: Story = {
+  render: (args) => (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 335px)",
+        gap: 16,
+        maxWidth: "calc(100vw - 32px)",
+        overflowX: "auto",
+        padding: 4,
+      }}
+    >
+      <ReportListItem
+        {...args}
+        status="pending"
+        statusLabel="검토 중"
+      />
+      <ReportListItem {...args} status="approved" statusLabel="승인" />
+      <ReportListItem {...args} status="rejected" statusLabel="반려" />
+    </div>
+  ),
 };
 
 export const LongContent: Story = {
+  render: renderSingleItem,
   args: {
     titleText: "서울역 공항철도 도심공항터미널 지하 2층 대형 보관함",
     locationLabel:
