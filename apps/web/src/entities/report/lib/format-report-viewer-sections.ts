@@ -1,4 +1,5 @@
 import { m } from "@repo/i18n";
+import { sortSizeTypes } from "#/entities/locker/lib/sort-size-types";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
 import {
   formatLockerOperatingHoursLabel,
@@ -55,7 +56,7 @@ const formatSizeTypesLabel = (sizeTypes: string[]): string => {
     return "-";
   }
 
-  const labels = sizeTypes.map((sizeType) => {
+  const labels = sortSizeTypes(sizeTypes).map((sizeType) => {
     if (sizeType === "SMALL") return m.report_size_s();
     if (sizeType === "MEDIUM") return m.report_size_m();
     if (sizeType === "LARGE") return m.report_size_l();
