@@ -147,7 +147,7 @@ export function getEffectiveVoteCounts(
     accurateCount?: number;
     inaccurateCount?: number;
   },
-): { accurateCount: number; inaccurateCount: number } | null {
+): { accurateCount?: number; inaccurateCount?: number } | null {
   if (
     server.accurateCount === undefined &&
     server.inaccurateCount === undefined &&
@@ -156,6 +156,7 @@ export function getEffectiveVoteCounts(
     return null;
   }
 
+  const hasBaselineEntry = baseline.has(lockerId);
   const baselineEntry = baseline.get(lockerId) ?? {
     vote: serverVoteStateToEffective(server),
     accurateCount: server.accurateCount ?? 0,
@@ -164,9 +165,18 @@ export function getEffectiveVoteCounts(
   const effectiveVote = getEffectiveVote(pending, baseline, lockerId, server);
   const delta = countDelta(baselineEntry.vote, effectiveVote);
 
+  const accurateCount =
+    !hasBaselineEntry && server.accurateCount === undefined
+      ? undefined
+      : Math.max(0, baselineEntry.accurateCount + delta.accurate);
+  const inaccurateCount =
+    !hasBaselineEntry && server.inaccurateCount === undefined
+      ? undefined
+      : Math.max(0, baselineEntry.inaccurateCount + delta.inaccurate);
+
   return {
-    accurateCount: Math.max(0, baselineEntry.accurateCount + delta.accurate),
-    inaccurateCount: Math.max(0, baselineEntry.inaccurateCount + delta.inaccurate),
+    accurateCount,
+    inaccurateCount,
   };
 }
 

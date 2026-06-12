@@ -141,6 +141,19 @@ describe("vote-locker-session", () => {
     ).toEqual(effectiveVoteToServerState("CORRECT"));
   });
 
+  it("서버가 제공하지 않은 카운트는 overlay에서 undefined를 유지한다", () => {
+    expect(
+      getEffectiveVoteCounts(new Map(), new Map(), 1, {
+        isAccurateVoted: false,
+        isInaccurateVoted: false,
+        accurateCount: 5,
+      }),
+    ).toEqual({
+      accurateCount: 5,
+      inaccurateCount: undefined,
+    });
+  });
+
   it("pending overlay가 카운트를 낙관적으로 반영한다", () => {
     const baseline = new Map([
       [1, { vote: null, accurateCount: 10, inaccurateCount: 2 }],
