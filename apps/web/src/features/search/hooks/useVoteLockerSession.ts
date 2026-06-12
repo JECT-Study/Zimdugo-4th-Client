@@ -68,12 +68,17 @@ export function useVoteLockerSession() {
         return;
       }
 
-      seedVoteBaseline(baselineRef.current, locker.lockerId, {
-        isAccurateVoted: locker.isAccurateVoted,
-        isInaccurateVoted: locker.isInaccurateVoted,
-        accurateCount: locker.accurateCount,
-        inaccurateCount: locker.inaccurateCount,
-      });
+      seedVoteBaseline(
+        baselineRef.current,
+        locker.lockerId,
+        {
+          isAccurateVoted: locker.isAccurateVoted,
+          isInaccurateVoted: locker.isInaccurateVoted,
+          accurateCount: locker.accurateCount,
+          inaccurateCount: locker.inaccurateCount,
+        },
+        pendingRef.current.has(locker.lockerId),
+      );
     },
     [],
   );
