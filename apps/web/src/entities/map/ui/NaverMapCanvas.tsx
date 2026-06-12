@@ -23,6 +23,8 @@ const MAP_AUTH_ERROR_SIGNATURES = [
   "Failed to load Naver Maps SDK",
 ];
 
+const MAP_BOOTSTRAP_TIMEOUT_MS = 3_000;
+
 const getMapErrorMessage = (message?: string) => {
   if (!message) return m.map_error_default_message();
 
@@ -40,6 +42,7 @@ export interface MapCanvasCoordinates {
 
 export interface NaverMapCanvasProps {
   onLoad?: (map: naver.maps.Map | null) => void;
+  onWillDestroy?: (map: naver.maps.Map) => void;
   onLoadingChange?: (isLoading: boolean) => void;
   onErrorChange?: (hasError: boolean) => void;
   initialCenter?: MapCanvasCoordinates | null;
@@ -48,6 +51,7 @@ export interface NaverMapCanvasProps {
 
 export function NaverMapCanvas({
   onLoad,
+  onWillDestroy,
   onLoadingChange,
   onErrorChange,
   initialCenter = null,
@@ -57,9 +61,13 @@ export function NaverMapCanvas({
   const mapRef = useRef<naver.maps.Map | null>(null);
   const { status, isReady, maps, error, reload } = useNaverMapSdk();
   const [mapInitError, setMapInitError] = useState<string | null>(null);
+  const [isMapBootstrapping, setIsMapBootstrapping] = useState(false);
 
   const onLoadRef = useRef(onLoad);
   onLoadRef.current = onLoad;
+
+  const onWillDestroyRef = useRef(onWillDestroy);
+  onWillDestroyRef.current = onWillDestroy;
 
   const onLoadingChangeRef = useRef(onLoadingChange);
   onLoadingChangeRef.current = onLoadingChange;
@@ -74,7 +82,8 @@ export function NaverMapCanvas({
   initialZoomRef.current = initialZoom;
 
   const hasError = status === "error" || mapInitError !== null;
-  const isLoading = status === "idle" || status === "loading";
+  const isSdkLoading = status === "idle" || status === "loading";
+  const isLoading = isSdkLoading || isMapBootstrapping;
   const errorMessage = getMapErrorMessage(mapInitError ?? error?.message);
 
   const handleRetry = () => {
@@ -89,9 +98,17 @@ export function NaverMapCanvas({
     let cancelled = false;
     let resizeObserver: ResizeObserver | null = null;
     let refreshFrameId = 0;
+    let bootstrapTimeoutId = 0;
+    let bootstrapIdleListener: naver.maps.MapEventListener | null = null;
+
+    const finishBootstrapping = () => {
+      if (cancelled) return;
+      setIsMapBootstrapping(false);
+    };
 
     const initMap = async () => {
       setMapInitError(null);
+      setIsMapBootstrapping(true);
 
       let size = getMapContainerSize(container);
       if (!hasUsableMapContainerSize(size)) {
@@ -118,6 +135,22 @@ export function NaverMapCanvas({
         mapRef.current = map;
         onLoadRef.current?.(map);
 
+        bootstrapIdleListener = maps.Event.addListener(map, "idle", () => {
+          if (bootstrapIdleListener) {
+            maps.Event.removeListener(bootstrapIdleListener);
+            bootstrapIdleListener = null;
+          }
+          window.clearTimeout(bootstrapTimeoutId);
+          finishBootstrapping();
+        });
+        bootstrapTimeoutId = window.setTimeout(() => {
+          if (bootstrapIdleListener) {
+            maps.Event.removeListener(bootstrapIdleListener);
+            bootstrapIdleListener = null;
+          }
+          finishBootstrapping();
+        }, MAP_BOOTSTRAP_TIMEOUT_MS);
+
         refreshFrameId = requestAnimationFrame(() => {
           if (cancelled || mapRef.current !== map) return;
           map.refresh();
@@ -134,6 +167,12 @@ export function NaverMapCanvas({
         resizeObserver.observe(container);
       } catch (nextError) {
         if (cancelled) return;
+        window.clearTimeout(bootstrapTimeoutId);
+        if (bootstrapIdleListener) {
+          maps.Event.removeListener(bootstrapIdleListener);
+          bootstrapIdleListener = null;
+        }
+        setIsMapBootstrapping(false);
         onLoadRef.current?.(null);
         setMapInitError(
           nextError instanceof Error
@@ -148,14 +187,20 @@ export function NaverMapCanvas({
     return () => {
       cancelled = true;
       cancelAnimationFrame(refreshFrameId);
+      window.clearTimeout(bootstrapTimeoutId);
+      if (bootstrapIdleListener) {
+        maps.Event.removeListener(bootstrapIdleListener);
+      }
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
       if (mapRef.current) {
+        onWillDestroyRef.current?.(mapRef.current);
         mapRef.current.destroy();
         mapRef.current = null;
         onLoadRef.current?.(null);
       }
+      setIsMapBootstrapping(false);
     };
   }, [isReady, maps]);
 
@@ -171,7 +216,7 @@ export function NaverMapCanvas({
     <section className={root} aria-label={m.map_area_aria()}>
       <div ref={containerRef} className={canvas} />
 
-      {isLoading ? <MapSkeleton /> : null}
+      {isLoading && !hasError ? <MapSkeleton /> : null}
 
       {hasError ? (
         <MapError

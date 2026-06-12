@@ -119,6 +119,8 @@
   "home_location_permission_title": "Location permission required",
   "home_location_permission_helper": "Allow location access in your browser settings, then refresh this page.",
   "map_area_aria": "Naver map area",
+  "map_loading_aria": "Loading map",
+  "map_loading_message": "Loading map",
   "map_error_alert_aria": "Map load failure alert",
   "map_error_title": "Map Load Error",
   "map_error_description": "Unable to load the map",

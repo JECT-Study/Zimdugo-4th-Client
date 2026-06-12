@@ -15,7 +15,6 @@ const createCache = (
   center: { lat: 37.5, lng: 127.0 },
   zoom: 14,
   savedAt: Date.now(),
-  wasCameraCentered: false,
   ...overrides,
 });
 
@@ -27,7 +26,6 @@ describe("map-viewport-bootstrap", () => {
     });
 
     expect(result.center).toEqual({ lat: 37.51, lng: 127.05 });
-    expect(result.restoreCameraCentered).toBe(false);
   });
 
   it("유효한 캐시가 있으면 center/zoom을 복원한다", () => {
@@ -45,59 +43,21 @@ describe("map-viewport-bootstrap", () => {
     expect(result.zoom).toBe(13);
   });
 
-  it("wasCameraCentered여도 권한이 없으면 추적 모드를 복원하지 않는다", () => {
+  it("캐시가 stale이면 GPS로 초기 center를 잡는다", () => {
     const cache = createCache({
-      wasCameraCentered: true,
-      zoom: 16,
+      center: { lat: 37.5, lng: 127.0 },
+      savedAt: 1_000,
     });
+    const gps = { lat: 37.52, lng: 127.0 };
 
-    const result = resolveMapBootstrapViewport({
-      cache,
-      permission: "denied",
-      gps: { lat: 37.5005, lng: 127.0005 },
-      now: cache.savedAt + 1_000,
-    });
-
-    expect(result.restoreCameraCentered).toBe(false);
-    expect(result.center).toEqual(cache.center);
-    expect(result.zoom).toBe(16);
-  });
-
-  it("wasCameraCentered여도 GPS가 없으면 추적 모드를 복원하지 않는다", () => {
-    const cache = createCache({
-      wasCameraCentered: true,
-      zoom: 16,
-    });
-
-    const result = resolveMapBootstrapViewport({
-      cache,
-      permission: "granted",
-      gps: null,
-      now: cache.savedAt + 1_000,
-    });
-
-    expect(result.restoreCameraCentered).toBe(false);
-    expect(result.center).toEqual(cache.center);
-    expect(result.zoom).toBe(16);
-  });
-
-  it("wasCameraCentered 캐시와 GPS가 있으면 추적 모드를 복원한다", () => {
-    const cache = createCache({
-      wasCameraCentered: true,
-      zoom: 16,
-    });
-
-    const gps = { lat: 37.5005, lng: 127.0005 };
     const result = resolveMapBootstrapViewport({
       cache,
       permission: "granted",
       gps,
-      now: cache.savedAt + 1_000,
+      now: 1_000 + MAP_VIEWPORT_STALE_MS + 1,
     });
 
-    expect(result.restoreCameraCentered).toBe(true);
     expect(result.center).toEqual(gps);
-    expect(result.zoom).toBe(16);
   });
 
   it("30분이 지나면 캐시를 stale로 본다", () => {

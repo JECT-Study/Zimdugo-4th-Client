@@ -1,5 +1,12 @@
+import { m } from "@repo/i18n";
 import type { CSSProperties } from "react";
-import { mapArea, skeletonContainer } from "./MapSkeleton.css";
+import {
+  loadingContent,
+  loadingLabel,
+  loadingSpinner,
+  mapArea,
+  skeletonContainer,
+} from "./MapSkeleton.css";
 
 const skeletonContainerFallbackStyle: CSSProperties = {
   position: "absolute",
@@ -7,6 +14,10 @@ const skeletonContainerFallbackStyle: CSSProperties = {
   width: "100%",
   height: "100%",
   zIndex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "#eef0f3",
   pointerEvents: "none",
 };
 
@@ -16,11 +27,11 @@ const mapAreaFallbackStyle: CSSProperties = {
   width: "100%",
   height: "100%",
   zIndex: 1,
-  background: "#f5f5f5",
+  background: "#eef0f3",
 };
 
 /**
- * 지도 SDK 로딩 중 표시되는 지도 영역 플레이스홀더.
+ * 지도 SDK·인스턴스 부트스트랩 중 표시되는 플레이스홀더.
  *
  * 컨트롤 버튼(새로고침/내 위치) 스켈레톤은 이 컴포넌트 안에 두지 않는다.
  * `NaverMapCanvas`의 root는 `isolation: isolate`로 스태킹이 갇혀 있어, 실제
@@ -29,8 +40,18 @@ const mapAreaFallbackStyle: CSSProperties = {
  */
 export function MapSkeleton() {
   return (
-    <div className={skeletonContainer} style={skeletonContainerFallbackStyle}>
-      <div className={mapArea} style={mapAreaFallbackStyle} />
+    <div
+      className={skeletonContainer}
+      style={skeletonContainerFallbackStyle}
+      role="status"
+      aria-live="polite"
+      aria-label={m.map_loading_aria()}
+    >
+      <div className={mapArea} style={mapAreaFallbackStyle} aria-hidden="true" />
+      <div className={loadingContent}>
+        <div className={loadingSpinner} aria-hidden="true" />
+        <p className={loadingLabel}>{m.map_loading_message()}</p>
+      </div>
     </div>
   );
 }

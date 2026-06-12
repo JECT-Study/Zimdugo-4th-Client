@@ -208,7 +208,6 @@ function IndexPage() {
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const isCameraCenteredRef = useRef(false);
-  const restoredCameraTrackingRef = useRef(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
   // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
@@ -316,23 +315,6 @@ function IndexPage() {
     });
   }, [focusLat, focusLng, mapRemountKey, permission, location]);
 
-  useEffect(() => {
-    if (restoredCameraTrackingRef.current || !mapBootstrap.restoreCameraCentered) {
-      return;
-    }
-
-    restoredCameraTrackingRef.current = true;
-    setIsCameraCentered(true);
-
-    if (permission === "granted" && !isTracking) {
-      startTracking();
-    }
-  }, [
-    isTracking,
-    mapBootstrap.restoreCameraCentered,
-    permission,
-    startTracking,
-  ]);
   const {
     heading: deviceHeading,
     isTracking: isOrientationTracking,
@@ -370,9 +352,7 @@ function IndexPage() {
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
 
-    useMapViewportStore
-      .getState()
-      .saveFromMap(mapInstanceRef.current, isCameraCenteredRef.current);
+    useMapViewportStore.getState().saveFromMap(mapInstanceRef.current);
 
     setIsRefreshing(true);
     setRefreshCooldownRemaining(15);
@@ -406,6 +386,17 @@ function IndexPage() {
     }, 1000);
   }, [isRefreshing, queryClient]);
 
+  const persistMapViewport = useCallback((map: naver.maps.Map) => {
+    useMapViewportStore.getState().saveFromMap(map);
+  }, []);
+
+  const saveMapViewport = useCallback(() => {
+    const map = mapInstanceRef.current;
+    if (map) {
+      persistMapViewport(map);
+    }
+  }, [persistMapViewport]);
+
   // 언마운트 시 리프레시 타이머 클린업
   useEffect(() => {
     return () => {
@@ -416,6 +407,23 @@ function IndexPage() {
     };
   }, []);
 
+  // 탭 전환·백그라운드 이탈 직전 viewport 저장
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        saveMapViewport();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", saveMapViewport);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", saveMapViewport);
+    };
+  }, [saveMapViewport]);
+
   useEffect(() => {
     if (!mapInstance) return;
 
@@ -425,13 +433,9 @@ function IndexPage() {
     return subscribeMapIdle({
       map: mapInstance,
       maps,
-      onSettle: () => {
-        useMapViewportStore
-          .getState()
-          .saveFromMap(mapInstance, isCameraCenteredRef.current);
-      },
+      onSettle: saveMapViewport,
     });
-  }, [mapInstance]);
+  }, [mapInstance, saveMapViewport]);
 
   const handleMyLocation = useCallback(async () => {
     if (permission === "denied") {
@@ -1512,6 +1516,7 @@ function IndexPage() {
         <NaverMapCanvas
           key={mapRemountKey}
           onLoad={handleMapLoad}
+          onWillDestroy={persistMapViewport}
           onLoadingChange={setIsMapLoading}
           onErrorChange={setHasMapError}
           initialCenter={mapBootstrap.center}

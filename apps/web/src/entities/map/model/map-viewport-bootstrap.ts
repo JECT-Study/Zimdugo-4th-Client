@@ -15,7 +15,6 @@ export interface MapViewportCache {
   center: MapViewportCoord;
   zoom: number;
   savedAt: number;
-  wasCameraCentered: boolean;
 }
 
 const EARTH_RADIUS_M = 6_371_000;
@@ -75,7 +74,6 @@ export interface ResolveMapBootstrapViewportInput {
 export interface ResolvedMapBootstrapViewport {
   center: MapViewportCoord;
   zoom: number;
-  restoreCameraCentered: boolean;
 }
 
 export const resolveMapBootstrapViewport = ({
@@ -91,7 +89,6 @@ export const resolveMapBootstrapViewport = ({
     return {
       center: deepLinkCenter,
       zoom: defaultZoom,
-      restoreCameraCentered: false,
     };
   }
 
@@ -99,27 +96,10 @@ export const resolveMapBootstrapViewport = ({
     cache != null &&
     !isMapViewportCacheStale(cache, { now, gps, permission });
 
-  if (cacheIsFresh && cache.wasCameraCentered) {
-    if (permission === "granted" && gps != null) {
-      return {
-        center: gps,
-        zoom: cache.zoom,
-        restoreCameraCentered: true,
-      };
-    }
-
-    return {
-      center: cache.center,
-      zoom: cache.zoom,
-      restoreCameraCentered: false,
-    };
-  }
-
   if (cacheIsFresh) {
     return {
       center: cache.center,
       zoom: cache.zoom,
-      restoreCameraCentered: false,
     };
   }
 
@@ -127,13 +107,11 @@ export const resolveMapBootstrapViewport = ({
     return {
       center: gps,
       zoom: defaultZoom,
-      restoreCameraCentered: false,
     };
   }
 
   return {
     center: defaultCenter,
     zoom: defaultZoom,
-    restoreCameraCentered: false,
   };
 };

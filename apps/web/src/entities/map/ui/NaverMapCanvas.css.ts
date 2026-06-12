@@ -23,4 +23,5 @@ export const canvas = style({
   minHeight: "100%",
   minWidth: 0,
   minBlockSize: 0,
+  backgroundColor: vars.color.bg.default,
 });
