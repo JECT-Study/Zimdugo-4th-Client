@@ -27,7 +27,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  args: {
+    titleText: "신촌역 5번 출구 B2 보관함",
+    locationLabel: "서울 서대문구 신촌로 83",
+    detailText: "무인 보관함",
+    updatedLabel: "1시간 전",
+    status: undefined,
+    statusLabel: undefined,
+  },
+};
 
 export const Approved: Story = {
   args: {
@@ -40,5 +49,17 @@ export const Rejected: Story = {
   args: {
     status: "rejected",
     statusLabel: "Rejected",
+  },
+};
+
+export const LongContent: Story = {
+  args: {
+    titleText: "서울역 공항철도 도심공항터미널 지하 2층 대형 보관함",
+    locationLabel:
+      "서울특별시 용산구 한강대로 405 서울역 공항철도 도심공항터미널",
+    detailText: "무인 보관함",
+    updatedLabel: "2026년 6월 12일",
+    status: "pending",
+    statusLabel: "검토 중",
   },
 };

@@ -1,10 +1,10 @@
 import { m } from "@repo/i18n";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
-import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
 } from "#/shared/lib/locker-detail-labels";
+import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 
 export type ReportViewerField = {
   label: string;
@@ -38,9 +38,7 @@ const formatFloorLabel = (detail: MyLockerReportDetail): string => {
   return `${scopeLabel} ${detail.floorNumber}${m.report_history_item_floor_unit()}`;
 };
 
-const formatIndoorOutdoorLabel = (
-  indoorOutdoorType: string | null,
-): string => {
+const formatIndoorOutdoorLabel = (indoorOutdoorType: string | null): string => {
   if (indoorOutdoorType === "INDOOR") {
     return m.report_indoor();
   }
@@ -152,6 +150,61 @@ export const formatReportViewerSections = (
   {
     title: m.report_section_time(),
     fields: [
+      {
+        label: m.report_section_time(),
+        value: formatLockerOperatingHoursLabel(
+          detail.startTime ?? undefined,
+          detail.endTime ?? undefined,
+        ),
+      },
+    ],
+  },
+  {
+    title: m.report_section_additional(),
+    fields: [
+      {
+        label: m.report_section_additional(),
+        value: formatAdditionalInfoLabel(detail.additionalInfo),
+      },
+    ],
+  },
+];
+
+export const formatReportViewerInformationGroups = (
+  detail: MyLockerReportDetail,
+): ReportViewerSection[] => [
+  {
+    title: m.my_report_detail_location_group(),
+    fields: [
+      {
+        label: m.my_report_detail_address(),
+        value: detail.roadAddress,
+      },
+      {
+        label: m.my_report_detail_position(),
+        value: formatFloorLabel(detail),
+      },
+      {
+        label: m.report_section_indoor_outdoor(),
+        value: formatIndoorOutdoorLabel(detail.indoorOutdoorType),
+      },
+    ],
+  },
+  {
+    title: m.my_report_detail_locker_group(),
+    fields: [
+      {
+        label: m.my_history_item_type(),
+        value: getLockerTypeLabel(detail.lockerType ?? undefined) || "-",
+      },
+      {
+        label: m.my_report_detail_size(),
+        value: formatSizeTypesLabel(detail.sizeTypes),
+      },
+      {
+        label: m.my_history_item_price(),
+        value: formatPriceLabel(detail),
+      },
       {
         label: m.report_section_time(),
         value: formatLockerOperatingHoursLabel(

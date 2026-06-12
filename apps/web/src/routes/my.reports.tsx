@@ -5,18 +5,20 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import {
-  ReportDetailViewerModal,
   type ReportDetailViewerLoadState,
+  ReportDetailViewerModal,
   ReportListItem,
 } from "#/entities/report";
+import { NonSearch } from "#/entities/search";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { useReportHistoryList } from "#/features/my/hooks/useReportHistoryList";
 import { formatReportListDetailText } from "#/features/my/lib/format-report-list-labels";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { summaryText } from "#/features/my/ui/my-list.css.ts";
 import { getMyLockerReportDetail } from "#/shared/api/my-page";
+import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
-import { requireAuthenticatedMyRoute } from "./-my-auth";
+import { useAppLanguageStore } from "#/shared/store/language";
 import {
   childContent,
   childEmpty,
@@ -26,6 +28,7 @@ import {
   childPage,
   header,
 } from "./-my.css.ts";
+import { requireAuthenticatedMyRoute } from "./-my-auth";
 
 export const Route = createFileRoute("/my/reports")({
   beforeLoad: requireAuthenticatedMyRoute,
@@ -36,13 +39,19 @@ const MY_REPORT_DETAIL_QUERY_KEY = "my-report-detail";
 
 function MyReportsPage() {
   const navigate = useNavigate();
+  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const listQuery = useReportHistoryList();
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
 
   const detailQuery = useQuery({
     queryKey: [MY_REPORT_DETAIL_QUERY_KEY, selectedReportId],
-    queryFn: ({ signal }) =>
-      getMyLockerReportDetail(selectedReportId!, signal),
+    queryFn: ({ signal }) => {
+      if (selectedReportId == null) {
+        throw new Error("Report id is required.");
+      }
+
+      return getMyLockerReportDetail(selectedReportId, signal);
+    },
     enabled: selectedReportId != null,
   });
 
@@ -63,10 +72,6 @@ function MyReportsPage() {
 
   const handleBack = () => {
     navigate({ to: "/my" });
-  };
-
-  const handleGoReport = () => {
-    navigate({ to: "/report" });
   };
 
   const handleSelectReport = (reportId: number) => {
@@ -91,6 +96,7 @@ function MyReportsPage() {
   const isInitialLoading = listQuery.isPending;
   const isError = listQuery.isError && items.length === 0;
   const isEmpty = !isInitialLoading && !isError && items.length === 0;
+  const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
 
   return (
     <div className={childPage}>
@@ -109,9 +115,7 @@ function MyReportsPage() {
           </p>
         ) : null}
 
-        {isInitialLoading ? (
-          <p>{m.my_summary_loading()}</p>
-        ) : null}
+        {isInitialLoading ? <p>{m.my_summary_loading()}</p> : null}
 
         {isError ? (
           <MyListErrorState onRetry={() => void listQuery.refetch()} />
@@ -119,15 +123,11 @@ function MyReportsPage() {
 
         {isEmpty ? (
           <div className={childEmpty}>
-            <p>{m.my_history_empty()}</p>
-            <Button
-              variant="filled"
-              intent="primary"
-              size="S"
-              onPress={handleGoReport}
-            >
-              {m.my_history_go_report()}
-            </Button>
+            <NonSearch
+              titleText={m.my_history_empty_title()}
+              descriptionText={m.my_history_empty()}
+              showEnglishSub={showEnglishSub}
+            />
           </div>
         ) : null}
 
@@ -141,9 +141,7 @@ function MyReportsPage() {
                     locationLabel={item.roadAddress}
                     detailText={formatReportListDetailText(item)}
                     updatedLabel={
-                      item.updatedAt
-                        ? formatUpdatedLabel(item.updatedAt)
-                        : "-"
+                      item.updatedAt ? formatUpdatedLabel(item.updatedAt) : "-"
                     }
                     onPress={() => handleSelectReport(item.reportId)}
                   />

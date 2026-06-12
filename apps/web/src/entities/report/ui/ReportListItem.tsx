@@ -1,12 +1,16 @@
-﻿import { Button } from "@repo/ui/components/button";
+import { Button } from "@repo/ui/components/button";
+import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
 import {
-  bodyRow,
+  address,
   cardButton,
-  detailColumn,
-  helperText,
+  chevron,
+  content,
   imageFrameSlot,
+  metaDetail,
+  metaDot,
   metaRow,
+  metaTime,
   reportStatus,
   root,
   statusVariants,
@@ -44,32 +48,40 @@ export function ReportListItem({
   const resolvedStatusLabel =
     status != null && statusLabel ? statusLabel : undefined;
 
-  const content = (
-    <>
+  const itemContent = (
+    <span className={content}>
+      <LockerImageReportFrame
+        size="compact"
+        titleText={imageTitleText}
+        helperText={imageHelperText}
+        className={imageFrameSlot}
+      />
       <span className={textColumn}>
-        <span className={titleLabel}>{titleText}</span>
+        <span className={titleLabel} title={titleText}>
+          {titleText}
+        </span>
+        <span className={address} title={locationLabel}>
+          {locationLabel}
+        </span>
         <span className={metaRow}>
-          <span>{locationLabel}</span>
-          <span>{updatedLabel}</span>
+          <span className={metaDetail} title={detailText}>
+            {detailText}
+          </span>
+          <span className={metaDot} aria-hidden="true">
+            ·
+          </span>
+          <span className={metaTime}>{updatedLabel}</span>
+          {status && resolvedStatusLabel ? (
+            <span className={[reportStatus, statusVariants[status]].join(" ")}>
+              {resolvedStatusLabel}
+            </span>
+          ) : null}
         </span>
       </span>
-      {status && resolvedStatusLabel ? (
-        <span className={[reportStatus, statusVariants[status]].join(" ")}>
-          {resolvedStatusLabel}
-        </span>
-      ) : null}
-      <span className={bodyRow}>
-        <LockerImageReportFrame
-          size="compact"
-          titleText={imageTitleText}
-          helperText={imageHelperText}
-          className={imageFrameSlot}
-        />
-        <span className={detailColumn}>
-          <span className={helperText}>{detailText}</span>
-        </span>
+      <span className={chevron} data-slot="chevron" aria-hidden="true">
+        <IconChevronLeft13 />
       </span>
-    </>
+    </span>
   );
 
   return onPress ? (
@@ -81,11 +93,11 @@ export function ReportListItem({
       onPress={onPress}
       aria-label={`${titleText} ${locationLabel} ${updatedLabel}`}
     >
-      {content}
+      {itemContent}
     </Button>
   ) : (
     <article className={[root, className].filter(Boolean).join(" ")}>
-      {content}
+      {itemContent}
     </article>
   );
 }

@@ -1,29 +1,36 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
-import { Header } from "@repo/ui/components/layout/header";
+import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
-import { formatReportViewerSections } from "../lib/format-report-viewer-sections";
+import { formatReportViewerInformationGroups } from "../lib/format-report-viewer-sections";
 import {
-  body,
-  fieldItem,
-  fieldLabel,
-  fieldList,
-  fieldValue,
   closeButton,
   footer,
-  header,
+  informationBody,
+  informationEyebrow,
+  informationGroup,
+  informationGroupTitle,
+  informationLabel,
+  informationList,
+  informationLockerTitle,
+  informationPhoto,
+  informationRow,
+  informationTitleCopy,
+  informationTitleRow,
+  informationValue,
   overlay,
   panel,
   photoImage,
   photoPlaceholder,
-  section,
-  sectionTitle,
   stateMessage,
 } from "./ReportDetailViewerModal.css.ts";
-import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 
-export type ReportDetailViewerLoadState = "idle" | "loading" | "ready" | "error";
+export type ReportDetailViewerLoadState =
+  | "idle"
+  | "loading"
+  | "ready"
+  | "error";
 
 export interface ReportDetailViewerModalProps {
   isOpen: boolean;
@@ -42,9 +49,9 @@ export function ReportDetailViewerModal({
   loadState,
   className,
 }: ReportDetailViewerModalProps) {
-  const sections =
+  const informationGroups =
     detail != null && loadState === "ready"
-      ? formatReportViewerSections(detail)
+      ? formatReportViewerInformationGroups(detail)
       : [];
 
   const handleClose = () => {
@@ -60,60 +67,57 @@ export function ReportDetailViewerModal({
     >
       <Modal className={className}>
         <Dialog className={panel} aria-label={m.my_report_detail_viewer_aria()}>
-          <Header
-            className={header}
-            leading="back"
-            titleType="text"
-            title={titleText}
-            onBack={handleClose}
-          />
+          <div className={informationBody}>
+            <div className={informationTitleRow} data-slot="information-title">
+              <div className={informationTitleCopy}>
+                <span className={informationEyebrow}>
+                  {m.my_report_detail_eyebrow()}
+                </span>
+                <h2 className={informationLockerTitle}>{titleText}</h2>
+              </div>
+            </div>
 
-          <div className={body}>
             {loadState === "loading" ? (
               <p className={stateMessage}>{m.my_summary_loading()}</p>
             ) : null}
-
             {loadState === "error" ? (
               <p className={stateMessage}>{m.my_list_error_title()}</p>
             ) : null}
 
-            {loadState === "ready"
-              ? sections.map((viewerSection) => (
+            {loadState === "ready" && detail != null ? (
+              <>
+                {detail.imageUrl ? (
+                  <img
+                    className={[photoImage, informationPhoto].join(" ")}
+                    src={detail.imageUrl}
+                    alt={m.report_section_photo()}
+                  />
+                ) : (
+                  <LockerImageReportFrame
+                    size="half"
+                    className={[photoPlaceholder, informationPhoto].join(" ")}
+                  />
+                )}
+
+                {informationGroups.map((group) => (
                   <section
-                    key={viewerSection.title}
-                    className={section}
-                    aria-label={viewerSection.title}
+                    key={group.title}
+                    className={informationGroup}
+                    aria-label={group.title}
                   >
-                    <h3 className={sectionTitle}>{viewerSection.title}</h3>
-
-                    {"imageUrl" in viewerSection ? (
-                      viewerSection.imageUrl ? (
-                        <img
-                          className={photoImage}
-                          src={viewerSection.imageUrl}
-                          alt={m.report_section_photo()}
-                        />
-                      ) : (
-                        <LockerImageReportFrame
-                          size="half"
-                          className={photoPlaceholder}
-                        />
-                      )
-                    ) : null}
-
-                    {viewerSection.fields.length > 0 ? (
-                      <ul className={fieldList}>
-                        {viewerSection.fields.map((field) => (
-                          <li key={field.label} className={fieldItem}>
-                            <span className={fieldLabel}>{field.label}</span>
-                            <span className={fieldValue}>{field.value}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
+                    <h3 className={informationGroupTitle}>{group.title}</h3>
+                    <dl className={informationList}>
+                      {group.fields.map((field) => (
+                        <div key={field.label} className={informationRow}>
+                          <dt className={informationLabel}>{field.label}</dt>
+                          <dd className={informationValue}>{field.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
                   </section>
-                ))
-              : null}
+                ))}
+              </>
+            ) : null}
           </div>
 
           {loadState === "ready" && detail != null ? (

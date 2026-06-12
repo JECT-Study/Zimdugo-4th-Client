@@ -13,14 +13,23 @@ import {
 
 export interface NonSearchProps {
   query?: string;
+  titleText?: string;
+  descriptionText?: string;
   showEnglishSub?: boolean;
 }
 
-export function NonSearch({ query, showEnglishSub = true }: NonSearchProps) {
+export function NonSearch({
+  query,
+  titleText,
+  descriptionText,
+  showEnglishSub = true,
+}: NonSearchProps) {
   const normalizedQuery = query?.trim();
-  const primaryDescription = normalizedQuery
-    ? `${m.non_search_for({ query: `“${normalizedQuery}”` })}\n${m.non_search_try()}`
-    : m.non_search_try();
+  const primaryDescription =
+    descriptionText ??
+    (normalizedQuery
+      ? `${m.non_search_for({ query: `“${normalizedQuery}”` })}\n${m.non_search_try()}`
+      : m.non_search_try());
   const englishDescription = normalizedQuery
     ? `${m.non_search_for_en({ query: `“${normalizedQuery}”` })}\n${m.non_search_try_en()}`
     : m.non_search_try_en();
@@ -30,7 +39,7 @@ export function NonSearch({ query, showEnglishSub = true }: NonSearchProps) {
       <IconNormalSearch24 />
       <div className={title}>
         <div className={languageBlock}>
-          <p className={textTitle}>{m.non_search_title()}</p>
+          <p className={textTitle}>{titleText ?? m.non_search_title()}</p>
           <p className={[inputTextDisplay, textSub, description].join(" ")}>
             {primaryDescription}
           </p>

@@ -5,13 +5,15 @@ import { Popup } from "@repo/ui/components/popup";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { FavoriteListItem } from "#/entities/favorite";
+import { NonSearch } from "#/entities/search";
 import { useFavoriteRemoval } from "#/features/my/hooks/useFavoriteRemoval";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { MyUndoToast } from "#/features/my/ui/MyUndoToast";
+import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
-import { requireAuthenticatedMyRoute } from "./-my-auth";
+import { useAppLanguageStore } from "#/shared/store/language";
 import {
   childContent,
   childEmpty,
@@ -21,6 +23,7 @@ import {
   childPage,
   header,
 } from "./-my.css.ts";
+import { requireAuthenticatedMyRoute } from "./-my-auth";
 
 export const Route = createFileRoute("/my/favorites")({
   beforeLoad: requireAuthenticatedMyRoute,
@@ -29,6 +32,7 @@ export const Route = createFileRoute("/my/favorites")({
 
 function MyFavoritesPage() {
   const navigate = useNavigate();
+  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const {
     listQuery,
     filteredItems,
@@ -83,8 +87,8 @@ function MyFavoritesPage() {
 
   const isInitialLoading = listQuery.isPending;
   const isError = listQuery.isError && filteredItems.length === 0;
-  const isEmpty =
-    !isInitialLoading && !isError && filteredItems.length === 0;
+  const isEmpty = !isInitialLoading && !isError && filteredItems.length === 0;
+  const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
 
   return (
     <div className={childPage}>
@@ -97,9 +101,7 @@ function MyFavoritesPage() {
       />
 
       <main className={childContent}>
-        {isInitialLoading ? (
-          <p>{m.my_summary_loading()}</p>
-        ) : null}
+        {isInitialLoading ? <p>{m.my_summary_loading()}</p> : null}
 
         {isError ? (
           <MyListErrorState onRetry={() => void listQuery.refetch()} />
@@ -107,7 +109,11 @@ function MyFavoritesPage() {
 
         {isEmpty ? (
           <div className={childEmpty}>
-            <p>{m.my_favorites_empty()}</p>
+            <NonSearch
+              titleText={m.my_favorites_empty_title()}
+              descriptionText={m.my_favorites_empty()}
+              showEnglishSub={showEnglishSub}
+            />
           </div>
         ) : null}
 
@@ -124,9 +130,7 @@ function MyFavoritesPage() {
                         : "-"
                     }
                     updatedLabel={
-                      item.updatedAt
-                        ? formatUpdatedLabel(item.updatedAt)
-                        : "-"
+                      item.updatedAt ? formatUpdatedLabel(item.updatedAt) : "-"
                     }
                     isFavorite={getEffectiveIsFavorite(
                       item.lockerId,
