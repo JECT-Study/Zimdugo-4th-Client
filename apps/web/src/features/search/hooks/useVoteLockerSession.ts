@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import {
-  toggleLockerVote,
+  postLockerVote,
   type LockerVoteType,
 } from "#/shared/api/locker-votes";
 import { useAuthStore } from "#/shared/store/authStore";
@@ -128,7 +128,7 @@ export function useVoteLockerSession() {
 
     const results = await Promise.allSettled(
       operations.map((operation) =>
-        toggleLockerVote(userId, operation.lockerId, operation.voteType),
+        postLockerVote(userId, operation.lockerId, operation.voteType),
       ),
     );
 

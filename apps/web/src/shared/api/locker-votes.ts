@@ -2,7 +2,7 @@ import { apiClient } from "#/shared/lib/apiClient";
 
 export type LockerVoteType = "CORRECT" | "INCORRECT";
 
-export async function toggleLockerVote(
+export async function postLockerVote(
   userId: number,
   lockerId: number,
   voteType: LockerVoteType,
