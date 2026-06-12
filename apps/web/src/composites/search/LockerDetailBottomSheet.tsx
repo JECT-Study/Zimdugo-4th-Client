@@ -13,6 +13,7 @@ import {
   IconStarFilled24,
   IconStarOutline24,
 } from "@repo/ui/tokens/icons";
+import type { LockerVoteType } from "#/shared/api/locker-votes";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
@@ -44,6 +45,8 @@ import {
   favoriteButton,
   feedbackButton,
   feedbackButtonNegative,
+  feedbackButtonNegativeSelected,
+  feedbackButtonSelected,
   feedbackRow,
   fullActionBar,
   fullActionRow,
@@ -76,6 +79,8 @@ export interface LockerDetailItem extends SearchLockerResultItem {
   detailHelpText?: string;
   accurateCount?: number;
   inaccurateCount?: number;
+  isAccurateVoted?: boolean;
+  isInaccurateVoted?: boolean;
   lastUpdatedLabel?: string;
 }
 
@@ -86,6 +91,7 @@ export interface LockerDetailBottomSheetProps {
   loadState?: LockerDetailLoadState;
   onRetry?: () => void;
   onFavoriteChange?: (item: LockerDetailItem, next: boolean) => void;
+  onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
   onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
   onNavigate?: (item: LockerDetailItem) => void;
@@ -164,6 +170,7 @@ export function LockerDetailBottomSheet({
   loadState = "ready",
   onRetry,
   onFavoriteChange,
+  onVoteChange,
   onBack,
   onShare,
   onNavigate,
@@ -244,6 +251,7 @@ export function LockerDetailBottomSheet({
             detailHelpText={detailHelpText}
             onShare={handleShare}
             onNavigate={handleNavigate}
+            onVoteChange={onVoteChange}
           />
         ) : (
           <HalfDetailContent
@@ -315,14 +323,20 @@ function FullDetailContent({
   detailHelpText,
   onShare,
   onNavigate,
+  onVoteChange,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
   onShare: () => void;
   onNavigate: () => void;
+  onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
 }) {
   const hasFeedbackVotes =
     locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
+
+  const handleVotePress = (voteType: LockerVoteType) => {
+    onVoteChange?.(locker, voteType);
+  };
 
   return (
     <>
@@ -368,7 +382,17 @@ function FullDetailContent({
           {hasFeedbackVotes ? (
             <div className={feedbackRow}>
               {locker.accurateCount !== undefined ? (
-                <button type="button" className={feedbackButton}>
+                <button
+                  type="button"
+                  className={[
+                    feedbackButton,
+                    locker.isAccurateVoted ? feedbackButtonSelected : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-pressed={locker.isAccurateVoted === true}
+                  onClick={() => handleVotePress("CORRECT")}
+                >
                   {m.locker_detail_feedback_accurate({
                     count: String(locker.accurateCount),
                   })}
@@ -377,7 +401,17 @@ function FullDetailContent({
               {locker.inaccurateCount !== undefined ? (
                 <button
                   type="button"
-                  className={[feedbackButton, feedbackButtonNegative].join(" ")}
+                  className={[
+                    feedbackButton,
+                    feedbackButtonNegative,
+                    locker.isInaccurateVoted
+                      ? feedbackButtonNegativeSelected
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-pressed={locker.isInaccurateVoted === true}
+                  onClick={() => handleVotePress("INCORRECT")}
                 >
                   {m.locker_detail_feedback_inaccurate({
                     count: String(locker.inaccurateCount),

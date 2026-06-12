@@ -94,6 +94,29 @@ describe("LockerDetailBottomSheet", () => {
     expect(handleNavigate).toHaveBeenCalledWith(LOCKER_DETAIL);
   });
 
+  it("정확성 투표 버튼 클릭 시 onVoteChange를 호출한다", () => {
+    const handleVoteChange = vi.fn();
+    const lockerWithVote = {
+      ...LOCKER_DETAIL,
+      isAccurateVoted: true,
+      isInaccurateVoted: false,
+    };
+
+    render(
+      <LockerDetailBottomSheet
+        locker={lockerWithVote}
+        minSnapPoint={44}
+        snapPoint={44}
+        onVoteChange={handleVoteChange}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    fireEvent.click(sheet.getByRole("button", { name: "정확한 정보에요 78" }));
+
+    expect(handleVoteChange).toHaveBeenCalledWith(lockerWithVote, "CORRECT");
+  });
+
   it("풀 스냅 시 전체 상세 콘텐츠를 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet
