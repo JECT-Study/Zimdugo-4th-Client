@@ -199,6 +199,7 @@ function IndexPage() {
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const userId = useAuthStore((state) => state.userId);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -433,8 +434,8 @@ function IndexPage() {
     pendingDeepLinkFocusPinRef.current = null;
   }, []);
 
-  const resetMapContext = useCallback(async () => {
-    await flushLockerSheetMutations();
+  const resetMapContext = useCallback(() => {
+    void flushLockerSheetMutations();
     setMapPlaceId(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -447,8 +448,8 @@ function IndexPage() {
     writeMapSheetSessionSnapshot(null);
   }, [flushLockerSheetMutations]);
 
-  const resetSearchContext = useCallback(async () => {
-    await flushLockerSheetMutations();
+  const resetSearchContext = useCallback(() => {
+    void flushLockerSheetMutations();
     setSearchQuery("");
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
@@ -593,6 +594,10 @@ function IndexPage() {
       return null;
     }
 
+    if (isAuthenticated && userId == null) {
+      return null;
+    }
+
     const origin = lockerDetailQueryOrigin ?? searchCoordinates;
 
     return {
@@ -601,7 +606,13 @@ function IndexPage() {
       lng: origin.lng,
       ...(userId != null ? { userId } : {}),
     };
-  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates, userId]);
+  }, [
+    activeLockerId,
+    isAuthenticated,
+    lockerDetailQueryOrigin,
+    searchCoordinates,
+    userId,
+  ]);
 
   const {
     data: lockerDetail,
@@ -665,12 +676,12 @@ function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    async (
+    (
       lockerId: number,
       optimisticDetail?: LockerDetailItem,
       options?: { detailSnap?: LockerDetailSnap },
     ) => {
-      await flushLockerSheetMutations();
+      void flushLockerSheetMutations();
       setSelectedLockerDetail(
         optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
       );
@@ -1092,8 +1103,8 @@ function IndexPage() {
     setIsNavigationPopupOpen(isOpen);
   }, []);
 
-  const handleBackFromDetail = useCallback(async () => {
-    await flushLockerSheetMutations();
+  const handleBackFromDetail = useCallback(() => {
+    void flushLockerSheetMutations();
     setLockerDetailOpensFull(false);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -1127,8 +1138,8 @@ function IndexPage() {
     resetMapContext();
   }, [resetMapContext]);
 
-  const handleBackToKeywordList = useCallback(async () => {
-    await flushLockerSheetMutations();
+  const handleBackToKeywordList = useCallback(() => {
+    void flushLockerSheetMutations();
     if (getSearchQueryIssue(searchDraft) === null) {
       setSearchQuery(trimSearchQueryDraft(searchDraft));
     }
