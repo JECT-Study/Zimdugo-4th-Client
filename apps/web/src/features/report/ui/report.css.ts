@@ -85,8 +85,7 @@ export const sectionTitleRow = style({
 });
 
 export const sectionTitleLabel = style({
-  flex: "0 1 auto",
-  flexShrink: 0,
+  flex: "0 0 auto",
   width: "auto",
   maxWidth: "55%",
 });

@@ -73,8 +73,10 @@ import {
   type LockerDetailSnap,
 } from "#/features/search/lib/open-locker-deep-link";
 import {
+  getSearchQueryIssue,
   getValidatedSearchQuery,
   resolveSearchQuerySubmitAttempt,
+  trimSearchQueryDraft,
 } from "#/features/search/lib/sanitize-search-query";
 import {
   toLockerSearchFilterParams,
@@ -1117,9 +1119,8 @@ function IndexPage() {
 
   const handleBackToKeywordList = useCallback(async () => {
     await flushFavoriteChanges();
-    const validatedKeyword = getValidatedSearchQuery(searchDraft);
-    if (validatedKeyword) {
-      setSearchQuery(validatedKeyword);
+    if (getSearchQueryIssue(searchDraft) === null) {
+      setSearchQuery(trimSearchQueryDraft(searchDraft));
     }
     setListKind("keyword");
     setSearchPlaceId(null);

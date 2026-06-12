@@ -8,9 +8,14 @@ const ALLOWED_SEARCH_QUERY_CHAR =
 const HANGUL_JAMO_CHAR =
   /[\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
 
-const isHangulJamoOnlyDraft = (draft: string): boolean =>
-  draft.length > 0 &&
-  [...draft].every((char) => HANGUL_JAMO_CHAR.test(char));
+const isHangulJamoOnlyDraft = (draft: string): boolean => {
+  const stripped = draft.replace(/\s/g, "");
+
+  return (
+    stripped.length > 0 &&
+    [...stripped].every((char) => HANGUL_JAMO_CHAR.test(char))
+  );
+};
 
 const isAllowedSearchQueryChar = (char: string): boolean =>
   ALLOWED_SEARCH_QUERY_CHAR.test(char) || HANGUL_JAMO_CHAR.test(char);

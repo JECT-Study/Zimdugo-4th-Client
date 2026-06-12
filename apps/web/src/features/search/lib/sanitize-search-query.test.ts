@@ -48,6 +48,7 @@ describe("sanitize-search-query", () => {
     expect(isSearchQueryDraftWellFormed("강남  역")).toBe(false);
     expect(isSearchQueryDraftWellFormed("강남!")).toBe(false);
     expect(isSearchQueryDraftWellFormed("ㄱ")).toBe(false);
+    expect(isSearchQueryDraftWellFormed("ㄱ ㄴ")).toBe(false);
     expect(isSearchQueryDraftWellFormed("ㄱㄴㄷ")).toBe(false);
     expect(isSearchQueryDraftWellFormed("ㄱㅏ")).toBe(false);
     expect(isSearchQueryDraftWellFormed("!!!")).toBe(false);
@@ -66,6 +67,7 @@ describe("sanitize-search-query", () => {
     expect(getSearchQueryIssue("!!!")).toBe("invalid-format");
     expect(getSearchQueryIssue("ㄱㅏ")).toBe("invalid-format");
     expect(getSearchQueryIssue("ㄱㄴ")).toBe("invalid-format");
+    expect(getSearchQueryIssue("ㄱ ㄴ")).toBe("invalid-format");
     expect(getSearchQueryIssue("ㅎㅇㄷ")).toBe("invalid-format");
   });
 
