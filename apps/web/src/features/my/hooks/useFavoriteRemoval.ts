@@ -97,11 +97,17 @@ export function useFavoriteRemoval() {
     await flushRemoval(item.lockerId);
   }, [clearPendingTimer, flushRemoval]);
 
+  const commitPendingRemovalRef = useRef(commitPendingRemoval);
+
+  useEffect(() => {
+    commitPendingRemovalRef.current = commitPendingRemoval;
+  }, [commitPendingRemoval]);
+
   useEffect(
     () => () => {
-      void commitPendingRemoval();
+      void commitPendingRemovalRef.current();
     },
-    [commitPendingRemoval],
+    [],
   );
 
   const requestRemoval = useCallback(
