@@ -78,15 +78,17 @@ export const classificationSection = style({
 
 export const sectionTitleRow = style({
   display: "flex",
-  alignItems: "flex-start",
+  alignItems: "center",
   justifyContent: "space-between",
   gap: vars.spacing[8],
   width: "100%",
 });
 
 export const sectionTitleLabel = style({
-  flex: "0 0 auto",
+  flex: "0 1 auto",
+  flexShrink: 0,
   width: "auto",
+  maxWidth: "55%",
 });
 
 export const sectionErrorTextBottom = style({
@@ -101,14 +103,13 @@ export const sectionErrorTextBottom = style({
 
 export const sectionErrorTextInline = style({
   margin: 0,
-  flex: "1 1 auto",
-  minWidth: 0,
-  alignSelf: "center",
+  flex: "1 1 0",
+  minWidth: "8rem",
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
+  minHeight: vars.typography.lineHeight.normal,
   color: vars.color.palette.red[300],
   textAlign: "right",
-  wordBreak: "keep-all",
 });
 
 /** 하단 에러 영역과 동일한 높이 — 제목 옆 배치 시 섹션 간 gap 유지용 */
