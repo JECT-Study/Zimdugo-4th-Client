@@ -57,10 +57,18 @@ export function seedVoteBaseline(
     return;
   }
 
+  const previousEntry = baseline.get(lockerId);
+  const hasExplicitVoteFlags =
+    server.isAccurateVoted !== undefined ||
+    server.isInaccurateVoted !== undefined;
+
   baseline.set(lockerId, {
-    vote: serverVoteStateToEffective(server),
-    accurateCount: server.accurateCount ?? 0,
-    inaccurateCount: server.inaccurateCount ?? 0,
+    vote: hasExplicitVoteFlags
+      ? serverVoteStateToEffective(server)
+      : (previousEntry?.vote ?? serverVoteStateToEffective(server)),
+    accurateCount: server.accurateCount ?? previousEntry?.accurateCount ?? 0,
+    inaccurateCount:
+      server.inaccurateCount ?? previousEntry?.inaccurateCount ?? 0,
   });
 }
 

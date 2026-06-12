@@ -11,6 +11,7 @@ import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 import {
   applySuccessfulVoteFlush,
   buildVoteFlushOperations,
+  effectiveVoteToServerState,
   getEffectiveVoteCounts,
   getEffectiveVoteFlags,
   rollbackFailedVoteFlush,
@@ -166,6 +167,29 @@ export function useVoteLockerSession() {
         }
         return updatedPending;
       });
+
+      for (const lockerId of succeededLockerIds) {
+        const baselineEntry = baselineRef.current.get(lockerId);
+        if (!baselineEntry) {
+          continue;
+        }
+
+        queryClient.setQueriesData<LockerDetailItem>(
+          { queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId] },
+          (previousDetail) => {
+            if (!previousDetail || previousDetail.lockerId !== lockerId) {
+              return previousDetail;
+            }
+
+            return {
+              ...previousDetail,
+              ...effectiveVoteToServerState(baselineEntry.vote),
+              accurateCount: baselineEntry.accurateCount,
+              inaccurateCount: baselineEntry.inaccurateCount,
+            };
+          },
+        );
+      }
 
       await queryClient.invalidateQueries({
         queryKey: [LOCKER_DETAIL_QUERY_KEY],
