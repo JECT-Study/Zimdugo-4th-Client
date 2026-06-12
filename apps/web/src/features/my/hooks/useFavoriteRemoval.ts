@@ -49,7 +49,7 @@ export function useFavoriteRemoval() {
     ]);
   }, [queryClient]);
 
-  const flushRemoval = useCallback(
+  const deleteFavoriteLocker = useCallback(
     async (lockerId: number) => {
       const wasPendingRemove = pending.get(lockerId) === false;
 
@@ -94,8 +94,8 @@ export function useFavoriteRemoval() {
   const commitPendingRemoval = useCallback(async () => {
     const item = clearPendingTimer();
     if (!item) return;
-    await flushRemoval(item.lockerId);
-  }, [clearPendingTimer, flushRemoval]);
+    await deleteFavoriteLocker(item.lockerId);
+  }, [clearPendingTimer, deleteFavoriteLocker]);
 
   const commitPendingRemovalRef = useRef(commitPendingRemoval);
 
@@ -125,12 +125,12 @@ export function useFavoriteRemoval() {
       const timeoutId = window.setTimeout(() => {
         pendingRemovalRef.current = null;
         setUndoItem(null);
-        void flushRemoval(item.lockerId);
+        void deleteFavoriteLocker(item.lockerId);
       }, UNDO_TIMEOUT_MS);
 
       pendingRemovalRef.current = { item, index, timeoutId };
     },
-    [commitPendingRemoval, flushRemoval, toggle],
+    [commitPendingRemoval, deleteFavoriteLocker, toggle],
   );
 
   const undoRemoval = useCallback(() => {
