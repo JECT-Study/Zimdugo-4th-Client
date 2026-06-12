@@ -39,18 +39,22 @@ export function DraggableBottomSheet({
   const controls = useAnimation();
   const dragControls = useDragControls();
   const resolvedInitialSnap = initialSnapPoint ?? snapPoint;
-  const [currentSnap, setCurrentSnap] = useState(resolvedInitialSnap);
-  const [liveOffset, setLiveOffset] = useState(resolvedInitialSnap);
-  const dragStartSnapRef = useRef(resolvedInitialSnap);
+  const clampSnap = (value: number) =>
+    Math.min(maxSnapPoint, Math.max(minSnapPoint, value));
+  const clampedInitialSnap = clampSnap(resolvedInitialSnap);
+  const [currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
+  const [liveOffset, setLiveOffset] = useState(clampedInitialSnap);
+  const dragStartSnapRef = useRef(clampedInitialSnap);
   const DRAG_ELASTIC = 0.05;
   const SNAP_DISTANCE_THRESHOLD = 48;
   const SNAP_VELOCITY_THRESHOLD = 420;
 
   useEffect(() => {
-    setCurrentSnap(resolvedInitialSnap);
-    setLiveOffset(resolvedInitialSnap);
-    dragStartSnapRef.current = resolvedInitialSnap;
-  }, [resolvedInitialSnap]);
+    const nextSnap = clampSnap(resolvedInitialSnap);
+    setCurrentSnap(nextSnap);
+    setLiveOffset(nextSnap);
+    dragStartSnapRef.current = nextSnap;
+  }, [resolvedInitialSnap, minSnapPoint, maxSnapPoint]);
 
   useEffect(() => {
     controls.start({ y: currentSnap });
