@@ -230,11 +230,14 @@ export function applySuccessfulVoteFlush(
 export function rollbackFailedVoteFlush(
   pending: LockerVotePending,
   failedLockerIds: number[],
+  pendingSnapshot: LockerVotePending,
 ): LockerVotePending {
   const nextPending = new Map(pending);
 
   for (const lockerId of failedLockerIds) {
-    nextPending.delete(lockerId);
+    if (nextPending.get(lockerId) === pendingSnapshot.get(lockerId)) {
+      nextPending.delete(lockerId);
+    }
   }
 
   return nextPending;

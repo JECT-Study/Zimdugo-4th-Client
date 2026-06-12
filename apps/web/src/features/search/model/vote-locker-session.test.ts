@@ -198,13 +198,27 @@ describe("vote-locker-session", () => {
     expect(next.pending.size).toBe(0);
   });
 
-  it("flush 실패 locker는 pending에서 롤백한다", () => {
-    const pending = new Map([
+  it("flush 실패 locker는 flush 시작 시점과 동일한 pending만 롤백한다", () => {
+    const pendingSnapshot = new Map([
       [1, "CORRECT"],
       [2, "INCORRECT"],
     ]);
+    const pending = new Map(pendingSnapshot);
 
-    expect(rollbackFailedVoteFlush(pending, [1]).get(1)).toBeUndefined();
-    expect(rollbackFailedVoteFlush(pending, [1]).get(2)).toBe("INCORRECT");
+    expect(
+      rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(1),
+    ).toBeUndefined();
+    expect(
+      rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(2),
+    ).toBe("INCORRECT");
+  });
+
+  it("flush 실패 후 변경된 pending은 유지한다", () => {
+    const pendingSnapshot = new Map([[1, "CORRECT"]]);
+    const pending = new Map([[1, "INCORRECT"]]);
+
+    expect(
+      rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(1),
+    ).toBe("INCORRECT");
   });
 });

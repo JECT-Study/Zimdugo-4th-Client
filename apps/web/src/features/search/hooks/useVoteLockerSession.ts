@@ -124,6 +124,8 @@ export function useVoteLockerSession() {
       return { hadChanges: false };
     }
 
+    const pendingSnapshot = new Map(currentPending);
+
     const results = await Promise.allSettled(
       operations.map((operation) =>
         toggleLockerVote(userId, operation.lockerId, operation.voteType),
@@ -148,7 +150,6 @@ export function useVoteLockerSession() {
     });
 
     if (succeededLockerIds.length > 0) {
-      const pendingSnapshot = new Map(currentPending);
       const nextState = applySuccessfulVoteFlush(
         baselineRef.current,
         pendingSnapshot,
@@ -173,7 +174,11 @@ export function useVoteLockerSession() {
 
     if (failedLockerIds.length > 0) {
       setPending((latestPending) =>
-        rollbackFailedVoteFlush(latestPending, failedLockerIds),
+        rollbackFailedVoteFlush(
+          latestPending,
+          failedLockerIds,
+          pendingSnapshot,
+        ),
       );
     }
 
