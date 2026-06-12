@@ -118,6 +118,14 @@ function MyRootPage() {
     navigate({ to: "/my/reports" });
   };
 
+  const handleConfirmPopupCancel = () => {
+    setIsConfirmPopupOpen(false);
+  };
+
+  const handleErrorPopupConfirm = () => {
+    setIsErrorPopupOpen(false);
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate({ to: "/", replace: true });
@@ -161,7 +169,7 @@ function MyRootPage() {
         }}
         secondaryAction={{
           label: m.my_profile_image_change_cancel(),
-          onPress: () => setIsConfirmPopupOpen(false),
+          onPress: handleConfirmPopupCancel,
         }}
       />
 
@@ -171,7 +179,7 @@ function MyRootPage() {
         titleText={errorMessage}
         primaryAction={{
           label: m.common_confirm(),
-          onPress: () => setIsErrorPopupOpen(false),
+          onPress: handleErrorPopupConfirm,
         }}
       />
     </>
