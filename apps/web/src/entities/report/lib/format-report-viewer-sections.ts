@@ -6,16 +6,16 @@ import {
 } from "#/shared/lib/locker-detail-labels";
 import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 
-export type ReportViewerField = {
+export interface ReportViewerField {
   label: string;
   value: string;
-};
+}
 
-export type ReportViewerSection = {
+export interface ReportViewerSection {
   title: string;
   fields: ReportViewerField[];
   imageUrl?: string | null;
-};
+}
 
 const formatFloorLabel = (detail: MyLockerReportDetail): string => {
   if (!detail.hasFloor) {
