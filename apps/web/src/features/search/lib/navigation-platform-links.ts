@@ -11,7 +11,6 @@ export type NavigationPoint = {
 };
 
 export type NavigationPlatformLinks = {
-  appUrl: string;
   webUrl: string;
 };
 
@@ -138,7 +137,8 @@ const buildKakaoRoutePoint = (point: NavigationPoint): string =>
     formatNavigationCoordinate(point.lng),
   ].join(",");
 
-const buildKakaoWebUrl = (
+/** 카카오맵 웹 길찾기 — 모바일·데스크톱 공통 */
+const buildKakaoWebLinkUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
 ): string =>
@@ -161,7 +161,6 @@ const buildGoogleWebUrl = (
 export type NavigationPlatformLinkOptions = {
   navigationOrigin: NavigationPoint;
   webOrigin?: string;
-  userAgent?: string;
 };
 
 export const getNavigationPlatformLinks = (
@@ -176,12 +175,15 @@ export const getNavigationPlatformLinks = (
 
   const { navigationOrigin } = options;
 
-  const webUrl =
-    platform === "kakao"
-      ? buildKakaoWebUrl(navigationOrigin, destination)
-      : buildGoogleWebUrl(navigationOrigin, destination);
+  if (platform === "kakao") {
+    return {
+      webUrl: buildKakaoWebLinkUrl(navigationOrigin, destination),
+    };
+  }
 
-  return { appUrl: webUrl, webUrl };
+  return {
+    webUrl: buildGoogleWebUrl(navigationOrigin, destination),
+  };
 };
 
 export const getNavigationPlatformUrl = (
@@ -195,6 +197,7 @@ type OpenNavigationOptions = {
   assign?: (url: string) => void;
 };
 
+/** 모바일·데스크톱 모두 웹 길찾기 URL로 이동한다. */
 export const openNavigationPlatformLinks = (
   links: NavigationPlatformLinks,
   options: OpenNavigationOptions = {},

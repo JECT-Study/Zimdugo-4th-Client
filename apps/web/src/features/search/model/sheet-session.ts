@@ -1,3 +1,5 @@
+import { getValidatedSearchQuery } from "#/features/search/lib/sanitize-search-query";
+
 export type AppMapContext = "idle" | "map" | "search";
 
 export type OverlayReturnContext = "idle" | "search";
@@ -68,7 +70,7 @@ export const shouldFetchKeywordSearch = (input: {
   searchDetailBack: SearchDetailBackTarget | null;
   searchQuery: string;
 }): boolean => {
-  if (input.context !== "search" || !input.searchQuery.trim()) {
+  if (input.context !== "search" || !getValidatedSearchQuery(input.searchQuery)) {
     return false;
   }
 

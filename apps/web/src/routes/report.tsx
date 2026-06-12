@@ -247,8 +247,11 @@ function ReportPage() {
                       setSelectedSizes={(cards) => {
                         setValue("sizeTypes", cardsToSizeTypes(cards), {
                           shouldDirty: true,
+                          shouldValidate: true,
                         });
                       }}
+                      sectionServerError={sectionServerErrors.size}
+                      onFieldChange={() => clearSectionError("size")}
                     />
                   </motion.div>
                 ) : (

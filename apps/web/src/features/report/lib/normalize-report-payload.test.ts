@@ -78,6 +78,15 @@ describe("normalizeReportPayload", () => {
     expect(payload.maxPrice).toBe(3000);
   });
 
+  it("sizeTypes를 SMALL → MEDIUM → LARGE 순으로 정렬해 보낸다", () => {
+    const payload = normalizeReportPayload({
+      ...baseForm(),
+      sizeTypes: ["LARGE", "SMALL", "MEDIUM"],
+    });
+
+    expect(payload.sizeTypes).toEqual(["SMALL", "MEDIUM", "LARGE"]);
+  });
+
   it("lockerType·sizeTypes enum을 재매핑하지 않는다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),
@@ -92,6 +101,7 @@ describe("normalizeReportPayload", () => {
   it("유효한 폼이면 API validation flag를 true로 포함한다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),
+      sizeTypes: ["SMALL"],
       isFree: true,
       startTime: "09:00",
       endTime: "22:30",

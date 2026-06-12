@@ -11,6 +11,7 @@ const validForm = (): ReportFormValues => ({
   indoorOutdoorType: "INDOOR",
   lockerType: "SUBWAY_STATION",
   hasFloor: false,
+  sizeTypes: ["SMALL"],
   isFree: true,
   locationConsentAgreed: true,
 });
@@ -55,6 +56,18 @@ describe("reportSchema", () => {
       lockerType: null,
     });
     expect(result.success).toBe(false);
+  });
+
+  it("보관함 규격은 최소 1개 선택이 필수이다", () => {
+    const result = parseReportForm({
+      ...validForm(),
+      sizeTypes: [],
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.some((issue) => issue.path[0] === "sizeTypes")).toBe(
+      true,
+    );
   });
 
   it("층 선택 여부는 필수이다", () => {

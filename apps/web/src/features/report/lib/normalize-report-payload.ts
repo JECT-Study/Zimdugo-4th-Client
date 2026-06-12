@@ -1,3 +1,4 @@
+import { sortSizeTypes } from "#/entities/locker/lib/sort-size-types";
 import { parseReportForm } from "#/features/report/model/report-schema";
 import type {
   LockerReportCreateRequest,
@@ -72,6 +73,7 @@ export function normalizeReportPayload(
 
   return {
     ...values,
+    sizeTypes: sortSizeTypes(values.sizeTypes),
     roadAddress: values.roadAddress.trim(),
     hasFloor,
     floorType,

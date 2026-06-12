@@ -169,7 +169,9 @@ export function SearchFilterBottomSheet({
       <div className={[sheetColumn, className].filter(Boolean).join(" ")}>
         <div className={scrollArea}>
           <div className={section}>
-            <LabelTitle size="small">사이즈</LabelTitle>
+            <LabelTitle size="small">
+              {m.search_filter_section_size()}
+            </LabelTitle>
             <div className={sizeCardSlot}>
               <SizeList
                 labels={{

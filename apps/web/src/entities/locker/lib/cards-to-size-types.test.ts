@@ -9,4 +9,13 @@ describe("cardsToSizeTypes", () => {
       "LARGE",
     ]);
   });
+
+  it("선택 순서와 관계없이 SMALL → MEDIUM → LARGE 순으로 정렬한다", () => {
+    expect(cardsToSizeTypes(["L", "S"])).toEqual(["SMALL", "LARGE"]);
+    expect(cardsToSizeTypes(["M", "L", "S"])).toEqual([
+      "SMALL",
+      "MEDIUM",
+      "LARGE",
+    ]);
+  });
 });

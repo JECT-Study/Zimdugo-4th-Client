@@ -16,8 +16,10 @@ import {
   formatUpdatedLabel,
 } from "#/shared/lib/format-updated-label";
 import {
+  formatLockerFloorLabel,
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
+  formatLockerSizeTypesLabel,
 } from "#/shared/lib/locker-detail-labels";
 import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 import type {
@@ -219,11 +221,15 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   minPrice: raw.minPrice,
   isFavorite: raw.isFavorite,
   operatingHoursLabel: formatOperatingHoursLabel(raw),
-  floorLabel: raw.floor !== undefined ? `${raw.floor}층` : raw.floorLabel,
+  floorLabel: formatLockerFloorLabel(
+    raw.floor,
+    raw.groundLevelType,
+    raw.floorLabel,
+  ),
   priceLabel: formatLockerPriceLabel(raw.minPrice, raw.maxPrice),
   sizeLabel:
     raw.lockerSizes && raw.lockerSizes.length > 0
-      ? raw.lockerSizes.join(", ")
+      ? formatLockerSizeTypesLabel(raw.lockerSizes)
       : raw.sizeLabel,
   detailHelpText: raw.detailInfo ?? raw.detailHelpText,
   accurateCount: raw.accurateVoteCount ?? raw.accurateCount,

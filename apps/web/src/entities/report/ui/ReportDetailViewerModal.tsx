@@ -98,6 +98,8 @@ export function ReportDetailViewerModal({
                 ) : (
                   <LockerImageReportFrame
                     size="half"
+                    titleText={m.my_report_image_empty()}
+                    helperText=""
                     className={[photoPlaceholder, informationPhoto].join(" ")}
                   />
                 )}

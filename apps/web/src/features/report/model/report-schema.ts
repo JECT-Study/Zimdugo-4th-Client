@@ -197,6 +197,14 @@ export const reportSchema = z
       }
     }
 
+    if (data.sizeTypes.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sizeTypes"],
+        message: "required",
+      });
+    }
+
     if (data.imageUrl !== null && !data.locationConsentAgreed) {
       ctx.addIssue({
         code: "custom",

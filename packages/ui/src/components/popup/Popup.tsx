@@ -109,7 +109,7 @@ export function Popup({
                 >
                   {hasMiddleElement && (
                     <div className={helperArea}>
-                      {hasHelper && <div className={helper}>{helperText}</div>}
+                      {hasHelper && <p className={helper}>{helperText}</p>}
 
                       {hasSubAction && (
                         <AriaButton

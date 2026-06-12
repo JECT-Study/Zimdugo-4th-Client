@@ -9,7 +9,6 @@ import {
   isSearchQuerySubmittable,
   resolveSearchQuerySubmitAttempt,
   SEARCH_QUERY_MAX_LENGTH,
-  SEARCH_QUERY_MIN_LENGTH,
 } from "./sanitize-search-query";
 
 describe("sanitize-search-query", () => {
@@ -38,29 +37,38 @@ describe("sanitize-search-query", () => {
   });
 
   it("well-formed 검사는 trim된 문자열 기준으로 형식만 판별한다", () => {
+    expect(isSearchQueryDraftWellFormed("가")).toBe(true);
     expect(isSearchQueryDraftWellFormed("강남")).toBe(true);
     expect(isSearchQueryDraftWellFormed("강남 역")).toBe(true);
     expect(isSearchQueryDraftWellFormed("COEX 코엑스 123")).toBe(true);
     expect(isSearchQueryDraftWellFormed("北京")).toBe(true);
     expect(isSearchQueryDraftWellFormed("とうきょう")).toBe(true);
     expect(isSearchQueryDraftWellFormed("강ㄴ")).toBe(true);
-    expect(isSearchQueryDraftWellFormed("강ㄴ남")).toBe(false);
+    expect(isSearchQueryDraftWellFormed("강ㄴ남")).toBe(true);
     expect(isSearchQueryDraftWellFormed("강남  역")).toBe(false);
     expect(isSearchQueryDraftWellFormed("강남!")).toBe(false);
+    expect(isSearchQueryDraftWellFormed("ㄱ")).toBe(false);
+    expect(isSearchQueryDraftWellFormed("ㄱ ㄴ")).toBe(false);
     expect(isSearchQueryDraftWellFormed("ㄱㄴㄷ")).toBe(false);
+    expect(isSearchQueryDraftWellFormed("ㄱㅏ")).toBe(false);
     expect(isSearchQueryDraftWellFormed("!!!")).toBe(false);
   });
 
-  it("입력 이슈를 길이 부족과 형식 오류로 구분한다", () => {
+  it("1글자 완성형 검색어와 초성검색·형식 오류를 구분한다", () => {
     expect(getSearchQueryIssue("")).toBeNull();
-    expect(getSearchQueryIssue("가")).toBe("too-short");
-    expect(getSearchQueryIssue("!")).toBe("too-short");
+    expect(getSearchQueryIssue("가")).toBeNull();
+    expect(getValidatedSearchQuery("가")).toBe("가");
+    expect(getSearchQueryIssue("!")).toBe("invalid-format");
     expect(getSearchQueryIssue("강남")).toBeNull();
     expect(getSearchQueryIssue("강남!")).toBe("invalid-format");
     expect(getSearchQueryIssue("강ㄴ")).toBeNull();
-    expect(getSearchQueryIssue("강ㄴ남")).toBe("invalid-format");
+    expect(getSearchQueryIssue("강ㄴ남")).toBeNull();
+    expect(getValidatedSearchQuery("강ㄴ남")).toBe("강ㄴ남");
     expect(getSearchQueryIssue("!!!")).toBe("invalid-format");
     expect(getSearchQueryIssue("ㄱㅏ")).toBe("invalid-format");
+    expect(getSearchQueryIssue("ㄱㄴ")).toBe("invalid-format");
+    expect(getSearchQueryIssue("ㄱ ㄴ")).toBe("invalid-format");
+    expect(getSearchQueryIssue("ㅎㅇㄷ")).toBe("invalid-format");
   });
 
   it("공백만 있는 draft는 유효하지 않다", () => {
@@ -68,17 +76,18 @@ describe("sanitize-search-query", () => {
     expect(isSearchQuerySubmittable("   ")).toBe(false);
     expect(resolveSearchQuerySubmitAttempt("   ")).toEqual({
       ok: false,
-      reason: "too-short",
+      reason: "invalid-format",
     });
   });
 
   it("규칙을 통과한 draft만 자동완성·제출 가능하다", () => {
     expect(isSearchQueryDraftValid("강남")).toBe(true);
+    expect(isSearchQueryDraftValid("가")).toBe(true);
+    expect(isSearchQueryDraftValid("강ㄴ남")).toBe(true);
     expect(isSearchQueryDraftValid("강남!")).toBe(false);
-    expect(isSearchQuerySubmittable("가")).toBe(false);
+    expect(isSearchQuerySubmittable("ㄱㄴ")).toBe(false);
     expect(isSearchQuerySubmittable("강남!")).toBe(false);
     expect(isSearchQuerySubmittable("강남")).toBe(true);
-    expect(SEARCH_QUERY_MIN_LENGTH).toBe(2);
     expect(SEARCH_QUERY_MAX_LENGTH).toBe(30);
   });
 
@@ -93,16 +102,20 @@ describe("sanitize-search-query", () => {
       reason: "invalid-format",
     });
     expect(resolveSearchQuerySubmitAttempt("가")).toEqual({
-      ok: false,
-      reason: "too-short",
+      ok: true,
+      query: "가",
     });
     expect(resolveSearchQuerySubmitAttempt("강남!")).toEqual({
       ok: false,
       reason: "invalid-format",
     });
-    expect(resolveSearchQuerySubmitAttempt("강ㄴ남")).toEqual({
+    expect(resolveSearchQuerySubmitAttempt("ㄱㄴ")).toEqual({
       ok: false,
       reason: "invalid-format",
+    });
+    expect(resolveSearchQuerySubmitAttempt("강ㄴ남")).toEqual({
+      ok: true,
+      query: "강ㄴ남",
     });
     expect(resolveSearchQuerySubmitAttempt("강남")).toEqual({
       ok: true,

@@ -50,5 +50,19 @@ describe("formatReportViewerInformationGroups", () => {
       "이용 시간",
     ]);
     expect(groups[2]?.fields[0]?.value).toBe("5번 출구 안쪽에 있습니다.");
+    expect(
+      groups[1]?.fields.find((field) => field.label === "이용 시간")?.value,
+    ).toBe("06:00 ~ 23:30");
+  });
+
+  it("규격은 API 응답 순서와 관계없이 소·중·대 순으로 표시한다", () => {
+    const groups = formatReportViewerInformationGroups({
+      ...REPORT_DETAIL,
+      sizeTypes: ["LARGE", "SMALL", "MEDIUM"],
+    });
+
+    expect(groups[1]?.fields.find((field) => field.label === "규격")?.value).toBe(
+      "소형, 중형, 대형",
+    );
   });
 });

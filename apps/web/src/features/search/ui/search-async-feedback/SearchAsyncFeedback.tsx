@@ -11,7 +11,6 @@ import {
 } from "./SearchAsyncFeedback.css.ts";
 
 export type SearchAsyncFeedbackVariant =
-  | "suggest-min-length"
   | "suggest-invalid-format"
   | "suggest-empty"
   | "suggest-error"
@@ -26,14 +25,6 @@ export function SearchAsyncFeedback({
   variant,
   onRetry,
 }: SearchAsyncFeedbackProps) {
-  if (variant === "suggest-min-length") {
-    return (
-      <div className={root}>
-        <p className={hint}>{m.search_suggest_min_length()}</p>
-      </div>
-    );
-  }
-
   if (variant === "suggest-invalid-format") {
     return (
       <div className={root}>

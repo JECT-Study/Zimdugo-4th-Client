@@ -1,21 +1,47 @@
 import { m } from "@repo/i18n";
-import { LabelTitle } from "@repo/ui/components/label-title";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
-import { section, sizeGuideBox, sizeGuideList } from "./report.css.ts";
+import { useReportSectionError } from "#/features/report/model/useReportSectionError";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
+import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
+import {
+  requiredMark,
+  section,
+  sizeGuideBox,
+  sizeGuideList,
+} from "./report.css.ts";
 
 interface ReportSizeSectionProps {
   selectedSizes: SizeCardType[];
   setSelectedSizes: (val: SizeCardType[]) => void;
+  sectionServerError?: string;
+  onFieldChange?: () => void;
 }
 
 export function ReportSizeSection({
   selectedSizes,
   setSelectedSizes,
+  sectionServerError,
+  onFieldChange,
 }: ReportSizeSectionProps) {
+  const errorMessage = useReportSectionError(["sizeTypes"], sectionServerError);
+  const errorId = errorMessage ? "report-size-error" : undefined;
+
+  const handleSizeChange = (cards: SizeCardType[]) => {
+    setSelectedSizes(cards);
+    onFieldChange?.();
+  };
+
   return (
-    <section className={section} data-section="size">
-      <LabelTitle size="small">{m.report_section_size()}</LabelTitle>
+    <section
+      className={section}
+      data-section="size"
+      aria-describedby={errorId}
+    >
+      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+        {m.report_section_size()}
+        <span className={requiredMark}>*</span>
+      </ReportSectionTitleRow>
       <SizeList
         labels={{
           S: m.report_size_s(),
@@ -23,7 +49,7 @@ export function ReportSizeSection({
           L: m.report_size_l(),
         }}
         value={selectedSizes}
-        onChange={setSelectedSizes}
+        onChange={handleSizeChange}
       />
 
       <div className={sizeGuideBox}>
@@ -39,6 +65,7 @@ export function ReportSizeSection({
           </li>
         </ul>
       </div>
+      <ReportSectionErrorReserve />
     </section>
   );
 }
