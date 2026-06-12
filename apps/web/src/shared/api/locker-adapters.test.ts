@@ -150,6 +150,8 @@ describe("locker-adapters", () => {
       detailInfo: "지하 1층 안내 데스크 옆",
       accurateVoteCount: 12,
       inaccurateVoteCount: 1,
+      isAccurateVoted: true,
+      isInaccurateVoted: false,
       updatedAt: "2026-05-31T14:59:09",
       isFavorite: false,
     };
@@ -164,6 +166,8 @@ describe("locker-adapters", () => {
     expect(detail.detailHelpText).toBe("지하 1층 안내 데스크 옆");
     expect(detail.accurateCount).toBe(12);
     expect(detail.inaccurateCount).toBe(1);
+    expect(detail.isAccurateVoted).toBe(true);
+    expect(detail.isInaccurateVoted).toBe(false);
     expect(detail.lastUpdatedLabel).toBe("최근 업데이트 2026-05-31 14:59");
   });
 
