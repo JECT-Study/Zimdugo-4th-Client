@@ -187,11 +187,23 @@ function IndexPage() {
   const flushVoteChangesRef = useRef(voteSession.flush);
   flushVoteChangesRef.current = voteSession.flush;
 
+  const flushInFlightRef = useRef<Promise<void> | null>(null);
+
   const flushLockerSheetMutations = useCallback(async () => {
-    await Promise.allSettled([
+    if (flushInFlightRef.current) {
+      return flushInFlightRef.current;
+    }
+
+    const flushPromise = Promise.allSettled([
       flushFavoriteChangesRef.current(),
       flushVoteChangesRef.current(),
-    ]);
+    ]).then(() => undefined);
+
+    flushInFlightRef.current = flushPromise.finally(() => {
+      flushInFlightRef.current = null;
+    });
+
+    return flushInFlightRef.current;
   }, []);
   const isSearchOpen = useSearchStore((state) => state.isSearchOpen);
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
@@ -1090,7 +1102,12 @@ function IndexPage() {
   }, []);
 
   const handleBackFromDetail = useCallback(() => {
-    void flushLockerSheetMutations();
+    const willResetMapContext = context === "map" && mapDetailBack === "idle";
+
+    if (!willResetMapContext) {
+      void flushLockerSheetMutations();
+    }
+
     setLockerDetailOpensFull(false);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
