@@ -35,13 +35,15 @@ import {
   MapControlsSkeleton,
   NaverMapCanvas,
   NaverMapProvider,
+  resolveMapBootstrapViewport,
+  subscribeMapIdle,
+  useMapViewportStore,
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import { fitNaverMapToBounds } from "#/entities/map/model/map-bounds";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import {
-  LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
@@ -167,13 +169,18 @@ function IndexPage() {
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
-  const mapInitialCenter = useMemo(() => {
-    if (focusLat != null && focusLng != null) {
-      return { lat: focusLat, lng: focusLng };
-    }
+  const mapBootstrap = useMemo(() => {
+    const deepLinkCenter =
+      focusLat != null && focusLng != null
+        ? { lat: focusLat, lng: focusLng }
+        : deepLinkMapCenterRef.current;
 
-    return deepLinkMapCenterRef.current;
+    return resolveMapBootstrapViewport({
+      deepLinkCenter,
+      cache: useMapViewportStore.getState().cache,
+    });
   }, [focusLat, focusLng]);
+  const [mapRemountKey, setMapRemountKey] = useState(0);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
     lat: number;
@@ -210,6 +217,8 @@ function IndexPage() {
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
+  const isCameraCenteredRef = useRef(false);
+  const restoredCameraTrackingRef = useRef(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
   // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
@@ -293,6 +302,7 @@ function IndexPage() {
 
   // 위치 및 방향 트래킹
   const [isCameraCentered, setIsCameraCentered] = useState(false);
+  isCameraCenteredRef.current = isCameraCentered;
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
@@ -301,6 +311,24 @@ function IndexPage() {
 
   const { permission, isTracking, location, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
+
+  useEffect(() => {
+    if (restoredCameraTrackingRef.current || !mapBootstrap.restoreCameraCentered) {
+      return;
+    }
+
+    restoredCameraTrackingRef.current = true;
+    setIsCameraCentered(true);
+
+    if (permission === "granted" && !isTracking) {
+      startTracking();
+    }
+  }, [
+    isTracking,
+    mapBootstrap.restoreCameraCentered,
+    permission,
+    startTracking,
+  ]);
   const {
     heading: deviceHeading,
     isTracking: isOrientationTracking,
@@ -337,6 +365,11 @@ function IndexPage() {
 
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
+
+    useMapViewportStore
+      .getState()
+      .saveFromMap(mapInstanceRef.current, isCameraCenteredRef.current);
+
     setIsRefreshing(true);
     setRefreshCooldownRemaining(15);
     setIsRefreshSpinning(true);
@@ -351,11 +384,7 @@ function IndexPage() {
       900,
     );
 
-    mapInstanceRef.current.refresh();
-    void queryClient.invalidateQueries({
-      queryKey: [LOCKER_PINS_QUERY_KEY],
-      refetchType: "active",
-    });
+    setMapRemountKey((key) => key + 1);
 
     refreshTimersRef.current.interval = window.setInterval(() => {
       setRefreshCooldownRemaining((prev) => {
@@ -367,17 +396,41 @@ function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing, queryClient]);
+  }, [isRefreshing]);
 
-  // 언마운트 시 리프레시 타이머 클린업
+  // 언마운트 시 viewport 저장·리프레시 타이머 클린업
   useEffect(() => {
     return () => {
+      const map = mapInstanceRef.current;
+      if (map) {
+        useMapViewportStore
+          .getState()
+          .saveFromMap(map, isCameraCenteredRef.current);
+      }
+
       window.clearTimeout(refreshTimersRef.current.spinning);
       window.clearTimeout(refreshTimersRef.current.visual);
       window.clearInterval(refreshTimersRef.current.interval);
       window.clearTimeout(locationLoadingTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    const maps = window.naver?.maps;
+    if (!maps) return;
+
+    return subscribeMapIdle({
+      map: mapInstance,
+      maps,
+      onSettle: () => {
+        useMapViewportStore
+          .getState()
+          .saveFromMap(mapInstance, isCameraCenteredRef.current);
+      },
+    });
+  }, [mapInstance]);
 
   const handleMyLocation = useCallback(async () => {
     if (permission === "denied") {
@@ -1456,10 +1509,13 @@ function IndexPage() {
 
       <NaverMapProvider language={languageTag()}>
         <NaverMapCanvas
+          key={mapRemountKey}
+          instanceKey={mapRemountKey}
           onLoad={handleMapLoad}
           onLoadingChange={setIsMapLoading}
           onErrorChange={setHasMapError}
-          initialCenter={mapInitialCenter}
+          initialCenter={mapBootstrap.center}
+          initialZoom={mapBootstrap.zoom}
         />
         <MyLocationMarker
           map={mapInstance}
@@ -1505,7 +1561,7 @@ function IndexPage() {
               .filter(Boolean)
               .join(" ")}
             onClick={handleRefreshMap}
-            aria-label="현 지도에서 검색"
+            aria-label={m.home_map_refresh_aria()}
             disabled={isRefreshing || !mapInstance}
           >
             <IconCircleboxRefresh48
