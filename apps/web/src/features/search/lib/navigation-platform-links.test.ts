@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { setLanguageTag } from "@repo/i18n";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import {
   DEFAULT_NAVIGATION_ORIGIN,
@@ -36,6 +36,9 @@ const CURRENT_ORIGIN = {
 };
 
 const WEB_ORIGIN = "https://app.zimdugo.com";
+const IOS_USER_AGENT =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)";
+const ANDROID_USER_AGENT = "Mozilla/5.0 (Linux; Android 14)";
 
 const linkOptions = (navigationOrigin = resolveNavigationOrigin(CURRENT_ORIGIN)) => ({
   navigationOrigin,
@@ -45,6 +48,10 @@ const linkOptions = (navigationOrigin = resolveNavigationOrigin(CURRENT_ORIGIN))
 describe("navigation-platform-links", () => {
   beforeEach(() => {
     setLanguageTag("ko");
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("이미 알고 있는 위치가 있으면 GPS 재요청 없이 출발지를 반환한다", async () => {
@@ -162,34 +169,31 @@ describe("navigation-platform-links", () => {
     ).toBe(links?.webUrl ?? null);
   });
 
-  it("카카오맵은 map.kakao.com/link 웹 URL을 사용한다", () => {
+  it("카카오맵은 kakaomap://, 모바일웹 스킴, 웹 링크 URL을 각각 만든다", () => {
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+      userAgent: IOS_USER_AGENT,
     });
 
-    expect(links?.appUrl).toBe(links?.webUrl);
+    expect(links?.appUrl).toContain("kakaomap://route?");
+    expect(links?.appUrl).toContain("sp=37.50120%2C127.03960");
+    expect(links?.appUrl).toContain("ep=37.55590%2C126.93640");
+    expect(links?.appUrl).toContain("by=publictransit");
+
+    expect(links?.mobileWebUrl).toContain("m.map.kakao.com/scheme/route?");
+    expect(links?.mobileWebUrl).toContain("by=publictransit");
+
     expect(links?.webUrl).toContain("map.kakao.com/link/from/");
     expect(links?.webUrl).toContain("/to/");
-    expect(links?.webUrl).not.toContain("m.map.kakao.com/scheme/route");
-    expect(links?.webUrl).not.toContain("nmap://");
-    expect(links?.webUrl).not.toContain("intent://");
-  });
 
-  it("카카오맵 Android도 map.kakao.com/link 웹 URL을 사용한다", () => {
-    const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
-      ...linkOptions(resolveNavigationOrigin(null)),
-      userAgent: "Mozilla/5.0 (Linux; Android 14)",
-    });
-
-    expect(links?.appUrl).toBe(links?.webUrl);
-    expect(links?.webUrl).toContain("map.kakao.com/link/from/");
-    expect(links?.webUrl).toContain(
-      encodeURIComponent(DEFAULT_NAVIGATION_ORIGIN.label),
+    expect(links?.androidIntentUrl).toContain("intent://route?");
+    expect(links?.androidIntentUrl).toContain("scheme=kakaomap");
+    expect(links?.androidIntentUrl).toContain(
+      `package=net.daum.android.map`,
     );
   });
 
-  it("길찾기 열기는 데스크톱에서 웹 URL을 사용한다", () => {
+  it("길찾기 열기는 데스크톱에서 웹 링크 URL을 사용한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks(
       "kakao",
@@ -197,35 +201,47 @@ describe("navigation-platform-links", () => {
       linkOptions(),
     );
 
-    openNavigationPlatformLinks(links!, { assign });
+    openNavigationPlatformLinks(links!, { assign, userAgent: "Mozilla/5.0" });
 
     expect(assign).toHaveBeenCalledTimes(1);
     expect(assign).toHaveBeenCalledWith(links?.webUrl);
   });
 
-  it("Android UA에서도 웹 URL을 사용한다", () => {
+  it("iOS에서는 kakaomap:// 스킴을 먼저 시도하고 모바일웹 스킴으로 폴백한다", () => {
+    vi.useFakeTimers();
     const assign = vi.fn();
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
-      userAgent: "Mozilla/5.0 (Linux; Android 14)",
+      userAgent: IOS_USER_AGENT,
     });
 
-    openNavigationPlatformLinks(links!, { assign });
+    openNavigationPlatformLinks(links!, {
+      assign,
+      userAgent: IOS_USER_AGENT,
+    });
 
     expect(assign).toHaveBeenCalledTimes(1);
-    expect(assign).toHaveBeenCalledWith(links?.webUrl);
+    expect(assign).toHaveBeenCalledWith(links?.appUrl);
+
+    vi.advanceTimersByTime(1_500);
+
+    expect(assign).toHaveBeenCalledTimes(2);
+    expect(assign).toHaveBeenLastCalledWith(links?.mobileWebUrl);
   });
 
-  it("iOS UA에서도 웹 URL을 사용한다", () => {
+  it("Android에서는 intent URL을 먼저 시도한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks("kakao", LOCKER_WITH_COORDS, {
       ...linkOptions(),
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+      userAgent: ANDROID_USER_AGENT,
     });
 
-    openNavigationPlatformLinks(links!, { assign });
+    openNavigationPlatformLinks(links!, {
+      assign,
+      userAgent: ANDROID_USER_AGENT,
+    });
 
     expect(assign).toHaveBeenCalledTimes(1);
-    expect(assign).toHaveBeenCalledWith(links?.webUrl);
+    expect(assign).toHaveBeenCalledWith(links?.androidIntentUrl);
   });
 });

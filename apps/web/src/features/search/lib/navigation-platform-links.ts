@@ -11,9 +11,19 @@ export type NavigationPoint = {
 };
 
 export type NavigationPlatformLinks = {
+  /** 앱 직접 호출용 (카카오: kakaomap://) */
   appUrl: string;
+  /** 데스크톱·최종 폴백 웹 URL */
   webUrl: string;
+  /** 모바일웹 스킴 폴백 (카카오: m.map.kakao.com/scheme/route) */
+  mobileWebUrl?: string;
+  /** Android intent 폴백 (kakaomap:// + browser_fallback_url) */
+  androidIntentUrl?: string;
 };
+
+const KAKAO_MAP_ANDROID_PACKAGE = "net.daum.android.map";
+const KAKAO_ROUTE_TRAVEL_MODE = "publictransit";
+const APP_DEEP_LINK_FALLBACK_MS = 1_500;
 
 /** 위치 미동의·미수신 시 길찾기 출발지 폴백 (좌표 고정, 라벨은 i18n) */
 export const getDefaultNavigationOrigin = (): NavigationPoint => ({
@@ -131,6 +141,19 @@ export const getLockerNavigationDestination = (
 const formatNavigationCoordinate = (value: number): string =>
   value.toFixed(5);
 
+const formatKakaoRouteCoordinatePair = (point: NavigationPoint): string =>
+  `${formatNavigationCoordinate(point.lat)},${formatNavigationCoordinate(point.lng)}`;
+
+const buildKakaoRouteSearchParams = (
+  origin: NavigationPoint,
+  destination: NavigationPoint,
+): URLSearchParams =>
+  new URLSearchParams({
+    sp: formatKakaoRouteCoordinatePair(origin),
+    ep: formatKakaoRouteCoordinatePair(destination),
+    by: KAKAO_ROUTE_TRAVEL_MODE,
+  });
+
 const buildKakaoRoutePoint = (point: NavigationPoint): string =>
   [
     encodeURIComponent(point.label),
@@ -138,11 +161,29 @@ const buildKakaoRoutePoint = (point: NavigationPoint): string =>
     formatNavigationCoordinate(point.lng),
   ].join(",");
 
-const buildKakaoWebUrl = (
+/** 데스크톱·라벨 포함 웹 길찾기 */
+const buildKakaoWebLinkUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
 ): string =>
   `https://map.kakao.com/link/from/${buildKakaoRoutePoint(origin)}/to/${buildKakaoRoutePoint(destination)}`;
+
+/** 카카오 공식 앱 스킴 — kakaomap://route */
+const buildKakaoAppSchemeUrl = (routeParams: URLSearchParams): string =>
+  `kakaomap://route?${routeParams.toString()}`;
+
+/** 카카오 공식 모바일웹 스킴 — m.map.kakao.com/scheme/route */
+const buildKakaoMobileWebSchemeUrl = (routeParams: URLSearchParams): string =>
+  `https://m.map.kakao.com/scheme/route?${routeParams.toString()}`;
+
+const buildKakaoAndroidIntentUrl = (
+  routeParams: URLSearchParams,
+  fallbackUrl: string,
+): string => {
+  const encodedFallback = encodeURIComponent(fallbackUrl);
+
+  return `intent://route?${routeParams.toString()}#Intent;scheme=kakaomap;package=${KAKAO_MAP_ANDROID_PACKAGE};S.browser_fallback_url=${encodedFallback};end`;
+};
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
@@ -176,11 +217,23 @@ export const getNavigationPlatformLinks = (
 
   const { navigationOrigin } = options;
 
-  const webUrl =
-    platform === "kakao"
-      ? buildKakaoWebUrl(navigationOrigin, destination)
-      : buildGoogleWebUrl(navigationOrigin, destination);
+  if (platform === "kakao") {
+    const routeParams = buildKakaoRouteSearchParams(
+      navigationOrigin,
+      destination,
+    );
+    const mobileWebUrl = buildKakaoMobileWebSchemeUrl(routeParams);
+    const webUrl = buildKakaoWebLinkUrl(navigationOrigin, destination);
 
+    return {
+      appUrl: buildKakaoAppSchemeUrl(routeParams),
+      mobileWebUrl,
+      androidIntentUrl: buildKakaoAndroidIntentUrl(routeParams, mobileWebUrl),
+      webUrl,
+    };
+  }
+
+  const webUrl = buildGoogleWebUrl(navigationOrigin, destination);
   return { appUrl: webUrl, webUrl };
 };
 
@@ -191,10 +244,24 @@ export const getNavigationPlatformUrl = (
 ): string | null =>
   getNavigationPlatformLinks(platform, locker, options)?.webUrl ?? null;
 
+const getDefaultUserAgent = (): string =>
+  typeof navigator !== "undefined" ? navigator.userAgent : "";
+
+const isMobileUserAgent = (userAgent: string): boolean =>
+  /Android|iPhone|iPad|iPod/i.test(userAgent);
+
+const isAndroidUserAgent = (userAgent: string): boolean =>
+  /Android/i.test(userAgent);
+
 type OpenNavigationOptions = {
   assign?: (url: string) => void;
+  userAgent?: string;
 };
 
+/**
+ * 모바일: kakaomap://(Android는 intent) → m.map.kakao.com/scheme/route 폴백.
+ * 데스크톱: map.kakao.com/link.
+ */
 export const openNavigationPlatformLinks = (
   links: NavigationPlatformLinks,
   options: OpenNavigationOptions = {},
@@ -204,6 +271,33 @@ export const openNavigationPlatformLinks = (
     ((url: string) => {
       window.location.href = url;
     });
+  const userAgent = options.userAgent ?? getDefaultUserAgent();
+  const mobileFallbackUrl = links.mobileWebUrl ?? links.webUrl;
+  const shouldTryKakaoDeepLink =
+    links.appUrl.startsWith("kakaomap://") &&
+    isMobileUserAgent(userAgent) &&
+    Boolean(links.mobileWebUrl);
 
-  assign(links.webUrl);
+  if (!shouldTryKakaoDeepLink) {
+    assign(links.webUrl);
+    return;
+  }
+
+  const deepLinkUrl =
+    isAndroidUserAgent(userAgent) && links.androidIntentUrl
+      ? links.androidIntentUrl
+      : links.appUrl;
+
+  const timerId = window.setTimeout(() => {
+    assign(mobileFallbackUrl);
+  }, APP_DEEP_LINK_FALLBACK_MS);
+
+  const clearFallback = () => {
+    window.clearTimeout(timerId);
+  };
+
+  window.addEventListener("pagehide", clearFallback, { once: true });
+  window.addEventListener("blur", clearFallback, { once: true });
+
+  assign(deepLinkUrl);
 };
