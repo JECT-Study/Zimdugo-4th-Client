@@ -333,9 +333,14 @@ function FullDetailContent({
 }) {
   const hasFeedbackVotes =
     locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
+  const canVote = typeof onVoteChange === "function";
 
   const handleVotePress = (voteType: LockerVoteType) => {
-    onVoteChange?.(locker, voteType);
+    if (!canVote) {
+      return;
+    }
+
+    onVoteChange(locker, voteType);
   };
 
   return (
@@ -384,6 +389,8 @@ function FullDetailContent({
               {locker.accurateCount !== undefined ? (
                 <button
                   type="button"
+                  disabled={!canVote}
+                  aria-disabled={!canVote}
                   className={[
                     feedbackButton,
                     locker.isAccurateVoted ? feedbackButtonSelected : "",
@@ -401,6 +408,8 @@ function FullDetailContent({
               {locker.inaccurateCount !== undefined ? (
                 <button
                   type="button"
+                  disabled={!canVote}
+                  aria-disabled={!canVote}
                   className={[
                     feedbackButton,
                     feedbackButtonNegative,
