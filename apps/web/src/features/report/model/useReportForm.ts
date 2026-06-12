@@ -344,7 +344,7 @@ export function useReportForm(): {
 
         if (selectedPhotoFile) {
           try {
-            imageUrl = await uploadReportPhoto(userId, selectedPhotoFile);
+            imageUrl = await uploadReportPhoto(selectedPhotoFile);
           } catch (error) {
             if (parseReportSubmitFailure(error).kind === "auth") {
               useAuthPopupStore.getState().openPopup("/report");
@@ -372,7 +372,7 @@ export function useReportForm(): {
         }
 
         const payload = normalizeReportPayload({ ...data, imageUrl });
-        await postLockerReport(payload, { userId });
+        await postLockerReport(payload);
         setIsPopupOpen(true);
       } catch (error) {
         const failure = parseReportSubmitFailure(error);

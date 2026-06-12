@@ -17,17 +17,14 @@ export class ReportPhotoUploadValidationError extends Error {
   }
 }
 
-export async function uploadReportPhoto(
-  userId: number,
-  file: File,
-): Promise<string> {
+export async function uploadReportPhoto(file: File): Promise<string> {
   const validation = validateReportPhotoFile(file);
   if (!validation.ok) {
     throw new ReportPhotoUploadValidationError(validation.error);
   }
 
   const contentType = resolveReportPhotoContentType(file);
-  const { uploadUrl, fileUrl } = await postUploadUrl(userId, {
+  const { uploadUrl, fileUrl } = await postUploadUrl({
     category: UPLOAD_CATEGORY_LOCKER_REPORT,
     fileName: file.name,
     contentType,

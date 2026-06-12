@@ -24,8 +24,8 @@ import {
 
 export function useVoteLockerSession() {
   const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.userId);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const accessToken = useAuthStore((state) => state.getAccessToken());
   const openAuthPopup = useAuthPopupStore((state) => state.openPopup);
   const baselineRef = useRef<LockerVoteBaseline>(new Map());
   const [pending, setPending] = useState<LockerVotePending>(() => new Map());
@@ -90,7 +90,7 @@ export function useVoteLockerSession() {
       voteType: LockerVoteType,
       server?: LockerVoteServerState,
     ): boolean => {
-      if (!isAuthenticated || userId == null) {
+      if (!isAuthenticated || accessToken == null) {
         openAuthPopup("/");
         return false;
       }
@@ -106,13 +106,13 @@ export function useVoteLockerSession() {
       );
       return true;
     },
-    [isAuthenticated, openAuthPopup, userId],
+    [accessToken, isAuthenticated, openAuthPopup],
   );
 
   const flush = useCallback(async (): Promise<{ hadChanges: boolean }> => {
     const currentPending = pendingRef.current;
 
-    if (!isAuthenticated || userId == null || currentPending.size === 0) {
+    if (!isAuthenticated || accessToken == null || currentPending.size === 0) {
       return { hadChanges: false };
     }
 
@@ -129,7 +129,7 @@ export function useVoteLockerSession() {
 
     const results = await Promise.allSettled(
       operations.map((operation) =>
-        postLockerVote(userId, operation.lockerId, operation.voteType),
+        postLockerVote(operation.lockerId, operation.voteType),
       ),
     );
 
@@ -207,7 +207,7 @@ export function useVoteLockerSession() {
     }
 
     return { hadChanges: true };
-  }, [isAuthenticated, queryClient, userId]);
+  }, [accessToken, isAuthenticated, queryClient]);
 
   const handleDetailVoteChange = useCallback(
     (item: LockerDetailItem, voteType: LockerVoteType) => {

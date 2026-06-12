@@ -5,22 +5,18 @@ import { useAuthStore } from "#/shared/store/authStore";
 
 export function useUpdateMeProfile() {
   const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.userId);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useMutation({
     mutationFn: (body: PatchMeProfileBody) => {
-      if (userId == null) {
-        throw new Error("User id is required.");
+      if (!isAuthenticated) {
+        throw new Error("Authentication is required.");
       }
 
-      return patchMeProfile(userId, body);
+      return patchMeProfile(body);
     },
     onSuccess: (data) => {
-      if (userId == null) {
-        return;
-      }
-
-      queryClient.setQueryData(userProfileQueryKey(userId), data);
+      queryClient.setQueryData(userProfileQueryKey(), data);
     },
   });
 }

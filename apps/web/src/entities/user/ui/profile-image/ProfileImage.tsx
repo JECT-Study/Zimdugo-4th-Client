@@ -38,7 +38,7 @@ export function ProfileImage({
   className,
 }: ProfileImageProps) {
   const [hasError, setHasError] = useState(false);
-  const { data: user } = useUser(userId);
+  const { data: user } = useUser(userId != null);
   const src = initialSrc ?? user?.profileImageUrl;
 
   const handleSetImageError = () => {

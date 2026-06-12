@@ -41,7 +41,7 @@ describe("postLockerReport", () => {
     postMock.mockReset();
   });
 
-  it("userId를 query로 포함해 제보 생성 요청을 보낸다", async () => {
+  it("제보 생성 요청을 보낸다", async () => {
     postMock.mockResolvedValue({
       data: {
         code: "SUCCESS",
@@ -52,12 +52,11 @@ describe("postLockerReport", () => {
       },
     });
 
-    await postLockerReport(payload, { userId: 7 });
+    await postLockerReport(payload);
 
     expect(apiClient.post).toHaveBeenCalledWith(
       "/api/v1/locker-reports",
       payload,
-      { params: { userId: 7 } },
     );
   });
 });

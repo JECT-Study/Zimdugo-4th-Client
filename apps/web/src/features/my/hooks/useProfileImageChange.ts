@@ -45,7 +45,7 @@ export function useProfileImageChange() {
 
       setIsUploadingProfileImage(true);
       try {
-        const profileImageUrl = await uploadProfilePhoto(userId, file);
+        const profileImageUrl = await uploadProfilePhoto(file);
 
         await updateProfile({ profileImageUrl });
       } catch (error) {

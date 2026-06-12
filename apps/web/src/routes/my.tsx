@@ -39,7 +39,7 @@ function MyRootPage() {
   const { isAuthenticated, logout } = useAuth();
   const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
-  const { data: profile, isPending: isProfilePending } = useUser(userId);
+  const { data: profile, isPending: isProfilePending } = useUser(userId != null);
   const { data: summary, isPending: isSummaryPending } = useMyPageSummary();
   const { mutate: updateProfile } = useUpdateMeProfile();
   const {
