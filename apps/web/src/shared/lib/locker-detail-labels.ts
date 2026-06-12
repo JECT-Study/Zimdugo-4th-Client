@@ -16,12 +16,18 @@ const formatCurrencyAmount = (amount: number): string => {
   return languageTag() === "ko" ? `${formatted}${unit}` : `${formatted} ${unit}`;
 };
 
+const trimTimeSeconds = (time: string): string =>
+  /^\d{1,2}:\d{2}:\d{2}$/.test(time) ? time.slice(0, 5) : time;
+
 export const formatLockerOperatingHoursLabel = (
   open?: string,
   close?: string,
 ): string => {
   if (open && close) {
-    return m.locker_detail_operating_hours({ open, close });
+    return m.locker_detail_operating_hours({
+      open: trimTimeSeconds(open),
+      close: trimTimeSeconds(close),
+    });
   }
 
   return m.locker_detail_operating_hours_not_provided();

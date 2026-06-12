@@ -269,7 +269,7 @@
   "address_search_title": "住所検索",
   "address_search_sdk_loading": "地図サービスを読み込んでいます。しばらくお待ちください。",
   "address_search_not_found": "住所の場所が見つかりません。別の住所を選択してください。",
-  "locker_detail_operating_hours": "営業時間 {open} ~ {close}",
+  "locker_detail_operating_hours": "{open} ~ {close}",
   "locker_detail_operating_hours_not_provided": "営業時間未提供",
   "locker_detail_price_not_provided": "料金未提供",
   "locker_detail_price_range": "{min} ~ {max}",

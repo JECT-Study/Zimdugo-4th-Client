@@ -24,7 +24,10 @@ describe("locker-detail-labels", () => {
     setLanguageTag("ko");
 
     expect(formatLockerOperatingHoursLabel("06:00", "23:00")).toBe(
-      "운영시간 06:00 ~ 23:00",
+      "06:00 ~ 23:00",
+    );
+    expect(formatLockerOperatingHoursLabel("11:00:00", "19:04:00")).toBe(
+      "11:00 ~ 19:04",
     );
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000원 ~ 5,000원");
     expect(formatLockerPriceLabel(3000)).toBe("3,000원 ~");

@@ -269,7 +269,7 @@
   "address_search_title": "Address Search",
   "address_search_sdk_loading": "Loading map services. Please try again in a moment.",
   "address_search_not_found": "Could not find the location for the address. Please select a different address.",
-  "locker_detail_operating_hours": "Hours {open} – {close}",
+  "locker_detail_operating_hours": "{open} – {close}",
   "locker_detail_operating_hours_not_provided": "Hours not provided",
   "locker_detail_price_not_provided": "Price not provided",
   "locker_detail_price_range": "{min} – {max}",

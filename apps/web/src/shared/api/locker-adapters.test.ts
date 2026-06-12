@@ -157,7 +157,7 @@ describe("locker-adapters", () => {
     const detail = toLockerDetailItem(raw);
 
     expect(detail.title).toBe("강남역 4번 출구 지하 1층");
-    expect(detail.operatingHoursLabel).toBe("운영시간 06:00 ~ 23:00");
+    expect(detail.operatingHoursLabel).toBe("06:00 ~ 23:00");
     expect(detail.floorLabel).toBe("1층");
     expect(detail.priceLabel).toBe("3,000원 ~ 5,000원");
     expect(detail.sizeLabel).toBe("SMALL, MEDIUM");

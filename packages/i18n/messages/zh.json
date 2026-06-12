@@ -269,7 +269,7 @@
   "address_search_title": "地址搜索",
   "address_search_sdk_loading": "正在加载地图服务，请稍后再试。",
   "address_search_not_found": "无法找到该地址的位置，请选择其他地址。",
-  "locker_detail_operating_hours": "营业时间 {open} ~ {close}",
+  "locker_detail_operating_hours": "{open} ~ {close}",
   "locker_detail_operating_hours_not_provided": "营业时间未提供",
   "locker_detail_price_not_provided": "价格未提供",
   "locker_detail_price_range": "{min} ~ {max}",
