@@ -171,7 +171,7 @@ describe("locker-adapters", () => {
     expect(detail.lastUpdatedLabel).toBe("최근 업데이트 2026-05-31 14:59");
   });
 
-  it("투표 플래그가 없으면 undefined로 유지한다", () => {
+  it("투표 플래그가 없으면 false로 변환한다", () => {
     const detail = toLockerDetailItem({
       lockerId: 1,
       lockerName: "테스트 보관함",
@@ -183,8 +183,8 @@ describe("locker-adapters", () => {
       inaccurateVoteCount: 0,
     });
 
-    expect(detail.isAccurateVoted).toBeUndefined();
-    expect(detail.isInaccurateVoted).toBeUndefined();
+    expect(detail.isAccurateVoted).toBe(false);
+    expect(detail.isInaccurateVoted).toBe(false);
   });
 
   it("운영시간·가격이 없으면 미제공 문구로 변환한다", () => {
