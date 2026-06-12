@@ -72,7 +72,10 @@ import {
   parseOpenLockerDeepLinkSearch,
   type LockerDetailSnap,
 } from "#/features/search/lib/open-locker-deep-link";
-import { resolveSearchQuerySubmitAttempt } from "#/features/search/lib/sanitize-search-query";
+import {
+  getValidatedSearchQuery,
+  resolveSearchQuerySubmitAttempt,
+} from "#/features/search/lib/sanitize-search-query";
 import {
   toLockerSearchFilterParams,
   toPlaceLockersFilterParams,
@@ -522,8 +525,13 @@ function IndexPage() {
       return null;
     }
 
+    const keyword = getValidatedSearchQuery(searchQuery);
+    if (!keyword) {
+      return null;
+    }
+
     return {
-      keyword: searchQuery.trim(),
+      keyword,
       lat: searchCoordinates.lat,
       lng: searchCoordinates.lng,
       ...toLockerSearchFilterParams(searchFilters),
@@ -1109,7 +1117,10 @@ function IndexPage() {
 
   const handleBackToKeywordList = useCallback(async () => {
     await flushFavoriteChanges();
-    setSearchQuery(searchDraft);
+    const validatedKeyword = getValidatedSearchQuery(searchDraft);
+    if (validatedKeyword) {
+      setSearchQuery(validatedKeyword);
+    }
     setListKind("keyword");
     setSearchPlaceId(null);
     setSheetMode("list");

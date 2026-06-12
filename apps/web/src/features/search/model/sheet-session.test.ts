@@ -96,6 +96,26 @@ describe("sheet-session v2", () => {
         searchQuery: "강남",
       }),
     ).toBe(true);
+
+    expect(
+      shouldFetchKeywordSearch({
+        context: "search",
+        listKind: "keyword",
+        sheetMode: "list",
+        searchDetailBack: null,
+        searchQuery: "ㄱㄴ",
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldFetchKeywordSearch({
+        context: "search",
+        listKind: "keyword",
+        sheetMode: "list",
+        searchDetailBack: null,
+        searchQuery: "강ㄴ남",
+      }),
+    ).toBe(true);
   });
 
   it("place lockers fetch 조건을 판별한다", () => {

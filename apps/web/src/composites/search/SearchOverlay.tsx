@@ -323,9 +323,6 @@ export function SearchOverlay({
             {queryIssue === "invalid-format" ? (
               <SearchAsyncFeedback variant="suggest-invalid-format" />
             ) : null}
-            {queryIssue === "too-short" ? (
-              <SearchAsyncFeedback variant="suggest-min-length" />
-            ) : null}
             {showSuggestLoading ? <SearchSuggestListSkeleton /> : null}
             {showSuggestError ? (
               <SearchAsyncFeedback
