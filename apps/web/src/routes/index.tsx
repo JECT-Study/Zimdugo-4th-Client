@@ -35,6 +35,9 @@ import {
   MapControlsSkeleton,
   NaverMapCanvas,
   NaverMapProvider,
+  resolveMapBootstrapViewport,
+  subscribeMapIdle,
+  useMapViewportStore,
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
@@ -167,13 +170,7 @@ function IndexPage() {
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
-  const mapInitialCenter = useMemo(() => {
-    if (focusLat != null && focusLng != null) {
-      return { lat: focusLat, lng: focusLng };
-    }
-
-    return deepLinkMapCenterRef.current;
-  }, [focusLat, focusLng]);
+  const [mapRemountKey, setMapRemountKey] = useState(0);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
     lat: number;
@@ -210,6 +207,7 @@ function IndexPage() {
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
+  const isCameraCenteredRef = useRef(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
   // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
@@ -293,6 +291,7 @@ function IndexPage() {
 
   // 위치 및 방향 트래킹
   const [isCameraCentered, setIsCameraCentered] = useState(false);
+  isCameraCenteredRef.current = isCameraCentered;
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
@@ -301,6 +300,21 @@ function IndexPage() {
 
   const { permission, isTracking, location, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
+
+  const mapBootstrap = useMemo(() => {
+    const deepLinkCenter =
+      focusLat != null && focusLng != null
+        ? { lat: focusLat, lng: focusLng }
+        : deepLinkMapCenterRef.current;
+
+    return resolveMapBootstrapViewport({
+      deepLinkCenter,
+      cache: useMapViewportStore.getState().cache,
+      permission,
+      gps: permission === "granted" && location ? location : null,
+    });
+  }, [focusLat, focusLng, mapRemountKey, permission, location]);
+
   const {
     heading: deviceHeading,
     isTracking: isOrientationTracking,
@@ -337,6 +351,9 @@ function IndexPage() {
 
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
+
+    useMapViewportStore.getState().saveFromMap(mapInstanceRef.current);
+
     setIsRefreshing(true);
     setRefreshCooldownRemaining(15);
     setIsRefreshSpinning(true);
@@ -351,7 +368,7 @@ function IndexPage() {
       900,
     );
 
-    mapInstanceRef.current.refresh();
+    setMapRemountKey((key) => key + 1);
     void queryClient.invalidateQueries({
       queryKey: [LOCKER_PINS_QUERY_KEY],
       refetchType: "active",
@@ -369,6 +386,17 @@ function IndexPage() {
     }, 1000);
   }, [isRefreshing, queryClient]);
 
+  const persistMapViewport = useCallback((map: naver.maps.Map) => {
+    useMapViewportStore.getState().saveFromMap(map);
+  }, []);
+
+  const saveMapViewport = useCallback(() => {
+    const map = mapInstanceRef.current;
+    if (map) {
+      persistMapViewport(map);
+    }
+  }, [persistMapViewport]);
+
   // 언마운트 시 리프레시 타이머 클린업
   useEffect(() => {
     return () => {
@@ -378,6 +406,36 @@ function IndexPage() {
       window.clearTimeout(locationLoadingTimerRef.current);
     };
   }, []);
+
+  // 탭 전환·백그라운드 이탈 직전 viewport 저장
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        saveMapViewport();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", saveMapViewport);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", saveMapViewport);
+    };
+  }, [saveMapViewport]);
+
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    const maps = window.naver?.maps;
+    if (!maps) return;
+
+    return subscribeMapIdle({
+      map: mapInstance,
+      maps,
+      onSettle: saveMapViewport,
+    });
+  }, [mapInstance, saveMapViewport]);
 
   const handleMyLocation = useCallback(async () => {
     if (permission === "denied") {
@@ -1456,10 +1514,13 @@ function IndexPage() {
 
       <NaverMapProvider language={languageTag()}>
         <NaverMapCanvas
+          key={mapRemountKey}
           onLoad={handleMapLoad}
+          onWillDestroy={persistMapViewport}
           onLoadingChange={setIsMapLoading}
           onErrorChange={setHasMapError}
-          initialCenter={mapInitialCenter}
+          initialCenter={mapBootstrap.center}
+          initialZoom={mapBootstrap.zoom}
         />
         <MyLocationMarker
           map={mapInstance}
@@ -1505,7 +1566,7 @@ function IndexPage() {
               .filter(Boolean)
               .join(" ")}
             onClick={handleRefreshMap}
-            aria-label="현 지도에서 검색"
+            aria-label={m.home_map_refresh_aria()}
             disabled={isRefreshing || !mapInstance}
           >
             <IconCircleboxRefresh48

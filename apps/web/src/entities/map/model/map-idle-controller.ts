@@ -45,7 +45,7 @@ export interface SubscribeMapIdleOptions {
   onSettle: (viewport: MapViewport) => void;
 }
 
-const readViewport = (map: naver.maps.Map): MapViewport => {
+export const readViewport = (map: naver.maps.Map): MapViewport => {
   const center = map.getCenter();
   const bounds = map.getBounds();
   const size = map.getSize?.();
