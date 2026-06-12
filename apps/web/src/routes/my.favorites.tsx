@@ -5,6 +5,7 @@ import { Popup } from "@repo/ui/components/popup";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { FavoriteListItem } from "#/entities/favorite";
+import type { FavoriteLockerListItem } from "#/shared/api/my-page";
 import { NonSearch } from "#/entities/search";
 import { useFavoriteRemoval } from "#/features/my/hooks/useFavoriteRemoval";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
@@ -47,6 +48,11 @@ function MyFavoritesPage() {
   const canLoadMore =
     listQuery.hasNextPage === true && !listQuery.isFetchingNextPage;
 
+  const isInitialLoading = listQuery.isPending;
+  const isError = listQuery.isError && filteredItems.length === 0;
+  const isEmpty = !isInitialLoading && !isError && filteredItems.length === 0;
+  const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
+
   const handleLoadMore = useCallback(() => {
     if (!canLoadMore) return;
     void listQuery.fetchNextPage();
@@ -61,11 +67,11 @@ function MyFavoritesPage() {
     navigate({ to: "/my" });
   };
 
-  const handleLockerPress = (item: {
-    lockerId: number;
-    latitude: number;
-    longitude: number;
-  }) => {
+  const handleRetry = () => {
+    void listQuery.refetch();
+  };
+
+  const handleLockerPress = (item: FavoriteLockerListItem) => {
     navigate({
       to: "/",
       search: {
@@ -85,11 +91,6 @@ function MyFavoritesPage() {
     setErrorMessage(null);
   };
 
-  const isInitialLoading = listQuery.isPending;
-  const isError = listQuery.isError && filteredItems.length === 0;
-  const isEmpty = !isInitialLoading && !isError && filteredItems.length === 0;
-  const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
-
   return (
     <div className={childPage}>
       <Header
@@ -103,9 +104,7 @@ function MyFavoritesPage() {
       <main className={childContent}>
         {isInitialLoading ? <p>{m.my_summary_loading()}</p> : null}
 
-        {isError ? (
-          <MyListErrorState onRetry={() => void listQuery.refetch()} />
-        ) : null}
+        {isError ? <MyListErrorState onRetry={handleRetry} /> : null}
 
         {isEmpty ? (
           <div className={childEmpty}>
