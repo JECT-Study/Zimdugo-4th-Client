@@ -93,6 +93,19 @@ export function useFavoriteLockerSession() {
     [],
   );
 
+  const syncBaselineFromLockerItems = useCallback(
+    (items: Array<{ lockerId: number; isFavorite?: boolean }>) => {
+      for (const item of items) {
+        seedFavoriteBaseline(
+          baselineRef.current,
+          item.lockerId,
+          item.isFavorite,
+        );
+      }
+    },
+    [],
+  );
+
   const toggle = useCallback(
     (lockerId: number, next: boolean): boolean => {
       if (!isAuthenticated || userId == null) {
@@ -214,6 +227,7 @@ export function useFavoriteLockerSession() {
     getEffectiveIsFavorite,
     syncBaselineFromSearchData,
     syncBaselineFromLockerDetail,
+    syncBaselineFromLockerItems,
     toggle,
     flush,
     handleSearchFavoriteChange,

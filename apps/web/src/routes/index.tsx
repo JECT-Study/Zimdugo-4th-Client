@@ -5,7 +5,7 @@ import {
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
@@ -67,6 +67,11 @@ import {
   searchLockerItemsToPins,
   searchResultItemsToPins,
 } from "#/features/search/lib/search-result-pins";
+import {
+  createLockerPinAt,
+  parseOpenLockerDeepLinkSearch,
+  type LockerDetailSnap,
+} from "#/features/search/lib/open-locker-deep-link";
 import { resolveSearchQuerySubmitAttempt } from "#/features/search/lib/sanitize-search-query";
 import {
   toLockerSearchFilterParams,
@@ -125,7 +130,10 @@ import {
   shouldShowMapControls,
 } from "./-map-control-visibility";
 
-export const Route = createFileRoute("/")({ component: IndexPage });
+export const Route = createFileRoute("/")({
+  component: IndexPage,
+  validateSearch: parseOpenLockerDeepLinkSearch,
+});
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
 
@@ -147,6 +155,23 @@ const mergeLockerDetailWithPreviousDistance = (
 };
 
 function IndexPage() {
+  const navigate = useNavigate();
+  const { openLockerId, detailSnap, focusLat, focusLng } = Route.useSearch();
+  const handledOpenLockerIdRef = useRef<number | null>(null);
+  const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
+  const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+  const mapInitialCenter = useMemo(() => {
+    if (focusLat != null && focusLng != null) {
+      return { lat: focusLat, lng: focusLng };
+    }
+
+    return deepLinkMapCenterRef.current;
+  }, [focusLat, focusLng]);
+  const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
+  const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const queryClient = useQueryClient();
   const favoriteSession = useFavoriteLockerSession();
   const flushFavoriteChangesRef = useRef(favoriteSession.flush);
@@ -380,6 +405,18 @@ function IndexPage() {
   const handleMapLoad = useCallback((map: naver.maps.Map | null) => {
     mapInstanceRef.current = map;
     setMapInstance(map);
+
+    const pin = pendingDeepLinkFocusPinRef.current;
+    if (!map || !pin) {
+      return;
+    }
+
+    focusNaverMapOnCoordinates({
+      map,
+      coordinates: { lat: pin.latitude, lng: pin.longitude },
+      bottomInsetPx: getDetailFocusBottomInsetPx(),
+    });
+    pendingDeepLinkFocusPinRef.current = null;
   }, []);
 
   const resetMapContext = useCallback(async () => {
@@ -532,17 +569,19 @@ function IndexPage() {
     refetch: refetchPlaceLockers,
   } = usePlaceLockers(placeLockersParams);
 
-  const lockerDetailParams = useMemo(
-    () =>
-      activeLockerId != null
-        ? {
-            lockerId: activeLockerId,
-            lat: searchCoordinates.lat,
-            lng: searchCoordinates.lng,
-          }
-        : null,
-    [activeLockerId, searchCoordinates.lat, searchCoordinates.lng],
-  );
+  const lockerDetailParams = useMemo(() => {
+    if (activeLockerId == null) {
+      return null;
+    }
+
+    const origin = lockerDetailQueryOrigin ?? searchCoordinates;
+
+    return {
+      lockerId: activeLockerId,
+      lat: origin.lat,
+      lng: origin.lng,
+    };
+  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates]);
 
   const {
     data: lockerDetail,
@@ -606,7 +645,11 @@ function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    async (lockerId: number, optimisticDetail?: LockerDetailItem) => {
+    async (
+      lockerId: number,
+      optimisticDetail?: LockerDetailItem,
+      options?: { detailSnap?: LockerDetailSnap },
+    ) => {
       await flushFavoriteChanges();
       setSelectedLockerDetail(
         optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
@@ -614,6 +657,7 @@ function IndexPage() {
       setActiveLockerId(lockerId);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
+      setLockerDetailOpensFull(options?.detailSnap === "full");
       setSheetMode("detail");
     },
     [flushFavoriteChanges, setIsSearchOpen, setSheetMode],
@@ -808,6 +852,107 @@ function IndexPage() {
     });
   }, []);
 
+  const openLockerFromDeepLink = useCallback(
+    async (
+      lockerId: number,
+      options: {
+        detailSnap?: LockerDetailSnap;
+        focus?: { lat: number; lng: number };
+      },
+    ) => {
+      const pin =
+        options.focus != null
+          ? createLockerPinAt(
+              lockerId,
+              options.focus.lat,
+              options.focus.lng,
+            )
+          : undefined;
+
+      if (pin) {
+        deepLinkMapCenterRef.current = {
+          lat: pin.latitude,
+          lng: pin.longitude,
+        };
+        setContext("map");
+        setMapDetailBack("idle");
+        setSelectedMapPin(pin);
+        setLockerDetailQueryOrigin({
+          lat: pin.latitude,
+          lng: pin.longitude,
+        });
+
+        if (mapInstanceRef.current) {
+          focusMapOnLockerPin(pin);
+        } else {
+          pendingDeepLinkFocusPinRef.current = pin;
+        }
+      }
+
+      await openLockerDetailById(
+        lockerId,
+        pin ? createLockerDetailFromPin(pin) : undefined,
+        { detailSnap: options.detailSnap ?? "half" },
+      );
+    },
+    [focusMapOnLockerPin, openLockerDetailById],
+  );
+
+  useEffect(() => {
+    if (openLockerId == null) {
+      handledOpenLockerIdRef.current = null;
+      return;
+    }
+
+    if (handledOpenLockerIdRef.current === openLockerId) {
+      return;
+    }
+
+    handledOpenLockerIdRef.current = openLockerId;
+
+    const focus =
+      focusLat != null && focusLng != null
+        ? { lat: focusLat, lng: focusLng }
+        : undefined;
+
+    openLockerFromDeepLink(openLockerId, { detailSnap, focus })
+      .then(() => {
+        navigate({ to: "/", search: {}, replace: true });
+      })
+      .catch((error) => {
+        console.error("Failed to open locker detail from deep link:", error);
+        handledOpenLockerIdRef.current = null;
+        setLockerDetailQueryOrigin(null);
+        navigate({ to: "/", search: {}, replace: true });
+      });
+  }, [
+    detailSnap,
+    focusLat,
+    focusLng,
+    navigate,
+    openLockerFromDeepLink,
+    openLockerId,
+  ]);
+
+  useEffect(() => {
+    const pin = pendingDeepLinkFocusPinRef.current;
+    if (!pin || !mapInstance) {
+      return;
+    }
+
+    pendingDeepLinkFocusPinRef.current = null;
+    focusMapOnLockerPin(pin);
+  }, [focusMapOnLockerPin, mapInstance]);
+
+  useEffect(() => {
+    if (sheetMode === "detail" && activeLockerId != null) {
+      return;
+    }
+
+    setLockerDetailQueryOrigin(null);
+    deepLinkMapCenterRef.current = null;
+  }, [activeLockerId, sheetMode]);
+
   const handleIdlePinSelect = useCallback(
     (
       pinType: "LOCKER" | "PLACE",
@@ -929,6 +1074,7 @@ function IndexPage() {
 
   const handleBackFromDetail = useCallback(async () => {
     await flushFavoriteChanges();
+    setLockerDetailOpensFull(false);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setIsNavigationPopupOpen(false);
@@ -1262,6 +1408,7 @@ function IndexPage() {
           onLoad={handleMapLoad}
           onLoadingChange={setIsMapLoading}
           onErrorChange={setHasMapError}
+          initialCenter={mapInitialCenter}
         />
         <MyLocationMarker
           map={mapInstance}
@@ -1380,6 +1527,7 @@ function IndexPage() {
           onFavoriteChange={favoriteSession.handleDetailFavoriteChange}
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
+          initialSnapPoint={lockerDetailOpensFull ? 44 : undefined}
         />
       ) : null}
 

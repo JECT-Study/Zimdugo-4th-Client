@@ -15,7 +15,10 @@ import {
 
 export interface DraggableBottomSheetProps {
   children: ReactNode;
+  /** 중간(하프) 스냅 위치 */
   snapPoint: number;
+  /** 첫 렌더 시 시작 스냅. 미지정 시 snapPoint에서 시작 */
+  initialSnapPoint?: number;
   minSnapPoint?: number;
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
@@ -28,23 +31,30 @@ export interface DraggableBottomSheetProps {
 export function DraggableBottomSheet({
   children,
   snapPoint,
+  initialSnapPoint,
   minSnapPoint = 52,
   maxSnapPoint = 760,
   onSnapChange,
 }: DraggableBottomSheetProps) {
   const controls = useAnimation();
   const dragControls = useDragControls();
-  const [currentSnap, setCurrentSnap] = useState(snapPoint);
-  const [liveOffset, setLiveOffset] = useState(snapPoint);
-  const dragStartSnapRef = useRef(snapPoint);
+  const resolvedInitialSnap = initialSnapPoint ?? snapPoint;
+  const clampSnap = (value: number) =>
+    Math.min(maxSnapPoint, Math.max(minSnapPoint, value));
+  const clampedInitialSnap = clampSnap(resolvedInitialSnap);
+  const [currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
+  const [liveOffset, setLiveOffset] = useState(clampedInitialSnap);
+  const dragStartSnapRef = useRef(clampedInitialSnap);
   const DRAG_ELASTIC = 0.05;
   const SNAP_DISTANCE_THRESHOLD = 48;
   const SNAP_VELOCITY_THRESHOLD = 420;
 
   useEffect(() => {
-    setCurrentSnap(snapPoint);
-    setLiveOffset(snapPoint);
-  }, [snapPoint]);
+    const nextSnap = clampSnap(resolvedInitialSnap);
+    setCurrentSnap(nextSnap);
+    setLiveOffset(nextSnap);
+    dragStartSnapRef.current = nextSnap;
+  }, [resolvedInitialSnap, minSnapPoint, maxSnapPoint]);
 
   useEffect(() => {
     controls.start({ y: currentSnap });

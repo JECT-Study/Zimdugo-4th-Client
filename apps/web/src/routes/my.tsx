@@ -1,57 +1,46 @@
 import { m } from "@repo/i18n";
-import { Button } from "@repo/ui/components/button";
-import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useUser } from "#/entities/user/hooks/useUser";
-import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
+import { useMyPageSummary } from "#/features/my/hooks/useMyPageSummary";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
 import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
+import { resolveMyPageNickname } from "#/features/my/lib/resolve-my-page-nickname";
 import { useAuth } from "#/shared/hooks/useAuth";
 import { useAuthStore } from "#/shared/store/authStore";
+import { MyPageSkeleton } from "./-MyPageSkeleton";
+import { MyPageView } from "./-MyPageView";
 import { requireAuthenticatedMyRoute } from "./-my-auth";
-import {
-  content,
-  header,
-  hiddenFileInput,
-  logoutButton,
-  logoutSlot,
-  menuGroup,
-  menuRow,
-  menuRowCount,
-  menuRowLabel,
-  nameField,
-  page,
-  profileImageButton,
-  profileSection,
-} from "./-my.css.ts";
 
 export const Route = createFileRoute("/my")({
   beforeLoad: requireAuthenticatedMyRoute,
   component: MyPage,
 });
 
-interface MenuRowProps {
-  label: string;
-  countLabel: string;
-}
-
-function MenuRow({ label, countLabel }: MenuRowProps) {
-  return (
-    <div className={menuRow} aria-disabled>
-      <span className={menuRowLabel}>{label}</span>
-      <span className={menuRowCount}>{countLabel}</span>
-    </div>
-  );
-}
-
 function MyPage() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const normalizedPath =
+    pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
+  const isMyRoot = normalizedPath === "/my";
+
+  return isMyRoot ? <MyRootPage /> : <Outlet />;
+}
+
+function MyRootPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
   const { data: profile, isPending: isProfilePending } = useUser(userId);
+  const { data: summary, isPending: isSummaryPending } = useMyPageSummary();
   const { mutate: updateProfile } = useUpdateMeProfile();
   const {
     isConfirmPopupOpen,
@@ -66,21 +55,35 @@ function MyPage() {
     handleFileChange,
   } = useProfileImageChange();
   const [nicknameDraft, setNicknameDraft] = useState("");
+  const [isNicknameInitialized, setIsNicknameInitialized] = useState(false);
 
   useEffect(() => {
-    if (profile?.nickname) {
-      setNicknameDraft(profile.nickname);
+    if (isProfilePending) {
       return;
     }
 
-    if (!isProfilePending) {
-      setNicknameDraft(email?.split("@")[0] ?? "");
-    }
+    setNicknameDraft(
+      resolveMyPageNickname({
+        profileNickname: profile?.nickname,
+        email,
+      }),
+    );
+    setIsNicknameInitialized(true);
   }, [profile?.nickname, email, isProfilePending]);
 
   const handleNicknameBlur = () => {
     const trimmedNickname = nicknameDraft.trim();
-    if (!trimmedNickname || trimmedNickname === profile?.nickname) {
+    if (!trimmedNickname) {
+      setNicknameDraft(
+        resolveMyPageNickname({
+          profileNickname: profile?.nickname,
+          email,
+        }),
+      );
+      return;
+    }
+
+    if (trimmedNickname === profile?.nickname) {
       return;
     }
 
@@ -89,15 +92,15 @@ function MyPage() {
       {
         onError: () => {
           setNicknameDraft(
-            profile?.nickname ?? email?.split("@")[0] ?? "",
+            resolveMyPageNickname({
+              profileNickname: profile?.nickname,
+              email,
+            }),
           );
         },
       },
     );
   };
-
-  const favoriteCountLabel = m.my_summary_favorite_count({ count: "0" });
-  const reportCountLabel = m.my_summary_report_count({ count: "0" });
 
   const handleBack = () => {
     navigate({ to: "/" });
@@ -107,70 +110,53 @@ function MyPage() {
     logout();
   };
 
+  const handleOpenFavorites = () => {
+    navigate({ to: "/my/favorites" });
+  };
+
+  const handleOpenReports = () => {
+    navigate({ to: "/my/reports" });
+  };
+
+  const handleConfirmPopupCancel = () => {
+    setIsConfirmPopupOpen(false);
+  };
+
+  const handleErrorPopupConfirm = () => {
+    setIsErrorPopupOpen(false);
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate({ to: "/", replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (userId == null || isProfilePending || !isNicknameInitialized) {
+    return <MyPageSkeleton />;
+  }
+
   return (
-    <div className={page}>
-      <Header
-        className={header}
-        leading="back"
-        titleType="text"
-        title={m.my_page_title()}
+    <>
+      <MyPageView
+        nickname={nicknameDraft}
+        profileImageUrl={profile?.profileImageUrl}
+        favoriteCount={summary?.favoriteLockerCount ?? 0}
+        reportCount={summary?.lockerReportCount ?? 0}
+        isSummaryPending={isSummaryPending}
+        isUpdatingProfileImage={isUpdatingProfileImage}
+        fileInputRef={fileInputRef}
         onBack={handleBack}
+        onProfileImagePress={openConfirmPopup}
+        onFileChange={(event) => {
+          void handleFileChange(event);
+        }}
+        onNicknameChange={setNicknameDraft}
+        onNicknameBlur={handleNicknameBlur}
+        onFavoritesPress={handleOpenFavorites}
+        onReportsPress={handleOpenReports}
+        onLogout={handleLogout}
       />
-
-      <main className={content}>
-        <section className={profileSection} aria-label={m.my_profile_aria()}>
-          <button
-            type="button"
-            className={profileImageButton}
-            aria-label={m.my_profile_image_change_aria()}
-            onClick={openConfirmPopup}
-            disabled={isUpdatingProfileImage}
-          >
-            <ProfileImage userId={userId} size={111} alt={m.my_profile_image_alt()} />
-          </button>
-          <input
-            ref={fileInputRef}
-            className={hiddenFileInput}
-            type="file"
-            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-            onChange={(event) => {
-              void handleFileChange(event);
-            }}
-          />
-          <input
-            className={nameField}
-            type="text"
-            value={nicknameDraft}
-            placeholder={m.my_name_placeholder()}
-            aria-label={m.my_nickname_input_aria()}
-            onChange={(event) => setNicknameDraft(event.target.value)}
-            onBlur={handleNicknameBlur}
-          />
-        </section>
-
-        <section className={menuGroup} aria-label={m.my_activity_aria()}>
-          <MenuRow
-            label={m.my_menu_favorite()}
-            countLabel={favoriteCountLabel}
-          />
-          <MenuRow
-            label={m.my_menu_report_history()}
-            countLabel={reportCountLabel}
-          />
-        </section>
-
-        <div className={logoutSlot}>
-          <Button
-            variant="filled"
-            intent="neutral"
-            size="L"
-            className={logoutButton}
-            onPress={handleLogout}
-          >
-            {m.my_logout()}
-          </Button>
-        </div>
-      </main>
 
       <Popup
         isOpen={isConfirmPopupOpen}
@@ -183,7 +169,7 @@ function MyPage() {
         }}
         secondaryAction={{
           label: m.my_profile_image_change_cancel(),
-          onPress: () => setIsConfirmPopupOpen(false),
+          onPress: handleConfirmPopupCancel,
         }}
       />
 
@@ -193,9 +179,9 @@ function MyPage() {
         titleText={errorMessage}
         primaryAction={{
           label: m.common_confirm(),
-          onPress: () => setIsErrorPopupOpen(false),
+          onPress: handleErrorPopupConfirm,
         }}
       />
-    </div>
+    </>
   );
 }

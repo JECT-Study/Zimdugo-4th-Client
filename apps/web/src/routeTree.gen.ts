@@ -18,6 +18,8 @@ import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
 import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
 import { Route as SettingsLanguageRouteImport } from './routes/settings.language'
+import { Route as MyReportsRouteImport } from './routes/my.reports'
+import { Route as MyFavoritesRouteImport } from './routes/my.favorites'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -64,13 +66,25 @@ const SettingsLanguageRoute = SettingsLanguageRouteImport.update({
   path: '/language',
   getParentRoute: () => SettingsRoute,
 } as any)
+const MyReportsRoute = MyReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => MyRoute,
+} as any)
+const MyFavoritesRoute = MyFavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => MyRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/my': typeof MyRoute
+  '/my': typeof MyRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/my/favorites': typeof MyFavoritesRoute
+  '/my/reports': typeof MyReportsRoute
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
@@ -79,9 +93,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/my': typeof MyRoute
+  '/my': typeof MyRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/my/favorites': typeof MyFavoritesRoute
+  '/my/reports': typeof MyReportsRoute
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
@@ -91,9 +107,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/my': typeof MyRoute
+  '/my': typeof MyRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/my/favorites': typeof MyFavoritesRoute
+  '/my/reports': typeof MyReportsRoute
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
@@ -107,6 +125,8 @@ export interface FileRouteTypes {
     | '/my'
     | '/report'
     | '/settings'
+    | '/my/favorites'
+    | '/my/reports'
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
@@ -118,6 +138,8 @@ export interface FileRouteTypes {
     | '/my'
     | '/report'
     | '/settings'
+    | '/my/favorites'
+    | '/my/reports'
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
@@ -129,6 +151,8 @@ export interface FileRouteTypes {
     | '/my'
     | '/report'
     | '/settings'
+    | '/my/favorites'
+    | '/my/reports'
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
@@ -138,7 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
-  MyRoute: typeof MyRoute
+  MyRoute: typeof MyRouteWithChildren
   ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRouteWithChildren
 }
@@ -208,8 +232,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsLanguageRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/my/reports': {
+      id: '/my/reports'
+      path: '/reports'
+      fullPath: '/my/reports'
+      preLoaderRoute: typeof MyReportsRouteImport
+      parentRoute: typeof MyRoute
+    }
+    '/my/favorites': {
+      id: '/my/favorites'
+      path: '/favorites'
+      fullPath: '/my/favorites'
+      preLoaderRoute: typeof MyFavoritesRouteImport
+      parentRoute: typeof MyRoute
+    }
   }
 }
+
+interface MyRouteChildren {
+  MyFavoritesRoute: typeof MyFavoritesRoute
+  MyReportsRoute: typeof MyReportsRoute
+}
+
+const MyRouteChildren: MyRouteChildren = {
+  MyFavoritesRoute: MyFavoritesRoute,
+  MyReportsRoute: MyReportsRoute,
+}
+
+const MyRouteWithChildren = MyRoute._addFileChildren(MyRouteChildren)
 
 interface SettingsRouteChildren {
   SettingsLanguageRoute: typeof SettingsLanguageRoute
@@ -232,7 +282,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
-  MyRoute: MyRoute,
+  MyRoute: MyRouteWithChildren,
   ReportRoute: ReportRoute,
   SettingsRoute: SettingsRouteWithChildren,
 }

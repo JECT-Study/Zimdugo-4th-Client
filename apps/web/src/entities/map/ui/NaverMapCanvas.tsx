@@ -29,16 +29,25 @@ const getMapErrorMessage = (message?: string) => {
   return isAuthOrSdkError ? m.map_error_default_message() : message;
 };
 
+export interface MapCanvasCoordinates {
+  lat: number;
+  lng: number;
+}
+
 export interface NaverMapCanvasProps {
   onLoad?: (map: naver.maps.Map | null) => void;
   onLoadingChange?: (isLoading: boolean) => void;
   onErrorChange?: (hasError: boolean) => void;
+  initialCenter?: MapCanvasCoordinates | null;
+  initialZoom?: number;
 }
 
 export function NaverMapCanvas({
   onLoad,
   onLoadingChange,
   onErrorChange,
+  initialCenter = null,
+  initialZoom = 15,
 }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
@@ -53,6 +62,12 @@ export function NaverMapCanvas({
 
   const onErrorChangeRef = useRef(onErrorChange);
   onErrorChangeRef.current = onErrorChange;
+
+  const initialCenterRef = useRef(initialCenter);
+  initialCenterRef.current = initialCenter;
+
+  const initialZoomRef = useRef(initialZoom);
+  initialZoomRef.current = initialZoom;
 
   const hasError = status === "error" || mapInitError !== null;
   const isLoading = status === "idle" || status === "loading";
@@ -71,9 +86,10 @@ export function NaverMapCanvas({
     let resizeObserver: ResizeObserver | null = null;
 
     try {
+      const bootstrapCenter = initialCenterRef.current ?? DEFAULT_CENTER;
       const map = new maps.Map(containerRef.current, {
-        center: new maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
-        zoom: 15,
+        center: new maps.LatLng(bootstrapCenter.lat, bootstrapCenter.lng),
+        zoom: initialZoomRef.current,
         zoomControl: false,
         scaleControl: true,
         mapDataControl: false,
