@@ -51,8 +51,9 @@ export function seedVoteBaseline(
     accurateCount?: number;
     inaccurateCount?: number;
   },
+  hasPending = false,
 ): void {
-  if (baseline.has(lockerId)) {
+  if (baseline.has(lockerId) && hasPending) {
     return;
   }
 

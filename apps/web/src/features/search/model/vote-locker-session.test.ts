@@ -34,26 +34,55 @@ describe("vote-locker-session", () => {
     ).toBeNull();
   });
 
-  it("baseline이 없을 때만 서버 투표 상태로 시드한다", () => {
+  it("펜딩 중인 변경 사항이 없을 때만 서버 투표 상태로 baseline을 갱신한다", () => {
     const baseline = new Map();
 
-    seedVoteBaseline(baseline, 1, {
-      isAccurateVoted: true,
-      isInaccurateVoted: false,
-      accurateCount: 3,
-      inaccurateCount: 1,
-    });
-    seedVoteBaseline(baseline, 1, {
-      isAccurateVoted: false,
-      isInaccurateVoted: true,
+    seedVoteBaseline(
+      baseline,
+      1,
+      {
+        isAccurateVoted: true,
+        isInaccurateVoted: false,
+        accurateCount: 3,
+        inaccurateCount: 1,
+      },
+      false,
+    );
+
+    seedVoteBaseline(
+      baseline,
+      1,
+      {
+        isAccurateVoted: false,
+        isInaccurateVoted: true,
+        accurateCount: 99,
+        inaccurateCount: 99,
+      },
+      false,
+    );
+
+    expect(baseline.get(1)).toEqual({
+      vote: "INCORRECT",
       accurateCount: 99,
       inaccurateCount: 99,
     });
 
+    seedVoteBaseline(
+      baseline,
+      1,
+      {
+        isAccurateVoted: true,
+        isInaccurateVoted: false,
+        accurateCount: 3,
+        inaccurateCount: 1,
+      },
+      true,
+    );
+
     expect(baseline.get(1)).toEqual({
-      vote: "CORRECT",
-      accurateCount: 3,
-      inaccurateCount: 1,
+      vote: "INCORRECT",
+      accurateCount: 99,
+      inaccurateCount: 99,
     });
   });
 
