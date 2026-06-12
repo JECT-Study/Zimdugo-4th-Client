@@ -121,7 +121,6 @@ import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useSearchStore } from "#/shared/store/search";
-import { useAuthStore } from "#/shared/store/authStore";
 import {
   locationButton,
   locationControlStack,
@@ -198,8 +197,6 @@ function IndexPage() {
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
-  const userId = useAuthStore((state) => state.userId);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -594,25 +591,14 @@ function IndexPage() {
       return null;
     }
 
-    if (isAuthenticated && userId == null) {
-      return null;
-    }
-
     const origin = lockerDetailQueryOrigin ?? searchCoordinates;
 
     return {
       lockerId: activeLockerId,
       lat: origin.lat,
       lng: origin.lng,
-      ...(userId != null ? { userId } : {}),
     };
-  }, [
-    activeLockerId,
-    isAuthenticated,
-    lockerDetailQueryOrigin,
-    searchCoordinates,
-    userId,
-  ]);
+  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates]);
 
   const {
     data: lockerDetail,

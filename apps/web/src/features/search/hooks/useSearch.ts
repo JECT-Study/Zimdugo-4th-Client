@@ -12,12 +12,15 @@ import {
   type GetLockerSuggestParams,
   type GetPlaceLockersParams,
 } from "#/shared/api/lockers";
+import { useAuthStore } from "#/shared/store/authStore";
 
 export const LOCKER_KEYWORD_QUERY_KEY = "lockerKeyword";
 export const LOCKER_SUGGEST_QUERY_KEY = "lockerSuggest";
 export const PLACE_LOCKERS_QUERY_KEY = "placeLockers";
 
 export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return useQuery({
     queryKey: [
       LOCKER_KEYWORD_QUERY_KEY,
@@ -30,6 +33,7 @@ export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
       params?.minPrice,
       params?.maxPrice,
       params?.isFree,
+      isAuthenticated,
     ],
     queryFn: ({ signal }) => {
       if (!params) {
@@ -45,6 +49,8 @@ export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
 }
 
 export function usePlaceLockers(params: GetPlaceLockersParams | null) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return useQuery({
     queryKey: [
       PLACE_LOCKERS_QUERY_KEY,
@@ -54,6 +60,7 @@ export function usePlaceLockers(params: GetPlaceLockersParams | null) {
       params?.sizeTypes,
       params?.lockerTypes,
       params?.indoorOutdoorTypes,
+      isAuthenticated,
     ],
     queryFn: ({ signal }) => {
       if (!params) {
@@ -69,12 +76,15 @@ export function usePlaceLockers(params: GetPlaceLockersParams | null) {
 }
 
 export function useLockerSuggest(params: GetLockerSuggestParams | null) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return useQuery({
     queryKey: [
       LOCKER_SUGGEST_QUERY_KEY,
       params?.keyword,
       params?.lat,
       params?.lng,
+      isAuthenticated,
     ],
     queryFn: ({ signal }) => {
       if (!params) {

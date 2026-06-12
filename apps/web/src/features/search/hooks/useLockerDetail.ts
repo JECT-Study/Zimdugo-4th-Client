@@ -4,17 +4,20 @@ import {
   getLockerDetail,
   type GetLockerDetailParams,
 } from "#/shared/api/lockers";
+import { useAuthStore } from "#/shared/store/authStore";
 
 export const LOCKER_DETAIL_QUERY_KEY = "lockerDetail";
 
 export function useLockerDetail(params: GetLockerDetailParams | null) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return useQuery({
     queryKey: [
       LOCKER_DETAIL_QUERY_KEY,
       params?.lockerId,
       params?.lat,
       params?.lng,
-      params?.userId,
+      isAuthenticated,
     ],
     queryFn: ({ signal }) => {
       if (!params) {
