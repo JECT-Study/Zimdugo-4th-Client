@@ -12,14 +12,22 @@ import {
   type GetLockerSuggestParams,
   type GetPlaceLockersParams,
 } from "#/shared/api/lockers";
+import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";
+
+function useAuthQueryCacheScope() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userId = useAuthStore((state) => state.userId);
+
+  return getAuthQueryCacheScope(isAuthenticated, userId);
+}
 
 export const LOCKER_KEYWORD_QUERY_KEY = "lockerKeyword";
 export const LOCKER_SUGGEST_QUERY_KEY = "lockerSuggest";
 export const PLACE_LOCKERS_QUERY_KEY = "placeLockers";
 
 export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const authScope = useAuthQueryCacheScope();
 
   return useQuery({
     queryKey: [
@@ -33,7 +41,7 @@ export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
       params?.minPrice,
       params?.maxPrice,
       params?.isFree,
-      isAuthenticated,
+      authScope,
     ],
     queryFn: ({ signal }) => {
       if (!params) {
@@ -49,7 +57,7 @@ export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
 }
 
 export function usePlaceLockers(params: GetPlaceLockersParams | null) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const authScope = useAuthQueryCacheScope();
 
   return useQuery({
     queryKey: [
@@ -60,7 +68,7 @@ export function usePlaceLockers(params: GetPlaceLockersParams | null) {
       params?.sizeTypes,
       params?.lockerTypes,
       params?.indoorOutdoorTypes,
-      isAuthenticated,
+      authScope,
     ],
     queryFn: ({ signal }) => {
       if (!params) {
@@ -76,7 +84,7 @@ export function usePlaceLockers(params: GetPlaceLockersParams | null) {
 }
 
 export function useLockerSuggest(params: GetLockerSuggestParams | null) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const authScope = useAuthQueryCacheScope();
 
   return useQuery({
     queryKey: [
@@ -84,7 +92,7 @@ export function useLockerSuggest(params: GetLockerSuggestParams | null) {
       params?.keyword,
       params?.lat,
       params?.lng,
-      isAuthenticated,
+      authScope,
     ],
     queryFn: ({ signal }) => {
       if (!params) {

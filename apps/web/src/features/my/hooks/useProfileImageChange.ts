@@ -16,7 +16,7 @@ const getProfilePhotoValidationMessage = (
     : m.report_photo_max_size_exceeded();
 
 export function useProfileImageChange() {
-  const userId = useAuthStore((state) => state.userId);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isConfirmPopupOpen, setIsConfirmPopupOpen] = useState(false);
   const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -39,7 +39,7 @@ export function useProfileImageChange() {
       const file = event.target.files?.[0];
       event.target.value = "";
 
-      if (!file || userId == null) {
+      if (!file || !isAuthenticated) {
         return;
       }
 
@@ -60,7 +60,7 @@ export function useProfileImageChange() {
         setIsUploadingProfileImage(false);
       }
     },
-    [updateProfile, userId],
+    [isAuthenticated, updateProfile],
   );
 
   return {

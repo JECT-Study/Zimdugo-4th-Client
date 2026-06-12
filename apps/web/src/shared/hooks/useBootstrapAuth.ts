@@ -1,11 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { authService } from "../../features/auth/sign-in/api/authService";
-import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
-import {
-  LOCKER_KEYWORD_QUERY_KEY,
-  PLACE_LOCKERS_QUERY_KEY,
-} from "#/features/search/hooks/useSearch";
+import { invalidatePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { useAuthStore } from "#/shared/store/authStore";
 
 export const useBootstrapAuth = () => {
@@ -22,17 +18,7 @@ export const useBootstrapAuth = () => {
         const authData = await authService.refresh();
         useAuthStore.getState().setAuth(authData);
 
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: [LOCKER_DETAIL_QUERY_KEY],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: [LOCKER_KEYWORD_QUERY_KEY],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: [PLACE_LOCKERS_QUERY_KEY],
-          }),
-        ]);
+        await invalidatePersonalizedQueries(queryClient);
       } catch (error) {
         useAuthStore.getState().clearAuth();
       }

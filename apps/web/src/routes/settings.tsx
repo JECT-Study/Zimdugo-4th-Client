@@ -7,9 +7,11 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { authService } from "#/features/auth/sign-in/api/authService";
+import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
   SettingsHeaderSkeleton,
@@ -43,6 +45,7 @@ export const Route = createFileRoute("/settings")({
 export function SettingsPage() {
   // 1. Hooks
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
@@ -62,6 +65,7 @@ export function SettingsPage() {
   const handleConfirmWithdraw = async () => {
     try {
       await authService.withdraw();
+      removePersonalizedQueries(queryClient);
       navigate({ to: "/", replace: true });
     } catch (error) {
       if (import.meta.env.DEV) {

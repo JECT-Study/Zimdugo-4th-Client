@@ -4,12 +4,15 @@ import {
   getLockerDetail,
   type GetLockerDetailParams,
 } from "#/shared/api/lockers";
+import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";
 
 export const LOCKER_DETAIL_QUERY_KEY = "lockerDetail";
 
 export function useLockerDetail(params: GetLockerDetailParams | null) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userId = useAuthStore((state) => state.userId);
+  const authScope = getAuthQueryCacheScope(isAuthenticated, userId);
 
   return useQuery({
     queryKey: [
@@ -17,7 +20,7 @@ export function useLockerDetail(params: GetLockerDetailParams | null) {
       params?.lockerId,
       params?.lat,
       params?.lng,
-      isAuthenticated,
+      authScope,
     ],
     queryFn: ({ signal }) => {
       if (!params) {
