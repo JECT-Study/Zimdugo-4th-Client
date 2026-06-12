@@ -60,6 +60,20 @@ function MyReportsPage() {
   const canLoadMore =
     listQuery.hasNextPage === true && !listQuery.isFetchingNextPage;
 
+  const viewerLoadState: ReportDetailViewerLoadState =
+    selectedReportId == null
+      ? "idle"
+      : detailQuery.isPending
+        ? "loading"
+        : detailQuery.isError
+          ? "error"
+          : "ready";
+
+  const isInitialLoading = listQuery.isPending;
+  const isError = listQuery.isError && items.length === 0;
+  const isEmpty = !isInitialLoading && !isError && items.length === 0;
+  const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
+
   const handleLoadMore = useCallback(() => {
     if (!canLoadMore) return;
     void listQuery.fetchNextPage();
@@ -74,6 +88,10 @@ function MyReportsPage() {
     navigate({ to: "/my" });
   };
 
+  const handleRetry = () => {
+    void listQuery.refetch();
+  };
+
   const handleSelectReport = (reportId: number) => {
     setSelectedReportId(reportId);
   };
@@ -83,20 +101,6 @@ function MyReportsPage() {
       setSelectedReportId(null);
     }
   };
-
-  const viewerLoadState: ReportDetailViewerLoadState =
-    selectedReportId == null
-      ? "idle"
-      : detailQuery.isPending
-        ? "loading"
-        : detailQuery.isError
-          ? "error"
-          : "ready";
-
-  const isInitialLoading = listQuery.isPending;
-  const isError = listQuery.isError && items.length === 0;
-  const isEmpty = !isInitialLoading && !isError && items.length === 0;
-  const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
 
   return (
     <div className={childPage}>
@@ -117,9 +121,7 @@ function MyReportsPage() {
 
         {isInitialLoading ? <p>{m.my_summary_loading()}</p> : null}
 
-        {isError ? (
-          <MyListErrorState onRetry={() => void listQuery.refetch()} />
-        ) : null}
+        {isError ? <MyListErrorState onRetry={handleRetry} /> : null}
 
         {isEmpty ? (
           <div className={childEmpty}>
