@@ -1,3 +1,4 @@
+import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
@@ -52,7 +53,7 @@ export function ReportListItem({
 
   const itemContent = (
     <span className={content}>
-      {status && resolvedStatusLabel ? (
+      {resolvedStatusLabel && status ? (
         <span className={statusRow} data-slot="status-row">
           <span className={[reportStatus, statusVariants[status]].join(" ")}>
             {resolvedStatusLabel}
@@ -98,7 +99,11 @@ export function ReportListItem({
       size="L"
       className={[root, cardButton, className].filter(Boolean).join(" ")}
       onPress={onPress}
-      aria-label={`${titleText} ${locationLabel} ${updatedLabel}`}
+      aria-label={m.report_item_aria_label({
+        title: titleText,
+        location: locationLabel,
+        updated: updatedLabel,
+      })}
     >
       {itemContent}
     </Button>

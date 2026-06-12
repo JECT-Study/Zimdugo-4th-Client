@@ -240,6 +240,7 @@
   "my_summary_loading": "…",
   "my_report_history_title": "報告履歴",
   "my_report_history_list_aria": "報告履歴リスト",
+  "report_item_aria_label": "{title}、{location}、{updated}",
   "my_report_history_load_more": "もっと見る",
   "my_report_history_total": "合計{count}件のロッカーを報告しました",
   "my_report_detail_viewer_aria": "報告の詳細を表示",

@@ -240,6 +240,7 @@
   "my_summary_loading": "…",
   "my_report_history_title": "Report history",
   "my_report_history_list_aria": "Report history list",
+  "report_item_aria_label": "{title}, {location}, {updated}",
   "my_report_history_load_more": "Load more",
   "my_report_history_total": "You reported {count} lockers in total",
   "my_report_detail_viewer_aria": "View report details",
