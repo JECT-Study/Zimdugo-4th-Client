@@ -178,6 +178,9 @@ export interface LockerDetailRaw {
   imageUrl?: string;
   accurateVoteCount?: number;
   inaccurateVoteCount?: number;
+  createdAt?: string;
+  isAccurateVoted?: boolean;
+  isInaccurateVoted?: boolean;
   /** @deprecated Swagger는 operatingHours 대신 startTime/endTime */
   operatingHours?: LockerOperatingHoursRaw | null;
   /** @deprecated Swagger는 floor 사용 */
@@ -240,6 +243,7 @@ export interface GetPlaceLockersParams
 
 export interface GetLockerDetailParams extends LockerSearchLocationParams {
   lockerId: number;
+  userId?: number;
   signal?: AbortSignal;
 }
 

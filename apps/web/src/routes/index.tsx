@@ -48,6 +48,7 @@ import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMark
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
+import { useVoteLockerSession } from "#/features/search/hooks/useVoteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
   useLockerDetail,
@@ -57,6 +58,7 @@ import {
   applyFavoriteOverlayToLockerItems,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
+import { applyVoteOverlayToLockerDetail } from "#/features/search/lib/apply-vote-overlay";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import {
   useLockerKeywordSearch,
@@ -119,6 +121,7 @@ import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useSearchStore } from "#/shared/store/search";
+import { useAuthStore } from "#/shared/store/authStore";
 import {
   locationButton,
   locationControlStack,
@@ -179,17 +182,24 @@ function IndexPage() {
   } | null>(null);
   const queryClient = useQueryClient();
   const favoriteSession = useFavoriteLockerSession();
+  const voteSession = useVoteLockerSession();
   const flushFavoriteChangesRef = useRef(favoriteSession.flush);
   flushFavoriteChangesRef.current = favoriteSession.flush;
+  const flushVoteChangesRef = useRef(voteSession.flush);
+  flushVoteChangesRef.current = voteSession.flush;
 
-  const flushFavoriteChanges = useCallback(
-    () => flushFavoriteChangesRef.current(),
-    [],
-  );
+  const flushLockerSheetMutations = useCallback(async () => {
+    await Promise.allSettled([
+      flushFavoriteChangesRef.current(),
+      flushVoteChangesRef.current(),
+    ]);
+  }, []);
   const isSearchOpen = useSearchStore((state) => state.isSearchOpen);
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
+  const userId = useAuthStore((state) => state.userId);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -424,8 +434,8 @@ function IndexPage() {
     pendingDeepLinkFocusPinRef.current = null;
   }, []);
 
-  const resetMapContext = useCallback(async () => {
-    await flushFavoriteChanges();
+  const resetMapContext = useCallback(() => {
+    void flushLockerSheetMutations();
     setMapPlaceId(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -436,10 +446,10 @@ function IndexPage() {
     setSheetMode("idle");
     setContext("idle");
     writeMapSheetSessionSnapshot(null);
-  }, [flushFavoriteChanges]);
+  }, [flushLockerSheetMutations]);
 
-  const resetSearchContext = useCallback(async () => {
-    await flushFavoriteChanges();
+  const resetSearchContext = useCallback(() => {
+    void flushLockerSheetMutations();
     setSearchQuery("");
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
@@ -454,7 +464,7 @@ function IndexPage() {
     setContext("idle");
     setIsSearchOpen(false);
     writeMapSheetSessionSnapshot(null);
-  }, [flushFavoriteChanges, setIsSearchOpen, setSearchQuery]);
+  }, [flushLockerSheetMutations, setIsSearchOpen, setSearchQuery]);
 
   const handleOpenSearch = useCallback(() => {
     const returnContext = resolveOverlayReturnContext(context);
@@ -584,14 +594,25 @@ function IndexPage() {
       return null;
     }
 
+    if (isAuthenticated && userId == null) {
+      return null;
+    }
+
     const origin = lockerDetailQueryOrigin ?? searchCoordinates;
 
     return {
       lockerId: activeLockerId,
       lat: origin.lat,
       lng: origin.lng,
+      ...(userId != null ? { userId } : {}),
     };
-  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates]);
+  }, [
+    activeLockerId,
+    isAuthenticated,
+    lockerDetailQueryOrigin,
+    searchCoordinates,
+    userId,
+  ]);
 
   const {
     data: lockerDetail,
@@ -655,12 +676,12 @@ function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    async (
+    (
       lockerId: number,
       optimisticDetail?: LockerDetailItem,
       options?: { detailSnap?: LockerDetailSnap },
     ) => {
-      await flushFavoriteChanges();
+      void flushLockerSheetMutations();
       setSelectedLockerDetail(
         optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
       );
@@ -670,7 +691,7 @@ function IndexPage() {
       setLockerDetailOpensFull(options?.detailSnap === "full");
       setSheetMode("detail");
     },
-    [flushFavoriteChanges, setIsSearchOpen, setSheetMode],
+    [flushLockerSheetMutations, setIsSearchOpen, setSheetMode],
   );
 
   const openSearchPlaceList = useCallback(
@@ -1082,8 +1103,8 @@ function IndexPage() {
     setIsNavigationPopupOpen(isOpen);
   }, []);
 
-  const handleBackFromDetail = useCallback(async () => {
-    await flushFavoriteChanges();
+  const handleBackFromDetail = useCallback(() => {
+    void flushLockerSheetMutations();
     setLockerDetailOpensFull(false);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -1107,7 +1128,7 @@ function IndexPage() {
     setSheetMode("list");
   }, [
     context,
-    flushFavoriteChanges,
+    flushLockerSheetMutations,
     mapDetailBack,
     resetMapContext,
     searchDetailBack,
@@ -1117,15 +1138,15 @@ function IndexPage() {
     resetMapContext();
   }, [resetMapContext]);
 
-  const handleBackToKeywordList = useCallback(async () => {
-    await flushFavoriteChanges();
+  const handleBackToKeywordList = useCallback(() => {
+    void flushLockerSheetMutations();
     if (getSearchQueryIssue(searchDraft) === null) {
       setSearchQuery(trimSearchQueryDraft(searchDraft));
     }
     setListKind("keyword");
     setSearchPlaceId(null);
     setSheetMode("list");
-  }, [flushFavoriteChanges, searchDraft]);
+  }, [flushLockerSheetMutations, searchDraft]);
 
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
@@ -1312,6 +1333,10 @@ function IndexPage() {
     favoriteSession.syncBaselineFromLockerDetail(lockerDetail);
   }, [favoriteSession.syncBaselineFromLockerDetail, lockerDetail]);
 
+  useEffect(() => {
+    voteSession.syncBaselineFromLockerDetail(lockerDetail);
+  }, [voteSession.syncBaselineFromLockerDetail, lockerDetail]);
+
   const searchBottomSheetDisplayItems = useMemo((): SearchResultItem[] => {
     if (isPlaceListScope) {
       return applyFavoriteOverlayToLockerItems(
@@ -1335,11 +1360,22 @@ function IndexPage() {
       return null;
     }
 
-    return applyFavoriteOverlayToLockerDetail(
+    const withFavorite = applyFavoriteOverlayToLockerDetail(
       selectedLockerDetail,
       favoriteSession.getEffectiveIsFavorite,
     );
-  }, [favoriteSession.getEffectiveIsFavorite, selectedLockerDetail]);
+
+    return applyVoteOverlayToLockerDetail(
+      withFavorite,
+      voteSession.getEffectiveVoteFlagOverlay,
+      voteSession.getEffectiveVoteCountOverlay,
+    );
+  }, [
+    favoriteSession.getEffectiveIsFavorite,
+    selectedLockerDetail,
+    voteSession.getEffectiveVoteFlagOverlay,
+    voteSession.getEffectiveVoteCountOverlay,
+  ]);
 
   const isSearchListLoading = shouldShowSearchListLoading({
     isPlaceListScope,
@@ -1537,6 +1573,7 @@ function IndexPage() {
           loadState={lockerDetailLoadState}
           onRetry={() => void refetchLockerDetail()}
           onFavoriteChange={favoriteSession.handleDetailFavoriteChange}
+          onVoteChange={voteSession.handleDetailVoteChange}
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
           initialSnapPoint={lockerDetailOpensFull ? 44 : undefined}

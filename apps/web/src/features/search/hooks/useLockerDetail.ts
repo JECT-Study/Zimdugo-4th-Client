@@ -14,6 +14,7 @@ export function useLockerDetail(params: GetLockerDetailParams | null) {
       params?.lockerId,
       params?.lat,
       params?.lng,
+      params?.userId,
     ],
     queryFn: ({ signal }) => {
       if (!params) {

@@ -369,6 +369,16 @@ export const feedbackButtonNegative = style({
   color: vars.color.danger.default,
 });
 
+export const feedbackButtonSelected = style({
+  backgroundColor: vars.color.palette.green[500],
+  color: vars.color.text.white,
+});
+
+export const feedbackButtonNegativeSelected = style({
+  backgroundColor: vars.color.danger.default,
+  color: vars.color.text.white,
+});
+
 export const fullActionBar = style({
   position: "absolute",
   left: 0,
