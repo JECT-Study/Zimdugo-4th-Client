@@ -112,22 +112,49 @@ describe("map-viewport-bootstrap", () => {
     ).toBe(true);
   });
 
-  it("GPS와 캐시 중심이 2km 이상이면 stale로 본다", () => {
+  it("저장 시 GPS와 현재 GPS가 2km 이상이면 stale로 본다", () => {
+    const savedGps = { lat: 37.5, lng: 127.0 };
     const cache = createCache({
-      center: { lat: 37.5, lng: 127.0 },
+      center: { lat: 37.55, lng: 127.05 },
       savedAt: Date.now(),
+      gpsAtSave: savedGps,
     });
-    const farGps = { lat: 37.52, lng: 127.0 };
+    const traveledGps = { lat: 37.52, lng: 127.0 };
 
     expect(
-      haversineDistanceM(cache.center, farGps),
+      haversineDistanceM(savedGps, traveledGps),
     ).toBeGreaterThan(MAP_VIEWPORT_STALE_DISTANCE_M);
 
     expect(
       isMapViewportCacheStale(cache, {
         permission: "granted",
-        gps: farGps,
+        gps: traveledGps,
       }),
     ).toBe(true);
+  });
+
+  it("지도 center는 GPS와 멀어도 사용자가 이동하지 않았으면 캐시를 유지한다", () => {
+    const savedGps = { lat: 37.5, lng: 127.0 };
+    const cache = createCache({
+      center: { lat: 37.55, lng: 127.05 },
+      savedAt: Date.now(),
+      gpsAtSave: savedGps,
+    });
+
+    expect(
+      isMapViewportCacheStale(cache, {
+        permission: "granted",
+        gps: savedGps,
+      }),
+    ).toBe(false);
+
+    const result = resolveMapBootstrapViewport({
+      cache,
+      permission: "granted",
+      gps: savedGps,
+    });
+
+    expect(result.center).toEqual(cache.center);
+    expect(result.source).toBe("cache");
   });
 });

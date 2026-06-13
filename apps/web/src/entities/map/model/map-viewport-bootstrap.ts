@@ -1,6 +1,8 @@
 import type { MapViewportCoord } from "./map-idle-controller";
 import type { LocationPermissionState } from "./useLocationTracking";
 
+export type { MapViewportCoord };
+
 export const DEFAULT_MAP_CENTER = {
   lat: 37.4979,
   lng: 127.0276,
@@ -18,6 +20,8 @@ export interface MapViewportCache {
   center: MapViewportCoord;
   zoom: number;
   savedAt: number;
+  /** 캐시 저장 시점의 사용자 GPS. 탭 복귀 시 이동 거리 판정에만 사용한다. */
+  gpsAtSave?: MapViewportCoord | null;
 }
 
 const EARTH_RADIUS_M = 6_371_000;
@@ -56,7 +60,9 @@ export const isMapViewportCacheStale = (
   if (
     options.permission === "granted" &&
     options.gps != null &&
-    haversineDistanceM(cache.center, options.gps) > MAP_VIEWPORT_STALE_DISTANCE_M
+    cache.gpsAtSave != null &&
+    haversineDistanceM(cache.gpsAtSave, options.gps) >
+      MAP_VIEWPORT_STALE_DISTANCE_M
   ) {
     return true;
   }

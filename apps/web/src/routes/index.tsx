@@ -434,7 +434,11 @@ function IndexPage() {
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
 
-    useMapViewportStore.getState().saveFromMap(mapInstanceRef.current);
+    const gpsAtSave =
+      permission === "granted" && location
+        ? { lat: location.lat, lng: location.lng }
+        : null;
+    useMapViewportStore.getState().saveFromMap(mapInstanceRef.current, gpsAtSave);
 
     setIsRefreshing(true);
     setRefreshCooldownRemaining(15);
@@ -466,11 +470,18 @@ function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing, queryClient]);
+  }, [isRefreshing, queryClient, permission, location?.lat, location?.lng]);
 
-  const persistMapViewport = useCallback((map: naver.maps.Map) => {
-    useMapViewportStore.getState().saveFromMap(map);
-  }, []);
+  const persistMapViewport = useCallback(
+    (map: naver.maps.Map) => {
+      const gpsAtSave =
+        permission === "granted" && location
+          ? { lat: location.lat, lng: location.lng }
+          : null;
+      useMapViewportStore.getState().saveFromMap(map, gpsAtSave);
+    },
+    [permission, location?.lat, location?.lng],
+  );
 
   const saveMapViewport = useCallback(() => {
     const map = mapInstanceRef.current;
