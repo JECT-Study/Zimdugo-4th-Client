@@ -32,14 +32,17 @@ import type {
   SearchResultItem,
 } from "#/composites/search/search-list-model";
 import {
+  GPS_BOOTSTRAP_WAIT_MS,
   MapControlsSkeleton,
   NaverMapCanvas,
   NaverMapProvider,
   resolveMapBootstrapViewport,
+  shouldWaitForGpsBootstrap,
   subscribeMapIdle,
   useMapViewportStore,
   useNaverMapSdk,
 } from "#/entities/map";
+import type { MapBootstrapSource } from "#/entities/map/model/map-viewport-bootstrap";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import { fitNaverMapToBounds } from "#/entities/map/model/map-bounds";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
@@ -49,6 +52,8 @@ import {
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
+import { root as mapCanvasRoot } from "#/entities/map/ui/NaverMapCanvas.css";
+import { MapSkeleton } from "#/entities/map/ui/map-skeleton/MapSkeleton";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import { useVoteLockerSession } from "#/features/search/hooks/useVoteLockerSession";
@@ -171,6 +176,7 @@ function IndexPage() {
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const [mapRemountKey, setMapRemountKey] = useState(0);
+  const [gpsBootstrapTimedOut, setGpsBootstrapTimedOut] = useState(false);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
     lat: number;
@@ -207,6 +213,11 @@ function IndexPage() {
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
+  const mapBootstrapForMountRef = useRef(
+    resolveMapBootstrapViewport({ cache: null }),
+  );
+  const mountedBootstrapSourceRef = useRef<MapBootstrapSource | null>(null);
+  const hasAppliedDeferredGpsCenterRef = useRef(false);
   const isCameraCenteredRef = useRef(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -301,19 +312,90 @@ function IndexPage() {
   const { permission, isTracking, location, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
 
-  const mapBootstrap = useMemo(() => {
-    const deepLinkCenter =
+  const deepLinkCenter = useMemo(
+    () =>
       focusLat != null && focusLng != null
         ? { lat: focusLat, lng: focusLng }
-        : deepLinkMapCenterRef.current;
+        : deepLinkMapCenterRef.current,
+    [focusLat, focusLng],
+  );
 
-    return resolveMapBootstrapViewport({
-      deepLinkCenter,
-      cache: useMapViewportStore.getState().cache,
-      permission,
-      gps: permission === "granted" && location ? location : null,
+  const gpsCoord = useMemo(
+    () =>
+      permission === "granted" && location
+        ? { lat: location.lat, lng: location.lng }
+        : null,
+    [permission, location?.lat, location?.lng],
+  );
+
+  const mapBootstrap = useMemo(
+    () =>
+      resolveMapBootstrapViewport({
+        deepLinkCenter,
+        cache: useMapViewportStore.getState().cache,
+        permission,
+        gps: gpsCoord,
+      }),
+    [deepLinkCenter, mapRemountKey, permission, gpsCoord],
+  );
+
+  const waitForGpsBootstrap = shouldWaitForGpsBootstrap({
+    deepLinkCenter,
+    cache: useMapViewportStore.getState().cache,
+    permission,
+    gps: gpsCoord,
+    timedOut: gpsBootstrapTimedOut,
+  });
+
+  const canMountMap = !waitForGpsBootstrap;
+
+  useEffect(() => {
+    setGpsBootstrapTimedOut(false);
+    mountedBootstrapSourceRef.current = null;
+    hasAppliedDeferredGpsCenterRef.current = false;
+  }, [mapRemountKey]);
+
+  useEffect(() => {
+    if (!waitForGpsBootstrap) return;
+
+    const timeoutId = window.setTimeout(
+      () => setGpsBootstrapTimedOut(true),
+      GPS_BOOTSTRAP_WAIT_MS,
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [waitForGpsBootstrap]);
+
+  useEffect(() => {
+    if (canMountMap) {
+      mapBootstrapForMountRef.current = mapBootstrap;
+    }
+  }, [canMountMap, mapBootstrap]);
+
+  useEffect(() => {
+    if (waitForGpsBootstrap) {
+      setIsMapLoading(true);
+    }
+  }, [waitForGpsBootstrap]);
+
+  useEffect(() => {
+    if (
+      hasAppliedDeferredGpsCenterRef.current ||
+      !mapInstance ||
+      permission !== "granted" ||
+      !location ||
+      mountedBootstrapSourceRef.current !== "default" ||
+      isCameraCentered
+    ) {
+      return;
+    }
+
+    hasAppliedDeferredGpsCenterRef.current = true;
+    focusNaverMapOnCoordinates({
+      map: mapInstance,
+      coordinates: location,
     });
-  }, [focusLat, focusLng, mapRemountKey, permission, location]);
+  }, [mapInstance, permission, location, isCameraCentered]);
 
   const {
     heading: deviceHeading,
@@ -487,6 +569,13 @@ function IndexPage() {
   const handleMapLoad = useCallback((map: naver.maps.Map | null) => {
     mapInstanceRef.current = map;
     setMapInstance(map);
+
+    if (map) {
+      mountedBootstrapSourceRef.current =
+        mapBootstrapForMountRef.current.source;
+    } else {
+      mountedBootstrapSourceRef.current = null;
+    }
 
     const pin = pendingDeepLinkFocusPinRef.current;
     if (!map || !pin) {
@@ -1513,15 +1602,21 @@ function IndexPage() {
       )}
 
       <NaverMapProvider language={languageTag()}>
-        <NaverMapCanvas
-          key={mapRemountKey}
-          onLoad={handleMapLoad}
-          onWillDestroy={persistMapViewport}
-          onLoadingChange={setIsMapLoading}
-          onErrorChange={setHasMapError}
-          initialCenter={mapBootstrap.center}
-          initialZoom={mapBootstrap.zoom}
-        />
+        {canMountMap ? (
+          <NaverMapCanvas
+            key={mapRemountKey}
+            onLoad={handleMapLoad}
+            onWillDestroy={persistMapViewport}
+            onLoadingChange={setIsMapLoading}
+            onErrorChange={setHasMapError}
+            initialCenter={mapBootstrap.center}
+            initialZoom={mapBootstrap.zoom}
+          />
+        ) : (
+          <section className={mapCanvasRoot} aria-label={m.map_area_aria()}>
+            <MapSkeleton />
+          </section>
+        )}
         <MyLocationMarker
           map={mapInstance}
           location={location}
