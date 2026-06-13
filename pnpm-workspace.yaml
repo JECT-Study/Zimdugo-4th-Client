@@ -1,6 +1,11 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+# pnpm 11: fresh clone 시 install 단계에서 패키지 postinstall/build 스크립트 실행 허용.
+# 아래만 명시적으로 허용(신뢰하는 네이티브 빌드 의존성). 목록 변경 시 보안·유지보수 검토 필요.
+# - @prisma/engines: Prisma 엔진 네이티브 바이너리
+# - esbuild: 번들러 네이티브 바이너리
+# - prisma: 스키마/엔진 빌드 단계
 allowBuilds:
   '@prisma/engines': true
   esbuild: true

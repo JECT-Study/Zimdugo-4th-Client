@@ -65,10 +65,14 @@ export const Default: Story = {
   name: "Default",
   args: defaultArgs,
   render: function Render(args: BottomTabBarStoryProps) {
-    const [activeTab, setActiveTab] = useState<BottomTabKey>(args.activeTab);
+    const [activeTab, setActiveTab] = useState<BottomTabKey>(
+      args.activeTab ?? "home",
+    );
 
     useEffect(() => {
-      setActiveTab(args.activeTab);
+      if (args.activeTab !== undefined) {
+        setActiveTab(args.activeTab);
+      }
     }, [args.activeTab]);
 
     return (
@@ -140,7 +144,7 @@ export const English: Story = {
     ...defaultArgs,
     labels: englishLabels,
   },
-  render: (args: BottomTabBarStoryProps) => {
+  render: function Render(args: BottomTabBarStoryProps) {
     return <BottomTabBar {...args} className={storyRelativeFrame} />;
   },
 };

@@ -27,21 +27,21 @@ const defaultLinks = {
   settings: "#",
 } satisfies Record<BottomTabKey, string>;
 
-const tabOrder = ["home", "report", "my", "settings"] as const;
+const TAB_ORDER = ["home", "report", "my", "settings"] as const;
 
-const tabLabels = {
+const TAB_LABELS = {
   home: "홈",
   report: "제보",
   my: "마이",
   settings: "설정",
 } satisfies Record<BottomTabKey, string>;
 
-const guideText =
+const GUIDE_TEXT =
   "선택한 하단 탭을 안내하는 말풍선입니다. 탭 위치에 따라 꼬리 위치를 0~100 값으로 조정합니다.";
 
 const FRAME_WIDTH = 375;
 const POPOVER_WIDTH = 240;
-const TAB_COUNT = tabOrder.length;
+const TAB_COUNT = TAB_ORDER.length;
 const TAB_BAR_HEIGHT = 60;
 const POPOVER_EDGE_PADDING = 12;
 
@@ -58,7 +58,7 @@ const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
 const getFallbackTabCenterX = (tab: BottomTabKey) => {
-  const index = tabOrder.indexOf(tab);
+  const index = TAB_ORDER.indexOf(tab);
   const tabWidth = FRAME_WIDTH / TAB_COUNT;
 
   return index * tabWidth + tabWidth / 2;
@@ -121,8 +121,8 @@ function BottomTabPopoverPreview({ activeTab }: { activeTab: BottomTabKey }) {
   useLayoutEffect(() => {
     if (!portalContainer) return;
 
-    const tabIndex = tabOrder.indexOf(activeTab);
-    const tabElement = portalContainer.querySelectorAll("nav a").item(tabIndex);
+    const tabIndex = TAB_ORDER.indexOf(activeTab);
+    const tabElement = portalContainer.querySelectorAll("a").item(tabIndex);
     const iconElement = tabElement?.querySelector("svg");
 
     if (!iconElement) {
@@ -167,30 +167,28 @@ function BottomTabPopoverPreview({ activeTab }: { activeTab: BottomTabKey }) {
           portalContainer={portalContainer}
           trigger={
             <AriaButton
-              aria-label={`${tabLabels[activeTab]} 탭 안내 기준점`}
+              aria-label={`${TAB_LABELS[activeTab]} 탭 안내 기준점`}
               style={getGuideTriggerStyle(metrics)}
             />
           }
-          titleText={`${tabLabels[activeTab]} 탭 안내`}
-          bodyText={guideText}
+          titleText={`${TAB_LABELS[activeTab]} 탭 안내`}
+          bodyText={GUIDE_TEXT}
           primaryAction={{ label: "Button" }}
         />
       ) : null}
       <BottomTabBar
         activeTab={activeTab}
         links={defaultLinks}
-        labels={tabLabels}
+        labels={TAB_LABELS}
         className={storyRelativeFrame}
       />
     </div>
   );
 }
 
-function BottomTabBarGuideGrid() {
-  useLayoutEffect(() => {
-    ensureKoreanHydrated();
-  }, []);
+ensureKoreanHydrated();
 
+function BottomTabBarGuideGrid() {
   return (
     <div
       style={{
@@ -217,7 +215,7 @@ function BottomTabBarGuideGrid() {
           overflow: "visible",
         }}
       >
-        {tabOrder.map((tab) => (
+        {TAB_ORDER.map((tab) => (
           <BottomTabPopoverPreview key={tab} activeTab={tab} />
         ))}
       </div>
