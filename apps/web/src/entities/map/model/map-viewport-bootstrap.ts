@@ -1,6 +1,8 @@
 import type { MapViewportCoord } from "./map-idle-controller";
 import type { LocationPermissionState } from "./useLocationTracking";
 
+export type { MapViewportCoord };
+
 export const DEFAULT_MAP_CENTER = {
   lat: 37.4979,
   lng: 127.0276,
@@ -10,11 +12,16 @@ export const DEFAULT_MAP_ZOOM = 15;
 
 export const MAP_VIEWPORT_STALE_MS = 30 * 60 * 1000;
 export const MAP_VIEWPORT_STALE_DISTANCE_M = 2000;
+export const GPS_BOOTSTRAP_WAIT_MS = 3_000;
+
+export type MapBootstrapSource = "deeplink" | "cache" | "gps" | "default";
 
 export interface MapViewportCache {
   center: MapViewportCoord;
   zoom: number;
   savedAt: number;
+  /** 캐시 저장 시점의 사용자 GPS. 탭 복귀 시 이동 거리 판정에만 사용한다. */
+  gpsAtSave?: MapViewportCoord | null;
 }
 
 const EARTH_RADIUS_M = 6_371_000;
@@ -53,12 +60,52 @@ export const isMapViewportCacheStale = (
   if (
     options.permission === "granted" &&
     options.gps != null &&
-    haversineDistanceM(cache.center, options.gps) > MAP_VIEWPORT_STALE_DISTANCE_M
+    cache.gpsAtSave != null &&
+    haversineDistanceM(cache.gpsAtSave, options.gps) >
+      MAP_VIEWPORT_STALE_DISTANCE_M
   ) {
     return true;
   }
 
   return false;
+};
+
+export const hasFreshMapViewportCache = (
+  cache: MapViewportCache | null | undefined,
+  options: {
+    now?: number;
+    gps?: MapViewportCoord | null;
+    permission?: LocationPermissionState;
+  } = {},
+): boolean => {
+  return (
+    cache != null && !isMapViewportCacheStale(cache, { ...options, now: options.now })
+  );
+};
+
+export interface ShouldWaitForGpsBootstrapInput {
+  deepLinkCenter?: MapViewportCoord | null;
+  cache?: MapViewportCache | null;
+  permission?: LocationPermissionState;
+  gps?: MapViewportCoord | null;
+  now?: number;
+  timedOut?: boolean;
+}
+
+/** GPS fix 전 기본 좌표로 지도를 만들지 않도록, cold start 시 짧게 대기한다. */
+export const shouldWaitForGpsBootstrap = ({
+  deepLinkCenter = null,
+  cache = null,
+  permission = "prompt",
+  gps = null,
+  now = Date.now(),
+  timedOut = false,
+}: ShouldWaitForGpsBootstrapInput): boolean => {
+  if (timedOut) return false;
+  if (deepLinkCenter != null) return false;
+  if (hasFreshMapViewportCache(cache, { now, gps, permission })) return false;
+  if (permission !== "granted") return false;
+  return gps == null;
 };
 
 export interface ResolveMapBootstrapViewportInput {
@@ -74,6 +121,7 @@ export interface ResolveMapBootstrapViewportInput {
 export interface ResolvedMapBootstrapViewport {
   center: MapViewportCoord;
   zoom: number;
+  source: MapBootstrapSource;
 }
 
 export const resolveMapBootstrapViewport = ({
@@ -89,17 +137,17 @@ export const resolveMapBootstrapViewport = ({
     return {
       center: deepLinkCenter,
       zoom: defaultZoom,
+      source: "deeplink",
     };
   }
 
-  const cacheIsFresh =
-    cache != null &&
-    !isMapViewportCacheStale(cache, { now, gps, permission });
+  const cacheIsFresh = hasFreshMapViewportCache(cache, { now, gps, permission });
 
-  if (cacheIsFresh) {
+  if (cacheIsFresh && cache != null) {
     return {
       center: cache.center,
       zoom: cache.zoom,
+      source: "cache",
     };
   }
 
@@ -107,11 +155,13 @@ export const resolveMapBootstrapViewport = ({
     return {
       center: gps,
       zoom: defaultZoom,
+      source: "gps",
     };
   }
 
   return {
     center: defaultCenter,
     zoom: defaultZoom,
+    source: "default",
   };
 };
