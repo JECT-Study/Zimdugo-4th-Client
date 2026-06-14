@@ -48,8 +48,6 @@ import {
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
 import { getPinId } from "#/entities/map/model/map-marker";
-
-export const DETAIL_FOCUS_ZOOM = 17;
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
@@ -142,6 +140,8 @@ import {
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
+
+export const DETAIL_FOCUS_ZOOM = 17;
 
 export const Route = createFileRoute("/")({
   component: IndexPage,
@@ -500,6 +500,7 @@ function IndexPage() {
       map,
       coordinates: { lat: pin.latitude, lng: pin.longitude },
       bottomInsetPx: getDetailFocusBottomInsetPx(),
+      zoom: DETAIL_FOCUS_ZOOM,
     });
     pendingDeepLinkFocusPinRef.current = null;
   }, []);
