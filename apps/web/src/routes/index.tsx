@@ -979,7 +979,7 @@ function IndexPage() {
 
       await openLockerDetailById(
         lockerId,
-        pin ? createLockerDetailFromPin(pin as any) : undefined,
+        pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined,
         { detailSnap: options.detailSnap ?? "half" },
       );
     },
