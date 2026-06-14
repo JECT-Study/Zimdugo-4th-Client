@@ -105,6 +105,11 @@ class FakeLatLngBounds {
 const createMockMap = () => ({
   getBounds: vi.fn(() => new FakeLatLngBounds(new FakeLatLng(37.0, 126.0), new FakeLatLng(38.0, 128.0))),
   getZoom: vi.fn(() => 15),
+  getProjection: vi.fn(() => ({
+    fromCoordToOffset: vi.fn((latlng: FakeLatLng) => {
+      return new FakePoint(Math.round(latlng.lat() * 1000), Math.round(latlng.lng() * 1000));
+    }),
+  })),
 } as unknown as naver.maps.Map);
 
 const createFakeMaps = () =>
@@ -317,5 +322,27 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances).toHaveLength(1);
     expect(FakeMarker.instances[0]?.setPosition).not.toHaveBeenCalled();
     expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
+  });
+
+  it("applies spread class and styles when spreadCenter is provided", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ latitude: 37.4979, longitude: 127.0276 })],
+      spreadCenter: { lat: 37.5547, lng: 126.9706 },
+    });
+
+    const options = FakeMarker.instances[0]?.options as {
+      icon?: { content?: string };
+    };
+
+    expect(options.icon?.content).toContain("spread");
+    expect(options.icon?.content).toContain("--spread-x");
+    expect(options.icon?.content).toContain("--spread-y");
   });
 });
