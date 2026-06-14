@@ -130,8 +130,8 @@ describe("createLockerMarkerIcon", () => {
   it("renders a 24x24 locker marker SVG", () => {
     const icon = createLockerMarkerIcon(createLockerPin());
 
-    expect(icon).toContain('width="24"');
-    expect(icon).toContain('height="24"');
+    expect(icon).toContain('width="100%"');
+    expect(icon).toContain('height="100%"');
     expect(icon).toContain('viewBox="0 0 24 24"');
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain(
@@ -178,7 +178,7 @@ describe("syncLockerMarkers", () => {
     expect(maps.Event.removeListener).not.toHaveBeenCalled();
   });
 
-  it("uses an image icon option for locker markers", () => {
+  it("uses an HTML icon option for locker markers", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -191,18 +191,15 @@ describe("syncLockerMarkers", () => {
     });
 
     const options = FakeMarker.instances[0]?.options as {
-      icon?: { url?: string; anchor?: FakePoint; scaledSize?: FakeSize };
+      icon?: { content?: string; anchor?: FakePoint };
     };
 
-    expect(options.icon?.url).toContain("data:image/svg+xml");
-    expect(decodeURIComponent(options.icon?.url ?? "")).toContain(
-      'data-type="LOCKER"',
-    );
+    expect(options.icon?.content).toContain("map-marker-item");
+    expect(options.icon?.content).toContain('data-type="LOCKER"');
     expect(options.icon?.anchor).toBeInstanceOf(FakePoint);
-    expect(options.icon?.scaledSize).toBeInstanceOf(FakeSize);
   });
 
-  it("uses an image icon option for place markers", () => {
+  it("uses an HTML icon option for place markers", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -215,13 +212,11 @@ describe("syncLockerMarkers", () => {
     });
 
     const options = FakeMarker.instances[0]?.options as {
-      icon?: { url?: string };
+      icon?: { content?: string };
     };
 
-    expect(options.icon?.url).toContain("data:image/svg+xml");
-    expect(decodeURIComponent(options.icon?.url ?? "")).toContain(
-      'data-type="PLACE"',
-    );
+    expect(options.icon?.content).toContain("map-marker-item");
+    expect(options.icon?.content).toContain('data-type="PLACE"');
   });
 
   it("passes pin type and id when a locker marker is clicked", () => {
@@ -240,7 +235,7 @@ describe("syncLockerMarkers", () => {
 
     FakeMarker.instances[0]?.listeners[0]?.();
 
-    expect(handleSelectLocker).toHaveBeenCalledWith("LOCKER", 42);
+    expect(handleSelectLocker).toHaveBeenCalledWith("LOCKER", 42, expect.any(Object));
   });
 
   it("passes place id when a place marker is clicked", () => {
@@ -259,7 +254,7 @@ describe("syncLockerMarkers", () => {
 
     FakeMarker.instances[0]?.listeners[0]?.();
 
-    expect(handleSelectLocker).toHaveBeenCalledWith("PLACE", 7);
+    expect(handleSelectLocker).toHaveBeenCalledWith("PLACE", 7, expect.any(Object));
   });
 
   it("removes click listeners on cleanup", () => {
