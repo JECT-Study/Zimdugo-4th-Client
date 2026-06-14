@@ -35,6 +35,7 @@ export interface UseLockerMarkersOptions {
     id: number,
     pin: LockerPinItemResponse,
   ) => void;
+  spreadCenter?: { lat: number; lng: number } | null;
 }
 
 export const useLockerMarkers = ({
@@ -42,6 +43,7 @@ export const useLockerMarkers = ({
   maps,
   selectedPinId,
   onSelectLocker,
+  spreadCenter,
 }: UseLockerMarkersOptions) => {
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
@@ -125,6 +127,7 @@ export const useLockerMarkers = ({
       selectedPinId,
       onSelectLocker: handleSelectLocker,
       registry: markerRegistryRef.current,
+      spreadCenter,
     });
   }, [
     map,
@@ -134,6 +137,7 @@ export const useLockerMarkers = ({
     handleSelectLocker,
     viewport,
     canFetchLockerPins,
+    spreadCenter,
   ]);
 
   useEffect(() => {

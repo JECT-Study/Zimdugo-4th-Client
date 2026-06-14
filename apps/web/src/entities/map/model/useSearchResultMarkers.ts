@@ -17,6 +17,7 @@ export interface UseSearchResultMarkersOptions {
     id: number,
     pin: LockerPinItemResponse,
   ) => void;
+  spreadCenter?: { lat: number; lng: number } | null;
 }
 
 export const useSearchResultMarkers = ({
@@ -26,6 +27,7 @@ export const useSearchResultMarkers = ({
   enabled = true,
   selectedPinId,
   onSelectLocker,
+  spreadCenter,
 }: UseSearchResultMarkersOptions) => {
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
   const onSelectLockerRef = useRef(onSelectLocker);
@@ -51,8 +53,9 @@ export const useSearchResultMarkers = ({
       onSelectLocker: (pinType, id, pin) =>
         onSelectLockerRef.current?.(pinType, id, pin),
       registry: markerRegistryRef.current,
+      spreadCenter,
     });
-  }, [enabled, map, maps, pins, selectedPinId]);
+  }, [enabled, map, maps, pins, selectedPinId, spreadCenter]);
 
   useEffect(() => {
     return () => {
