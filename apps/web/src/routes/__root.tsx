@@ -86,7 +86,13 @@ export const Route = createRootRouteWithContext<{
     links: [
       {
         rel: "icon",
+        href: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+      {
+        rel: "icon",
         href: "/favicon.ico",
+        sizes: "any",
         type: "image/x-icon",
       },
       {
