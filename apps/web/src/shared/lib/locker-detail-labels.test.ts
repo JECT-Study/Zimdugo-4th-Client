@@ -58,5 +58,8 @@ describe("locker-detail-labels", () => {
 
     setLanguageTag("zh");
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW ~ 5,000 KRW");
+
+    setLanguageTag("zh-TW");
+    expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW ~ 5,000 KRW");
   });
 });

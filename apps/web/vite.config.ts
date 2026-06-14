@@ -7,7 +7,7 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-const locales = ["ko", "en", "ja", "zh"] as const;
+const locales = ["ko", "en", "ja", "zh", "zh-TW"] as const;
 const appI18nEntry = fileURLToPath(new URL("./src/i18n.ts", import.meta.url));
 const appI18nServerEntry = fileURLToPath(
   new URL("./src/i18n-server.ts", import.meta.url),

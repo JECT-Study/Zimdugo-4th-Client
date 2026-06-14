@@ -7,7 +7,9 @@ import {
   BASE_LOCALE,
   LOCALE_COOKIE_MAX_AGE,
   LOCALE_COOKIE_NAME,
+  LOCALE_PATH_PREFIX,
   normalizeLocale,
+  resolveBrowserLanguageCandidates,
 } from "#/shared/i18n/locales";
 
 export const APP_LANGUAGES = APP_LOCALES;
@@ -16,7 +18,6 @@ export type AppLanguage = AppLocale;
 
 const APP_LANGUAGE_STORAGE_KEY = "app-language";
 const DEFAULT_APP_LANGUAGE: AppLanguage = BASE_LOCALE;
-const LOCALE_PATH_PREFIX = /^\/(?:ko|en|ja|zh)(?=\/|$)/;
 const HREF_PARSE_BASE_ORIGIN = "http://zimdugo.local";
 
 export const normalizeLanguage = normalizeLocale;
@@ -66,15 +67,10 @@ const getSystemLanguage = (): AppLanguage | null => {
     return null;
   }
 
-  const candidates = [navigator.language, ...(navigator.languages ?? [])];
-  for (const candidate of candidates) {
-    const normalized = normalizeLanguage(candidate);
-    if (normalized) {
-      return normalized;
-    }
-  }
-
-  return null;
+  return resolveBrowserLanguageCandidates([
+    navigator.language,
+    ...(navigator.languages ?? []),
+  ]);
 };
 
 const setLanguageCookie = (language: AppLanguage) => {
@@ -164,5 +160,6 @@ export const appLanguageLabelMap: Record<AppLanguage, string> = {
   ko: "\uD55C\uAD6D\uC5B4",
   en: "English",
   ja: "\u65E5\u672C\u8A9E",
-  zh: "\u4E2D\u6587",
+  zh: "\u7B80\u4F53\u4E2D\u6587",
+  "zh-TW": "\u7E41\u9AD4\u4E2D\u6587",
 };

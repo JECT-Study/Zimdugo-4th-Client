@@ -82,6 +82,7 @@ const DEFAULT_LABELS_BY_LANGUAGE = {
   en: { home: "Home", report: "Report", my: "MY", settings: "Settings" },
   ja: { home: "ホーム", report: "通報", my: "マイ", settings: "設定" },
   zh: { home: "首页", report: "举报", my: "我的", settings: "设置" },
+  "zh-TW": { home: "首頁", report: "回報", my: "我的", settings: "設定" },
 } satisfies Record<AppLanguage, Record<BottomTabKey, string>>;
 
 export type BottomTabLinks = Record<BottomTabKey, string>;

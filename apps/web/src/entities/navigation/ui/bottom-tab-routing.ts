@@ -1,4 +1,5 @@
 import type { BottomTabKey } from "@repo/ui/tokens/icons";
+import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 
 /**
  * Bottom tab route map. Keep this object stable so the shell can pass it
@@ -11,10 +12,7 @@ export const BOTTOM_TAB_LINKS: Record<BottomTabKey, string> = {
   settings: "/settings",
 };
 
-const LOCALE_PREFIX = /^\/(?:ko|en|ja|zh)(?=\/|$)/;
-
-const stripLocale = (pathname: string) =>
-  pathname.replace(LOCALE_PREFIX, "") || "/";
+const stripLocale = stripLocalePathPrefix;
 
 /**
  * Calculates the active tab for the current route, ignoring locale prefixes.
