@@ -1,3 +1,4 @@
+import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { vars } from "@repo/ui/vars";
 import type { CSSProperties } from "react";
@@ -32,7 +33,7 @@ const SUGGEST_SKELETON_ROW_COUNT = 4;
 
 export function SearchSuggestListSkeleton() {
   return (
-    <div style={listStyle} aria-busy="true" aria-label="자동완성 불러오는 중">
+    <div style={listStyle} aria-busy="true" aria-label={m.search_suggest_loading_aria()}>
       {Array.from({ length: SUGGEST_SKELETON_ROW_COUNT }, (_, index) => (
         <div key={index} style={rowStyle}>
           <Skeleton

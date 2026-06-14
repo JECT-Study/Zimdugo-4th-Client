@@ -1,7 +1,10 @@
+import { languageTag, m } from "@repo/i18n";
+import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/tokens/icons";
 import { useSearch } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
-import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/tokens/icons";
 import { loginSocialButtonInlineFallbackStyle } from "#/features/auth/sign-in/ui/login-page-fallback";
+import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
+import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import {
   google,
   icon19,
@@ -43,23 +46,41 @@ const labelContainerFallbackStyle: CSSProperties = {
   lineHeight: 1.2,
 };
 
-const loginTexts = {
+const LOGIN_PROVIDER_CONTENT: Record<
+  LoginProvider,
+  {
+    className: string;
+    iconClassName: string;
+    Icon: typeof IconNaver19;
+    title: () => string;
+    sub: () => string;
+  }
+> = {
   naver: {
-    title: "네이버 1초 로그인/회원가입",
-    en: "Naver 1 second login/membership",
+    className: naver,
+    iconClassName: icon19,
+    Icon: IconNaver19,
+    title: m.login_social_naver,
+    sub: m.login_social_naver_sub,
   },
   kakao: {
-    title: "카카오 1초 로그인/회원가입",
-    en: "Kakao 1 second login/membership",
+    className: kakao,
+    iconClassName: icon24,
+    Icon: IconKakao24,
+    title: m.login_social_kakao,
+    sub: m.login_social_kakao_sub,
   },
   google: {
-    title: "구글 1초 로그인/회원가입",
-    en: "Google 1 second login/membership",
+    className: google,
+    iconClassName: icon24,
+    Icon: IconGoogle24,
+    title: m.login_social_google,
+    sub: m.login_social_google_sub,
   },
 };
 
 export interface SocialLoginStackProps {
-  /** Figma 로그인 버튼의 영어 보조 문구 표시 여부 */
+  /** Storybook/tests override. Default follows app language (hidden when UI is English). */
   showEnglishLabel?: boolean;
   className?: string;
   /** CSS 청크 지연 시 스택 컨테이너 인라인 레이아웃 폴백 */
@@ -75,12 +96,16 @@ export interface SocialLoginStackProps {
  * 단순 링크 이동뿐 아니라 필요 시 useMutation을 통한 커스텀 로그인 로직을 포함할 수 있습니다.
  */
 export function SocialLoginStack({
-  showEnglishLabel = false,
+  showEnglishLabel,
   className,
   stackFallbackStyle,
   applyFallbackStyle = false,
   onLogin,
 }: SocialLoginStackProps) {
+  const appLanguage = normalizeLocale(languageTag()) ?? BASE_LOCALE;
+  const showEnglishSub =
+    showEnglishLabel ??
+    resolveEnglishSubVisibility({ appLanguage });
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const returnPath = (search.returnPath as string) || "/";
 
@@ -88,7 +113,7 @@ export function SocialLoginStack({
     const baseUrl =
       import.meta.env.VITE_API_BASE_URL ??
       (import.meta.env.DEV ? "http://localhost:8080" : "");
-    // SSR 렌더링 시에는 브라우저 환경 변수 차이로 인한 Hydration Mismatch를 방지하기 위해 
+    // SSR 렌더링 시에는 브라우저 환경 변수 차이로 인한 Hydration Mismatch를 방지하기 위해
     // 기본 OAuth 주소만 렌더링하고, 실제 콜백 경로는 클릭 이벤트에서 동적으로 주입합니다.
     return `${baseUrl}/oauth2/authorization/${provider}`;
   };
@@ -103,16 +128,15 @@ export function SocialLoginStack({
       return;
     }
 
-    // 클라이언트 브라우저에서 실행되므로 window 객체에 안전하게 접근 가능
     const baseUrl =
       import.meta.env.VITE_API_BASE_URL ??
       (import.meta.env.DEV ? "http://localhost:8080" : "");
 
-    // 콜백이 무조건 /login을 거치도록 해야, my, report 등 보호된 라우트의 beforeLoad에서 차단되지 않고
-    // 토큰 갱신 로직(useLoginResultHandler)이 정상적으로 실행될 수 있습니다.
-    const encodedReturnPath = encodeURIComponent(returnPath.startsWith("/") ? returnPath : `/${returnPath}`);
+    const encodedReturnPath = encodeURIComponent(
+      returnPath.startsWith("/") ? returnPath : `/${returnPath}`,
+    );
     const absoluteCallbackUrl = `${window.location.origin}/login?returnPath=${encodedReturnPath}`;
-    
+
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}?callbackUrl=${encodeURIComponent(absoluteCallbackUrl)}`;
   };
 
@@ -121,87 +145,49 @@ export function SocialLoginStack({
       className={[stack, className].filter(Boolean).join(" ")}
       style={stackFallbackStyle}
     >
-      <a
-        href={getHref("naver")}
-        className={naver}
-        style={applyFallbackStyle ? loginSocialButtonInlineFallbackStyle : undefined}
-        onClick={(e) => handleClick(e, "naver")}
-      >
-        <span
-          className={row}
-          style={applyFallbackStyle ? rowFallbackStyle : undefined}
-        >
-          <span
-            className={icon19}
-            style={applyFallbackStyle ? iconFallbackStyle : undefined}
-          >
-            <IconNaver19 />
-          </span>
-          <span
-            className={labelContainer}
-            style={applyFallbackStyle ? labelContainerFallbackStyle : undefined}
-          >
-            <span className={labelTitle}>{loginTexts.naver.title}</span>
-            {showEnglishLabel && (
-              <span className={labelEn}>{loginTexts.naver.en}</span>
-            )}
-          </span>
-        </span>
-      </a>
-      <a
-        href={getHref("kakao")}
-        className={kakao}
-        style={applyFallbackStyle ? loginSocialButtonInlineFallbackStyle : undefined}
-        onClick={(e) => handleClick(e, "kakao")}
-      >
-        <span
-          className={row}
-          style={applyFallbackStyle ? rowFallbackStyle : undefined}
-        >
-          <span
-            className={icon24}
-            style={applyFallbackStyle ? iconFallbackStyle : undefined}
-          >
-            <IconKakao24 />
-          </span>
-          <span
-            className={labelContainer}
-            style={applyFallbackStyle ? labelContainerFallbackStyle : undefined}
-          >
-            <span className={labelTitle}>{loginTexts.kakao.title}</span>
-            {showEnglishLabel && (
-              <span className={labelEn}>{loginTexts.kakao.en}</span>
-            )}
-          </span>
-        </span>
-      </a>
-      <a
-        href={getHref("google")}
-        className={google}
-        style={applyFallbackStyle ? loginSocialButtonInlineFallbackStyle : undefined}
-        onClick={(e) => handleClick(e, "google")}
-      >
-        <span
-          className={row}
-          style={applyFallbackStyle ? rowFallbackStyle : undefined}
-        >
-          <span
-            className={icon24}
-            style={applyFallbackStyle ? iconFallbackStyle : undefined}
-          >
-            <IconGoogle24 />
-          </span>
-          <span
-            className={labelContainer}
-            style={applyFallbackStyle ? labelContainerFallbackStyle : undefined}
-          >
-            <span className={labelTitle}>{loginTexts.google.title}</span>
-            {showEnglishLabel && (
-              <span className={labelEn}>{loginTexts.google.en}</span>
-            )}
-          </span>
-        </span>
-      </a>
+      {(Object.keys(LOGIN_PROVIDER_CONTENT) as LoginProvider[]).map(
+        (provider) => {
+          const { className: buttonClassName, iconClassName, Icon, title, sub } =
+            LOGIN_PROVIDER_CONTENT[provider];
+
+          return (
+            <a
+              key={provider}
+              href={getHref(provider)}
+              className={buttonClassName}
+              style={
+                applyFallbackStyle
+                  ? loginSocialButtonInlineFallbackStyle
+                  : undefined
+              }
+              onClick={(e) => handleClick(e, provider)}
+            >
+              <span
+                className={row}
+                style={applyFallbackStyle ? rowFallbackStyle : undefined}
+              >
+                <span
+                  className={iconClassName}
+                  style={applyFallbackStyle ? iconFallbackStyle : undefined}
+                >
+                  <Icon />
+                </span>
+                <span
+                  className={labelContainer}
+                  style={
+                    applyFallbackStyle ? labelContainerFallbackStyle : undefined
+                  }
+                >
+                  <span className={labelTitle}>{title()}</span>
+                  {showEnglishSub ? (
+                    <span className={labelEn}>{sub()}</span>
+                  ) : null}
+                </span>
+              </span>
+            </a>
+          );
+        },
+      )}
     </div>
   );
 }

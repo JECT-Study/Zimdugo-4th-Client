@@ -1,3 +1,4 @@
+import { m } from "@repo/i18n";
 import { useEffect } from "react";
 import { Popup } from "@repo/ui/components/popup";
 import { useLoginResultStore } from "#/shared/store/loginResultStore";
@@ -22,10 +23,10 @@ export function LoginResultModal() {
 
   const config = {
     success: {
-      titleText: "로그인이 확인되었습니다",
+      titleText: m.login_result_success_title(),
     },
     failure: {
-      titleText: "로그인에 실패했습니다",
+      titleText: m.login_result_failure_title(),
     },
   };
 
@@ -37,9 +38,9 @@ export function LoginResultModal() {
       onOpenChange={(val) => !val && close()}
       titleText={config[type].titleText}
       primaryAction={{
-        label: "확인",
+        label: m.common_confirm(),
         onPress: close,
       }}
     />
   );
-};
+}

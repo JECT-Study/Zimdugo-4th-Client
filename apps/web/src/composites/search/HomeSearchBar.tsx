@@ -186,7 +186,7 @@ export function HomeSearchBar({
               className={closeButton}
               onPointerDown={handleClosePointerDown}
               onClick={handleCloseSearchContext}
-              aria-label="홈으로 돌아가기"
+              aria-label={m.home_search_back_aria()}
             >
               <IconX24 />
             </button>

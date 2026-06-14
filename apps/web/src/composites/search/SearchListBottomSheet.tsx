@@ -73,16 +73,6 @@ interface ActiveSort {
   direction: SearchSortDirection;
 }
 
-const FAVORITE_LABEL_FALLBACKS: Record<
-  AppLocale,
-  { add: string; remove: string }
-> = {
-  ko: { add: "즐겨찾기 추가", remove: "즐겨찾기 해제" },
-  en: { add: "Add to favorites", remove: "Remove from favorites" },
-  ja: { add: "お気に入りに追加", remove: "お気に入りから削除" },
-  zh: { add: "添加收藏", remove: "取消收藏" },
-};
-
 export function SearchListBottomSheet({
   searchQuery,
   items = [],
@@ -186,7 +176,7 @@ export function SearchListBottomSheet({
                   type="button"
                   className={headerLeadingButton}
                   onClick={onHeaderBackPress}
-                  aria-label="뒤로"
+                  aria-label={m.locker_detail_back_aria()}
                 >
                   <IconChevronLeft13 />
                 </button>
@@ -249,10 +239,8 @@ export function SearchListBottomSheet({
                   items={visibleItems}
                   onLockerPress={onLockerPress}
                   onFavoriteChange={onFavoriteChange}
-                  favoriteAddLabel={FAVORITE_LABEL_FALLBACKS[appLanguage].add}
-                  favoriteRemoveLabel={
-                    FAVORITE_LABEL_FALLBACKS[appLanguage].remove
-                  }
+                  favoriteAddLabel={m.search_favorite_add()}
+                  favoriteRemoveLabel={m.search_favorite_remove()}
                 />
               </div>
             ) : showEmpty ? (

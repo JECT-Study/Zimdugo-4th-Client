@@ -1,3 +1,4 @@
+import { m } from "@repo/i18n";
 import { useEffect, useState } from "react";
 import { IconCamera24 } from "@repo/ui/tokens/icons";
 import { useUser } from "../../hooks/useUser.ts";
@@ -33,7 +34,7 @@ export interface ProfileImageProps {
 export function ProfileImage({
   userId,
   src: initialSrc,
-  alt = "프로필 이미지",
+  alt,
   size = 111,
   className,
 }: ProfileImageProps) {
@@ -66,7 +67,7 @@ export function ProfileImage({
       {showImage ? (
         <img
           src={src}
-          alt={alt}
+          alt={alt ?? m.my_profile_image_alt()}
           className={styles.profileImageContent}
           onError={handleSetImageError}
         />
