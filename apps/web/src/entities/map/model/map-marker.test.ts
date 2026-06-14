@@ -345,4 +345,20 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain("--spread-x");
     expect(options.icon?.content).toContain("--spread-y");
   });
+
+  it("skips icon updates after creating a spread marker with unchanged pin data", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin = createLockerPin();
+    const spreadCenter = { lat: 37.5547, lng: 126.9706 };
+
+    syncLockerMarkers({ map, maps, lockers: [pin], registry, spreadCenter });
+    syncLockerMarkers({ map, maps, lockers: [pin], registry, spreadCenter });
+
+    expect(FakeMarker.instances).toHaveLength(1);
+    expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
+  });
 });

@@ -357,9 +357,7 @@ export const syncLockerMarkers = ({
 
     const entry: LockerMarkerEntry = {
       marker,
-      iconSignature: `${iconSignature}:${animationState}${
-        spreadX !== 0 || spreadY !== 0 ? `:spread:${spreadX}:${spreadY}` : ""
-      }`,
+      iconSignature: `${iconSignature}:${animationState}`,
       positionSignature,
       wasSelectedBefore: isSelected,
     };
