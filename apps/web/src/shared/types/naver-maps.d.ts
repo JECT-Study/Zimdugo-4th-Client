@@ -48,12 +48,17 @@ declare namespace naver.maps {
     getSW(): LatLng;
     hasLatLng(latlng: LatLng | LatLngLiteral): boolean;
   }
+  interface HtmlIcon {
+    content: string | HTMLElement;
+    size?: Size;
+    anchor?: Point;
+  }
   class Marker {
     constructor(options: any);
     getVisible(): boolean;
     setMap(map: Map | null): void;
     setPosition(latlng: LatLng | LatLngLiteral): void;
-    setIcon?(icon: any): void;
+    setIcon?(icon: HtmlIcon | any): void;
     setVisible(visible: boolean): void;
   }
   // Event.addListener는 removeListener에 넘길 수 있는 opaque 핸들을 돌려준다.

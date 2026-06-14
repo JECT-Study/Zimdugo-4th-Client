@@ -6,20 +6,16 @@ import type { SearchResultItem } from "./search-list-model";
 
 const STORY_LIST_ITEMS: SearchResultItem[] = [
   {
-    suggestType: "PLACE",
     itemType: "PLACE",
     placeId: 1,
-    id: "story-place",
     title: "코엑스",
     distanceLabel: "120m",
     address: "서울 강남구 영동대로 513",
     distanceMeters: 120,
     lockers: [
       {
-        suggestType: "LOCKER",
         itemType: "LOCKER",
         lockerId: 1,
-        id: "story-locker-1",
         title: "코엑스 메가박스 보관함",
         categoryLabel: "복합문화공간",
         updatedLabel: "10분 전 업데이트",
@@ -27,10 +23,8 @@ const STORY_LIST_ITEMS: SearchResultItem[] = [
         address: "서울 강남구 영동대로 513",
       },
       {
-        suggestType: "LOCKER",
         itemType: "LOCKER",
         lockerId: 2,
-        id: "story-locker-2",
         title: "코엑스 동문 보관함",
         categoryLabel: "복합문화공간",
         updatedLabel: "1시간 전 업데이트",

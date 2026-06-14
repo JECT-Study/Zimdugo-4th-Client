@@ -18,6 +18,7 @@ const validStep1Values = (): ReportFormValues => ({
   indoorOutdoorType: "INDOOR",
   lockerType: "MUSEUM",
   hasFloor: false,
+  sizeTypes: ["SMALL"],
 });
 
 function hasStep1ValidationErrors(values: ReportFormValues): boolean {

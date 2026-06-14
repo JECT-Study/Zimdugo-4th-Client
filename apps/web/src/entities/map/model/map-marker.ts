@@ -13,13 +13,16 @@ const LOCKER_MARKER_PATH =
 export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
 
-export const createMapPinIcon = (pin: LockerPinItemResponse): string => {
+export const createMapPinIcon = (
+  pin: LockerPinItemResponse,
+  _isSelected = false,
+): string => {
   const isPlace = pin.pinType === "PLACE";
   const markerFill = isPlace ? PLACE_MARKER_FILL : LOCKER_MARKER_FILL;
   // PLACE marker badge design is intentionally disabled until the final cluster marker spec lands.
   const badgeSvg = "";
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" role="img" aria-label="보관함 위치" data-type="${pin.pinType}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" role="img" aria-label="보관함 위치" data-type="${pin.pinType}">
     <circle cx="12" cy="12" r="12" fill="${LOCKER_MARKER_BACKGROUND}"/>
     <svg x="1" y="1" width="22" height="22" viewBox="0 0 22 22" fill="none">
       <path d="${LOCKER_MARKER_PATH}" fill="${markerFill}"/>
@@ -41,6 +44,7 @@ interface SyncLockerMarkersOptions {
   map: naver.maps.Map;
   maps: typeof naver.maps;
   lockers: LockerPinItemResponse[];
+  selectedPinId?: string | null;
   onSelectLocker?: (
     pinType: "LOCKER" | "PLACE",
     id: number,
@@ -54,54 +58,53 @@ interface LockerMarkerEntry {
   iconSignature: string;
   listener?: naver.maps.MapEventListener;
   positionSignature: string;
+  wasSelectedBefore?: boolean;
 }
 
 export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
 
-const toSvgDataUrl = (svg: string): string =>
-  `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 
-/**
- * Icon option caches.
- *
- * Marker icons use image URLs derived from SVG so PLACE/LOCKER pins both
- * receive click events reliably. Options are cached per maps instance via
- * WeakMap because SDK objects (`maps.Size`, `maps.Point`) are instance-bound.
- */
-type LockerIconOptions = {
-  url: string;
-  size: naver.maps.Size;
-  scaledSize: naver.maps.Size;
-  origin: naver.maps.Point;
-  anchor: naver.maps.Point;
-};
 
 const lockerIconCache = new WeakMap<
   typeof naver.maps,
-  Map<string, LockerIconOptions>
+  Map<string, naver.maps.HtmlIcon>
 >();
 
 const createMarkerIconOptions = (
   pin: LockerPinItemResponse,
   maps: typeof naver.maps,
-): LockerIconOptions => {
-  const key = getPinIconSignature(pin);
+  isSelected: boolean,
+  animationState:
+    | "selected-active"
+    | "selected-static"
+    | "unselected-active"
+    | "normal",
+  zoomLevel?: number,
+): naver.maps.HtmlIcon => {
+  const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}`;
 
   let innerMap = lockerIconCache.get(maps);
   if (!innerMap) {
-    innerMap = new Map<string, LockerIconOptions>();
+    innerMap = new Map<string, naver.maps.HtmlIcon>();
     lockerIconCache.set(maps, innerMap);
   }
 
   const cached = innerMap.get(key);
   if (cached) return cached;
 
-  const options: LockerIconOptions = {
-    url: toSvgDataUrl(createLockerMarkerIcon(pin)),
-    size: new maps.Size(24, 24),
-    scaledSize: new maps.Size(24, 24),
-    origin: new maps.Point(0, 0),
-    anchor: new maps.Point(12, 12),
+  const size =
+    animationState === "selected-active" ||
+    animationState === "selected-static"
+      ? 36
+      : 24;
+  const radius = size / 2;
+
+  const options = {
+    content: `<div class="map-marker-item ${animationState}" style="width: ${size}px; height: ${size}px;">
+      ${createLockerMarkerIcon(pin, isSelected)}
+    </div>`,
+    size: new maps.Size(size, size),
+    anchor: new maps.Point(radius, radius),
   };
   innerMap.set(key, options);
   return options;
@@ -110,25 +113,45 @@ const createMarkerIconOptions = (
 const getPinPositionSignature = (pin: LockerPinItemResponse): string =>
   `${pin.latitude}:${pin.longitude}`;
 
-const getPinIconSignature = (pin: LockerPinItemResponse): string =>
-  `${pin.pinType}:${pin.lockerCount ?? ""}`;
+const getPinIconSignature = (
+  pin: LockerPinItemResponse,
+  isSelected: boolean,
+  zoomLevel?: number,
+): string => {
+  const isStateful = isSelected;
+  return `${pin.pinType}:${pin.lockerCount ?? ""}:${isSelected ? "selected" : "default"}${
+    isStateful && zoomLevel != null ? `:${zoomLevel}` : ""
+  }`;
+};
 
 const createLockerMarker = ({
   map,
   maps,
   pin,
+  isSelected,
+  animationState,
+  zoomLevel,
 }: {
   map: naver.maps.Map;
   maps: typeof naver.maps;
   pin: LockerPinItemResponse;
-}) =>
-  new maps.Marker({
+  isSelected: boolean;
+  animationState:
+    | "selected-active"
+    | "selected-static"
+    | "unselected-active"
+    | "normal";
+  zoomLevel: number;
+}) => {
+  const marker = new maps.Marker({
     map,
     clickable: true,
     title: pin.pinType === "LOCKER" ? "보관함" : "보관함 모음",
     position: new maps.LatLng(pin.latitude, pin.longitude),
-    icon: createMarkerIconOptions(pin, maps),
+    icon: createMarkerIconOptions(pin, maps, isSelected, animationState, zoomLevel),
   });
+  return marker;
+};
 
 const attachMarkerSelectListener = (
   entry: LockerMarkerEntry,
@@ -175,6 +198,7 @@ export const syncLockerMarkers = ({
   map,
   maps,
   lockers,
+  selectedPinId,
   onSelectLocker,
   registry = new Map(),
 }: SyncLockerMarkersOptions) => {
@@ -209,12 +233,21 @@ export const syncLockerMarkers = ({
     const existingEntry = registry.get(pinId);
 
     const positionSignature = getPinPositionSignature(pin);
-    const iconSignature = getPinIconSignature(pin);
+    const isSelected = selectedPinId === pinId;
     const position = new maps.LatLng(pin.latitude, pin.longitude);
     const isVisible = expandedBounds?.hasLatLng(position) ?? true;
+    const zoomLevel = map.getZoom?.() ?? 0;
+
+    const iconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
 
     if (existingEntry) {
-      if (existingEntry.marker.getMap?.() !== map) {
+      if (
+        (
+          existingEntry.marker as naver.maps.Marker & {
+            getMap?: () => naver.maps.Map | null;
+          }
+        ).getMap?.() !== map
+      ) {
         existingEntry.marker.setMap(map);
       }
 
@@ -223,10 +256,29 @@ export const syncLockerMarkers = ({
         existingEntry.positionSignature = positionSignature;
       }
 
-      if (existingEntry.iconSignature !== iconSignature) {
-        existingEntry.marker.setIcon?.(createMarkerIconOptions(pin, maps));
-        existingEntry.iconSignature = iconSignature;
+      let animationState:
+        | "selected-active"
+        | "selected-static"
+        | "unselected-active"
+        | "normal" = "normal";
+      if (isSelected) {
+        animationState = existingEntry.wasSelectedBefore
+          ? "selected-static"
+          : "selected-active";
+      } else {
+        animationState = existingEntry.wasSelectedBefore
+          ? "unselected-active"
+          : "normal";
       }
+
+      const nextIconSignature = `${iconSignature}:${animationState}`;
+      if (existingEntry.iconSignature !== nextIconSignature) {
+        existingEntry.marker.setIcon?.(
+          createMarkerIconOptions(pin, maps, isSelected, animationState, zoomLevel),
+        );
+        existingEntry.iconSignature = nextIconSignature;
+      }
+      existingEntry.wasSelectedBefore = isSelected;
 
       if (existingEntry.marker.getVisible() !== isVisible) {
         existingEntry.marker.setVisible(isVisible);
@@ -242,13 +294,15 @@ export const syncLockerMarkers = ({
       continue;
     }
 
-    const marker = createLockerMarker({ map, maps, pin });
+    const animationState = isSelected ? "selected-active" : "normal";
+    const marker = createLockerMarker({ map, maps, pin, isSelected, animationState, zoomLevel });
     marker.setVisible(isVisible);
 
     const entry: LockerMarkerEntry = {
       marker,
-      iconSignature,
+      iconSignature: `${iconSignature}:${animationState}`,
       positionSignature,
+      wasSelectedBefore: isSelected,
     };
 
     if (onSelectLocker) {

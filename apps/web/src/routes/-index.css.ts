@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 import { vars } from "@repo/ui/vars";
 import { keyframes } from "@vanilla-extract/css";
 import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
@@ -157,4 +157,38 @@ export const controlButton = style({
     outline: `2px solid ${vars.color.brand.primary}`,
     outlineOffset: "2px",
   },
+});
+
+const markerScaleUp = keyframes({
+  "0%": { transform: "scale(0.66)", opacity: 0.8 },
+  "100%": { transform: "scale(1)", opacity: 1 },
+});
+
+const markerScaleDown = keyframes({
+  "0%": { transform: "scale(1.5)" },
+  "100%": { transform: "scale(1)" },
+});
+
+globalStyle(".map-marker-item", {
+  transformOrigin: "center center",
+  willChange: "transform",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+globalStyle(".map-marker-item.selected-active", {
+  animation: `${markerScaleUp} 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
+});
+
+globalStyle(".map-marker-item.selected-static", {
+  transform: "scale(1)",
+});
+
+globalStyle(".map-marker-item.unselected-active", {
+  animation: `${markerScaleDown} 0.2s ease-out forwards`,
+});
+
+globalStyle(".map-marker-item.normal", {
+  transform: "scale(1)",
 });

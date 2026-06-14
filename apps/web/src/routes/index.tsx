@@ -47,6 +47,7 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
+import { getPinId } from "#/entities/map/model/map-marker";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
@@ -978,7 +979,7 @@ function IndexPage() {
 
       await openLockerDetailById(
         lockerId,
-        pin ? createLockerDetailFromPin(pin) : undefined,
+        pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined,
         { detailSnap: options.detailSnap ?? "half" },
       );
     },
@@ -1486,6 +1487,18 @@ function IndexPage() {
     mapDetailBack,
     selectedMapDetailPinCount: selectedMapDetailPins.length,
   });
+  const selectedPinId = useMemo(() => {
+    if (selectedMapPin) {
+      return getPinId(selectedMapPin);
+    }
+    if (activeLockerId != null) {
+      return `LOCKER-${activeLockerId}`;
+    }
+    if (openLockerId != null) {
+      return `LOCKER-${openLockerId}`;
+    }
+    return null;
+  }, [selectedMapPin, activeLockerId, openLockerId]);
   const showPlaceSheetBack =
     context === "map" || (context === "search" && listKind === "place");
   const listHeaderLeadingPress = showPlaceSheetBack
@@ -1531,24 +1544,28 @@ function IndexPage() {
         {markerLayer === "idle" ? (
           <LockerMarkersLayer
             map={mapInstance}
+            selectedPinId={selectedPinId}
             onSelectPin={handleIdlePinSelect}
           />
         ) : markerLayer === "search" ? (
           <SearchResultMarkersLayer
             map={mapInstance}
             pins={searchResultPins}
+            selectedPinId={selectedPinId}
             onSelectLocker={handleSearchMarkerSelect}
           />
         ) : markerLayer === "mapPlace" ? (
           <SearchResultMarkersLayer
             map={mapInstance}
             pins={mapPlacePins}
+            selectedPinId={selectedPinId}
             onSelectLocker={handleMapPlaceMarkerSelect}
           />
         ) : markerLayer === "selectedMapDetail" ? (
           <SearchResultMarkersLayer
             map={mapInstance}
             pins={selectedMapDetailPins}
+            selectedPinId={selectedPinId}
             onSelectLocker={handleIdlePinSelect}
           />
         ) : null}
@@ -1680,9 +1697,11 @@ function IndexPage() {
 
 function LockerMarkersLayer({
   map,
+  selectedPinId,
   onSelectPin,
 }: {
   map: naver.maps.Map | null;
+  selectedPinId?: string | null;
   onSelectPin?: (
     pinType: "LOCKER" | "PLACE",
     id: number,
@@ -1691,7 +1710,7 @@ function LockerMarkersLayer({
 }) {
   const { maps } = useNaverMapSdk();
 
-  useLockerMarkers({ map, maps, onSelectLocker: onSelectPin });
+  useLockerMarkers({ map, maps, selectedPinId, onSelectLocker: onSelectPin });
 
   return null;
 }
@@ -1699,10 +1718,12 @@ function LockerMarkersLayer({
 function SearchResultMarkersLayer({
   map,
   pins,
+  selectedPinId,
   onSelectLocker,
 }: {
   map: naver.maps.Map | null;
   pins: ReturnType<typeof searchResultItemsToPins>;
+  selectedPinId?: string | null;
   onSelectLocker: (
     pinType: "LOCKER" | "PLACE",
     id: number,
@@ -1715,6 +1736,7 @@ function SearchResultMarkersLayer({
     map,
     maps,
     pins,
+    selectedPinId,
     onSelectLocker,
   });
 
