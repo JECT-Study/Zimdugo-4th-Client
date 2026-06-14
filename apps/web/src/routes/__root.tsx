@@ -78,6 +78,29 @@ export const Route = createRootRouteWithContext<{
       {
         title: "Zimdugo",
       },
+      {
+        name: "theme-color",
+        content: "#3bd569",
+      },
+    ],
+    links: [
+      {
+        rel: "icon",
+        href: "/favicon.ico",
+        type: "image/x-icon",
+      },
+      {
+        rel: "icon",
+        href: "/icons/favicon-16x16.png",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        rel: "icon",
+        href: "/icons/favicon-32x32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
     ],
   }),
   shellComponent: RootDocument,
