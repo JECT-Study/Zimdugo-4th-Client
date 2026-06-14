@@ -101,6 +101,11 @@ export const Route = createRootRouteWithContext<{
         sizes: "32x32",
         type: "image/png",
       },
+      {
+        rel: "apple-touch-icon",
+        href: "/icons/apple-touch-icon-180x180.png",
+        sizes: "180x180",
+      },
     ],
   }),
   shellComponent: RootDocument,
