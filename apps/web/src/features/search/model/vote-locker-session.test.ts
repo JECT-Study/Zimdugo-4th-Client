@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type {
+  LockerVoteBaseline,
+  LockerVotePending,
+} from "./vote-locker-session";
 import {
   applySuccessfulVoteFlush,
   buildVoteFlushOperations,
@@ -180,11 +184,11 @@ describe("vote-locker-session", () => {
   });
 
   it("flush 시 baseline 대비 변경분만 압축한다", () => {
-    const baseline = new Map([
+    const baseline: LockerVoteBaseline = new Map([
       [1, { vote: null, accurateCount: 1, inaccurateCount: 0 }],
       [2, { vote: "CORRECT" as const, accurateCount: 2, inaccurateCount: 0 }],
     ]);
-    const pending = new Map([
+    const pending: LockerVotePending = new Map([
       [1, "CORRECT"],
       [2, null],
     ]);
@@ -196,10 +200,10 @@ describe("vote-locker-session", () => {
   });
 
   it("flush 성공 시 baseline과 pending을 갱신한다", () => {
-    const baseline = new Map([
+    const baseline: LockerVoteBaseline = new Map([
       [1, { vote: null, accurateCount: 1, inaccurateCount: 0 }],
     ]);
-    const pending = new Map([[1, "CORRECT"]]);
+    const pending: LockerVotePending = new Map([[1, "CORRECT"]]);
 
     const next = applySuccessfulVoteFlush(baseline, pending, [1]);
 
@@ -212,7 +216,7 @@ describe("vote-locker-session", () => {
   });
 
   it("flush 실패 locker는 flush 시작 시점과 동일한 pending만 롤백한다", () => {
-    const pendingSnapshot = new Map([
+    const pendingSnapshot: LockerVotePending = new Map([
       [1, "CORRECT"],
       [2, "INCORRECT"],
     ]);
@@ -227,8 +231,8 @@ describe("vote-locker-session", () => {
   });
 
   it("flush 실패 후 변경된 pending은 유지한다", () => {
-    const pendingSnapshot = new Map([[1, "CORRECT"]]);
-    const pending = new Map([[1, "INCORRECT"]]);
+    const pendingSnapshot: LockerVotePending = new Map([[1, "CORRECT"]]);
+    const pending: LockerVotePending = new Map([[1, "INCORRECT"]]);
 
     expect(
       rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(1),

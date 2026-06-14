@@ -81,7 +81,7 @@ const createLockerPin = (
   latitude: 37.4979,
   longitude: 127.0276,
   ...overrides,
-});
+} as LockerPinItemResponse);
 
 const createPlacePin = (
   overrides: Partial<LockerPinItemResponse> = {},
@@ -93,7 +93,7 @@ const createPlacePin = (
   longitude: 126.9706,
   lockerCount: 3,
   ...overrides,
-});
+} as LockerPinItemResponse);
 
 class FakeLatLngBounds {
   constructor(public readonly sw: FakeLatLng, public readonly ne: FakeLatLng) {}
@@ -104,6 +104,7 @@ class FakeLatLngBounds {
 
 const createMockMap = () => ({
   getBounds: vi.fn(() => new FakeLatLngBounds(new FakeLatLng(37.0, 126.0), new FakeLatLng(38.0, 128.0))),
+  getZoom: vi.fn(() => 15),
 } as unknown as naver.maps.Map);
 
 const createFakeMaps = () =>

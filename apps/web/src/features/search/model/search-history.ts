@@ -52,10 +52,10 @@ const keywordHistoryKey = (query: string): string =>
   capSearchQueryDraft(query).toLowerCase();
 
 export const getSearchHistoryEntryId = (
-  input: Pick<SearchHistoryInput, "kind"> &
-    Partial<SearchHistoryKeywordEntry> &
-    Partial<SearchHistoryLockerEntry> &
-    Partial<SearchHistoryPlaceEntry>,
+  input:
+    | { kind: "keyword"; query?: string }
+    | { kind: "locker"; lockerId?: number }
+    | { kind: "place"; placeId?: number },
 ): string => {
   switch (input.kind) {
     case "keyword":
