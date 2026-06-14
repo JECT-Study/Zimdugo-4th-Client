@@ -1487,10 +1487,18 @@ function IndexPage() {
     mapDetailBack,
     selectedMapDetailPinCount: selectedMapDetailPins.length,
   });
-  const selectedPinId = useMemo(
-    () => (selectedMapPin ? getPinId(selectedMapPin) : null),
-    [selectedMapPin],
-  );
+  const selectedPinId = useMemo(() => {
+    if (selectedMapPin) {
+      return getPinId(selectedMapPin);
+    }
+    if (activeLockerId != null) {
+      return `LOCKER-${activeLockerId}`;
+    }
+    if (openLockerId != null) {
+      return `LOCKER-${openLockerId}`;
+    }
+    return null;
+  }, [selectedMapPin, activeLockerId, openLockerId]);
   const showPlaceSheetBack =
     context === "map" || (context === "search" && listKind === "place");
   const listHeaderLeadingPress = showPlaceSheetBack

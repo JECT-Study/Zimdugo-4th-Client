@@ -177,10 +177,18 @@ globalStyle(".map-marker-item", {
   justifyContent: "center",
 });
 
-globalStyle(".map-marker-item.selected", {
+globalStyle(".map-marker-item.selected-active", {
   animation: `${markerScaleUp} 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
 });
 
-globalStyle(".map-marker-item.unselected", {
+globalStyle(".map-marker-item.selected-static", {
+  transform: "scale(1)",
+});
+
+globalStyle(".map-marker-item.unselected-active", {
   animation: `${markerScaleDown} 0.2s ease-out forwards`,
+});
+
+globalStyle(".map-marker-item.normal", {
+  transform: "scale(1)",
 });
