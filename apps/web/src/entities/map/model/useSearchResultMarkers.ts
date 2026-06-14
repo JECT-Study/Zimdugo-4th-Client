@@ -11,6 +11,7 @@ export interface UseSearchResultMarkersOptions {
   maps: typeof naver.maps | null;
   pins: LockerPinItemResponse[];
   enabled?: boolean;
+  selectedPinId?: string | null;
   onSelectLocker?: (
     pinType: "LOCKER" | "PLACE",
     id: number,
@@ -23,6 +24,7 @@ export const useSearchResultMarkers = ({
   maps,
   pins,
   enabled = true,
+  selectedPinId,
   onSelectLocker,
 }: UseSearchResultMarkersOptions) => {
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
@@ -45,11 +47,12 @@ export const useSearchResultMarkers = ({
       map,
       maps,
       lockers: pins,
+      selectedPinId,
       onSelectLocker: (pinType, id, pin) =>
         onSelectLockerRef.current?.(pinType, id, pin),
       registry: markerRegistryRef.current,
     });
-  }, [enabled, map, maps, pins]);
+  }, [enabled, map, maps, pins, selectedPinId]);
 
   useEffect(() => {
     return () => {
