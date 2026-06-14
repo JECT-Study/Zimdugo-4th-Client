@@ -1,4 +1,6 @@
 import { createApiClient, createApiMethods } from "@repo/libs/axios";
+import type { InternalAxiosRequestConfig } from "axios";
+import { resolveAcceptLanguageHeader } from "#/shared/i18n/api-locale";
 import { useAuthStore } from "#/shared/store/authStore";
 import { authService } from "#/features/auth/sign-in/api/authService";
 
@@ -7,7 +9,34 @@ export const apiClient = createApiClient(
 );
 apiClient.defaults.withCredentials = true;
 
+const getRequestUrl = (config: InternalAxiosRequestConfig): string => {
+  const requestPath = config.url ?? "";
+  if (/^https?:\/\//i.test(requestPath)) {
+    return requestPath;
+  }
+
+  const baseURL = config.baseURL ?? "";
+  if (!baseURL) {
+    return requestPath;
+  }
+
+  if (baseURL.endsWith("/") && requestPath.startsWith("/")) {
+    return `${baseURL.slice(0, -1)}${requestPath}`;
+  }
+
+  if (!baseURL.endsWith("/") && !requestPath.startsWith("/")) {
+    return `${baseURL}/${requestPath}`;
+  }
+
+  return `${baseURL}${requestPath}`;
+};
+
 apiClient.interceptors.request.use((config) => {
+  const acceptLanguage = resolveAcceptLanguageHeader(getRequestUrl(config));
+  if (acceptLanguage) {
+    config.headers.set("Accept-Language", acceptLanguage);
+  }
+
   const token = useAuthStore.getState().getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
