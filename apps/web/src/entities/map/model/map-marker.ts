@@ -67,7 +67,7 @@ export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
 
 const lockerIconCache = new WeakMap<
   typeof naver.maps,
-  Map<string, any>
+  Map<string, naver.maps.HtmlIcon>
 >();
 
 const createMarkerIconOptions = (
@@ -80,12 +80,12 @@ const createMarkerIconOptions = (
     | "unselected-active"
     | "normal",
   zoomLevel?: number,
-): any => {
+): naver.maps.HtmlIcon => {
   const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}`;
 
   let innerMap = lockerIconCache.get(maps);
   if (!innerMap) {
-    innerMap = new Map<string, any>();
+    innerMap = new Map<string, naver.maps.HtmlIcon>();
     lockerIconCache.set(maps, innerMap);
   }
 
