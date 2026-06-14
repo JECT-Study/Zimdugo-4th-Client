@@ -10,6 +10,7 @@ export interface FocusNaverMapOptions {
   coordinates: MapCoordinates | null | undefined;
   maps?: typeof naver.maps | null;
   bottomInsetPx?: number;
+  zoom?: number;
 }
 
 export const DEFAULT_CURRENT_LOCATION_OPTIONS: PositionOptions = {
@@ -97,6 +98,7 @@ export const focusNaverMapOnCoordinates = ({
   coordinates,
   maps = typeof window !== "undefined" ? window.naver?.maps : null,
   bottomInsetPx = 0,
+  zoom,
 }: FocusNaverMapOptions) => {
   if (!map || !coordinates || !maps) {
     return false;
@@ -109,15 +111,37 @@ export const focusNaverMapOnCoordinates = ({
   const viewportHeight = size?.height ?? 0;
   const latitudeSpan =
     ne && sw ? Math.abs(ne.lat() - sw.lat()) : 0;
-  const verticalOffsetRatio =
-    bottomInsetPx > 0 && viewportHeight > 0
-      ? Math.min(bottomInsetPx / 2 / viewportHeight, 0.35)
-      : 0;
-  const adjustedLatitude =
-    latitudeSpan > 0
-      ? coordinates.lat - latitudeSpan * verticalOffsetRatio
-      : coordinates.lat;
 
-  map.panTo(new maps.LatLng(adjustedLatitude, coordinates.lng));
+  const currentZoom = map.getZoom();
+  let adjustedLatitude = coordinates.lat;
+
+  const isZoomingIn = zoom !== undefined && currentZoom < zoom;
+  const targetZoom = isZoomingIn ? zoom : currentZoom;
+
+  if (latitudeSpan > 0) {
+    let targetSpan = latitudeSpan;
+    if (isZoomingIn) {
+      const zoomDiff = zoom - currentZoom;
+      targetSpan = latitudeSpan / Math.pow(2, zoomDiff);
+    }
+
+    const verticalOffsetRatio =
+      bottomInsetPx > 0 && viewportHeight > 0
+        ? Math.min(bottomInsetPx / 2 / viewportHeight, 0.35)
+        : 0;
+    adjustedLatitude = coordinates.lat - targetSpan * verticalOffsetRatio;
+  }
+
+  const targetLatLng = new maps.LatLng(adjustedLatitude, coordinates.lng);
+
+  if (isZoomingIn) {
+    map.morph(targetLatLng, targetZoom, {
+      duration: 800,
+      easing: "easeOutCubic",
+    });
+  } else {
+    map.panTo(targetLatLng);
+  }
+
   return true;
 };
