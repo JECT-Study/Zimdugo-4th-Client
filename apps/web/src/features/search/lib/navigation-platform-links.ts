@@ -57,6 +57,7 @@ export const resolveNavigationOrigin = (
 export type ResolveNavigationOriginResult = {
   origin: NavigationPoint;
   permissionDenied: boolean;
+  usedCurrentLocation: boolean;
 };
 
 const isGeolocationPermissionDenied = (error: unknown): boolean => {
@@ -91,6 +92,7 @@ export const resolveNavigationOriginWithPermissionRequest = async (
     return {
       origin: resolveNavigationOrigin(options.knownLocation),
       permissionDenied: false,
+      usedCurrentLocation: true,
     };
   }
 
@@ -104,11 +106,13 @@ export const resolveNavigationOriginWithPermissionRequest = async (
     return {
       origin: resolveNavigationOrigin(coordinates),
       permissionDenied: false,
+      usedCurrentLocation: true,
     };
   } catch (error) {
     return {
       origin: getDefaultNavigationOrigin(),
       permissionDenied: isGeolocationPermissionDenied(error),
+      usedCurrentLocation: false,
     };
   }
 };

@@ -1149,7 +1149,7 @@ function IndexPage() {
 
   const handleNavigationOriginResolved = useCallback(
     (result: ResolveNavigationOriginResult) => {
-      if (result.origin.label === "현재 위치") {
+      if (result.usedCurrentLocation) {
         startTracking();
       }
     },
@@ -1602,7 +1602,7 @@ function IndexPage() {
             type="button"
             className={locationButton}
             onClick={handleMyLocation}
-            aria-label="내 위치로 이동"
+            aria-label={m.home_my_location_aria()}
           >
             <IconCircleboxCrosshair48
               state={
