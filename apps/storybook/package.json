@@ -15,11 +15,11 @@
   },
   "devDependencies": {
     "@inlang/paraglide-js": "2.13.1",
-    "@storybook/react-vite": "^10.1.10",
+    "@storybook/react-vite": "^10.4.4",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vanilla-extract/vite-plugin": "^5.1.4",
-    "storybook": "^10.1.10",
+    "storybook": "^10.4.4",
     "typescript": "^5.7.2",
     "vite": "^7.1.7"
   }
