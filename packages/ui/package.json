@@ -100,7 +100,7 @@
     "format": "biome format"
   },
   "dependencies": {
-    "@storybook/react": "^10.3.3",
+    "@storybook/react": "^10.4.4",
     "@vanilla-extract/css": "^1.18.0",
     "@vanilla-extract/recipes": "^0.5.7",
     "@vanilla-extract/sprinkles": "^1.6.5",

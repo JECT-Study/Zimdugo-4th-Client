@@ -3,6 +3,7 @@
 import { setLanguageTag } from "@repo/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SearchFilterBottomSheet } from "./SearchFilterBottomSheet";
 
 afterEach(cleanup);
@@ -12,7 +13,19 @@ describe("SearchFilterBottomSheet", () => {
     setLanguageTag("ko");
     const handleApply = vi.fn();
 
-    render(<SearchFilterBottomSheet onApply={handleApply} />);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SearchFilterBottomSheet onApply={handleApply} />
+      </QueryClientProvider>,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "실내" }));
     fireEvent.click(screen.getByRole("button", { name: "실외" }));
@@ -33,17 +46,27 @@ describe("SearchFilterBottomSheet", () => {
   it("restores previously applied filter values when reopened", () => {
     setLanguageTag("ko");
 
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
     render(
-      <SearchFilterBottomSheet
-        initialFilters={{
-          regionActive: false,
-          sizeActive: false,
-          placeTypeActive: true,
-          indoorOutdoorState: ["indoor"],
-          placeTypeState: ["museum"],
-          selectedSizes: [],
-        }}
-      />,
+      <QueryClientProvider client={queryClient}>
+        <SearchFilterBottomSheet
+          initialFilters={{
+            regionActive: false,
+            sizeActive: false,
+            placeTypeActive: true,
+            indoorOutdoorState: ["indoor"],
+            placeTypeState: ["museum"],
+            selectedSizes: [],
+          }}
+        />
+      </QueryClientProvider>,
     );
 
     expect(

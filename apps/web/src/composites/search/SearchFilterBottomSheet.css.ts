@@ -75,3 +75,23 @@ export const resetButton = style({
 export const applyButton = style({
   flex: 1,
 });
+
+export const sizeGuideBox = style({
+  fontSize: vars.typography.fontSize[12],
+  color: vars.color.palette.gray[600],
+  lineHeight: "1.6",
+  backgroundColor: vars.color.palette.gray[100],
+  padding: vars.spacing[12],
+  borderRadius: vars.radius[8],
+  marginTop: vars.spacing[12],
+});
+
+export const sizeGuideList = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[4],
+  margin: 0,
+  padding: 0,
+  listStyle: "none",
+});
+

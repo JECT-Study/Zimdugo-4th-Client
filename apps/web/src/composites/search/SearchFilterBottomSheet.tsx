@@ -16,6 +16,8 @@ import {
   sectionGap24,
   sheetColumn,
   sizeCardSlot,
+  sizeGuideBox,
+  sizeGuideList,
 } from "./SearchFilterBottomSheet.css.ts";
 
 export interface SearchFilterAppliedState {
@@ -182,6 +184,19 @@ export function SearchFilterBottomSheet({
                 value={selectedSizes}
                 onChange={setSelectedSizes}
               />
+            </div>
+            <div className={sizeGuideBox}>
+              <ul className={sizeGuideList}>
+                <li>
+                  <b>{m.report_size_s()}</b>: {m.report_size_guide_s()}
+                </li>
+                <li>
+                  <b>{m.report_size_m()}</b>: {m.report_size_guide_m()}
+                </li>
+                <li>
+                  <b>{m.report_size_l()}</b>: {m.report_size_guide_l()}
+                </li>
+              </ul>
             </div>
           </div>
 
