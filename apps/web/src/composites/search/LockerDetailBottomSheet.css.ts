@@ -406,8 +406,6 @@ export const fullIconActionButton = style({
   width: "64px",
   height: "40px",
   padding: 0,
-  paddingLeft: 0,
-  paddingRight: 0,
   flexShrink: 0,
 });
 
