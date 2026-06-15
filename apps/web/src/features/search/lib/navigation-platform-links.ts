@@ -2,7 +2,7 @@ import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomShe
 import { m } from "@repo/i18n";
 import { getCurrentMapCoordinates } from "#/entities/map/model/current-location";
 
-export type NavigationPlatform = "kakao" | "google";
+export type NavigationPlatform = "naver" | "google";
 
 export type NavigationPoint = {
   lat: number;
@@ -127,26 +127,43 @@ export const getLockerNavigationDestination = (
   return {
     lat: locker.latitude,
     lng: locker.longitude,
-    label: locker.address?.trim() || locker.title,
+    label: locker.title?.trim() || locker.address,
   };
 };
 
-const formatNavigationCoordinate = (value: number): string =>
-  value.toFixed(5);
+const NAVER_MAP_HALF_EARTH = 20037508.34;
 
-const buildKakaoRoutePoint = (point: NavigationPoint): string =>
+/** WGS84 경위도를 네이버 길찾기 URL용 EPSG:3857 좌표 문자열로 변환한다. */
+export const encodeNaverCoordinate = (coordinate: number): string => {
+  const projected =
+    Math.abs(coordinate) > 90
+      ? (coordinate * NAVER_MAP_HALF_EARTH) / 180
+      : (Math.log(Math.tan(((90 + coordinate) * Math.PI) / 360)) *
+          NAVER_MAP_HALF_EARTH) /
+        Math.PI;
+
+  return String(projected);
+};
+
+const buildNaverRoutePath = (point: NavigationPoint): string =>
   [
+    encodeNaverCoordinate(point.lng),
+    encodeNaverCoordinate(point.lat),
     encodeURIComponent(point.label),
-    formatNavigationCoordinate(point.lat),
-    formatNavigationCoordinate(point.lng),
+    "",
+    "ADDRESS_POI",
   ].join(",");
 
-/** 카카오맵 웹 길찾기 — 모바일·데스크톱 공통 */
-const buildKakaoWebLinkUrl = (
+/** 네이버맵 웹 길찾기 — 모바일·데스크톱 공통 */
+const buildNaverWebDirectionsUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
-): string =>
-  `https://map.kakao.com/link/from/${buildKakaoRoutePoint(origin)}/to/${buildKakaoRoutePoint(destination)}`;
+): string => {
+  const startPath = buildNaverRoutePath(origin);
+  const destinationPath = buildNaverRoutePath(destination);
+
+  return `https://map.naver.com/p/directions/${startPath}/${destinationPath}/-`;
+};
 
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
@@ -179,9 +196,9 @@ export const getNavigationPlatformLinks = (
 
   const { navigationOrigin } = options;
 
-  if (platform === "kakao") {
+  if (platform === "naver") {
     return {
-      webUrl: buildKakaoWebLinkUrl(navigationOrigin, destination),
+      webUrl: buildNaverWebDirectionsUrl(navigationOrigin, destination),
     };
   }
 

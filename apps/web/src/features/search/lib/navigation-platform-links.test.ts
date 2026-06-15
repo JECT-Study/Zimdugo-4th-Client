@@ -165,25 +165,26 @@ describe("navigation-platform-links", () => {
     ).toBe(links?.webUrl ?? null);
   });
 
-  it("카카오맵은 map.kakao.com/link 웹 길찾기 URL을 만든다", () => {
+  it("네이버지도는 map.naver.com/p/directions 웹 길찾기 URL을 만든다", () => {
     const links = getNavigationPlatformLinks(
-      "kakao",
+      "naver",
       LOCKER_WITH_COORDS,
       linkOptions(),
     );
 
-    expect(links?.webUrl).toContain("map.kakao.com/link/from/");
-    expect(links?.webUrl).toContain("/to/");
-    expect(links?.webUrl).toContain("37.50120");
-    expect(links?.webUrl).toContain("127.03960");
-    expect(links?.webUrl).toContain("37.55590");
-    expect(links?.webUrl).toContain("126.93640");
+    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
+    expect(links?.webUrl).toContain("ADDRESS_POI");
+    expect(links?.webUrl).toContain(encodeURIComponent("현재 위치"));
+    expect(links?.webUrl).toContain(
+      encodeURIComponent(LOCKER_WITH_COORDS.title),
+    );
+    expect(links?.webUrl).not.toContain("/walk");
   });
 
   it("길찾기 열기는 모바일·데스크톱 모두 웹 URL을 사용한다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks(
-      "kakao",
+      "naver",
       LOCKER_WITH_COORDS,
       linkOptions(),
     );

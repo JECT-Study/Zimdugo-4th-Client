@@ -37,7 +37,7 @@ describe("NavigationPlatformPopup", () => {
     vi.restoreAllMocks();
   });
 
-  it("카카오맵·구글맵스 길찾기 선택지를 렌더링한다", () => {
+  it("네이버지도·구글맵스 길찾기 선택지를 렌더링한다", () => {
     render(
       <NavigationPlatformPopup
         isOpen
@@ -48,29 +48,47 @@ describe("NavigationPlatformPopup", () => {
 
     expect(screen.getByText("어떤 지도로 길찾기 할까요?")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "카카오맵으로 길찾기" }),
+      screen.getByRole("button", { name: "네이버지도로 길찾기" }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "구글맵스로 길찾기" }),
     ).toBeTruthy();
+
+    const naverMapButton = screen.getByRole("button", {
+      name: "네이버지도로 길찾기",
+    });
+    const naverMapIcon = naverMapButton.querySelector("img");
+
+    expect(naverMapIcon?.getAttribute("src")).toBe(
+      "/icons/navigation/naver-map.jpg",
+    );
+
+    const googleMapsButton = screen.getByRole("button", {
+      name: "구글맵스로 길찾기",
+    });
+    const googleMapsIcon = googleMapsButton.querySelector("img");
+
+    expect(googleMapsIcon?.getAttribute("src")).toBe(
+      "/icons/navigation/google-maps.jpg",
+    );
   });
 
   it("출발지·도착지 좌표로 길찾기 URL을 만든다", () => {
     expect(
-      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("map.kakao.com/link/from/");
+    ).toContain("map.naver.com/p/directions/");
     expect(
-      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("/to/");
+    ).toContain("ADDRESS_POI");
     expect(
-      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).not.toContain("/by/");
+    ).not.toContain("/walk");
     expect(
       getNavigationPlatformUrl("google", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
@@ -82,9 +100,7 @@ describe("NavigationPlatformPopup", () => {
           navigationOrigin: NAVIGATION_ORIGIN,
         }) ?? "",
       ),
-    ).toContain(
-      `origin=${NAVIGATION_ORIGIN.lat},${NAVIGATION_ORIGIN.lng}`,
-    );
+    ).toContain(`origin=${NAVIGATION_ORIGIN.lat},${NAVIGATION_ORIGIN.lng}`);
     expect(
       decodeURIComponent(
         getNavigationPlatformUrl("google", LOCKER_DETAIL, {
