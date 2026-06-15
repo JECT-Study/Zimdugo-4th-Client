@@ -23,10 +23,10 @@ export const normalizeLocale = (value?: string | null): AppLocale | null => {
   if (lower.startsWith("en")) return "en";
   if (lower.startsWith("ja")) return "ja";
   if (
-    lower === "zh-tw" ||
-    lower === "zh-hant" ||
-    lower === "zh-hk" ||
-    lower === "zh-mo"
+    lower.startsWith("zh-tw") ||
+    lower.startsWith("zh-hant") ||
+    lower.startsWith("zh-hk") ||
+    lower.startsWith("zh-mo")
   ) {
     return "zh-TW";
   }

@@ -17,6 +17,8 @@ describe("normalizeLocale", () => {
     expect(normalizeLocale("zh")).toBe("zh");
     expect(normalizeLocale("zh-TW")).toBe("zh-TW");
     expect(normalizeLocale("zh-Hant")).toBe("zh-TW");
+    expect(normalizeLocale("zh-Hant-TW")).toBe("zh-TW");
+    expect(normalizeLocale("zh-Hant-HK")).toBe("zh-TW");
     expect(normalizeLocale("zh-HK")).toBe("zh-TW");
   });
 });
