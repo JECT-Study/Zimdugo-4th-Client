@@ -102,11 +102,10 @@ export function SocialLoginStack({
   applyFallbackStyle = false,
   onLogin,
 }: SocialLoginStackProps) {
-  const appLanguage = normalizeLocale(languageTag()) ?? BASE_LOCALE;
-  const showEnglishSub =
-    showEnglishLabel ??
-    resolveEnglishSubVisibility({ appLanguage });
   const search = useSearch({ strict: false }) as Record<string, unknown>;
+  const appLanguage = normalizeLocale(languageTag()) ?? BASE_LOCALE;
+  const isEnglishSubVisible =
+    showEnglishLabel ?? resolveEnglishSubVisibility({ appLanguage });
   const returnPath = (search.returnPath as string) || "/";
 
   const getHref = (provider: LoginProvider) => {
@@ -179,7 +178,7 @@ export function SocialLoginStack({
                   }
                 >
                   <span className={labelTitle}>{title()}</span>
-                  {showEnglishSub ? (
+                  {isEnglishSubVisible ? (
                     <span className={labelEn}>{sub()}</span>
                   ) : null}
                 </span>
