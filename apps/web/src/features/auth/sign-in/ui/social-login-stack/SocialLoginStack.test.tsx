@@ -12,6 +12,7 @@ vi.mock("@tanstack/react-router", () => ({
 describe("SocialLoginStack", () => {
   afterEach(() => {
     cleanup();
+    setLanguageTag("ko");
   });
 
   beforeEach(() => {
