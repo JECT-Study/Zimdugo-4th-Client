@@ -154,7 +154,14 @@ const buildNaverRoutePath = (point: NavigationPoint): string =>
     "ADDRESS_POI",
   ].join(",");
 
-/** 네이버맵 웹 길찾기 — 모바일·데스크톱 공통 */
+/**
+ * 네이버맵 웹 길찾기 URL을 생성한다.
+ *
+ * NOTE: 아래 URL 형식은 네이버에서 공식 문서로 제공하는 URL Scheme(`nmap://` 등)이 아니라,
+ * 웹 지도 주소창에서 관찰된 비공식 패턴을 따른다. 네이버 측 UI/URL 구조 변경 시
+ * 동작이 깨지거나 추후 수정이 필요할 수 있다. PC 환경에서는 특히 불안정하거나
+ * 기대한 길찾기 화면이 열리지 않는 경우가 있다.
+ */
 const buildNaverWebDirectionsUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
