@@ -370,7 +370,7 @@ function IndexPage() {
     useMapViewportStore.getState().saveFromMap(mapInstanceRef.current);
 
     setIsRefreshing(true);
-    setRefreshCooldownRemaining(15);
+    setRefreshCooldownRemaining(5);
     setIsRefreshSpinning(true);
     setIsRefreshVisualLoading(true);
 

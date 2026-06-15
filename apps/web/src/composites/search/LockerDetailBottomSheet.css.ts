@@ -214,6 +214,7 @@ export const iconActionButton = style({
   width: "52px",
   height: "32px",
   padding: 0,
+  flexShrink: 0,
   border: 0,
   borderRadius: vars.radius[8],
   backgroundColor: vars.color.palette.gray[200],
@@ -402,6 +403,8 @@ export const fullActionRow = style({
 export const fullIconActionButton = style({
   width: "64px",
   height: "40px",
+  padding: 0,
+  flexShrink: 0,
 });
 
 export const fullPrimaryActionButton = style({
