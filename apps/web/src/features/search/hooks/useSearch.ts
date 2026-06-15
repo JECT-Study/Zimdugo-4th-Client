@@ -5,12 +5,12 @@ import {
   toSearchAutocompleteItems,
 } from "#/shared/api/locker-adapters";
 import {
-  getLockerKeyword,
-  getLockerSuggest,
-  getPlaceLockers,
   type GetLockerKeywordParams,
   type GetLockerSuggestParams,
   type GetPlaceLockersParams,
+  getLockerKeyword,
+  getLockerSuggest,
+  getPlaceLockers,
 } from "#/shared/api/lockers";
 import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";
@@ -53,6 +53,7 @@ export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
       );
     },
     enabled: !!params?.keyword?.trim(),
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -80,6 +81,7 @@ export function usePlaceLockers(params: GetPlaceLockersParams | null) {
       );
     },
     enabled: params != null,
+    placeholderData: (previousData) => previousData,
   });
 }
 

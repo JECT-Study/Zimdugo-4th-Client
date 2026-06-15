@@ -5,8 +5,18 @@ declare namespace naver.maps {
     setCenter(latlng: LatLng | LatLngLiteral): void;
     getCenter(): LatLng;
     panTo(latlng: LatLng | LatLngLiteral): void;
+    morph(
+      target: LatLng | LatLngLiteral,
+      zoom?: number,
+      options?: {
+        duration?: number;
+        easing?: string;
+      },
+    ): void;
     getBounds(): LatLngBounds;
     getZoom(): number;
+    setZoom(zoom: number, effect?: boolean): void;
+    getProjection(): MapSystemProjection;
     getSize?(): Size;
     refresh(noEffect?: boolean): void;
     setSize(size: Size): void;
@@ -47,6 +57,10 @@ declare namespace naver.maps {
     getNE(): LatLng;
     getSW(): LatLng;
     hasLatLng(latlng: LatLng | LatLngLiteral): boolean;
+  }
+  interface MapSystemProjection {
+    fromCoordToOffset(latlng: LatLng | LatLngLiteral): Point;
+    fromOffsetToCoord(offset: Point): LatLng;
   }
   interface HtmlIcon {
     content: string | HTMLElement;

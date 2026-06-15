@@ -51,6 +51,7 @@ interface SyncLockerMarkersOptions {
     pin: LockerPinItemResponse,
   ) => void;
   registry?: LockerMarkerRegistry;
+  spreadCenter?: { lat: number; lng: number } | null;
 }
 
 interface LockerMarkerEntry {
@@ -80,8 +81,13 @@ const createMarkerIconOptions = (
     | "unselected-active"
     | "normal",
   zoomLevel?: number,
+  spreadX?: number,
+  spreadY?: number,
 ): naver.maps.HtmlIcon => {
-  const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}`;
+  const hasSpread = spreadX != null && spreadY != null && (spreadX !== 0 || spreadY !== 0);
+  const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}${
+    hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
+  }`;
 
   let innerMap = lockerIconCache.get(maps);
   if (!innerMap) {
@@ -99,8 +105,13 @@ const createMarkerIconOptions = (
       : 24;
   const radius = size / 2;
 
+  const spreadClass = hasSpread ? "spread" : "";
+  const inlineStyle = hasSpread
+    ? `style="width: ${size}px; height: ${size}px; --spread-x: ${spreadX}px; --spread-y: ${spreadY}px;"`
+    : `style="width: ${size}px; height: ${size}px;"`;
+
   const options = {
-    content: `<div class="map-marker-item ${animationState}" style="width: ${size}px; height: ${size}px;">
+    content: `<div class="map-marker-item ${animationState} ${spreadClass}" ${inlineStyle}>
       ${createLockerMarkerIcon(pin, isSelected)}
     </div>`,
     size: new maps.Size(size, size),
@@ -131,6 +142,8 @@ const createLockerMarker = ({
   isSelected,
   animationState,
   zoomLevel,
+  spreadX,
+  spreadY,
 }: {
   map: naver.maps.Map;
   maps: typeof naver.maps;
@@ -142,13 +155,23 @@ const createLockerMarker = ({
     | "unselected-active"
     | "normal";
   zoomLevel: number;
+  spreadX?: number;
+  spreadY?: number;
 }) => {
   const marker = new maps.Marker({
     map,
     clickable: true,
     title: pin.pinType === "LOCKER" ? "보관함" : "보관함 모음",
     position: new maps.LatLng(pin.latitude, pin.longitude),
-    icon: createMarkerIconOptions(pin, maps, isSelected, animationState, zoomLevel),
+    icon: createMarkerIconOptions(
+      pin,
+      maps,
+      isSelected,
+      animationState,
+      zoomLevel,
+      spreadX,
+      spreadY,
+    ),
   });
   return marker;
 };
@@ -201,6 +224,7 @@ export const syncLockerMarkers = ({
   selectedPinId,
   onSelectLocker,
   registry = new Map(),
+  spreadCenter,
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
 
@@ -221,6 +245,14 @@ export const syncLockerMarkers = ({
     );
   }
 
+  const proj = map.getProjection ? map.getProjection() : null;
+  let centerPoint: naver.maps.Point | null = null;
+  if (spreadCenter && proj) {
+    centerPoint = proj.fromCoordToOffset(
+      new maps.LatLng(spreadCenter.lat, spreadCenter.lng),
+    );
+  }
+
   for (const [pinId, entry] of registry) {
     if (!nextPinIds.has(pinId)) {
       clearMarkerEntry(entry, maps);
@@ -237,6 +269,14 @@ export const syncLockerMarkers = ({
     const position = new maps.LatLng(pin.latitude, pin.longitude);
     const isVisible = expandedBounds?.hasLatLng(position) ?? true;
     const zoomLevel = map.getZoom?.() ?? 0;
+
+    let spreadX = 0;
+    let spreadY = 0;
+    if (centerPoint && proj) {
+      const pinPoint = proj.fromCoordToOffset(position);
+      spreadX = Math.round(centerPoint.x - pinPoint.x);
+      spreadY = Math.round(centerPoint.y - pinPoint.y);
+    }
 
     const iconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
 
@@ -274,7 +314,15 @@ export const syncLockerMarkers = ({
       const nextIconSignature = `${iconSignature}:${animationState}`;
       if (existingEntry.iconSignature !== nextIconSignature) {
         existingEntry.marker.setIcon?.(
-          createMarkerIconOptions(pin, maps, isSelected, animationState, zoomLevel),
+          createMarkerIconOptions(
+            pin,
+            maps,
+            isSelected,
+            animationState,
+            zoomLevel,
+            0,
+            0,
+          ),
         );
         existingEntry.iconSignature = nextIconSignature;
       }
@@ -295,7 +343,16 @@ export const syncLockerMarkers = ({
     }
 
     const animationState = isSelected ? "selected-active" : "normal";
-    const marker = createLockerMarker({ map, maps, pin, isSelected, animationState, zoomLevel });
+    const marker = createLockerMarker({
+      map,
+      maps,
+      pin,
+      isSelected,
+      animationState,
+      zoomLevel,
+      spreadX,
+      spreadY,
+    });
     marker.setVisible(isVisible);
 
     const entry: LockerMarkerEntry = {
