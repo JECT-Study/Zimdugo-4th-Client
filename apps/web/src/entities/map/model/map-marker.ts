@@ -244,10 +244,10 @@ export const syncLockerMarkers = ({
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
 
-  // 1. 동일 좌표 그룹화 (위도/경도 소수점 5자리 기준)
+  // 1. 동일 좌표 그룹화 (위도/경도 소수점 4자리 기준)
   const coordGroups = new Map<string, LockerPinItemResponse[]>();
   for (const pin of lockers) {
-    const key = `${pin.latitude.toFixed(5)},${pin.longitude.toFixed(5)}`;
+    const key = `${pin.latitude.toFixed(4)},${pin.longitude.toFixed(4)}`;
     let list = coordGroups.get(key);
     if (!list) {
       list = [];
@@ -307,7 +307,7 @@ export const syncLockerMarkers = ({
     }
 
     // 2. 오프셋 계산 (동일 좌표 그룹이 2개 이상일 때)
-    const coordKey = `${pin.latitude.toFixed(5)},${pin.longitude.toFixed(5)}`;
+    const coordKey = `${pin.latitude.toFixed(4)},${pin.longitude.toFixed(4)}`;
     const groupList = coordGroups.get(coordKey) ?? [];
     const groupCount = groupList.length;
 
