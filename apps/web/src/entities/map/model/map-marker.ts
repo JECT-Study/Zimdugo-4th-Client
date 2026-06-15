@@ -307,7 +307,7 @@ export const syncLockerMarkers = ({
     }
 
     // 2. 오프셋 계산 (동일 좌표 그룹이 2개 이상일 때)
-    const coordKey = `${pin.latitude.toFixed(5)},${pin.longitude.toFixed(5)}`;
+    const coordKey = `${pin.latitude.toFixed(4)},${pin.longitude.toFixed(4)}`;
     const groupList = coordGroups.get(coordKey) ?? [];
     const groupCount = groupList.length;
 
