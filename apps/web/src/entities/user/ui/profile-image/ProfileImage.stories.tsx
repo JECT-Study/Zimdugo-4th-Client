@@ -11,7 +11,7 @@ const storyQueryClient = new QueryClient({
 });
 
 const meta = {
-  title: "Entities/User/ProfileImage",
+  title: "Product/My/Profile Image",
   component: ProfileImage,
   parameters: {
     layout: "centered",

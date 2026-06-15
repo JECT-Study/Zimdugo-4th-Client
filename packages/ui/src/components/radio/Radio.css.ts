@@ -214,7 +214,6 @@ export const dot = recipe({
 
 export const text = recipe({
   base: {
-    fontFamily: "Pretendard, -apple-system, sans-serif",
     fontSize: vars.typography.fontSize[14],
     fontWeight: vars.typography.fontWeight.SemiBold, // 600
     lineHeight: "120%", // 1.2

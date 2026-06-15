@@ -4,7 +4,7 @@ import { vars } from "../../vars.css.ts";
 import { Checkbox } from "./Checkbox.tsx";
 
 const meta = {
-  title: "Shared/Controls/Checkbox",
+  title: "Design System/Components/Controls/Checkbox",
   component: Checkbox,
   parameters: { layout: "centered" },
   argTypes: {

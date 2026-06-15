@@ -4,7 +4,7 @@ import { vars } from "../../vars.css.ts";
 import { Toggle } from "./Toggle.tsx";
 
 const meta = {
-  title: "Shared/Layout/Toggle",
+  title: "Design System/Components/Layout/Toggle",
   component: Toggle,
   parameters: { layout: "centered" },
 } satisfies Meta<typeof Toggle>;

@@ -92,7 +92,6 @@ export const iconWrapper = style({
 });
 
 export const title = style({
-  fontFamily: "Pretendard",
   fontSize: vars.typography.fontSize[18],
   fontWeight: 600,
   lineHeight: "120%",
@@ -104,7 +103,6 @@ export const title = style({
 });
 
 export const helper = style({
-  fontFamily: "Pretendard",
   fontSize: "10px",
   fontWeight: 500,
   color: vars.color.text.surface,
@@ -121,7 +119,6 @@ export const subActionText = style({
   height: "14px",
   justifyContent: "center",
   alignItems: "center",
-  fontFamily: "Pretendard",
   fontSize: "12px",
   fontWeight: 500,
   color: vars.color.text.disable,

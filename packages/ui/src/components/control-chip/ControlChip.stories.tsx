@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { ControlChip } from "./ControlChip.tsx";
 
 const meta = {
-  title: "Shared/Controls/ControlChip",
+  title: "Design System/Components/Controls/ControlChip",
   component: ControlChip,
   parameters: { layout: "centered" },
   argTypes: {

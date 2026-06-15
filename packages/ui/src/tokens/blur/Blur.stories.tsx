@@ -3,7 +3,7 @@ import { blur } from "./blur.css.ts";
 import * as styles from "./Stories.css.ts";
 
 const meta = {
-  title: "Foundation/Blur",
+  title: "Design System/Tokens/Blur",
   parameters: { layout: "fullscreen" },
 } satisfies Meta;
 

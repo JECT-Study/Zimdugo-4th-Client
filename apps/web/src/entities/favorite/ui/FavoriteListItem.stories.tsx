@@ -1,8 +1,8 @@
-﻿import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { FavoriteListItem } from "./FavoriteListItem.tsx";
 
 const meta = {
-  title: "Entities/Favorite/FavoriteListItem",
+  title: "Product/My/Favorite List Item",
   component: FavoriteListItem,
   parameters: {
     layout: "centered",

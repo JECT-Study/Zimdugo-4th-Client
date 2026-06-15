@@ -26,7 +26,7 @@ const LOCKER_AUTOCOMPLETE_ITEM: SearchAutocompleteItemData = {
 };
 
 const meta = {
-  title: "Entities/Search/SearchAutocompleteItem",
+  title: "Product/Search/Autocomplete Item",
   component: SearchAutocompleteItem,
   parameters: {
     layout: "centered",

@@ -3,7 +3,7 @@ import * as styles from "./Stories.css.ts";
 import { shadow } from "./shadow.css.ts";
 
 const meta = {
-  title: "Foundation/Shadow",
+  title: "Design System/Tokens/Shadow",
   parameters: { layout: "fullscreen" },
 } satisfies Meta;
 

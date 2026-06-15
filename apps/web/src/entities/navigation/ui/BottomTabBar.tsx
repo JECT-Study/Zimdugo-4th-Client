@@ -204,6 +204,15 @@ interface BottomTabBarLinkContentProps extends BottomTabBarLinkProps {
   isActive: boolean;
 }
 
+function shouldUseNativeLink(to: string) {
+  return (
+    to.startsWith("#") ||
+    to.startsWith("http://") ||
+    to.startsWith("https://") ||
+    to.startsWith("//")
+  );
+}
+
 function BottomTabBarLinkContent({
   to,
   tabKey,
@@ -211,12 +220,8 @@ function BottomTabBarLinkContent({
   isActive,
   applyFallbackStyle = false,
 }: BottomTabBarLinkContentProps) {
-  return (
-    <Link
-      to={to}
-      className={tabItem}
-      style={applyFallbackStyle ? bottomTabItemFallbackStyle : undefined}
-    >
+  const content = (
+    <>
       <div
         className={iconWrapper}
         style={applyFallbackStyle ? iconWrapperFallbackStyle : undefined}
@@ -229,6 +234,33 @@ function BottomTabBarLinkContent({
       >
         {label}
       </span>
+    </>
+  );
+
+  if (shouldUseNativeLink(to)) {
+    return (
+      <a
+        href={to}
+        className={tabItem}
+        style={applyFallbackStyle ? bottomTabItemFallbackStyle : undefined}
+        onClick={(event) => {
+          if (to === "#") {
+            event.preventDefault();
+          }
+        }}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      to={to}
+      className={tabItem}
+      style={applyFallbackStyle ? bottomTabItemFallbackStyle : undefined}
+    >
+      {content}
     </Link>
   );
 }

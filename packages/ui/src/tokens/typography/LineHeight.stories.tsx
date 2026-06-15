@@ -3,7 +3,7 @@ import * as styles from "./Stories.css.ts";
 import { typography } from "./typography.css.ts";
 
 const meta = {
-  title: "Foundation/Typography",
+  title: "Design System/Tokens/Typography",
   parameters: { layout: "fullscreen" },
 } satisfies Meta;
 

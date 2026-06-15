@@ -3,7 +3,7 @@ import { radius } from "./radius.css.ts";
 import * as styles from "./Stories.css.ts";
 
 const meta = {
-  title: "Foundation/Radius",
+  title: "Design System/Tokens/Radius",
   parameters: { layout: "fullscreen" },
 } satisfies Meta;
 

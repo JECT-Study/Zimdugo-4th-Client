@@ -8,7 +8,7 @@ const items = [
 ];
 
 const meta = {
-  title: "Shared/Layout/Tab",
+  title: "Design System/Components/Layout/Tab",
   component: TabBar,
   parameters: { layout: "centered" },
   args: {

@@ -19,7 +19,7 @@ const PROFILE_IMAGE_URL = `data:image/svg+xml,${encodeURIComponent(`
 `)}`;
 
 const meta = {
-  title: "Pages/MyPage",
+  title: "Product/Pages/My Page",
   component: MyPageView,
   decorators: [
     (Story) => (

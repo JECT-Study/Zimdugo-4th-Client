@@ -28,7 +28,7 @@ const REPORT_DETAIL: MyLockerReportDetail = {
 };
 
 const meta = {
-  title: "Entities/Report/ReportDetailViewerModal",
+  title: "Product/My/Report Detail Modal",
   component: ReportDetailViewerModal,
   parameters: {
     layout: "fullscreen",

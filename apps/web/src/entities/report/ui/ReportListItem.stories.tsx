@@ -14,7 +14,7 @@ const DEFAULT_ARGS = {
 } satisfies ReportListItemProps;
 
 const meta = {
-  title: "Entities/Report/ReportListItem",
+  title: "Product/My/Report List Item",
   component: ReportListItem,
   parameters: {
     layout: "centered",

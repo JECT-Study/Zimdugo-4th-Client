@@ -36,7 +36,7 @@ const STORY_LIST_ITEMS: SearchResultItem[] = [
 ];
 
 const meta = {
-  title: "Composites/Search/SearchListBottomSheet",
+  title: "Product/Search/Results Bottom Sheet",
   component: SearchListBottomSheet,
   parameters: {
     layout: "fullscreen",

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { SearchResultsHeading } from "./SearchResultsHeading.tsx";
 
 const meta = {
-  title: "Features/Search/SearchResultsHeading",
+  title: "Product/Search/Results Heading",
   component: SearchResultsHeading,
   parameters: {
     layout: "centered",
