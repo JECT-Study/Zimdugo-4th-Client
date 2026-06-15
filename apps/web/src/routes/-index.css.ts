@@ -1,6 +1,5 @@
-import { globalStyle, style } from "@vanilla-extract/css";
 import { vars } from "@repo/ui/vars";
-import { keyframes } from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
 
 export const mapContainer = style({
@@ -43,7 +42,6 @@ export const locationControlStack = style({
   gap: vars.spacing[8],
   zIndex: vars.zIndex.ui,
 });
-
 
 export const locationButton = style({
   position: "relative",
@@ -182,7 +180,6 @@ const markerSpreadOut = keyframes({
 
 globalStyle(".map-marker-item", {
   transformOrigin: "center center",
-  willChange: "transform",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -194,6 +191,7 @@ globalStyle(".map-marker-item.selected-active", {
 
 globalStyle(".map-marker-item.selected-static", {
   transform: "scale(1)",
+  animation: "none",
 });
 
 globalStyle(".map-marker-item.unselected-active", {
@@ -202,6 +200,7 @@ globalStyle(".map-marker-item.unselected-active", {
 
 globalStyle(".map-marker-item.normal", {
   transform: "scale(1)",
+  animation: "none",
 });
 
 globalStyle(".map-marker-item.spread", {
