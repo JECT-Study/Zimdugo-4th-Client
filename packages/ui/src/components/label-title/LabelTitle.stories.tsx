@@ -4,7 +4,7 @@ import { vars } from "../../vars.css.ts";
 import { LabelTitle } from "./LabelTitle.tsx";
 
 const meta = {
-  title: "Shared/Controls/LabelTitle",
+  title: "Design System/Components/Controls/LabelTitle",
   component: LabelTitle,
   parameters: { layout: "centered" },
   argTypes: {

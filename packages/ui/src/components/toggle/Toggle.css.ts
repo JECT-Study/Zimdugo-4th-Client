@@ -163,7 +163,6 @@ export const thumb = recipe({
 });
 
 export const label = style({
-  fontFamily: "Pretendard, -apple-system, sans-serif",
   fontSize: vars.typography.fontSize[14],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: "1.2",

@@ -38,7 +38,7 @@ const sampleRecentEntries: SearchHistoryEntry[] = [
 ];
 
 const meta = {
-  title: "Composites/Search/SearchOverlay",
+  title: "Product/Search/Search Overlay",
   component: SearchOverlay,
   parameters: {
     layout: "fullscreen",

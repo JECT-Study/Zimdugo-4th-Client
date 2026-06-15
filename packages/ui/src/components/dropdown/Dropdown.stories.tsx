@@ -10,7 +10,7 @@ const OPTIONS = [
 ];
 
 const meta = {
-  title: "Shared/Layout/Dropdown",
+  title: "Design System/Components/Layout/Dropdown",
   component: Dropdown,
   parameters: { layout: "centered" },
   args: {

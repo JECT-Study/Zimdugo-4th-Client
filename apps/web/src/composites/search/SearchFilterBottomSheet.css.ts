@@ -64,7 +64,6 @@ export const resetButton = style({
   width: "112px",
   minWidth: "112px",
   color: vars.color.palette.gray[600],
-  fontFamily: "var(--font-familiy-kr, Pretendard)",
   fontSize: vars.typography.fontSize[18],
   fontStyle: "normal",
   fontWeight: vars.typography.fontWeight.Medium,

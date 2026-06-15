@@ -10,7 +10,7 @@ import { BottomTabBar, type BottomTabKey } from "./BottomTabBar.tsx";
 import { storyRelativeFrame } from "./BottomTabBar.stories.css.ts";
 
 const meta = {
-  title: "Shared/Layout/Popover",
+  title: "Product/Guides/Navigation/Bottom Tab Bar Guide",
   component: Popover,
   parameters: {
     layout: "fullscreen",

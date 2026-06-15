@@ -28,7 +28,6 @@ export const dialog = style({
 
 export const title = style({
   margin: 0,
-  fontFamily: "Pretendard",
   fontSize: vars.typography.fontSize[18],
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: "120%",
@@ -104,7 +103,6 @@ export const dialItem = style({
   justifyContent: "center",
   scrollSnapAlign: "center",
   userSelect: "none",
-  fontFamily: "Pretendard",
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: "120%",
   fontSize: vars.typography.fontSize[14],

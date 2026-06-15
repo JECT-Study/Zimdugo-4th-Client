@@ -3,7 +3,7 @@ import * as styles from "./Stories.css.ts";
 import { spacing } from "./spacing.css.ts";
 
 const meta = {
-  title: "Foundation/Spacing",
+  title: "Design System/Tokens/Spacing",
   parameters: { layout: "fullscreen" },
 } satisfies Meta;
 

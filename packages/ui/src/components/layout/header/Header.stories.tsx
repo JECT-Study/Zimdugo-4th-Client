@@ -4,7 +4,7 @@ import { vars } from "@repo/ui/vars.css";
 import { Header } from "./Header.tsx";
 
 const meta = {
-  title: "Shared/Layout/Header",
+  title: "Design System/Components/Layout/Header",
   component: Header,
   parameters: { layout: "centered" },
   decorators: [

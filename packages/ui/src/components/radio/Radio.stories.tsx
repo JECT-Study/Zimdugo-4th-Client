@@ -3,7 +3,7 @@ import React from "react";
 import { Radio, RadioGroup } from "./Radio.tsx";
 
 const meta = {
-  title: "Shared/Layout/Radio",
+  title: "Design System/Components/Layout/Radio",
   component: RadioGroup,
   parameters: { layout: "centered" },
 } satisfies Meta<typeof RadioGroup>;

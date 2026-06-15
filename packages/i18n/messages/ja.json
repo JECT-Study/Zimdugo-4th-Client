@@ -265,6 +265,8 @@
   "my_profile_image_change_aria": "プロフィール写真を変更",
   "my_profile_image_change_title": "プロフィール写真を変更しますか？",
   "my_profile_image_change_helper": "「はい」を押すと写真選択画面が開きます。端末で写真・カメラへのアクセスを許可してください。",
+  "my_profile_image_change_confirm": "はい",
+  "my_profile_image_change_cancel": "いいえ",
   "my_profile_image_invalid": "画像ファイルのみ選択できます。",
   "my_profile_image_read_failed": "写真を読み込めませんでした。もう一度お試しください。",
   "my_profile_image_update_failed": "プロフィール写真の変更に失敗しました。しばらくしてからもう一度お試しください。",

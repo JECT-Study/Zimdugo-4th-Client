@@ -265,6 +265,8 @@
   "my_profile_image_change_aria": "프로필 사진 변경",
   "my_profile_image_change_title": "프로필 사진을 변경하시겠습니까?",
   "my_profile_image_change_helper": "예를 누르면 사진 선택 화면이 열립니다. 기기에서 사진·카메라 접근을 허용해 주세요.",
+  "my_profile_image_change_confirm": "예",
+  "my_profile_image_change_cancel": "아니오",
   "my_profile_image_invalid": "이미지 파일만 선택할 수 있습니다.",
   "my_profile_image_read_failed": "사진을 불러오지 못했습니다. 다시 시도해 주세요.",
   "my_profile_image_update_failed": "프로필 사진 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.",

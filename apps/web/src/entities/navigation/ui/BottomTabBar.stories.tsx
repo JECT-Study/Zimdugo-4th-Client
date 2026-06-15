@@ -6,7 +6,7 @@ import { BottomTabBar, type BottomTabKey } from "./BottomTabBar.tsx";
 import { storyRelativeFrame } from "./BottomTabBar.stories.css.ts";
 
 const meta = {
-  title: "Entities/Navigation/BottomTabBar",
+  title: "Product/Navigation/Bottom Tab Bar",
   component: BottomTabBar,
   parameters: {
     layout: "centered",
@@ -142,6 +142,7 @@ export const English: Story = {
   name: "English",
   args: {
     ...defaultArgs,
+    activeTab: "home",
     labels: englishLabels,
   },
   render: function Render(args: BottomTabBarStoryProps) {

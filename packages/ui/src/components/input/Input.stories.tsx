@@ -4,7 +4,7 @@ import { vars } from "../../vars.css.ts";
 import { Input, type InputProps } from "./Input.tsx";
 
 const meta = {
-  title: "Shared/Controls/Input",
+  title: "Design System/Components/Controls/Input",
   component: Input,
   parameters: { layout: "centered" },
   argTypes: {

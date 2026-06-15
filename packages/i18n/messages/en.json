@@ -265,6 +265,8 @@
   "my_profile_image_change_aria": "Change profile photo",
   "my_profile_image_change_title": "Change your profile photo?",
   "my_profile_image_change_helper": "Tap Yes to open the photo picker. Allow photo or camera access on your device if prompted.",
+  "my_profile_image_change_confirm": "Yes",
+  "my_profile_image_change_cancel": "No",
   "my_profile_image_invalid": "Please choose an image file.",
   "my_profile_image_read_failed": "Could not load the photo. Please try again.",
   "my_profile_image_update_failed": "Failed to update your profile photo. Please try again later.",

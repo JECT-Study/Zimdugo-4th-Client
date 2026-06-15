@@ -14,7 +14,7 @@ const lockerTypeOptions = [
 ];
 
 const meta = {
-  title: "Shared/Controls/ControlChipGroup",
+  title: "Design System/Components/Controls/ControlChipGroup",
   component: ControlChipGroup,
   parameters: { layout: "centered" },
   args: {

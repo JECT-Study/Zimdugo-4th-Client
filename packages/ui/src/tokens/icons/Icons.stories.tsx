@@ -60,7 +60,7 @@ import {
 } from "./Icons.tsx";
 
 const meta = {
-  title: "Foundation/Icons",
+  title: "Design System/Tokens/Icons",
   parameters: {
     layout: "padded",
     docs: {

@@ -4,7 +4,7 @@ import { Button as AriaButton } from "react-aria-components";
 import { Popover } from "./Popover.tsx";
 
 const meta = {
-  title: "Shared/Layout/Popover",
+  title: "Design System/Components/Layout/Popover",
   component: Popover,
   parameters: { layout: "fullscreen" },
   argTypes: {

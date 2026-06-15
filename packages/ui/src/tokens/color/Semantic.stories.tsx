@@ -3,7 +3,7 @@ import { color } from "./color.css.ts";
 import * as styles from "./Stories.css.ts";
 
 const meta = {
-  title: "Foundation/Colors",
+  title: "Design System/Tokens/Colors",
   parameters: { layout: "fullscreen" },
 } satisfies Meta;
 

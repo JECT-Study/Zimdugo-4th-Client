@@ -4,7 +4,7 @@ import { vars } from "../../vars.css.ts";
 import { Button } from "./Button.tsx";
 
 const meta = {
-  title: "Shared/Button",
+  title: "Design System/Components/Button",
   component: Button,
   parameters: { layout: "centered" },
   argTypes: {

@@ -3,7 +3,7 @@ import type { ComponentProps } from "react";
 import { SocialLoginStack } from "./SocialLoginStack.tsx";
 
 const meta = {
-  title: "Features/Auth/SocialLoginStack",
+  title: "Product/Auth/Social Login",
   component: SocialLoginStack,
   parameters: {
     layout: "centered",

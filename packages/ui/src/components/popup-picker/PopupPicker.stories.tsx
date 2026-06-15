@@ -20,7 +20,7 @@ const floorOptions = Array.from({ length: 30 }, (_, index) => {
 });
 
 const meta = {
-  title: "Shared/Layout/PopupPicker",
+  title: "Design System/Components/Layout/PopupPicker",
   component: PopupPicker,
   parameters: { layout: "centered" },
   args: {

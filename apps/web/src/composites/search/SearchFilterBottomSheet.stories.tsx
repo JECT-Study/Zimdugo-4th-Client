@@ -13,7 +13,7 @@ const storyQueryClient = new QueryClient({
 });
 
 const meta = {
-  title: "Composites/Search/SearchFilterBottomSheet",
+  title: "Product/Search/Filter Bottom Sheet",
   component: SearchFilterBottomSheet,
   parameters: {
     layout: "fullscreen",

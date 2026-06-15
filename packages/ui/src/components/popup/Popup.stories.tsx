@@ -4,7 +4,7 @@ import { Popup } from "./Popup.tsx";
 const action = () => {};
 
 const meta = {
-  title: "Shared/Layout/Popup",
+  title: "Design System/Components/Layout/Popup",
   component: Popup,
   parameters: { layout: "centered" },
   args: {
