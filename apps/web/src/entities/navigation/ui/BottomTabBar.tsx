@@ -208,7 +208,8 @@ function shouldUseNativeLink(to: string) {
   return (
     to.startsWith("#") ||
     to.startsWith("http://") ||
-    to.startsWith("https://")
+    to.startsWith("https://") ||
+    to.startsWith("//")
   );
 }
 
@@ -243,7 +244,7 @@ function BottomTabBarLinkContent({
         className={tabItem}
         style={applyFallbackStyle ? bottomTabItemFallbackStyle : undefined}
         onClick={(event) => {
-          if (to === "#" || to.startsWith("#")) {
+          if (to === "#") {
             event.preventDefault();
           }
         }}
