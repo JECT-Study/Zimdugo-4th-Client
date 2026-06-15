@@ -361,4 +361,41 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances).toHaveLength(1);
     expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
   });
+
+  it("applies offset style and class when multiple lockers share the same coordinates", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    const pin1 = createLockerPin({ lockerId: 101, latitude: 37.5, longitude: 127.0 });
+    const pin2 = createLockerPin({ lockerId: 102, latitude: 37.5, longitude: 127.0 });
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+    });
+
+    expect(FakeMarker.instances).toHaveLength(2);
+
+    const options1 = FakeMarker.instances[0]?.options as {
+      icon?: { content?: string };
+    };
+    const options2 = FakeMarker.instances[1]?.options as {
+      icon?: { content?: string };
+    };
+
+    expect(options1.icon?.content).toContain("map-marker-offset-wrapper");
+    expect(options1.icon?.content).toContain("--offset-x");
+    expect(options1.icon?.content).toContain("--offset-y");
+
+    expect(options2.icon?.content).toContain("map-marker-offset-wrapper");
+    expect(options2.icon?.content).toContain("--offset-x");
+    expect(options2.icon?.content).toContain("--offset-y");
+
+    expect(options1.icon?.content).toContain("--offset-x: 15px");
+    expect(options2.icon?.content).toContain("--offset-x: -15px");
+  });
 });
+
