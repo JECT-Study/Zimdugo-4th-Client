@@ -324,8 +324,11 @@ export const syncLockerMarkers = ({
     }
 
     const baseIconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
+    const hasSpread = spreadX !== 0 || spreadY !== 0;
     const hasOffset = offsetX !== 0 || offsetY !== 0;
     const iconSignature = `${baseIconSignature}${
+      hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
+    }${
       hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
     }`;
 
@@ -369,8 +372,8 @@ export const syncLockerMarkers = ({
             isSelected,
             animationState,
             zoomLevel,
-            0,
-            0,
+            spreadX,
+            spreadY,
             offsetX,
             offsetY,
           ),
