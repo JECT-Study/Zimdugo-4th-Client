@@ -33,7 +33,13 @@ const SUGGEST_SKELETON_ROW_COUNT = 4;
 
 export function SearchSuggestListSkeleton() {
   return (
-    <div style={listStyle} aria-busy="true" aria-label={m.search_suggest_loading_aria()}>
+    <div
+      style={listStyle}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={m.search_suggest_loading_aria()}
+    >
       {Array.from({ length: SUGGEST_SKELETON_ROW_COUNT }, (_, index) => (
         <div key={index} style={rowStyle}>
           <Skeleton

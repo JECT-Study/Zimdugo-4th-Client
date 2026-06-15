@@ -34,7 +34,13 @@ const RESULT_SKELETON_ROW_COUNT = 3;
 
 export function SearchResultListSkeleton() {
   return (
-    <div style={listStyle} aria-busy="true" aria-label={m.search_result_loading_aria()}>
+    <div
+      style={listStyle}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={m.search_result_loading_aria()}
+    >
       {Array.from({ length: RESULT_SKELETON_ROW_COUNT }, (_, index) => (
         <div key={index} style={rowStyle}>
           <Skeleton
