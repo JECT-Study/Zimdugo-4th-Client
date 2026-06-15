@@ -27,14 +27,19 @@ export const buildAcceptLanguageHeader = (locale: AppLocale): string =>
 
 /** Backend i18n applies only to locker/place read APIs. */
 const LOCKER_PLACE_ACCEPT_LANGUAGE_PATH =
-  /\/api\/v1\/(?:lockers|places)(?:\/|$|\?)/;
+  /^\/api\/v1\/(?:lockers|places)(?:\/|$)/;
 
 export const shouldAttachAcceptLanguage = (requestUrl: string | undefined) => {
   if (!requestUrl) {
     return false;
   }
 
-  return LOCKER_PLACE_ACCEPT_LANGUAGE_PATH.test(requestUrl);
+  try {
+    const pathname = new URL(requestUrl, "https://local.invalid").pathname;
+    return LOCKER_PLACE_ACCEPT_LANGUAGE_PATH.test(pathname);
+  } catch {
+    return false;
+  }
 };
 
 export const resolveAcceptLanguageHeader = (

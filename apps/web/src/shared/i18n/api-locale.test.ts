@@ -35,6 +35,9 @@ describe("shouldAttachAcceptLanguage", () => {
     ).toBe(true);
 
     expect(shouldAttachAcceptLanguage("/api/v1/me/profile")).toBe(false);
+    expect(
+      shouldAttachAcceptLanguage("/api/v1/me?next=/api/v1/lockers/1"),
+    ).toBe(false);
     expect(shouldAttachAcceptLanguage("/api/v1/me/favorite-lockers/1")).toBe(
       false,
     );
