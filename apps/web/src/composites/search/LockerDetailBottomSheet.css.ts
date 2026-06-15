@@ -214,8 +214,6 @@ export const iconActionButton = style({
   width: "52px",
   height: "32px",
   padding: 0,
-  paddingLeft: 0,
-  paddingRight: 0,
   flexShrink: 0,
   border: 0,
   borderRadius: vars.radius[8],
