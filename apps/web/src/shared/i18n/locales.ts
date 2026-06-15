@@ -36,7 +36,7 @@ export const normalizeLocale = (value?: string | null): AppLocale | null => {
 };
 
 export const isAppLocale = (value: string): value is AppLocale =>
-  normalizeLocale(value) !== null;
+  APP_LOCALES.includes(value as AppLocale);
 
 export const stripLocalePathPrefix = (pathname: string): string =>
   pathname.replace(LOCALE_PATH_PREFIX, "") || "/";

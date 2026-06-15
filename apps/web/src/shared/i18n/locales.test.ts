@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isAppLocale,
   normalizeLocale,
   parsePathLocale,
   resolveBrowserLanguageCandidates,
@@ -20,6 +21,15 @@ describe("normalizeLocale", () => {
     expect(normalizeLocale("zh-Hant-TW")).toBe("zh-TW");
     expect(normalizeLocale("zh-Hant-HK")).toBe("zh-TW");
     expect(normalizeLocale("zh-HK")).toBe("zh-TW");
+  });
+});
+
+describe("isAppLocale", () => {
+  it("accepts only canonical app locale values", () => {
+    expect(isAppLocale("ko")).toBe(true);
+    expect(isAppLocale("zh-TW")).toBe(true);
+    expect(isAppLocale("ko-KR")).toBe(false);
+    expect(isAppLocale("zh-Hant-TW")).toBe(false);
   });
 });
 
