@@ -62,6 +62,7 @@ describe("navigation-platform-links", () => {
         label: "현재 위치",
       },
       permissionDenied: false,
+      usedCurrentLocation: true,
     });
   });
 
@@ -80,6 +81,7 @@ describe("navigation-platform-links", () => {
         label: "현재 위치",
       },
       permissionDenied: false,
+      usedCurrentLocation: true,
     });
 
     await expect(
@@ -91,6 +93,7 @@ describe("navigation-platform-links", () => {
     ).resolves.toEqual({
       origin: DEFAULT_NAVIGATION_ORIGIN,
       permissionDenied: true,
+      usedCurrentLocation: false,
     });
 
     await expect(
@@ -102,6 +105,7 @@ describe("navigation-platform-links", () => {
     ).resolves.toEqual({
       origin: DEFAULT_NAVIGATION_ORIGIN,
       permissionDenied: false,
+      usedCurrentLocation: false,
     });
   });
 

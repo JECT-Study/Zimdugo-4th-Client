@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { authService } from "#/features/auth/sign-in/api/authService";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
+import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
   SettingsHeaderSkeleton,
@@ -53,8 +54,7 @@ export function SettingsPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   // 2. Derived values
-  const normalizedPath =
-    pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
+  const normalizedPath = stripLocalePathPrefix(pathname);
   const isSettingsRoot = normalizedPath === "/settings";
   const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady({
     enabled: isSettingsRoot,

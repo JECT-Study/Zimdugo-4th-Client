@@ -1,10 +1,11 @@
 import {
   type AppLocale,
   BASE_LOCALE,
-  isAppLocale,
   LOCALE_COOKIE_MAX_AGE,
   LOCALE_COOKIE_NAME,
   normalizeLocale,
+  parsePathLocale,
+  UNSUPPORTED_LOCALE_FALLBACK,
 } from "#/shared/i18n/locales";
 
 const isDocumentRequest = (req: Request): boolean => {
@@ -28,10 +29,8 @@ const isDocumentRequest = (req: Request): boolean => {
   return req.headers.get("Accept")?.includes("text/html") ?? false;
 };
 
-const getPathLocale = (pathname: string): AppLocale | null => {
-  const firstSegment = pathname.split("/").filter(Boolean)[0]?.toLowerCase();
-  return firstSegment && isAppLocale(firstSegment) ? firstSegment : null;
-};
+const getPathLocale = (pathname: string): AppLocale | null =>
+  parsePathLocale(pathname);
 
 const getCookieLocale = (cookieHeader: string | null): AppLocale | null => {
   if (!cookieHeader) return null;
@@ -75,6 +74,22 @@ const getAcceptLanguageLocale = (
   }
 
   return null;
+};
+
+const resolvePreferredDocumentLocale = (req: Request): AppLocale => {
+  const cookieLocale = getCookieLocale(req.headers.get("Cookie"));
+  if (cookieLocale) {
+    return cookieLocale;
+  }
+
+  const acceptLanguageHeader = req.headers.get("Accept-Language");
+  if (acceptLanguageHeader) {
+    return (
+      getAcceptLanguageLocale(acceptLanguageHeader) ?? UNSUPPORTED_LOCALE_FALLBACK
+    );
+  }
+
+  return BASE_LOCALE;
 };
 
 const getLocalizedPath = (url: URL, locale: AppLocale): string => {
@@ -156,10 +171,7 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
   const pathLocale = getPathLocale(url.pathname);
 
   if (isDocumentRequest(req) && !pathLocale) {
-    const preferredLocale =
-      getCookieLocale(req.headers.get("Cookie")) ??
-      getAcceptLanguageLocale(req.headers.get("Accept-Language")) ??
-      BASE_LOCALE;
+    const preferredLocale = resolvePreferredDocumentLocale(req);
 
     if (preferredLocale !== BASE_LOCALE) {
       return {

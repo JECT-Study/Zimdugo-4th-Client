@@ -1,3 +1,4 @@
+import { m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
@@ -10,9 +11,9 @@ export function AuthRequirePopup() {
     <Popup
       isOpen={isOpen}
       onOpenChange={(val) => !val && closePopup()}
-      titleText="로그인이 필요한 기능입니다"
+      titleText={m.auth_required_title()}
       primaryAction={{
-        label: "로그인하기",
+        label: m.auth_required_login(),
         onPress: () => {
           closePopup();
           navigate({
@@ -22,7 +23,7 @@ export function AuthRequirePopup() {
         },
       }}
       secondaryAction={{
-        label: "취소",
+        label: m.common_cancel(),
         onPress: closePopup,
       }}
     />

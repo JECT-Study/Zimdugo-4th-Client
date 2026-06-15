@@ -122,7 +122,6 @@ function LoginPageContent({
           applyFallbackStyle ? loginStackInlineFallbackStyle : undefined
         }
         applyFallbackStyle={applyFallbackStyle}
-        showEnglishLabel
       />
     </>
   );

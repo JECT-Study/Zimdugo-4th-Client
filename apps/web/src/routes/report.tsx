@@ -108,6 +108,7 @@ function ReportPage() {
     isPhotoErrorPopupOpen,
     setIsPhotoErrorPopupOpen,
     isSubmitErrorPopupOpen,
+    isSubmitConfirmPopupOpen,
     submitErrorMessage,
     photoErrorMessage,
     isSubmitting,
@@ -334,7 +335,9 @@ function ReportPage() {
                     void handleNext();
                   }}
                   isDisabled={
-                    isSubmitting || !validation.isStep2Valid
+                    isSubmitting ||
+                    isSubmitConfirmPopupOpen ||
+                    !validation.isStep2Valid
                   }
                 >
                   {m.report_submit_with_current_info()}
@@ -350,6 +353,7 @@ function ReportPage() {
                 }}
                 isDisabled={
                   isSubmitting ||
+                  isSubmitConfirmPopupOpen ||
                   (step === 2 ? !validation.isStep2Valid : false)
                 }
                 isLoading={isSubmitting}
@@ -415,15 +419,32 @@ function ReportPage() {
         />
 
         <Popup
+          isOpen={isSubmitConfirmPopupOpen}
+          onOpenChange={handlers.handleSubmitConfirmPopupOpenChange}
+          titleText={m.report_submit_confirm_title()}
+          helperText={m.report_submit_confirm_helper()}
+          primaryAction={{
+            label: m.common_no(),
+            onPress: () => handlers.handleSubmitConfirmPopupOpenChange(false),
+          }}
+          secondaryAction={{
+            label: m.common_yes(),
+            onPress: () => {
+              void handlers.handleConfirmSubmit();
+            },
+          }}
+        />
+
+        <Popup
           isOpen={isExitPopupOpen}
           onOpenChange={setIsExitPopupOpen}
           titleText={m.report_exit_title()}
           primaryAction={{
-            label: m.report_exit_back(),
+            label: m.common_no(),
             onPress: handleStayOnReport,
           }}
           secondaryAction={{
-            label: m.report_exit_leave(),
+            label: m.common_yes(),
             onPress: handleLeaveReport,
           }}
         />

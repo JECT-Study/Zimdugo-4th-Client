@@ -13,6 +13,7 @@ import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange
 import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
 import { resolveMyPageNickname } from "#/features/my/lib/resolve-my-page-nickname";
 import { useAuth } from "#/shared/hooks/useAuth";
+import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
 import { MyPageSkeleton } from "./-MyPageSkeleton";
 import { MyPageView } from "./-MyPageView";
@@ -27,8 +28,7 @@ function MyPage() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const normalizedPath =
-    pathname.replace(/^\/(?:ko|en|ja|zh)(?=\/|$)/, "") || "/";
+  const normalizedPath = stripLocalePathPrefix(pathname);
   const isMyRoot = normalizedPath === "/my";
 
   return isMyRoot ? <MyRootPage /> : <Outlet />;
@@ -163,11 +163,11 @@ function MyRootPage() {
         titleText={m.my_profile_image_change_title()}
         helperText={m.my_profile_image_change_helper()}
         primaryAction={{
-          label: m.my_profile_image_change_confirm(),
+          label: m.common_yes(),
           onPress: handleConfirmChange,
         }}
         secondaryAction={{
-          label: m.my_profile_image_change_cancel(),
+          label: m.common_no(),
           onPress: handleConfirmPopupCancel,
         }}
       />

@@ -86,6 +86,7 @@ export function useReportForm(): {
   setIsPhotoErrorPopupOpen: (open: boolean) => void;
   isSubmitErrorPopupOpen: boolean;
   setIsSubmitErrorPopupOpen: (open: boolean) => void;
+  isSubmitConfirmPopupOpen: boolean;
   submitErrorMessage: string;
   photoErrorMessage: string;
   isSubmitting: boolean;
@@ -106,6 +107,8 @@ export function useReportForm(): {
     clearSectionError: (sectionId: ReportSectionId) => void;
     handleSubmitErrorPopupConfirm: () => void;
     handleSubmitErrorPopupOpenChange: (open: boolean) => void;
+    handleSubmitConfirmPopupOpenChange: (open: boolean) => void;
+    handleConfirmSubmit: () => Promise<void>;
     preparePrivacyPolicyNavigation: () => void;
   };
   validation: { isStep1Valid: boolean; isStep2Valid: boolean };
@@ -127,6 +130,7 @@ export function useReportForm(): {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isPhotoErrorPopupOpen, setIsPhotoErrorPopupOpen] = useState(false);
   const [isSubmitErrorPopupOpen, setIsSubmitErrorPopupOpen] = useState(false);
+  const [isSubmitConfirmPopupOpen, setIsSubmitConfirmPopupOpen] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState("");
   const [photoErrorMessage, setPhotoErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -453,6 +457,18 @@ export function useReportForm(): {
     [applyZodIssuesToUi, scrollToFirstFieldError, scheduleSectionScroll, step],
   );
 
+  const handleSubmitConfirmPopupOpenChange = useCallback((open: boolean) => {
+    if (isSubmitting) {
+      return;
+    }
+    setIsSubmitConfirmPopupOpen(open);
+  }, [isSubmitting]);
+
+  const handleConfirmSubmit = useCallback(async () => {
+    setIsSubmitConfirmPopupOpen(false);
+    await handleSubmit(onSubmit, onInvalid)();
+  }, [handleSubmit, onInvalid, onSubmit]);
+
   const handleNext = useCallback(async () => {
     if (step < 2) {
       const isValid = await trigger([...STEP_1_FIELDS]);
@@ -470,7 +486,12 @@ export function useReportForm(): {
       return;
     }
 
-    await handleSubmit(onSubmit, onInvalid)();
+    await handleSubmit(
+      () => {
+        setIsSubmitConfirmPopupOpen(true);
+      },
+      onInvalid,
+    )();
   }, [
     step,
     trigger,
@@ -613,6 +634,7 @@ export function useReportForm(): {
     setIsPhotoErrorPopupOpen,
     isSubmitErrorPopupOpen,
     setIsSubmitErrorPopupOpen,
+    isSubmitConfirmPopupOpen,
     submitErrorMessage,
     photoErrorMessage,
     isSubmitting,
@@ -633,6 +655,8 @@ export function useReportForm(): {
       clearSectionError,
       handleSubmitErrorPopupConfirm,
       handleSubmitErrorPopupOpenChange,
+      handleSubmitConfirmPopupOpenChange,
+      handleConfirmSubmit,
       preparePrivacyPolicyNavigation,
     },
     validation: { isStep1Valid, isStep2Valid },

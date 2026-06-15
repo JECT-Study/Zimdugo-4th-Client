@@ -1,20 +1,23 @@
 import { languageTag, m } from "@repo/i18n";
 import { sortSizeTypes } from "#/entities/locker/lib/sort-size-types";
 import type { AppLocale } from "#/shared/i18n/locales";
+import { normalizeLocale } from "#/shared/i18n/locales";
 
 const NUMBER_LOCALE_BY_TAG: Record<AppLocale, string> = {
   ko: "ko-KR",
   en: "en-US",
   ja: "ja-JP",
   zh: "zh-CN",
+  "zh-TW": "zh-TW",
 };
 
 const formatCurrencyAmount = (amount: number): string => {
-  const locale = NUMBER_LOCALE_BY_TAG[languageTag()] ?? "ko-KR";
+  const appLocale = normalizeLocale(languageTag()) ?? "ko";
+  const locale = NUMBER_LOCALE_BY_TAG[appLocale];
   const formatted = amount.toLocaleString(locale);
   const unit = m.report_price_unit();
 
-  return languageTag() === "ko" ? `${formatted}${unit}` : `${formatted} ${unit}`;
+  return appLocale === "ko" ? `${formatted}${unit}` : `${formatted} ${unit}`;
 };
 
 const trimTimeSeconds = (time: string): string =>
