@@ -131,25 +131,48 @@ export const getLockerNavigationDestination = (
   };
 };
 
-const NAVER_MAP_HALF_EARTH = 20037508.34;
+const NAVER_COORD_PRECISION = 7;
+const NAVER_COORD_SCALE = 10 ** NAVER_COORD_PRECISION;
+const NAVER_COORD_OFFSET = 200 * NAVER_COORD_SCALE;
+const NAVER_BASE62_ALPHABET =
+  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-/** WGS84 경위도를 네이버 길찾기 URL용 EPSG:3857 좌표 문자열로 변환한다. */
-export const encodeNaverCoordinate = (coordinate: number): string => {
-  const projected =
-    Math.abs(coordinate) > 90
-      ? (coordinate * NAVER_MAP_HALF_EARTH) / 180
-      : (Math.log(Math.tan(((90 + coordinate) * Math.PI) / 360)) *
-          NAVER_MAP_HALF_EARTH) /
-        Math.PI;
+const toNaverBase62 = (value: number): string => {
+  if (value === 0) {
+    return NAVER_BASE62_ALPHABET[0];
+  }
 
-  return String(projected);
+  let remaining = value;
+  let encoded = "";
+
+  while (remaining > 0) {
+    encoded = NAVER_BASE62_ALPHABET[remaining % 62] + encoded;
+    remaining = Math.floor(remaining / 62);
+  }
+
+  return encoded;
 };
+
+/** WGS84 경위도를 네이버 웹 지도 길찾기 URL용 단축 좌표 문자열로 변환한다. */
+export const encodeNaverCoordinate = (coordinate: number): string => {
+  const scaled = Math.round(coordinate * NAVER_COORD_SCALE) + NAVER_COORD_OFFSET;
+  return toNaverBase62(scaled);
+};
+
+/** 길찾기 path 세그먼트 구분자(`,`)를 깨는 문자를 정리한다. */
+export const sanitizeNaverNavigationLabel = (label: string): string =>
+  label
+    .trim()
+    .replace(/[[\]]/g, "")
+    .replace(/,/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const buildNaverRoutePath = (point: NavigationPoint): string =>
   [
     encodeNaverCoordinate(point.lng),
     encodeNaverCoordinate(point.lat),
-    encodeURIComponent(point.label),
+    encodeURIComponent(sanitizeNaverNavigationLabel(point.label)),
     "",
     "ADDRESS_POI",
   ].join(",");

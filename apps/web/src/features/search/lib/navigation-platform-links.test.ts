@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import {
   DEFAULT_NAVIGATION_ORIGIN,
+  encodeNaverCoordinate,
   getNavigationPlatformLinks,
   getNavigationPlatformUrl,
   hasNavigationDestination,
@@ -12,6 +13,7 @@ import {
   openNavigationPlatformLinks,
   resolveNavigationOrigin,
   resolveNavigationOriginWithPermissionRequest,
+  sanitizeNaverNavigationLabel,
 } from "./navigation-platform-links";
 
 const LOCKER_WITHOUT_COORDS: LockerDetailItem = {
@@ -165,6 +167,20 @@ describe("navigation-platform-links", () => {
     ).toBe(links?.webUrl ?? null);
   });
 
+  it("네이버 단축 좌표를 base62로 인코딩한다", () => {
+    expect(encodeNaverCoordinate(126.9364)).toBe("3zfUVq");
+    expect(encodeNaverCoordinate(37.5559)).toBe("2ALBpK");
+  });
+
+  it("네이버 길찾기 라벨에서 path 구분을 깨는 특수문자를 정리한다", () => {
+    expect(
+      sanitizeNaverNavigationLabel(
+        "블루보틀커피 성수 카페 2번 무료 보관함 [주간전용]",
+      ),
+    ).toBe("블루보틀커피 성수 카페 2번 무료 보관함 주간전용");
+    expect(sanitizeNaverNavigationLabel("A, B")).toBe("A B");
+  });
+
   it("네이버지도는 map.naver.com/p/directions 웹 길찾기 URL을 만든다", () => {
     const links = getNavigationPlatformLinks(
       "naver",
@@ -173,12 +189,32 @@ describe("navigation-platform-links", () => {
     );
 
     expect(links?.webUrl).toContain("map.naver.com/p/directions/");
+    expect(links?.webUrl).toContain("3zfUVq,2ALBpK");
     expect(links?.webUrl).toContain("ADDRESS_POI");
     expect(links?.webUrl).toContain(encodeURIComponent("현재 위치"));
     expect(links?.webUrl).toContain(
       encodeURIComponent(LOCKER_WITH_COORDS.title),
     );
+    expect(links?.webUrl).not.toMatch(/\/\d{8,}\./);
     expect(links?.webUrl).not.toContain("/walk");
+  });
+
+  it("도착지 이름의 대괄호는 네이버 URL에서 제거한다", () => {
+    const lockerWithBracketTitle: LockerDetailItem = {
+      ...LOCKER_WITH_COORDS,
+      title: "테스트 보관함 [주간전용]",
+    };
+    const links = getNavigationPlatformLinks(
+      "naver",
+      lockerWithBracketTitle,
+      linkOptions(),
+    );
+
+    expect(links?.webUrl).toContain(
+      encodeURIComponent("테스트 보관함 주간전용"),
+    );
+    expect(links?.webUrl).not.toContain("%5B");
+    expect(links?.webUrl).not.toContain("%5D");
   });
 
   it("길찾기 열기는 모바일·데스크톱 모두 웹 URL을 사용한다", () => {

@@ -83,7 +83,17 @@ describe("NavigationPlatformPopup", () => {
       getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
+    ).toContain("3zfUVq,2ALBpK");
+    expect(
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
     ).toContain("ADDRESS_POI");
+    expect(
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).not.toMatch(/\/\d{8,}\./);
     expect(
       getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
@@ -145,6 +155,42 @@ describe("NavigationPlatformPopup", () => {
     });
   });
 
+  it("네이버 버튼 선택 시 onSelectPlatform에 naver 플랫폼을 전달한다", async () => {
+    const onSelectPlatform = vi.fn();
+
+    vi.spyOn(
+      navigationPlatformLinks,
+      "resolveNavigationOriginWithPermissionRequest",
+    ).mockResolvedValueOnce({
+      origin: NAVIGATION_ORIGIN,
+      permissionDenied: false,
+      usedCurrentLocation: true,
+    });
+    vi.spyOn(
+      navigationPlatformLinks,
+      "openNavigationPlatformLinks",
+    ).mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "네이버지도로 길찾기" }));
+
+    await waitFor(() => {
+      expect(onSelectPlatform).toHaveBeenCalledWith(
+        "naver",
+        expect.stringContaining("map.naver.com/p/directions/"),
+        LOCKER_DETAIL,
+      );
+    });
+  });
+
   it("지도 플랫폼 선택 시 위치 권한을 요청한다", async () => {
     const onSelectPlatform = vi.fn();
 
@@ -154,6 +200,7 @@ describe("NavigationPlatformPopup", () => {
     ).mockResolvedValueOnce({
       origin: NAVIGATION_ORIGIN,
       permissionDenied: false,
+      usedCurrentLocation: true,
     });
     vi.spyOn(
       navigationPlatformLinks,

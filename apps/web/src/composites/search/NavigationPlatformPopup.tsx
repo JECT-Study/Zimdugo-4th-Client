@@ -84,6 +84,9 @@ export function NavigationPlatformPopup({
         openNavigationPlatformLinks(links);
         onOpenChange(false);
       })
+      .catch(() => {
+        // 길찾기 오픈 실패 시 다이얼로그를 유지해 사용자가 재시도할 수 있게 한다.
+      })
       .finally(() => {
         resolvingNavigationLockerIds.delete(locker.lockerId);
       });
