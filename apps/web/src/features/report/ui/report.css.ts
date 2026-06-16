@@ -82,6 +82,13 @@ export const section = style({
   scrollMarginTop: "8px",
 });
 
+export const locationSection = style([
+  section,
+  {
+    paddingTop: vars.spacing[16],
+  },
+]);
+
 export const classificationSection = style({
   display: "flex",
   flexDirection: "column",
@@ -127,7 +134,6 @@ export const sectionErrorTextInline = style({
 /** 하단 에러 영역과 동일한 높이 — 제목 옆 배치 시 섹션 간 gap 유지용 */
 export const sectionErrorReserve = style({
   margin: 0,
-  marginTop: vars.spacing[8],
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
   minHeight: vars.typography.lineHeight.normal,
@@ -317,6 +323,8 @@ export const textareaContainer = style({
   padding: "10px 16px 36px", // 하단 카운터 공간 확보
   boxSizing: "border-box",
   position: "relative",
+  display: "block",
+  cursor: "text",
 });
 
 export const textareaField = style({
@@ -592,6 +600,14 @@ export const privacyPolicyLink = style({
   border: "none",
   padding: 0,
   cursor: "pointer",
+  textAlign: "left",
+});
+
+/** 체크박스(20px) + gap(8px) 만큼 들여써 동의 문구와 정렬 */
+export const privacyPolicyLinkRow = style({
+  paddingLeft: "28px",
+  width: "100%",
+  boxSizing: "border-box",
 });
 
 export const photoAgreementGroup = style({

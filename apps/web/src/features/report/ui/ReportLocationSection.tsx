@@ -6,10 +6,10 @@ import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
   addressTextContent,
+  locationSection,
   locationTextButton,
   photoSectionContent,
   requiredMark,
-  section,
 } from "./report.css.ts";
 
 interface ReportLocationSectionProps {
@@ -39,7 +39,7 @@ export function ReportLocationSection({
 
   return (
     <section
-      className={section}
+      className={locationSection}
       data-section="location"
       aria-describedby={errorId}
     >

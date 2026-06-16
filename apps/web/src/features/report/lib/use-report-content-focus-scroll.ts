@@ -43,19 +43,33 @@ export function useReportContentFocusScroll(
     const container = contentRef.current;
     if (!container) return;
 
+    let frameId = 0;
+
     const handleFocusIn = (event: FocusEvent) => {
       const target = event.target;
       if (!(target instanceof HTMLElement) || !container.contains(target)) {
         return;
       }
 
-      requestAnimationFrame(() => {
+      if (frameId !== 0) {
+        cancelAnimationFrame(frameId);
+      }
+
+      frameId = requestAnimationFrame(() => {
+        frameId = 0;
+        if (!container.isConnected) return;
+
         resetDocumentScroll();
         scrollFocusedElementIntoView(container, target);
       });
     };
 
     container.addEventListener("focusin", handleFocusIn, true);
-    return () => container.removeEventListener("focusin", handleFocusIn, true);
+    return () => {
+      if (frameId !== 0) {
+        cancelAnimationFrame(frameId);
+      }
+      container.removeEventListener("focusin", handleFocusIn, true);
+    };
   }, [contentRef, enabled]);
 }

@@ -48,8 +48,9 @@ export function ReportAdditionalInfoSection({
       <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
         {m.report_section_additional()}
       </ReportSectionTitleRow>
-      <div className={textareaContainer}>
+      <label className={textareaContainer} htmlFor="report-additional-info">
         <textarea
+          id="report-additional-info"
           ref={textareaRef}
           placeholder={m.report_additional_placeholder()}
           value={additionalInfo}
@@ -67,7 +68,7 @@ export function ReportAdditionalInfoSection({
         <div className={charCounter}>
           {additionalInfo.length}/{MAX_REPORT_ADDITIONAL_INFO_LENGTH}
         </div>
-      </div>
+      </label>
       <ReportSectionErrorReserve />
     </section>
   );

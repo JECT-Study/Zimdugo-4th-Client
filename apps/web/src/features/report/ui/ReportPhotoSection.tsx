@@ -20,6 +20,7 @@ import {
   photoPreviewUploadSpinner,
   photoUploadArea,
   privacyPolicyLink,
+  privacyPolicyLinkRow,
   reportPhotoGallery,
   section,
 } from "./report.css.ts";
@@ -164,19 +165,21 @@ export function ReportPhotoSection({
               {m.report_photo_exif_agreement_label()}
             </span>
           </div>
-          <button
-            type="button"
-            className={privacyPolicyLink}
-            onClick={() => {
-              onPrivacyPolicyNavigate?.();
-              navigate({
-                to: "/settings/privacy",
-                search: buildLegalReturnSearch("/report"),
-              });
-            }}
-          >
-            {m.report_photo_privacy_policy_link()}
-          </button>
+          <div className={privacyPolicyLinkRow}>
+            <button
+              type="button"
+              className={privacyPolicyLink}
+              onClick={() => {
+                onPrivacyPolicyNavigate?.();
+                navigate({
+                  to: "/settings/privacy",
+                  search: buildLegalReturnSearch("/report"),
+                });
+              }}
+            >
+              {m.report_photo_privacy_policy_link()}
+            </button>
+          </div>
         </div>
       </div>
       <ReportSectionErrorReserve />
