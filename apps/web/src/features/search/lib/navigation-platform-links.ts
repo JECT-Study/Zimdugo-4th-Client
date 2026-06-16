@@ -1,6 +1,5 @@
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import { m } from "@repo/i18n";
-import { getCurrentMapCoordinates } from "#/entities/map/model/current-location";
 
 export type NavigationPlatform = "naver" | "google";
 
@@ -28,13 +27,6 @@ export const DEFAULT_NAVIGATION_ORIGIN: NavigationPoint = {
   label: "강남역 11번 출구",
 };
 
-/** 길찾기 출발지 결정용 GPS 옵션 (모바일 콜드 스타트 고려) */
-export const NAVIGATION_ORIGIN_POSITION_OPTIONS: PositionOptions = {
-  enableHighAccuracy: false,
-  maximumAge: 60_000,
-  timeout: 5_000,
-};
-
 export const hasNavigationDestination = (
   locker: LockerDetailItem,
 ): locker is LockerDetailItem & { latitude: number; longitude: number } =>
@@ -60,61 +52,23 @@ export type ResolveNavigationOriginResult = {
   usedCurrentLocation: boolean;
 };
 
-const isGeolocationPermissionDenied = (error: unknown): boolean => {
-  if (
-    typeof GeolocationPositionError !== "undefined" &&
-    error instanceof GeolocationPositionError
-  ) {
-    return error.code === error.PERMISSION_DENIED;
-  }
-
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as GeolocationPositionError).code === 1
-  );
-};
-
-type ResolveNavigationOriginOptions = {
-  knownLocation?: { lat: number; lng: number } | null;
-  getCurrentCoordinates?: (
-    positionOptions?: PositionOptions,
-  ) => Promise<{ lat: number; lng: number }>;
-  positionOptions?: PositionOptions;
-};
-
-/** 길찾기 직전에 위치 권한을 한 번 더 요청하고 출발지를 결정한다. */
-export const resolveNavigationOriginWithPermissionRequest = async (
-  options?: ResolveNavigationOriginOptions,
-): Promise<ResolveNavigationOriginResult> => {
-  if (options?.knownLocation) {
+/** 길찾기 열기 시점의 출발지를 결정한다. 알려진 위치가 없으면 기본 출발지를 즉시 사용한다. */
+export const resolveNavigationOriginForDirections = (
+  knownLocation?: { lat: number; lng: number } | null,
+): ResolveNavigationOriginResult => {
+  if (knownLocation) {
     return {
-      origin: resolveNavigationOrigin(options.knownLocation),
+      origin: resolveNavigationOrigin(knownLocation),
       permissionDenied: false,
       usedCurrentLocation: true,
     };
   }
 
-  const getCurrentCoordinates =
-    options?.getCurrentCoordinates ?? getCurrentMapCoordinates;
-  const positionOptions =
-    options?.positionOptions ?? NAVIGATION_ORIGIN_POSITION_OPTIONS;
-
-  try {
-    const coordinates = await getCurrentCoordinates(positionOptions);
-    return {
-      origin: resolveNavigationOrigin(coordinates),
-      permissionDenied: false,
-      usedCurrentLocation: true,
-    };
-  } catch (error) {
-    return {
-      origin: getDefaultNavigationOrigin(),
-      permissionDenied: isGeolocationPermissionDenied(error),
-      usedCurrentLocation: false,
-    };
-  }
+  return {
+    origin: getDefaultNavigationOrigin(),
+    permissionDenied: false,
+    usedCurrentLocation: false,
+  };
 };
 
 export const getLockerNavigationDestination = (

@@ -12,7 +12,7 @@ import {
   type NavigationPlatform,
   openNavigationPlatformLinks,
   type ResolveNavigationOriginResult,
-  resolveNavigationOriginWithPermissionRequest,
+  resolveNavigationOriginForDirections,
 } from "#/features/search/lib/navigation-platform-links";
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
 import {
@@ -67,48 +67,23 @@ export function NavigationPlatformPopup({
 
     resolvingNavigationLockerIds.add(locker.lockerId);
 
-    const navigationWindow = window.open(
-      "about:blank",
-      "_blank",
-      "noopener,noreferrer",
-    );
+    try {
+      const result = resolveNavigationOriginForDirections(knownLocation);
+      onOriginResolved?.(result);
 
-    const originTask = resolveNavigationOriginWithPermissionRequest({
-      knownLocation,
-    });
-
-    void originTask
-      .then((result) => {
-        onOriginResolved?.(result);
-
-        const links = getNavigationPlatformLinks(platform, locker, {
-          navigationOrigin: result.origin,
-        });
-        if (!links) {
-          navigationWindow?.close();
-          return;
-        }
-
-        onSelectPlatform?.(platform, links.webUrl, locker);
-        openNavigationPlatformLinks(links, {
-          assign: (url) => {
-            if (navigationWindow) {
-              navigationWindow.location.href = url;
-              return;
-            }
-
-            window.open(url, "_blank", "noopener,noreferrer");
-          },
-        });
-        onOpenChange(false);
-      })
-      .catch(() => {
-        navigationWindow?.close();
-        // 길찾기 오픈 실패 시 다이얼로그를 유지해 사용자가 재시도할 수 있게 한다.
-      })
-      .finally(() => {
-        resolvingNavigationLockerIds.delete(locker.lockerId);
+      const links = getNavigationPlatformLinks(platform, locker, {
+        navigationOrigin: result.origin,
       });
+      if (!links) {
+        return;
+      }
+
+      onSelectPlatform?.(platform, links.webUrl, locker);
+      openNavigationPlatformLinks(links);
+      onOpenChange(false);
+    } finally {
+      resolvingNavigationLockerIds.delete(locker.lockerId);
+    }
   };
 
   return (

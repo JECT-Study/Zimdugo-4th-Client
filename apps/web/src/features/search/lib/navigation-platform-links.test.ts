@@ -9,10 +9,9 @@ import {
   getNavigationPlatformLinks,
   getNavigationPlatformUrl,
   hasNavigationDestination,
-  NAVIGATION_ORIGIN_POSITION_OPTIONS,
   openNavigationPlatformLinks,
   resolveNavigationOrigin,
-  resolveNavigationOriginWithPermissionRequest,
+  resolveNavigationOriginForDirections,
   sanitizeNaverNavigationLabel,
 } from "./navigation-platform-links";
 
@@ -49,15 +48,10 @@ describe("navigation-platform-links", () => {
     setLanguageTag("ko");
   });
 
-  it("이미 알고 있는 위치가 있으면 GPS 재요청 없이 출발지를 반환한다", async () => {
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        knownLocation: CURRENT_ORIGIN,
-        getCurrentCoordinates: async () => {
-          throw new Error("should not request geolocation");
-        },
-      }),
-    ).resolves.toEqual({
+  it("이미 알고 있는 위치가 있으면 해당 좌표를 출발지로 사용한다", () => {
+    expect(
+      resolveNavigationOriginForDirections(CURRENT_ORIGIN),
+    ).toEqual({
       origin: {
         lat: CURRENT_ORIGIN.lat,
         lng: CURRENT_ORIGIN.lng,
@@ -68,63 +62,17 @@ describe("navigation-platform-links", () => {
     });
   });
 
-  it("길찾기 직전에 위치 권한을 요청해 출발지를 결정한다", async () => {
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        getCurrentCoordinates: async () => ({
-          lat: 37.5012,
-          lng: 127.0396,
-        }),
-      }),
-    ).resolves.toEqual({
-      origin: {
-        lat: 37.5012,
-        lng: 127.0396,
-        label: "현재 위치",
-      },
-      permissionDenied: false,
-      usedCurrentLocation: true,
-    });
-
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        getCurrentCoordinates: async () => {
-          throw { code: 1 };
-        },
-      }),
-    ).resolves.toEqual({
-      origin: DEFAULT_NAVIGATION_ORIGIN,
-      permissionDenied: true,
-      usedCurrentLocation: false,
-    });
-
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        getCurrentCoordinates: async () => {
-          throw new Error("timeout");
-        },
-      }),
-    ).resolves.toEqual({
+  it("알려진 위치가 없으면 기본 출발지를 즉시 사용한다", () => {
+    expect(resolveNavigationOriginForDirections(null)).toEqual({
       origin: DEFAULT_NAVIGATION_ORIGIN,
       permissionDenied: false,
       usedCurrentLocation: false,
     });
-  });
-
-  it("길찾기 출발지 조회 시 5초 타임아웃 옵션을 전달한다", async () => {
-    const getCurrentCoordinates = vi.fn(async () => ({
-      lat: 37.5012,
-      lng: 127.0396,
-    }));
-
-    await resolveNavigationOriginWithPermissionRequest({
-      getCurrentCoordinates,
+    expect(resolveNavigationOriginForDirections()).toEqual({
+      origin: DEFAULT_NAVIGATION_ORIGIN,
+      permissionDenied: false,
+      usedCurrentLocation: false,
     });
-
-    expect(getCurrentCoordinates).toHaveBeenCalledWith(
-      NAVIGATION_ORIGIN_POSITION_OPTIONS,
-    );
-    expect(NAVIGATION_ORIGIN_POSITION_OPTIONS.timeout).toBe(5_000);
   });
 
   it("출발지는 현재 위치를 우선하고 없으면 강남역 11번 출구로 폴백한다", () => {
