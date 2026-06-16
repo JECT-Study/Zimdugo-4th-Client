@@ -83,10 +83,15 @@ const createMarkerIconOptions = (
   zoomLevel?: number,
   spreadX?: number,
   spreadY?: number,
+  offsetX?: number,
+  offsetY?: number,
 ): naver.maps.HtmlIcon => {
   const hasSpread = spreadX != null && spreadY != null && (spreadX !== 0 || spreadY !== 0);
+  const hasOffset = offsetX != null && offsetY != null && (offsetX !== 0 || offsetY !== 0);
   const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}${
     hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
+  }${
+    hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
   }`;
 
   let innerMap = lockerIconCache.get(maps);
@@ -106,13 +111,18 @@ const createMarkerIconOptions = (
   const radius = size / 2;
 
   const spreadClass = hasSpread ? "spread" : "";
-  const inlineStyle = hasSpread
-    ? `style="width: ${size}px; height: ${size}px; --spread-x: ${spreadX}px; --spread-y: ${spreadY}px;"`
-    : `style="width: ${size}px; height: ${size}px;"`;
+  const spreadStyle = hasSpread
+    ? `--spread-x: ${spreadX}px; --spread-y: ${spreadY}px;`
+    : "";
+  const offsetStyle = hasOffset
+    ? `--offset-x: ${offsetX}px; --offset-y: ${offsetY}px;`
+    : "";
 
   const options = {
-    content: `<div class="map-marker-item ${animationState} ${spreadClass}" ${inlineStyle}>
-      ${createLockerMarkerIcon(pin, isSelected)}
+    content: `<div class="map-marker-offset-wrapper" style="width: ${size}px; height: ${size}px; ${offsetStyle}">
+      <div class="map-marker-item ${animationState} ${spreadClass}" style="width: 100%; height: 100%; ${spreadStyle}">
+        ${createLockerMarkerIcon(pin, isSelected)}
+      </div>
     </div>`,
     size: new maps.Size(size, size),
     anchor: new maps.Point(radius, radius),
@@ -144,6 +154,8 @@ const createLockerMarker = ({
   zoomLevel,
   spreadX,
   spreadY,
+  offsetX,
+  offsetY,
 }: {
   map: naver.maps.Map;
   maps: typeof naver.maps;
@@ -157,6 +169,8 @@ const createLockerMarker = ({
   zoomLevel: number;
   spreadX?: number;
   spreadY?: number;
+  offsetX?: number;
+  offsetY?: number;
 }) => {
   const marker = new maps.Marker({
     map,
@@ -171,6 +185,8 @@ const createLockerMarker = ({
       zoomLevel,
       spreadX,
       spreadY,
+      offsetX,
+      offsetY,
     ),
   });
   return marker;
@@ -228,6 +244,18 @@ export const syncLockerMarkers = ({
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
 
+  // 1. 동일 좌표 그룹화 (위도/경도 소수점 4자리 기준)
+  const coordGroups = new Map<string, LockerPinItemResponse[]>();
+  for (const pin of lockers) {
+    const key = `${pin.latitude.toFixed(4)},${pin.longitude.toFixed(4)}`;
+    let list = coordGroups.get(key);
+    if (!list) {
+      list = [];
+      coordGroups.set(key, list);
+    }
+    list.push(pin);
+  }
+
   // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
   const mapBounds = map.getBounds?.() as
     | naver.maps.LatLngBounds
@@ -278,7 +306,31 @@ export const syncLockerMarkers = ({
       spreadY = Math.round(centerPoint.y - pinPoint.y);
     }
 
-    const iconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
+    // 2. 오프셋 계산 (동일 좌표 그룹이 2개 이상일 때)
+    const coordKey = `${pin.latitude.toFixed(4)},${pin.longitude.toFixed(4)}`;
+    const groupList = coordGroups.get(coordKey) ?? [];
+    const groupCount = groupList.length;
+
+    let offsetX = 0;
+    let offsetY = 0;
+    if (groupCount > 1) {
+      const indexInGroup = groupList.findIndex((item) => getPinId(item) === pinId);
+      if (indexInGroup !== -1) {
+        const angle = (2 * Math.PI * indexInGroup) / groupCount;
+        const R = 15; // 줌과 상관없이 화면상 고정된 15px 오프셋
+        offsetX = Math.round(R * Math.cos(angle));
+        offsetY = Math.round(R * Math.sin(angle));
+      }
+    }
+
+    const baseIconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
+    const hasSpread = spreadX !== 0 || spreadY !== 0;
+    const hasOffset = offsetX !== 0 || offsetY !== 0;
+    const iconSignature = `${baseIconSignature}${
+      hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
+    }${
+      hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
+    }`;
 
     if (existingEntry) {
       if (
@@ -320,8 +372,10 @@ export const syncLockerMarkers = ({
             isSelected,
             animationState,
             zoomLevel,
-            0,
-            0,
+            spreadX,
+            spreadY,
+            offsetX,
+            offsetY,
           ),
         );
         existingEntry.iconSignature = nextIconSignature;
@@ -352,6 +406,8 @@ export const syncLockerMarkers = ({
       zoomLevel,
       spreadX,
       spreadY,
+      offsetX,
+      offsetY,
     });
     marker.setVisible(isVisible);
 
