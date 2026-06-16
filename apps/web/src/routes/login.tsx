@@ -1,5 +1,5 @@
-import { useEffect, type CSSProperties } from "react";
-import { createFileRoute, useSearch, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useSearch } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
 import { SocialLoginStack } from "#/features/auth/sign-in/ui/social-login-stack/SocialLoginStack";
 import { LoginPageSkeleton } from "#/features/auth/sign-in/ui/LoginPageSkeleton";
@@ -61,7 +61,7 @@ const wordmarkStyle = {
 } satisfies CSSProperties;
 
 function LoginPage() {
-  const { code } = useSearch({ from: "/login" });
+  const { code, returnPath } = useSearch({ from: "/login" });
   const { isStyleReady, isStyleTimedOut } = useLoginPageStyleReady();
 
   // 소셜 로그인 콜백으로 돌아온 경우, UI를 숨겨 화면 깜빡임 방지 (Hydration 에러 방지를 위해 구조는 유지)
@@ -77,7 +77,7 @@ function LoginPage() {
           transition: "opacity 0.2s ease-in-out",
         }}
       >
-        <LoginPageContent applyFallbackStyle={false} />
+        <LoginPageContent applyFallbackStyle={false} returnPath={returnPath} />
       </div>
     );
   }
@@ -91,15 +91,20 @@ function LoginPage() {
       className={page}
       style={isStyleTimedOut ? loginPageInlineFallbackStyle : undefined}
     >
-      <LoginPageContent applyFallbackStyle={isStyleTimedOut} />
+      <LoginPageContent
+        applyFallbackStyle={isStyleTimedOut}
+        returnPath={returnPath}
+      />
     </div>
   );
 }
 
 function LoginPageContent({
   applyFallbackStyle,
+  returnPath,
 }: {
   applyFallbackStyle: boolean;
+  returnPath: string;
 }) {
   return (
     <>
@@ -118,6 +123,7 @@ function LoginPageContent({
       </div>
       <SocialLoginStack
         className={loginStack}
+        returnPath={returnPath}
         stackFallbackStyle={
           applyFallbackStyle ? loginStackInlineFallbackStyle : undefined
         }

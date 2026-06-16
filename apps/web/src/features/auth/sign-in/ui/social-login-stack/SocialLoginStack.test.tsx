@@ -2,12 +2,8 @@
 
 import { setLanguageTag } from "@repo/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SocialLoginStack } from "./SocialLoginStack";
-
-vi.mock("@tanstack/react-router", () => ({
-  useSearch: () => ({ returnPath: "/" }),
-}));
 
 describe("SocialLoginStack", () => {
   afterEach(() => {

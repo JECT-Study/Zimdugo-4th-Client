@@ -1,19 +1,21 @@
+import { languageTag, m } from "@repo/i18n";
 import { Button as UiButton } from "@repo/ui/components/button";
-import { m } from "@repo/i18n";
-import {
-  getNavigationPlatformLinks,
-  hasNavigationDestination,
-  openNavigationPlatformLinks,
-  resolveNavigationOriginWithPermissionRequest,
-  type NavigationPlatform,
-  type ResolveNavigationOriginResult,
-} from "#/features/search/lib/navigation-platform-links";
+import { Popup } from "@repo/ui/components/popup";
+import { useState } from "react";
 import {
   Button as AriaButton,
   Dialog,
   Modal,
   ModalOverlay,
 } from "react-aria-components";
+import {
+  getNavigationPlatformLinks,
+  hasNavigationDestination,
+  type NavigationPlatform,
+  openNavigationPlatformLinks,
+  type ResolveNavigationOriginResult,
+  resolveNavigationOriginForDirections,
+} from "#/features/search/lib/navigation-platform-links";
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
 import {
   cancelButton,
@@ -27,15 +29,11 @@ import {
 } from "./NavigationPlatformPopup.css.ts";
 
 export type { NavigationPlatform } from "#/features/search/lib/navigation-platform-links";
-export {
-  getNavigationPlatformUrl,
-} from "#/features/search/lib/navigation-platform-links";
+export { getNavigationPlatformUrl } from "#/features/search/lib/navigation-platform-links";
 
-const KAKAO_MAP_ICON_URL =
-  "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/68/e2/0b/68e20b4b-7303-6023-2de9-c893f5ea1b38/AppIcon-0-0-1x_U007epad-0-1-0-85-220.png/512x512bb.jpg";
+const NAVER_MAP_ICON_URL = "/icons/navigation/naver-map.png";
 
-const GOOGLE_MAPS_ICON_URL =
-  "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/f1/56/40/f15640e5-527f-1000-045f-0a4c71df9286/maps_2025-0-0-1x_U007epad-0-0-0-1-0-0-sRGB-0-0-85-220.png/512x512bb.jpg";
+const GOOGLE_MAPS_ICON_URL = "/icons/navigation/google-maps.png";
 
 const resolvingNavigationLockerIds = new Set<number>();
 
@@ -60,7 +58,10 @@ export function NavigationPlatformPopup({
   onOriginResolved,
   onSelectPlatform,
 }: NavigationPlatformPopupProps) {
-  const handleSelectPlatform = (platform: NavigationPlatform) => {
+  const [isNaverLanguageWarningOpen, setIsNaverLanguageWarningOpen] =
+    useState(false);
+
+  const openPlatformNavigation = (platform: NavigationPlatform) => {
     if (!locker || !hasNavigationDestination(locker)) {
       return;
     }
@@ -71,77 +72,110 @@ export function NavigationPlatformPopup({
 
     resolvingNavigationLockerIds.add(locker.lockerId);
 
-    const originTask = resolveNavigationOriginWithPermissionRequest({
-      knownLocation,
-    });
+    try {
+      const result = resolveNavigationOriginForDirections(knownLocation);
+      onOriginResolved?.(result);
 
-    void originTask
-      .then((result) => {
-        onOriginResolved?.(result);
-
-        const links = getNavigationPlatformLinks(platform, locker, {
-          navigationOrigin: result.origin,
-        });
-        if (!links) return;
-
-        onSelectPlatform?.(platform, links.webUrl, locker);
-        openNavigationPlatformLinks(links);
-        onOpenChange(false);
-      })
-      .finally(() => {
-        resolvingNavigationLockerIds.delete(locker.lockerId);
+      const links = getNavigationPlatformLinks(platform, locker, {
+        navigationOrigin: result.origin,
       });
+      if (!links) {
+        return;
+      }
+
+      onSelectPlatform?.(platform, links.webUrl, locker);
+      openNavigationPlatformLinks(links);
+      onOpenChange(false);
+    } finally {
+      resolvingNavigationLockerIds.delete(locker.lockerId);
+    }
+  };
+
+  const handleSelectPlatform = (platform: NavigationPlatform) => {
+    if (platform === "naver" && languageTag() !== "ko") {
+      setIsNaverLanguageWarningOpen(true);
+      return;
+    }
+
+    openPlatformNavigation(platform);
   };
 
   return (
-    <ModalOverlay
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      className={overlay}
-      isDismissable
-    >
-      <Modal>
-        <Dialog className={dialog} aria-label={m.navigation_platform_dialog_aria()}>
-          <h2 className={title}>{m.navigation_platform_title()}</h2>
-          <div className={platformGrid}>
-            <AriaButton
-              className={platformButton}
-              onPress={() => handleSelectPlatform("kakao")}
-              aria-label={m.navigation_platform_kakao_aria()}
-            >
-              <img
-                className={platformIcon}
-                src={KAKAO_MAP_ICON_URL}
-                alt=""
-                aria-hidden="true"
-              />
-              <span className={platformLabel}>{m.navigation_platform_kakao()}</span>
-            </AriaButton>
-            <AriaButton
-              className={platformButton}
-              onPress={() => handleSelectPlatform("google")}
-              aria-label={m.navigation_platform_google_aria()}
-            >
-              <img
-                className={platformIcon}
-                src={GOOGLE_MAPS_ICON_URL}
-                alt=""
-                aria-hidden="true"
-              />
-              <span className={platformLabel}>{m.navigation_platform_google()}</span>
-            </AriaButton>
-          </div>
-          <UiButton
-            variant="filled"
-            intent="neutral"
-            size="L"
-            className={cancelButton}
-            onPress={() => onOpenChange(false)}
+    <>
+      <ModalOverlay
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        className={overlay}
+        isDismissable
+      >
+        <Modal>
+          <Dialog
+            className={dialog}
+            aria-label={m.navigation_platform_dialog_aria()}
           >
-            {m.navigation_platform_close()}
-          </UiButton>
-        </Dialog>
-      </Modal>
-    </ModalOverlay>
+            <h2 className={title}>{m.navigation_platform_title()}</h2>
+            <div className={platformGrid}>
+              <AriaButton
+                className={platformButton}
+                onPress={() => handleSelectPlatform("naver")}
+                aria-label={m.navigation_platform_naver_aria()}
+              >
+                <img
+                  className={platformIcon}
+                  src={NAVER_MAP_ICON_URL}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span className={platformLabel}>
+                  {m.navigation_platform_naver()}
+                </span>
+              </AriaButton>
+              <AriaButton
+                className={platformButton}
+                onPress={() => handleSelectPlatform("google")}
+                aria-label={m.navigation_platform_google_aria()}
+              >
+                <img
+                  className={platformIcon}
+                  src={GOOGLE_MAPS_ICON_URL}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span className={platformLabel}>
+                  {m.navigation_platform_google()}
+                </span>
+              </AriaButton>
+            </div>
+            <UiButton
+              variant="filled"
+              intent="neutral"
+              size="L"
+              className={cancelButton}
+              onPress={() => onOpenChange(false)}
+            >
+              {m.navigation_platform_close()}
+            </UiButton>
+          </Dialog>
+        </Modal>
+      </ModalOverlay>
+
+      <Popup
+        isOpen={isNaverLanguageWarningOpen}
+        onOpenChange={setIsNaverLanguageWarningOpen}
+        titleText={m.navigation_naver_language_warning_title()}
+        helperText={m.navigation_naver_language_warning_helper()}
+        primaryAction={{
+          label: m.common_yes(),
+          onPress: () => {
+            setIsNaverLanguageWarningOpen(false);
+            openPlatformNavigation("naver");
+          },
+        }}
+        secondaryAction={{
+          label: m.common_no(),
+          onPress: () => setIsNaverLanguageWarningOpen(false),
+        }}
+      />
+    </>
   );
 }

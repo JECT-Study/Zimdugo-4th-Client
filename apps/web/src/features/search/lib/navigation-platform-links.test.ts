@@ -5,13 +5,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import {
   DEFAULT_NAVIGATION_ORIGIN,
+  encodeNaverCoordinate,
   getNavigationPlatformLinks,
   getNavigationPlatformUrl,
   hasNavigationDestination,
-  NAVIGATION_ORIGIN_POSITION_OPTIONS,
   openNavigationPlatformLinks,
   resolveNavigationOrigin,
-  resolveNavigationOriginWithPermissionRequest,
+  resolveNavigationOriginForDirections,
+  resolveGoogleMapsHl,
+  sanitizeNaverNavigationLabel,
 } from "./navigation-platform-links";
 
 const LOCKER_WITHOUT_COORDS: LockerDetailItem = {
@@ -47,15 +49,10 @@ describe("navigation-platform-links", () => {
     setLanguageTag("ko");
   });
 
-  it("이미 알고 있는 위치가 있으면 GPS 재요청 없이 출발지를 반환한다", async () => {
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        knownLocation: CURRENT_ORIGIN,
-        getCurrentCoordinates: async () => {
-          throw new Error("should not request geolocation");
-        },
-      }),
-    ).resolves.toEqual({
+  it("이미 알고 있는 위치가 있으면 해당 좌표를 출발지로 사용한다", () => {
+    expect(
+      resolveNavigationOriginForDirections(CURRENT_ORIGIN),
+    ).toEqual({
       origin: {
         lat: CURRENT_ORIGIN.lat,
         lng: CURRENT_ORIGIN.lng,
@@ -66,63 +63,17 @@ describe("navigation-platform-links", () => {
     });
   });
 
-  it("길찾기 직전에 위치 권한을 요청해 출발지를 결정한다", async () => {
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        getCurrentCoordinates: async () => ({
-          lat: 37.5012,
-          lng: 127.0396,
-        }),
-      }),
-    ).resolves.toEqual({
-      origin: {
-        lat: 37.5012,
-        lng: 127.0396,
-        label: "현재 위치",
-      },
-      permissionDenied: false,
-      usedCurrentLocation: true,
-    });
-
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        getCurrentCoordinates: async () => {
-          throw { code: 1 };
-        },
-      }),
-    ).resolves.toEqual({
-      origin: DEFAULT_NAVIGATION_ORIGIN,
-      permissionDenied: true,
-      usedCurrentLocation: false,
-    });
-
-    await expect(
-      resolveNavigationOriginWithPermissionRequest({
-        getCurrentCoordinates: async () => {
-          throw new Error("timeout");
-        },
-      }),
-    ).resolves.toEqual({
+  it("알려진 위치가 없으면 기본 출발지를 즉시 사용한다", () => {
+    expect(resolveNavigationOriginForDirections(null)).toEqual({
       origin: DEFAULT_NAVIGATION_ORIGIN,
       permissionDenied: false,
       usedCurrentLocation: false,
     });
-  });
-
-  it("길찾기 출발지 조회 시 5초 타임아웃 옵션을 전달한다", async () => {
-    const getCurrentCoordinates = vi.fn(async () => ({
-      lat: 37.5012,
-      lng: 127.0396,
-    }));
-
-    await resolveNavigationOriginWithPermissionRequest({
-      getCurrentCoordinates,
+    expect(resolveNavigationOriginForDirections()).toEqual({
+      origin: DEFAULT_NAVIGATION_ORIGIN,
+      permissionDenied: false,
+      usedCurrentLocation: false,
     });
-
-    expect(getCurrentCoordinates).toHaveBeenCalledWith(
-      NAVIGATION_ORIGIN_POSITION_OPTIONS,
-    );
-    expect(NAVIGATION_ORIGIN_POSITION_OPTIONS.timeout).toBe(5_000);
   });
 
   it("출발지는 현재 위치를 우선하고 없으면 강남역 11번 출구로 폴백한다", () => {
@@ -160,30 +111,98 @@ describe("navigation-platform-links", () => {
     expect(decodeURIComponent(links?.webUrl ?? "")).toContain(
       "destination=37.5559,126.9364",
     );
+    expect(links?.webUrl).toContain("hl=ko");
     expect(
       getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
     ).toBe(links?.webUrl ?? null);
   });
 
-  it("카카오맵은 map.kakao.com/link 웹 길찾기 URL을 만든다", () => {
+  it("구글맵 URL hl은 앱 언어에 맞춘다", () => {
+    setLanguageTag("en");
+    expect(resolveGoogleMapsHl("en")).toBe("en");
+    expect(
+      getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
+    ).toContain("hl=en");
+
+    setLanguageTag("zh-TW");
+    expect(resolveGoogleMapsHl("zh-TW")).toBe("zh-TW");
+    expect(
+      getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
+    ).toContain("hl=zh-TW");
+  });
+
+  it("네이버 단축 좌표를 base62로 인코딩한다", () => {
+    expect(encodeNaverCoordinate(126.9364)).toBe("3zfUVq");
+    expect(encodeNaverCoordinate(37.5559)).toBe("2ALBpK");
+  });
+
+  it("네이버 길찾기 라벨에서 path 구분을 깨는 특수문자를 정리한다", () => {
+    expect(
+      sanitizeNaverNavigationLabel(
+        "블루보틀커피 성수 카페 2번 무료 보관함 [주간전용]",
+      ),
+    ).toBe("블루보틀커피 성수 카페 2번 무료 보관함 주간전용");
+    expect(sanitizeNaverNavigationLabel("A, B")).toBe("A B");
+  });
+
+  it("네이버지도는 map.naver.com/p/directions 웹 길찾기 URL을 만든다", () => {
     const links = getNavigationPlatformLinks(
-      "kakao",
+      "naver",
       LOCKER_WITH_COORDS,
       linkOptions(),
     );
 
-    expect(links?.webUrl).toContain("map.kakao.com/link/from/");
-    expect(links?.webUrl).toContain("/to/");
-    expect(links?.webUrl).toContain("37.50120");
-    expect(links?.webUrl).toContain("127.03960");
-    expect(links?.webUrl).toContain("37.55590");
-    expect(links?.webUrl).toContain("126.93640");
+    expect(links?.webUrl).toContain("map.naver.com/p/directions/");
+    expect(links?.webUrl).toContain("3zfUVq,2ALBpK");
+    expect(links?.webUrl).toContain("ADDRESS_POI");
+    expect(links?.webUrl).toContain(encodeURIComponent("현재 위치"));
+    expect(links?.webUrl).toContain(
+      encodeURIComponent(LOCKER_WITH_COORDS.title),
+    );
+    expect(links?.webUrl).not.toMatch(/\/\d{8,}\./);
+    expect(links?.webUrl).toMatch(/\/-\/transit$/);
   });
 
-  it("길찾기 열기는 모바일·데스크톱 모두 웹 URL을 사용한다", () => {
+  it("도착지 이름의 대괄호는 네이버 URL에서 제거한다", () => {
+    const lockerWithBracketTitle: LockerDetailItem = {
+      ...LOCKER_WITH_COORDS,
+      title: "테스트 보관함 [주간전용]",
+    };
+    const links = getNavigationPlatformLinks(
+      "naver",
+      lockerWithBracketTitle,
+      linkOptions(),
+    );
+
+    expect(links?.webUrl).toContain(
+      encodeURIComponent("테스트 보관함 주간전용"),
+    );
+    expect(links?.webUrl).not.toContain("%5B");
+    expect(links?.webUrl).not.toContain("%5D");
+  });
+
+  it("길찾기 열기는 새 탭에서 연다", () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    const links = getNavigationPlatformLinks(
+      "naver",
+      LOCKER_WITH_COORDS,
+      linkOptions(),
+    );
+
+    openNavigationPlatformLinks(links!);
+    expect(open).toHaveBeenCalledWith(
+      links?.webUrl,
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    open.mockRestore();
+  });
+
+  it("길찾기 열기는 assign 옵션으로 열기 방식을 주입할 수 있다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks(
-      "kakao",
+      "naver",
       LOCKER_WITH_COORDS,
       linkOptions(),
     );

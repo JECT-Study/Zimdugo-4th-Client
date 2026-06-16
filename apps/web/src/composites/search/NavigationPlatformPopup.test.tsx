@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { setLanguageTag } from "@repo/i18n";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as navigationPlatformLinks from "#/features/search/lib/navigation-platform-links";
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
@@ -28,6 +28,12 @@ const NAVIGATION_ORIGIN = {
   label: "현재 위치",
 };
 
+const DEFAULT_NAVIGATION_ORIGIN = {
+  lat: 37.498095,
+  lng: 127.02761,
+  label: "강남역 11번 출구",
+};
+
 describe("NavigationPlatformPopup", () => {
   beforeEach(() => {
     setLanguageTag("ko");
@@ -37,7 +43,7 @@ describe("NavigationPlatformPopup", () => {
     vi.restoreAllMocks();
   });
 
-  it("카카오맵·구글맵스 길찾기 선택지를 렌더링한다", () => {
+  it("네이버지도·구글맵스 길찾기 선택지를 렌더링한다", () => {
     render(
       <NavigationPlatformPopup
         isOpen
@@ -48,29 +54,57 @@ describe("NavigationPlatformPopup", () => {
 
     expect(screen.getByText("어떤 지도로 길찾기 할까요?")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "카카오맵으로 길찾기" }),
+      screen.getByRole("button", { name: "네이버지도로 길찾기" }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "구글맵스로 길찾기" }),
     ).toBeTruthy();
+
+    const naverMapButton = screen.getByRole("button", {
+      name: "네이버지도로 길찾기",
+    });
+    const naverMapIcon = naverMapButton.querySelector("img");
+
+    expect(naverMapIcon?.getAttribute("src")).toBe(
+      "/icons/navigation/naver-map.png",
+    );
+
+    const googleMapsButton = screen.getByRole("button", {
+      name: "구글맵스로 길찾기",
+    });
+    const googleMapsIcon = googleMapsButton.querySelector("img");
+
+    expect(googleMapsIcon?.getAttribute("src")).toBe(
+      "/icons/navigation/google-maps.png",
+    );
   });
 
   it("출발지·도착지 좌표로 길찾기 URL을 만든다", () => {
     expect(
-      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("map.kakao.com/link/from/");
+    ).toContain("map.naver.com/p/directions/");
     expect(
-      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).toContain("/to/");
+    ).toContain("3zfUVq,2ALBpK");
     expect(
-      getNavigationPlatformUrl("kakao", LOCKER_DETAIL, {
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).not.toContain("/by/");
+    ).toContain("ADDRESS_POI");
+    expect(
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).not.toMatch(/\/\d{8,}\./);
+    expect(
+      getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
+        navigationOrigin: NAVIGATION_ORIGIN,
+      }),
+    ).toMatch(/\/-\/transit$/);
     expect(
       getNavigationPlatformUrl("google", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
@@ -82,9 +116,7 @@ describe("NavigationPlatformPopup", () => {
           navigationOrigin: NAVIGATION_ORIGIN,
         }) ?? "",
       ),
-    ).toContain(
-      `origin=${NAVIGATION_ORIGIN.lat},${NAVIGATION_ORIGIN.lng}`,
-    );
+    ).toContain(`origin=${NAVIGATION_ORIGIN.lat},${NAVIGATION_ORIGIN.lng}`);
     expect(
       decodeURIComponent(
         getNavigationPlatformUrl("google", LOCKER_DETAIL, {
@@ -94,20 +126,34 @@ describe("NavigationPlatformPopup", () => {
     ).toContain("destination=37.5559,126.9364");
   });
 
-  it("이미 알고 있는 위치가 있으면 GPS 재요청 없이 길찾기를 연다", async () => {
-    const getCurrentCoordinates = vi.fn(async () => {
-      throw new Error("should not request geolocation");
-    });
+  it("이미 알고 있는 위치가 있으면 해당 좌표로 길찾기를 연다", () => {
+    const onSelectPlatform = vi.fn();
+    const open = vi
+      .spyOn(navigationPlatformLinks, "openNavigationPlatformLinks")
+      .mockImplementation(() => undefined);
 
-    vi.spyOn(
-      navigationPlatformLinks,
-      "resolveNavigationOriginWithPermissionRequest",
-    ).mockImplementationOnce((options) =>
-      navigationPlatformLinks.resolveNavigationOriginWithPermissionRequest({
-        ...options,
-        getCurrentCoordinates,
-      }),
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
+      />,
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "구글맵스로 길찾기" }));
+
+    const url = onSelectPlatform.mock.calls[0]?.[1] as string;
+    expect(onSelectPlatform).toHaveBeenCalledWith("google", url, LOCKER_DETAIL);
+    expect(decodeURIComponent(url)).toContain("origin=37.5012,127.0396");
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it("한국어가 아니면 네이버지도 선택 시 언어 지원 안내 팝업을 띄운다", () => {
+    setLanguageTag("en");
+    const onSelectPlatform = vi.fn();
+
     vi.spyOn(
       navigationPlatformLinks,
       "openNavigationPlatformLinks",
@@ -119,26 +165,109 @@ describe("NavigationPlatformPopup", () => {
         locker={LOCKER_DETAIL}
         knownLocation={{ lat: 37.5012, lng: 127.0396 }}
         onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "구글맵스로 길찾기" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open directions in Naver Map" }),
+    );
 
-    await waitFor(() => {
-      expect(getCurrentCoordinates).not.toHaveBeenCalled();
-    });
+    expect(
+      screen.getByText(
+        "Naver Map doesn't support your current language. Open it anyway?",
+      ),
+    ).toBeTruthy();
+    expect(onSelectPlatform).not.toHaveBeenCalled();
   });
 
-  it("지도 플랫폼 선택 시 위치 권한을 요청한다", async () => {
+  it("한국어가 아니면 언어 지원 안내에서 아니오를 누르면 네이버지도를 열지 않는다", () => {
+    setLanguageTag("en");
+
+    const open = vi
+      .spyOn(navigationPlatformLinks, "openNavigationPlatformLinks")
+      .mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open directions in Naver Map" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "No" }));
+
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("한국어가 아니면 언어 지원 안내에서 예를 누르면 네이버지도를 연다", () => {
+    setLanguageTag("en");
+    const onSelectPlatform = vi.fn();
+
+    const open = vi
+      .spyOn(navigationPlatformLinks, "openNavigationPlatformLinks")
+      .mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open directions in Naver Map" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Yes" }));
+
+    expect(onSelectPlatform).toHaveBeenCalledWith(
+      "naver",
+      expect.stringContaining("map.naver.com/p/directions/"),
+      LOCKER_DETAIL,
+    );
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it("네이버 버튼 선택 시 onSelectPlatform에 naver 플랫폼을 전달한다", () => {
     const onSelectPlatform = vi.fn();
 
     vi.spyOn(
       navigationPlatformLinks,
-      "resolveNavigationOriginWithPermissionRequest",
-    ).mockResolvedValueOnce({
-      origin: NAVIGATION_ORIGIN,
-      permissionDenied: false,
-    });
+      "openNavigationPlatformLinks",
+    ).mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "네이버지도로 길찾기" }),
+    );
+
+    expect(onSelectPlatform).toHaveBeenCalledWith(
+      "naver",
+      expect.stringContaining("map.naver.com/p/directions/"),
+      LOCKER_DETAIL,
+    );
+  });
+
+  it("현재 위치가 없으면 기본 출발지로 길찾기를 연다", () => {
+    const onSelectPlatform = vi.fn();
+
     vi.spyOn(
       navigationPlatformLinks,
       "openNavigationPlatformLinks",
@@ -155,18 +284,9 @@ describe("NavigationPlatformPopup", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "구글맵스로 길찾기" }));
 
-    await waitFor(() => {
-      expect(
-        navigationPlatformLinks.resolveNavigationOriginWithPermissionRequest,
-      ).toHaveBeenCalledTimes(1);
-      expect(
-        navigationPlatformLinks.resolveNavigationOriginWithPermissionRequest,
-      ).toHaveBeenCalledWith({ knownLocation: null });
-    });
-    expect(onSelectPlatform).toHaveBeenCalledWith(
-      "google",
-      expect.stringContaining("google.com/maps/dir/"),
-      LOCKER_DETAIL,
+    const url = onSelectPlatform.mock.calls[0]?.[1] as string;
+    expect(decodeURIComponent(url)).toContain(
+      `origin=${DEFAULT_NAVIGATION_ORIGIN.lat},${DEFAULT_NAVIGATION_ORIGIN.lng}`,
     );
   });
 });

@@ -1,6 +1,5 @@
 import { languageTag, m } from "@repo/i18n";
 import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/tokens/icons";
-import { useSearch } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
 import { loginSocialButtonInlineFallbackStyle } from "#/features/auth/sign-in/ui/login-page-fallback";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
@@ -89,6 +88,7 @@ export interface SocialLoginStackProps {
   applyFallbackStyle?: boolean;
   /** 클라이언트 측 로그인 처리 로직을 주입해야 하는 경우 */
   onLogin?: (provider: LoginProvider) => void;
+  returnPath?: string;
 }
 
 /**
@@ -101,12 +101,11 @@ export function SocialLoginStack({
   stackFallbackStyle,
   applyFallbackStyle = false,
   onLogin,
+  returnPath = "/",
 }: SocialLoginStackProps) {
-  const search = useSearch({ strict: false }) as Record<string, unknown>;
   const appLanguage = normalizeLocale(languageTag()) ?? BASE_LOCALE;
   const isEnglishSubVisible =
     showEnglishLabel ?? resolveEnglishSubVisibility({ appLanguage });
-  const returnPath = (search.returnPath as string) || "/";
 
   const getHref = (provider: LoginProvider) => {
     const baseUrl =
