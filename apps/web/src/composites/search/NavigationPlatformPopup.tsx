@@ -165,12 +165,15 @@ export function NavigationPlatformPopup({
         titleText={m.navigation_naver_language_warning_title()}
         helperText={m.navigation_naver_language_warning_helper()}
         primaryAction={{
-          label: m.common_no(),
-          onPress: () => setIsNaverLanguageWarningOpen(false),
+          label: m.common_yes(),
+          onPress: () => {
+            setIsNaverLanguageWarningOpen(false);
+            openPlatformNavigation("naver");
+          },
         }}
         secondaryAction={{
-          label: m.common_yes(),
-          onPress: () => openPlatformNavigation("naver"),
+          label: m.common_no(),
+          onPress: () => setIsNaverLanguageWarningOpen(false),
         }}
       />
     </>

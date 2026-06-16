@@ -424,14 +424,14 @@ function ReportPage() {
           titleText={m.report_submit_confirm_title()}
           helperText={m.report_submit_confirm_helper()}
           primaryAction={{
-            label: m.common_no(),
-            onPress: () => handlers.handleSubmitConfirmPopupOpenChange(false),
-          }}
-          secondaryAction={{
             label: m.common_yes(),
             onPress: () => {
               void handlers.handleConfirmSubmit();
             },
+          }}
+          secondaryAction={{
+            label: m.common_no(),
+            onPress: () => handlers.handleSubmitConfirmPopupOpenChange(false),
           }}
         />
 
@@ -440,12 +440,12 @@ function ReportPage() {
           onOpenChange={setIsExitPopupOpen}
           titleText={m.report_exit_title()}
           primaryAction={{
-            label: m.common_no(),
-            onPress: handleStayOnReport,
-          }}
-          secondaryAction={{
             label: m.common_yes(),
             onPress: handleLeaveReport,
+          }}
+          secondaryAction={{
+            label: m.common_no(),
+            onPress: handleStayOnReport,
           }}
         />
 
