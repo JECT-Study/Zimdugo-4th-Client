@@ -4,8 +4,8 @@ import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "motion/react";
-import { useState, useRef } from "react";
+import { motion } from "motion/react";
+import { useRef, useState } from "react";
 import { FormProvider, useWatch } from "react-hook-form";
 import {
   cardsToSizeTypes,
@@ -16,6 +16,17 @@ import { useReportForm } from "#/features/report/model/useReportForm";
 import { useReportPageReady } from "#/features/report/model/useReportPageReady";
 import { LocationPickerOverlay } from "#/features/report/ui/LocationPickerOverlay";
 import { ReportPageLoadingOverlay } from "#/features/report/ui/ReportPageLoadingOverlay";
+import { ReportUnifiedSections } from "#/features/report/ui/ReportUnifiedSections";
+import {
+  bottomButtonWrapper,
+  contentArea,
+  nextButton,
+  reportContainer,
+  reportHeader,
+  stepWrapper,
+  submitActionFrame,
+  submitSubButton,
+} from "#/features/report/ui/report.css.ts";
 import {
   reportBottomBarInlineFallbackStyle,
   reportContentInlineFallbackStyle,
@@ -25,30 +36,15 @@ import {
   reportPageLoadingShellStyle,
   reportPageVisibleContentStyle,
 } from "#/features/report/ui/report-page-fallback";
-import { ReportClassificationSection } from "#/features/report/ui/ReportClassificationSection";
-import { ReportAdditionalInfoSection } from "#/features/report/ui/ReportAdditionalInfoSection";
-import { ReportFloorSection } from "#/features/report/ui/ReportFloorSection";
-import { ReportLocationSection } from "#/features/report/ui/ReportLocationSection";
-import { ReportPhotoSection } from "#/features/report/ui/ReportPhotoSection";
-import { ReportPriceSection } from "#/features/report/ui/ReportPriceSection";
-import { ReportSizeSection } from "#/features/report/ui/ReportSizeSection";
-import { ReportTimeSection } from "#/features/report/ui/ReportTimeSection";
-import {
-  bottomButtonWrapper,
-  contentArea,
-  nextButton,
-  reportContainer,
-  reportHeader,
-  submitActionFrame,
-  submitSubButton,
-  stepWrapper,
-} from "#/features/report/ui/report.css.ts";
 import { useAuthStore } from "#/shared/store/authStore";
 
 const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
   { label: m.search_filter_place_museum_short(), value: "MUSEUM" },
   { label: m.search_filter_place_subway_short(), value: "SUBWAY_STATION" },
-  { label: m.search_filter_place_department_short(), value: "DEPARTMENT_STORE" },
+  {
+    label: m.search_filter_place_department_short(),
+    value: "DEPARTMENT_STORE",
+  },
   {
     label: m.search_filter_place_convenience_short(),
     value: "CONVENIENCE_STORE",
@@ -218,100 +214,52 @@ function ReportPage() {
             }
           >
             <div ref={stepWrapperRef} className={stepWrapper}>
-              <AnimatePresence mode="wait">
-                {step === 1 ? (
-                  <motion.div
-                    key="step1"
-                    initial={isPageReady ? { opacity: 0, x: -10 } : false}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ReportLocationSection
-                      address={roadAddress}
-                      selectedCoords={selectedCoords}
-                      onOpenOverlay={() => setIsAddressOverlayOpen(true)}
-                      sectionServerError={sectionServerErrors.location}
-                      onFieldChange={() => clearSectionError("location")}
-                    />
-                    <ReportFloorSection
-                      sectionServerError={sectionServerErrors.floor}
-                      onFieldChange={() => clearSectionError("floor")}
-                    />
-                    <ReportClassificationSection
-                      lockerTypeOptions={lockerTypeOptions}
-                      sectionServerError={sectionServerErrors.classification}
-                      onFieldChange={() => clearSectionError("classification")}
-                    />
-                    <ReportSizeSection
-                      selectedSizes={sizeTypesToCards(sizeTypes)}
-                      setSelectedSizes={(cards) => {
-                        setValue("sizeTypes", cardsToSizeTypes(cards), {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }}
-                      sectionServerError={sectionServerErrors.size}
-                      onFieldChange={() => clearSectionError("size")}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="step2"
-                    initial={isPageReady ? { opacity: 0, x: 10 } : false}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ReportPhotoSection
-                      uploadedImages={uploadedImages}
-                      fileInputRef={fileInputRef}
-                      onImageClick={handleImageClick}
-                      onImageChange={handleImageChange}
-                      onImageRemove={handleImageRemove}
-                      isSubmitting={isSubmitting}
-                      photoServerError={sectionServerErrors.photo}
-                      isAgreed={locationConsentAgreed}
-                      setIsAgreed={(val) => {
-                        setValue("locationConsentAgreed", val, {
-                          shouldDirty: true,
-                        });
-                      }}
-                      onPrivacyPolicyNavigate={preparePrivacyPolicyNavigation}
-                    />
-                    <ReportPriceSection
-                      priceType={priceType}
-                      setPriceType={handlePriceTypeChange}
-                      minPrice={minPriceDisplay}
-                      setMinPrice={setMinPriceDisplay}
-                      maxPrice={maxPriceDisplay}
-                      setMaxPrice={setMaxPriceDisplay}
-                      sectionServerError={sectionServerErrors.price}
-                      onFieldChange={() => clearSectionError("price")}
-                    />
-                    <ReportTimeSection
-                      openTime={startTime ?? ""}
-                      setOpenTime={(val) => {
-                        setValue("startTime", val || null, { shouldDirty: true });
-                      }}
-                      closeTime={endTime ?? ""}
-                      setCloseTime={(val) => {
-                        setValue("endTime", val || null, { shouldDirty: true });
-                      }}
-                      sectionServerError={sectionServerErrors.time}
-                      onFieldChange={() => clearSectionError("time")}
-                    />
-                    <ReportAdditionalInfoSection
-                      additionalInfo={additionalInfo}
-                      setAdditionalInfo={(val) => {
-                        setValue("additionalInfo", val, { shouldDirty: true });
-                      }}
-                      sectionServerError={sectionServerErrors.additionalInfo}
-                      onFieldChange={() => clearSectionError("additionalInfo")}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <ReportUnifiedSections
+                address={roadAddress}
+                selectedCoords={selectedCoords}
+                onOpenLocationOverlay={() => setIsAddressOverlayOpen(true)}
+                lockerTypeOptions={lockerTypeOptions}
+                selectedSizes={sizeTypesToCards(sizeTypes)}
+                setSelectedSizes={(cards) => {
+                  setValue("sizeTypes", cardsToSizeTypes(cards), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+                uploadedImages={uploadedImages}
+                fileInputRef={fileInputRef}
+                onImageClick={handleImageClick}
+                onImageChange={handleImageChange}
+                onImageRemove={handleImageRemove}
+                isSubmitting={isSubmitting}
+                isAgreed={locationConsentAgreed}
+                setIsAgreed={(val) => {
+                  setValue("locationConsentAgreed", val, {
+                    shouldDirty: true,
+                  });
+                }}
+                onPrivacyPolicyNavigate={preparePrivacyPolicyNavigation}
+                priceType={priceType}
+                setPriceType={handlePriceTypeChange}
+                minPrice={minPriceDisplay}
+                setMinPrice={setMinPriceDisplay}
+                maxPrice={maxPriceDisplay}
+                setMaxPrice={setMaxPriceDisplay}
+                openTime={startTime}
+                setOpenTime={(val) => {
+                  setValue("startTime", val || null, { shouldDirty: true });
+                }}
+                closeTime={endTime}
+                setCloseTime={(val) => {
+                  setValue("endTime", val || null, { shouldDirty: true });
+                }}
+                additionalInfo={additionalInfo}
+                setAdditionalInfo={(val) => {
+                  setValue("additionalInfo", val, { shouldDirty: true });
+                }}
+                sectionServerErrors={sectionServerErrors}
+                clearSectionError={clearSectionError}
+              />
             </div>
           </main>
 
