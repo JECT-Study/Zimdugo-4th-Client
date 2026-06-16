@@ -1,13 +1,13 @@
 import { languageTag, m } from "@repo/i18n";
 import { Button as UiButton } from "@repo/ui/components/button";
 import { Popup } from "@repo/ui/components/popup";
+import { useState } from "react";
 import {
   Button as AriaButton,
   Dialog,
   Modal,
   ModalOverlay,
 } from "react-aria-components";
-import { useState } from "react";
 import {
   getNavigationPlatformLinks,
   hasNavigationDestination,
@@ -31,9 +31,9 @@ import {
 export type { NavigationPlatform } from "#/features/search/lib/navigation-platform-links";
 export { getNavigationPlatformUrl } from "#/features/search/lib/navigation-platform-links";
 
-const NAVER_MAP_ICON_URL = "/icons/navigation/naver-map.jpg";
+const NAVER_MAP_ICON_URL = "/icons/navigation/naver-map.png";
 
-const GOOGLE_MAPS_ICON_URL = "/icons/navigation/google-maps.jpg";
+const GOOGLE_MAPS_ICON_URL = "/icons/navigation/google-maps.png";
 
 const resolvingNavigationLockerIds = new Set<number>();
 

@@ -66,7 +66,7 @@ describe("NavigationPlatformPopup", () => {
     const naverMapIcon = naverMapButton.querySelector("img");
 
     expect(naverMapIcon?.getAttribute("src")).toBe(
-      "/icons/navigation/naver-map.jpg",
+      "/icons/navigation/naver-map.png",
     );
 
     const googleMapsButton = screen.getByRole("button", {
@@ -75,7 +75,7 @@ describe("NavigationPlatformPopup", () => {
     const googleMapsIcon = googleMapsButton.querySelector("img");
 
     expect(googleMapsIcon?.getAttribute("src")).toBe(
-      "/icons/navigation/google-maps.jpg",
+      "/icons/navigation/google-maps.png",
     );
   });
 
@@ -145,11 +145,7 @@ describe("NavigationPlatformPopup", () => {
     fireEvent.click(screen.getByRole("button", { name: "구글맵스로 길찾기" }));
 
     const url = onSelectPlatform.mock.calls[0]?.[1] as string;
-    expect(onSelectPlatform).toHaveBeenCalledWith(
-      "google",
-      url,
-      LOCKER_DETAIL,
-    );
+    expect(onSelectPlatform).toHaveBeenCalledWith("google", url, LOCKER_DETAIL);
     expect(decodeURIComponent(url)).toContain("origin=37.5012,127.0396");
     expect(open).toHaveBeenCalledTimes(1);
   });
@@ -258,7 +254,9 @@ describe("NavigationPlatformPopup", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "네이버지도로 길찾기" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "네이버지도로 길찾기" }),
+    );
 
     expect(onSelectPlatform).toHaveBeenCalledWith(
       "naver",
