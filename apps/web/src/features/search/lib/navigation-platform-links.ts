@@ -1,5 +1,10 @@
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
+import {
+  type AppLocale,
+  BASE_LOCALE,
+  normalizeLocale,
+} from "#/shared/i18n/locales";
 
 export type NavigationPlatform = "naver" | "google";
 
@@ -149,6 +154,19 @@ const buildNaverWebDirectionsUrl = (
   return `https://map.naver.com/p/directions/${startPath}/${destinationPath}/-/transit`;
 };
 
+const GOOGLE_MAPS_HL_BY_APP_LOCALE = {
+  ko: "ko",
+  en: "en",
+  ja: "ja",
+  zh: "zh-CN",
+  "zh-TW": "zh-TW",
+} as const satisfies Record<AppLocale, string>;
+
+/** 앱 언어를 Google Maps URL `hl`(host language) 값으로 변환한다. */
+export const resolveGoogleMapsHl = (
+  locale = normalizeLocale(languageTag()) ?? BASE_LOCALE,
+): string => GOOGLE_MAPS_HL_BY_APP_LOCALE[locale];
+
 const buildGoogleWebUrl = (
   origin: NavigationPoint,
   destination: NavigationPoint,
@@ -158,6 +176,7 @@ const buildGoogleWebUrl = (
     origin: `${origin.lat},${origin.lng}`,
     destination: `${destination.lat},${destination.lng}`,
     travelmode: "transit",
+    hl: resolveGoogleMapsHl(),
   });
 
   return `https://www.google.com/maps/dir/?${params.toString()}`;

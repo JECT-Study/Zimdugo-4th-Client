@@ -12,6 +12,7 @@ import {
   openNavigationPlatformLinks,
   resolveNavigationOrigin,
   resolveNavigationOriginForDirections,
+  resolveGoogleMapsHl,
   sanitizeNaverNavigationLabel,
 } from "./navigation-platform-links";
 
@@ -110,9 +111,24 @@ describe("navigation-platform-links", () => {
     expect(decodeURIComponent(links?.webUrl ?? "")).toContain(
       "destination=37.5559,126.9364",
     );
+    expect(links?.webUrl).toContain("hl=ko");
     expect(
       getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
     ).toBe(links?.webUrl ?? null);
+  });
+
+  it("구글맵 URL hl은 앱 언어에 맞춘다", () => {
+    setLanguageTag("en");
+    expect(resolveGoogleMapsHl("en")).toBe("en");
+    expect(
+      getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
+    ).toContain("hl=en");
+
+    setLanguageTag("zh-TW");
+    expect(resolveGoogleMapsHl("zh-TW")).toBe("zh-TW");
+    expect(
+      getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
+    ).toContain("hl=zh-TW");
   });
 
   it("네이버 단축 좌표를 base62로 인코딩한다", () => {
