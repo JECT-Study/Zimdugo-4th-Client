@@ -9,6 +9,9 @@ const webI18nServerEntry = fileURLToPath(
   new URL("../../web/src/i18n-server.ts", import.meta.url),
 );
 const webSrcRoot = fileURLToPath(new URL("../../web/src", import.meta.url));
+const webPublicRoot = fileURLToPath(
+  new URL("../../web/public", import.meta.url),
+);
 
 const config: StorybookConfig = {
   stories: [
@@ -16,7 +19,7 @@ const config: StorybookConfig = {
     "../../../apps/web/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   addons: [],
-  staticDirs: [{ from: "../../web/public", to: "/" }],
+  staticDirs: [{ from: webPublicRoot, to: "/" }],
   framework: {
     name: "@storybook/react-vite",
     options: {},
