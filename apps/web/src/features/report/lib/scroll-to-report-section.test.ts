@@ -36,6 +36,19 @@ describe("scrollToReportSection", () => {
 
   it("스크롤 컨테이너가 있으면 scrollIntoView 대신 컨테이너를 스크롤한다", () => {
     vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false }));
+    vi.spyOn(window, "getComputedStyle").mockImplementation((element) => {
+      const el = element as HTMLElement;
+      if (el.tagName === "MAIN") {
+        return { paddingTop: "0px" } as CSSStyleDeclaration;
+      }
+      if (el.tagName === "SECTION") {
+        return { scrollMarginTop: "0px" } as CSSStyleDeclaration;
+      }
+      return {
+        paddingTop: "0px",
+        scrollMarginTop: "0px",
+      } as CSSStyleDeclaration;
+    });
 
     const scrollContainer = document.createElement("main");
     scrollContainer.setAttribute(REPORT_CONTENT_SCROLL_CONTAINER_ATTR, "");

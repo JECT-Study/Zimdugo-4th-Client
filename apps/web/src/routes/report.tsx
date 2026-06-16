@@ -16,6 +16,7 @@ import { useReportForm } from "#/features/report/model/useReportForm";
 import { useReportPageReady } from "#/features/report/model/useReportPageReady";
 import { LocationPickerOverlay } from "#/features/report/ui/LocationPickerOverlay";
 import { REPORT_CONTENT_SCROLL_CONTAINER_ATTR } from "#/features/report/lib/scroll-to-report-section";
+import { useReportContentFocusScroll } from "#/features/report/lib/use-report-content-focus-scroll";
 import { ReportPageLoadingOverlay } from "#/features/report/ui/ReportPageLoadingOverlay";
 import { ReportUnifiedSections } from "#/features/report/ui/ReportUnifiedSections";
 import {
@@ -24,6 +25,7 @@ import {
   nextButton,
   reportContainer,
   reportHeader,
+  reportPageContent,
   stepWrapper,
   submitActionFrame,
 } from "#/features/report/ui/report.css.ts";
@@ -85,6 +87,7 @@ function ReportPage() {
     bottomBarRef,
     stepWrapperRef,
   });
+  useReportContentFocusScroll(contentRef, isPageReady);
   const applyFallbackStyle = isStyleTimedOut;
 
   const {
@@ -172,6 +175,7 @@ function ReportPage() {
 
         <div
           aria-hidden={!isPageReady}
+          className={reportPageContent}
           style={
             isPageReady
               ? reportPageVisibleContentStyle

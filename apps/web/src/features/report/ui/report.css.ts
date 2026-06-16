@@ -28,12 +28,19 @@ export const reportHeader = style({
   zIndex: 100,
 });
 
+export const reportPageContent = style({
+  position: "absolute",
+  inset: 0,
+});
+
 export const contentArea = style({
-  flex: 1,
-  minHeight: 0,
+  position: "absolute",
+  inset: 0,
   width: "100%",
   padding: `calc(56px + env(safe-area-inset-top, 0px)) ${vars.layout.sidePadding} 100px`, // 헤더 높이 + 하단 버튼 여백
   overflowY: "auto",
+  overflowAnchor: "none",
+  overscrollBehaviorY: "contain",
   WebkitOverflowScrolling: "touch",
   display: "flex",
   flexDirection: "column",

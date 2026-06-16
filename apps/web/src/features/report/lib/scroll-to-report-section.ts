@@ -37,11 +37,19 @@ export function scrollToReportSection(sectionId: ReportSectionId): void {
   if (scrollContainer) {
     const containerRect = scrollContainer.getBoundingClientRect();
     const sectionRect = section.getBoundingClientRect();
+    const paddingTop =
+      Number.parseFloat(window.getComputedStyle(scrollContainer).paddingTop) ||
+      0;
+    const scrollMargin =
+      Number.parseFloat(window.getComputedStyle(section).scrollMarginTop) || 0;
     const nextScrollTop =
-      scrollContainer.scrollTop + (sectionRect.top - containerRect.top);
+      scrollContainer.scrollTop +
+      (sectionRect.top - containerRect.top) -
+      paddingTop -
+      scrollMargin;
 
     scrollContainer.scrollTo({
-      top: nextScrollTop,
+      top: Math.max(0, nextScrollTop),
       behavior: getReportSectionScrollBehavior(),
     });
     return;

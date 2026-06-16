@@ -43,11 +43,13 @@ export const reportHeaderInlineFallbackStyle: CSSProperties = {
 };
 
 export const reportContentInlineFallbackStyle: CSSProperties = {
-  flex: 1,
-  minHeight: 0,
+  position: "absolute",
+  inset: 0,
   width: "100%",
   padding: `calc(56px + env(safe-area-inset-top, 0px)) ${REPORT_SIDE_PADDING} 100px`,
   overflowY: "auto",
+  overflowAnchor: "none",
+  overscrollBehaviorY: "contain",
   display: "flex",
   flexDirection: "column",
   boxSizing: "border-box",
@@ -104,11 +106,8 @@ export const reportPageLoadingSpinnerStyle: CSSProperties = {
 };
 
 const reportPageContentShellStyle: CSSProperties = {
-  flex: 1,
-  minHeight: 0,
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
+  position: "absolute",
+  inset: 0,
 };
 
 export const reportPageHiddenContentStyle: CSSProperties = {
