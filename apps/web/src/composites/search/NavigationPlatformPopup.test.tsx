@@ -104,7 +104,7 @@ describe("NavigationPlatformPopup", () => {
       getNavigationPlatformUrl("naver", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,
       }),
-    ).not.toContain("/walk");
+    ).toMatch(/\/-\/transit$/);
     expect(
       getNavigationPlatformUrl("google", LOCKER_DETAIL, {
         navigationOrigin: NAVIGATION_ORIGIN,

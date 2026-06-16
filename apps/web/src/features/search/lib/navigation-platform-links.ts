@@ -146,7 +146,7 @@ const buildNaverWebDirectionsUrl = (
   const startPath = buildNaverRoutePath(origin);
   const destinationPath = buildNaverRoutePath(destination);
 
-  return `https://map.naver.com/p/directions/${startPath}/${destinationPath}/-`;
+  return `https://map.naver.com/p/directions/${startPath}/${destinationPath}/-/transit`;
 };
 
 const buildGoogleWebUrl = (

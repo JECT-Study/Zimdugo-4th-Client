@@ -144,7 +144,7 @@ describe("navigation-platform-links", () => {
       encodeURIComponent(LOCKER_WITH_COORDS.title),
     );
     expect(links?.webUrl).not.toMatch(/\/\d{8,}\./);
-    expect(links?.webUrl).not.toContain("/walk");
+    expect(links?.webUrl).toMatch(/\/-\/transit$/);
   });
 
   it("도착지 이름의 대괄호는 네이버 URL에서 제거한다", () => {
