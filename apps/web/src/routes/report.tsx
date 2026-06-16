@@ -25,7 +25,6 @@ import {
   reportHeader,
   stepWrapper,
   submitActionFrame,
-  submitSubButton,
 } from "#/features/report/ui/report.css.ts";
 import {
   reportBottomBarInlineFallbackStyle,
@@ -56,12 +55,6 @@ const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
 ];
 
 export const Route = createFileRoute("/report")({
-  validateSearch: (search: Record<string, unknown>): { step?: 2 } => {
-    if (search.step === "2" || search.step === 2) {
-      return { step: 2 };
-    }
-    return {};
-  },
   beforeLoad: ({ location, preload }) => {
     if (!useAuthStore.getState().isAuthenticated) {
       if (typeof window !== "undefined" && !preload) {
@@ -95,7 +88,6 @@ function ReportPage() {
 
   const {
     form,
-    step,
     sectionServerErrors,
     isAddressOverlayOpen,
     setIsAddressOverlayOpen,
@@ -138,8 +130,7 @@ function ReportPage() {
     isFree === true ? "free" : isFree === false ? "paid" : "none";
 
   const {
-    handleBack,
-    handleNext,
+    handleSubmitPress,
     handleImageClick,
     handleImageChange,
     handleImageRemove,
@@ -151,11 +142,7 @@ function ReportPage() {
   } = handlers;
 
   const handleExitBack = () => {
-    if (step === 1) {
-      setIsExitPopupOpen(true);
-    } else {
-      handleBack();
-    }
+    setIsExitPopupOpen(true);
   };
 
   const handleStayOnReport = () => {
@@ -199,10 +186,8 @@ function ReportPage() {
               className={reportHeader}
               leading="back"
               onBack={handleExitBack}
-              titleType="step"
-              stepCurrent={step}
-              stepTotal={2}
-              stepState={step === 2 ? "active" : "default"}
+              titleType="text"
+              title={m.report_title()}
             />
           </div>
 
@@ -273,44 +258,24 @@ function ReportPage() {
             }
           >
             <div className={submitActionFrame}>
-              {step === 2 && (
-                <Button
-                  variant="ghost"
-                  intent="neutral"
-                  size="L"
-                  className={submitSubButton}
-                  onPress={() => {
-                    void handleNext();
-                  }}
-                  isDisabled={
-                    isSubmitting ||
-                    isSubmitConfirmPopupOpen ||
-                    !validation.isStep2Valid
-                  }
-                >
-                  {m.report_submit_with_current_info()}
-                </Button>
-              )}
               <Button
                 className={nextButton}
                 variant="filled"
                 intent="primary"
                 size="L"
                 onPress={() => {
-                  void handleNext();
+                  void handleSubmitPress();
                 }}
                 isDisabled={
                   isSubmitting ||
                   isSubmitConfirmPopupOpen ||
-                  (step === 2 ? !validation.isStep2Valid : false)
+                  !validation.isSubmitEnabled
                 }
                 isLoading={isSubmitting}
               >
-                {step === 1
-                  ? m.report_button_next()
-                  : isSubmitting && uploadedImages.length > 0
-                    ? m.report_button_submit_uploading()
-                    : m.report_button_submit()}
+                {isSubmitting && uploadedImages.length > 0
+                  ? m.report_button_submit_uploading()
+                  : m.report_button_submit()}
               </Button>
             </div>
           </div>

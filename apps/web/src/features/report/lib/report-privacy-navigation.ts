@@ -1,7 +1,6 @@
 import type { ReportFormValues } from "#/features/report/model/report-types";
 
 export type ReportPrivacyNavigationState = {
-  step: number;
   values: ReportFormValues;
   minPriceDisplay: string;
   maxPriceDisplay: string;
@@ -19,9 +18,7 @@ export function stashReportStateForPrivacyPolicy(
   preserveBlobUrlsOnUnmount = true;
 }
 
-export function consumeReportPrivacyNavigationState():
-  | ReportPrivacyNavigationState
-  | null {
+export function consumeReportPrivacyNavigationState(): ReportPrivacyNavigationState | null {
   const state = pendingRestore;
   pendingRestore = null;
   return state;

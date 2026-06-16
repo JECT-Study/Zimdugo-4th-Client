@@ -3,8 +3,8 @@ import { Checkbox } from "@repo/ui/components/checkbox";
 import { IconX16 } from "@repo/ui/tokens/icons";
 import { useNavigate } from "@tanstack/react-router";
 import type { ChangeEvent, RefObject } from "react";
-import { buildLegalReturnSearch } from "#/features/settings/legal/model/legal-return-search";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
+import { buildLegalReturnSearch } from "#/features/settings/legal/model/legal-return-search";
 import { MAX_REPORT_PHOTOS } from "../model/report-types";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
@@ -57,21 +57,23 @@ export function ReportPhotoSection({
   const isAgreementDisabled = !hasUploadedImage || isSubmitting;
 
   return (
-    <section className={section} data-section="photo" aria-describedby={photoErrorId}>
+    <section
+      className={section}
+      data-section="photo"
+      aria-describedby={photoErrorId}
+    >
       <ReportSectionTitleRow errorMessage={photoError} errorId={photoErrorId}>
-        <>
-          {m.report_section_photo()}
-          <span
-            style={{
-              fontSize: "12px",
-              color: "#ADB5BD",
-              marginLeft: "8px",
-              fontWeight: "normal",
-            }}
-          >
-            ({uploadedImages.length}/{MAX_REPORT_PHOTOS})
-          </span>
-        </>
+        {m.report_section_photo()}
+        <span
+          style={{
+            fontSize: "12px",
+            color: "#ADB5BD",
+            marginLeft: "8px",
+            fontWeight: "normal",
+          }}
+        >
+          ({uploadedImages.length}/{MAX_REPORT_PHOTOS})
+        </span>
       </ReportSectionTitleRow>
       <div className={photoAgreementGroup}>
         <div
@@ -123,13 +125,16 @@ export function ReportPhotoSection({
                 className={imagePreview}
               />
               {isPhotoUploading ? (
-                <div
+                <output
                   className={photoPreviewUploadOverlay}
                   aria-live="polite"
                   aria-label={m.report_photo_uploading()}
                 >
-                  <div className={photoPreviewUploadSpinner} aria-hidden="true" />
-                </div>
+                  <div
+                    className={photoPreviewUploadSpinner}
+                    aria-hidden="true"
+                  />
+                </output>
               ) : null}
               <button
                 type="button"
@@ -166,7 +171,7 @@ export function ReportPhotoSection({
               onPrivacyPolicyNavigate?.();
               navigate({
                 to: "/settings/privacy",
-                search: buildLegalReturnSearch("/report", 2),
+                search: buildLegalReturnSearch("/report"),
               });
             }}
           >
