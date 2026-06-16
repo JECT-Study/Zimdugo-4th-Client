@@ -154,6 +154,92 @@ describe("NavigationPlatformPopup", () => {
     expect(open).toHaveBeenCalledTimes(1);
   });
 
+  it("한국어가 아니면 네이버지도 선택 시 언어 지원 안내 팝업을 띄운다", () => {
+    setLanguageTag("en");
+    const onSelectPlatform = vi.fn();
+
+    vi.spyOn(
+      navigationPlatformLinks,
+      "openNavigationPlatformLinks",
+    ).mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open directions in Naver Map" }),
+    );
+
+    expect(
+      screen.getByText(
+        "Naver Map doesn't support your current language. Open it anyway?",
+      ),
+    ).toBeTruthy();
+    expect(onSelectPlatform).not.toHaveBeenCalled();
+  });
+
+  it("한국어가 아니면 언어 지원 안내에서 아니오를 누르면 네이버지도를 열지 않는다", () => {
+    setLanguageTag("en");
+
+    const open = vi
+      .spyOn(navigationPlatformLinks, "openNavigationPlatformLinks")
+      .mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open directions in Naver Map" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "No" }));
+
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("한국어가 아니면 언어 지원 안내에서 예를 누르면 네이버지도를 연다", () => {
+    setLanguageTag("en");
+    const onSelectPlatform = vi.fn();
+
+    const open = vi
+      .spyOn(navigationPlatformLinks, "openNavigationPlatformLinks")
+      .mockImplementation(() => undefined);
+
+    render(
+      <NavigationPlatformPopup
+        isOpen
+        locker={LOCKER_DETAIL}
+        knownLocation={{ lat: 37.5012, lng: 127.0396 }}
+        onOpenChange={() => undefined}
+        onSelectPlatform={onSelectPlatform}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open directions in Naver Map" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Yes" }));
+
+    expect(onSelectPlatform).toHaveBeenCalledWith(
+      "naver",
+      expect.stringContaining("map.naver.com/p/directions/"),
+      LOCKER_DETAIL,
+    );
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
   it("네이버 버튼 선택 시 onSelectPlatform에 naver 플랫폼을 전달한다", () => {
     const onSelectPlatform = vi.fn();
 

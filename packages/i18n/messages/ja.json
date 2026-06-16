@@ -307,6 +307,8 @@
   "navigation_platform_close": "閉じる",
   "navigation_current_location": "現在地",
   "navigation_default_origin": "江南駅11番出口",
+  "navigation_naver_language_warning_title": "Naver Mapは現在の言語に対応していません。それでも開きますか？",
+  "navigation_naver_language_warning_helper": "韓国語以外ではルート案内が正しく表示されない場合があります。",
   "auth_required_title": "ログインが必要な機能です",
   "auth_required_login": "ログイン",
   "common_cancel": "キャンセル",

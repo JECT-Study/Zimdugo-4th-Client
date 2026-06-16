@@ -307,6 +307,8 @@
   "navigation_platform_close": "关闭",
   "navigation_current_location": "当前位置",
   "navigation_default_origin": "江南站11号出口",
+  "navigation_naver_language_warning_title": "Naver 地图不支持当前语言。仍要打开吗？",
+  "navigation_naver_language_warning_helper": "非韩语环境下，路线指引可能无法正常显示。",
   "auth_required_title": "此功能需要登录",
   "auth_required_login": "登录",
   "common_cancel": "取消",

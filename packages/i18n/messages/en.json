@@ -307,6 +307,8 @@
   "navigation_platform_close": "Close",
   "navigation_current_location": "Current location",
   "navigation_default_origin": "Gangnam Station Exit 11",
+  "navigation_naver_language_warning_title": "Naver Map doesn't support your current language. Open it anyway?",
+  "navigation_naver_language_warning_helper": "Directions may not display correctly outside Korean.",
   "auth_required_title": "Sign in to use this feature",
   "auth_required_login": "Sign in",
   "common_cancel": "Cancel",

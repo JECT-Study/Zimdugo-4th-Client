@@ -1,11 +1,13 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Button as UiButton } from "@repo/ui/components/button";
+import { Popup } from "@repo/ui/components/popup";
 import {
   Button as AriaButton,
   Dialog,
   Modal,
   ModalOverlay,
 } from "react-aria-components";
+import { useState } from "react";
 import {
   getNavigationPlatformLinks,
   hasNavigationDestination,
@@ -56,7 +58,10 @@ export function NavigationPlatformPopup({
   onOriginResolved,
   onSelectPlatform,
 }: NavigationPlatformPopupProps) {
-  const handleSelectPlatform = (platform: NavigationPlatform) => {
+  const [isNaverLanguageWarningOpen, setIsNaverLanguageWarningOpen] =
+    useState(false);
+
+  const openPlatformNavigation = (platform: NavigationPlatform) => {
     if (!locker || !hasNavigationDestination(locker)) {
       return;
     }
@@ -86,62 +91,88 @@ export function NavigationPlatformPopup({
     }
   };
 
+  const handleSelectPlatform = (platform: NavigationPlatform) => {
+    if (platform === "naver" && languageTag() !== "ko") {
+      setIsNaverLanguageWarningOpen(true);
+      return;
+    }
+
+    openPlatformNavigation(platform);
+  };
+
   return (
-    <ModalOverlay
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      className={overlay}
-      isDismissable
-    >
-      <Modal>
-        <Dialog
-          className={dialog}
-          aria-label={m.navigation_platform_dialog_aria()}
-        >
-          <h2 className={title}>{m.navigation_platform_title()}</h2>
-          <div className={platformGrid}>
-            <AriaButton
-              className={platformButton}
-              onPress={() => handleSelectPlatform("naver")}
-              aria-label={m.navigation_platform_naver_aria()}
-            >
-              <img
-                className={platformIcon}
-                src={NAVER_MAP_ICON_URL}
-                alt=""
-                aria-hidden="true"
-              />
-              <span className={platformLabel}>
-                {m.navigation_platform_naver()}
-              </span>
-            </AriaButton>
-            <AriaButton
-              className={platformButton}
-              onPress={() => handleSelectPlatform("google")}
-              aria-label={m.navigation_platform_google_aria()}
-            >
-              <img
-                className={platformIcon}
-                src={GOOGLE_MAPS_ICON_URL}
-                alt=""
-                aria-hidden="true"
-              />
-              <span className={platformLabel}>
-                {m.navigation_platform_google()}
-              </span>
-            </AriaButton>
-          </div>
-          <UiButton
-            variant="filled"
-            intent="neutral"
-            size="L"
-            className={cancelButton}
-            onPress={() => onOpenChange(false)}
+    <>
+      <ModalOverlay
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        className={overlay}
+        isDismissable
+      >
+        <Modal>
+          <Dialog
+            className={dialog}
+            aria-label={m.navigation_platform_dialog_aria()}
           >
-            {m.navigation_platform_close()}
-          </UiButton>
-        </Dialog>
-      </Modal>
-    </ModalOverlay>
+            <h2 className={title}>{m.navigation_platform_title()}</h2>
+            <div className={platformGrid}>
+              <AriaButton
+                className={platformButton}
+                onPress={() => handleSelectPlatform("naver")}
+                aria-label={m.navigation_platform_naver_aria()}
+              >
+                <img
+                  className={platformIcon}
+                  src={NAVER_MAP_ICON_URL}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span className={platformLabel}>
+                  {m.navigation_platform_naver()}
+                </span>
+              </AriaButton>
+              <AriaButton
+                className={platformButton}
+                onPress={() => handleSelectPlatform("google")}
+                aria-label={m.navigation_platform_google_aria()}
+              >
+                <img
+                  className={platformIcon}
+                  src={GOOGLE_MAPS_ICON_URL}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span className={platformLabel}>
+                  {m.navigation_platform_google()}
+                </span>
+              </AriaButton>
+            </div>
+            <UiButton
+              variant="filled"
+              intent="neutral"
+              size="L"
+              className={cancelButton}
+              onPress={() => onOpenChange(false)}
+            >
+              {m.navigation_platform_close()}
+            </UiButton>
+          </Dialog>
+        </Modal>
+      </ModalOverlay>
+
+      <Popup
+        isOpen={isNaverLanguageWarningOpen}
+        onOpenChange={setIsNaverLanguageWarningOpen}
+        titleText={m.navigation_naver_language_warning_title()}
+        helperText={m.navigation_naver_language_warning_helper()}
+        primaryAction={{
+          label: m.common_no(),
+          onPress: () => setIsNaverLanguageWarningOpen(false),
+        }}
+        secondaryAction={{
+          label: m.common_yes(),
+          onPress: () => openPlatformNavigation("naver"),
+        }}
+      />
+    </>
   );
 }
