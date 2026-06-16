@@ -67,6 +67,12 @@ export function NavigationPlatformPopup({
 
     resolvingNavigationLockerIds.add(locker.lockerId);
 
+    const navigationWindow = window.open(
+      "about:blank",
+      "_blank",
+      "noopener,noreferrer",
+    );
+
     const originTask = resolveNavigationOriginWithPermissionRequest({
       knownLocation,
     });
@@ -78,13 +84,26 @@ export function NavigationPlatformPopup({
         const links = getNavigationPlatformLinks(platform, locker, {
           navigationOrigin: result.origin,
         });
-        if (!links) return;
+        if (!links) {
+          navigationWindow?.close();
+          return;
+        }
 
         onSelectPlatform?.(platform, links.webUrl, locker);
-        openNavigationPlatformLinks(links);
+        openNavigationPlatformLinks(links, {
+          assign: (url) => {
+            if (navigationWindow) {
+              navigationWindow.location.href = url;
+              return;
+            }
+
+            window.open(url, "_blank", "noopener,noreferrer");
+          },
+        });
         onOpenChange(false);
       })
       .catch(() => {
+        navigationWindow?.close();
         // 길찾기 오픈 실패 시 다이얼로그를 유지해 사용자가 재시도할 수 있게 한다.
       })
       .finally(() => {

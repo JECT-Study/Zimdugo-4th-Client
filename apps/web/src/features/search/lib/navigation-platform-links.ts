@@ -248,7 +248,7 @@ type OpenNavigationOptions = {
   assign?: (url: string) => void;
 };
 
-/** 모바일·데스크톱 모두 웹 길찾기 URL로 이동한다. */
+/** 길찾기 URL을 새 탭에서 연다. */
 export const openNavigationPlatformLinks = (
   links: NavigationPlatformLinks,
   options: OpenNavigationOptions = {},
@@ -256,7 +256,7 @@ export const openNavigationPlatformLinks = (
   const assign =
     options.assign ??
     ((url: string) => {
-      window.location.href = url;
+      window.open(url, "_blank", "noopener,noreferrer");
     });
 
   assign(links.webUrl);

@@ -217,7 +217,25 @@ describe("navigation-platform-links", () => {
     expect(links?.webUrl).not.toContain("%5D");
   });
 
-  it("길찾기 열기는 모바일·데스크톱 모두 웹 URL을 사용한다", () => {
+  it("길찾기 열기는 새 탭에서 연다", () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    const links = getNavigationPlatformLinks(
+      "naver",
+      LOCKER_WITH_COORDS,
+      linkOptions(),
+    );
+
+    openNavigationPlatformLinks(links!);
+    expect(open).toHaveBeenCalledWith(
+      links?.webUrl,
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    open.mockRestore();
+  });
+
+  it("길찾기 열기는 assign 옵션으로 열기 방식을 주입할 수 있다", () => {
     const assign = vi.fn();
     const links = getNavigationPlatformLinks(
       "naver",
