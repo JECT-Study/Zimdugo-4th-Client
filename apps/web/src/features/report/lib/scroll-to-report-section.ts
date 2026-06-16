@@ -1,5 +1,8 @@
 import type { ReportSectionId } from "#/features/report/model/report-types";
 
+export const REPORT_CONTENT_SCROLL_CONTAINER_ATTR =
+  "data-report-scroll-container";
+
 export const REPORT_SECTION_ORDER: ReportSectionId[] = [
   "location",
   "floor",
@@ -21,12 +24,33 @@ export function getReportSectionScrollBehavior(): ScrollBehavior {
 
 export function scrollToReportSection(sectionId: ReportSectionId): void {
   if (typeof document === "undefined") return;
-  document
-    .querySelector(`[data-section="${sectionId}"]`)
-    ?.scrollIntoView({
+
+  const section = document.querySelector<HTMLElement>(
+    `[data-section="${sectionId}"]`,
+  );
+  if (!section) return;
+
+  const scrollContainer = document.querySelector<HTMLElement>(
+    `[${REPORT_CONTENT_SCROLL_CONTAINER_ATTR}]`,
+  );
+
+  if (scrollContainer) {
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const sectionRect = section.getBoundingClientRect();
+    const nextScrollTop =
+      scrollContainer.scrollTop + (sectionRect.top - containerRect.top);
+
+    scrollContainer.scrollTo({
+      top: nextScrollTop,
       behavior: getReportSectionScrollBehavior(),
-      block: "start",
     });
+    return;
+  }
+
+  section.scrollIntoView({
+    behavior: getReportSectionScrollBehavior(),
+    block: "start",
+  });
 }
 
 export function scrollToEarliestReportSection(

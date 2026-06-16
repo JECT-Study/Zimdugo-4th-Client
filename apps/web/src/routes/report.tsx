@@ -15,6 +15,7 @@ import type { LockerType } from "#/features/report/model/report-types";
 import { useReportForm } from "#/features/report/model/useReportForm";
 import { useReportPageReady } from "#/features/report/model/useReportPageReady";
 import { LocationPickerOverlay } from "#/features/report/ui/LocationPickerOverlay";
+import { REPORT_CONTENT_SCROLL_CONTAINER_ATTR } from "#/features/report/lib/scroll-to-report-section";
 import { ReportPageLoadingOverlay } from "#/features/report/ui/ReportPageLoadingOverlay";
 import { ReportUnifiedSections } from "#/features/report/ui/ReportUnifiedSections";
 import {
@@ -194,6 +195,7 @@ function ReportPage() {
           <main
             ref={contentRef}
             className={contentArea}
+            {...{ [REPORT_CONTENT_SCROLL_CONTAINER_ATTR]: "" }}
             style={
               applyFallbackStyle ? reportContentInlineFallbackStyle : undefined
             }

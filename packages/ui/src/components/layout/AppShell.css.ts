@@ -11,6 +11,7 @@ export const shell = style({
 
 export const main = style({
   flex: 1,
+  minHeight: 0,
   width: "100%",
   display: "flex",
   flexDirection: "column",

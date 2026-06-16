@@ -5,10 +5,14 @@ export const reportContainer = style({
   width: "100%",
   maxWidth: vars.layout.containerWidth,
   margin: "0 auto",
-  height: "100dvh",
+  flex: 1,
+  minHeight: 0,
+  height: "100%",
   backgroundColor: vars.color.bg.default,
   position: "relative",
   overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
 });
 
 export const reportHeader = style({
@@ -25,8 +29,9 @@ export const reportHeader = style({
 });
 
 export const contentArea = style({
+  flex: 1,
+  minHeight: 0,
   width: "100%",
-  height: "100%",
   padding: `calc(56px + env(safe-area-inset-top, 0px)) ${vars.layout.sidePadding} 100px`, // 헤더 높이 + 하단 버튼 여백
   overflowY: "auto",
   WebkitOverflowScrolling: "touch",
@@ -67,6 +72,7 @@ export const section = style({
   display: "flex",
   flexDirection: "column",
   gap: "14px",
+  scrollMarginTop: "8px",
 });
 
 export const classificationSection = style({
