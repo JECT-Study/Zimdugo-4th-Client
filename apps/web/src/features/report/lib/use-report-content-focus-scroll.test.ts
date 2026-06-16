@@ -91,4 +91,50 @@ describe("useReportContentFocusScroll", () => {
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
     expect(container.scrollTop).toBeGreaterThan(0);
   });
+
+  it("컨테이너 밖 포커스는 무시한다", () => {
+    const requestAnimationFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockReturnValue(1);
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+
+    const contentRef = createRef<HTMLElement>();
+    const container = document.createElement("main");
+    const insideInput = document.createElement("input");
+    const outsideInput = document.createElement("input");
+    container.appendChild(insideInput);
+    document.body.appendChild(container);
+    document.body.appendChild(outsideInput);
+    contentRef.current = container;
+
+    renderHook(() => useReportContentFocusScroll(contentRef, true));
+
+    act(() => {
+      outsideInput.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    });
+
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("enabled가 false이면 포커스 핸들러를 등록하지 않는다", () => {
+    const requestAnimationFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockReturnValue(1);
+
+    const contentRef = createRef<HTMLElement>();
+    const container = document.createElement("main");
+    const input = document.createElement("input");
+    container.appendChild(input);
+    document.body.appendChild(container);
+    contentRef.current = container;
+
+    renderHook(() => useReportContentFocusScroll(contentRef, false));
+
+    act(() => {
+      input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    });
+
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+  });
 });

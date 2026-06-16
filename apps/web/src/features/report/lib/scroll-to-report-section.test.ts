@@ -96,4 +96,64 @@ describe("scrollToReportSection", () => {
     });
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
+
+  it("paddingTop과 scrollMarginTop 보정값을 scrollTop 계산에 반영한다", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false }));
+    vi.spyOn(window, "getComputedStyle").mockImplementation((element) => {
+      const el = element as HTMLElement;
+      if (el.tagName === "MAIN") {
+        return { paddingTop: "56px" } as CSSStyleDeclaration;
+      }
+      if (el.tagName === "SECTION") {
+        return { scrollMarginTop: "8px" } as CSSStyleDeclaration;
+      }
+      return {
+        paddingTop: "0px",
+        scrollMarginTop: "0px",
+      } as CSSStyleDeclaration;
+    });
+
+    const scrollContainer = document.createElement("main");
+    scrollContainer.setAttribute(REPORT_CONTENT_SCROLL_CONTAINER_ATTR, "");
+    Object.defineProperty(scrollContainer, "scrollTop", {
+      writable: true,
+      value: 100,
+    });
+    scrollContainer.scrollTo = vi.fn();
+
+    const section = document.createElement("section");
+    section.dataset.section = "price";
+    scrollContainer.appendChild(section);
+    document.body.appendChild(scrollContainer);
+
+    vi.spyOn(scrollContainer, "getBoundingClientRect").mockReturnValue({
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 400,
+      width: 0,
+      height: 400,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(section, "getBoundingClientRect").mockReturnValue({
+      top: 80,
+      left: 0,
+      right: 0,
+      bottom: 120,
+      width: 0,
+      height: 40,
+      x: 0,
+      y: 80,
+      toJSON: () => ({}),
+    });
+
+    scrollToReportSection("price");
+
+    expect(scrollContainer.scrollTo).toHaveBeenCalledWith({
+      top: 116,
+      behavior: "smooth",
+    });
+  });
 });
