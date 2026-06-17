@@ -206,3 +206,12 @@ globalStyle(".map-marker-item.normal", {
 globalStyle(".map-marker-item.spread", {
   animation: `${markerSpreadOut} 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
 });
+
+globalStyle(".map-marker-offset-wrapper", {
+  position: "relative",
+  transformOrigin: "center center",
+});
+
+globalStyle(".map-marker-offset-wrapper.map-marker-offset-active", {
+  transform: "translate(var(--offset-x, 0px), var(--offset-y, 0px))",
+});

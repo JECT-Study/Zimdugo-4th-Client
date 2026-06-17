@@ -6,6 +6,8 @@ export type LockerMarkerStatus = "active" | "inactive";
 const LOCKER_MARKER_FILL = vars.color.palette.green[500];
 const LOCKER_MARKER_BACKGROUND = vars.color.palette.gray[100];
 const PLACE_MARKER_FILL = vars.color.palette.red[300];
+const COORDINATE_GROUP_PRECISION = 4;
+const OFFSET_RADIUS_PX = 15;
 
 const LOCKER_MARKER_PATH =
   "M11 0C17.0751 0 22 4.92487 22 11C22 17.0751 17.0751 22 11 22C6.64579 22 2.88256 19.4701 1.09986 15.8L8.22852 12.4284C8.7645 13.385 9.80921 14.032 11.0049 14.0321C12.7503 14.0321 14.1797 12.6437 14.1797 10.9189H14.1935C14.1934 9.20771 12.7641 7.80645 11.0187 7.80645C9.27335 7.80647 7.84401 9.19425 7.84388 10.9189C7.84388 11.0806 7.85799 11.2424 7.88546 11.404L0.156628 12.8587C0.053794 12.2545 0 11.6335 0 11C0 4.92487 4.92487 0 11 0Z";
@@ -58,18 +60,80 @@ interface LockerMarkerEntry {
   marker: naver.maps.Marker;
   iconSignature: string;
   listener?: naver.maps.MapEventListener;
+  listenerHandler?: SyncLockerMarkersOptions["onSelectLocker"];
+  listenerPin?: LockerPinItemResponse;
+  listenerPinId?: string;
   positionSignature: string;
   wasSelectedBefore?: boolean;
+  hadSpreadBefore?: boolean;
 }
 
 export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
-
-
 
 const lockerIconCache = new WeakMap<
   typeof naver.maps,
   Map<string, naver.maps.HtmlIcon>
 >();
+
+const getCoordinateGroupKey = (pin: LockerPinItemResponse): string =>
+  `${pin.latitude.toFixed(COORDINATE_GROUP_PRECISION)},${pin.longitude.toFixed(COORDINATE_GROUP_PRECISION)}`;
+
+const getLockerSortId = (pin: LockerPinItemResponse): number =>
+  pin.pinType === "LOCKER"
+    ? (pin.lockerId ?? Number.MAX_SAFE_INTEGER)
+    : Number.MAX_SAFE_INTEGER;
+
+const createLockerOffsetMap = (
+  pins: LockerPinItemResponse[],
+): Map<string, { offsetX: number; offsetY: number }> => {
+  const groups = new Map<string, LockerPinItemResponse[]>();
+  const offsetMap = new Map<string, { offsetX: number; offsetY: number }>();
+
+  for (const pin of pins) {
+    if (pin.pinType !== "LOCKER") continue;
+
+    const key = getCoordinateGroupKey(pin);
+    const group = groups.get(key);
+    if (group) {
+      group.push(pin);
+    } else {
+      groups.set(key, [pin]);
+    }
+  }
+
+  for (const group of groups.values()) {
+    group.sort((a, b) => getLockerSortId(a) - getLockerSortId(b));
+
+    if (group.length <= 1) continue;
+
+    group.forEach((pin, index) => {
+      const angle = (2 * Math.PI * index) / group.length;
+
+      offsetMap.set(getPinId(pin), {
+        offsetX: Math.round(OFFSET_RADIUS_PX * Math.cos(angle)),
+        offsetY: Math.round(OFFSET_RADIUS_PX * Math.sin(angle)),
+      });
+    });
+  }
+
+  return offsetMap;
+};
+
+const getIconSignatureSuffix = ({
+  hasSpread,
+  offsetX,
+  offsetY,
+}: {
+  hasSpread: boolean;
+  offsetX: number;
+  offsetY: number;
+}): string => {
+  const hasOffset = offsetX !== 0 || offsetY !== 0;
+
+  return `${hasSpread ? ":spread" : ""}${
+    hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
+  }`;
+};
 
 const createMarkerIconOptions = (
   pin: LockerPinItemResponse,
@@ -83,11 +147,17 @@ const createMarkerIconOptions = (
   zoomLevel?: number,
   spreadX?: number,
   spreadY?: number,
+  offsetX?: number,
+  offsetY?: number,
+  shouldAnimateSpread = false,
 ): naver.maps.HtmlIcon => {
-  const hasSpread = spreadX != null && spreadY != null && (spreadX !== 0 || spreadY !== 0);
+  const hasSpread =
+    spreadX != null && spreadY != null && (spreadX !== 0 || spreadY !== 0);
+  const hasOffset =
+    offsetX != null && offsetY != null && (offsetX !== 0 || offsetY !== 0);
   const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}${
-    hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
-  }`;
+    shouldAnimateSpread && hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
+  }${hasOffset ? `:offset:${offsetX}:${offsetY}` : ""}`;
 
   let innerMap = lockerIconCache.get(maps);
   if (!innerMap) {
@@ -99,20 +169,26 @@ const createMarkerIconOptions = (
   if (cached) return cached;
 
   const size =
-    animationState === "selected-active" ||
-    animationState === "selected-static"
+    animationState === "selected-active" || animationState === "selected-static"
       ? 36
       : 24;
   const radius = size / 2;
 
-  const spreadClass = hasSpread ? "spread" : "";
-  const inlineStyle = hasSpread
-    ? `style="width: ${size}px; height: ${size}px; --spread-x: ${spreadX}px; --spread-y: ${spreadY}px;"`
-    : `style="width: ${size}px; height: ${size}px;"`;
+  const spreadClass = shouldAnimateSpread && hasSpread ? "spread" : "";
+  const offsetClass = hasOffset ? " map-marker-offset-active" : "";
+  const spreadStyle =
+    shouldAnimateSpread && hasSpread
+      ? `--spread-x: ${spreadX}px; --spread-y: ${spreadY}px;`
+      : "";
+  const offsetStyle = hasOffset
+    ? `--offset-x: ${offsetX}px; --offset-y: ${offsetY}px;`
+    : "";
 
   const options = {
-    content: `<div class="map-marker-item ${animationState} ${spreadClass}" ${inlineStyle}>
-      ${createLockerMarkerIcon(pin, isSelected)}
+    content: `<div class="map-marker-offset-wrapper${offsetClass}" style="width: ${size}px; height: ${size}px; ${offsetStyle}">
+      <div class="map-marker-item ${animationState} ${spreadClass}" style="width: 100%; height: 100%; ${spreadStyle}">
+        ${createLockerMarkerIcon(pin, isSelected)}
+      </div>
     </div>`,
     size: new maps.Size(size, size),
     anchor: new maps.Point(radius, radius),
@@ -144,6 +220,9 @@ const createLockerMarker = ({
   zoomLevel,
   spreadX,
   spreadY,
+  offsetX,
+  offsetY,
+  shouldAnimateSpread,
 }: {
   map: naver.maps.Map;
   maps: typeof naver.maps;
@@ -157,6 +236,9 @@ const createLockerMarker = ({
   zoomLevel: number;
   spreadX?: number;
   spreadY?: number;
+  offsetX?: number;
+  offsetY?: number;
+  shouldAnimateSpread?: boolean;
 }) => {
   const marker = new maps.Marker({
     map,
@@ -171,6 +253,9 @@ const createLockerMarker = ({
       zoomLevel,
       spreadX,
       spreadY,
+      offsetX,
+      offsetY,
+      shouldAnimateSpread,
     ),
   });
   return marker;
@@ -186,15 +271,34 @@ const attachMarkerSelectListener = (
     pin: LockerPinItemResponse,
   ) => void,
 ) => {
+  const pinId = getPinId(pin);
+  entry.listenerPin = pin;
+
+  if (
+    entry.listener &&
+    entry.listenerPinId === pinId &&
+    entry.listenerHandler === onSelectLocker
+  ) {
+    return;
+  }
+
   if (entry.listener) {
     maps.Event.removeListener(entry.listener);
   }
 
   entry.listener = maps.Event.addListener(entry.marker, "click", () => {
-    const id = pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId;
+    const listenerPin = entry.listenerPin;
+    if (!listenerPin) return;
+
+    const id =
+      listenerPin.pinType === "LOCKER"
+        ? listenerPin.lockerId
+        : listenerPin.placeId;
     if (id == null) return;
-    onSelectLocker(pin.pinType, id, pin);
+    onSelectLocker(listenerPin.pinType, id, listenerPin);
   });
+  entry.listenerHandler = onSelectLocker;
+  entry.listenerPinId = pinId;
 };
 
 const clearMarkerEntry = (
@@ -204,6 +308,10 @@ const clearMarkerEntry = (
   if (entry.listener) {
     maps.Event.removeListener(entry.listener);
   }
+  entry.listener = undefined;
+  entry.listenerHandler = undefined;
+  entry.listenerPin = undefined;
+  entry.listenerPinId = undefined;
   entry.marker.setMap(null);
 };
 
@@ -227,6 +335,7 @@ export const syncLockerMarkers = ({
   spreadCenter,
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
+  const offsetMap = createLockerOffsetMap(lockers);
 
   // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
   const mapBounds = map.getBounds?.() as
@@ -278,7 +387,15 @@ export const syncLockerMarkers = ({
       spreadY = Math.round(centerPoint.y - pinPoint.y);
     }
 
-    const iconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
+    const hasSpread = spreadX !== 0 || spreadY !== 0;
+    const { offsetX = 0, offsetY = 0 } = offsetMap.get(pinId) ?? {};
+
+    const baseIconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
+    const iconSignature = `${baseIconSignature}${getIconSignatureSuffix({
+      hasSpread,
+      offsetX,
+      offsetY,
+    })}`;
 
     if (existingEntry) {
       if (
@@ -311,6 +428,10 @@ export const syncLockerMarkers = ({
           : "normal";
       }
 
+      const shouldAnimateSpread =
+        animationState === "normal" &&
+        hasSpread &&
+        !existingEntry.hadSpreadBefore;
       const nextIconSignature = `${iconSignature}:${animationState}`;
       if (existingEntry.iconSignature !== nextIconSignature) {
         existingEntry.marker.setIcon?.(
@@ -320,13 +441,17 @@ export const syncLockerMarkers = ({
             isSelected,
             animationState,
             zoomLevel,
-            0,
-            0,
+            spreadX,
+            spreadY,
+            offsetX,
+            offsetY,
+            shouldAnimateSpread,
           ),
         );
         existingEntry.iconSignature = nextIconSignature;
       }
       existingEntry.wasSelectedBefore = isSelected;
+      existingEntry.hadSpreadBefore = hasSpread;
 
       if (existingEntry.marker.getVisible() !== isVisible) {
         existingEntry.marker.setVisible(isVisible);
@@ -337,12 +462,16 @@ export const syncLockerMarkers = ({
       } else if (existingEntry.listener) {
         maps.Event.removeListener(existingEntry.listener);
         existingEntry.listener = undefined;
+        existingEntry.listenerHandler = undefined;
+        existingEntry.listenerPin = undefined;
+        existingEntry.listenerPinId = undefined;
       }
 
       continue;
     }
 
     const animationState = isSelected ? "selected-active" : "normal";
+    const shouldAnimateSpread = animationState === "normal" && hasSpread;
     const marker = createLockerMarker({
       map,
       maps,
@@ -352,6 +481,9 @@ export const syncLockerMarkers = ({
       zoomLevel,
       spreadX,
       spreadY,
+      offsetX,
+      offsetY,
+      shouldAnimateSpread,
     });
     marker.setVisible(isVisible);
 
@@ -360,6 +492,7 @@ export const syncLockerMarkers = ({
       iconSignature: `${iconSignature}:${animationState}`,
       positionSignature,
       wasSelectedBefore: isSelected,
+      hadSpreadBefore: hasSpread,
     };
 
     if (onSelectLocker) {
