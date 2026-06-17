@@ -79,10 +79,11 @@ const getLockerSortId = (pin: LockerPinItemResponse): number =>
     ? (pin.lockerId ?? Number.MAX_SAFE_INTEGER)
     : Number.MAX_SAFE_INTEGER;
 
-const createLockerCoordinateGroups = (
+const createLockerOffsetMap = (
   pins: LockerPinItemResponse[],
-): Map<string, LockerPinItemResponse[]> => {
+): Map<string, { offsetX: number; offsetY: number }> => {
   const groups = new Map<string, LockerPinItemResponse[]>();
+  const offsetMap = new Map<string, { offsetX: number; offsetY: number }>();
 
   for (const pin of pins) {
     if (pin.pinType !== "LOCKER") continue;
@@ -98,30 +99,20 @@ const createLockerCoordinateGroups = (
 
   for (const group of groups.values()) {
     group.sort((a, b) => getLockerSortId(a) - getLockerSortId(b));
+
+    if (group.length <= 1) continue;
+
+    group.forEach((pin, index) => {
+      const angle = (2 * Math.PI * index) / group.length;
+
+      offsetMap.set(getPinId(pin), {
+        offsetX: Math.round(OFFSET_RADIUS_PX * Math.cos(angle)),
+        offsetY: Math.round(OFFSET_RADIUS_PX * Math.sin(angle)),
+      });
+    });
   }
 
-  return groups;
-};
-
-const getLockerOffset = (
-  pin: LockerPinItemResponse,
-  pinId: string,
-  coordGroups: Map<string, LockerPinItemResponse[]>,
-): { offsetX: number; offsetY: number } => {
-  if (pin.pinType !== "LOCKER") return { offsetX: 0, offsetY: 0 };
-
-  const group = coordGroups.get(getCoordinateGroupKey(pin)) ?? [];
-  if (group.length <= 1) return { offsetX: 0, offsetY: 0 };
-
-  const index = group.findIndex((item) => getPinId(item) === pinId);
-  if (index === -1) return { offsetX: 0, offsetY: 0 };
-
-  const angle = (2 * Math.PI * index) / group.length;
-
-  return {
-    offsetX: Math.round(OFFSET_RADIUS_PX * Math.cos(angle)),
-    offsetY: Math.round(OFFSET_RADIUS_PX * Math.sin(angle)),
-  };
+  return offsetMap;
 };
 
 const getPositionSignatureSuffix = ({
@@ -316,7 +307,7 @@ export const syncLockerMarkers = ({
   spreadCenter,
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
-  const coordGroups = createLockerCoordinateGroups(lockers);
+  const offsetMap = createLockerOffsetMap(lockers);
 
   // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
   const mapBounds = map.getBounds?.() as
@@ -368,7 +359,7 @@ export const syncLockerMarkers = ({
       spreadY = Math.round(centerPoint.y - pinPoint.y);
     }
 
-    const { offsetX, offsetY } = getLockerOffset(pin, pinId, coordGroups);
+    const { offsetX = 0, offsetY = 0 } = offsetMap.get(pinId) ?? {};
 
     const baseIconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
     const iconSignature = `${baseIconSignature}${getPositionSignatureSuffix({
