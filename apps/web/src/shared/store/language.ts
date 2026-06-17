@@ -1,4 +1,4 @@
-import { setLanguageTag } from "@repo/i18n";
+import { languageTag, setLanguageTag } from "@repo/i18n";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -81,6 +81,49 @@ const setLanguageCookie = (language: AppLanguage) => {
   document.cookie = `${LOCALE_COOKIE_NAME}=${language};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`;
 };
 
+const getLanguageCookie = (): AppLanguage | null => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const localeCookie = document.cookie
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(`${LOCALE_COOKIE_NAME}=`));
+
+  const cookieValue = localeCookie?.split("=").slice(1).join("=");
+
+  return normalizeLanguage(cookieValue);
+};
+
+const syncLanguageRuntime = (language: AppLanguage) => {
+  setLanguageTag(language, { reload: false });
+  setLanguageCookie(language);
+};
+
+const shouldSyncLanguageRuntime = (language: AppLanguage) =>
+  languageTag() !== language || getLanguageCookie() !== language;
+
+const resolvePersistedLanguage = (
+  persistedState: unknown,
+  fallbackLanguage: AppLanguage,
+): AppLanguage => {
+  if (
+    typeof persistedState === "object" &&
+    persistedState !== null &&
+    "appLanguage" in persistedState
+  ) {
+    const persistedLanguage = (persistedState as { appLanguage?: unknown })
+      .appLanguage;
+
+    return typeof persistedLanguage === "string"
+      ? (normalizeLanguage(persistedLanguage) ?? fallbackLanguage)
+      : fallbackLanguage;
+  }
+
+  return fallbackLanguage;
+};
+
 interface AppLanguageState {
   appLanguage: AppLanguage;
   hasInitialized: boolean;
@@ -100,11 +143,12 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         const urlLanguage = normalizeLanguage(urlLanguageParam);
 
         if (get().hasInitialized) {
-          const nextLanguage = urlLanguage ?? DEFAULT_APP_LANGUAGE;
+          const nextLanguage = urlLanguage ?? get().appLanguage;
           if (nextLanguage !== get().appLanguage) {
             set({ appLanguage: nextLanguage });
-            setLanguageTag(nextLanguage, { reload: false });
-            setLanguageCookie(nextLanguage);
+          }
+          if (shouldSyncLanguageRuntime(nextLanguage)) {
+            syncLanguageRuntime(nextLanguage);
           }
           return;
         }
@@ -121,8 +165,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
           appLanguage: nextLanguage,
           hasInitialized: true,
         });
-        setLanguageTag(nextLanguage, { reload: false });
-        setLanguageCookie(nextLanguage);
+        syncLanguageRuntime(nextLanguage);
       },
       setAppLanguage: (language) => {
         if (!APP_LANGUAGES.includes(language)) {
@@ -130,8 +173,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         }
 
         set({ appLanguage: language, hasInitialized: true });
-        setLanguageTag(language, { reload: false });
-        setLanguageCookie(language);
+        syncLanguageRuntime(language);
       },
       markHydrated: () => {
         set({ hasInitialized: false, hasHydrated: true });
@@ -148,6 +190,13 @@ export const useAppLanguageStore = create<AppLanguageState>()(
             }
           : window.localStorage,
       ),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        appLanguage: resolvePersistedLanguage(
+          persistedState,
+          currentState.appLanguage,
+        ),
+      }),
       partialize: (state) => ({ appLanguage: state.appLanguage }),
       onRehydrateStorage: () => (state) => {
         state?.markHydrated();
