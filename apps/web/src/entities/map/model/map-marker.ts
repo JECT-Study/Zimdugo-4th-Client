@@ -60,6 +60,9 @@ interface LockerMarkerEntry {
   marker: naver.maps.Marker;
   iconSignature: string;
   listener?: naver.maps.MapEventListener;
+  listenerHandler?: SyncLockerMarkersOptions["onSelectLocker"];
+  listenerPin?: LockerPinItemResponse;
+  listenerPinId?: string;
   positionSignature: string;
   wasSelectedBefore?: boolean;
   hadSpreadBefore?: boolean;
@@ -268,15 +271,34 @@ const attachMarkerSelectListener = (
     pin: LockerPinItemResponse,
   ) => void,
 ) => {
+  const pinId = getPinId(pin);
+  entry.listenerPin = pin;
+
+  if (
+    entry.listener &&
+    entry.listenerPinId === pinId &&
+    entry.listenerHandler === onSelectLocker
+  ) {
+    return;
+  }
+
   if (entry.listener) {
     maps.Event.removeListener(entry.listener);
   }
 
   entry.listener = maps.Event.addListener(entry.marker, "click", () => {
-    const id = pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId;
+    const listenerPin = entry.listenerPin;
+    if (!listenerPin) return;
+
+    const id =
+      listenerPin.pinType === "LOCKER"
+        ? listenerPin.lockerId
+        : listenerPin.placeId;
     if (id == null) return;
-    onSelectLocker(pin.pinType, id, pin);
+    onSelectLocker(listenerPin.pinType, id, listenerPin);
   });
+  entry.listenerHandler = onSelectLocker;
+  entry.listenerPinId = pinId;
 };
 
 const clearMarkerEntry = (
@@ -286,6 +308,10 @@ const clearMarkerEntry = (
   if (entry.listener) {
     maps.Event.removeListener(entry.listener);
   }
+  entry.listener = undefined;
+  entry.listenerHandler = undefined;
+  entry.listenerPin = undefined;
+  entry.listenerPinId = undefined;
   entry.marker.setMap(null);
 };
 
@@ -436,6 +462,9 @@ export const syncLockerMarkers = ({
       } else if (existingEntry.listener) {
         maps.Event.removeListener(existingEntry.listener);
         existingEntry.listener = undefined;
+        existingEntry.listenerHandler = undefined;
+        existingEntry.listenerPin = undefined;
+        existingEntry.listenerPinId = undefined;
       }
 
       continue;

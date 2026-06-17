@@ -344,6 +344,40 @@ describe("syncLockerMarkers", () => {
     expect(maps.Event.removeListener).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps an existing click listener when the same pin id and handler are synced", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const handleSelectLocker = vi.fn();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ lockerId: 42, latitude: 37.5 })],
+      onSelectLocker: handleSelectLocker,
+      registry,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ lockerId: 42, latitude: 37.6 })],
+      onSelectLocker: handleSelectLocker,
+      registry,
+    });
+
+    FakeMarker.instances[0]?.listeners[0]?.();
+
+    expect(maps.Event.addListener).toHaveBeenCalledTimes(1);
+    expect(maps.Event.removeListener).not.toHaveBeenCalled();
+    expect(handleSelectLocker).toHaveBeenCalledWith(
+      "LOCKER",
+      42,
+      expect.objectContaining({ latitude: 37.6 }),
+    );
+  });
+
   it("reuses an existing marker for the same pin", () => {
     FakeMarker.instances = [];
 
