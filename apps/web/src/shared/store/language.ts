@@ -86,7 +86,10 @@ const syncLanguageRuntime = (language: AppLanguage) => {
   setLanguageCookie(language);
 };
 
-const resolvePersistedLanguage = (persistedState: unknown): AppLanguage => {
+const resolvePersistedLanguage = (
+  persistedState: unknown,
+  fallbackLanguage: AppLanguage,
+): AppLanguage => {
   if (
     typeof persistedState === "object" &&
     persistedState !== null &&
@@ -96,11 +99,11 @@ const resolvePersistedLanguage = (persistedState: unknown): AppLanguage => {
       .appLanguage;
 
     return typeof persistedLanguage === "string"
-      ? (normalizeLanguage(persistedLanguage) ?? DEFAULT_APP_LANGUAGE)
-      : DEFAULT_APP_LANGUAGE;
+      ? (normalizeLanguage(persistedLanguage) ?? fallbackLanguage)
+      : fallbackLanguage;
   }
 
-  return DEFAULT_APP_LANGUAGE;
+  return fallbackLanguage;
 };
 
 interface AppLanguageState {
@@ -169,7 +172,10 @@ export const useAppLanguageStore = create<AppLanguageState>()(
       ),
       merge: (persistedState, currentState) => ({
         ...currentState,
-        appLanguage: resolvePersistedLanguage(persistedState),
+        appLanguage: resolvePersistedLanguage(
+          persistedState,
+          currentState.appLanguage,
+        ),
       }),
       partialize: (state) => ({ appLanguage: state.appLanguage }),
       onRehydrateStorage: () => (state) => {
