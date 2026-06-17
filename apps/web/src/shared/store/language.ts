@@ -81,6 +81,28 @@ const setLanguageCookie = (language: AppLanguage) => {
   document.cookie = `${LOCALE_COOKIE_NAME}=${language};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`;
 };
 
+const syncLanguageRuntime = (language: AppLanguage) => {
+  setLanguageTag(language, { reload: false });
+  setLanguageCookie(language);
+};
+
+const resolvePersistedLanguage = (persistedState: unknown): AppLanguage => {
+  if (
+    typeof persistedState === "object" &&
+    persistedState !== null &&
+    "appLanguage" in persistedState
+  ) {
+    const persistedLanguage = (persistedState as { appLanguage?: unknown })
+      .appLanguage;
+
+    return typeof persistedLanguage === "string"
+      ? (normalizeLanguage(persistedLanguage) ?? DEFAULT_APP_LANGUAGE)
+      : DEFAULT_APP_LANGUAGE;
+  }
+
+  return DEFAULT_APP_LANGUAGE;
+};
+
 interface AppLanguageState {
   appLanguage: AppLanguage;
   hasInitialized: boolean;
@@ -100,12 +122,11 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         const urlLanguage = normalizeLanguage(urlLanguageParam);
 
         if (get().hasInitialized) {
-          const nextLanguage = urlLanguage ?? DEFAULT_APP_LANGUAGE;
+          const nextLanguage = urlLanguage ?? get().appLanguage;
           if (nextLanguage !== get().appLanguage) {
             set({ appLanguage: nextLanguage });
-            setLanguageTag(nextLanguage, { reload: false });
-            setLanguageCookie(nextLanguage);
           }
+          syncLanguageRuntime(nextLanguage);
           return;
         }
 
@@ -121,8 +142,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
           appLanguage: nextLanguage,
           hasInitialized: true,
         });
-        setLanguageTag(nextLanguage, { reload: false });
-        setLanguageCookie(nextLanguage);
+        syncLanguageRuntime(nextLanguage);
       },
       setAppLanguage: (language) => {
         if (!APP_LANGUAGES.includes(language)) {
@@ -130,8 +150,7 @@ export const useAppLanguageStore = create<AppLanguageState>()(
         }
 
         set({ appLanguage: language, hasInitialized: true });
-        setLanguageTag(language, { reload: false });
-        setLanguageCookie(language);
+        syncLanguageRuntime(language);
       },
       markHydrated: () => {
         set({ hasInitialized: false, hasHydrated: true });
@@ -148,6 +167,10 @@ export const useAppLanguageStore = create<AppLanguageState>()(
             }
           : window.localStorage,
       ),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        appLanguage: resolvePersistedLanguage(persistedState),
+      }),
       partialize: (state) => ({ appLanguage: state.appLanguage }),
       onRehydrateStorage: () => (state) => {
         state?.markHydrated();
