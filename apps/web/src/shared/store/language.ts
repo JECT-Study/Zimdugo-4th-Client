@@ -1,4 +1,4 @@
-import { setLanguageTag } from "@repo/i18n";
+import { languageTag, setLanguageTag } from "@repo/i18n";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -81,10 +81,28 @@ const setLanguageCookie = (language: AppLanguage) => {
   document.cookie = `${LOCALE_COOKIE_NAME}=${language};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`;
 };
 
+const getLanguageCookie = (): AppLanguage | null => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const localeCookie = document.cookie
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(`${LOCALE_COOKIE_NAME}=`));
+
+  const cookieValue = localeCookie?.split("=").slice(1).join("=");
+
+  return normalizeLanguage(cookieValue);
+};
+
 const syncLanguageRuntime = (language: AppLanguage) => {
   setLanguageTag(language, { reload: false });
   setLanguageCookie(language);
 };
+
+const shouldSyncLanguageRuntime = (language: AppLanguage) =>
+  languageTag() !== language || getLanguageCookie() !== language;
 
 const resolvePersistedLanguage = (
   persistedState: unknown,
@@ -129,7 +147,9 @@ export const useAppLanguageStore = create<AppLanguageState>()(
           if (nextLanguage !== get().appLanguage) {
             set({ appLanguage: nextLanguage });
           }
-          syncLanguageRuntime(nextLanguage);
+          if (shouldSyncLanguageRuntime(nextLanguage)) {
+            syncLanguageRuntime(nextLanguage);
+          }
           return;
         }
 

@@ -20,6 +20,15 @@ const clearLocaleCookie = () => {
   document.cookie = `${LOCALE_COOKIE_NAME}=;path=/;max-age=0`;
 };
 
+const readLocaleCookie = () => {
+  const entry = document.cookie
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(`${LOCALE_COOKIE_NAME}=`));
+
+  return entry?.split("=").slice(1).join("=") ?? null;
+};
+
 const loadLanguageStore = async () => {
   const languageModule = await import("./language");
   return languageModule.useAppLanguageStore;
@@ -41,6 +50,20 @@ describe("useAppLanguageStore", () => {
 
     expect(useAppLanguageStore.getState().appLanguage).toBe("en");
     expect(languageTag()).toBe("en");
+  });
+
+  it("resyncs the runtime when the store is already initialized but runtime state drifts", async () => {
+    writePersistedLanguage("en");
+    const useAppLanguageStore = await loadLanguageStore();
+
+    useAppLanguageStore.getState().initializeLanguage(null);
+    setLanguageTag("ko", { reload: false });
+    clearLocaleCookie();
+    useAppLanguageStore.getState().initializeLanguage(null);
+
+    expect(useAppLanguageStore.getState().appLanguage).toBe("en");
+    expect(languageTag()).toBe("en");
+    expect(readLocaleCookie()).toBe("en");
   });
 
   it("prefers the URL locale over the persisted app language", async () => {
