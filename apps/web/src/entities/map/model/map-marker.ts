@@ -6,6 +6,8 @@ export type LockerMarkerStatus = "active" | "inactive";
 const LOCKER_MARKER_FILL = vars.color.palette.green[500];
 const LOCKER_MARKER_BACKGROUND = vars.color.palette.gray[100];
 const PLACE_MARKER_FILL = vars.color.palette.red[300];
+const COORDINATE_GROUP_PRECISION = 4;
+const OFFSET_RADIUS_PX = 15;
 
 const LOCKER_MARKER_PATH =
   "M11 0C17.0751 0 22 4.92487 22 11C22 17.0751 17.0751 22 11 22C6.64579 22 2.88256 19.4701 1.09986 15.8L8.22852 12.4284C8.7645 13.385 9.80921 14.032 11.0049 14.0321C12.7503 14.0321 14.1797 12.6437 14.1797 10.9189H14.1935C14.1934 9.20771 12.7641 7.80645 11.0187 7.80645C9.27335 7.80647 7.84401 9.19425 7.84388 10.9189C7.84388 11.0806 7.85799 11.2424 7.88546 11.404L0.156628 12.8587C0.053794 12.2545 0 11.6335 0 11C0 4.92487 4.92487 0 11 0Z";
@@ -64,12 +66,82 @@ interface LockerMarkerEntry {
 
 export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
 
-
-
 const lockerIconCache = new WeakMap<
   typeof naver.maps,
   Map<string, naver.maps.HtmlIcon>
 >();
+
+const getCoordinateGroupKey = (pin: LockerPinItemResponse): string =>
+  `${pin.latitude.toFixed(COORDINATE_GROUP_PRECISION)},${pin.longitude.toFixed(COORDINATE_GROUP_PRECISION)}`;
+
+const getLockerSortId = (pin: LockerPinItemResponse): number =>
+  pin.pinType === "LOCKER"
+    ? (pin.lockerId ?? Number.MAX_SAFE_INTEGER)
+    : Number.MAX_SAFE_INTEGER;
+
+const createLockerCoordinateGroups = (
+  pins: LockerPinItemResponse[],
+): Map<string, LockerPinItemResponse[]> => {
+  const groups = new Map<string, LockerPinItemResponse[]>();
+
+  for (const pin of pins) {
+    if (pin.pinType !== "LOCKER") continue;
+
+    const key = getCoordinateGroupKey(pin);
+    const group = groups.get(key);
+    if (group) {
+      group.push(pin);
+    } else {
+      groups.set(key, [pin]);
+    }
+  }
+
+  for (const group of groups.values()) {
+    group.sort((a, b) => getLockerSortId(a) - getLockerSortId(b));
+  }
+
+  return groups;
+};
+
+const getLockerOffset = (
+  pin: LockerPinItemResponse,
+  pinId: string,
+  coordGroups: Map<string, LockerPinItemResponse[]>,
+): { offsetX: number; offsetY: number } => {
+  if (pin.pinType !== "LOCKER") return { offsetX: 0, offsetY: 0 };
+
+  const group = coordGroups.get(getCoordinateGroupKey(pin)) ?? [];
+  if (group.length <= 1) return { offsetX: 0, offsetY: 0 };
+
+  const index = group.findIndex((item) => getPinId(item) === pinId);
+  if (index === -1) return { offsetX: 0, offsetY: 0 };
+
+  const angle = (2 * Math.PI * index) / group.length;
+
+  return {
+    offsetX: Math.round(OFFSET_RADIUS_PX * Math.cos(angle)),
+    offsetY: Math.round(OFFSET_RADIUS_PX * Math.sin(angle)),
+  };
+};
+
+const getPositionSignatureSuffix = ({
+  spreadX,
+  spreadY,
+  offsetX,
+  offsetY,
+}: {
+  spreadX: number;
+  spreadY: number;
+  offsetX: number;
+  offsetY: number;
+}): string => {
+  const hasSpread = spreadX !== 0 || spreadY !== 0;
+  const hasOffset = offsetX !== 0 || offsetY !== 0;
+
+  return `${hasSpread ? `:spread:${spreadX}:${spreadY}` : ""}${
+    hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
+  }`;
+};
 
 const createMarkerIconOptions = (
   pin: LockerPinItemResponse,
@@ -86,13 +158,13 @@ const createMarkerIconOptions = (
   offsetX?: number,
   offsetY?: number,
 ): naver.maps.HtmlIcon => {
-  const hasSpread = spreadX != null && spreadY != null && (spreadX !== 0 || spreadY !== 0);
-  const hasOffset = offsetX != null && offsetY != null && (offsetX !== 0 || offsetY !== 0);
+  const hasSpread =
+    spreadX != null && spreadY != null && (spreadX !== 0 || spreadY !== 0);
+  const hasOffset =
+    offsetX != null && offsetY != null && (offsetX !== 0 || offsetY !== 0);
   const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}${
     hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
-  }${
-    hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
-  }`;
+  }${hasOffset ? `:offset:${offsetX}:${offsetY}` : ""}`;
 
   let innerMap = lockerIconCache.get(maps);
   if (!innerMap) {
@@ -104,13 +176,13 @@ const createMarkerIconOptions = (
   if (cached) return cached;
 
   const size =
-    animationState === "selected-active" ||
-    animationState === "selected-static"
+    animationState === "selected-active" || animationState === "selected-static"
       ? 36
       : 24;
   const radius = size / 2;
 
   const spreadClass = hasSpread ? "spread" : "";
+  const offsetClass = hasOffset ? " map-marker-offset-active" : "";
   const spreadStyle = hasSpread
     ? `--spread-x: ${spreadX}px; --spread-y: ${spreadY}px;`
     : "";
@@ -119,7 +191,7 @@ const createMarkerIconOptions = (
     : "";
 
   const options = {
-    content: `<div class="map-marker-offset-wrapper" style="width: ${size}px; height: ${size}px; ${offsetStyle}">
+    content: `<div class="map-marker-offset-wrapper${offsetClass}" style="width: ${size}px; height: ${size}px; ${offsetStyle}">
       <div class="map-marker-item ${animationState} ${spreadClass}" style="width: 100%; height: 100%; ${spreadStyle}">
         ${createLockerMarkerIcon(pin, isSelected)}
       </div>
@@ -243,19 +315,7 @@ export const syncLockerMarkers = ({
   spreadCenter,
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
-
-  // 1. LOCKER 타입 핀들만 동일 좌표 그룹화 (위도/경도 소수점 4자리 기준)
-  const coordGroups = new Map<string, LockerPinItemResponse[]>();
-  for (const pin of lockers) {
-    if (pin.pinType !== "LOCKER") continue;
-    const key = `${pin.latitude.toFixed(4)},${pin.longitude.toFixed(4)}`;
-    let list = coordGroups.get(key);
-    if (!list) {
-      list = [];
-      coordGroups.set(key, list);
-    }
-    list.push(pin);
-  }
+  const coordGroups = createLockerCoordinateGroups(lockers);
 
   // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
   const mapBounds = map.getBounds?.() as
@@ -307,33 +367,15 @@ export const syncLockerMarkers = ({
       spreadY = Math.round(centerPoint.y - pinPoint.y);
     }
 
-    // 2. 오프셋 계산 (동일 좌표 그룹의 LOCKER가 2개 이상일 때)
-    let offsetX = 0;
-    let offsetY = 0;
-    if (pin.pinType === "LOCKER") {
-      const coordKey = `${pin.latitude.toFixed(4)},${pin.longitude.toFixed(4)}`;
-      const groupList = coordGroups.get(coordKey) ?? [];
-      const groupCount = groupList.length;
-
-      if (groupCount > 1) {
-        const indexInGroup = groupList.findIndex((item) => getPinId(item) === pinId);
-        if (indexInGroup !== -1) {
-          const angle = (2 * Math.PI * indexInGroup) / groupCount;
-          const R = 15; // 줌과 상관없이 화면상 고정된 15px 오프셋
-          offsetX = Math.round(R * Math.cos(angle));
-          offsetY = Math.round(R * Math.sin(angle));
-        }
-      }
-    }
+    const { offsetX, offsetY } = getLockerOffset(pin, pinId, coordGroups);
 
     const baseIconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
-    const hasSpread = spreadX !== 0 || spreadY !== 0;
-    const hasOffset = offsetX !== 0 || offsetY !== 0;
-    const iconSignature = `${baseIconSignature}${
-      hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
-    }${
-      hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
-    }`;
+    const iconSignature = `${baseIconSignature}${getPositionSignatureSuffix({
+      spreadX,
+      spreadY,
+      offsetX,
+      offsetY,
+    })}`;
 
     if (existingEntry) {
       if (
@@ -375,8 +417,8 @@ export const syncLockerMarkers = ({
             isSelected,
             animationState,
             zoomLevel,
-            0,
-            0,
+            spreadX,
+            spreadY,
             offsetX,
             offsetY,
           ),

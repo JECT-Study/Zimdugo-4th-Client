@@ -33,8 +33,12 @@ class FakeLatLng {
     public readonly _lat: number,
     public readonly _lng: number,
   ) {}
-  lat() { return this._lat; }
-  lng() { return this._lng; }
+  lat() {
+    return this._lat;
+  }
+  lng() {
+    return this._lng;
+  }
 }
 
 class FakePoint {
@@ -61,7 +65,9 @@ class FakeMarker {
   public readonly getMap = vi.fn(() => this.attachedMap);
   public readonly setIcon = vi.fn();
   public readonly setPosition = vi.fn();
-  public readonly setVisible = vi.fn((visible: boolean) => { this.visible = visible; });
+  public readonly setVisible = vi.fn((visible: boolean) => {
+    this.visible = visible;
+  });
   public readonly getVisible = vi.fn(() => this.visible);
   public readonly listeners: Array<() => void> = [];
   public visible = true;
@@ -74,43 +80,64 @@ class FakeMarker {
 
 const createLockerPin = (
   overrides: Partial<LockerPinItemResponse> = {},
-): LockerPinItemResponse => ({
-  pinType: "LOCKER",
-  placeId: null,
-  lockerId: 42,
-  latitude: 37.4979,
-  longitude: 127.0276,
-  ...overrides,
-} as LockerPinItemResponse);
+): LockerPinItemResponse =>
+  ({
+    pinType: "LOCKER",
+    placeId: null,
+    lockerId: 42,
+    latitude: 37.4979,
+    longitude: 127.0276,
+    ...overrides,
+  }) as LockerPinItemResponse;
 
 const createPlacePin = (
   overrides: Partial<LockerPinItemResponse> = {},
-): LockerPinItemResponse => ({
-  pinType: "PLACE",
-  placeId: 7,
-  lockerId: null,
-  latitude: 37.5547,
-  longitude: 126.9706,
-  lockerCount: 3,
-  ...overrides,
-} as LockerPinItemResponse);
+): LockerPinItemResponse =>
+  ({
+    pinType: "PLACE",
+    placeId: 7,
+    lockerId: null,
+    latitude: 37.5547,
+    longitude: 126.9706,
+    lockerCount: 3,
+    ...overrides,
+  }) as LockerPinItemResponse;
 
 class FakeLatLngBounds {
-  constructor(public readonly sw: FakeLatLng, public readonly ne: FakeLatLng) {}
-  getSW() { return this.sw; }
-  getNE() { return this.ne; }
-  hasLatLng() { return true; }
+  constructor(
+    public readonly sw: FakeLatLng,
+    public readonly ne: FakeLatLng,
+  ) {}
+  getSW() {
+    return this.sw;
+  }
+  getNE() {
+    return this.ne;
+  }
+  hasLatLng() {
+    return true;
+  }
 }
 
-const createMockMap = () => ({
-  getBounds: vi.fn(() => new FakeLatLngBounds(new FakeLatLng(37.0, 126.0), new FakeLatLng(38.0, 128.0))),
-  getZoom: vi.fn(() => 15),
-  getProjection: vi.fn(() => ({
-    fromCoordToOffset: vi.fn((latlng: FakeLatLng) => {
-      return new FakePoint(Math.round(latlng.lat() * 1000), Math.round(latlng.lng() * 1000));
-    }),
-  })),
-} as unknown as naver.maps.Map);
+const createMockMap = () =>
+  ({
+    getBounds: vi.fn(
+      () =>
+        new FakeLatLngBounds(
+          new FakeLatLng(37.0, 126.0),
+          new FakeLatLng(38.0, 128.0),
+        ),
+    ),
+    getZoom: vi.fn(() => 15),
+    getProjection: vi.fn(() => ({
+      fromCoordToOffset: vi.fn((latlng: FakeLatLng) => {
+        return new FakePoint(
+          Math.round(latlng.lat() * 1000),
+          Math.round(latlng.lng() * 1000),
+        );
+      }),
+    })),
+  }) as unknown as naver.maps.Map;
 
 const createFakeMaps = () =>
   ({
@@ -131,6 +158,31 @@ const createFakeMaps = () =>
     },
     LatLngBounds: FakeLatLngBounds,
   }) as unknown as typeof naver.maps;
+
+const getMarkerContent = (marker: FakeMarker | undefined): string => {
+  const options = marker?.options as {
+    icon?: { content?: string };
+  };
+
+  return options.icon?.content ?? "";
+};
+
+const getSetIconContent = (marker: FakeMarker | undefined): string => {
+  const icon = marker?.setIcon.mock.calls.at(-1)?.[0] as
+    | { content?: string }
+    | undefined;
+
+  return icon?.content ?? "";
+};
+
+const getOffsetStyle = (content: string): string | undefined => {
+  const offsetX = content.match(/--offset-x: (-?\d+)px/)?.[1];
+  const offsetY = content.match(/--offset-y: (-?\d+)px/)?.[1];
+
+  if (offsetX == null || offsetY == null) return undefined;
+
+  return `${offsetX},${offsetY}`;
+};
 
 describe("createLockerMarkerIcon", () => {
   it("renders a 24x24 locker marker SVG", () => {
@@ -241,7 +293,11 @@ describe("syncLockerMarkers", () => {
 
     FakeMarker.instances[0]?.listeners[0]?.();
 
-    expect(handleSelectLocker).toHaveBeenCalledWith("LOCKER", 42, expect.any(Object));
+    expect(handleSelectLocker).toHaveBeenCalledWith(
+      "LOCKER",
+      42,
+      expect.any(Object),
+    );
   });
 
   it("passes place id when a place marker is clicked", () => {
@@ -260,7 +316,11 @@ describe("syncLockerMarkers", () => {
 
     FakeMarker.instances[0]?.listeners[0]?.();
 
-    expect(handleSelectLocker).toHaveBeenCalledWith("PLACE", 7, expect.any(Object));
+    expect(handleSelectLocker).toHaveBeenCalledWith(
+      "PLACE",
+      7,
+      expect.any(Object),
+    );
   });
 
   it("removes click listeners on cleanup", () => {
@@ -362,14 +422,22 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
   });
 
-  it("applies offset style and class when multiple lockers share the same coordinates", () => {
+  it("applies different offsets when two lockers share the same coordinates", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
     const maps = createFakeMaps();
 
-    const pin1 = createLockerPin({ lockerId: 101, latitude: 37.5, longitude: 127.0 });
-    const pin2 = createLockerPin({ lockerId: 102, latitude: 37.5, longitude: 127.0 });
+    const pin1 = createLockerPin({
+      lockerId: 101,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const pin2 = createLockerPin({
+      lockerId: 102,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
 
     syncLockerMarkers({
       map,
@@ -379,18 +447,63 @@ describe("syncLockerMarkers", () => {
 
     expect(FakeMarker.instances).toHaveLength(2);
 
-    const options1 = FakeMarker.instances[0]?.options as {
-      icon?: { content?: string };
-    };
-    const options2 = FakeMarker.instances[1]?.options as {
-      icon?: { content?: string };
-    };
+    const content1 = getMarkerContent(FakeMarker.instances[0]);
+    const content2 = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(options1.icon?.content).toContain("map-marker-offset-wrapper");
-    expect(options1.icon?.content).toContain("--offset-x: 15px");
+    expect(content1).toContain("map-marker-offset-active");
+    expect(content1).toContain("--offset-x: 15px");
+    expect(content1).toContain("--offset-y: 0px");
 
-    expect(options2.icon?.content).toContain("map-marker-offset-wrapper");
-    expect(options2.icon?.content).toContain("--offset-x: -15px");
+    expect(content2).toContain("map-marker-offset-active");
+    expect(content2).toContain("--offset-x: -15px");
+    expect(content2).toContain("--offset-y: 0px");
+  });
+
+  it("distributes three or more lockers with the same coordinates", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [
+        createLockerPin({ lockerId: 101, latitude: 37.5, longitude: 127.0 }),
+        createLockerPin({ lockerId: 102, latitude: 37.5, longitude: 127.0 }),
+        createLockerPin({ lockerId: 103, latitude: 37.5, longitude: 127.0 }),
+      ],
+    });
+
+    const offsets = FakeMarker.instances.map((marker) =>
+      getOffsetStyle(getMarkerContent(marker)),
+    );
+
+    expect(new Set(offsets)).toEqual(new Set(["15,0", "-7,13", "-8,-13"]));
+  });
+
+  it("keeps the same locker offset when server response order changes", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [
+        createLockerPin({ lockerId: 102, latitude: 37.5, longitude: 127.0 }),
+        createLockerPin({ lockerId: 101, latitude: 37.5, longitude: 127.0 }),
+      ],
+    });
+
+    const locker102Content = getMarkerContent(FakeMarker.instances[0]);
+    const locker101Content = getMarkerContent(FakeMarker.instances[1]);
+
+    expect(locker102Content).toContain("--offset-x: -15px");
+    expect(locker102Content).toContain("--offset-y: 0px");
+    expect(locker101Content).toContain("--offset-x: 15px");
+    expect(locker101Content).toContain("--offset-y: 0px");
   });
 
   it("does not apply offset to PLACE type markers even when coordinates are shared", () => {
@@ -399,8 +512,16 @@ describe("syncLockerMarkers", () => {
     const map = createMockMap();
     const maps = createFakeMaps();
 
-    const pin1 = createLockerPin({ lockerId: 101, latitude: 37.5, longitude: 127.0 });
-    const pin2 = createPlacePin({ placeId: 201, latitude: 37.5, longitude: 127.0 });
+    const pin1 = createLockerPin({
+      lockerId: 101,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const pin2 = createPlacePin({
+      placeId: 201,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
 
     syncLockerMarkers({
       map,
@@ -410,15 +531,81 @@ describe("syncLockerMarkers", () => {
 
     expect(FakeMarker.instances).toHaveLength(2);
 
-    const options1 = FakeMarker.instances[0]?.options as {
-      icon?: { content?: string };
-    };
-    const options2 = FakeMarker.instances[1]?.options as {
-      icon?: { content?: string };
-    };
+    const content1 = getMarkerContent(FakeMarker.instances[0]);
+    const content2 = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(options1.icon?.content).not.toContain("--offset-x");
-    expect(options2.icon?.content).not.toContain("--offset-x");
+    expect(content1).not.toContain("--offset-x");
+    expect(content2).not.toContain("--offset-x");
+    expect(content1).not.toContain("map-marker-offset-active");
+    expect(content2).not.toContain("map-marker-offset-active");
+  });
+
+  it("keeps spread and offset styles when an existing marker icon is updated", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin1 = createLockerPin({
+      lockerId: 101,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const pin2 = createLockerPin({
+      lockerId: 102,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const spreadCenter = { lat: 37.5547, lng: 126.9706 };
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      registry,
+      spreadCenter,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      selectedPinId: "LOCKER-101",
+      registry,
+      spreadCenter,
+    });
+
+    const content = getSetIconContent(FakeMarker.instances[0]);
+
+    expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
+    expect(content).toContain("--spread-x");
+    expect(content).toContain("--spread-y");
+    expect(content).toContain("--offset-x: 15px");
+    expect(content).toContain("--offset-y: 0px");
+  });
+
+  it("does not activate offset transform for markers without offset", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [
+        createLockerPin({ lockerId: 101, latitude: 37.5, longitude: 127.0 }),
+        createPlacePin({ placeId: 201, latitude: 37.5, longitude: 127.0 }),
+      ],
+    });
+
+    const lockerContent = getMarkerContent(FakeMarker.instances[0]);
+    const placeContent = getMarkerContent(FakeMarker.instances[1]);
+
+    expect(lockerContent).toContain("map-marker-offset-wrapper");
+    expect(placeContent).toContain("map-marker-offset-wrapper");
+    expect(lockerContent).not.toContain("map-marker-offset-active");
+    expect(placeContent).not.toContain("map-marker-offset-active");
+    expect(lockerContent).not.toContain("--offset-x");
+    expect(placeContent).not.toContain("--offset-x");
   });
 });
-
