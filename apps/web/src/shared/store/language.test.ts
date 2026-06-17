@@ -50,6 +50,7 @@ describe("useAppLanguageStore", () => {
 
     expect(useAppLanguageStore.getState().appLanguage).toBe("en");
     expect(languageTag()).toBe("en");
+    expect(readLocaleCookie()).toBe("en");
   });
 
   it("resyncs the runtime when the store is already initialized but runtime state drifts", async () => {
@@ -74,6 +75,7 @@ describe("useAppLanguageStore", () => {
 
     expect(useAppLanguageStore.getState().appLanguage).toBe("ja");
     expect(languageTag()).toBe("ja");
+    expect(readLocaleCookie()).toBe("ja");
   });
 
   it("does not reset to the default language on locale-less routes after initialization", async () => {
@@ -95,6 +97,7 @@ describe("useAppLanguageStore", () => {
 
     expect(useAppLanguageStore.getState().appLanguage).toBe("zh-TW");
     expect(languageTag()).toBe("zh-TW");
+    expect(readLocaleCookie()).toBe("zh-TW");
   });
 
   it("falls back to the default language when the persisted language is invalid", async () => {
@@ -107,5 +110,6 @@ describe("useAppLanguageStore", () => {
       "ko" satisfies AppLanguage,
     );
     expect(languageTag()).toBe("ko");
+    expect(readLocaleCookie()).toBe("ko");
   });
 });
