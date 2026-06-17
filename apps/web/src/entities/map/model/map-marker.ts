@@ -181,7 +181,8 @@ const createMarkerIconOptions = (
       : 24;
   const radius = size / 2;
 
-  const spreadClass = hasSpread ? "spread" : "";
+  const shouldPlaySpread = hasSpread && animationState === "normal";
+  const spreadClass = shouldPlaySpread ? "spread" : "";
   const offsetClass = hasOffset ? " map-marker-offset-active" : "";
   const spreadStyle = hasSpread
     ? `--spread-x: ${spreadX}px; --spread-y: ${spreadY}px;`

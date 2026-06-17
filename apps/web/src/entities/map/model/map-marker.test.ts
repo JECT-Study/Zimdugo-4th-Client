@@ -184,6 +184,9 @@ const getOffsetStyle = (content: string): string | undefined => {
   return `${offsetX},${offsetY}`;
 };
 
+const getMarkerItemClass = (content: string): string =>
+  content.match(/class="map-marker-item ([^"]+)"/)?.[1] ?? "";
+
 describe("createLockerMarkerIcon", () => {
   it("renders a 24x24 locker marker SVG", () => {
     const icon = createLockerMarkerIcon(createLockerPin());
@@ -579,6 +582,91 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
     expect(content).toContain("--spread-x");
     expect(content).toContain("--spread-y");
+    expect(content).toContain("--offset-x: 15px");
+    expect(content).toContain("--offset-y: 0px");
+  });
+
+  it("does not replay spread animation when a spread marker becomes selected", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin = createLockerPin({
+      lockerId: 101,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const spreadCenter = { lat: 37.5547, lng: 126.9706 };
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin],
+      registry,
+      spreadCenter,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin],
+      selectedPinId: "LOCKER-101",
+      registry,
+      spreadCenter,
+    });
+
+    const content = getSetIconContent(FakeMarker.instances[0]);
+    const markerItemClass = getMarkerItemClass(content);
+
+    expect(markerItemClass).toContain("selected-active");
+    expect(markerItemClass).not.toContain("spread");
+    expect(content).toContain("--spread-x");
+    expect(content).toContain("--spread-y");
+  });
+
+  it("does not replay spread animation when a selected spread marker is unselected", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin1 = createLockerPin({
+      lockerId: 101,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const pin2 = createLockerPin({
+      lockerId: 102,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const spreadCenter = { lat: 37.5547, lng: 126.9706 };
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      selectedPinId: "LOCKER-101",
+      registry,
+      spreadCenter,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      selectedPinId: "LOCKER-102",
+      registry,
+      spreadCenter,
+    });
+
+    const content = getSetIconContent(FakeMarker.instances[0]);
+    const markerItemClass = getMarkerItemClass(content);
+
+    expect(markerItemClass).toContain("unselected-active");
+    expect(markerItemClass).not.toContain("spread");
+    expect(content).toContain("--spread-x");
+    expect(content).toContain("--spread-y");
+    expect(content).toContain("map-marker-offset-active");
     expect(content).toContain("--offset-x: 15px");
     expect(content).toContain("--offset-y: 0px");
   });
