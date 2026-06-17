@@ -65,7 +65,7 @@ export const controlChip = recipe({
       choice: {
         backgroundColor: vars.color.palette.gray[200],
         color: vars.color.palette.gray[800],
-        padding: `0 ${vars.spacing[12]}`,
+        padding: `6px ${vars.spacing[12]}`,
         minWidth: "56px",
         selectors: {
           "&[data-active='true'], &[data-selected='true']": {

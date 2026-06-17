@@ -174,6 +174,7 @@
   "report_section_time": "营业时间",
   "report_time_start": "开始",
   "report_time_end": "结束",
+  "report_time_all_day": "24小时营业",
   "report_time_am": "上午",
   "report_time_pm": "下午",
   "report_time_start_select_aria": "打开开始时间选择弹窗",

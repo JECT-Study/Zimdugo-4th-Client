@@ -4,9 +4,9 @@ import {
   MAX_REPORT_ADDITIONAL_INFO_LENGTH,
   REPORT_PRICE_MAX,
   REPORT_PRICE_MIN,
-  SIZE_TYPES,
   type ReportFormValues,
   reportDefaultValues,
+  SIZE_TYPES,
 } from "./report-types";
 
 export const timeToMinutes = (time: string): number => {
@@ -188,7 +188,8 @@ export const reportSchema = z
     if (hasStart && hasEnd && data.startTime && data.endTime) {
       const start = timeToMinutes(data.startTime);
       const end = timeToMinutes(data.endTime);
-      if (start >= end) {
+      const isAllDay = start === 0 && end === 0;
+      if (!isAllDay && start >= end) {
         ctx.addIssue({
           code: "custom",
           path: ["endTime"],

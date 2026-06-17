@@ -65,9 +65,9 @@ describe("reportSchema", () => {
     });
     expect(result.success).toBe(false);
     if (result.success) return;
-    expect(result.error.issues.some((issue) => issue.path[0] === "sizeTypes")).toBe(
-      true,
-    );
+    expect(
+      result.error.issues.some((issue) => issue.path[0] === "sizeTypes"),
+    ).toBe(true);
   });
 
   it("층 선택 여부는 필수이다", () => {
@@ -77,9 +77,9 @@ describe("reportSchema", () => {
     });
     expect(result.success).toBe(false);
     if (result.success) return;
-    expect(result.error.issues.some((issue) => issue.path[0] === "hasFloor")).toBe(
-      true,
-    );
+    expect(
+      result.error.issues.some((issue) => issue.path[0] === "hasFloor"),
+    ).toBe(true);
   });
 
   it("층 있음일 때 층 유형과 층수는 필수이다", () => {
@@ -134,9 +134,9 @@ describe("reportSchema", () => {
     });
     expect(result.success).toBe(false);
     if (result.success) return;
-    expect(result.error.issues.some((issue) => issue.path[0] === "minPrice")).toBe(
-      true,
-    );
+    expect(
+      result.error.issues.some((issue) => issue.path[0] === "minPrice"),
+    ).toBe(true);
   });
 
   it("유료(isFree: false)일 때 최소·최대 가격은 필수이다", () => {
@@ -226,12 +226,12 @@ describe("reportSchema", () => {
     ).toBe(false);
   });
 
-  it("24시간 영업(00:00 ~ 23:59)은 허용한다", () => {
+  it("24시간 영업(00:00 ~ 00:00)은 허용한다", () => {
     expect(
       parseReportForm({
         ...validForm(),
         startTime: "00:00",
-        endTime: "23:59",
+        endTime: "00:00",
       }).success,
     ).toBe(true);
   });
@@ -263,15 +263,17 @@ describe("reportSchema", () => {
 
   it("imageUrl은 null 또는 https URL이어야 한다", () => {
     expect(parseReportForm(validForm()).success).toBe(true);
-    expect(
-      reportSchemaSafeParseWithImageUrl("https://example.com/a.jpg"),
-    ).toBe(true);
+    expect(reportSchemaSafeParseWithImageUrl("https://example.com/a.jpg")).toBe(
+      true,
+    );
     expect(reportSchemaSafeParseWithImageUrl("http://example.com/a.jpg")).toBe(
       false,
     );
     expect(reportSchemaSafeParseWithImageUrl("not-a-url")).toBe(false);
     expect(
-      reportSchemaSafeParseWithImageUrl(`https://example.com/${"a".repeat(481)}`),
+      reportSchemaSafeParseWithImageUrl(
+        `https://example.com/${"a".repeat(481)}`,
+      ),
     ).toBe(false);
   });
 

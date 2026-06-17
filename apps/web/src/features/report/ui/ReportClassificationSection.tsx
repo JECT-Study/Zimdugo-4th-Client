@@ -1,6 +1,7 @@
 import { m } from "@repo/i18n";
 import type { ReactNode } from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { useCallback, useEffect } from "react";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import type {
   LockerType,
   ReportFormValues,
@@ -13,9 +14,10 @@ import { classificationSection } from "./report.css.ts";
 
 interface ReportClassificationSectionProps {
   lockerTypeOptions: Array<{ label: string; value: LockerType }>;
-  floorSection?: ReactNode;
+  floorSection?: (props: { isDisabled: boolean }) => ReactNode;
   sectionServerError?: string;
   onFieldChange?: () => void;
+  onFloorReset?: () => void;
 }
 
 export function ReportClassificationSection({
@@ -23,8 +25,16 @@ export function ReportClassificationSection({
   floorSection,
   sectionServerError,
   onFieldChange,
+  onFloorReset,
 }: ReportClassificationSectionProps) {
-  const { control } = useFormContext<ReportFormValues>();
+  const { clearErrors, control, setValue } = useFormContext<ReportFormValues>();
+  const indoorOutdoorType = useWatch({ control, name: "indoorOutdoorType" });
+  const hasFloor = useWatch({ control, name: "hasFloor" });
+  const floorType = useWatch({ control, name: "floorType" });
+  const floorNumber = useWatch({ control, name: "floorNumber" });
+  const isFloorDisabled = indoorOutdoorType === "OUTDOOR";
+  const isFloorFixedToNone =
+    hasFloor === false && floorType === null && floorNumber === null;
   const indoorOutdoorErrorMessage = useReportSectionError([
     "indoorOutdoorType",
   ]);
@@ -39,11 +49,22 @@ export function ReportClassificationSection({
     ? "report-locker-type-error"
     : undefined;
 
+  const resetFloorToNone = useCallback(() => {
+    setValue("hasFloor", false, { shouldDirty: true });
+    setValue("floorType", null, { shouldDirty: true });
+    setValue("floorNumber", null, { shouldDirty: true });
+    clearErrors(["hasFloor", "floorType", "floorNumber"]);
+    onFloorReset?.();
+  }, [clearErrors, onFloorReset, setValue]);
+
   const handleIndoorOutdoorChange = (
     onChange: (value: ReportFormValues["indoorOutdoorType"]) => void,
     value: ReportFormValues["indoorOutdoorType"],
   ) => {
     onChange(value);
+    if (value === "OUTDOOR") {
+      resetFloorToNone();
+    }
     onFieldChange?.();
   };
 
@@ -54,6 +75,12 @@ export function ReportClassificationSection({
     onChange(value);
     onFieldChange?.();
   };
+
+  useEffect(() => {
+    if (isFloorDisabled && !isFloorFixedToNone) {
+      resetFloorToNone();
+    }
+  }, [isFloorDisabled, isFloorFixedToNone, resetFloorToNone]);
 
   return (
     <div
@@ -75,7 +102,7 @@ export function ReportClassificationSection({
           />
         )}
       />
-      {floorSection}
+      {floorSection?.({ isDisabled: isFloorDisabled })}
       <Controller
         control={control}
         name="lockerType"

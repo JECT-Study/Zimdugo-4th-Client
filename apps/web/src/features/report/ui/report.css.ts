@@ -82,6 +82,10 @@ export const section = style({
   scrollMarginTop: "8px",
 });
 
+export const disabledSection = style({
+  opacity: 0.5,
+});
+
 export const locationSection = style([
   section,
   {
@@ -108,6 +112,8 @@ export const sectionTitleLabel = style({
   flex: "0 0 auto",
   width: "auto",
   maxWidth: "55%",
+  fontSize: vars.typography.fontSize[18],
+  lineHeight: vars.typography.lineHeight.relaxed,
 });
 
 export const sectionErrorTextBottom = style({
@@ -155,8 +161,8 @@ export const indoorOutdoorControl = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: vars.spacing[16],
-  width: "256px",
+  gap: "56px",
+  width: "296px",
   maxWidth: "100%",
   margin: "0 auto",
   padding: 0,
@@ -166,7 +172,7 @@ export const indoorOutdoorControl = style({
 
 export const indoorOutdoorChip = style({
   width: "120px",
-  maxWidth: "calc(50% - 8px)",
+  maxWidth: "calc(50% - 28px)",
 });
 
 export const photoSectionContent = style({
@@ -652,11 +658,20 @@ export const submitSubButton = style({
 });
 
 export const priceRow = style({
-  display: "flex",
-  gap: vars.spacing[16],
-  alignItems: "center",
-  justifyContent: "center",
   width: "100%",
+  selectors: {
+    "& > div": {
+      display: "grid",
+      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+      gap: 0,
+      width: "100%",
+      justifyContent: "stretch",
+    },
+  },
+});
+
+export const priceOptionRadio = style({
+  justifySelf: "start",
 });
 
 export const priceInputRow = style({
@@ -675,6 +690,12 @@ export const timeRow = style({
   display: "flex",
   gap: vars.spacing[8],
   alignItems: "center",
+});
+
+export const timeAllDayRow = style({
+  display: "flex",
+  justifyContent: "flex-start",
+  width: "100%",
 });
 
 export const timeSeparator = style({

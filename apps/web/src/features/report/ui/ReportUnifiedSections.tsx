@@ -92,14 +92,16 @@ export function ReportUnifiedSections({
       />
       <ReportClassificationSection
         lockerTypeOptions={lockerTypeOptions}
-        floorSection={
+        floorSection={({ isDisabled }) => (
           <ReportFloorSection
+            isDisabled={isDisabled}
             sectionServerError={sectionServerErrors.floor}
             onFieldChange={() => clearSectionError("floor")}
           />
-        }
+        )}
         sectionServerError={sectionServerErrors.classification}
         onFieldChange={() => clearSectionError("classification")}
+        onFloorReset={() => clearSectionError("floor")}
       />
       <ReportSizeSection
         selectedSizes={selectedSizes}

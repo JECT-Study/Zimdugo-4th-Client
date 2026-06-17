@@ -33,6 +33,7 @@ export function ReportLocationSection({
     sectionServerError,
   );
   const errorId = errorMessage ? "report-location-error" : undefined;
+  const hasLocationValue = Boolean(address) || selectedCoords !== null;
 
   const handleOpenLocationOverlay = () => {
     onFieldChange?.();
@@ -42,6 +43,15 @@ export function ReportLocationSection({
   const handleResetLocation = () => {
     onFieldChange?.();
     onResetLocation();
+  };
+
+  const handleLocationButtonPress = () => {
+    if (hasLocationValue) {
+      handleResetLocation();
+      return;
+    }
+
+    handleOpenLocationOverlay();
   };
 
   return (
@@ -84,10 +94,11 @@ export function ReportLocationSection({
           variant="filled"
           intent="primary"
           size="L"
-          onPress={handleResetLocation}
-          isDisabled={!address && selectedCoords === null}
+          onPress={handleLocationButtonPress}
         >
-          {m.search_filter_reset()}
+          {hasLocationValue
+            ? m.search_filter_reset()
+            : m.report_location_select_placeholder()}
         </Button>
       </div>
       <ReportSectionErrorReserve />

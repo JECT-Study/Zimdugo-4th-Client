@@ -1,12 +1,13 @@
 import { m } from "@repo/i18n";
-import { Checkbox } from "@repo/ui/components/checkbox";
 import { Input } from "@repo/ui/components/input";
+import { Radio, RadioGroup } from "@repo/ui/components/radio";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
   priceInputContainer,
   priceInputRow,
+  priceOptionRadio,
   priceRow,
   priceUnit,
   section,
@@ -63,40 +64,23 @@ export function ReportPriceSectionView({
       <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
         {m.report_section_price()}
       </ReportSectionTitleRow>
-      <div className={priceRow}>
-        <Checkbox
-          labelText={m.report_price_free()}
-          isSelected={priceType === "free"}
-          onSelectedChange={(selected) => {
-            if (selected) {
-              setPriceType("free");
-              onFieldChange?.();
-              return;
-            }
-            if (priceType === "free") {
-              setPriceType("none");
-              onFieldChange?.();
-            }
-          }}
-          labelLocation="right"
-        />
-        <Checkbox
-          labelText={m.report_price_paid()}
-          isSelected={priceType === "paid"}
-          onSelectedChange={(selected) => {
-            if (selected) {
-              setPriceType("paid");
-              onFieldChange?.();
-              return;
-            }
-            if (priceType === "paid") {
-              setPriceType("none");
-              onFieldChange?.();
-            }
-          }}
-          labelLocation="right"
-        />
-      </div>
+      <RadioGroup
+        aria-label={m.report_section_price()}
+        className={priceRow}
+        optionsDirection="row"
+        value={priceType === "none" ? undefined : priceType}
+        onChange={(value) => {
+          setPriceType(value as "free" | "paid");
+          onFieldChange?.();
+        }}
+      >
+        <Radio className={priceOptionRadio} value="free">
+          {m.report_price_free()}
+        </Radio>
+        <Radio className={priceOptionRadio} value="paid">
+          {m.report_price_paid()}
+        </Radio>
+      </RadioGroup>
       {priceType === "paid" && (
         <div className={priceInputRow}>
           <div className={priceInputContainer}>

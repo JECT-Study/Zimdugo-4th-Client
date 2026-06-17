@@ -12,6 +12,7 @@ import { PickerTriggerButton } from "./PickerTriggerButton";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
+  disabledSection,
   floorChoiceButton,
   floorControlRow,
   placeType,
@@ -20,6 +21,7 @@ import {
 } from "./report.css.ts";
 
 interface ReportFloorSectionProps {
+  isDisabled?: boolean;
   sectionServerError?: string;
   onFieldChange?: () => void;
 }
@@ -50,6 +52,7 @@ const scopeFromFloorType = (
 };
 
 export function ReportFloorSection({
+  isDisabled = false,
   sectionServerError,
   onFieldChange,
 }: ReportFloorSectionProps) {
@@ -123,6 +126,8 @@ export function ReportFloorSection({
       : m.report_floor_select_placeholder();
 
   const handleSelectNoFloor = () => {
+    if (isDisabled) return;
+
     setValue("hasFloor", false, { shouldDirty: true });
     setValue("floorType", null, { shouldDirty: true });
     setValue("floorNumber", null, { shouldDirty: true });
@@ -131,11 +136,15 @@ export function ReportFloorSection({
   };
 
   const handleSelectHasFloor = () => {
+    if (isDisabled) return;
+
     setValue("hasFloor", true, { shouldDirty: true });
     onFieldChange?.();
   };
 
   const handleOpenFloorPicker = () => {
+    if (isDisabled) return;
+
     setPendingFloorScope(scopeFromFloorType(floorType));
     setPendingFloor(floorNumber !== null ? String(floorNumber) : pendingFloor);
     setIsFloorPickerOpen(true);
@@ -152,6 +161,8 @@ export function ReportFloorSection({
   };
 
   const handleConfirmFloor = () => {
+    if (isDisabled) return;
+
     const parsedFloor = Number.parseInt(pendingFloor, 10);
     if (Number.isNaN(parsedFloor) || parsedFloor < 1) return;
 
@@ -169,8 +180,11 @@ export function ReportFloorSection({
 
   return (
     <section
-      className={section}
+      className={[section, isDisabled ? disabledSection : ""]
+        .filter(Boolean)
+        .join(" ")}
       data-section="floor"
+      aria-disabled={isDisabled}
       aria-describedby={errorId}
     >
       <ReportSectionTitleRow
@@ -189,6 +203,7 @@ export function ReportFloorSection({
             intent={isNoFloorSelected ? "primary" : "neutral"}
             size="L"
             onPress={handleSelectNoFloor}
+            isDisabled={isDisabled}
           >
             {m.report_floor_none()}
           </Button>
@@ -198,6 +213,7 @@ export function ReportFloorSection({
             intent={isHasFloorSelected ? "primary" : "neutral"}
             size="L"
             onPress={handleSelectHasFloor}
+            isDisabled={isDisabled}
           >
             {m.report_floor_exists()}
           </Button>
@@ -205,7 +221,7 @@ export function ReportFloorSection({
             label={floorLabel}
             ariaLabel={m.report_floor_select_aria()}
             onPress={handleOpenFloorPicker}
-            isDisabled={!isHasFloorSelected}
+            isDisabled={isDisabled || !isHasFloorSelected}
           />
         </div>
       </div>

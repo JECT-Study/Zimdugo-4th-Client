@@ -1,4 +1,5 @@
 import { m } from "@repo/i18n";
+import { Checkbox } from "@repo/ui/components/checkbox";
 import {
   PopupPicker,
   type PopupPickerColumn,
@@ -8,7 +9,12 @@ import { useReportSectionError } from "#/features/report/model/useReportSectionE
 import { PickerTriggerButton } from "./PickerTriggerButton";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
-import { section, timeRow, timeSeparator } from "./report.css.ts";
+import {
+  section,
+  timeAllDayRow,
+  timeRow,
+  timeSeparator,
+} from "./report.css.ts";
 
 interface ReportTimeSectionProps {
   openTime: string;
@@ -43,6 +49,7 @@ export function ReportTimeSection({
     sectionServerError,
   );
   const errorId = errorMessage ? "report-time-error" : undefined;
+  const isAllDay = openTime === "00:00" && closeTime === "00:00";
   const [activeTarget, setActiveTarget] = useState<TimeTarget | null>(null);
   const [pendingHour, setPendingHour] = useState("00");
   const [pendingMinute, setPendingMinute] = useState("00");
@@ -88,6 +95,8 @@ export function ReportTimeSection({
   );
 
   const handleOpenPicker = (target: TimeTarget) => {
+    if (isAllDay) return;
+
     const currentTime = parseTime(target === "open" ? openTime : closeTime);
 
     setActiveTarget(target);
@@ -119,6 +128,20 @@ export function ReportTimeSection({
     onFieldChange?.();
   };
 
+  const handleAllDayChange = (selected: boolean) => {
+    if (selected) {
+      setOpenTime("00:00");
+      setCloseTime("00:00");
+      setActiveTarget(null);
+      onFieldChange?.();
+      return;
+    }
+
+    setOpenTime("");
+    setCloseTime("");
+    onFieldChange?.();
+  };
+
   return (
     <section className={section} data-section="time" aria-describedby={errorId}>
       <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
@@ -130,12 +153,22 @@ export function ReportTimeSection({
           label={openTime || m.report_time_start()}
           ariaLabel={m.report_time_start_select_aria()}
           onPress={() => handleOpenPicker("open")}
+          isDisabled={isAllDay}
         />
         <span className={timeSeparator}>~</span>
         <PickerTriggerButton
           label={closeTime || m.report_time_end()}
           ariaLabel={m.report_time_end_select_aria()}
           onPress={() => handleOpenPicker("close")}
+          isDisabled={isAllDay}
+        />
+      </div>
+      <div className={timeAllDayRow}>
+        <Checkbox
+          labelText={m.report_time_all_day()}
+          isSelected={isAllDay}
+          onSelectedChange={handleAllDayChange}
+          labelLocation="right"
         />
       </div>
 
