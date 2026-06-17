@@ -6,7 +6,6 @@ import {
 import { useMemo, useState } from "react";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { PickerTriggerButton } from "./PickerTriggerButton";
-import { ReportSectionError } from "./ReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import { section, timeRow, timeSeparator } from "./report.css.ts";
@@ -121,11 +120,7 @@ export function ReportTimeSection({
   };
 
   return (
-    <section
-      className={section}
-      data-section="time"
-      aria-describedby={errorId}
-    >
+    <section className={section} data-section="time" aria-describedby={errorId}>
       <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
         {m.report_section_time()}
       </ReportSectionTitleRow>

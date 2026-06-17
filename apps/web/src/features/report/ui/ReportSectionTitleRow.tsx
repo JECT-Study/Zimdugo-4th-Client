@@ -6,12 +6,14 @@ import { sectionTitleLabel, sectionTitleRow } from "./report.css.ts";
 interface ReportSectionTitleRowProps {
   children: ReactNode;
   errorMessage?: string;
+  defaultErrorMessage?: string;
   errorId?: string;
 }
 
 export function ReportSectionTitleRow({
   children,
   errorMessage,
+  defaultErrorMessage,
   errorId,
 }: ReportSectionTitleRowProps) {
   return (
@@ -22,6 +24,7 @@ export function ReportSectionTitleRow({
       <ReportSectionError
         id={errorId}
         message={errorMessage}
+        defaultMessage={defaultErrorMessage}
         placement="title"
       />
     </div>

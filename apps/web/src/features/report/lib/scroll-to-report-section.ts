@@ -5,8 +5,8 @@ export const REPORT_CONTENT_SCROLL_CONTAINER_ATTR =
 
 export const REPORT_SECTION_ORDER: ReportSectionId[] = [
   "location",
-  "floor",
   "classification",
+  "floor",
   "size",
   "photo",
   "agreement",

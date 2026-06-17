@@ -74,6 +74,39 @@ type PendingValidationNavigation = {
   firstSectionId: ReportSectionId | null;
 };
 
+export const isReportRequiredFieldsComplete = (
+  values: Pick<
+    ReportFormValues,
+    | "roadAddress"
+    | "latitude"
+    | "longitude"
+    | "indoorOutdoorType"
+    | "lockerType"
+    | "hasFloor"
+    | "floorType"
+    | "floorNumber"
+    | "sizeTypes"
+  >,
+): boolean => {
+  const isFloorComplete =
+    values.hasFloor === false ||
+    (values.hasFloor === true &&
+      values.floorType !== null &&
+      values.floorNumber !== null &&
+      values.floorNumber >= 1);
+
+  return (
+    values.roadAddress.trim().length > 0 &&
+    values.latitude !== null &&
+    values.longitude !== null &&
+    values.indoorOutdoorType !== null &&
+    values.lockerType !== null &&
+    values.hasFloor !== null &&
+    isFloorComplete &&
+    values.sizeTypes.length > 0
+  );
+};
+
 export function useReportForm(): {
   form: UseFormReturn<ReportFormValues>;
   sectionServerErrors: Partial<Record<ReportSectionId, string>>;
@@ -197,6 +230,15 @@ export function useReportForm(): {
   const locationConsentAgreed =
     useWatch({ control, name: "locationConsentAgreed" }) ?? false;
   const imageUrl = useWatch({ control, name: "imageUrl" }) ?? null;
+  const roadAddress = useWatch({ control, name: "roadAddress" }) ?? "";
+  const latitude = useWatch({ control, name: "latitude" });
+  const longitude = useWatch({ control, name: "longitude" });
+  const indoorOutdoorType = useWatch({ control, name: "indoorOutdoorType" });
+  const lockerType = useWatch({ control, name: "lockerType" });
+  const hasFloor = useWatch({ control, name: "hasFloor" });
+  const floorType = useWatch({ control, name: "floorType" });
+  const floorNumber = useWatch({ control, name: "floorNumber" });
+  const sizeTypes = useWatch({ control, name: "sizeTypes" }) ?? [];
 
   useEffect(() => {
     if (
@@ -540,7 +582,20 @@ export function useReportForm(): {
     uploadedImageCount: uploadedImages.length,
     hasSelectedPhotoFile: selectedPhotoFileRef.current !== null,
   });
-  const isSubmitEnabled = !shouldRequireExifConsent || locationConsentAgreed;
+  const areRequiredFieldsComplete = isReportRequiredFieldsComplete({
+    roadAddress,
+    latitude,
+    longitude,
+    indoorOutdoorType,
+    lockerType,
+    hasFloor,
+    floorType,
+    floorNumber,
+    sizeTypes,
+  });
+  const isSubmitEnabled =
+    areRequiredFieldsComplete &&
+    (!shouldRequireExifConsent || locationConsentAgreed);
 
   return {
     form,

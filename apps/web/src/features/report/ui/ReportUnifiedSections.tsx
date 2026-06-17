@@ -19,6 +19,7 @@ interface ReportUnifiedSectionsProps {
   address: string;
   selectedCoords: { lat: number; lng: number } | null;
   onOpenLocationOverlay: () => void;
+  onResetLocation: () => void;
   lockerTypeOptions: Array<{ label: string; value: LockerType }>;
   selectedSizes: SizeCardType[];
   setSelectedSizes: (cards: SizeCardType[]) => void;
@@ -51,6 +52,7 @@ export function ReportUnifiedSections({
   address,
   selectedCoords,
   onOpenLocationOverlay,
+  onResetLocation,
   lockerTypeOptions,
   selectedSizes,
   setSelectedSizes,
@@ -84,15 +86,18 @@ export function ReportUnifiedSections({
         address={address}
         selectedCoords={selectedCoords}
         onOpenOverlay={onOpenLocationOverlay}
+        onResetLocation={onResetLocation}
         sectionServerError={sectionServerErrors.location}
         onFieldChange={() => clearSectionError("location")}
       />
-      <ReportFloorSection
-        sectionServerError={sectionServerErrors.floor}
-        onFieldChange={() => clearSectionError("floor")}
-      />
       <ReportClassificationSection
         lockerTypeOptions={lockerTypeOptions}
+        floorSection={
+          <ReportFloorSection
+            sectionServerError={sectionServerErrors.floor}
+            onFieldChange={() => clearSectionError("floor")}
+          />
+        }
         sectionServerError={sectionServerErrors.classification}
         onFieldChange={() => clearSectionError("classification")}
       />

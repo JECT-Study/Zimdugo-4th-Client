@@ -26,6 +26,7 @@ export function ReportIndoorOutdoorSection({
     <section className={section}>
       <ReportSectionTitleRow
         errorMessage={sectionErrorMessage}
+        defaultErrorMessage={m.report_error_required()}
         errorId={sectionErrorId}
       >
         {m.report_section_indoor_outdoor()}

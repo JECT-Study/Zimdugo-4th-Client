@@ -1,7 +1,6 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
-import { ReportSectionError } from "./ReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
@@ -16,13 +15,16 @@ interface ReportLocationSectionProps {
   address: string;
   selectedCoords: { lat: number; lng: number } | null;
   onOpenOverlay: () => void;
+  onResetLocation: () => void;
   sectionServerError?: string;
   onFieldChange?: () => void;
 }
 
 export function ReportLocationSection({
   address,
+  selectedCoords,
   onOpenOverlay,
+  onResetLocation,
   sectionServerError,
   onFieldChange,
 }: ReportLocationSectionProps) {
@@ -37,13 +39,22 @@ export function ReportLocationSection({
     onOpenOverlay();
   };
 
+  const handleResetLocation = () => {
+    onFieldChange?.();
+    onResetLocation();
+  };
+
   return (
     <section
       className={locationSection}
       data-section="location"
       aria-describedby={errorId}
     >
-      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+      <ReportSectionTitleRow
+        errorMessage={errorMessage}
+        defaultErrorMessage={m.report_error_required()}
+        errorId={errorId}
+      >
         {m.report_section_location()}
         <span className={requiredMark}>*</span>
       </ReportSectionTitleRow>
@@ -54,7 +65,11 @@ export function ReportLocationSection({
         </button>
         */}
 
-        <button type="button" className={locationTextButton} disabled>
+        <button
+          type="button"
+          className={locationTextButton}
+          onClick={handleOpenLocationOverlay}
+        >
           <span
             className={addressTextContent}
             style={{
@@ -67,11 +82,12 @@ export function ReportLocationSection({
 
         <Button
           variant="filled"
-          intent="neutral"
+          intent="primary"
           size="L"
-          onPress={handleOpenLocationOverlay}
+          onPress={handleResetLocation}
+          isDisabled={!address && selectedCoords === null}
         >
-          {m.report_location_select_button()}
+          {m.search_filter_reset()}
         </Button>
       </div>
       <ReportSectionErrorReserve />

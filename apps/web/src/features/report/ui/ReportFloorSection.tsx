@@ -9,7 +9,6 @@ import { useFormContext, useWatch } from "react-hook-form";
 import type { ReportFormValues } from "#/features/report/model/report-types";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { PickerTriggerButton } from "./PickerTriggerButton";
-import { ReportSectionError } from "./ReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
@@ -138,9 +137,7 @@ export function ReportFloorSection({
 
   const handleOpenFloorPicker = () => {
     setPendingFloorScope(scopeFromFloorType(floorType));
-    setPendingFloor(
-      floorNumber !== null ? String(floorNumber) : pendingFloor,
-    );
+    setPendingFloor(floorNumber !== null ? String(floorNumber) : pendingFloor);
     setIsFloorPickerOpen(true);
   };
 
@@ -176,7 +173,11 @@ export function ReportFloorSection({
       data-section="floor"
       aria-describedby={errorId}
     >
-      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+      <ReportSectionTitleRow
+        errorMessage={errorMessage}
+        defaultErrorMessage={m.report_error_required()}
+        errorId={errorId}
+      >
         {m.report_section_floor()}
         <span className={requiredMark}>*</span>
       </ReportSectionTitleRow>

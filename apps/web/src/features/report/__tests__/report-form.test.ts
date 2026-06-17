@@ -1,14 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
 import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
-import { collectErrorSectionIds, mergeErrorSectionIds } from "#/features/report/lib/report-field-errors";
+import {
+  collectErrorSectionIds,
+  mergeErrorSectionIds,
+} from "#/features/report/lib/report-field-errors";
 import { applyValidationErrors } from "#/features/report/model/report-error-targets";
 import { parseReportForm } from "#/features/report/model/report-schema";
 import {
   type ReportFormValues,
-  STEP_1_FIELDS,
   reportDefaultValues,
+  STEP_1_FIELDS,
 } from "#/features/report/model/report-types";
+import { isReportRequiredFieldsComplete } from "#/features/report/model/useReportForm";
 
 const validStep1Values = (): ReportFormValues => ({
   ...reportDefaultValues,
@@ -110,6 +114,24 @@ describe("report form multi-step validation", () => {
 });
 
 describe("report form submit handling", () => {
+  it("필수 입력값이 모두 채워진 경우에만 제출 준비 상태가 된다", () => {
+    expect(isReportRequiredFieldsComplete(validStep1Values())).toBe(true);
+    expect(
+      isReportRequiredFieldsComplete({
+        ...validStep1Values(),
+        lockerType: null,
+      }),
+    ).toBe(false);
+    expect(
+      isReportRequiredFieldsComplete({
+        ...validStep1Values(),
+        hasFloor: true,
+        floorType: null,
+        floorNumber: null,
+      }),
+    ).toBe(false);
+  });
+
   it("제출 payload는 imageUrl null을 유지한다", () => {
     const payload = normalizeReportPayload(validStep1Values());
     expect(payload.imageUrl).toBeNull();
@@ -119,10 +141,10 @@ describe("report form submit handling", () => {
     const setError = vi.fn();
     const setSectionServerErrors = vi.fn();
 
-    applyValidationErrors(
-      [{ field: "lockerType", message: "required" }],
-      { setError, setSectionServerErrors },
-    );
+    applyValidationErrors([{ field: "lockerType", message: "required" }], {
+      setError,
+      setSectionServerErrors,
+    });
 
     expect(setError).toHaveBeenCalledWith("lockerType", {
       type: "server",
@@ -132,9 +154,7 @@ describe("report form submit handling", () => {
 
   it("API 400 enumInputValid 오류는 classification sectionServerErrors로 저장한다", () => {
     const setError = vi.fn();
-    const updates: Array<
-      Partial<Record<string, string>>
-    > = [];
+    const updates: Array<Partial<Record<string, string>>> = [];
     const setSectionServerErrors = vi.fn((sectionUpdates) => {
       updates.push(sectionUpdates);
     });

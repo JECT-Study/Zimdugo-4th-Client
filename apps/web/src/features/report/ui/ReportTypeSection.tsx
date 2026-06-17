@@ -1,12 +1,15 @@
 import { m } from "@repo/i18n";
 import { ControlChipGroup } from "@repo/ui/components/control-chip-group";
-import { LabelTitle } from "@repo/ui/components/label-title";
 import type { LockerType } from "#/features/report/model/report-types";
+import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import { placeType, requiredMark, section } from "./report.css.ts";
 
 interface ReportTypeSectionBaseProps {
   title?: string;
   isRequiredMarkVisible?: boolean;
+  errorMessage?: string;
+  errorId?: string;
+  defaultErrorMessage?: string;
 }
 
 interface ReportTypeSingleSectionProps extends ReportTypeSectionBaseProps {
@@ -49,12 +52,14 @@ export function ReportTypeSection(props: ReportTypeSectionProps) {
 
   return (
     <section className={section}>
-      <LabelTitle size="small">
+      <ReportSectionTitleRow
+        errorMessage={props.errorMessage}
+        defaultErrorMessage={props.defaultErrorMessage}
+        errorId={props.errorId}
+      >
         {title}
-        {isRequiredMarkVisible ? (
-          <span className={requiredMark}>*</span>
-        ) : null}
-      </LabelTitle>
+        {isRequiredMarkVisible ? <span className={requiredMark}>*</span> : null}
+      </ReportSectionTitleRow>
       <div className={placeType}>
         <ControlChipGroup
           options={props.options}

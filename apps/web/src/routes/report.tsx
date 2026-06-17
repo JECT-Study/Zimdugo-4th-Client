@@ -7,16 +7,16 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { FormProvider, useWatch } from "react-hook-form";
+import { REPORT_CONTENT_SCROLL_CONTAINER_ATTR } from "#/features/report/lib/scroll-to-report-section";
 import {
   cardsToSizeTypes,
   sizeTypesToCards,
 } from "#/features/report/lib/size-type-map";
+import { useReportContentFocusScroll } from "#/features/report/lib/use-report-content-focus-scroll";
 import type { LockerType } from "#/features/report/model/report-types";
 import { useReportForm } from "#/features/report/model/useReportForm";
 import { useReportPageReady } from "#/features/report/model/useReportPageReady";
 import { LocationPickerOverlay } from "#/features/report/ui/LocationPickerOverlay";
-import { REPORT_CONTENT_SCROLL_CONTAINER_ATTR } from "#/features/report/lib/scroll-to-report-section";
-import { useReportContentFocusScroll } from "#/features/report/lib/use-report-content-focus-scroll";
 import { ReportPageLoadingOverlay } from "#/features/report/ui/ReportPageLoadingOverlay";
 import { ReportUnifiedSections } from "#/features/report/ui/ReportUnifiedSections";
 import {
@@ -209,6 +209,12 @@ function ReportPage() {
                 address={roadAddress}
                 selectedCoords={selectedCoords}
                 onOpenLocationOverlay={() => setIsAddressOverlayOpen(true)}
+                onResetLocation={() => {
+                  setValue("roadAddress", "", { shouldDirty: true });
+                  setValue("latitude", null, { shouldDirty: true });
+                  setValue("longitude", null, { shouldDirty: true });
+                  clearSectionError("location");
+                }}
                 lockerTypeOptions={lockerTypeOptions}
                 selectedSizes={sizeTypesToCards(sizeTypes)}
                 setSelectedSizes={(cards) => {

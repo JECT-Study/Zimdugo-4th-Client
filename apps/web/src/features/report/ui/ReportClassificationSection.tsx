@@ -1,29 +1,43 @@
+import { m } from "@repo/i18n";
+import type { ReactNode } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import type { LockerType, ReportFormValues } from "#/features/report/model/report-types";
+import type {
+  LockerType,
+  ReportFormValues,
+} from "#/features/report/model/report-types";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { ReportIndoorOutdoorSection } from "./ReportIndoorOutdoorSection";
+import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportTypeSection } from "./ReportTypeSection";
 import { classificationSection } from "./report.css.ts";
-import { ReportSectionError } from "./ReportSectionError";
-import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 
 interface ReportClassificationSectionProps {
   lockerTypeOptions: Array<{ label: string; value: LockerType }>;
+  floorSection?: ReactNode;
   sectionServerError?: string;
   onFieldChange?: () => void;
 }
 
 export function ReportClassificationSection({
   lockerTypeOptions,
+  floorSection,
   sectionServerError,
   onFieldChange,
 }: ReportClassificationSectionProps) {
   const { control } = useFormContext<ReportFormValues>();
-  const errorMessage = useReportSectionError(
-    ["indoorOutdoorType", "lockerType"],
+  const indoorOutdoorErrorMessage = useReportSectionError([
+    "indoorOutdoorType",
+  ]);
+  const lockerTypeErrorMessage = useReportSectionError(
+    ["lockerType"],
     sectionServerError,
   );
-  const errorId = errorMessage ? "report-classification-error" : undefined;
+  const indoorOutdoorErrorId = indoorOutdoorErrorMessage
+    ? "report-indoor-outdoor-error"
+    : undefined;
+  const lockerTypeErrorId = lockerTypeErrorMessage
+    ? "report-locker-type-error"
+    : undefined;
 
   const handleIndoorOutdoorChange = (
     onChange: (value: ReportFormValues["indoorOutdoorType"]) => void,
@@ -45,7 +59,7 @@ export function ReportClassificationSection({
     <div
       className={classificationSection}
       data-section="classification"
-      aria-describedby={errorId}
+      aria-describedby={indoorOutdoorErrorId ?? lockerTypeErrorId}
     >
       <Controller
         control={control}
@@ -53,14 +67,15 @@ export function ReportClassificationSection({
         render={({ field }) => (
           <ReportIndoorOutdoorSection
             value={field.value ?? null}
-            sectionErrorMessage={errorMessage}
-            sectionErrorId={errorId}
+            sectionErrorMessage={indoorOutdoorErrorMessage}
+            sectionErrorId={indoorOutdoorErrorId}
             onChange={(value) =>
               handleIndoorOutdoorChange(field.onChange, value)
             }
           />
         )}
       />
+      {floorSection}
       <Controller
         control={control}
         name="lockerType"
@@ -69,6 +84,9 @@ export function ReportClassificationSection({
             lockerType={field.value ?? null}
             onChange={(value) => handleLockerTypeChange(field.onChange, value)}
             options={lockerTypeOptions}
+            errorMessage={lockerTypeErrorMessage}
+            errorId={lockerTypeErrorId}
+            defaultErrorMessage={m.report_error_required()}
           />
         )}
       />
