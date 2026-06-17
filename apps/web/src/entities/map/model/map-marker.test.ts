@@ -543,7 +543,7 @@ describe("syncLockerMarkers", () => {
     expect(content2).not.toContain("map-marker-offset-active");
   });
 
-  it("keeps spread and offset styles when an existing marker icon is updated", () => {
+  it("keeps offset styles when an existing spread marker icon is updated", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -580,8 +580,8 @@ describe("syncLockerMarkers", () => {
     const content = getSetIconContent(FakeMarker.instances[0]);
 
     expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
-    expect(content).toContain("--spread-x");
-    expect(content).toContain("--spread-y");
+    expect(content).not.toContain("--spread-x");
+    expect(content).not.toContain("--spread-y");
     expect(content).toContain("--offset-x: 15px");
     expect(content).toContain("--offset-y: 0px");
   });
@@ -620,8 +620,8 @@ describe("syncLockerMarkers", () => {
 
     expect(markerItemClass).toContain("selected-active");
     expect(markerItemClass).not.toContain("spread");
-    expect(content).toContain("--spread-x");
-    expect(content).toContain("--spread-y");
+    expect(content).not.toContain("--spread-x");
+    expect(content).not.toContain("--spread-y");
   });
 
   it("does not replay spread animation when a selected spread marker is unselected", () => {
@@ -664,11 +664,68 @@ describe("syncLockerMarkers", () => {
 
     expect(markerItemClass).toContain("unselected-active");
     expect(markerItemClass).not.toContain("spread");
-    expect(content).toContain("--spread-x");
-    expect(content).toContain("--spread-y");
+    expect(content).not.toContain("--spread-x");
+    expect(content).not.toContain("--spread-y");
     expect(content).toContain("map-marker-offset-active");
     expect(content).toContain("--offset-x: 15px");
     expect(content).toContain("--offset-y: 0px");
+  });
+
+  it("does not update unrelated spread markers when selection changes after map projection changes", () => {
+    FakeMarker.instances = [];
+
+    let projectionScale = 1000;
+    const map = createMockMap();
+    map.getProjection = vi.fn(() => ({
+      fromCoordToOffset: vi.fn((latlng: FakeLatLng) => {
+        return new FakePoint(
+          Math.round(latlng.lat() * projectionScale),
+          Math.round(latlng.lng() * projectionScale),
+        );
+      }),
+    })) as naver.maps.Map["getProjection"];
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin1 = createLockerPin({
+      lockerId: 101,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const pin2 = createLockerPin({
+      lockerId: 102,
+      latitude: 37.5001,
+      longitude: 127.0001,
+    });
+    const pin3 = createLockerPin({
+      lockerId: 103,
+      latitude: 37.5002,
+      longitude: 127.0002,
+    });
+    const spreadCenter = { lat: 37.5547, lng: 126.9706 };
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2, pin3],
+      selectedPinId: "LOCKER-101",
+      registry,
+      spreadCenter,
+    });
+
+    projectionScale = 1100;
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2, pin3],
+      selectedPinId: "LOCKER-102",
+      registry,
+      spreadCenter,
+    });
+
+    expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
+    expect(FakeMarker.instances[1]?.setIcon).toHaveBeenCalledTimes(1);
+    expect(FakeMarker.instances[2]?.setIcon).not.toHaveBeenCalled();
   });
 
   it("does not activate offset transform for markers without offset", () => {
