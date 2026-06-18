@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { keyframes, style } from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 export const reportContainer = style({
   width: "100%",
@@ -659,15 +659,14 @@ export const submitSubButton = style({
 
 export const priceRow = style({
   width: "100%",
-  selectors: {
-    "& > div": {
-      display: "grid",
-      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-      gap: 0,
-      width: "100%",
-      justifyContent: "stretch",
-    },
-  },
+});
+
+globalStyle(`${priceRow} > div`, {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 0,
+  width: "100%",
+  justifyContent: "stretch",
 });
 
 export const priceOptionRadio = style({
