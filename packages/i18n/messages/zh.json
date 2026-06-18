@@ -323,5 +323,10 @@
   "login_social_kakao": "Kakao 1秒登录/注册",
   "login_social_kakao_sub": "Kakao 1 second login/membership",
   "login_social_google": "Google 1秒登录/注册",
-  "login_social_google_sub": "Google 1 second login/membership"
+  "login_social_google_sub": "Google 1 second login/membership",
+  "settings_document_error_title": "文档加载失败",
+  "settings_document_error_helper": "请检查网络连接后重试。",
+  "settings_document_retry": "重试",
+  "settings_document_loading_aria": "正在加载文档",
+  "settings_notice_empty": "暂无公告。"
 }

@@ -323,5 +323,10 @@
   "login_social_kakao": "카카오 1초 로그인/회원가입",
   "login_social_kakao_sub": "Kakao 1 second login/membership",
   "login_social_google": "구글 1초 로그인/회원가입",
-  "login_social_google_sub": "Google 1 second login/membership"
+  "login_social_google_sub": "Google 1 second login/membership",
+  "settings_document_error_title": "문서를 불러오지 못했어요",
+  "settings_document_error_helper": "네트워크 상태를 확인한 뒤 다시 시도해주세요.",
+  "settings_document_retry": "다시 시도",
+  "settings_document_loading_aria": "문서를 불러오는 중",
+  "settings_notice_empty": "등록된 공지사항이 없습니다."
 }

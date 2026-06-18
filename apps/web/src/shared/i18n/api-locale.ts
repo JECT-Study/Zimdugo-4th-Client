@@ -27,7 +27,7 @@ export const buildAcceptLanguageHeader = (locale: AppLocale): string =>
 
 /** Backend i18n applies only to locker/place read APIs. */
 const LOCKER_PLACE_ACCEPT_LANGUAGE_PATH =
-  /^\/api\/v1\/(?:lockers|places)(?:\/|$)/;
+  /^\/api\/v1\/(?:lockers|places|documents)(?:\/|$)/;
 
 export const shouldAttachAcceptLanguage = (requestUrl: string | undefined) => {
   if (!requestUrl) {
