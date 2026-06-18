@@ -1,5 +1,4 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { privacyDocument } from "#/features/settings/legal/model/legal-documents";
 import {
   parseLegalReturnSearch,
   type LegalReturnSearch,
@@ -16,7 +15,7 @@ function SettingsPrivacyPage() {
 
   return (
     <LegalDocumentPage
-      legalDocument={privacyDocument}
+      documentType="PRIVACY"
       returnSearch={returnSearch}
     />
   );
