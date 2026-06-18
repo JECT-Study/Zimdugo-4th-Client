@@ -21,15 +21,14 @@ import {
 } from "./legal-document.css.ts";
 
 const formatAppliedAt = (dateStr: string): string => {
-  try {
-    const d = new Date(dateStr);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}.${month}.${day}`;
-  } catch {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) {
     return "";
   }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}.${month}.${day}`;
 };
 
 // ─── 목록 페이지 ───────────────────────────────────────────────
