@@ -323,5 +323,10 @@
   "login_social_kakao": "Kakao 1-second sign-in",
   "login_social_kakao_sub": "Kakao 1 second login/membership",
   "login_social_google": "Google 1-second sign-in",
-  "login_social_google_sub": "Google 1 second login/membership"
+  "login_social_google_sub": "Google 1 second login/membership",
+  "settings_document_error_title": "Couldn't load the document",
+  "settings_document_error_helper": "Check your network connection and try again.",
+  "settings_document_retry": "Try again",
+  "settings_document_loading_aria": "Loading document",
+  "settings_notice_empty": "No notices available."
 }

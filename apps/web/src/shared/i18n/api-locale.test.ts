@@ -25,7 +25,7 @@ describe("buildAcceptLanguageHeader", () => {
 });
 
 describe("shouldAttachAcceptLanguage", () => {
-  it("matches locker and place read APIs only", () => {
+  it("matches locker, place, and document read APIs", () => {
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/pin")).toBe(true);
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/keyword")).toBe(true);
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/42")).toBe(true);
@@ -42,6 +42,11 @@ describe("shouldAttachAcceptLanguage", () => {
       false,
     );
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/1/votes")).toBe(true);
+
+    expect(shouldAttachAcceptLanguage("/api/v1/documents")).toBe(true);
+    expect(shouldAttachAcceptLanguage("/api/v1/documents?type=NOTICE")).toBe(
+      true,
+    );
   });
 });
 
