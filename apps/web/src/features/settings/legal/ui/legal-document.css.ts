@@ -63,3 +63,46 @@ export const paragraph = style({
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: "1.2",
 });
+
+export const noticeListItem = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[4],
+  padding: `${vars.spacing[16]} 0`,
+  borderBottom: `1px solid ${vars.color.border.default}`,
+  cursor: "pointer",
+  background: "none",
+  border: "none",
+  width: "100%",
+  textAlign: "left",
+  ":first-child": {
+    paddingTop: 0,
+  },
+  ":last-child": {
+    borderBottom: "none",
+    paddingBottom: 0,
+  },
+});
+
+export const noticeListItemTitle = style({
+  margin: 0,
+  color: vars.color.palette.gray[800],
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: "1.4",
+});
+
+export const noticeListItemDate = style({
+  margin: 0,
+  color: vars.color.palette.gray[400],
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: "1.2",
+});
+
+export const noticeDetailImage = style({
+  width: "100%",
+  borderRadius: vars.radius.scale[8],
+  display: "block",
+  objectFit: "cover",
+});
