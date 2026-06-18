@@ -8,6 +8,7 @@ import {
   priceInputContainer,
   priceInputRow,
   priceOptionRadio,
+  priceRadioGroup,
   priceRow,
   priceUnit,
   section,
@@ -64,23 +65,25 @@ export function ReportPriceSectionView({
       <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
         {m.report_section_price()}
       </ReportSectionTitleRow>
-      <RadioGroup
-        aria-label={m.report_section_price()}
-        className={priceRow}
-        optionsDirection="row"
-        value={priceType === "none" ? undefined : priceType}
-        onChange={(value) => {
-          setPriceType(value as "free" | "paid");
-          onFieldChange?.();
-        }}
-      >
-        <Radio className={priceOptionRadio} value="free">
-          {m.report_price_free()}
-        </Radio>
-        <Radio className={priceOptionRadio} value="paid">
-          {m.report_price_paid()}
-        </Radio>
-      </RadioGroup>
+      <div className={priceRow}>
+        <RadioGroup
+          aria-label={m.report_section_price()}
+          className={priceRadioGroup}
+          optionsDirection="row"
+          value={priceType === "none" ? undefined : priceType}
+          onChange={(value) => {
+            setPriceType(value as "free" | "paid");
+            onFieldChange?.();
+          }}
+        >
+          <Radio className={priceOptionRadio} value="free">
+            {m.report_price_free()}
+          </Radio>
+          <Radio className={priceOptionRadio} value="paid">
+            {m.report_price_paid()}
+          </Radio>
+        </RadioGroup>
+      </div>
       {priceType === "paid" && (
         <div className={priceInputRow}>
           <div className={priceInputContainer}>

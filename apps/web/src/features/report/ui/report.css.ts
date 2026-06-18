@@ -661,7 +661,15 @@ export const priceRow = style({
   width: "100%",
 });
 
-globalStyle(`${priceRow} > div`, {
+export const priceRadioGroup = style({
+  width: "100%",
+});
+
+globalStyle(`${priceRadioGroup}`, {
+  width: "100%",
+});
+
+globalStyle(`${priceRadioGroup} > div`, {
   display: "grid",
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 0,

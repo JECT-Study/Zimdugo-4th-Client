@@ -98,7 +98,7 @@ export function ReportLocationSection({
         >
           {hasLocationValue
             ? m.search_filter_reset()
-            : m.report_location_select_placeholder()}
+            : m.report_location_select_button()}
         </Button>
       </div>
       <ReportSectionErrorReserve />
