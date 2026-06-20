@@ -148,7 +148,7 @@ export function useFavoriteLockerSession() {
 
     if (failedLockerIds.length > 0) {
       setPending((latestPending) =>
-        rollbackFailedFlush(latestPending, failedLockerIds),
+        rollbackFailedFlush(latestPending, failedLockerIds, pendingSnapshot),
       );
     }
 

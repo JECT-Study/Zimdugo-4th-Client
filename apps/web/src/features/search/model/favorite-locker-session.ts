@@ -67,11 +67,14 @@ export function buildFavoriteFlushOperations(
 export function rollbackFailedFlush(
   pending: FavoriteLockerPending,
   failedLockerIds: number[],
+  pendingSnapshot: FavoriteLockerPending,
 ): FavoriteLockerPending {
   const nextPending = new Map(pending);
 
   for (const lockerId of failedLockerIds) {
-    nextPending.delete(lockerId);
+    if (nextPending.get(lockerId) === pendingSnapshot.get(lockerId)) {
+      nextPending.delete(lockerId);
+    }
   }
 
   return nextPending;

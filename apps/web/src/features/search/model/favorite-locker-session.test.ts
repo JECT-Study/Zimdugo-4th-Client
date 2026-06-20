@@ -53,13 +53,27 @@ describe("favorite-locker-session", () => {
     ]);
   });
 
-  it("flush 실패 locker는 pending에서 롤백한다", () => {
-    const pending = new Map([
+  it("flush 실패 locker는 flush 시작 시점과 동일한 pending만 롤백한다", () => {
+    const pendingSnapshot = new Map([
       [1, true],
       [2, false],
     ]);
+    const pending = new Map(pendingSnapshot);
 
-    expect(rollbackFailedFlush(pending, [1]).get(1)).toBeUndefined();
-    expect(rollbackFailedFlush(pending, [1]).get(2)).toBe(false);
+    expect(
+      rollbackFailedFlush(pending, [1], pendingSnapshot).get(1),
+    ).toBeUndefined();
+    expect(
+      rollbackFailedFlush(pending, [1], pendingSnapshot).get(2),
+    ).toBe(false);
+  });
+
+  it("flush 실패 후 변경된 pending은 유지한다", () => {
+    const pendingSnapshot = new Map([[1, true]]);
+    const pending = new Map([[1, false]]);
+
+    expect(
+      rollbackFailedFlush(pending, [1], pendingSnapshot).get(1),
+    ).toBe(false);
   });
 });
