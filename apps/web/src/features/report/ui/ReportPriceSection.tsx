@@ -5,9 +5,10 @@ import { useReportSectionError } from "#/features/report/model/useReportSectionE
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
+  priceFreeRadio,
   priceInputContainer,
   priceInputRow,
-  priceOptionRadio,
+  pricePaidRadio,
   priceRadioGroup,
   priceRow,
   priceUnit,
@@ -76,10 +77,10 @@ export function ReportPriceSectionView({
             onFieldChange?.();
           }}
         >
-          <Radio className={priceOptionRadio} value="free">
+          <Radio className={priceFreeRadio} value="free">
             {m.report_price_free()}
           </Radio>
-          <Radio className={priceOptionRadio} value="paid">
+          <Radio className={pricePaidRadio} value="paid">
             {m.report_price_paid()}
           </Radio>
         </RadioGroup>

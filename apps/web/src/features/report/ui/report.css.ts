@@ -671,13 +671,19 @@ globalStyle(`${priceRadioGroup}`, {
 
 globalStyle(`${priceRadioGroup} > div`, {
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 0,
+  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  columnGap: vars.spacing[8],
   width: "100%",
   justifyContent: "stretch",
 });
 
-export const priceOptionRadio = style({
+export const priceFreeRadio = style({
+  gridColumn: "1",
+  justifySelf: "start",
+});
+
+export const pricePaidRadio = style({
+  gridColumn: "3",
   justifySelf: "start",
 });
 
@@ -694,8 +700,9 @@ export const priceInputItem = style({
 });
 
 export const timeRow = style({
-  display: "flex",
-  gap: vars.spacing[8],
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  columnGap: vars.spacing[8],
   alignItems: "center",
 });
 
