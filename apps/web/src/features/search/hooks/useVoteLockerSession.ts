@@ -165,9 +165,13 @@ export function useVoteLockerSession() {
         return updatedPending;
       });
 
-      await queryClient.invalidateQueries({
-        queryKey: [LOCKER_DETAIL_QUERY_KEY],
-      });
+      await Promise.all(
+        succeededLockerIds.map((lockerId) =>
+          queryClient.invalidateQueries({
+            queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
+          }),
+        ),
+      );
     }
 
     if (failedLockerIds.length > 0) {
