@@ -1,4 +1,3 @@
-export type FavoriteLockerBaseline = Map<number, boolean>;
 export type FavoriteLockerPending = Map<number, boolean>;
 
 export type FavoriteFlushOperation = {
@@ -6,26 +5,28 @@ export type FavoriteFlushOperation = {
   action: "add" | "remove";
 };
 
-export function seedFavoriteBaseline(
-  baseline: FavoriteLockerBaseline,
+export function getEffectiveFavorite(
+  pending: FavoriteLockerPending,
   lockerId: number,
   serverIsFavorite: boolean | undefined,
-): void {
-  if (!baseline.has(lockerId)) {
-    baseline.set(lockerId, serverIsFavorite ?? false);
+): boolean {
+  if (pending.has(lockerId)) {
+    return pending.get(lockerId) ?? false;
   }
+
+  return serverIsFavorite ?? false;
 }
 
 export function toggleFavoritePending(
-  baseline: FavoriteLockerBaseline,
   pending: FavoriteLockerPending,
   lockerId: number,
   next: boolean,
+  serverIsFavorite: boolean | undefined,
 ): FavoriteLockerPending {
   const nextPending = new Map(pending);
-  const base = baseline.get(lockerId) ?? false;
+  const server = serverIsFavorite ?? false;
 
-  if (next === base) {
+  if (next === server) {
     nextPending.delete(lockerId);
   } else {
     nextPending.set(lockerId, next);
@@ -34,32 +35,15 @@ export function toggleFavoritePending(
   return nextPending;
 }
 
-export function getEffectiveFavorite(
-  pending: FavoriteLockerPending,
-  baseline: FavoriteLockerBaseline,
-  lockerId: number,
-  serverIsFavorite: boolean | undefined,
-): boolean {
-  if (pending.has(lockerId)) {
-    return pending.get(lockerId) ?? false;
-  }
-
-  if (baseline.has(lockerId)) {
-    return baseline.get(lockerId) ?? false;
-  }
-
-  return serverIsFavorite ?? false;
-}
-
 export function buildFavoriteFlushOperations(
-  baseline: FavoriteLockerBaseline,
   pending: FavoriteLockerPending,
+  serverByLockerId: Map<number, boolean>,
 ): FavoriteFlushOperation[] {
   const operations: FavoriteFlushOperation[] = [];
 
   for (const [lockerId, next] of pending) {
-    const base = baseline.get(lockerId) ?? false;
-    if (next === base) {
+    const server = serverByLockerId.get(lockerId) ?? false;
+    if (next === server) {
       continue;
     }
 
@@ -70,27 +54,6 @@ export function buildFavoriteFlushOperations(
   }
 
   return operations;
-}
-
-export function applySuccessfulFlush(
-  baseline: FavoriteLockerBaseline,
-  pending: FavoriteLockerPending,
-  succeededLockerIds: number[],
-): { baseline: FavoriteLockerBaseline; pending: FavoriteLockerPending } {
-  const nextBaseline = new Map(baseline);
-  const nextPending = new Map(pending);
-
-  for (const lockerId of succeededLockerIds) {
-    const nextValue = nextPending.get(lockerId);
-    if (nextValue === undefined) {
-      continue;
-    }
-
-    nextBaseline.set(lockerId, nextValue);
-    nextPending.delete(lockerId);
-  }
-
-  return { baseline: nextBaseline, pending: nextPending };
 }
 
 export function rollbackFailedFlush(

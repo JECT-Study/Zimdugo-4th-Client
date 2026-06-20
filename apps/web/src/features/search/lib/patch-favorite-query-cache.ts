@@ -1,0 +1,89 @@
+import type { QueryClient } from "@tanstack/react-query";
+import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type {
+  SearchLockerResultItem,
+  SearchLockerResultItems,
+  SearchResultItem,
+} from "#/composites/search/search-list-model";
+import type {
+  LockerKeywordViewModel,
+  PlaceLockersViewModel,
+} from "#/shared/api/locker-adapters";
+import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
+import {
+  LOCKER_KEYWORD_QUERY_KEY,
+  PLACE_LOCKERS_QUERY_KEY,
+} from "../hooks/useSearch";
+
+const patchLockerFavorite = (
+  locker: SearchLockerResultItem,
+  lockerId: number,
+  isFavorite: boolean,
+): SearchLockerResultItem =>
+  locker.lockerId === lockerId ? { ...locker, isFavorite } : locker;
+
+const patchSearchResultItem = (
+  item: SearchResultItem,
+  lockerId: number,
+  isFavorite: boolean,
+): SearchResultItem => {
+  if (item.itemType === "LOCKER") {
+    return patchLockerFavorite(item, lockerId, isFavorite);
+  }
+
+  return {
+    ...item,
+    lockers: item.lockers.map((locker) =>
+      patchLockerFavorite(locker, lockerId, isFavorite),
+    ) as SearchLockerResultItems,
+  };
+};
+
+export const patchFavoriteInQueryCaches = (
+  queryClient: QueryClient,
+  lockerId: number,
+  isFavorite: boolean,
+): void => {
+  queryClient.setQueriesData<LockerKeywordViewModel>(
+    { queryKey: [LOCKER_KEYWORD_QUERY_KEY] },
+    (previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        items: previous.items.map((item) =>
+          patchSearchResultItem(item, lockerId, isFavorite),
+        ),
+      };
+    },
+  );
+
+  queryClient.setQueriesData<PlaceLockersViewModel>(
+    { queryKey: [PLACE_LOCKERS_QUERY_KEY] },
+    (previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        lockers: previous.lockers.map((locker) =>
+          patchLockerFavorite(locker, lockerId, isFavorite),
+        ),
+      };
+    },
+  );
+
+  queryClient.setQueriesData<LockerDetailItem>(
+    { queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId] },
+    (previous) => {
+      if (!previous || previous.lockerId !== lockerId) {
+        return previous;
+      }
+
+      return { ...previous, isFavorite };
+    },
+  );
+};

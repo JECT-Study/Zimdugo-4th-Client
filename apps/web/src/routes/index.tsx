@@ -1120,7 +1120,7 @@ export function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    (
+    async (
       lockerId: number,
       optimisticDetail?: LockerDetailItem,
       options?: {
@@ -2217,18 +2217,6 @@ export function IndexPage() {
   const searchBottomSheetItems = isPlaceListScope
     ? (placeLockersResults?.lockers ?? [])
     : (keywordSearchResults?.items ?? []);
-
-  useEffect(() => {
-    favoriteSession.syncBaselineFromSearchData(searchBottomSheetItems);
-  }, [favoriteSession.syncBaselineFromSearchData, searchBottomSheetItems]);
-
-  useEffect(() => {
-    favoriteSession.syncBaselineFromLockerDetail(lockerDetail);
-  }, [favoriteSession.syncBaselineFromLockerDetail, lockerDetail]);
-
-  useEffect(() => {
-    voteSession.syncBaselineFromLockerDetail(lockerDetail);
-  }, [voteSession.syncBaselineFromLockerDetail, lockerDetail]);
 
   const searchBottomSheetDisplayItems = useMemo((): SearchResultItem[] => {
     if (isPlaceListScope) {
