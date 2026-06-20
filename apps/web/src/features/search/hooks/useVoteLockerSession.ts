@@ -8,6 +8,7 @@ import {
 import { useAuthStore } from "#/shared/store/authStore";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { collectServerVoteByLockerId } from "../lib/collect-server-vote-state";
+import { readLockerDetailFromQueryCache } from "../lib/read-locker-detail-from-query-cache";
 import {
   buildVoteFlushOperations,
   computeVoteDetailAfterFlush,
@@ -184,10 +185,10 @@ export function useVoteLockerSession() {
 
   const handleDetailVoteChange = useCallback(
     (item: LockerDetailItem, voteType: LockerVoteType) => {
-      const serverDetail = queryClient.getQueryData<LockerDetailItem>([
-        LOCKER_DETAIL_QUERY_KEY,
+      const serverDetail = readLockerDetailFromQueryCache(
+        queryClient,
         item.lockerId,
-      ]);
+      );
 
       toggle(item.lockerId, voteType, {
         isAccurateVoted:

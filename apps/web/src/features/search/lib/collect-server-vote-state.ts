@@ -1,10 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import {
   serverVoteStateToEffective,
   type EffectiveLockerVote,
 } from "../model/vote-locker-session";
-import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
+import { readLockerDetailFromQueryCache } from "./read-locker-detail-from-query-cache";
 
 export const collectServerVoteByLockerId = (
   queryClient: QueryClient,
@@ -14,13 +13,9 @@ export const collectServerVoteByLockerId = (
   const serverByLockerId = new Map<number, EffectiveLockerVote>();
 
   for (const lockerId of targetIds) {
-    const detail = queryClient.getQueryData<LockerDetailItem>([
-      LOCKER_DETAIL_QUERY_KEY,
-      lockerId,
-    ]);
+    const detail = readLockerDetailFromQueryCache(queryClient, lockerId);
 
     if (!detail) {
-      serverByLockerId.set(lockerId, null);
       continue;
     }
 

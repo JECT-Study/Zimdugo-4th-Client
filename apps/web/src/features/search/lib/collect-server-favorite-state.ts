@@ -1,5 +1,4 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import { FAVORITE_LOCKER_LIST_QUERY_KEY } from "#/features/my/hooks/useFavoriteLockerList";
 import type {
   SearchLockerResultItem,
@@ -13,7 +12,7 @@ import type {
   LockerKeywordViewModel,
   PlaceLockersViewModel,
 } from "#/shared/api/locker-adapters";
-import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
+import { readLockerDetailFromQueryCache } from "./read-locker-detail-from-query-cache";
 import {
   LOCKER_KEYWORD_QUERY_KEY,
   PLACE_LOCKERS_QUERY_KEY,
@@ -39,17 +38,12 @@ const readLockerDetailFavorite = (
   queryClient: QueryClient,
   lockerId: number,
 ): boolean | undefined => {
-  const detailQueries = queryClient.getQueriesData<LockerDetailItem>({
-    queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
-  });
-
-  for (const [, detail] of detailQueries) {
-    if (detail?.lockerId === lockerId) {
-      return detail.isFavorite ?? false;
-    }
+  const detail = readLockerDetailFromQueryCache(queryClient, lockerId);
+  if (!detail) {
+    return undefined;
   }
 
-  return undefined;
+  return detail.isFavorite ?? false;
 };
 
 export const collectServerFavoriteByLockerId = (

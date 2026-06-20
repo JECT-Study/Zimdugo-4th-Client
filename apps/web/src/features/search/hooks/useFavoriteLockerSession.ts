@@ -10,6 +10,7 @@ import { useAuthStore } from "#/shared/store/authStore";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { collectServerFavoriteByLockerId } from "../lib/collect-server-favorite-state";
 import { patchFavoriteInQueryCaches } from "../lib/patch-favorite-query-cache";
+import { readLockerDetailFromQueryCache } from "../lib/read-locker-detail-from-query-cache";
 import {
   buildFavoriteFlushOperations,
   getEffectiveFavorite,
@@ -168,10 +169,10 @@ export function useFavoriteLockerSession() {
 
   const handleDetailFavoriteChange = useCallback(
     (item: LockerDetailItem, next: boolean) => {
-      const serverDetail = queryClient.getQueryData<LockerDetailItem>([
-        LOCKER_DETAIL_QUERY_KEY,
+      const serverDetail = readLockerDetailFromQueryCache(
+        queryClient,
         item.lockerId,
-      ]);
+      );
 
       toggle(
         item.lockerId,
