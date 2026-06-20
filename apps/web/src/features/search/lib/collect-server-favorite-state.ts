@@ -1,18 +1,23 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import { FAVORITE_LOCKER_LIST_QUERY_KEY } from "#/features/my/hooks/useFavoriteLockerList";
 import type {
   SearchLockerResultItem,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
 import type {
+  FavoriteLockerListItem,
+  PaginatedListData,
+} from "#/shared/api/my-page";
+import type {
   LockerKeywordViewModel,
   PlaceLockersViewModel,
 } from "#/shared/api/locker-adapters";
+import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
 import {
   LOCKER_KEYWORD_QUERY_KEY,
   PLACE_LOCKERS_QUERY_KEY,
 } from "../hooks/useSearch";
-import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
 
 const forEachLockerInSearchData = (
   items: SearchResultItem[] | SearchLockerResultItem[],
@@ -30,6 +35,23 @@ const forEachLockerInSearchData = (
   }
 };
 
+const readLockerDetailFavorite = (
+  queryClient: QueryClient,
+  lockerId: number,
+): boolean | undefined => {
+  const detailQueries = queryClient.getQueriesData<LockerDetailItem>({
+    queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
+  });
+
+  for (const [, detail] of detailQueries) {
+    if (detail?.lockerId === lockerId) {
+      return detail.isFavorite ?? false;
+    }
+  }
+
+  return undefined;
+};
+
 export const collectServerFavoriteByLockerId = (
   queryClient: QueryClient,
   lockerIds: Iterable<number>,
@@ -42,13 +64,9 @@ export const collectServerFavoriteByLockerId = (
   }
 
   for (const lockerId of targetIds) {
-    const detail = queryClient.getQueryData<LockerDetailItem>([
-      LOCKER_DETAIL_QUERY_KEY,
-      lockerId,
-    ]);
-
-    if (detail) {
-      serverByLockerId.set(lockerId, detail.isFavorite ?? false);
+    const detailFavorite = readLockerDetailFavorite(queryClient, lockerId);
+    if (detailFavorite !== undefined) {
+      serverByLockerId.set(lockerId, detailFavorite);
     }
   }
 
@@ -84,9 +102,23 @@ export const collectServerFavoriteByLockerId = (
     }
   }
 
-  for (const lockerId of targetIds) {
-    if (!serverByLockerId.has(lockerId)) {
-      serverByLockerId.set(lockerId, false);
+  const favoriteListQueries = queryClient.getQueriesData<
+    InfiniteData<PaginatedListData<FavoriteLockerListItem>>
+  >({
+    queryKey: [FAVORITE_LOCKER_LIST_QUERY_KEY],
+  });
+
+  for (const [, data] of favoriteListQueries) {
+    if (!data) {
+      continue;
+    }
+
+    for (const page of data.pages) {
+      for (const item of page.items) {
+        if (targetIds.has(item.lockerId)) {
+          serverByLockerId.set(item.lockerId, item.isFavorite ?? true);
+        }
+      }
     }
   }
 

@@ -42,7 +42,15 @@ export function buildFavoriteFlushOperations(
   const operations: FavoriteFlushOperation[] = [];
 
   for (const [lockerId, next] of pending) {
-    const server = serverByLockerId.get(lockerId) ?? false;
+    const server = serverByLockerId.get(lockerId);
+    if (server === undefined) {
+      operations.push({
+        lockerId,
+        action: next ? "add" : "remove",
+      });
+      continue;
+    }
+
     if (next === server) {
       continue;
     }

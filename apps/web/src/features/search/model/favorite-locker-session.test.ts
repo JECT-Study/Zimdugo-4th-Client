@@ -45,6 +45,14 @@ describe("favorite-locker-session", () => {
     ]);
   });
 
+  it("서버 상태를 알 수 없으면 pending 값으로 flush operation을 만든다", () => {
+    const pending = new Map([[42, false]]);
+
+    expect(buildFavoriteFlushOperations(pending, new Map())).toEqual([
+      { lockerId: 42, action: "remove" },
+    ]);
+  });
+
   it("flush 실패 locker는 pending에서 롤백한다", () => {
     const pending = new Map([
       [1, true],
