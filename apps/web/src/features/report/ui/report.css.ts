@@ -320,29 +320,52 @@ export const priceUnit = style({
   pointerEvents: "none",
 });
 
-export const textareaContainer = style({
+export const reportTextareaRoot = style({
   width: "100%",
-  minHeight: "140px",
+  minHeight: "200px",
   borderRadius: vars.radius[8],
-  border: `1px solid ${vars.color.palette.gray[400]}`,
-  backgroundColor: "white",
-  padding: "10px 16px 36px", // 하단 카운터 공간 확보
+  backgroundColor: vars.color.border.default,
+  padding: vars.spacing[16],
   boxSizing: "border-box",
   position: "relative",
   display: "block",
   cursor: "text",
+  opacity: 0.6,
+  selectors: {
+    "&:focus-within": {
+      opacity: 1,
+    },
+  },
 });
 
-export const textareaField = style({
+export const reportTextareaField = style({
   width: "100%",
-  height: "100px",
+  minHeight: "168px",
+  maxHeight: "168px",
   border: "none",
   outline: "none",
   resize: "none",
   fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.5,
   fontFamily: "inherit",
-  color: vars.color.text.content,
+  color: vars.color.text.title,
+  backgroundColor: "transparent",
   padding: 0,
+  overflow: "hidden",
+  "::placeholder": {
+    color: vars.color.text.surface,
+  },
+});
+
+export const reportTextareaCounter = style({
+  position: "absolute",
+  right: "48px",
+  bottom: "18px",
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.2,
+  color: vars.color.text.surface,
 });
 
 export const textareaClearButton = style({
@@ -363,12 +386,17 @@ export const textareaClearButton = style({
   },
 });
 
-export const charCounter = style({
+export const reportTextareaIcon = style({
   position: "absolute",
-  bottom: "12px",
   right: "16px",
-  fontSize: vars.typography.fontSize[12],
-  color: vars.color.palette.gray[500],
+  bottom: "14px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  color: vars.color.text.title,
+  pointerEvents: "none",
 });
 
 export const requiredMark = style({
