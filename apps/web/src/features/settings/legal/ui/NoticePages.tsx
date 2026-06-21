@@ -211,7 +211,7 @@ export function NoticeDetailPage({ doc, onBack }: NoticeDetailPageProps) {
           <div className={noticeImageContainer}>
             {images.map((url, index) => (
               <img
-                key={url}
+                key={`${url}-${index}`}
                 src={url}
                 alt={`${doc.title} - ${index + 1}`}
                 className={noticeDetailImage}
