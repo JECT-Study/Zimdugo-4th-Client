@@ -691,6 +691,9 @@ export const priceRow = style({
 
 export const priceRadioGroup = style({
   width: "100%",
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  columnGap: vars.spacing[8],
 });
 
 globalStyle(`${priceRadioGroup}`, {
@@ -698,11 +701,7 @@ globalStyle(`${priceRadioGroup}`, {
 });
 
 globalStyle(`${priceRadioGroup} > div`, {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
-  columnGap: vars.spacing[8],
-  width: "100%",
-  justifyContent: "stretch",
+  display: "contents",
 });
 
 export const priceFreeRadio = style({
@@ -716,8 +715,9 @@ export const pricePaidRadio = style({
 });
 
 export const priceInputRow = style({
-  display: "flex",
-  gap: vars.spacing[8],
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  columnGap: vars.spacing[8],
   alignItems: "center",
   width: "100%",
 });
