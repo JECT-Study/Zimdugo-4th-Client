@@ -59,6 +59,7 @@ export const stepWrapper = style({
   flexDirection: "column",
   gap: "32px",
   width: "100%",
+  paddingTop: vars.spacing[16],
 });
 
 export const bottomButtonWrapper = style({
@@ -86,12 +87,7 @@ export const disabledSection = style({
   opacity: 0.5,
 });
 
-export const locationSection = style([
-  section,
-  {
-    paddingTop: vars.spacing[16],
-  },
-]);
+export const locationSection = section;
 
 export const classificationSection = style({
   display: "flex",
