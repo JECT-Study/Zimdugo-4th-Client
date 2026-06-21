@@ -106,3 +106,10 @@ export const noticeDetailImage = style({
   display: "block",
   objectFit: "cover",
 });
+
+export const noticeImageContainer = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[16],
+  marginBottom: vars.spacing[24],
+});

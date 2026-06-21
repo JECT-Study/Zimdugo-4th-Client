@@ -2,8 +2,8 @@ import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
 import { useNavigate } from "@tanstack/react-router";
-import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import type { ClientDocumentResponse } from "#/shared/api/documents";
+import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import { useDocuments } from "../model/useDocuments";
 import {
   content,
@@ -11,6 +11,7 @@ import {
   header,
   introText,
   noticeDetailImage,
+  noticeImageContainer,
   noticeListItem,
   noticeListItemDate,
   noticeListItemTitle,
@@ -61,6 +62,7 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
         >
           {Array.from({ length: 3 }, (_, i) => (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton is static
               key={i}
               style={{
                 padding: "16px 0",
@@ -99,7 +101,10 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
           title={m.settings_notice()}
           onBack={() => navigate({ to: "/settings" })}
         />
-        <main className={content} style={{ textAlign: "center", paddingTop: 64 }}>
+        <main
+          className={content}
+          style={{ textAlign: "center", paddingTop: 64 }}
+        >
           <p className={introText}>{m.settings_document_error_title()}</p>
           <p className={paragraph} style={{ marginBottom: 16 }}>
             {m.settings_document_error_helper()}
@@ -137,7 +142,10 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
           title={m.settings_notice()}
           onBack={() => navigate({ to: "/settings" })}
         />
-        <main className={content} style={{ textAlign: "center", paddingTop: 64 }}>
+        <main
+          className={content}
+          style={{ textAlign: "center", paddingTop: 64 }}
+        >
           <p className={introText}>{m.settings_notice_empty()}</p>
         </main>
       </div>
@@ -162,7 +170,9 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
             onClick={() => onSelect(doc)}
           >
             <p className={noticeListItemTitle}>{doc.title}</p>
-            <p className={noticeListItemDate}>{formatAppliedAt(doc.appliedAt)}</p>
+            <p className={noticeListItemDate}>
+              {formatAppliedAt(doc.appliedAt)}
+            </p>
           </button>
         ))}
       </main>
@@ -178,7 +188,13 @@ interface NoticeDetailPageProps {
 }
 
 export function NoticeDetailPage({ doc, onBack }: NoticeDetailPageProps) {
-  const hasImage = Boolean(doc.imageUrl);
+  const images = (
+    doc.imageUrls && doc.imageUrls.length > 0
+      ? doc.imageUrls
+      : doc.imageUrl
+        ? [doc.imageUrl]
+        : []
+  ).filter(Boolean);
 
   return (
     <div className={page}>
@@ -191,13 +207,17 @@ export function NoticeDetailPage({ doc, onBack }: NoticeDetailPageProps) {
       />
 
       <main className={content}>
-        {hasImage && (
-          <img
-            src={doc.imageUrl!}
-            alt={doc.title}
-            className={noticeDetailImage}
-            style={{ marginBottom: 24 }}
-          />
+        {images.length > 0 && (
+          <div className={noticeImageContainer}>
+            {images.map((url, index) => (
+              <img
+                key={`${url}-${index}`}
+                src={url}
+                alt={`${doc.title} - ${index + 1}`}
+                className={noticeDetailImage}
+              />
+            ))}
+          </div>
         )}
 
         <article className={documentBox}>
