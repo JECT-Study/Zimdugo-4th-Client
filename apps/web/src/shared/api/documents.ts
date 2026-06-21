@@ -14,6 +14,7 @@ export interface ClientDocumentResponse {
   title: string;
   appliedAt: string;
   imageUrl?: string | null;
+  imageUrls?: string[] | null;
   sections: SectionResponse[];
 }
 
