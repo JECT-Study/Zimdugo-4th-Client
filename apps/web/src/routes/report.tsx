@@ -273,7 +273,7 @@ function ReportPage() {
               <Button
                 className={nextButton}
                 variant="filled"
-                intent="neutral"
+                intent={validation.isSubmitEnabled ? "neutral" : "primary"}
                 size="L"
                 onPress={() => {
                   void handleSubmitPress();
@@ -287,7 +287,9 @@ function ReportPage() {
               >
                 {isSubmitting && uploadedImages.length > 0
                   ? m.report_button_submit_uploading()
-                  : m.report_submit_with_current_info()}
+                  : validation.isSubmitEnabled
+                    ? m.report_submit_with_current_info()
+                    : m.report_button_submit()}
               </Button>
             </div>
           </div>
