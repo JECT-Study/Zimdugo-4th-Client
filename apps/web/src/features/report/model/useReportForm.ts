@@ -107,6 +107,21 @@ export const isReportRequiredFieldsComplete = (
   );
 };
 
+export const isReportSubmitEnabled = ({
+  areRequiredFieldsComplete,
+  shouldRequireExifConsent,
+  locationConsentAgreed,
+}: {
+  areRequiredFieldsComplete: boolean;
+  shouldRequireExifConsent: boolean;
+  locationConsentAgreed: boolean;
+}): boolean => {
+  const isExifConsentSatisfied =
+    !shouldRequireExifConsent || locationConsentAgreed;
+
+  return isExifConsentSatisfied && areRequiredFieldsComplete;
+};
+
 export function useReportForm(): {
   form: UseFormReturn<ReportFormValues>;
   sectionServerErrors: Partial<Record<ReportSectionId, string>>;
@@ -142,7 +157,11 @@ export function useReportForm(): {
     handleConfirmSubmit: () => Promise<void>;
     preparePrivacyPolicyNavigation: () => void;
   };
-  validation: { isSubmitEnabled: boolean };
+  validation: {
+    areRequiredFieldsComplete: boolean;
+    isExifConsentSatisfied: boolean;
+    isSubmitEnabled: boolean;
+  };
 } {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const form = useForm<ReportFormValues>({
@@ -593,9 +612,13 @@ export function useReportForm(): {
     floorNumber,
     sizeTypes,
   });
-  const isSubmitEnabled =
-    areRequiredFieldsComplete &&
-    (!shouldRequireExifConsent || locationConsentAgreed);
+  const isExifConsentSatisfied =
+    !shouldRequireExifConsent || locationConsentAgreed;
+  const isSubmitEnabled = isReportSubmitEnabled({
+    areRequiredFieldsComplete,
+    shouldRequireExifConsent,
+    locationConsentAgreed,
+  });
 
   return {
     form,
@@ -632,6 +655,10 @@ export function useReportForm(): {
       handleConfirmSubmit,
       preparePrivacyPolicyNavigation,
     },
-    validation: { isSubmitEnabled },
+    validation: {
+      areRequiredFieldsComplete,
+      isExifConsentSatisfied,
+      isSubmitEnabled,
+    },
   };
 }
