@@ -188,12 +188,13 @@ interface NoticeDetailPageProps {
 }
 
 export function NoticeDetailPage({ doc, onBack }: NoticeDetailPageProps) {
-  const images =
+  const images = (
     doc.imageUrls && doc.imageUrls.length > 0
       ? doc.imageUrls
       : doc.imageUrl
         ? [doc.imageUrl]
-        : [];
+        : []
+  ).filter(Boolean);
 
   return (
     <div className={page}>
