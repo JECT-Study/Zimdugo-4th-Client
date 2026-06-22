@@ -99,15 +99,15 @@ export const classificationSection = style({
 export const sectionTitleRow = style({
   display: "flex",
   alignItems: "center",
-  justifyContent: "space-between",
+  justifyContent: "flex-start",
   gap: vars.spacing[8],
   width: "100%",
 });
 
 export const sectionTitleLabel = style({
   flex: "0 0 auto",
-  width: "auto",
-  maxWidth: "55%",
+  width: "fit-content",
+  maxWidth: "none",
   fontSize: vars.typography.fontSize[18],
   lineHeight: vars.typography.lineHeight.relaxed,
 });
@@ -124,7 +124,7 @@ export const sectionErrorTextBottom = style({
 
 export const sectionErrorTextInline = style({
   margin: 0,
-  flex: "1 1 auto",
+  flex: "0 0 auto",
   marginLeft: "auto",
   minWidth: 0,
   fontSize: vars.typography.fontSize[12],
@@ -132,8 +132,6 @@ export const sectionErrorTextInline = style({
   minHeight: vars.typography.lineHeight.normal,
   color: vars.color.palette.red[300],
   textAlign: "right",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 });
 
