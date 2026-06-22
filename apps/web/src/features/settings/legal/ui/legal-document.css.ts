@@ -62,6 +62,7 @@ export const paragraph = style({
   fontSize: vars.typography.fontSize[12],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: "1.2",
+  whiteSpace: "pre-wrap",
 });
 
 export const noticeListItem = style({
