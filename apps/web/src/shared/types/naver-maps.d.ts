@@ -1,7 +1,20 @@
 declare namespace naver.maps {
+  interface MapOptions {
+    center?: LatLng | LatLngLiteral;
+    zoom?: number;
+    logoControl?: boolean;
+    mapDataControl?: boolean;
+    scaleControl?: boolean;
+    zoomControl?: boolean;
+    draggable?: boolean;
+    scrollWheel?: boolean;
+    pinchZoom?: boolean;
+  }
+
   // biome-ignore lint/suspicious/noShadowRestrictedNames: naver maps SDK 명세상 Map 이름 유지
   class Map {
-    constructor(element: string | HTMLElement, options: any);
+    constructor(element: string | HTMLElement, options: MapOptions);
+    setOptions(options: MapOptions): void;
     setCenter(latlng: LatLng | LatLngLiteral): void;
     getCenter(): LatLng;
     panTo(latlng: LatLng | LatLngLiteral): void;
@@ -67,21 +80,30 @@ declare namespace naver.maps {
     size?: Size;
     anchor?: Point;
   }
+  interface MarkerOptions {
+    position?: LatLng | LatLngLiteral;
+    map?: Map | null;
+    icon?: HtmlIcon;
+    visible?: boolean;
+    clickable?: boolean;
+    title?: string;
+    zIndex?: number;
+  }
   class Marker {
-    constructor(options: any);
+    constructor(options: MarkerOptions);
     getVisible(): boolean;
     setMap(map: Map | null): void;
     setPosition(latlng: LatLng | LatLngLiteral): void;
-    setIcon?(icon: HtmlIcon | any): void;
+    setIcon?(icon: HtmlIcon): void;
     setVisible(visible: boolean): void;
   }
   // Event.addListener는 removeListener에 넘길 수 있는 opaque 핸들을 돌려준다.
   type MapEventListener = unknown;
   namespace Event {
     function addListener(
-      instance: any,
+      instance: unknown,
       eventName: string,
-      handler: (event: any) => void,
+      handler: (event: unknown) => void,
     ): MapEventListener;
     function removeListener(
       listener: MapEventListener | MapEventListener[],
@@ -109,8 +131,12 @@ declare namespace naver.maps {
         }>;
       };
     }
+    interface ReverseGeocodeOptions {
+      coords: LatLng;
+      orders: string;
+    }
     function reverseGeocode(
-      options: any,
+      options: ReverseGeocodeOptions,
       callback: (status: Status, response: ReverseGeocodeResponse) => void,
     ): void;
     const OrderType: {
