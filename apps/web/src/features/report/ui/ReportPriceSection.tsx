@@ -9,6 +9,7 @@ import {
   priceInputContainer,
   priceInputRow,
   pricePaidRadio,
+  priceRadioGrid,
   priceRadioGroup,
   priceRow,
   priceUnit,
@@ -77,12 +78,14 @@ export function ReportPriceSectionView({
             onFieldChange?.();
           }}
         >
-          <Radio className={priceFreeRadio} value="free">
-            {m.report_price_free()}
-          </Radio>
-          <Radio className={pricePaidRadio} value="paid">
-            {m.report_price_paid()}
-          </Radio>
+          <div className={priceRadioGrid}>
+            <Radio className={priceFreeRadio} value="free">
+              {m.report_price_free()}
+            </Radio>
+            <Radio className={pricePaidRadio} value="paid">
+              {m.report_price_paid()}
+            </Radio>
+          </div>
         </RadioGroup>
       </div>
       {priceType === "paid" && (

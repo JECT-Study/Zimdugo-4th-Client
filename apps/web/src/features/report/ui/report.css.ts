@@ -687,17 +687,22 @@ export const priceRow = style({
 
 export const priceRadioGroup = style({
   width: "100%",
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
-  columnGap: vars.spacing[8],
 });
 
-globalStyle(`${priceRadioGroup}`, {
+globalStyle(`${priceRadioGroup}${priceRadioGroup}`, {
   width: "100%",
 });
 
 globalStyle(`${priceRadioGroup} > div`, {
-  display: "contents",
+  width: "100%",
+});
+
+export const priceRadioGrid = style({
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  columnGap: vars.spacing[8],
+  alignItems: "center",
+  width: "100%",
 });
 
 export const priceFreeRadio = style({
