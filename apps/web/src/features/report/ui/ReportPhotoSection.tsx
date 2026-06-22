@@ -6,6 +6,7 @@ import type { ChangeEvent, RefObject } from "react";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { buildLegalReturnSearch } from "#/features/settings/legal/model/legal-return-search";
 import { MAX_REPORT_PHOTOS } from "../model/report-types";
+import { ReportSectionError } from "./ReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
@@ -33,6 +34,7 @@ interface ReportPhotoSectionProps {
   onImageRemove: (index: number) => void;
   isSubmitting?: boolean;
   photoServerError?: string;
+  agreementServerError?: string;
   isAgreed: boolean;
   setIsAgreed: (val: boolean) => void;
   onPrivacyPolicyNavigate?: () => void;
@@ -46,13 +48,21 @@ export function ReportPhotoSection({
   onImageRemove,
   isSubmitting = false,
   photoServerError,
+  agreementServerError,
   isAgreed,
   setIsAgreed,
   onPrivacyPolicyNavigate,
 }: ReportPhotoSectionProps) {
   const navigate = useNavigate();
   const photoError = useReportSectionError(["imageUrl"], photoServerError);
+  const agreementError = useReportSectionError(
+    ["locationConsentAgreed"],
+    agreementServerError,
+  );
   const photoErrorId = photoError ? "report-photo-error" : undefined;
+  const agreementErrorId = agreementError
+    ? "report-agreement-error"
+    : undefined;
   const isPhotoUploading = isSubmitting && uploadedImages.length > 0;
   const hasUploadedImage = uploadedImages.length > 0;
   const isAgreementDisabled = !hasUploadedImage || isSubmitting;
@@ -149,7 +159,11 @@ export function ReportPhotoSection({
             </div>
           ))}
         </div>
-        <div className={agreementSection} data-section="agreement">
+        <div
+          className={agreementSection}
+          data-section="agreement"
+          aria-describedby={agreementErrorId}
+        >
           <div
             className={agreementCheckRow}
             data-disabled={isAgreementDisabled ? "true" : "false"}
@@ -160,11 +174,17 @@ export function ReportPhotoSection({
               onSelectedChange={setIsAgreed}
               labelLocation="none"
               isDisabled={isAgreementDisabled}
+              aria-describedby={agreementErrorId}
             />
             <span className={agreementLabel}>
               {m.report_photo_exif_agreement_label()}
             </span>
           </div>
+          <ReportSectionError
+            message={agreementError}
+            id={agreementErrorId}
+            placement="bottom"
+          />
           <div className={privacyPolicyLinkRow}>
             <button
               type="button"

@@ -17,7 +17,8 @@ export function ReportSectionError({
   id,
   placement = "title",
 }: ReportSectionErrorProps) {
-  const displayMessage = message ?? defaultMessage;
+  const hasError = message !== undefined;
+  const displayMessage = hasError ? message || defaultMessage : undefined;
 
   if (placement === "title" && !displayMessage) {
     return null;
@@ -28,9 +29,9 @@ export function ReportSectionError({
 
   return (
     <p
-      id={message ? id : undefined}
+      id={hasError ? id : undefined}
       className={className}
-      role={message ? "alert" : undefined}
+      role={hasError ? "alert" : undefined}
       aria-hidden={displayMessage ? undefined : true}
     >
       {displayMessage ?? "\u00A0"}

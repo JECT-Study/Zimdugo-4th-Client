@@ -192,16 +192,19 @@ export function useReportForm(): {
   const uploadedImagesRef = useRef(uploadedImages);
   const pendingValidationNavigationRef =
     useRef<PendingValidationNavigation | null>(null);
-  const scrollTimeoutRef = useRef<number | null>(null);
+  const scrollRafRef = useRef<number | null>(null);
   const sectionServerErrorsRef = useRef(sectionServerErrors);
 
   const scheduleSectionScroll = useCallback((scroll: () => void) => {
-    if (scrollTimeoutRef.current !== null) {
-      window.clearTimeout(scrollTimeoutRef.current);
-      scrollTimeoutRef.current = null;
+    if (scrollRafRef.current !== null) {
+      window.cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
     }
 
-    requestAnimationFrame(scroll);
+    scrollRafRef.current = window.requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      scroll();
+    });
   }, []);
 
   useEffect(() => {
@@ -210,8 +213,8 @@ export function useReportForm(): {
 
   useEffect(() => {
     return () => {
-      if (scrollTimeoutRef.current !== null) {
-        window.clearTimeout(scrollTimeoutRef.current);
+      if (scrollRafRef.current !== null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
       }
     };
   }, []);

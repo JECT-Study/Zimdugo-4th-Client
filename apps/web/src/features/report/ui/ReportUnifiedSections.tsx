@@ -80,6 +80,11 @@ export function ReportUnifiedSections({
   sectionServerErrors,
   clearSectionError,
 }: ReportUnifiedSectionsProps) {
+  const handlePhotoAgreementChange = (value: boolean) => {
+    setIsAgreed(value);
+    clearSectionError("agreement");
+  };
+
   return (
     <>
       <ReportLocationSection
@@ -117,8 +122,9 @@ export function ReportUnifiedSections({
         onImageRemove={onImageRemove}
         isSubmitting={isSubmitting}
         photoServerError={sectionServerErrors.photo}
+        agreementServerError={sectionServerErrors.agreement}
         isAgreed={isAgreed}
-        setIsAgreed={setIsAgreed}
+        setIsAgreed={handlePhotoAgreementChange}
         onPrivacyPolicyNavigate={onPrivacyPolicyNavigate}
       />
       <ReportPriceSection
