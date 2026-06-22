@@ -48,8 +48,6 @@ export function ReportTimeSection({
     ["startTime", "endTime"],
     sectionServerError,
   );
-  const errorId = errorMessage ? "report-time-error" : undefined;
-  const isAllDay = openTime === "00:00" && closeTime === "00:00";
   const [activeTarget, setActiveTarget] = useState<TimeTarget | null>(null);
   const [pendingHour, setPendingHour] = useState("00");
   const [pendingMinute, setPendingMinute] = useState("00");
@@ -93,6 +91,9 @@ export function ReportTimeSection({
     ],
     [hourOptions, minuteOptions, pendingHour, pendingMinute],
   );
+
+  const errorId = errorMessage ? "report-time-error" : undefined;
+  const isAllDay = openTime === "00:00" && closeTime === "00:00";
 
   const handleOpenPicker = (target: TimeTarget) => {
     if (isAllDay) return;
@@ -190,13 +191,6 @@ export function ReportTimeSection({
         }}
       />
       <ReportSectionErrorReserve />
-      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
-      <ReportSectionError
-        id={errorId}
-        message={errorMessage}
-        placement="bottom"
-      />
-      */}
     </section>
   );
 }

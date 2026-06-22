@@ -1,5 +1,5 @@
 import { IconPencil24 } from "@repo/ui/tokens/icons";
-import { useEffect, useRef } from "react";
+import type { ChangeEvent } from "react";
 import {
   reportTextareaCounter,
   reportTextareaField,
@@ -26,25 +26,18 @@ export function ReportTextareaField({
   describedBy,
   onChange,
 }: ReportTextareaFieldProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  });
+  const handleChangeTextarea = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    onChange(event.target.value.slice(0, maxLength));
+  };
 
   return (
     <label className={reportTextareaRoot} htmlFor={id}>
       <textarea
         id={id}
-        ref={textareaRef}
         placeholder={placeholder}
         value={value}
         maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value.slice(0, maxLength))}
+        onChange={handleChangeTextarea}
         className={reportTextareaField}
         aria-invalid={isInvalid ? true : undefined}
         aria-describedby={describedBy}

@@ -32,9 +32,6 @@ export function ReportClassificationSection({
   const hasFloor = useWatch({ control, name: "hasFloor" });
   const floorType = useWatch({ control, name: "floorType" });
   const floorNumber = useWatch({ control, name: "floorNumber" });
-  const isFloorDisabled = indoorOutdoorType === "OUTDOOR";
-  const isFloorFixedToNone =
-    hasFloor === false && floorType === null && floorNumber === null;
   const indoorOutdoorErrorMessage = useReportSectionError([
     "indoorOutdoorType",
   ]);
@@ -42,12 +39,6 @@ export function ReportClassificationSection({
     ["lockerType"],
     sectionServerError,
   );
-  const indoorOutdoorErrorId = indoorOutdoorErrorMessage
-    ? "report-indoor-outdoor-error"
-    : undefined;
-  const lockerTypeErrorId = lockerTypeErrorMessage
-    ? "report-locker-type-error"
-    : undefined;
 
   const resetFloorToNone = useCallback(() => {
     setValue("hasFloor", false, { shouldDirty: true });
@@ -56,6 +47,16 @@ export function ReportClassificationSection({
     clearErrors(["hasFloor", "floorType", "floorNumber"]);
     onFloorReset?.();
   }, [clearErrors, onFloorReset, setValue]);
+
+  const isFloorDisabled = indoorOutdoorType === "OUTDOOR";
+  const isFloorFixedToNone =
+    hasFloor === false && floorType === null && floorNumber === null;
+  const indoorOutdoorErrorId = indoorOutdoorErrorMessage
+    ? "report-indoor-outdoor-error"
+    : undefined;
+  const lockerTypeErrorId = lockerTypeErrorMessage
+    ? "report-locker-type-error"
+    : undefined;
 
   const handleIndoorOutdoorChange = (
     onChange: (value: ReportFormValues["indoorOutdoorType"]) => void,
@@ -118,13 +119,6 @@ export function ReportClassificationSection({
         )}
       />
       <ReportSectionErrorReserve />
-      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
-      <ReportSectionError
-        id={errorId}
-        message={errorMessage}
-        placement="bottom"
-      />
-      */}
     </div>
   );
 }

@@ -15,14 +15,14 @@ export const REPORT_SECTION_ORDER: ReportSectionId[] = [
   "additionalInfo",
 ];
 
-export function getReportSectionScrollBehavior(): ScrollBehavior {
+export const getReportSectionScrollBehavior = (): ScrollBehavior => {
   if (typeof window === "undefined") return "smooth";
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ? "auto"
     : "smooth";
-}
+};
 
-export function scrollToReportSection(sectionId: ReportSectionId): void {
+export const scrollToReportSection = (sectionId: ReportSectionId): void => {
   if (typeof document === "undefined") return;
 
   const section = document.querySelector<HTMLElement>(
@@ -59,11 +59,11 @@ export function scrollToReportSection(sectionId: ReportSectionId): void {
     behavior: getReportSectionScrollBehavior(),
     block: "start",
   });
-}
+};
 
-export function scrollToEarliestReportSection(
+export const scrollToEarliestReportSection = (
   sectionIds: Iterable<ReportSectionId>,
-): void {
+): void => {
   const sectionSet = new Set(sectionIds);
   for (const sectionId of REPORT_SECTION_ORDER) {
     if (sectionSet.has(sectionId)) {
@@ -71,4 +71,4 @@ export function scrollToEarliestReportSection(
       return;
     }
   }
-}
+};

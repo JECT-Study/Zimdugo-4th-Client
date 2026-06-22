@@ -77,16 +77,10 @@ export function ReportFloorSection({
   const hasFloor = useWatch({ control, name: "hasFloor" });
   const floorType = useWatch({ control, name: "floorType" });
   const floorNumber = useWatch({ control, name: "floorNumber" });
-
-  const isNoFloorSelected = hasFloor === false;
-  const isHasFloorSelected = hasFloor === true;
-
   const errorMessage = useReportSectionError(
     ["hasFloor", "floorType", "floorNumber"],
     sectionServerError,
   );
-  const errorId = errorMessage ? "report-floor-error" : undefined;
-
   const [isFloorPickerOpen, setIsFloorPickerOpen] = useState(false);
   const [pendingFloor, setPendingFloor] = useState(DEFAULT_FLOOR_VALUE);
 
@@ -118,6 +112,9 @@ export function ReportFloorSection({
     [floorOptions, pendingFloor],
   );
 
+  const isNoFloorSelected = hasFloor === false;
+  const isHasFloorSelected = hasFloor === true;
+  const errorId = errorMessage ? "report-floor-error" : undefined;
   const floorLabel = isHasFloorSelected
     ? getFloorLabel(floorType, floorNumber)
     : m.report_floor_select_placeholder();
@@ -225,13 +222,6 @@ export function ReportFloorSection({
       />
 
       <ReportSectionErrorReserve />
-      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
-      <ReportSectionError
-        id={errorId}
-        message={errorMessage}
-        placement="bottom"
-      />
-      */}
     </section>
   );
 }
