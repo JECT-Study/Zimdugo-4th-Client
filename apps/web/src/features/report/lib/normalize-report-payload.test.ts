@@ -12,7 +12,7 @@ const baseForm = (): ReportFormValues => ({
   lockerType: "SUBWAY_STATION",
   hasFloor: false,
   locationConsentAgreed: true,
-  additionalInfo: "  B2 화장실 옆  ",
+  additionalInfo: "  B2 화장실 앞  ",
 });
 
 describe("normalizeReportPayload", () => {
@@ -79,7 +79,7 @@ describe("normalizeReportPayload", () => {
     expect(payload.maxPrice).toBe(3000);
   });
 
-  it("sizeTypes를 SMALL → MEDIUM → LARGE 순으로 정렬해 보낸다", () => {
+  it("sizeTypes를 SMALL, MEDIUM, LARGE 순서로 정렬해 보낸다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),
       sizeTypes: ["LARGE", "SMALL", "MEDIUM"],
@@ -88,7 +88,7 @@ describe("normalizeReportPayload", () => {
     expect(payload.sizeTypes).toEqual(["SMALL", "MEDIUM", "LARGE"]);
   });
 
-  it("lockerType·sizeTypes enum을 재매핑하지 않는다", () => {
+  it("lockerType과 sizeTypes enum 값을 그대로 보낸다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),
       lockerType: "PUBLIC_OFFICE",
@@ -115,6 +115,40 @@ describe("normalizeReportPayload", () => {
     expect("sizeTypesValid" in payload).toBe(false);
   });
 
+  it("필수 좌표와 타입 값이 null이면 예외를 던진다", () => {
+    expect(() =>
+      normalizeReportPayload({ ...baseForm(), latitude: null }),
+    ).toThrow(/latitude is required/);
+
+    expect(() =>
+      normalizeReportPayload({ ...baseForm(), longitude: null }),
+    ).toThrow(/longitude is required/);
+
+    expect(() =>
+      normalizeReportPayload({ ...baseForm(), indoorOutdoorType: null }),
+    ).toThrow(/indoorOutdoorType is required/);
+
+    expect(() =>
+      normalizeReportPayload({ ...baseForm(), lockerType: null }),
+    ).toThrow(/lockerType is required/);
+  });
+
+  it("필수 좌표와 타입 값이 undefined이면 예외를 던진다", () => {
+    expect(() =>
+      normalizeReportPayload({
+        ...baseForm(),
+        latitude: undefined,
+      } as unknown as ReportFormValues),
+    ).toThrow(/latitude is required/);
+
+    expect(() =>
+      normalizeReportPayload({
+        ...baseForm(),
+        lockerType: undefined,
+      } as unknown as ReportFormValues),
+    ).toThrow(/lockerType is required/);
+  });
+
   it("startTime과 endTime을 HH:mm 형식 그대로 유지한다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),
@@ -130,10 +164,10 @@ describe("normalizeReportPayload", () => {
     const payload = normalizeReportPayload(baseForm());
 
     expect(payload.roadAddress).toBe("서울 마포구 양화로 160");
-    expect(payload.additionalInfo).toBe("B2 화장실 옆");
+    expect(payload.additionalInfo).toBe("B2 화장실 앞");
   });
 
-  it("imageUrl을 폼 값 그대로 payload에 반영한다", () => {
+  it("imageUrl 값이 있으면 그대로 payload에 반영한다", () => {
     const imageUrl = "https://cdn.example.com/locker-report/key.jpg";
     const payload = normalizeReportPayload({
       ...baseForm(),

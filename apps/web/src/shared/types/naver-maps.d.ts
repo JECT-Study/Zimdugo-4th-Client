@@ -11,7 +11,7 @@ declare namespace naver.maps {
     pinchZoom?: boolean;
   }
 
-  // biome-ignore lint/suspicious/noShadowRestrictedNames: naver maps SDK 명세상 Map 이름 유지
+  // biome-ignore lint/suspicious/noShadowRestrictedNames: naver maps SDK 명세의 Map 이름을 따른다
   class Map {
     constructor(element: string | HTMLElement, options: MapOptions);
     setOptions(options: MapOptions): void;
@@ -80,10 +80,22 @@ declare namespace naver.maps {
     size?: Size;
     anchor?: Point;
   }
+  interface ImageIcon {
+    url: string;
+    size?: Size;
+    origin?: Point;
+    anchor?: Point;
+  }
+  interface SymbolIcon {
+    path: number[] | string;
+    style?: Record<string, unknown>;
+    anchor?: Point;
+  }
+  type MarkerIcon = string | ImageIcon | SymbolIcon | HtmlIcon;
   interface MarkerOptions {
     position?: LatLng | LatLngLiteral;
     map?: Map | null;
-    icon?: HtmlIcon;
+    icon?: MarkerIcon;
     visible?: boolean;
     clickable?: boolean;
     title?: string;
@@ -94,10 +106,10 @@ declare namespace naver.maps {
     getVisible(): boolean;
     setMap(map: Map | null): void;
     setPosition(latlng: LatLng | LatLngLiteral): void;
-    setIcon?(icon: HtmlIcon): void;
+    setIcon?(icon: MarkerIcon): void;
     setVisible(visible: boolean): void;
   }
-  // Event.addListener는 removeListener에 넘길 수 있는 opaque 핸들을 돌려준다.
+  // Event.addListener와 removeListener에만 전달하는 opaque 핸들이다.
   type MapEventListener = unknown;
   namespace Event {
     function addListener(

@@ -4,8 +4,11 @@ import type {
   ReportFormValues,
 } from "#/features/report/model/report-types";
 
-const requireReportValue = <T>(value: T | null, fieldName: string): T => {
-  if (value === null) {
+const requireReportValue = <T>(
+  value: T | null | undefined,
+  fieldName: string,
+): T => {
+  if (value == null) {
     throw new Error(`${fieldName} is required before creating report payload.`);
   }
 
@@ -13,7 +16,7 @@ const requireReportValue = <T>(value: T | null, fieldName: string): T => {
 };
 
 /**
- * 폼 값 → API body. enum 재매핑 없음 — 구조 정리만 수행.
+ * 폼 값을 API body로 정리한다. enum 유효성 검사는 스키마에서 수행한다.
  * @see docs/features/ep-02-report.md §11
  */
 export function normalizeReportPayload(
