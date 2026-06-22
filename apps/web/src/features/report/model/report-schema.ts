@@ -150,6 +150,13 @@ export const reportSchema = z
           message: "min",
         });
       }
+      if (data.maxPrice !== null && data.maxPrice <= 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["maxPrice"],
+          message: "min",
+        });
+      }
       if (data.maxPrice !== null && data.maxPrice > REPORT_PRICE_MAX) {
         ctx.addIssue({
           code: "custom",
@@ -168,7 +175,17 @@ export const reportSchema = z
           message: "range",
         });
       }
-    } else if (data.minPrice !== null || data.maxPrice !== null) {
+    } else if (
+      data.minPrice !== null &&
+      data.maxPrice !== null &&
+      (data.minPrice !== 0 || data.maxPrice !== 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["minPrice"],
+        message: "must_be_zero",
+      });
+    } else if (data.minPrice !== data.maxPrice) {
       ctx.addIssue({
         code: "custom",
         path: ["minPrice"],

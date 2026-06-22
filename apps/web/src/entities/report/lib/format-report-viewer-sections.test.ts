@@ -15,9 +15,10 @@ const REPORT_DETAIL: MyLockerReportDetail = {
   indoorOutdoorType: "INDOOR",
   lockerType: "UNMANNED",
   sizeTypes: ["SMALL", "MEDIUM", "LARGE"],
-  isFree: false,
+  priceType: "PAID",
   minPrice: 2000,
   maxPrice: 5000,
+  operatingTimeType: "TIME_RANGE",
   startTime: "06:00",
   endTime: "23:30",
   additionalInfo: "5번 출구 안쪽에 있습니다.",
@@ -47,11 +48,11 @@ describe("formatReportViewerInformationGroups", () => {
       "유형",
       "규격",
       "가격",
-      "이용 시간",
+      "운영 시간",
     ]);
     expect(groups[2]?.fields[0]?.value).toBe("5번 출구 안쪽에 있습니다.");
     expect(
-      groups[1]?.fields.find((field) => field.label === "이용 시간")?.value,
+      groups[1]?.fields.find((field) => field.label === "운영 시간")?.value,
     ).toBe("06:00 ~ 23:30");
   });
 
@@ -61,8 +62,8 @@ describe("formatReportViewerInformationGroups", () => {
       sizeTypes: ["LARGE", "SMALL", "MEDIUM"],
     });
 
-    expect(groups[1]?.fields.find((field) => field.label === "규격")?.value).toBe(
-      "소형, 중형, 대형",
-    );
+    expect(
+      groups[1]?.fields.find((field) => field.label === "규격")?.value,
+    ).toBe("소형, 중형, 대형");
   });
 });
