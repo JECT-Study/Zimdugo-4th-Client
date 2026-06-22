@@ -27,7 +27,6 @@ import {
   shouldPreserveReportBlobUrlsOnUnmount,
   stashReportStateForPrivacyPolicy,
 } from "#/features/report/lib/report-privacy-navigation";
-import { getReportValidationMessage } from "#/features/report/lib/report-validation-message";
 import { requiresExifConsent } from "#/features/report/lib/requires-exif-consent";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import {
@@ -512,9 +511,7 @@ export function useReportForm(): {
               ? m.report_submit_unknown_validation_error()
               : result.agreementConsentRequired
                 ? m.report_submit_agreement_required()
-                : result.firstMessage
-                  ? getReportValidationMessage(result.firstMessage)
-                  : m.report_submit_validation_check_title(),
+                : m.report_submit_validation_check_title(),
           );
           setIsSubmitErrorPopupOpen(true);
           return;

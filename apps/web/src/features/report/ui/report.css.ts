@@ -131,6 +131,7 @@ export const sectionErrorTextInline = style({
   minHeight: vars.typography.lineHeight.normal,
   color: vars.color.palette.red[300],
   textAlign: "right",
+  whiteSpace: "nowrap",
 });
 
 /** 하단 에러 영역과 동일한 높이 — 제목 옆 배치 시 섹션 간 gap 유지용 */

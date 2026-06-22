@@ -186,7 +186,6 @@ export type ApplyValidationErrorsResult = {
   earliestStep: 1 | 2 | null;
   hasUnknown: boolean;
   firstSectionId: ReportSectionId | null;
-  firstMessage: string | null;
   agreementConsentRequired: boolean;
 };
 
@@ -245,7 +244,6 @@ export function applyValidationErrors(
     earliestStep,
     hasUnknown,
     firstSectionId,
-    firstMessage: normalizedErrors[0]?.message ?? null,
     agreementConsentRequired,
   };
 }
