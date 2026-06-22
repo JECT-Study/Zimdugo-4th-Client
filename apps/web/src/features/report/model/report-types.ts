@@ -170,7 +170,7 @@ export type ValidationErrorItem = {
 };
 
 export type ValidationErrorResponse = {
-  code: "VALIDATION_FAILED";
+  code: "VALIDATION_FAILED" | "COMMON-400-1";
   message: string;
   status: 400;
   timestamp: string;

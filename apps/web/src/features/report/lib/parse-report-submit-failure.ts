@@ -1,5 +1,10 @@
 import type { ValidationErrorResponse } from "#/features/report/model/report-types";
 
+const VALIDATION_ERROR_CODES = new Set<ValidationErrorResponse["code"]>([
+  "VALIDATION_FAILED",
+  "COMMON-400-1",
+]);
+
 export type ReportSubmitFailureKind = "validation" | "auth" | "server";
 
 export type ReportSubmitFailure =
@@ -49,7 +54,7 @@ function isValidationErrorResponse(
   if (typeof data !== "object" || data === null) return false;
   const candidate = data as ValidationErrorResponse;
   return (
-    candidate.code === "VALIDATION_FAILED" &&
+    VALIDATION_ERROR_CODES.has(candidate.code) &&
     Array.isArray(candidate.validationErrors)
   );
 }
