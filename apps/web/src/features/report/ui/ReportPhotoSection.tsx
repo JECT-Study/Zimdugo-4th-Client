@@ -211,11 +211,6 @@ export function ReportPhotoSection({
               {m.report_photo_exif_agreement_label()}
             </span>
           </div>
-          <ReportSectionError
-            message={agreementError}
-            id={agreementErrorId}
-            placement="bottom"
-          />
           <div className={privacyPolicyLinkRow}>
             <button
               type="button"
@@ -231,6 +226,11 @@ export function ReportPhotoSection({
               {m.report_photo_privacy_policy_link()}
             </button>
           </div>
+          <ReportSectionError
+            message={agreementError}
+            id={agreementErrorId}
+            placement="bottom"
+          />
         </div>
       </div>
       <ReportSectionErrorReserve />

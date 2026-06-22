@@ -222,7 +222,7 @@
   "report_error_server_prohibited_word": "使用できない表現が含まれています。",
   "report_exit_title": "作成を中断しますか？",
   "report_submit_confirm_title": "この内容で報告しますか？",
-  "report_submit_confirm_helper": "提出後は審査を経て反映されます。内容をもう一度ご確認ください。",
+  "report_submit_confirm_helper": "提出後は審査を経て反映されます。\n内容をもう一度ご確認ください。",
   "my_history_title": "マイ履歴",
   "my_history_empty_title": "報告履歴がありません",
   "my_history_empty": "まだ報告したロッカーがありません\nロッカーを報告してください！",

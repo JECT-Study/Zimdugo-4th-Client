@@ -222,7 +222,7 @@
   "report_error_server_prohibited_word": "内容包含不允许使用的词语。",
   "report_exit_title": "确定要停止填写吗？",
   "report_submit_confirm_title": "确定提交这条上报吗？",
-  "report_submit_confirm_helper": "提交后将进入审核。请再次确认填写内容。",
+  "report_submit_confirm_helper": "提交后将进入审核。\n请再次确认填写内容。",
   "my_history_title": "我的上报",
   "my_history_empty_title": "还没有上报记录",
   "my_history_empty": "还没有上报过寄存柜\n请上报寄存柜！",

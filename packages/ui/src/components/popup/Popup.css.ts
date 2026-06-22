@@ -132,6 +132,7 @@ export const helper = style({
   width: "100%",
   margin: 0,
   wordBreak: "keep-all",
+  whiteSpace: "pre-line",
 });
 
 export const subActionText = style({

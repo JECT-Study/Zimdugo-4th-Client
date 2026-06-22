@@ -222,7 +222,7 @@
   "report_error_server_prohibited_word": "사용할 수 없는 표현이 포함되어 있습니다.",
   "report_exit_title": "작성을 중단하시겠습니까?",
   "report_submit_confirm_title": "이대로 제보하시겠어요?",
-  "report_submit_confirm_helper": "제보 후 검토를 거쳐 반영돼요. 입력하신 내용을 한 번 더 확인해 주세요.",
+  "report_submit_confirm_helper": "제보 후 검토를 거쳐 반영돼요.\n입력하신 내용을 한 번 더 확인해 주세요.",
   "my_history_title": "마이 제보 내역",
   "my_history_empty_title": "제보 히스토리가 없어요",
   "my_history_empty": "아직 제보한 보관함이 없어요\n보관함을 제보해주세요!",

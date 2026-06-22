@@ -222,7 +222,7 @@
   "report_error_server_prohibited_word": "This text contains words that aren't allowed.",
   "report_exit_title": "Stop writing?",
   "report_submit_confirm_title": "Submit this report?",
-  "report_submit_confirm_helper": "We'll review it before publishing. Double-check your details first.",
+  "report_submit_confirm_helper": "We'll review it before publishing.\nDouble-check your details first.",
   "my_history_title": "My Reports",
   "my_history_empty_title": "No report history yet",
   "my_history_empty": "You haven't reported any lockers yet.\nReport a locker!",

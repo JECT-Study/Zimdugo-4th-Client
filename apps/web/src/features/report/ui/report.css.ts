@@ -124,10 +124,9 @@ export const sectionErrorTextBottom = style({
 
 export const sectionErrorTextInline = style({
   margin: 0,
-  flex: "0 1 auto",
+  flex: "1 1 auto",
   marginLeft: "auto",
   minWidth: 0,
-  maxWidth: "calc(100% - 96px)",
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
   minHeight: vars.typography.lineHeight.normal,
@@ -504,6 +503,11 @@ export const photoErrorIconCircle = style({
   justifyContent: "center",
   flexShrink: 0,
   backgroundColor: vars.color.bg.default,
+  selectors: {
+    "& svg path": {
+      fill: vars.color.text.error,
+    },
+  },
 });
 
 export const photoUploadErrorMessage = style({
