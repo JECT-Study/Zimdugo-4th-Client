@@ -477,9 +477,26 @@ export const photoUploadArea = style([
         cursor: "not-allowed",
         opacity: 0.5,
       },
+      '&[data-state="error"]': {
+        borderColor: vars.color.border.error,
+      },
+      '&[data-state="error"]:disabled': {
+        opacity: 1,
+      },
     },
   },
 ]);
+
+export const photoUploadErrorMessage = style({
+  color: vars.color.text.error,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: "1.2",
+  textAlign: "center",
+  whiteSpace: "pre-line",
+  wordBreak: "keep-all",
+  maxWidth: "100%",
+});
 
 export const imageWrapper = style([
   reportPhotoTileBase,
@@ -488,6 +505,12 @@ export const imageWrapper = style([
     flex: "0 0 343px",
     borderRadius: vars.radius[12],
     overflow: "hidden",
+    boxSizing: "border-box",
+    selectors: {
+      '&[data-state="error"]': {
+        border: `1px dashed ${vars.color.border.error}`,
+      },
+    },
   },
 ]);
 
@@ -538,6 +561,20 @@ export const photoPreviewUploadOverlay = style({
   backgroundColor: "rgba(22, 24, 28, 0.08)",
   backdropFilter: "blur(2px)",
   zIndex: 5,
+});
+
+export const photoPreviewErrorOverlay = style({
+  position: "absolute",
+  inset: 0,
+  zIndex: 6,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: vars.spacing[12],
+  padding: vars.spacing[24],
+  backgroundColor: "rgba(245, 245, 245, 0.92)",
+  boxSizing: "border-box",
 });
 
 export const photoPreviewUploadSpinner = style({

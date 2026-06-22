@@ -144,6 +144,8 @@ function ReportPage() {
     clearSectionError,
     preparePrivacyPolicyNavigation,
   } = handlers;
+  const shouldShowCurrentInfoSubmit =
+    validation.isSubmitEnabled && !validation.areOptionalFieldsComplete;
 
   const handleExitBack = () => {
     setIsExitPopupOpen(true);
@@ -273,7 +275,7 @@ function ReportPage() {
               <Button
                 className={nextButton}
                 variant="filled"
-                intent={validation.isSubmitEnabled ? "neutral" : "primary"}
+                intent={shouldShowCurrentInfoSubmit ? "neutral" : "primary"}
                 size="L"
                 onPress={() => {
                   void handleSubmitPress();
@@ -287,7 +289,7 @@ function ReportPage() {
               >
                 {isSubmitting && uploadedImages.length > 0
                   ? m.report_button_submit_uploading()
-                  : validation.isSubmitEnabled
+                  : shouldShowCurrentInfoSubmit
                     ? m.report_submit_with_current_info()
                     : m.report_button_submit()}
               </Button>

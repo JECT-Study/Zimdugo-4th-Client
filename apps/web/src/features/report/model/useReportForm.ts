@@ -122,6 +122,43 @@ export const isReportSubmitEnabled = ({
   return isExifConsentSatisfied && areRequiredFieldsComplete;
 };
 
+export const isReportOptionalFieldsComplete = ({
+  isFree,
+  minPrice,
+  maxPrice,
+  startTime,
+  endTime,
+  additionalInfo,
+  imageUrl,
+  uploadedImageCount,
+}: Pick<
+  ReportFormValues,
+  | "isFree"
+  | "minPrice"
+  | "maxPrice"
+  | "startTime"
+  | "endTime"
+  | "additionalInfo"
+  | "imageUrl"
+> & {
+  uploadedImageCount: number;
+}): boolean => {
+  const isPriceComplete =
+    isFree === true ||
+    isFree === null ||
+    (isFree === false && minPrice !== null && maxPrice !== null);
+  const isTimeComplete = startTime !== null && endTime !== null;
+  const isAdditionalInfoComplete = additionalInfo.trim().length > 0;
+  const isPhotoComplete = imageUrl !== null || uploadedImageCount > 0;
+
+  return (
+    isPriceComplete &&
+    isTimeComplete &&
+    isAdditionalInfoComplete &&
+    isPhotoComplete
+  );
+};
+
 export function useReportForm(): {
   form: UseFormReturn<ReportFormValues>;
   sectionServerErrors: Partial<Record<ReportSectionId, string>>;
@@ -161,6 +198,7 @@ export function useReportForm(): {
     areRequiredFieldsComplete: boolean;
     isExifConsentSatisfied: boolean;
     isSubmitEnabled: boolean;
+    areOptionalFieldsComplete: boolean;
   };
 } {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -261,6 +299,12 @@ export function useReportForm(): {
   const floorType = useWatch({ control, name: "floorType" });
   const floorNumber = useWatch({ control, name: "floorNumber" });
   const sizeTypes = useWatch({ control, name: "sizeTypes" }) ?? [];
+  const isFree = useWatch({ control, name: "isFree" });
+  const minPrice = useWatch({ control, name: "minPrice" });
+  const maxPrice = useWatch({ control, name: "maxPrice" });
+  const startTime = useWatch({ control, name: "startTime" });
+  const endTime = useWatch({ control, name: "endTime" });
+  const additionalInfo = useWatch({ control, name: "additionalInfo" }) ?? "";
 
   useEffect(() => {
     if (
@@ -393,7 +437,9 @@ export function useReportForm(): {
             }
 
             if (error instanceof ReportPhotoUploadValidationError) {
-              setPhotoErrorMessage(getPhotoValidationMessage(error.code));
+              const message = getPhotoValidationMessage(error.code);
+              setPhotoErrorMessage(message);
+              setSectionServerErrors((prev) => ({ ...prev, photo: message }));
               setIsPhotoErrorPopupOpen(true);
               requestAnimationFrame(() => {
                 scrollToReportSection("photo");
@@ -401,7 +447,9 @@ export function useReportForm(): {
               return;
             }
 
-            setPhotoErrorMessage(m.report_photo_upload_failed());
+            const message = m.report_photo_upload_failed();
+            setPhotoErrorMessage(message);
+            setSectionServerErrors((prev) => ({ ...prev, photo: message }));
             setIsPhotoErrorPopupOpen(true);
             requestAnimationFrame(() => {
               scrollToReportSection("photo");
@@ -550,7 +598,9 @@ export function useReportForm(): {
       if (!files?.length) return;
 
       if (uploadedImages.length >= MAX_REPORT_PHOTOS) {
-        setPhotoErrorMessage(m.report_photo_max_count_exceeded());
+        const message = m.report_photo_max_count_exceeded();
+        setPhotoErrorMessage(message);
+        setSectionServerErrors((prev) => ({ ...prev, photo: message }));
         setIsPhotoErrorPopupOpen(true);
         e.target.value = "";
         return;
@@ -560,7 +610,9 @@ export function useReportForm(): {
       const validation = validateReportPhotoFile(selectedFile);
 
       if (!validation.ok) {
-        setPhotoErrorMessage(getPhotoValidationMessage(validation.error));
+        const message = getPhotoValidationMessage(validation.error);
+        setPhotoErrorMessage(message);
+        setSectionServerErrors((prev) => ({ ...prev, photo: message }));
         setIsPhotoErrorPopupOpen(true);
         e.target.value = "";
         return;
@@ -630,6 +682,16 @@ export function useReportForm(): {
     shouldRequireExifConsent,
     locationConsentAgreed,
   });
+  const areOptionalFieldsComplete = isReportOptionalFieldsComplete({
+    isFree,
+    minPrice,
+    maxPrice,
+    startTime,
+    endTime,
+    additionalInfo,
+    imageUrl,
+    uploadedImageCount: uploadedImages.length,
+  });
 
   return {
     form,
@@ -670,6 +732,7 @@ export function useReportForm(): {
       areRequiredFieldsComplete,
       isExifConsentSatisfied,
       isSubmitEnabled,
+      areOptionalFieldsComplete,
     },
   };
 }
