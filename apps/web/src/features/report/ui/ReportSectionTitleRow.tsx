@@ -1,4 +1,3 @@
-import { LabelTitle } from "@repo/ui/components/label-title";
 import type { ReactNode } from "react";
 import { ReportSectionError } from "./ReportSectionError";
 import { sectionTitleLabel, sectionTitleRow } from "./report.css.ts";
@@ -18,9 +17,7 @@ export function ReportSectionTitleRow({
 }: ReportSectionTitleRowProps) {
   return (
     <div className={sectionTitleRow}>
-      <LabelTitle size="small" className={sectionTitleLabel}>
-        {children}
-      </LabelTitle>
+      <div className={sectionTitleLabel}>{children}</div>
       <ReportSectionError
         id={errorId}
         message={errorMessage}

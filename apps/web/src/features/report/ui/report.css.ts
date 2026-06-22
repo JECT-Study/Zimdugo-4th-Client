@@ -97,19 +97,19 @@ export const classificationSection = style({
 });
 
 export const sectionTitleRow = style({
-  display: "flex",
+  display: "grid",
+  gridTemplateColumns: "max-content minmax(0, 1fr)",
   alignItems: "center",
-  justifyContent: "flex-start",
-  gap: vars.spacing[8],
+  columnGap: vars.spacing[8],
   width: "100%",
 });
 
 export const sectionTitleLabel = style({
-  flex: "0 0 auto",
-  width: "fit-content",
-  maxWidth: "none",
+  minWidth: 0,
   fontSize: vars.typography.fontSize[18],
+  fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: vars.typography.lineHeight.relaxed,
+  color: vars.color.palette.gray[800],
 });
 
 export const sectionErrorTextBottom = style({
@@ -124,14 +124,15 @@ export const sectionErrorTextBottom = style({
 
 export const sectionErrorTextInline = style({
   margin: 0,
-  flex: "0 0 auto",
-  marginLeft: "auto",
+  justifySelf: "end",
   minWidth: 0,
+  maxWidth: "100%",
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
   minHeight: vars.typography.lineHeight.normal,
   color: vars.color.palette.red[300],
   textAlign: "right",
+  overflow: "hidden",
   whiteSpace: "nowrap",
 });
 
