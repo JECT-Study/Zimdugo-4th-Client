@@ -123,6 +123,7 @@ export type UploadCreateRequest = {
   category: UploadCategory;
   fileName: string;
   contentType: string;
+  contentLength: number;
 };
 
 export type UploadCreateData = {

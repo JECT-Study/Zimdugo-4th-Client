@@ -1,15 +1,15 @@
-import { postUploadUrl } from "#/features/report/api/create-upload-url";
-import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
+import { prepareProfileImageFile } from "#/features/my/lib/prepare-profile-image-file";
 import {
   type ProfilePhotoValidationError,
   resolveProfilePhotoContentType,
   validateProfilePhotoFile,
 } from "#/features/my/lib/validate-profile-photo-file";
+import { postUploadUrl } from "#/features/report/api/create-upload-url";
+import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import {
   MAX_REPORT_PHOTO_SIZE_BYTES,
   UPLOAD_CATEGORY_PROFILE,
 } from "#/features/report/model/report-types";
-import { prepareProfileImageFile } from "#/features/my/lib/prepare-profile-image-file";
 
 export class ProfilePhotoUploadValidationError extends Error {
   readonly code: ProfilePhotoValidationError;
@@ -38,6 +38,7 @@ export async function uploadProfilePhoto(file: File): Promise<string> {
     category: UPLOAD_CATEGORY_PROFILE,
     fileName: preparedFile.name,
     contentType,
+    contentLength: preparedFile.size,
   });
 
   await uploadFileToPresignedUrl({

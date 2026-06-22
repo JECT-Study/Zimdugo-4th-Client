@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { InvalidUploadCreateResponseError, postUploadUrl } from "#/features/report/api/create-upload-url";
+import {
+  InvalidUploadCreateResponseError,
+  postUploadUrl,
+} from "#/features/report/api/create-upload-url";
 import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/features/report/model/report-types";
 import { apiClient } from "#/shared/lib/apiClient";
 
@@ -36,6 +39,7 @@ describe("postUploadUrl", () => {
       category: UPLOAD_CATEGORY_LOCKER_REPORT,
       fileName: "locker-photo.jpg",
       contentType: "image/jpeg",
+      contentLength: 244852,
     };
 
     await expect(postUploadUrl(payload)).resolves.toEqual(uploadData);
@@ -64,6 +68,7 @@ describe("postUploadUrl", () => {
         category: UPLOAD_CATEGORY_LOCKER_REPORT,
         fileName: "locker-photo.jpg",
         contentType: "image/jpeg",
+        contentLength: 244852,
       }),
     ).rejects.toBeInstanceOf(InvalidUploadCreateResponseError);
   });

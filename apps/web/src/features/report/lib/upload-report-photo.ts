@@ -28,6 +28,7 @@ export async function uploadReportPhoto(file: File): Promise<string> {
     category: UPLOAD_CATEGORY_LOCKER_REPORT,
     fileName: file.name,
     contentType,
+    contentLength: file.size,
   });
 
   await uploadFileToPresignedUrl({ uploadUrl, file, contentType });
