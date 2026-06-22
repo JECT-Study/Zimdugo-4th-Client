@@ -196,6 +196,7 @@
   "report_photo_max_count_exceeded": "只能上傳1張照片。",
   "report_photo_max_size_exceeded": "照片大小不能超過5MB。",
   "report_photo_upload_failed": "照片上傳失敗，請稍後重試。",
+  "report_photo_upload_failed_card": "照片上傳失敗\n請重試！",
   "report_submit_success_title": "上報成功！",
   "report_submit_success_home": "返回主頁",
   "report_submit_success_history": "查看上報歷史",

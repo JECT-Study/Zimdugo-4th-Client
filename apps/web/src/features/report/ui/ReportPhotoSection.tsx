@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
 import { Checkbox } from "@repo/ui/components/checkbox";
-import { IconCircleboxUnhappy32, IconX16 } from "@repo/ui/tokens/icons";
+import { IconNavigationRefresh24, IconX16 } from "@repo/ui/tokens/icons";
 import { useNavigate } from "@tanstack/react-router";
 import type { ChangeEvent, RefObject } from "react";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
@@ -17,6 +17,7 @@ import {
   imagePreview,
   imageWrapper,
   photoAgreementGroup,
+  photoErrorIconCircle,
   photoPreviewErrorOverlay,
   photoPreviewUploadOverlay,
   photoPreviewUploadSpinner,
@@ -113,8 +114,12 @@ export function ReportPhotoSection({
             >
               {photoError ? (
                 <>
-                  <IconCircleboxUnhappy32 />
-                  <span className={photoUploadErrorMessage}>{photoError}</span>
+                  <span className={photoErrorIconCircle} aria-hidden="true">
+                    <IconNavigationRefresh24 />
+                  </span>
+                  <span className={photoUploadErrorMessage}>
+                    {m.report_photo_upload_failed_card()}
+                  </span>
                 </>
               ) : (
                 <>
@@ -165,8 +170,12 @@ export function ReportPhotoSection({
               ) : null}
               {photoError && !isPhotoUploading ? (
                 <div className={photoPreviewErrorOverlay}>
-                  <IconCircleboxUnhappy32 />
-                  <span className={photoUploadErrorMessage}>{photoError}</span>
+                  <span className={photoErrorIconCircle} aria-hidden="true">
+                    <IconNavigationRefresh24 />
+                  </span>
+                  <span className={photoUploadErrorMessage}>
+                    {m.report_photo_upload_failed_card()}
+                  </span>
                 </div>
               ) : null}
               <button

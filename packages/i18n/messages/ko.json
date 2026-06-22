@@ -196,6 +196,7 @@
   "report_photo_max_count_exceeded": "사진은 1장만 업로드 가능합니다.",
   "report_photo_max_size_exceeded": "사진은 5MB 이하만 업로드 가능합니다.",
   "report_photo_upload_failed": "사진 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.",
+  "report_photo_upload_failed_card": "사진 업로드에 실패했습니다\n다시 시도해주세요!",
   "report_submit_success_title": "제보가 완료되었습니다!",
   "report_submit_success_home": "홈으로 돌아가기",
   "report_submit_success_history": "제보 히스토리 보기",

@@ -124,13 +124,17 @@ export const sectionErrorTextBottom = style({
 
 export const sectionErrorTextInline = style({
   margin: 0,
-  flex: "1 1 0",
-  minWidth: "8rem",
+  flex: "0 1 auto",
+  marginLeft: "auto",
+  minWidth: 0,
+  maxWidth: "calc(100% - 96px)",
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
   minHeight: vars.typography.lineHeight.normal,
   color: vars.color.palette.red[300],
   textAlign: "right",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 });
 
@@ -480,6 +484,9 @@ export const photoUploadArea = style([
       },
       '&[data-state="error"]': {
         borderColor: vars.color.border.error,
+        borderStyle: "dashed",
+        backgroundColor: vars.color.bg.surface,
+        gap: vars.spacing[12],
       },
       '&[data-state="error"]:disabled': {
         opacity: 1,
@@ -487,6 +494,17 @@ export const photoUploadArea = style([
     },
   },
 ]);
+
+export const photoErrorIconCircle = style({
+  width: "32px",
+  height: "32px",
+  borderRadius: vars.radius.max,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  backgroundColor: vars.color.bg.default,
+});
 
 export const photoUploadErrorMessage = style({
   color: vars.color.text.error,
