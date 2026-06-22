@@ -1,4 +1,4 @@
-import type { CSSProperties, KeyboardEvent } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { Button } from "../button/Button.tsx";
@@ -10,6 +10,7 @@ import {
   dialList,
   dialog,
   overlay,
+  pickerCenterAccessory,
   pickerFrame,
   selection,
   title,
@@ -34,6 +35,7 @@ export interface DialPickerProps {
   columns: DialPickerColumn[];
   onColumnChange: (columnId: string, value: string) => void;
   className?: string;
+  centerAccessory?: ReactNode;
 }
 
 export type PopupPickerOption = DialPickerOption;
@@ -50,6 +52,7 @@ export interface PopupPickerProps {
     onPress: () => void;
   };
   className?: string;
+  centerAccessory?: ReactNode;
 }
 
 const getOptionIndex = (column: DialPickerColumn) => {
@@ -88,8 +91,7 @@ function DialPickerColumnView({
 
   const selectedIndex = getOptionIndex(pickerColumn);
   const selectedOption = pickerColumn.options[selectedIndex];
-  const isCircular =
-    pickerColumn.isCircular && pickerColumn.options.length > 1;
+  const isCircular = pickerColumn.isCircular && pickerColumn.options.length > 1;
   const visibleOptions = isCircular
     ? [
         ...pickerColumn.options,
@@ -234,7 +236,10 @@ export function DialPicker({
   columns,
   onColumnChange,
   className,
+  centerAccessory,
 }: DialPickerProps) {
+  const shouldShowColumnDividers = !centerAccessory;
+
   return (
     <div
       className={[pickerFrame, className].filter(Boolean).join(" ")}
@@ -245,11 +250,16 @@ export function DialPicker({
       }
     >
       <div className={selection} aria-hidden="true" />
+      {centerAccessory ? (
+        <span className={pickerCenterAccessory} aria-hidden="true">
+          {centerAccessory}
+        </span>
+      ) : null}
       {columns.map((pickerColumn, index) => (
         <DialPickerColumnView
           key={pickerColumn.id}
           column={pickerColumn}
-          hasDivider={index > 0}
+          hasDivider={shouldShowColumnDividers && index > 0}
           onChange={onColumnChange}
         />
       ))}
@@ -265,6 +275,7 @@ export function PopupPicker({
   onColumnChange,
   primaryAction,
   className,
+  centerAccessory,
 }: PopupPickerProps) {
   const handlePrimaryPress = () => {
     primaryAction.onPress();
@@ -280,7 +291,11 @@ export function PopupPicker({
       <Modal className={className}>
         <Dialog className={dialog} aria-label={titleText}>
           <h2 className={title}>{titleText}</h2>
-          <DialPicker columns={columns} onColumnChange={onColumnChange} />
+          <DialPicker
+            columns={columns}
+            onColumnChange={onColumnChange}
+            centerAccessory={centerAccessory}
+          />
           <Button
             className={action}
             variant="filled"

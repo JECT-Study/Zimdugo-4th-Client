@@ -185,6 +185,7 @@ export function ReportTimeSection({
         }
         columns={columns}
         onColumnChange={handleTimeChange}
+        centerAccessory=":"
         primaryAction={{
           label: m.report_time_picker_confirm(),
           onPress: handleConfirmTime,

@@ -712,12 +712,12 @@ export const priceUnknownRadio = style({
 
 export const priceFreeRadio = style({
   gridColumn: "2",
-  justifySelf: "start",
+  justifySelf: "center",
 });
 
 export const pricePaidRadio = style({
   gridColumn: "3",
-  justifySelf: "start",
+  justifySelf: "end",
 });
 
 export const priceInputRow = style({
