@@ -27,6 +27,7 @@ import {
   shouldPreserveReportBlobUrlsOnUnmount,
   stashReportStateForPrivacyPolicy,
 } from "#/features/report/lib/report-privacy-navigation";
+import { getReportValidationMessage } from "#/features/report/lib/report-validation-message";
 import { requiresExifConsent } from "#/features/report/lib/requires-exif-consent";
 import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import {
@@ -334,6 +335,24 @@ export function useReportForm(): {
     [form],
   );
 
+  const resetPhotoInputState = useCallback(() => {
+    for (const url of uploadedImagesRef.current) {
+      if (url.startsWith("blob:")) {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    selectedPhotoFileRef.current = null;
+    setUploadedImages([]);
+    setValue("imageUrl", null, { shouldDirty: true });
+    setValue("locationConsentAgreed", false, { shouldDirty: true });
+    form.clearErrors("locationConsentAgreed");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [form, setValue]);
+
   const getExifConsentRequirement = useCallback(() => {
     return requiresExifConsent({
       imageUrl: form.getValues("imageUrl"),
@@ -362,6 +381,17 @@ export function useReportForm(): {
       setSectionServerErrors,
     });
   }, [form, getExifConsentRequirement]);
+
+  const handleAuthFailure = useCallback(() => {
+    pendingValidationNavigationRef.current = null;
+    form.clearErrors();
+    setSectionServerErrors({});
+    setSubmitErrorMessage("");
+    setPhotoErrorMessage("");
+    setIsSubmitErrorPopupOpen(false);
+    setIsPhotoErrorPopupOpen(false);
+    useAuthPopupStore.getState().openPopup("/report");
+  }, [form]);
 
   const scrollToPendingValidationSection = useCallback(() => {
     const pending = pendingValidationNavigationRef.current;
@@ -404,7 +434,7 @@ export function useReportForm(): {
   const onSubmit = useCallback(
     async (data: ReportFormValues) => {
       if (!isAuthenticated) {
-        useAuthPopupStore.getState().openPopup("/report");
+        handleAuthFailure();
         return;
       }
 
@@ -432,12 +462,13 @@ export function useReportForm(): {
             imageUrl = await uploadReportPhoto(selectedPhotoFile);
           } catch (error) {
             if (parseReportSubmitFailure(error).kind === "auth") {
-              useAuthPopupStore.getState().openPopup("/report");
+              handleAuthFailure();
               return;
             }
 
             if (error instanceof ReportPhotoUploadValidationError) {
               const message = getPhotoValidationMessage(error.code);
+              resetPhotoInputState();
               setPhotoErrorMessage(message);
               setSectionServerErrors((prev) => ({ ...prev, photo: message }));
               setIsPhotoErrorPopupOpen(true);
@@ -448,6 +479,7 @@ export function useReportForm(): {
             }
 
             const message = m.report_photo_upload_failed();
+            resetPhotoInputState();
             setPhotoErrorMessage(message);
             setSectionServerErrors((prev) => ({ ...prev, photo: message }));
             setIsPhotoErrorPopupOpen(true);
@@ -480,14 +512,16 @@ export function useReportForm(): {
               ? m.report_submit_unknown_validation_error()
               : result.agreementConsentRequired
                 ? m.report_submit_agreement_required()
-                : m.report_submit_validation_check_title(),
+                : result.firstMessage
+                  ? getReportValidationMessage(result.firstMessage)
+                  : m.report_submit_validation_check_title(),
           );
           setIsSubmitErrorPopupOpen(true);
           return;
         }
 
         if (failure.kind === "auth") {
-          useAuthPopupStore.getState().openPopup("/report");
+          handleAuthFailure();
           return;
         }
 
@@ -498,7 +532,7 @@ export function useReportForm(): {
         setIsSubmitting(false);
       }
     },
-    [form, isAuthenticated],
+    [form, handleAuthFailure, isAuthenticated, resetPhotoInputState],
   );
 
   const scrollToFirstFieldError = useCallback(
@@ -599,10 +633,10 @@ export function useReportForm(): {
 
       if (uploadedImages.length >= MAX_REPORT_PHOTOS) {
         const message = m.report_photo_max_count_exceeded();
+        resetPhotoInputState();
         setPhotoErrorMessage(message);
         setSectionServerErrors((prev) => ({ ...prev, photo: message }));
         setIsPhotoErrorPopupOpen(true);
-        e.target.value = "";
         return;
       }
 
@@ -611,10 +645,10 @@ export function useReportForm(): {
 
       if (!validation.ok) {
         const message = getPhotoValidationMessage(validation.error);
+        resetPhotoInputState();
         setPhotoErrorMessage(message);
         setSectionServerErrors((prev) => ({ ...prev, photo: message }));
         setIsPhotoErrorPopupOpen(true);
-        e.target.value = "";
         return;
       }
 
@@ -630,7 +664,7 @@ export function useReportForm(): {
       clearSectionError("photo");
       e.target.value = "";
     },
-    [clearSectionError, setValue, uploadedImages],
+    [clearSectionError, resetPhotoInputState, setValue, uploadedImages],
   );
 
   const preparePrivacyPolicyNavigation = useCallback(() => {

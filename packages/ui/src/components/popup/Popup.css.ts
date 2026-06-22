@@ -1,8 +1,8 @@
 import { style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "../../vars.css.ts";
 
-/** dialog 240px − 좌우 padding 18px × 2 */
 const POPUP_CONTENT_WIDTH = "204px";
+const POPUP_WIDE_CONTENT_WIDTH = "288px";
 
 export const overlay = style({
   position: "fixed",
@@ -15,13 +15,11 @@ export const overlay = style({
   zIndex: vars.zIndex.modal,
 });
 
-export const dialog = style({
+const dialogBase = style({
   display: "flex",
-  width: "240px",
-  minWidth: "240px",
   minHeight: "164px",
   height: "auto",
-  padding: "16px 18px", // 좌우 패딩 18px로 조정
+  padding: "16px 18px",
   flexDirection: "column",
   justifyContent: "flex-end",
   alignItems: "center",
@@ -32,8 +30,12 @@ export const dialog = style({
   textAlign: "center",
 });
 
+export const dialog = styleVariants({
+  default: [dialogBase, { width: "240px", minWidth: "240px" }],
+  wide: [dialogBase, { width: "324px", minWidth: "324px" }],
+});
+
 const containerBase = style({
-  width: POPUP_CONTENT_WIDTH,
   minHeight: "132px",
   height: "auto",
   flexShrink: 0,
@@ -44,22 +46,41 @@ const containerBase = style({
 });
 
 export const container = styleVariants({
-  default: [containerBase, { gap: "18px" }], // 심플 모드: 18px 통일
-  withMiddle: [containerBase, { gap: "14px" }], // 헬퍼 모드: 기존 14px
+  default: [containerBase, { width: POPUP_CONTENT_WIDTH, gap: "18px" }],
+  withMiddle: [containerBase, { width: POPUP_CONTENT_WIDTH, gap: "14px" }],
+  wideDefault: [
+    containerBase,
+    { width: POPUP_WIDE_CONTENT_WIDTH, gap: "18px" },
+  ],
+  wideWithMiddle: [
+    containerBase,
+    { width: POPUP_WIDE_CONTENT_WIDTH, gap: "14px" },
+  ],
 });
 
 const bottomSectionBase = style({
-  width: POPUP_CONTENT_WIDTH,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
 });
 
 export const bottomSection = styleVariants({
-  default: [bottomSectionBase], // 심플 모드: 버튼 크기만큼만 차지
+  default: [bottomSectionBase, { width: POPUP_CONTENT_WIDTH }],
   withMiddle: [
     bottomSectionBase,
     {
+      width: POPUP_CONTENT_WIDTH,
+      minHeight: "54px",
+      height: "auto",
+      justifyContent: "flex-end",
+      gap: "8px",
+    },
+  ],
+  wideDefault: [bottomSectionBase, { width: POPUP_WIDE_CONTENT_WIDTH }],
+  wideWithMiddle: [
+    bottomSectionBase,
+    {
+      width: POPUP_WIDE_CONTENT_WIDTH,
       minHeight: "54px",
       height: "auto",
       justifyContent: "flex-end",
@@ -143,7 +164,7 @@ export const actionsContainer = style({
 
 export const buttonRow = style({
   display: "flex",
-  gap: vars.spacing[12], // 기존 토큰 활용
+  gap: vars.spacing[12],
   width: "100%",
   justifyContent: "center",
 });
@@ -161,7 +182,7 @@ export const primaryButtonItem = style([
     selectors: {
       "&[data-size='L']": {
         flex: "none",
-        width: POPUP_CONTENT_WIDTH,
+        width: "100%",
       },
     },
   },

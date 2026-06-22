@@ -166,7 +166,7 @@
   "report_section_price": "보관함 가격",
   "report_price_free": "무료",
   "report_price_paid": "유료",
-  "report_price_unknown": "모름",
+  "report_price_unknown": "입력 안함",
   "report_price_min_placeholder": "최소",
   "report_price_max_placeholder": "최대",
   "report_price_min_input_aria": "최소 요금 입력",

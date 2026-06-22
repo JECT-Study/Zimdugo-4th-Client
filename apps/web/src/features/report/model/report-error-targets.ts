@@ -186,12 +186,17 @@ export type ApplyValidationErrorsResult = {
   earliestStep: 1 | 2 | null;
   hasUnknown: boolean;
   firstSectionId: ReportSectionId | null;
+  firstMessage: string | null;
   agreementConsentRequired: boolean;
 };
 
 export function applyValidationErrors(
   errors: ValidationErrorItem[],
-  { setError, setSectionServerErrors, clearErrors }: ApplyValidationErrorsParams,
+  {
+    setError,
+    setSectionServerErrors,
+    clearErrors,
+  }: ApplyValidationErrorsParams,
 ): ApplyValidationErrorsResult {
   clearErrors?.();
   setSectionServerErrors({});
@@ -240,6 +245,7 @@ export function applyValidationErrors(
     earliestStep,
     hasUnknown,
     firstSectionId,
+    firstMessage: normalizedErrors[0]?.message ?? null,
     agreementConsentRequired,
   };
 }
@@ -277,7 +283,9 @@ export function getSectionAnchorFields(
   sectionId: ReportSectionId,
 ): Array<keyof ReportFormValues> {
   return Object.entries(FIELD_TARGETS)
-    .filter(([, target]) => target.sectionId === sectionId && target.anchorField)
+    .filter(
+      ([, target]) => target.sectionId === sectionId && target.anchorField,
+    )
     .map(([, target]) => target.anchorField as keyof ReportFormValues);
 }
 

@@ -331,6 +331,7 @@ function ReportPage() {
           isOpen={isSubmitErrorPopupOpen}
           onOpenChange={handlers.handleSubmitErrorPopupOpenChange}
           titleText={submitErrorMessage}
+          width="wide"
           primaryAction={{
             label: m.common_confirm(),
             onPress: handlers.handleSubmitErrorPopupConfirm,
@@ -341,6 +342,7 @@ function ReportPage() {
           isOpen={isPhotoErrorPopupOpen}
           onOpenChange={setIsPhotoErrorPopupOpen}
           titleText={photoErrorMessage}
+          width="wide"
           primaryAction={{
             label: m.common_confirm(),
             onPress: () => setIsPhotoErrorPopupOpen(false),

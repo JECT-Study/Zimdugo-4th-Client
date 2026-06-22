@@ -157,10 +157,10 @@ describe("applyValidationErrors", () => {
     const setError = vi.fn();
     const setSectionServerErrors = vi.fn();
 
-    applyValidationErrors(
-      [{ field: "roadAddress", message: "required" }],
-      { setError, setSectionServerErrors },
-    );
+    applyValidationErrors([{ field: "roadAddress", message: "required" }], {
+      setError,
+      setSectionServerErrors,
+    });
 
     expect(setError).toHaveBeenCalledWith("roadAddress", {
       type: "server",
@@ -181,6 +181,7 @@ describe("applyValidationErrors", () => {
     expect(setSectionServerErrors).toHaveBeenCalledWith({});
     expect(result.agreementConsentRequired).toBe(true);
     expect(result.firstSectionId).toBe("agreement");
+    expect(result.firstMessage).toBeNull();
     expect(result.earliestStep).toBeNull();
   });
 
@@ -198,6 +199,23 @@ describe("applyValidationErrors", () => {
 
     expect(result.earliestStep).toBe(1);
     expect(result.firstSectionId).toBe("classification");
+    expect(result.firstMessage).toBe("required");
+  });
+
+  it("aggregate validation의 첫 메시지를 popup에서 재사용할 수 있도록 반환한다", () => {
+    const setError = vi.fn();
+    const setSectionServerErrors = vi.fn();
+
+    const result = applyValidationErrors(
+      [
+        { field: "floorInputValid", message: "validation.invalid_floor" },
+        { field: "priceInputValid", message: "validation.invalid_price" },
+      ],
+      { setError, setSectionServerErrors },
+    );
+
+    expect(result.firstSectionId).toBe("floor");
+    expect(result.firstMessage).toBe("validation.invalid_floor");
   });
 
   it("unknown field는 setError·section 갱신 없이 hasUnknown을 true로 반환한다", () => {
