@@ -166,6 +166,7 @@
   "report_section_price": "Locker Price",
   "report_price_free": "Free",
   "report_price_paid": "Paid",
+  "report_price_unknown": "Unknown",
   "report_price_min_placeholder": "Min (optional)",
   "report_price_max_placeholder": "Max (optional)",
   "report_price_min_input_aria": "Enter minimum price",

@@ -13,6 +13,7 @@ import {
   priceRadioGroup,
   priceRow,
   priceUnit,
+  priceUnknownRadio,
   section,
 } from "./report.css.ts";
 
@@ -57,6 +58,12 @@ export function ReportPriceSectionView({
   onMaxPriceBlur,
 }: ReportPriceSectionViewProps) {
   const errorId = errorMessage ? "report-price-error" : undefined;
+  const handleChangePriceType = (value: string) => {
+    if (value !== "none" && value !== "free" && value !== "paid") return;
+
+    setPriceType(value);
+    onFieldChange?.();
+  };
 
   return (
     <section
@@ -72,13 +79,13 @@ export function ReportPriceSectionView({
           aria-label={m.report_section_price()}
           className={priceRadioGroup}
           optionsDirection="row"
-          value={priceType === "none" ? undefined : priceType}
-          onChange={(value) => {
-            setPriceType(value as "free" | "paid");
-            onFieldChange?.();
-          }}
+          value={priceType}
+          onChange={handleChangePriceType}
         >
           <div className={priceRadioGrid}>
+            <Radio className={priceUnknownRadio} value="none">
+              {m.report_price_unknown()}
+            </Radio>
             <Radio className={priceFreeRadio} value="free">
               {m.report_price_free()}
             </Radio>

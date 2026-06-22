@@ -699,14 +699,19 @@ globalStyle(`${priceRadioGroup} > div`, {
 
 export const priceRadioGrid = style({
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   columnGap: vars.spacing[8],
   alignItems: "center",
   width: "100%",
 });
 
-export const priceFreeRadio = style({
+export const priceUnknownRadio = style({
   gridColumn: "1",
+  justifySelf: "start",
+});
+
+export const priceFreeRadio = style({
+  gridColumn: "2",
   justifySelf: "start",
 });
 

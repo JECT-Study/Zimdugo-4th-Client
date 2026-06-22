@@ -166,6 +166,7 @@
   "report_section_price": "寄存櫃價格",
   "report_price_free": "免費",
   "report_price_paid": "付費",
+  "report_price_unknown": "不清楚",
   "report_price_min_placeholder": "最小 (選填)",
   "report_price_max_placeholder": "最大 (選填)",
   "report_price_min_input_aria": "輸入最低價格",

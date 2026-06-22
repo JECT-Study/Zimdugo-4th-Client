@@ -166,6 +166,7 @@
   "report_section_price": "料金",
   "report_price_free": "無料",
   "report_price_paid": "有料",
+  "report_price_unknown": "不明",
   "report_price_min_placeholder": "最小 (任意)",
   "report_price_max_placeholder": "最大 (任意)",
   "report_price_min_input_aria": "最低料金を入力",
