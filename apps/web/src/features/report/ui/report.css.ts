@@ -80,7 +80,7 @@ export const section = style({
   display: "flex",
   flexDirection: "column",
   gap: "14px",
-  scrollMarginTop: "8px",
+  scrollMarginTop: vars.spacing[24],
 });
 
 export const disabledSection = style({

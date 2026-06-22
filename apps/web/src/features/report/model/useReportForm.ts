@@ -316,10 +316,9 @@ export function useReportForm(): {
     });
   }, [form, getExifConsentRequirement]);
 
-  const handleSubmitErrorPopupConfirm = useCallback(() => {
+  const scrollToPendingValidationSection = useCallback(() => {
     const pending = pendingValidationNavigationRef.current;
     pendingValidationNavigationRef.current = null;
-    setIsSubmitErrorPopupOpen(false);
 
     if (!pending) return;
 
@@ -339,12 +338,21 @@ export function useReportForm(): {
     });
   }, [form.formState.errors, scheduleSectionScroll]);
 
-  const handleSubmitErrorPopupOpenChange = useCallback((open: boolean) => {
-    if (!open) {
-      pendingValidationNavigationRef.current = null;
-    }
-    setIsSubmitErrorPopupOpen(open);
-  }, []);
+  const handleSubmitErrorPopupConfirm = useCallback(() => {
+    setIsSubmitErrorPopupOpen(false);
+    scrollToPendingValidationSection();
+  }, [scrollToPendingValidationSection]);
+
+  const handleSubmitErrorPopupOpenChange = useCallback(
+    (open: boolean) => {
+      setIsSubmitErrorPopupOpen(open);
+
+      if (!open) {
+        scrollToPendingValidationSection();
+      }
+    },
+    [scrollToPendingValidationSection],
+  );
 
   const onSubmit = useCallback(
     async (data: ReportFormValues) => {
