@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
-import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
-import { formatLockerPriceLabel } from "#/shared/lib/locker-detail-labels";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
+import { formatLockerPriceLabel } from "#/shared/lib/locker-detail-labels";
+import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 
 const formatFloorLabel = (detail: MyLockerReportDetail): string => {
   if (!detail.hasFloor) {
@@ -25,8 +25,12 @@ const formatFloorLabel = (detail: MyLockerReportDetail): string => {
 };
 
 const formatPriceLabel = (detail: MyLockerReportDetail): string => {
-  if (detail.isFree) {
+  if (detail.priceType === "FREE") {
     return m.report_price_free();
+  }
+
+  if (detail.priceType === "UNKNOWN") {
+    return m.locker_detail_price_not_provided();
   }
 
   return formatLockerPriceLabel(

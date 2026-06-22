@@ -1,59 +1,22 @@
 import { sortSizeTypes } from "#/entities/locker/lib/sort-size-types";
-import { parseReportForm } from "#/features/report/model/report-schema";
 import type {
   LockerReportCreateRequest,
   ReportFormValues,
 } from "#/features/report/model/report-types";
 
-const FLOOR_VALIDATION_FIELDS = new Set([
-  "hasFloor",
-  "floorType",
-  "floorNumber",
-]);
-const ENUM_VALIDATION_FIELDS = new Set(["indoorOutdoorType", "lockerType"]);
-const PRICE_VALIDATION_FIELDS = new Set(["isFree", "minPrice", "maxPrice"]);
-const OPERATING_HOURS_VALIDATION_FIELDS = new Set(["startTime", "endTime"]);
-const SIZE_TYPES_VALIDATION_FIELDS = new Set(["sizeTypes"]);
-
-const hasValidationIssue = (
-  invalidFields: Set<string>,
-  fields: Set<string>,
-): boolean => invalidFields.has("__root__") || [...fields].some((field) => invalidFields.has(field));
-
-export const deriveReportValidationFlags = (values: ReportFormValues) => {
-  const parsed = parseReportForm(values);
-
-  if (parsed.success) {
-    return {
-      floorInputValid: true,
-      enumInputValid: true,
-      priceInputValid: true,
-      operatingHoursValid: true,
-      sizeTypesValid: true,
-    };
+const requireReportValue = <T>(
+  value: T | null | undefined,
+  fieldName: string,
+): T => {
+  if (value == null) {
+    throw new Error(`${fieldName} is required before creating report payload.`);
   }
 
-  const invalidFields = new Set(
-    parsed.error.issues.map((issue) => String(issue.path[0] ?? "__root__")),
-  );
-
-  return {
-    floorInputValid: !hasValidationIssue(invalidFields, FLOOR_VALIDATION_FIELDS),
-    enumInputValid: !hasValidationIssue(invalidFields, ENUM_VALIDATION_FIELDS),
-    priceInputValid: !hasValidationIssue(invalidFields, PRICE_VALIDATION_FIELDS),
-    operatingHoursValid: !hasValidationIssue(
-      invalidFields,
-      OPERATING_HOURS_VALIDATION_FIELDS,
-    ),
-    sizeTypesValid: !hasValidationIssue(
-      invalidFields,
-      SIZE_TYPES_VALIDATION_FIELDS,
-    ),
-  };
+  return value;
 };
 
 /**
- * 폼 값 → API body. enum 재매핑 없음 — 구조 정리만 수행.
+ * 폼 값을 API body로 정리한다. enum 유효성 검사는 스키마에서 수행한다.
  * @see docs/features/ep-02-report.md §11
  */
 export function normalizeReportPayload(
@@ -66,29 +29,32 @@ export function normalizeReportPayload(
 
   let minPrice = values.minPrice;
   let maxPrice = values.maxPrice;
-  if (values.isFree !== false) {
+  if (values.isFree === true) {
+    minPrice = 0;
+    maxPrice = 0;
+  } else if (values.isFree === null) {
     minPrice = null;
     maxPrice = null;
   }
 
   return {
-    ...values,
-    sizeTypes: sortSizeTypes(values.sizeTypes),
     roadAddress: values.roadAddress.trim(),
-    hasFloor,
+    latitude: requireReportValue(values.latitude, "latitude"),
+    longitude: requireReportValue(values.longitude, "longitude"),
+    locationConsentAgreed: values.locationConsentAgreed,
+    indoorOutdoorType: requireReportValue(
+      values.indoorOutdoorType,
+      "indoorOutdoorType",
+    ),
+    lockerType: requireReportValue(values.lockerType, "lockerType"),
     floorType,
     floorNumber,
     minPrice,
     maxPrice,
+    startTime: values.startTime,
+    endTime: values.endTime,
+    sizeTypes: sortSizeTypes(values.sizeTypes),
     additionalInfo: values.additionalInfo.trim(),
     imageUrl: values.imageUrl,
-    ...deriveReportValidationFlags({
-      ...values,
-      hasFloor,
-      floorType,
-      floorNumber,
-      minPrice,
-      maxPrice,
-    }),
   };
 }

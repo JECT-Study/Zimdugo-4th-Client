@@ -1,14 +1,18 @@
 import { vars } from "@repo/ui/vars";
-import { keyframes, style } from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 export const reportContainer = style({
   width: "100%",
   maxWidth: vars.layout.containerWidth,
   margin: "0 auto",
-  height: "100dvh",
+  flex: 1,
+  minHeight: 0,
+  height: "100%",
   backgroundColor: vars.color.bg.default,
   position: "relative",
   overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
 });
 
 export const reportHeader = style({
@@ -24,11 +28,19 @@ export const reportHeader = style({
   zIndex: 100,
 });
 
+export const reportPageContent = style({
+  position: "absolute",
+  inset: 0,
+});
+
 export const contentArea = style({
+  position: "absolute",
+  inset: 0,
   width: "100%",
-  height: "100%",
   padding: `calc(56px + env(safe-area-inset-top, 0px)) ${vars.layout.sidePadding} 100px`, // 헤더 높이 + 하단 버튼 여백
   overflowY: "auto",
+  overflowAnchor: "none",
+  overscrollBehaviorY: "contain",
   WebkitOverflowScrolling: "touch",
   display: "flex",
   flexDirection: "column",
@@ -47,6 +59,7 @@ export const stepWrapper = style({
   flexDirection: "column",
   gap: "32px",
   width: "100%",
+  paddingTop: vars.spacing[16],
 });
 
 export const bottomButtonWrapper = style({
@@ -67,7 +80,14 @@ export const section = style({
   display: "flex",
   flexDirection: "column",
   gap: "14px",
+  scrollMarginTop: vars.spacing[24],
 });
+
+export const disabledSection = style({
+  opacity: 0.5,
+});
+
+export const locationSection = section;
 
 export const classificationSection = style({
   display: "flex",
@@ -77,17 +97,19 @@ export const classificationSection = style({
 });
 
 export const sectionTitleRow = style({
-  display: "flex",
+  display: "grid",
+  gridTemplateColumns: "max-content minmax(0, 1fr)",
   alignItems: "center",
-  justifyContent: "space-between",
-  gap: vars.spacing[8],
+  columnGap: vars.spacing[8],
   width: "100%",
 });
 
 export const sectionTitleLabel = style({
-  flex: "0 0 auto",
-  width: "auto",
-  maxWidth: "55%",
+  minWidth: 0,
+  fontSize: vars.typography.fontSize[18],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: vars.typography.lineHeight.relaxed,
+  color: vars.color.palette.gray[800],
 });
 
 export const sectionErrorTextBottom = style({
@@ -102,19 +124,21 @@ export const sectionErrorTextBottom = style({
 
 export const sectionErrorTextInline = style({
   margin: 0,
-  flex: "1 1 0",
-  minWidth: "8rem",
+  justifySelf: "end",
+  minWidth: 0,
+  maxWidth: "100%",
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
   minHeight: vars.typography.lineHeight.normal,
   color: vars.color.palette.red[300],
   textAlign: "right",
+  overflow: "hidden",
+  whiteSpace: "nowrap",
 });
 
 /** 하단 에러 영역과 동일한 높이 — 제목 옆 배치 시 섹션 간 gap 유지용 */
 export const sectionErrorReserve = style({
   margin: 0,
-  marginTop: vars.spacing[8],
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
   minHeight: vars.typography.lineHeight.normal,
@@ -136,8 +160,8 @@ export const indoorOutdoorControl = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: vars.spacing[16],
-  width: "256px",
+  gap: "56px",
+  width: "296px",
   maxWidth: "100%",
   margin: "0 auto",
   padding: 0,
@@ -147,7 +171,7 @@ export const indoorOutdoorControl = style({
 
 export const indoorOutdoorChip = style({
   width: "120px",
-  maxWidth: "calc(50% - 8px)",
+  maxWidth: "calc(50% - 28px)",
 });
 
 export const photoSectionContent = style({
@@ -295,27 +319,52 @@ export const priceUnit = style({
   pointerEvents: "none",
 });
 
-export const textareaContainer = style({
+export const reportTextareaRoot = style({
   width: "100%",
-  minHeight: "140px",
+  minHeight: "200px",
   borderRadius: vars.radius[8],
-  border: `1px solid ${vars.color.palette.gray[400]}`,
-  backgroundColor: "white",
-  padding: "10px 16px 36px", // 하단 카운터 공간 확보
+  backgroundColor: vars.color.border.default,
+  padding: vars.spacing[16],
   boxSizing: "border-box",
   position: "relative",
+  display: "block",
+  cursor: "text",
+  opacity: 0.6,
+  selectors: {
+    "&:focus-within": {
+      opacity: 1,
+    },
+  },
 });
 
-export const textareaField = style({
+export const reportTextareaField = style({
   width: "100%",
-  height: "100px",
+  minHeight: "168px",
+  maxHeight: "168px",
   border: "none",
   outline: "none",
   resize: "none",
   fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.5,
   fontFamily: "inherit",
-  color: vars.color.text.content,
+  color: vars.color.text.title,
+  backgroundColor: "transparent",
   padding: 0,
+  overflow: "hidden",
+  "::placeholder": {
+    color: vars.color.text.surface,
+  },
+});
+
+export const reportTextareaCounter = style({
+  position: "absolute",
+  right: "48px",
+  bottom: "18px",
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.2,
+  color: vars.color.text.surface,
 });
 
 export const textareaClearButton = style({
@@ -336,12 +385,17 @@ export const textareaClearButton = style({
   },
 });
 
-export const charCounter = style({
+export const reportTextareaIcon = style({
   position: "absolute",
-  bottom: "12px",
   right: "16px",
-  fontSize: vars.typography.fontSize[12],
-  color: vars.color.palette.gray[500],
+  bottom: "14px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  color: vars.color.text.title,
+  pointerEvents: "none",
 });
 
 export const requiredMark = style({
@@ -426,9 +480,41 @@ export const photoUploadArea = style([
         cursor: "not-allowed",
         opacity: 0.5,
       },
+      '&[data-state="error"]': {
+        borderColor: vars.color.border.error,
+        borderStyle: "dashed",
+        backgroundColor: vars.color.bg.surface,
+        gap: vars.spacing[12],
+      },
+      '&[data-state="error"]:disabled': {
+        opacity: 1,
+      },
     },
   },
 ]);
+
+export const photoErrorIconCircle = style({
+  width: "32px",
+  height: "32px",
+  borderRadius: vars.radius.max,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.error,
+});
+
+export const photoUploadErrorMessage = style({
+  color: vars.color.text.error,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: "1.2",
+  textAlign: "center",
+  whiteSpace: "pre-line",
+  wordBreak: "keep-all",
+  maxWidth: "100%",
+});
 
 export const imageWrapper = style([
   reportPhotoTileBase,
@@ -437,6 +523,12 @@ export const imageWrapper = style([
     flex: "0 0 343px",
     borderRadius: vars.radius[12],
     overflow: "hidden",
+    boxSizing: "border-box",
+    selectors: {
+      '&[data-state="error"]': {
+        border: `1px dashed ${vars.color.border.error}`,
+      },
+    },
   },
 ]);
 
@@ -487,6 +579,20 @@ export const photoPreviewUploadOverlay = style({
   backgroundColor: "rgba(22, 24, 28, 0.08)",
   backdropFilter: "blur(2px)",
   zIndex: 5,
+});
+
+export const photoPreviewErrorOverlay = style({
+  position: "absolute",
+  inset: 0,
+  zIndex: 6,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: vars.spacing[12],
+  padding: vars.spacing[24],
+  backgroundColor: "rgba(245, 245, 245, 0.92)",
+  boxSizing: "border-box",
 });
 
 export const photoPreviewUploadSpinner = style({
@@ -579,6 +685,14 @@ export const privacyPolicyLink = style({
   border: "none",
   padding: 0,
   cursor: "pointer",
+  textAlign: "left",
+});
+
+/** 체크박스(20px) + gap(8px) 만큼 들여써 동의 문구와 정렬 */
+export const privacyPolicyLinkRow = style({
+  paddingLeft: "28px",
+  width: "100%",
+  boxSizing: "border-box",
 });
 
 export const photoAgreementGroup = style({
@@ -623,16 +737,48 @@ export const submitSubButton = style({
 });
 
 export const priceRow = style({
-  display: "flex",
-  gap: vars.spacing[16],
-  alignItems: "center",
-  justifyContent: "center",
   width: "100%",
 });
 
+export const priceRadioGroup = style({
+  width: "100%",
+});
+
+globalStyle(`${priceRadioGroup}${priceRadioGroup}`, {
+  width: "100%",
+});
+
+globalStyle(`${priceRadioGroup} > div`, {
+  width: "100%",
+});
+
+export const priceRadioGrid = style({
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  columnGap: vars.spacing[8],
+  alignItems: "center",
+  width: "100%",
+});
+
+export const priceUnknownRadio = style({
+  gridColumn: "1",
+  justifySelf: "start",
+});
+
+export const priceFreeRadio = style({
+  gridColumn: "2",
+  justifySelf: "center",
+});
+
+export const pricePaidRadio = style({
+  gridColumn: "3",
+  justifySelf: "end",
+});
+
 export const priceInputRow = style({
-  display: "flex",
-  gap: vars.spacing[8],
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  columnGap: vars.spacing[8],
   alignItems: "center",
   width: "100%",
 });
@@ -643,9 +789,16 @@ export const priceInputItem = style({
 });
 
 export const timeRow = style({
-  display: "flex",
-  gap: vars.spacing[8],
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+  columnGap: vars.spacing[8],
   alignItems: "center",
+});
+
+export const timeAllDayRow = style({
+  display: "flex",
+  justifyContent: "flex-start",
+  width: "100%",
 });
 
 export const timeSeparator = style({

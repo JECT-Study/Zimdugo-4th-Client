@@ -157,10 +157,10 @@ describe("applyValidationErrors", () => {
     const setError = vi.fn();
     const setSectionServerErrors = vi.fn();
 
-    applyValidationErrors(
-      [{ field: "roadAddress", message: "required" }],
-      { setError, setSectionServerErrors },
-    );
+    applyValidationErrors([{ field: "roadAddress", message: "required" }], {
+      setError,
+      setSectionServerErrors,
+    });
 
     expect(setError).toHaveBeenCalledWith("roadAddress", {
       type: "server",

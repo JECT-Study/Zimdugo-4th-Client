@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { postUploadUrl } from "#/features/report/api/create-upload-url";
 import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import {
-  ReportPhotoUploadValidationError,
+  type ReportPhotoUploadValidationError,
   uploadReportPhoto,
 } from "#/features/report/lib/upload-report-photo";
 import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/features/report/model/report-types";
@@ -40,6 +40,7 @@ describe("uploadReportPhoto", () => {
       category: UPLOAD_CATEGORY_LOCKER_REPORT,
       fileName: "locker-photo.jpg",
       contentType: "image/jpeg",
+      contentLength: file.size,
     });
     expect(uploadFileToPresignedUrl).toHaveBeenCalledWith({
       uploadUrl: "https://bucket.s3.amazonaws.com/key?X-Amz-Signature=abc",

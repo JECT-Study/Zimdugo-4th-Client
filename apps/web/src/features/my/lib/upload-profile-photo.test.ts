@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { prepareProfileImageFile } from "#/features/my/lib/prepare-profile-image-file";
+import {
+  type ProfilePhotoUploadValidationError,
+  uploadProfilePhoto,
+} from "#/features/my/lib/upload-profile-photo";
 import { postUploadUrl } from "#/features/report/api/create-upload-url";
 import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import { UPLOAD_CATEGORY_PROFILE } from "#/features/report/model/report-types";
-import { prepareProfileImageFile } from "#/features/my/lib/prepare-profile-image-file";
-import {
-  ProfilePhotoUploadValidationError,
-  uploadProfilePhoto,
-} from "#/features/my/lib/upload-profile-photo";
 
 vi.mock("#/features/report/api/create-upload-url", () => ({
   postUploadUrl: vi.fn(),
@@ -39,7 +39,7 @@ describe("uploadProfilePhoto", () => {
     });
     vi.mocked(uploadFileToPresignedUrl).mockResolvedValue(undefined);
 
-    await expect(uploadProfilePhoto( file)).resolves.toBe(
+    await expect(uploadProfilePhoto(file)).resolves.toBe(
       "https://cdn.example.com/profile/key.jpg",
     );
 
@@ -48,6 +48,7 @@ describe("uploadProfilePhoto", () => {
       category: UPLOAD_CATEGORY_PROFILE,
       fileName: "profile-photo.jpg",
       contentType: "image/jpeg",
+      contentLength: file.size,
     });
     expect(uploadFileToPresignedUrl).toHaveBeenCalledWith({
       uploadUrl: "https://bucket.s3.amazonaws.com/key?X-Amz-Signature=abc",
@@ -61,7 +62,7 @@ describe("uploadProfilePhoto", () => {
       type: "application/x-hwp",
     });
 
-    await expect(uploadProfilePhoto( invalidFile)).rejects.toMatchObject({
+    await expect(uploadProfilePhoto(invalidFile)).rejects.toMatchObject({
       name: "ProfilePhotoUploadValidationError",
       code: "invalid_type",
     } satisfies Partial<ProfilePhotoUploadValidationError>);
@@ -74,7 +75,7 @@ describe("uploadProfilePhoto", () => {
   it("GIF, WebP 등 대표 포맷이 아닌 이미지는 거부한다", async () => {
     const webpFile = new File(["webp"], "profile.webp", { type: "image/webp" });
 
-    await expect(uploadProfilePhoto( webpFile)).rejects.toMatchObject({
+    await expect(uploadProfilePhoto(webpFile)).rejects.toMatchObject({
       name: "ProfilePhotoUploadValidationError",
       code: "invalid_type",
     } satisfies Partial<ProfilePhotoUploadValidationError>);
@@ -93,7 +94,7 @@ describe("uploadProfilePhoto", () => {
     });
     vi.mocked(prepareProfileImageFile).mockResolvedValue(oversizedFile);
 
-    await expect(uploadProfilePhoto( file)).rejects.toMatchObject({
+    await expect(uploadProfilePhoto(file)).rejects.toMatchObject({
       name: "ProfilePhotoUploadValidationError",
       code: "max_size",
     } satisfies Partial<ProfilePhotoUploadValidationError>);

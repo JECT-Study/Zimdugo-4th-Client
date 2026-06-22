@@ -14,48 +14,52 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import {
-  type ReportPhotoValidationError,
-  validateReportPhotoFile,
-} from "#/features/report/lib/validate-report-photo-file";
-import {
-  ReportPhotoUploadValidationError,
-  uploadReportPhoto,
-} from "#/features/report/lib/upload-report-photo";
-import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
-import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
-import { requiresExifConsent } from "#/features/report/lib/requires-exif-consent";
-import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
-import { collectErrorSectionIds, mergeErrorSectionIds } from "#/features/report/lib/report-field-errors";
-import {
-  scrollToEarliestReportSection,
-  scrollToReportSection,
-} from "#/features/report/lib/scroll-to-report-section";
 import { postLockerReport } from "#/features/report/api/create-locker-report";
+import { normalizeReportPayload } from "#/features/report/lib/normalize-report-payload";
+import { parseReportSubmitFailure } from "#/features/report/lib/parse-report-submit-failure";
+import {
+  collectErrorSectionIds,
+  mergeErrorSectionIds,
+} from "#/features/report/lib/report-field-errors";
 import {
   clearReportPrivacyNavigationHold,
   consumeReportPrivacyNavigationState,
   shouldPreserveReportBlobUrlsOnUnmount,
   stashReportStateForPrivacyPolicy,
 } from "#/features/report/lib/report-privacy-navigation";
+import { requiresExifConsent } from "#/features/report/lib/requires-exif-consent";
+import { formatPriceInput } from "#/features/report/lib/sanitizePriceInput";
 import {
-  applyValidationErrors,
+  scrollToEarliestReportSection,
+  scrollToReportSection,
+} from "#/features/report/lib/scroll-to-report-section";
+import {
+  ReportPhotoUploadValidationError,
+  uploadReportPhoto,
+} from "#/features/report/lib/upload-report-photo";
+import {
+  type ReportPhotoValidationError,
+  validateReportPhotoFile,
+} from "#/features/report/lib/validate-report-photo-file";
+import { useAuthPopupStore } from "#/shared/store/authPopupStore";
+import { useAuthStore } from "#/shared/store/authStore";
+import {
   applyClientValidationIssues,
+  applyValidationErrors,
   getSectionAnchorFields,
   toClientValidationIssues,
 } from "./report-error-targets";
 import { parseReportForm, reportSchema } from "./report-schema";
-import { useAuthStore } from "#/shared/store/authStore";
-import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import {
   MAX_REPORT_PHOTOS,
   type ReportFormValues,
   type ReportSectionId,
   reportDefaultValues,
-  STEP_1_FIELDS,
 } from "./report-types";
 
-const getPhotoValidationMessage = (error: ReportPhotoValidationError): string =>
+const getPhotoValidationMessage = (
+  error: ReportPhotoValidationError,
+): string =>
   error === "invalid_type"
     ? m.report_alert_image_only()
     : m.report_photo_max_size_exceeded();
@@ -67,16 +71,96 @@ const parsePriceNumber = (formatted: string): number | null => {
 };
 
 type PendingValidationNavigation = {
-  earliestStep: 1 | 2 | null;
   firstSectionId: ReportSectionId | null;
 };
 
-/** AnimatePresence exit(200ms) + wait 모드 이후 DOM 마운트 대기 */
-const STEP_TRANSITION_SCROLL_MS = 250;
+export const isReportRequiredFieldsComplete = (
+  values: Pick<
+    ReportFormValues,
+    | "roadAddress"
+    | "latitude"
+    | "longitude"
+    | "indoorOutdoorType"
+    | "lockerType"
+    | "hasFloor"
+    | "floorType"
+    | "floorNumber"
+    | "sizeTypes"
+  >,
+): boolean => {
+  const isFloorComplete =
+    values.hasFloor === false ||
+    (values.hasFloor === true &&
+      values.floorType !== null &&
+      values.floorNumber !== null &&
+      values.floorNumber >= 1);
+
+  return (
+    values.roadAddress.trim().length > 0 &&
+    values.latitude !== null &&
+    values.longitude !== null &&
+    values.indoorOutdoorType !== null &&
+    values.lockerType !== null &&
+    values.hasFloor !== null &&
+    isFloorComplete &&
+    values.sizeTypes.length > 0
+  );
+};
+
+export const isReportSubmitEnabled = ({
+  areRequiredFieldsComplete,
+  shouldRequireExifConsent,
+  locationConsentAgreed,
+}: {
+  areRequiredFieldsComplete: boolean;
+  shouldRequireExifConsent: boolean;
+  locationConsentAgreed: boolean;
+}): boolean => {
+  const isExifConsentSatisfied =
+    !shouldRequireExifConsent || locationConsentAgreed;
+
+  return isExifConsentSatisfied && areRequiredFieldsComplete;
+};
+
+export const isReportOptionalFieldsComplete = ({
+  isFree,
+  minPrice,
+  maxPrice,
+  startTime,
+  endTime,
+  additionalInfo,
+  imageUrl,
+  uploadedImageCount,
+}: Pick<
+  ReportFormValues,
+  | "isFree"
+  | "minPrice"
+  | "maxPrice"
+  | "startTime"
+  | "endTime"
+  | "additionalInfo"
+  | "imageUrl"
+> & {
+  uploadedImageCount: number;
+}): boolean => {
+  const isPriceComplete =
+    isFree === true ||
+    isFree === null ||
+    (isFree === false && minPrice !== null && maxPrice !== null);
+  const isTimeComplete = startTime !== null && endTime !== null;
+  const isAdditionalInfoComplete = additionalInfo.trim().length > 0;
+  const isPhotoComplete = imageUrl !== null || uploadedImageCount > 0;
+
+  return (
+    isPriceComplete &&
+    isTimeComplete &&
+    isAdditionalInfoComplete &&
+    isPhotoComplete
+  );
+};
 
 export function useReportForm(): {
   form: UseFormReturn<ReportFormValues>;
-  step: number;
   sectionServerErrors: Partial<Record<ReportSectionId, string>>;
   isAddressOverlayOpen: boolean;
   setIsAddressOverlayOpen: (open: boolean) => void;
@@ -95,8 +179,7 @@ export function useReportForm(): {
   minPriceDisplay: string;
   maxPriceDisplay: string;
   handlers: {
-    handleBack: () => void;
-    handleNext: () => Promise<void>;
+    handleSubmitPress: () => Promise<void>;
     handleImageClick: () => void;
     handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
     handleImageRemove: (index: number) => void;
@@ -111,7 +194,12 @@ export function useReportForm(): {
     handleConfirmSubmit: () => Promise<void>;
     preparePrivacyPolicyNavigation: () => void;
   };
-  validation: { isStep1Valid: boolean; isStep2Valid: boolean };
+  validation: {
+    areRequiredFieldsComplete: boolean;
+    isExifConsentSatisfied: boolean;
+    isSubmitEnabled: boolean;
+    areOptionalFieldsComplete: boolean;
+  };
 } {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const form = useForm<ReportFormValues>({
@@ -120,9 +208,8 @@ export function useReportForm(): {
     mode: "onSubmit",
   });
 
-  const { control, setValue, trigger, handleSubmit } = form;
+  const { control, setValue, handleSubmit } = form;
 
-  const [step, setStep] = useState(1);
   const [sectionServerErrors, setSectionServerErrors] = useState<
     Partial<Record<ReportSectionId, string>>
   >({});
@@ -130,7 +217,8 @@ export function useReportForm(): {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isPhotoErrorPopupOpen, setIsPhotoErrorPopupOpen] = useState(false);
   const [isSubmitErrorPopupOpen, setIsSubmitErrorPopupOpen] = useState(false);
-  const [isSubmitConfirmPopupOpen, setIsSubmitConfirmPopupOpen] = useState(false);
+  const [isSubmitConfirmPopupOpen, setIsSubmitConfirmPopupOpen] =
+    useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState("");
   const [photoErrorMessage, setPhotoErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,31 +228,22 @@ export function useReportForm(): {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedPhotoFileRef = useRef<File | null>(null);
   const uploadedImagesRef = useRef(uploadedImages);
-  const pendingValidationNavigationRef = useRef<PendingValidationNavigation | null>(
-    null,
-  );
-  const scrollTimeoutRef = useRef<number | null>(null);
+  const pendingValidationNavigationRef =
+    useRef<PendingValidationNavigation | null>(null);
+  const scrollRafRef = useRef<number | null>(null);
   const sectionServerErrorsRef = useRef(sectionServerErrors);
 
-  const scheduleSectionScroll = useCallback(
-    (scroll: () => void, afterStepTransition: boolean) => {
-      if (scrollTimeoutRef.current !== null) {
-        window.clearTimeout(scrollTimeoutRef.current);
-        scrollTimeoutRef.current = null;
-      }
+  const scheduleSectionScroll = useCallback((scroll: () => void) => {
+    if (scrollRafRef.current !== null) {
+      window.cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
 
-      if (afterStepTransition) {
-        scrollTimeoutRef.current = window.setTimeout(() => {
-          scrollTimeoutRef.current = null;
-          scroll();
-        }, STEP_TRANSITION_SCROLL_MS);
-        return;
-      }
-
-      requestAnimationFrame(scroll);
-    },
-    [],
-  );
+    scrollRafRef.current = window.requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      scroll();
+    });
+  }, []);
 
   useEffect(() => {
     sectionServerErrorsRef.current = sectionServerErrors;
@@ -172,8 +251,8 @@ export function useReportForm(): {
 
   useEffect(() => {
     return () => {
-      if (scrollTimeoutRef.current !== null) {
-        window.clearTimeout(scrollTimeoutRef.current);
+      if (scrollRafRef.current !== null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
       }
     };
   }, []);
@@ -185,7 +264,6 @@ export function useReportForm(): {
   useEffect(() => {
     const restored = consumeReportPrivacyNavigationState();
     if (restored) {
-      setStep(restored.step);
       form.reset(restored.values);
       setMinPriceDisplay(restored.minPriceDisplay);
       setMaxPriceDisplay(restored.maxPriceDisplay);
@@ -209,12 +287,24 @@ export function useReportForm(): {
     };
   }, []);
 
-  const roadAddress = useWatch({ control, name: "roadAddress" }) ?? "";
-  const lockerType = useWatch({ control, name: "lockerType" });
-  const indoorOutdoorType = useWatch({ control, name: "indoorOutdoorType" });
   const locationConsentAgreed =
     useWatch({ control, name: "locationConsentAgreed" }) ?? false;
   const imageUrl = useWatch({ control, name: "imageUrl" }) ?? null;
+  const roadAddress = useWatch({ control, name: "roadAddress" }) ?? "";
+  const latitude = useWatch({ control, name: "latitude" });
+  const longitude = useWatch({ control, name: "longitude" });
+  const indoorOutdoorType = useWatch({ control, name: "indoorOutdoorType" });
+  const lockerType = useWatch({ control, name: "lockerType" });
+  const hasFloor = useWatch({ control, name: "hasFloor" });
+  const floorType = useWatch({ control, name: "floorType" });
+  const floorNumber = useWatch({ control, name: "floorNumber" });
+  const sizeTypes = useWatch({ control, name: "sizeTypes" }) ?? [];
+  const isFree = useWatch({ control, name: "isFree" });
+  const minPrice = useWatch({ control, name: "minPrice" });
+  const maxPrice = useWatch({ control, name: "maxPrice" });
+  const startTime = useWatch({ control, name: "startTime" });
+  const endTime = useWatch({ control, name: "endTime" });
+  const additionalInfo = useWatch({ control, name: "additionalInfo" }) ?? "";
 
   useEffect(() => {
     if (
@@ -244,6 +334,24 @@ export function useReportForm(): {
     [form],
   );
 
+  const resetPhotoInputState = useCallback(() => {
+    for (const url of uploadedImagesRef.current) {
+      if (url.startsWith("blob:")) {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    selectedPhotoFileRef.current = null;
+    setUploadedImages([]);
+    setValue("imageUrl", null, { shouldDirty: true });
+    setValue("locationConsentAgreed", false, { shouldDirty: true });
+    form.clearErrors("locationConsentAgreed");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [form, setValue]);
+
   const getExifConsentRequirement = useCallback(() => {
     return requiresExifConsent({
       imageUrl: form.getValues("imageUrl"),
@@ -252,49 +360,43 @@ export function useReportForm(): {
     });
   }, [form]);
 
-  const applyZodIssuesToUi = useCallback(
-    (stepFilter?: 1 | 2) => {
-      const parsed = parseReportForm(form.getValues());
-      if (parsed.success) return [];
+  const applyZodIssuesToUi = useCallback(() => {
+    const parsed = parseReportForm(form.getValues());
+    if (parsed.success) return [];
 
-      const shouldRequireExifConsent = getExifConsentRequirement();
-      const issues = toClientValidationIssues(parsed.error.issues).filter(
-        (issue) => {
-          if (issue.path[0] !== "locationConsentAgreed") {
-            return true;
-          }
+    const shouldRequireExifConsent = getExifConsentRequirement();
+    const issues = toClientValidationIssues(parsed.error.issues).filter(
+      (issue) => {
+        if (issue.path[0] !== "locationConsentAgreed") {
+          return true;
+        }
 
-          return shouldRequireExifConsent;
-        },
-      );
+        return shouldRequireExifConsent;
+      },
+    );
 
-      return applyClientValidationIssues(
-        issues,
-        {
-          setError: form.setError,
-          setSectionServerErrors,
-        },
-        stepFilter ? { step: stepFilter } : undefined,
-      );
-    },
-    [form, getExifConsentRequirement],
-  );
+    return applyClientValidationIssues(issues, {
+      setError: form.setError,
+      setSectionServerErrors,
+    });
+  }, [form, getExifConsentRequirement]);
 
-  const handleBack = useCallback(() => {
-    if (step > 1) setStep((s) => s - 1);
-  }, [step]);
+  const handleAuthFailure = useCallback(() => {
+    pendingValidationNavigationRef.current = null;
+    form.clearErrors();
+    setSectionServerErrors({});
+    setSubmitErrorMessage("");
+    setPhotoErrorMessage("");
+    setIsSubmitErrorPopupOpen(false);
+    setIsPhotoErrorPopupOpen(false);
+    useAuthPopupStore.getState().openPopup("/report");
+  }, [form]);
 
-  const handleSubmitErrorPopupConfirm = useCallback(() => {
+  const scrollToPendingValidationSection = useCallback(() => {
     const pending = pendingValidationNavigationRef.current;
     pendingValidationNavigationRef.current = null;
-    setIsSubmitErrorPopupOpen(false);
 
     if (!pending) return;
-
-    const afterStepTransition = pending.earliestStep === 1 && step === 2;
-    if (pending.earliestStep === 1) {
-      setStep(1);
-    }
 
     scheduleSectionScroll(() => {
       if (pending.firstSectionId) {
@@ -309,20 +411,29 @@ export function useReportForm(): {
       if (sectionIds.length > 0) {
         scrollToEarliestReportSection(sectionIds);
       }
-    }, afterStepTransition);
-  }, [form.formState.errors, scheduleSectionScroll, step]);
+    });
+  }, [form.formState.errors, scheduleSectionScroll]);
 
-  const handleSubmitErrorPopupOpenChange = useCallback((open: boolean) => {
-    if (!open) {
-      pendingValidationNavigationRef.current = null;
-    }
-    setIsSubmitErrorPopupOpen(open);
-  }, []);
+  const handleSubmitErrorPopupConfirm = useCallback(() => {
+    setIsSubmitErrorPopupOpen(false);
+    scrollToPendingValidationSection();
+  }, [scrollToPendingValidationSection]);
+
+  const handleSubmitErrorPopupOpenChange = useCallback(
+    (open: boolean) => {
+      setIsSubmitErrorPopupOpen(open);
+
+      if (!open) {
+        scrollToPendingValidationSection();
+      }
+    },
+    [scrollToPendingValidationSection],
+  );
 
   const onSubmit = useCallback(
     async (data: ReportFormValues) => {
       if (!isAuthenticated) {
-        useAuthPopupStore.getState().openPopup("/report");
+        handleAuthFailure();
         return;
       }
 
@@ -333,7 +444,6 @@ export function useReportForm(): {
       });
       if (shouldRequireExifConsent && !data.locationConsentAgreed) {
         pendingValidationNavigationRef.current = {
-          earliestStep: 2,
           firstSectionId: "agreement",
         };
         setSubmitErrorMessage(m.report_submit_agreement_required());
@@ -351,14 +461,15 @@ export function useReportForm(): {
             imageUrl = await uploadReportPhoto(selectedPhotoFile);
           } catch (error) {
             if (parseReportSubmitFailure(error).kind === "auth") {
-              useAuthPopupStore.getState().openPopup("/report");
+              handleAuthFailure();
               return;
             }
 
             if (error instanceof ReportPhotoUploadValidationError) {
-              setPhotoErrorMessage(
-                getPhotoValidationMessage(error.code),
-              );
+              const message = getPhotoValidationMessage(error.code);
+              resetPhotoInputState();
+              setPhotoErrorMessage(message);
+              setSectionServerErrors((prev) => ({ ...prev, photo: message }));
               setIsPhotoErrorPopupOpen(true);
               requestAnimationFrame(() => {
                 scrollToReportSection("photo");
@@ -366,7 +477,10 @@ export function useReportForm(): {
               return;
             }
 
-            setPhotoErrorMessage(m.report_photo_upload_failed());
+            const message = m.report_photo_upload_failed();
+            resetPhotoInputState();
+            setPhotoErrorMessage(message);
+            setSectionServerErrors((prev) => ({ ...prev, photo: message }));
             setIsPhotoErrorPopupOpen(true);
             requestAnimationFrame(() => {
               scrollToReportSection("photo");
@@ -389,9 +503,6 @@ export function useReportForm(): {
           });
 
           pendingValidationNavigationRef.current = {
-            earliestStep: result.agreementConsentRequired
-              ? 2
-              : result.earliestStep,
             firstSectionId: result.firstSectionId,
           };
 
@@ -407,7 +518,7 @@ export function useReportForm(): {
         }
 
         if (failure.kind === "auth") {
-          useAuthPopupStore.getState().openPopup("/report");
+          handleAuthFailure();
           return;
         }
 
@@ -418,20 +529,14 @@ export function useReportForm(): {
         setIsSubmitting(false);
       }
     },
-    [form, isAuthenticated],
+    [form, handleAuthFailure, isAuthenticated, resetPhotoInputState],
   );
 
   const scrollToFirstFieldError = useCallback(
-    (
-      errors: FieldErrors<ReportFormValues>,
-      afterStepTransition = false,
-    ) => {
+    (errors: FieldErrors<ReportFormValues>) => {
       const sectionIds = collectErrorSectionIds(errors);
       if (sectionIds.length === 0) return;
-      scheduleSectionScroll(
-        () => scrollToEarliestReportSection(sectionIds),
-        afterStepTransition,
-      );
+      scheduleSectionScroll(() => scrollToEarliestReportSection(sectionIds));
     },
     [scheduleSectionScroll],
   );
@@ -440,66 +545,35 @@ export function useReportForm(): {
     (errors: FieldErrors<ReportFormValues>) => {
       setIsSubmitting(false);
       const sectionIds = applyZodIssuesToUi();
-      const hasStep1Error = STEP_1_FIELDS.some((field) => errors[field]);
-      const afterStepTransition = hasStep1Error && step === 2;
-      if (hasStep1Error) {
-        setStep(1);
-      }
       if (sectionIds.length > 0) {
-        scheduleSectionScroll(
-          () => scrollToEarliestReportSection(sectionIds),
-          afterStepTransition,
-        );
+        scheduleSectionScroll(() => scrollToEarliestReportSection(sectionIds));
         return;
       }
-      scrollToFirstFieldError(errors, afterStepTransition);
+      scrollToFirstFieldError(errors);
     },
-    [applyZodIssuesToUi, scrollToFirstFieldError, scheduleSectionScroll, step],
+    [applyZodIssuesToUi, scrollToFirstFieldError, scheduleSectionScroll],
   );
 
-  const handleSubmitConfirmPopupOpenChange = useCallback((open: boolean) => {
-    if (isSubmitting) {
-      return;
-    }
-    setIsSubmitConfirmPopupOpen(open);
-  }, [isSubmitting]);
+  const handleSubmitConfirmPopupOpenChange = useCallback(
+    (open: boolean) => {
+      if (isSubmitting) {
+        return;
+      }
+      setIsSubmitConfirmPopupOpen(open);
+    },
+    [isSubmitting],
+  );
 
   const handleConfirmSubmit = useCallback(async () => {
     setIsSubmitConfirmPopupOpen(false);
     await handleSubmit(onSubmit, onInvalid)();
   }, [handleSubmit, onInvalid, onSubmit]);
 
-  const handleNext = useCallback(async () => {
-    if (step < 2) {
-      const isValid = await trigger([...STEP_1_FIELDS]);
-      if (isValid) {
-        setStep(2);
-        window.scrollTo(0, 0);
-      } else {
-        const sectionIds = applyZodIssuesToUi(1);
-        if (sectionIds.length > 0) {
-          requestAnimationFrame(() => {
-            scrollToEarliestReportSection(sectionIds);
-          });
-        }
-      }
-      return;
-    }
-
-    await handleSubmit(
-      () => {
-        setIsSubmitConfirmPopupOpen(true);
-      },
-      onInvalid,
-    )();
-  }, [
-    step,
-    trigger,
-    handleSubmit,
-    onSubmit,
-    onInvalid,
-    applyZodIssuesToUi,
-  ]);
+  const handleSubmitPress = useCallback(async () => {
+    await handleSubmit(() => {
+      setIsSubmitConfirmPopupOpen(true);
+    }, onInvalid)();
+  }, [handleSubmit, onInvalid]);
 
   const formatPrice = useCallback((val: string) => formatPriceInput(val), []);
 
@@ -555,9 +629,11 @@ export function useReportForm(): {
       if (!files?.length) return;
 
       if (uploadedImages.length >= MAX_REPORT_PHOTOS) {
-        setPhotoErrorMessage(m.report_photo_max_count_exceeded());
+        const message = m.report_photo_max_count_exceeded();
+        resetPhotoInputState();
+        setPhotoErrorMessage(message);
+        setSectionServerErrors((prev) => ({ ...prev, photo: message }));
         setIsPhotoErrorPopupOpen(true);
-        e.target.value = "";
         return;
       }
 
@@ -565,9 +641,11 @@ export function useReportForm(): {
       const validation = validateReportPhotoFile(selectedFile);
 
       if (!validation.ok) {
-        setPhotoErrorMessage(getPhotoValidationMessage(validation.error));
+        const message = getPhotoValidationMessage(validation.error);
+        resetPhotoInputState();
+        setPhotoErrorMessage(message);
+        setSectionServerErrors((prev) => ({ ...prev, photo: message }));
         setIsPhotoErrorPopupOpen(true);
-        e.target.value = "";
         return;
       }
 
@@ -583,19 +661,18 @@ export function useReportForm(): {
       clearSectionError("photo");
       e.target.value = "";
     },
-    [clearSectionError, setValue, uploadedImages],
+    [clearSectionError, resetPhotoInputState, setValue, uploadedImages],
   );
 
   const preparePrivacyPolicyNavigation = useCallback(() => {
     stashReportStateForPrivacyPolicy({
-      step,
       values: form.getValues(),
       minPriceDisplay,
       maxPriceDisplay,
       uploadedImages,
       selectedPhotoFile: selectedPhotoFileRef.current,
     });
-  }, [form, maxPriceDisplay, minPriceDisplay, step, uploadedImages]);
+  }, [form, maxPriceDisplay, minPriceDisplay, uploadedImages]);
 
   const handleImageRemove = useCallback(
     (index: number) => {
@@ -613,18 +690,42 @@ export function useReportForm(): {
     [clearSectionError, form, setValue, uploadedImages],
   );
 
-  const isStep1Valid =
-    !!roadAddress.trim() && lockerType !== null && indoorOutdoorType !== null;
   const shouldRequireExifConsent = requiresExifConsent({
     imageUrl,
     uploadedImageCount: uploadedImages.length,
     hasSelectedPhotoFile: selectedPhotoFileRef.current !== null,
   });
-  const isStep2Valid = !shouldRequireExifConsent || locationConsentAgreed;
+  const areRequiredFieldsComplete = isReportRequiredFieldsComplete({
+    roadAddress,
+    latitude,
+    longitude,
+    indoorOutdoorType,
+    lockerType,
+    hasFloor,
+    floorType,
+    floorNumber,
+    sizeTypes,
+  });
+  const isExifConsentSatisfied =
+    !shouldRequireExifConsent || locationConsentAgreed;
+  const isSubmitEnabled = isReportSubmitEnabled({
+    areRequiredFieldsComplete,
+    shouldRequireExifConsent,
+    locationConsentAgreed,
+  });
+  const areOptionalFieldsComplete = isReportOptionalFieldsComplete({
+    isFree,
+    minPrice,
+    maxPrice,
+    startTime,
+    endTime,
+    additionalInfo,
+    imageUrl,
+    uploadedImageCount: uploadedImages.length,
+  });
 
   return {
     form,
-    step,
     sectionServerErrors,
     isAddressOverlayOpen,
     setIsAddressOverlayOpen,
@@ -643,8 +744,7 @@ export function useReportForm(): {
     minPriceDisplay,
     maxPriceDisplay,
     handlers: {
-      handleBack,
-      handleNext,
+      handleSubmitPress,
       handleImageClick,
       handleImageChange,
       handleImageRemove,
@@ -659,6 +759,11 @@ export function useReportForm(): {
       handleConfirmSubmit,
       preparePrivacyPolicyNavigation,
     },
-    validation: { isStep1Valid, isStep2Valid },
+    validation: {
+      areRequiredFieldsComplete,
+      isExifConsentSatisfied,
+      isSubmitEnabled,
+      areOptionalFieldsComplete,
+    },
   };
 }

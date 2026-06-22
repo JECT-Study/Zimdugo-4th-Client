@@ -73,12 +73,13 @@ export function LocationPickerOverlay({
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
   const [isInitialSetupComplete, setIsInitialSetupComplete] = useState(false);
 
-  const [currentAddress, setCurrentAddress] = useState(
+  const [currentAddress, setCurrentAddress] = useState<string>(
     m.report_location_select_placeholder(),
   );
-  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>(
-    initialCoords ?? DEFAULT_COORDS,
-  );
+  const [currentCoords, setCurrentCoords] = useState<{
+    lat: number;
+    lng: number;
+  }>(initialCoords ?? DEFAULT_COORDS);
 
   const [isMapMoving, setIsMapMoving] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -298,7 +299,12 @@ export function LocationPickerOverlay({
       setIsMapMoving(false);
       updateAddressFromCoords(lat, lng);
     });
-  }, [completeInitialSetup, initialCoords, isSdkLoaded, updateAddressFromCoords]);
+  }, [
+    completeInitialSetup,
+    initialCoords,
+    isSdkLoaded,
+    updateAddressFromCoords,
+  ]);
 
   useEffect(() => {
     if (!isMapInteractive || !mapInstanceRef.current) return;
@@ -340,8 +346,7 @@ export function LocationPickerOverlay({
     onSelect(currentAddress, currentCoords);
   };
 
-  const isAddressPending =
-    !isMapInteractive || isMapMoving || isGeocoding;
+  const isAddressPending = !isMapInteractive || isMapMoving || isGeocoding;
   const isConfirmDisabled = isAddressPending;
 
   return (
@@ -353,7 +358,10 @@ export function LocationPickerOverlay({
 
         <div className={centerPinContainer}>
           <IconNavigationPin40
-            className={[centerPin, !isMapMoving && isMapInteractive ? "bounce" : ""]
+            className={[
+              centerPin,
+              !isMapMoving && isMapInteractive ? "bounce" : "",
+            ]
               .filter(Boolean)
               .join(" ")}
           />
@@ -379,11 +387,11 @@ export function LocationPickerOverlay({
 
       <div className={bottomPanel}>
         <div className={addressInfo}>
-          <span className={addressLabel}>{m.report_location_selected_label()}</span>
+          <span className={addressLabel}>
+            {m.report_location_selected_label()}
+          </span>
           <div className={addressText}>
-            {isAddressPending
-              ? m.report_location_loading()
-              : currentAddress}
+            {isAddressPending ? m.report_location_loading() : currentAddress}
           </div>
         </div>
         <Button

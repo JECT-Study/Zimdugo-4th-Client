@@ -191,7 +191,11 @@ export type ApplyValidationErrorsResult = {
 
 export function applyValidationErrors(
   errors: ValidationErrorItem[],
-  { setError, setSectionServerErrors, clearErrors }: ApplyValidationErrorsParams,
+  {
+    setError,
+    setSectionServerErrors,
+    clearErrors,
+  }: ApplyValidationErrorsParams,
 ): ApplyValidationErrorsResult {
   clearErrors?.();
   setSectionServerErrors({});
@@ -277,7 +281,9 @@ export function getSectionAnchorFields(
   sectionId: ReportSectionId,
 ): Array<keyof ReportFormValues> {
   return Object.entries(FIELD_TARGETS)
-    .filter(([, target]) => target.sectionId === sectionId && target.anchorField)
+    .filter(
+      ([, target]) => target.sectionId === sectionId && target.anchorField,
+    )
     .map(([, target]) => target.anchorField as keyof ReportFormValues);
 }
 

@@ -57,6 +57,23 @@ export const selection = style({
   pointerEvents: "none",
 });
 
+export const pickerCenterAccessory = style({
+  position: "absolute",
+  top: "24px",
+  left: "50%",
+  zIndex: 2,
+  height: "40px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: vars.color.text.title,
+  fontSize: vars.typography.fontSize[16],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: "120%",
+  pointerEvents: "none",
+  transform: "translateX(-50%)",
+});
+
 export const dialColumn = style({
   position: "relative",
   zIndex: 1,

@@ -16,6 +16,13 @@ export type LockerType =
 
 export type SizeType = "SMALL" | "MEDIUM" | "LARGE";
 
+export type ReportPriceType = "FREE" | "PAID" | "UNKNOWN";
+
+export type ReportOperatingTimeType =
+  | "OPEN_24_HOURS"
+  | "TIME_RANGE"
+  | "UNKNOWN";
+
 export type ReportFormValues = {
   roadAddress: string;
   latitude: number | null;
@@ -36,13 +43,23 @@ export type ReportFormValues = {
   imageUrl: string | null;
 };
 
-export type LockerReportCreateRequest = ReportFormValues & {
-  floorInputValid: boolean;
-  enumInputValid: boolean;
-  priceInputValid: boolean;
-  operatingHoursValid: boolean;
-  sizeTypesValid: boolean;
-};
+export interface LockerReportCreateRequest {
+  roadAddress: string;
+  latitude: number;
+  longitude: number;
+  locationConsentAgreed: boolean;
+  indoorOutdoorType: IndoorOutdoorType;
+  lockerType: LockerType;
+  floorType: FloorType | null;
+  floorNumber: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  startTime: string | null;
+  endTime: string | null;
+  sizeTypes: SizeType[];
+  additionalInfo: string;
+  imageUrl: string | null;
+}
 
 export type ReportSectionId =
   | "location"
@@ -85,7 +102,7 @@ export const MAX_REPORT_PHOTOS = 1;
 export const MAX_REPORT_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_REPORT_ADDITIONAL_INFO_LENGTH = 255;
 
-export const REPORT_PRICE_MIN = 1_000;
+export const REPORT_PRICE_MIN = 0;
 export const REPORT_PRICE_MAX = 100_000;
 
 export const LOCKER_TYPES = [
@@ -99,7 +116,11 @@ export const LOCKER_TYPES = [
   "ETC",
 ] as const satisfies readonly LockerType[];
 
-export const SIZE_TYPES = ["SMALL", "MEDIUM", "LARGE"] as const satisfies readonly SizeType[];
+export const SIZE_TYPES = [
+  "SMALL",
+  "MEDIUM",
+  "LARGE",
+] as const satisfies readonly SizeType[];
 
 export const AGGREGATE_VALIDATION_FIELDS = [
   "floorInputValid",
@@ -109,7 +130,8 @@ export const AGGREGATE_VALIDATION_FIELDS = [
   "sizeTypesValid",
 ] as const;
 
-export type AggregateValidationField = (typeof AGGREGATE_VALIDATION_FIELDS)[number];
+export type AggregateValidationField =
+  (typeof AGGREGATE_VALIDATION_FIELDS)[number];
 
 export type UploadCategory = "PROFILE" | "LOCKER_REPORT";
 
@@ -123,6 +145,7 @@ export type UploadCreateRequest = {
   category: UploadCategory;
   fileName: string;
   contentType: string;
+  contentLength: number;
 };
 
 export type UploadCreateData = {
@@ -147,7 +170,7 @@ export type ValidationErrorItem = {
 };
 
 export type ValidationErrorResponse = {
-  code: "VALIDATION_FAILED";
+  code: "VALIDATION_FAILED" | "COMMON-400-1";
   message: string;
   status: 400;
   timestamp: string;
@@ -158,7 +181,6 @@ export type ValidationErrorResponse = {
 
 export type LockerReportCreateResponse = {
   reportId: number;
-  name: string;
   roadAddress: string;
   latitude: number;
   longitude: number;

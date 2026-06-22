@@ -28,6 +28,40 @@ describe("parseReportSubmitFailure", () => {
     });
   });
 
+  it("COMMON-400-1 검증 실패 응답을 validation kind로 파싱한다", () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          code: "COMMON-400-1",
+          message: "요청 값 검증에 실패했습니다.",
+          status: 400,
+          timestamp: "2026-06-22T05:38:49.393Z",
+          path: "/api/v1/locker-reports",
+          traceId: "trace-1",
+          validationErrors: [
+            {
+              field: "floorInputValid",
+              message: "validation.invalid_floor",
+              rejectedValue: false,
+            },
+          ],
+        },
+      },
+    };
+
+    expect(parseReportSubmitFailure(error)).toEqual({
+      kind: "validation",
+      validationErrors: [
+        {
+          field: "floorInputValid",
+          message: "validation.invalid_floor",
+          rejectedValue: false,
+        },
+      ],
+    });
+  });
+
   it("401 응답을 auth kind로 파싱한다", () => {
     expect(
       parseReportSubmitFailure({

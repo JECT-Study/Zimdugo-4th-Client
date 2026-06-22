@@ -14,10 +14,14 @@ export const reportPageLoadingShellStyle: CSSProperties = {
   width: "100%",
   maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   margin: "0 auto",
-  height: "100dvh",
+  flex: 1,
+  minHeight: 0,
+  height: "100%",
   position: "relative",
   overflow: "hidden",
   backgroundColor: REPORT_PAGE_BG,
+  display: "flex",
+  flexDirection: "column",
 };
 
 export const reportPageInlineFallbackStyle: CSSProperties = {
@@ -39,10 +43,13 @@ export const reportHeaderInlineFallbackStyle: CSSProperties = {
 };
 
 export const reportContentInlineFallbackStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
   width: "100%",
-  height: "100%",
   padding: `calc(56px + env(safe-area-inset-top, 0px)) ${REPORT_SIDE_PADDING} 100px`,
   overflowY: "auto",
+  overflowAnchor: "none",
+  overscrollBehaviorY: "contain",
   display: "flex",
   flexDirection: "column",
   boxSizing: "border-box",
@@ -98,14 +105,19 @@ export const reportPageLoadingSpinnerStyle: CSSProperties = {
   backgroundColor: "rgba(255, 255, 255, 0.78)",
 };
 
+const reportPageContentShellStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+};
+
 export const reportPageHiddenContentStyle: CSSProperties = {
   visibility: "hidden",
   pointerEvents: "none",
-  height: "100%",
+  ...reportPageContentShellStyle,
 };
 
 export const reportPageVisibleContentStyle: CSSProperties = {
   visibility: "visible",
   pointerEvents: "auto",
-  height: "100%",
+  ...reportPageContentShellStyle,
 };

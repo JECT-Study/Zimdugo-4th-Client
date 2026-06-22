@@ -23,6 +23,7 @@ const fallbackShellStyle: CSSProperties = {
 export function AppShell({ header, bottomTabBar, children }: AppShellProps) {
   const fallbackMainStyle = {
     flex: 1,
+    minHeight: 0,
     width: "100%",
     display: "flex",
     flexDirection: "column",

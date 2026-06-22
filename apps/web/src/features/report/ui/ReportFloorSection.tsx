@@ -9,10 +9,10 @@ import { useFormContext, useWatch } from "react-hook-form";
 import type { ReportFormValues } from "#/features/report/model/report-types";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { PickerTriggerButton } from "./PickerTriggerButton";
-import { ReportSectionError } from "./ReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
+  disabledSection,
   floorChoiceButton,
   floorControlRow,
   placeType,
@@ -21,36 +21,55 @@ import {
 } from "./report.css.ts";
 
 interface ReportFloorSectionProps {
+  isDisabled?: boolean;
   sectionServerError?: string;
   onFieldChange?: () => void;
 }
 
-const FLOOR_SCOPE = {
-  ground: "ground",
-  underground: "underground",
-} as const;
+const MAX_FLOOR = 99;
+const DEFAULT_FLOOR_VALUE = "1";
 
-type FloorScope = (typeof FLOOR_SCOPE)[keyof typeof FLOOR_SCOPE];
+const parseFloorPickerValue = (
+  value: string,
+): Pick<ReportFormValues, "floorType" | "floorNumber"> | null => {
+  const floor = Number.parseInt(value, 10);
 
-const normalizeFloorScope = (value: string): FloorScope => {
-  if (
-    value === FLOOR_SCOPE.underground ||
-    value === m.report_floor_underground()
-  ) {
-    return FLOOR_SCOPE.underground;
-  }
+  if (Number.isNaN(floor) || floor === 0) return null;
 
-  return FLOOR_SCOPE.ground;
+  return {
+    floorType: floor < 0 ? "UNDERGROUND" : "ABOVE_GROUND",
+    floorNumber: Math.abs(floor),
+  };
 };
 
-const scopeFromFloorType = (
+const pickerValueFromFloor = (
   floorType: ReportFormValues["floorType"],
-): FloorScope => {
-  if (floorType === "UNDERGROUND") return FLOOR_SCOPE.underground;
-  return FLOOR_SCOPE.ground;
+  floorNumber: ReportFormValues["floorNumber"],
+): string => {
+  if (floorNumber === null || floorNumber < 1) return DEFAULT_FLOOR_VALUE;
+
+  return floorType === "UNDERGROUND"
+    ? String(-floorNumber)
+    : String(floorNumber);
+};
+
+const getFloorLabel = (
+  floorType: ReportFormValues["floorType"],
+  floorNumber: ReportFormValues["floorNumber"],
+): string => {
+  if (floorNumber === null || !floorType) {
+    return m.report_floor_select_placeholder();
+  }
+
+  return floorType === "UNDERGROUND" ? `B${floorNumber}` : `${floorNumber}F`;
+};
+
+const getFloorOptionLabel = (floor: number): string => {
+  return floor < 0 ? `B${Math.abs(floor)}` : `${floor}F`;
 };
 
 export function ReportFloorSection({
+  isDisabled = false,
   sectionServerError,
   onFieldChange,
 }: ReportFloorSectionProps) {
@@ -58,54 +77,31 @@ export function ReportFloorSection({
   const hasFloor = useWatch({ control, name: "hasFloor" });
   const floorType = useWatch({ control, name: "floorType" });
   const floorNumber = useWatch({ control, name: "floorNumber" });
-
-  const isNoFloorSelected = hasFloor === false;
-  const isHasFloorSelected = hasFloor === true;
-
   const errorMessage = useReportSectionError(
     ["hasFloor", "floorType", "floorNumber"],
     sectionServerError,
   );
-  const errorId = errorMessage ? "report-floor-error" : undefined;
-
   const [isFloorPickerOpen, setIsFloorPickerOpen] = useState(false);
-  const [pendingFloorScope, setPendingFloorScope] = useState<FloorScope>(
-    FLOOR_SCOPE.ground,
-  );
-  const [pendingFloor, setPendingFloor] = useState("1");
+  const [pendingFloor, setPendingFloor] = useState(DEFAULT_FLOOR_VALUE);
 
-  const floorScopeOptions = useMemo(
-    () => [
-      { value: FLOOR_SCOPE.ground, label: m.report_floor_ground() },
-      {
-        value: FLOOR_SCOPE.underground,
-        label: m.report_floor_underground(),
-      },
-    ],
-    [],
-  );
+  const floorOptions = useMemo(() => {
+    const aboveGroundFloors = Array.from(
+      { length: MAX_FLOOR },
+      (_, index) => MAX_FLOOR - index,
+    );
+    const undergroundFloors = Array.from(
+      { length: MAX_FLOOR },
+      (_, index) => -(index + 1),
+    );
 
-  const floorOptions = useMemo(
-    () =>
-      Array.from({ length: 99 }, (_, index) => {
-        const floor = index + 1;
-
-        return {
-          value: String(floor),
-          label: `${floor}${m.report_floor_unit()}`,
-        };
-      }),
-    [],
-  );
+    return [...aboveGroundFloors, ...undergroundFloors].map((floor) => ({
+      value: String(floor),
+      label: getFloorOptionLabel(floor),
+    }));
+  }, []);
 
   const floorPickerColumns = useMemo<PopupPickerColumn[]>(
     () => [
-      {
-        id: "scope",
-        value: pendingFloorScope,
-        options: floorScopeOptions,
-        ariaLabel: m.report_floor_scope_aria(),
-      },
       {
         id: "floor",
         value: pendingFloor,
@@ -113,17 +109,19 @@ export function ReportFloorSection({
         ariaLabel: m.report_floor_number_aria(),
       },
     ],
-    [floorOptions, floorScopeOptions, pendingFloorScope, pendingFloor],
+    [floorOptions, pendingFloor],
   );
 
-  const floorLabel =
-    isHasFloorSelected && floorNumber !== null && floorType
-      ? floorType === "UNDERGROUND"
-        ? `B${floorNumber}${m.report_floor_unit()}`
-        : `${floorNumber}${m.report_floor_unit()}`
-      : m.report_floor_select_placeholder();
+  const isNoFloorSelected = hasFloor === false;
+  const isHasFloorSelected = hasFloor === true;
+  const errorId = errorMessage ? "report-floor-error" : undefined;
+  const floorLabel = isHasFloorSelected
+    ? getFloorLabel(floorType, floorNumber)
+    : m.report_floor_select_placeholder();
 
   const handleSelectNoFloor = () => {
+    if (isDisabled) return;
+
     setValue("hasFloor", false, { shouldDirty: true });
     setValue("floorType", null, { shouldDirty: true });
     setValue("floorNumber", null, { shouldDirty: true });
@@ -132,51 +130,51 @@ export function ReportFloorSection({
   };
 
   const handleSelectHasFloor = () => {
+    if (isDisabled) return;
+
     setValue("hasFloor", true, { shouldDirty: true });
     onFieldChange?.();
   };
 
   const handleOpenFloorPicker = () => {
-    setPendingFloorScope(scopeFromFloorType(floorType));
-    setPendingFloor(
-      floorNumber !== null ? String(floorNumber) : pendingFloor,
-    );
+    if (isDisabled) return;
+
+    setPendingFloor(pickerValueFromFloor(floorType, floorNumber));
     setIsFloorPickerOpen(true);
   };
 
   const handleFloorPickerChange = (columnId: string, value: string) => {
-    if (columnId === "scope") {
-      setPendingFloorScope(normalizeFloorScope(value));
-    }
-
     if (columnId === "floor") {
       setPendingFloor(value);
     }
   };
 
   const handleConfirmFloor = () => {
-    const parsedFloor = Number.parseInt(pendingFloor, 10);
-    if (Number.isNaN(parsedFloor) || parsedFloor < 1) return;
+    if (isDisabled) return;
+
+    const nextFloor = parseFloorPickerValue(pendingFloor);
+    if (!nextFloor) return;
 
     setValue("hasFloor", true, { shouldDirty: true });
-    setValue(
-      "floorType",
-      pendingFloorScope === FLOOR_SCOPE.underground
-        ? "UNDERGROUND"
-        : "ABOVE_GROUND",
-      { shouldDirty: true },
-    );
-    setValue("floorNumber", parsedFloor, { shouldDirty: true });
+    setValue("floorType", nextFloor.floorType, { shouldDirty: true });
+    setValue("floorNumber", nextFloor.floorNumber, { shouldDirty: true });
     onFieldChange?.();
   };
 
   return (
     <section
-      className={section}
+      className={[section, isDisabled ? disabledSection : ""]
+        .filter(Boolean)
+        .join(" ")}
       data-section="floor"
+      aria-disabled={isDisabled}
       aria-describedby={errorId}
     >
-      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+      <ReportSectionTitleRow
+        errorMessage={errorMessage}
+        defaultErrorMessage={m.report_error_required()}
+        errorId={errorId}
+      >
         {m.report_section_floor()}
         <span className={requiredMark}>*</span>
       </ReportSectionTitleRow>
@@ -188,6 +186,7 @@ export function ReportFloorSection({
             intent={isNoFloorSelected ? "primary" : "neutral"}
             size="L"
             onPress={handleSelectNoFloor}
+            isDisabled={isDisabled}
           >
             {m.report_floor_none()}
           </Button>
@@ -197,6 +196,7 @@ export function ReportFloorSection({
             intent={isHasFloorSelected ? "primary" : "neutral"}
             size="L"
             onPress={handleSelectHasFloor}
+            isDisabled={isDisabled}
           >
             {m.report_floor_exists()}
           </Button>
@@ -204,7 +204,7 @@ export function ReportFloorSection({
             label={floorLabel}
             ariaLabel={m.report_floor_select_aria()}
             onPress={handleOpenFloorPicker}
-            isDisabled={!isHasFloorSelected}
+            isDisabled={isDisabled || !isHasFloorSelected}
           />
         </div>
       </div>
@@ -222,13 +222,6 @@ export function ReportFloorSection({
       />
 
       <ReportSectionErrorReserve />
-      {/* 롤백용: 하단 에러 영역 — Reserve 제거 후 주석 해제
-      <ReportSectionError
-        id={errorId}
-        message={errorMessage}
-        placement="bottom"
-      />
-      */}
     </section>
   );
 }

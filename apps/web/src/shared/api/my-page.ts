@@ -1,6 +1,13 @@
 import { apiClient } from "#/shared/lib/apiClient";
 import type { BackendResponse } from "./lockers";
 
+export type MyLockerReportPriceType = "FREE" | "PAID" | "UNKNOWN";
+
+export type MyLockerReportOperatingTimeType =
+  | "OPEN_24_HOURS"
+  | "TIME_RANGE"
+  | "UNKNOWN";
+
 export interface MyPageSummaryData {
   favoriteLockerCount: number;
   lockerReportCount: number;
@@ -49,9 +56,10 @@ export interface MyLockerReportDetail {
   indoorOutdoorType: string | null;
   lockerType: string | null;
   sizeTypes: string[];
-  isFree: boolean | null;
+  priceType: MyLockerReportPriceType;
   minPrice: number | null;
   maxPrice: number | null;
+  operatingTimeType: MyLockerReportOperatingTimeType;
   startTime: string | null;
   endTime: string | null;
   additionalInfo: string | null;

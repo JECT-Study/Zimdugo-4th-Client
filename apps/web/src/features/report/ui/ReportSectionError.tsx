@@ -1,7 +1,11 @@
-import { sectionErrorTextBottom, sectionErrorTextInline } from "./report.css.ts";
+import {
+  sectionErrorTextBottom,
+  sectionErrorTextInline,
+} from "./report.css.ts";
 
 interface ReportSectionErrorProps {
   message?: string;
+  defaultMessage?: string;
   id?: string;
   /** title: 섹션 제목 옆, bottom: 섹션 하단(롤백용) */
   placement?: "title" | "bottom";
@@ -9,10 +13,14 @@ interface ReportSectionErrorProps {
 
 export function ReportSectionError({
   message,
+  defaultMessage,
   id,
   placement = "title",
 }: ReportSectionErrorProps) {
-  if (placement === "title" && !message) {
+  const hasError = message !== undefined;
+  const displayMessage = hasError ? message || defaultMessage : undefined;
+
+  if (placement === "title" && !displayMessage) {
     return null;
   }
 
@@ -21,12 +29,12 @@ export function ReportSectionError({
 
   return (
     <p
-      id={message ? id : undefined}
+      id={hasError ? id : undefined}
       className={className}
-      role={message ? "alert" : undefined}
-      aria-hidden={message ? undefined : true}
+      role={hasError ? "alert" : undefined}
+      aria-hidden={displayMessage ? undefined : true}
     >
-      {message ?? "\u00A0"}
+      {displayMessage ?? "\u00A0"}
     </p>
   );
 }

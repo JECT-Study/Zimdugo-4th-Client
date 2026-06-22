@@ -47,6 +47,7 @@ export interface PopupProps {
     label: string;
     onPress: () => void;
   };
+  width?: "default" | "wide";
   className?: string;
 }
 
@@ -59,11 +60,28 @@ export function Popup({
   primaryAction,
   secondaryAction,
   subAction,
+  width = "default",
   className,
 }: PopupProps) {
   const hasHelper = !!helperText;
   const hasSubAction = !hasHelper && !!subAction;
   const hasMiddleElement = hasHelper || hasSubAction;
+  const containerClassName =
+    width === "wide"
+      ? hasMiddleElement
+        ? container.wideWithMiddle
+        : container.wideDefault
+      : hasMiddleElement
+        ? container.withMiddle
+        : container.default;
+  const bottomSectionClassName =
+    width === "wide"
+      ? hasMiddleElement
+        ? bottomSection.wideWithMiddle
+        : bottomSection.wideDefault
+      : hasMiddleElement
+        ? bottomSection.withMiddle
+        : bottomSection.default;
 
   return (
     <ModalOverlay
@@ -72,7 +90,7 @@ export function Popup({
       className={overlay}
     >
       <Modal className={className}>
-        <Dialog className={dialog} aria-label={titleText}>
+        <Dialog className={dialog[width]} aria-label={titleText}>
           {({ close }: { close: () => void }) => {
             const handlePrimary = () => {
               primaryAction.onPress();
@@ -90,23 +108,13 @@ export function Popup({
             };
 
             return (
-              <div
-                className={
-                  hasMiddleElement ? container.withMiddle : container.default
-                }
-              >
+              <div className={containerClassName}>
                 {/* 기본 Caution 아이콘을 초록색으로 표현하기 위해 state 생략 또는 커스텀 */}
                 <div className={iconWrapper}>{icon || <IconCaution24 />}</div>
 
                 <div className={title}>{titleText}</div>
 
-                <div
-                  className={
-                    hasMiddleElement
-                      ? bottomSection.withMiddle
-                      : bottomSection.default
-                  }
-                >
+                <div className={bottomSectionClassName}>
                   {hasMiddleElement && (
                     <div className={helperArea}>
                       {hasHelper && <p className={helper}>{helperText}</p>}

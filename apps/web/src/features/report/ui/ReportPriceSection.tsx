@@ -1,14 +1,19 @@
 import { m } from "@repo/i18n";
-import { Checkbox } from "@repo/ui/components/checkbox";
 import { Input } from "@repo/ui/components/input";
+import { Radio, RadioGroup } from "@repo/ui/components/radio";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";
 import { ReportSectionErrorReserve } from "./ReportSectionErrorReserve";
 import { ReportSectionTitleRow } from "./ReportSectionTitleRow";
 import {
+  priceFreeRadio,
   priceInputContainer,
   priceInputRow,
+  pricePaidRadio,
+  priceRadioGrid,
+  priceRadioGroup,
   priceRow,
   priceUnit,
+  priceUnknownRadio,
   section,
 } from "./report.css.ts";
 
@@ -53,6 +58,12 @@ export function ReportPriceSectionView({
   onMaxPriceBlur,
 }: ReportPriceSectionViewProps) {
   const errorId = errorMessage ? "report-price-error" : undefined;
+  const handleChangePriceType = (value: string) => {
+    if (value !== "none" && value !== "free" && value !== "paid") return;
+
+    setPriceType(value);
+    onFieldChange?.();
+  };
 
   return (
     <section
@@ -64,38 +75,25 @@ export function ReportPriceSectionView({
         {m.report_section_price()}
       </ReportSectionTitleRow>
       <div className={priceRow}>
-        <Checkbox
-          labelText={m.report_price_free()}
-          isSelected={priceType === "free"}
-          onSelectedChange={(selected) => {
-            if (selected) {
-              setPriceType("free");
-              onFieldChange?.();
-              return;
-            }
-            if (priceType === "free") {
-              setPriceType("none");
-              onFieldChange?.();
-            }
-          }}
-          labelLocation="right"
-        />
-        <Checkbox
-          labelText={m.report_price_paid()}
-          isSelected={priceType === "paid"}
-          onSelectedChange={(selected) => {
-            if (selected) {
-              setPriceType("paid");
-              onFieldChange?.();
-              return;
-            }
-            if (priceType === "paid") {
-              setPriceType("none");
-              onFieldChange?.();
-            }
-          }}
-          labelLocation="right"
-        />
+        <RadioGroup
+          aria-label={m.report_section_price()}
+          className={priceRadioGroup}
+          optionsDirection="row"
+          value={priceType}
+          onChange={handleChangePriceType}
+        >
+          <div className={priceRadioGrid}>
+            <Radio className={priceUnknownRadio} value="none">
+              {m.report_price_unknown()}
+            </Radio>
+            <Radio className={priceFreeRadio} value="free">
+              {m.report_price_free()}
+            </Radio>
+            <Radio className={pricePaidRadio} value="paid">
+              {m.report_price_paid()}
+            </Radio>
+          </div>
+        </RadioGroup>
       </div>
       {priceType === "paid" && (
         <div className={priceInputRow}>

@@ -33,12 +33,12 @@ export function ReportSizeSection({
   };
 
   return (
-    <section
-      className={section}
-      data-section="size"
-      aria-describedby={errorId}
-    >
-      <ReportSectionTitleRow errorMessage={errorMessage} errorId={errorId}>
+    <section className={section} data-section="size" aria-describedby={errorId}>
+      <ReportSectionTitleRow
+        errorMessage={errorMessage}
+        defaultErrorMessage={m.report_error_required()}
+        errorId={errorId}
+      >
         {m.report_section_size()}
         <span className={requiredMark}>*</span>
       </ReportSectionTitleRow>

@@ -67,11 +67,11 @@ const formatSizeTypesLabel = (sizeTypes: string[]): string => {
 };
 
 const formatPriceLabel = (detail: MyLockerReportDetail): string => {
-  if (detail.isFree === true) {
+  if (detail.priceType === "FREE") {
     return m.report_price_free();
   }
 
-  if (detail.isFree === false) {
+  if (detail.priceType === "PAID") {
     return formatLockerPriceLabel(
       detail.minPrice ?? undefined,
       detail.maxPrice ?? undefined,
@@ -79,6 +79,21 @@ const formatPriceLabel = (detail: MyLockerReportDetail): string => {
   }
 
   return m.locker_detail_price_not_provided();
+};
+
+const formatOperatingTimeLabel = (detail: MyLockerReportDetail): string => {
+  if (detail.operatingTimeType === "OPEN_24_HOURS") {
+    return m.report_time_all_day();
+  }
+
+  if (detail.operatingTimeType === "TIME_RANGE") {
+    return formatLockerOperatingHoursLabel(
+      detail.startTime ?? undefined,
+      detail.endTime ?? undefined,
+    );
+  }
+
+  return m.locker_detail_operating_hours_not_provided();
 };
 
 const formatAdditionalInfoLabel = (additionalInfo: string | null): string => {
@@ -153,10 +168,7 @@ export const formatReportViewerSections = (
     fields: [
       {
         label: m.report_section_time(),
-        value: formatLockerOperatingHoursLabel(
-          detail.startTime ?? undefined,
-          detail.endTime ?? undefined,
-        ),
+        value: formatOperatingTimeLabel(detail),
       },
     ],
   },
@@ -208,10 +220,7 @@ export const formatReportViewerInformationGroups = (
       },
       {
         label: m.report_section_time(),
-        value: formatLockerOperatingHoursLabel(
-          detail.startTime ?? undefined,
-          detail.endTime ?? undefined,
-        ),
+        value: formatOperatingTimeLabel(detail),
       },
     ],
   },
