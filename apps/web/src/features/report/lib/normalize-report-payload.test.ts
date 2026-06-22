@@ -24,7 +24,7 @@ describe("normalizeReportPayload", () => {
       floorNumber: 2,
     });
 
-    expect(payload.hasFloor).toBe(false);
+    expect("hasFloor" in payload).toBe(false);
     expect(payload.floorType).toBeNull();
     expect(payload.floorNumber).toBeNull();
   });
@@ -49,12 +49,12 @@ describe("normalizeReportPayload", () => {
       maxPrice: 3000,
     });
 
-    expect(payload.isFree).toBeNull();
+    expect("isFree" in payload).toBe(false);
     expect(payload.minPrice).toBeNull();
     expect(payload.maxPrice).toBeNull();
   });
 
-  it("isFree가 true이면 minPrice와 maxPrice를 null로 보낸다", () => {
+  it("isFree가 true이면 minPrice와 maxPrice를 0으로 보낸다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),
       isFree: true,
@@ -62,8 +62,9 @@ describe("normalizeReportPayload", () => {
       maxPrice: 3000,
     });
 
-    expect(payload.minPrice).toBeNull();
-    expect(payload.maxPrice).toBeNull();
+    expect("isFree" in payload).toBe(false);
+    expect(payload.minPrice).toBe(0);
+    expect(payload.maxPrice).toBe(0);
   });
 
   it("isFree가 false이면 minPrice와 maxPrice를 유지한다", () => {
@@ -98,7 +99,7 @@ describe("normalizeReportPayload", () => {
     expect(payload.sizeTypes).toEqual(["SMALL", "LARGE"]);
   });
 
-  it("유효한 폼이면 API validation flag를 true로 포함한다", () => {
+  it("서버 내부 validation flag를 payload에 포함하지 않는다", () => {
     const payload = normalizeReportPayload({
       ...baseForm(),
       sizeTypes: ["SMALL"],
@@ -107,24 +108,11 @@ describe("normalizeReportPayload", () => {
       endTime: "22:30",
     });
 
-    expect(payload.floorInputValid).toBe(true);
-    expect(payload.enumInputValid).toBe(true);
-    expect(payload.priceInputValid).toBe(true);
-    expect(payload.operatingHoursValid).toBe(true);
-    expect(payload.sizeTypesValid).toBe(true);
-  });
-
-  it("유효하지 않은 가격 입력이면 priceInputValid를 false로 보낸다", () => {
-    const payload = normalizeReportPayload({
-      ...baseForm(),
-      isFree: false,
-      minPrice: null,
-      maxPrice: null,
-    });
-
-    expect(payload.priceInputValid).toBe(false);
-    expect(payload.floorInputValid).toBe(true);
-    expect(payload.enumInputValid).toBe(true);
+    expect("floorInputValid" in payload).toBe(false);
+    expect("enumInputValid" in payload).toBe(false);
+    expect("priceInputValid" in payload).toBe(false);
+    expect("operatingHoursValid" in payload).toBe(false);
+    expect("sizeTypesValid" in payload).toBe(false);
   });
 
   it("startTime과 endTime을 HH:mm 형식 그대로 유지한다", () => {

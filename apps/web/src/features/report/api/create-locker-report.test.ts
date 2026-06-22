@@ -15,13 +15,11 @@ const payload = {
   roadAddress: "서울 마포구 양화로 160",
   latitude: 37.556,
   longitude: 126.923,
-  hasFloor: true,
   floorType: "UNDERGROUND",
   floorNumber: 2,
   indoorOutdoorType: "INDOOR",
   lockerType: "SUBWAY_STATION",
   sizeTypes: ["SMALL", "MEDIUM", "LARGE"],
-  isFree: false,
   minPrice: 1000,
   maxPrice: 3000,
   startTime: "09:00",
@@ -29,11 +27,6 @@ const payload = {
   additionalInfo: "B2 화장실 옆",
   imageUrl: "https://cdn.example.com/locker/1.jpg",
   locationConsentAgreed: true,
-  floorInputValid: true,
-  enumInputValid: true,
-  priceInputValid: true,
-  operatingHoursValid: true,
-  sizeTypesValid: true,
 } satisfies LockerReportCreateRequest;
 
 describe("postLockerReport", () => {

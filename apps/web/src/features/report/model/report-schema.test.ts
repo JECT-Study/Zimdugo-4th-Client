@@ -158,6 +158,15 @@ describe("reportSchema", () => {
         minPrice: 500,
         maxPrice: 2000,
       }).success,
+    ).toBe(true);
+
+    expect(
+      parseReportForm({
+        ...validForm(),
+        isFree: false,
+        minPrice: 0,
+        maxPrice: 0,
+      }).success,
     ).toBe(false);
 
     expect(
@@ -184,6 +193,15 @@ describe("reportSchema", () => {
         isFree: false,
         minPrice: 1000,
         maxPrice: 3000,
+      }).success,
+    ).toBe(true);
+
+    expect(
+      parseReportForm({
+        ...validForm(),
+        isFree: false,
+        minPrice: 0,
+        maxPrice: 1000,
       }).success,
     ).toBe(true);
   });
@@ -277,7 +295,16 @@ describe("reportSchema", () => {
     ).toBe(false);
   });
 
-  it("무료(isFree: true)일 때 minPrice·maxPrice는 null이어야 한다", () => {
+  it("무료(isFree: true)일 때 minPrice·maxPrice는 null 또는 0이어야 한다", () => {
+    expect(
+      parseReportForm({
+        ...validForm(),
+        isFree: true,
+        minPrice: 0,
+        maxPrice: 0,
+      }).success,
+    ).toBe(true);
+
     expect(
       parseReportForm({
         ...validForm(),
