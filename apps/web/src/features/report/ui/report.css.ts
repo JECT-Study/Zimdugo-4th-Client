@@ -503,11 +503,7 @@ export const photoErrorIconCircle = style({
   justifyContent: "center",
   flexShrink: 0,
   backgroundColor: vars.color.bg.default,
-  selectors: {
-    "& svg path": {
-      fill: vars.color.text.error,
-    },
-  },
+  color: vars.color.text.error,
 });
 
 export const photoUploadErrorMessage = style({
