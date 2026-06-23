@@ -217,6 +217,9 @@ importers:
       '@vanilla-extract/sprinkles':
         specifier: ^1.6.5
         version: 1.6.5(@vanilla-extract/css@1.18.0)
+      axios:
+        specifier: ^1.13.5
+        version: 1.13.6
       js-cookie:
         specifier: ^3.0.7
         version: 3.0.7

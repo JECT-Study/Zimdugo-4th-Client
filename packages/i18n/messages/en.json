@@ -1,5 +1,5 @@
 {
-  "$schema": "https://inlang.com/schema/message-format",
+  "$schema": "https://inlang.com/schema/inlang-message-format",
   "hello": "Hello",
   "nav_home": "Home",
   "nav_report": "Report",
