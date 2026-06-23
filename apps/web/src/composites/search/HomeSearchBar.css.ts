@@ -103,7 +103,6 @@ export const languageDropdown = style({
   alignItems: "flex-start",
   width: "32px",
   zIndex: 1,
-  transition: "width 180ms ease",
 });
 
 export const languageDropdownExpanded = style({
@@ -125,8 +124,6 @@ export const languageTrigger = style({
   cursor: "pointer",
   outline: "none",
   overflow: "hidden",
-  transition:
-    "width 180ms ease, height 180ms ease, padding 180ms ease, border-color 180ms ease, background-color 180ms ease",
   selectors: {
     [`${languageDropdownExpanded} &`]: {
       width: "119px",
@@ -154,12 +151,6 @@ export const languageTriggerLabel = style({
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
   transform: "translateX(-4px)",
-  transition: "opacity 120ms ease 80ms, transform 120ms ease 80ms",
-});
-
-export const languageTriggerLabelVisible = style({
-  opacity: 1,
-  transform: "translateX(0)",
 });
 
 export const languageChevron = style({
@@ -171,7 +162,6 @@ export const languageChevron = style({
   borderRight: "5px solid transparent",
   borderTop: `6px solid ${vars.color.text.title}`,
   transform: "translateX(-4px)",
-  transition: "opacity 120ms ease 80ms, transform 120ms ease 80ms",
   selectors: {
     [`${languageDropdownExpanded} &`]: {
       opacity: 1,
@@ -193,12 +183,7 @@ export const languageOptions = style({
   backgroundColor: vars.color.bg.default,
   boxShadow: vars.shadow[2],
   overflow: "hidden",
-  opacity: 0,
-  pointerEvents: "none",
-  transform: "translateY(-8px)",
   transformOrigin: "top left",
-  transition: "opacity 160ms ease, transform 180ms ease, visibility 160ms ease",
-  visibility: "hidden",
   "::before": {
     content: '""',
     position: "absolute",
@@ -210,13 +195,6 @@ export const languageOptions = style({
     borderRight: "5px solid transparent",
     borderBottom: `6px solid ${vars.color.bg.default}`,
   },
-});
-
-export const languageOptionsOpen = style({
-  opacity: 1,
-  pointerEvents: "auto",
-  transform: "translateY(0)",
-  visibility: "visible",
 });
 
 export const languageOption = style({

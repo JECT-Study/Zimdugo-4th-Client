@@ -7,6 +7,7 @@ import {
   IconNormalSearch24,
   IconX24,
 } from "@repo/ui/tokens/icons";
+import { AnimatePresence, motion } from "motion/react";
 import {
   type CSSProperties,
   type MouseEvent,
@@ -41,11 +42,9 @@ import {
   languageOption,
   languageOptionSelected,
   languageOptions,
-  languageOptionsOpen,
   languageOptionText,
   languageTrigger,
   languageTriggerLabel,
-  languageTriggerLabelVisible,
   searchBarLayer,
   searchField,
   searchFieldWithClose,
@@ -129,6 +128,16 @@ const HOME_SEARCH_BAR_STYLE_PROBES: StyleReadyProbe[] = [
   },
 ];
 
+const LANGUAGE_DROPDOWN_TRANSITION = {
+  duration: 0.18,
+  ease: "easeOut",
+} as const;
+
+const LANGUAGE_LABEL_TRANSITION = {
+  duration: 0.12,
+  ease: "easeOut",
+} as const;
+
 let hasHomeSearchBarStyleResolved = false;
 
 export function HomeSearchBar({
@@ -164,7 +173,6 @@ export function HomeSearchBar({
     }
 
     setIsLanguageOptionsOpen(false);
-    setIsLanguageExpanded(false);
   };
 
   const handleSelectLanguage = (language: AppLanguage) => {
@@ -289,7 +297,7 @@ export function HomeSearchBar({
             ) : null}
           </div>
           {!isSearchContextActive ? (
-            <div
+            <motion.div
               ref={languageDropdownRef}
               className={[
                 languageDropdown,
@@ -297,67 +305,85 @@ export function HomeSearchBar({
               ]
                 .filter(Boolean)
                 .join(" ")}
+              animate={{ width: isLanguageExpanded ? 119 : 32 }}
+              transition={LANGUAGE_DROPDOWN_TRANSITION}
             >
-              <button
+              <motion.button
                 type="button"
                 className={languageTrigger}
                 aria-label={m.settings_language()}
                 aria-expanded={isLanguageOptionsOpen}
                 onClick={handleToggleLanguage}
+                animate={{
+                  width: isLanguageExpanded ? 119 : 32,
+                  height: isLanguageExpanded ? 36 : 32,
+                  padding: isLanguageExpanded ? "2px 6px" : "0px",
+                  borderWidth: isLanguageExpanded ? 1 : 0,
+                }}
+                transition={LANGUAGE_DROPDOWN_TRANSITION}
               >
                 <IconNormalGlobe32 />
-                <span
-                  className={[
-                    languageTriggerLabel,
-                    isLanguageExpanded ? languageTriggerLabelVisible : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                <motion.span
+                  className={languageTriggerLabel}
+                  animate={{
+                    opacity: isLanguageExpanded ? 1 : 0,
+                    x: isLanguageExpanded ? 0 : -4,
+                  }}
+                  transition={LANGUAGE_LABEL_TRANSITION}
                 >
                   {appLanguageLabelMap[currentLanguage]}
-                </span>
-                <span className={languageChevron} aria-hidden />
-              </button>
-              <div
-                className={[
-                  languageOptions,
-                  isLanguageOptionsOpen ? languageOptionsOpen : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                role="listbox"
-                aria-hidden={!isLanguageOptionsOpen}
-              >
-                {APP_LANGUAGES.map((language) => {
-                  const isCurrent = language === currentLanguage;
-                  return (
-                    <button
-                      key={language}
-                      type="button"
-                      className={[
-                        languageOption,
-                        isCurrent ? languageOptionSelected : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      role="option"
-                      aria-selected={isCurrent}
-                      tabIndex={isLanguageOptionsOpen ? 0 : -1}
-                      onClick={() => handleSelectLanguage(language)}
-                    >
-                      <span className={languageOptionText}>
-                        {appLanguageLabelMap[language]}
-                      </span>
-                      {isCurrent ? (
-                        <span className={languageCheckIcon}>
-                          <IconCheck24 />
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                </motion.span>
+                <motion.span
+                  className={languageChevron}
+                  aria-hidden
+                  animate={{
+                    opacity: isLanguageExpanded ? 1 : 0,
+                    x: isLanguageExpanded ? 0 : -4,
+                  }}
+                  transition={LANGUAGE_LABEL_TRANSITION}
+                />
+              </motion.button>
+              <AnimatePresence>
+                {isLanguageOptionsOpen ? (
+                  <motion.div
+                    className={languageOptions}
+                    role="listbox"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={LANGUAGE_DROPDOWN_TRANSITION}
+                  >
+                    {APP_LANGUAGES.map((language) => {
+                      const isCurrent = language === currentLanguage;
+                      return (
+                        <button
+                          key={language}
+                          type="button"
+                          className={[
+                            languageOption,
+                            isCurrent ? languageOptionSelected : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          role="option"
+                          aria-selected={isCurrent}
+                          onClick={() => handleSelectLanguage(language)}
+                        >
+                          <span className={languageOptionText}>
+                            {appLanguageLabelMap[language]}
+                          </span>
+                          {isCurrent ? (
+                            <span className={languageCheckIcon}>
+                              <IconCheck24 />
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </motion.div>
           ) : null}
         </>
       )}
