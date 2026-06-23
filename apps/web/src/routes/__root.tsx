@@ -65,6 +65,43 @@ const CRITICAL_LAYOUT_CSS = `
   }
 `;
 
+const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
+(function () {
+  try {
+    var raw = window.localStorage.getItem("app-language");
+    if (!raw) return;
+
+    var parsed = JSON.parse(raw);
+    var language = parsed && parsed.state && parsed.state.appLanguage;
+    var normalized = null;
+
+    if (typeof language === "string") {
+      var lower = language.toLowerCase().replace(/_/g, "-");
+      if (lower.indexOf("ko") === 0) normalized = "ko";
+      else if (lower.indexOf("en") === 0) normalized = "en";
+      else if (lower.indexOf("ja") === 0) normalized = "ja";
+      else if (
+        lower.indexOf("zh-tw") === 0 ||
+        lower.indexOf("zh-hant") === 0 ||
+        lower.indexOf("zh-hk") === 0 ||
+        lower.indexOf("zh-mo") === 0
+      ) normalized = "zh-TW";
+      else if (lower.indexOf("zh") === 0) normalized = "zh";
+    }
+
+    if (!normalized || normalized === "ko") return;
+
+    var pathname = window.location.pathname;
+    var hasPathLocale = /^\\/(?:ko|en|ja|zh-tw|zh)(?=\\/|$)/i.test(pathname);
+    if (hasPathLocale) return;
+
+    var nextPathname = "/" + normalized + (pathname === "/" ? "" : pathname);
+    window.location.replace(nextPathname + window.location.search + window.location.hash);
+  } catch (_) {
+  }
+})();
+`;
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -176,6 +213,10 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang={lang}>
       <head>
         <title>{m.seo_global_title()}</title>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script runs before hydration to normalize locale-less URLs
+          dangerouslySetInnerHTML={{ __html: INITIAL_LANGUAGE_REDIRECT_SCRIPT }}
+        />
         <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
       </head>
