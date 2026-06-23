@@ -135,12 +135,11 @@ function RootDocument({ children }: { children: ReactNode }) {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const hasLanguageHydrated = useAppLanguageStore((state) => state.hasHydrated);
   const initializeLanguage = useAppLanguageStore(
     (state) => state.initializeLanguage,
   );
-  const lang = hasLanguageHydrated ? appLanguage : languageTag();
+  const lang = languageTag();
   const showBottomTab = shouldShowBottomTab(pathname);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is used to trigger language initialization on route change
@@ -149,7 +148,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       return;
     }
 
-    initializeLanguage(getUrlLanguage(window.location.href));
+    initializeLanguage(getUrlLanguage(pathname));
   }, [hasLanguageHydrated, initializeLanguage, pathname]);
 
   return (

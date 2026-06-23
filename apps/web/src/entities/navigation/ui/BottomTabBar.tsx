@@ -1,12 +1,9 @@
+import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { BottomBarFrame } from "@repo/ui/components/layout/bottom-bar-frame";
 import { BottomMenuIcon, type BottomTabKey } from "@repo/ui/tokens/icons";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type CSSProperties, memo, useEffect } from "react";
-import {
-  type AppLanguage,
-  useAppLanguageStore,
-} from "@/shared/store/language.ts";
 import { SKELETON_SURFACE_STYLE } from "@/shared/ui/skeleton-style.ts";
 import {
   type StyleReadyProbe,
@@ -77,13 +74,12 @@ const BOTTOM_TAB_STYLE_PROBES: StyleReadyProbe[] = [
 
 let hasBottomTabStyleResolved = false;
 
-const DEFAULT_LABELS_BY_LANGUAGE = {
-  ko: { home: "홈", report: "제보", my: "MY", settings: "설정" },
-  en: { home: "Home", report: "Report", my: "MY", settings: "Settings" },
-  ja: { home: "ホーム", report: "通報", my: "マイ", settings: "設定" },
-  zh: { home: "首页", report: "举报", my: "我的", settings: "设置" },
-  "zh-TW": { home: "首頁", report: "回報", my: "我的", settings: "設定" },
-} satisfies Record<AppLanguage, Record<BottomTabKey, string>>;
+const getDefaultLabels = (): Record<BottomTabKey, string> => ({
+  home: m.nav_home(),
+  report: m.nav_report(),
+  my: m.nav_my(),
+  settings: m.nav_settings(),
+});
 
 export type BottomTabLinks = Record<BottomTabKey, string>;
 
@@ -105,14 +101,13 @@ function BottomTabBarComponent({
   labels,
   className,
 }: BottomTabBarProps) {
-  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
     enabled: !hasBottomTabStyleResolved,
     probes: BOTTOM_TAB_STYLE_PROBES,
   });
 
   const shouldProbeStyle = !hasBottomTabStyleResolved;
-  const defaultLabels = DEFAULT_LABELS_BY_LANGUAGE[appLanguage];
+  const defaultLabels = getDefaultLabels();
   const getLabel = (key: BottomTabKey) => labels?.[key] ?? defaultLabels[key];
 
   useEffect(() => {

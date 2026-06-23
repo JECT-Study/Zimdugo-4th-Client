@@ -1,4 +1,4 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
 import { IconCheck24 } from "@repo/ui/tokens/icons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -31,6 +31,7 @@ import {
   type AppLanguage,
   appLanguageLabelMap,
   getLocalizedHref,
+  normalizeLanguage,
   useAppLanguageStore,
 } from "#/shared/store/language";
 
@@ -44,6 +45,7 @@ function SettingsLanguagePage() {
   const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady();
   const applyFallbackStyle = isStyleTimedOut;
+  const currentLanguage = normalizeLanguage(languageTag()) ?? appLanguage;
 
   const handleSelectLanguage = (language: AppLanguage) => {
     setAppLanguage(language);
@@ -56,7 +58,7 @@ function SettingsLanguagePage() {
       return;
     }
 
-    if (appLanguage !== language) {
+    if (currentLanguage !== language) {
       window.location.reload();
     }
   };
@@ -100,7 +102,7 @@ function SettingsLanguagePage() {
           }
         >
           {APP_LANGUAGES.map((language) => {
-            const isCurrent = language === appLanguage;
+            const isCurrent = language === currentLanguage;
             return (
               <button
                 key={language}
