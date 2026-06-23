@@ -28,13 +28,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         // 기본 정적 페이지 목록
         const staticPaths = [
           "",
-          "/login",
-          "/my",
-          "/report",
-          "/settings",
           "/settings/terms",
           "/settings/privacy",
-          "/settings/language",
           "/settings/notices",
         ];
         // 다국어 접두사 목록
