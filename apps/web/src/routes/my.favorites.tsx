@@ -1,20 +1,20 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { FavoriteListItem } from "#/entities/favorite";
-import type { FavoriteLockerListItem } from "#/shared/api/my-page";
 import { NonSearch } from "#/entities/search";
 import { useFavoriteRemoval } from "#/features/my/hooks/useFavoriteRemoval";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { MyUndoToast } from "#/features/my/ui/MyUndoToast";
+import type { FavoriteLockerListItem } from "#/shared/api/my-page";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
+import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
-import { useAppLanguageStore } from "#/shared/store/language";
 import {
   childContent,
   childEmpty,
@@ -33,7 +33,6 @@ export const Route = createFileRoute("/my/favorites")({
 
 function MyFavoritesPage() {
   const navigate = useNavigate();
-  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const {
     listQuery,
     filteredItems,
@@ -51,6 +50,7 @@ function MyFavoritesPage() {
   const isInitialLoading = listQuery.isPending;
   const isError = listQuery.isError && filteredItems.length === 0;
   const isEmpty = !isInitialLoading && !isError && filteredItems.length === 0;
+  const appLanguage = normalizeLocale(languageTag()) ?? BASE_LOCALE;
   const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
 
   const handleLoadMore = useCallback(() => {

@@ -1,115 +1,21 @@
-import { vars } from "@repo/ui/vars";
 import { globalStyle, style } from "@vanilla-extract/css";
+import { vars } from "../../vars.css.ts";
 
-export const searchBarLayer = style({
-  position: "absolute",
-  top: "calc(env(safe-area-inset-top, 0px) + 8px)",
-  left: vars.spacing[16],
-  right: vars.spacing[16],
-  zIndex: vars.zIndex.ui,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  gap: vars.spacing[8],
-  maxWidth: `calc(${vars.layout.containerWidth} - 32px)`,
-  margin: "0 auto",
-});
-
-export const searchInputFrame = style({
-  position: "relative",
-  width: "100%",
-});
-
-export const searchField = style({
-  display: "flex",
-  flexDirection: "column",
-  width: "100%",
-  minHeight: "48px",
-});
-
-export const searchFieldWithClose = style({
-  position: "relative",
-});
-
-globalStyle(`${searchFieldWithClose} > div`, {
-  paddingRight: "52px",
-});
-
-export const closeButton = style({
-  position: "absolute",
-  top: "50%",
-  right: vars.spacing[12],
-  transform: "translateY(-50%)",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "32px",
-  height: "32px",
-  padding: 0,
-  border: 0,
-  borderRadius: vars.radius[6],
-  backgroundColor: "transparent",
-  color: vars.color.text.surface,
-  cursor: "pointer",
-  outline: "none",
-  selectors: {
-    "&:focus-visible": {
-      boxShadow: `0 0 0 2px ${vars.color.focus}`,
-    },
-  },
-});
-
-export const fallbackButton = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.spacing[12],
-  width: "100%",
-  minHeight: "48px",
-  boxSizing: "border-box",
-  padding: `10px ${vars.layout.sidePadding}`,
-  border: `2px solid ${vars.color.border.hover}`,
-  borderRadius: vars.radius.scale[6],
-  backgroundColor: vars.color.bg.default,
-  color: vars.color.text.disable,
-  cursor: "pointer",
-  outline: "none",
-  ":focus-visible": {
-    borderColor: vars.color.border.focus,
-  },
-});
-
-export const fallbackIconSlot = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "24px",
-  height: "24px",
-  flexShrink: 0,
-});
-
-export const fallbackLabel = style({
-  overflow: "hidden",
-  fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-});
-
-export const languageDropdown = style({
+export const root = style({
   position: "relative",
   display: "inline-flex",
   flexDirection: "column",
   alignItems: "flex-start",
   width: "32px",
   zIndex: 1,
+  transition: "width 180ms ease-out",
 });
 
-export const languageDropdownExpanded = style({
+export const rootExpanded = style({
   width: "119px",
 });
 
-export const languageTrigger = style({
+export const trigger = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "flex-start",
@@ -124,8 +30,10 @@ export const languageTrigger = style({
   cursor: "pointer",
   outline: "none",
   overflow: "hidden",
+  transition:
+    "width 180ms ease-out, height 180ms ease-out, padding 180ms ease-out, border-width 180ms ease-out, background-color 180ms ease-out",
   selectors: {
-    [`${languageDropdownExpanded} &`]: {
+    [`${rootExpanded} &`]: {
       width: "119px",
       height: "36px",
       gap: "4px",
@@ -139,7 +47,7 @@ export const languageTrigger = style({
   },
 });
 
-export const languageTriggerLabel = style({
+export const triggerLabel = style({
   minWidth: 0,
   flex: 1,
   overflow: "hidden",
@@ -151,9 +59,16 @@ export const languageTriggerLabel = style({
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
   transform: "translateX(-4px)",
+  transition: "opacity 120ms ease-out, transform 120ms ease-out",
+  selectors: {
+    [`${rootExpanded} &`]: {
+      opacity: 1,
+      transform: "translateX(0)",
+    },
+  },
 });
 
-export const languageChevron = style({
+export const chevron = style({
   width: 0,
   height: 0,
   flexShrink: 0,
@@ -162,15 +77,16 @@ export const languageChevron = style({
   borderRight: "5px solid transparent",
   borderTop: `6px solid ${vars.color.text.title}`,
   transform: "translateX(-4px)",
+  transition: "opacity 120ms ease-out, transform 120ms ease-out",
   selectors: {
-    [`${languageDropdownExpanded} &`]: {
+    [`${rootExpanded} &`]: {
       opacity: 1,
       transform: "translateX(0)",
     },
   },
 });
 
-export const languageOptions = style({
+export const options = style({
   position: "absolute",
   top: "46px",
   left: 0,
@@ -184,6 +100,10 @@ export const languageOptions = style({
   boxShadow: vars.shadow[2],
   overflow: "hidden",
   transformOrigin: "top left",
+  opacity: 0,
+  pointerEvents: "none",
+  transform: "translateY(-8px)",
+  transition: "opacity 180ms ease-out, transform 180ms ease-out",
   "::before": {
     content: '""',
     position: "absolute",
@@ -197,7 +117,13 @@ export const languageOptions = style({
   },
 });
 
-export const languageOption = style({
+export const optionsOpen = style({
+  opacity: 1,
+  pointerEvents: "auto",
+  transform: "translateY(0)",
+});
+
+export const option = style({
   position: "relative",
   display: "flex",
   alignItems: "center",
@@ -224,12 +150,12 @@ export const languageOption = style({
   },
 });
 
-export const languageOptionSelected = style({
+export const optionSelected = style({
   backgroundColor: vars.color.bg.surface,
   color: vars.color.text.title,
 });
 
-export const languageOptionText = style({
+export const optionText = style({
   minWidth: 0,
   overflow: "hidden",
   fontSize: vars.typography.fontSize[12],
@@ -239,7 +165,7 @@ export const languageOptionText = style({
   whiteSpace: "nowrap",
 });
 
-export const languageCheckIcon = style({
+export const checkIcon = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -249,7 +175,7 @@ export const languageCheckIcon = style({
   color: vars.color.brand.primary,
 });
 
-globalStyle(`${languageCheckIcon} svg`, {
+globalStyle(`${checkIcon} svg`, {
   width: "16px",
   height: "16px",
 });

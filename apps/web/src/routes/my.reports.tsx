@@ -1,4 +1,4 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { useQuery } from "@tanstack/react-query";
@@ -17,8 +17,8 @@ import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { summaryText } from "#/features/my/ui/my-list.css.ts";
 import { getMyLockerReportDetail } from "#/shared/api/my-page";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
+import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
-import { useAppLanguageStore } from "#/shared/store/language";
 import {
   childContent,
   childEmpty,
@@ -39,7 +39,6 @@ const MY_REPORT_DETAIL_QUERY_KEY = "my-report-detail";
 
 function MyReportsPage() {
   const navigate = useNavigate();
-  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const listQuery = useReportHistoryList();
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
 
@@ -72,6 +71,7 @@ function MyReportsPage() {
   const isInitialLoading = listQuery.isPending;
   const isError = listQuery.isError && items.length === 0;
   const isEmpty = !isInitialLoading && !isError && items.length === 0;
+  const appLanguage = normalizeLocale(languageTag()) ?? BASE_LOCALE;
   const showEnglishSub = resolveEnglishSubVisibility({ appLanguage });
 
   const handleLoadMore = useCallback(() => {
