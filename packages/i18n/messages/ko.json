@@ -332,5 +332,7 @@
   "seo_locker_detail_title": "{name} | 짐두고 물품보관함",
   "seo_locker_detail_description": "{name} 물품보관함의 위치({address}), {priceText}, 운영 시간 등 상세 정보를 짐두고에서 쉽고 빠르게 확인하세요.",
   "seo_locker_detail_price_text": "최소 요금 {price}원",
-  "seo_locker_detail_price_unknown": "요금 정보 확인 가능"
+  "seo_locker_detail_price_unknown": "요금 정보 확인 가능",
+  "seo_global_title": "짐두고 (Zimdugo) | 대한민국의 모든 물품보관함 지도",
+  "seo_global_description": "짐두고 (Zimdugo)는 대한민국의 모든 물품보관함 위치와 요금, 운영 시간 등 보관함 정보를 쉽게 찾을 수 있는 지도 서비스입니다. 전국 지하철역, 쇼핑몰, 관광지 등 다양한 장소의 물품보관소 위치를 찾고, 새로운 보관함을 직접 제보해 보세요."
 }

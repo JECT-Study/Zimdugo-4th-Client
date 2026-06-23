@@ -7,24 +7,21 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import "@repo/ui/styles/global.css";
-import { languageTag } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
-import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
-import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import {
   BOTTOM_TAB_LINKS,
   BottomTabBar,
   shouldShowBottomTab,
 } from "#/entities/navigation";
+import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
+import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
-import {
-  getUrlLanguage,
-  useAppLanguageStore,
-} from "#/shared/store/language";
+import { getUrlLanguage, useAppLanguageStore } from "#/shared/store/language";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
 
 const CRITICAL_LAYOUT_CSS = `
@@ -76,7 +73,11 @@ export const Route = createRootRouteWithContext<{
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       {
-        title: "Zimdugo",
+        title: m.seo_global_title(),
+      },
+      {
+        name: "description",
+        content: m.seo_global_description(),
       },
       {
         name: "theme-color",
@@ -84,7 +85,7 @@ export const Route = createRootRouteWithContext<{
       },
       {
         name: "google-site-verification",
-        content: "gpgSPQCFt-Gg188XTXUl8KrpB4gPuU6EH0b0i9OTlLE",
+        content: "PBX5eyWxz34tFCjI4wjJDYtAVV3Uww8gK7xf5v35qNM",
       },
     ],
     links: [
@@ -127,7 +128,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   useLoginResultHandler();
 
   // 경로 변경 때 URL locale과 앱 언어 상태를 다시 맞춘다.
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const hasLanguageHydrated = useAppLanguageStore((state) => state.hasHydrated);
   const initializeLanguage = useAppLanguageStore(
@@ -136,6 +139,7 @@ function RootDocument({ children }: { children: ReactNode }) {
   const lang = hasLanguageHydrated ? appLanguage : languageTag();
   const showBottomTab = shouldShowBottomTab(pathname);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is used to trigger language initialization on route change
   useEffect(() => {
     if (!hasLanguageHydrated) {
       return;
@@ -147,7 +151,7 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang={lang}>
       <head>
-        <title>Zimdugo</title>
+        <title>{m.seo_global_title()}</title>
         <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
       </head>
