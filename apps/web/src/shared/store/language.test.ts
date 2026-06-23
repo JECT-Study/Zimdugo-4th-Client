@@ -113,3 +113,64 @@ describe("useAppLanguageStore", () => {
     expect(readLocaleCookie()).toBe("ko");
   });
 });
+
+describe("resolveLanguageSyncAction", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it("redirects locale-less routes to the persisted non-default language", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/settings?tab=language#current",
+        urlLanguage: null,
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({
+      kind: "redirect",
+      href: "/en/settings?tab=language#current",
+    });
+  });
+
+  it("prefers explicit URL locale over the persisted language", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/ja/settings",
+        urlLanguage: "ja",
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "sync", language: "ja" });
+  });
+
+  it("keeps the runtime language when locale-less route already matches persisted language", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/en/settings",
+        urlLanguage: null,
+        persistedLanguage: "en",
+        runtimeLanguage: "en",
+      }),
+    ).toEqual({ kind: "sync", language: "en" });
+  });
+
+  it("keeps the base runtime language on locale-less routes when persisted language is base", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/settings",
+        urlLanguage: null,
+        persistedLanguage: "ko",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "sync", language: "ko" });
+  });
+});

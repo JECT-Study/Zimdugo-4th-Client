@@ -26,6 +26,7 @@ import {
   settingsLanguageSettingRowInlineFallbackStyle,
   settingsPageInlineFallbackStyle,
 } from "#/features/settings/ui/settings-page-fallback";
+import { BASE_LOCALE } from "#/shared/i18n/locales";
 import {
   APP_LANGUAGES,
   type AppLanguage,
@@ -41,11 +42,10 @@ export const Route = createFileRoute("/settings/language")({
 
 function SettingsLanguagePage() {
   const navigate = useNavigate();
-  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady();
   const applyFallbackStyle = isStyleTimedOut;
-  const currentLanguage = normalizeLanguage(languageTag()) ?? appLanguage;
+  const currentLanguage = normalizeLanguage(languageTag()) ?? BASE_LOCALE;
 
   const handleSelectLanguage = (language: AppLanguage) => {
     setAppLanguage(language);

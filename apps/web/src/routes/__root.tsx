@@ -7,7 +7,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import "@repo/ui/styles/global.css";
 import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
@@ -21,7 +21,12 @@ import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
-import { getUrlLanguage, useAppLanguageStore } from "#/shared/store/language";
+import {
+  getRuntimeLanguage,
+  getUrlLanguage,
+  resolveLanguageSyncAction,
+  useAppLanguageStore,
+} from "#/shared/store/language";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
 
 const CRITICAL_LAYOUT_CSS = `
@@ -131,15 +136,18 @@ function RootDocument({ children }: { children: ReactNode }) {
   useBootstrapAuth();
   useLoginResultHandler();
 
-  // 경로 변경 때 URL locale과 앱 언어 상태를 다시 맞춘다.
+  // 경로가 바뀌면 URL locale과 runtime/store 언어를 다시 맞춘다.
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const [runtimeLanguage, setRuntimeLanguage] = useState(() =>
+    getRuntimeLanguage(),
+  );
   const hasLanguageHydrated = useAppLanguageStore((state) => state.hasHydrated);
   const initializeLanguage = useAppLanguageStore(
     (state) => state.initializeLanguage,
   );
-  const lang = languageTag();
+  const lang = runtimeLanguage;
   const showBottomTab = shouldShowBottomTab(pathname);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is used to trigger language initialization on route change
@@ -148,7 +156,21 @@ function RootDocument({ children }: { children: ReactNode }) {
       return;
     }
 
-    initializeLanguage(getUrlLanguage(pathname));
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const action = resolveLanguageSyncAction({
+      href: currentHref,
+      urlLanguage: getUrlLanguage(pathname),
+      persistedLanguage: useAppLanguageStore.getState().appLanguage,
+      runtimeLanguage: languageTag(),
+    });
+
+    if (action.kind === "redirect") {
+      window.location.replace(action.href);
+      return;
+    }
+
+    initializeLanguage(action.language);
+    setRuntimeLanguage(getRuntimeLanguage());
   }, [hasLanguageHydrated, initializeLanguage, pathname]);
 
   return (
