@@ -150,7 +150,6 @@ function RootDocument({ children }: { children: ReactNode }) {
   const lang = runtimeLanguage;
   const showBottomTab = shouldShowBottomTab(pathname);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is used to trigger language initialization on route change
   useEffect(() => {
     if (!hasLanguageHydrated) {
       return;
