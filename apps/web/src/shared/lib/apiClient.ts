@@ -19,8 +19,8 @@ const getBaseUrl = (): string => {
     return import.meta.env.VITE_API_BASE_URL;
   }
 
-  // 클라이언트 환경 기본 프록시 경로
-  return "/api";
+  // 클라이언트 환경 기본 상대 경로 fallback (API 래퍼들이 이미 /api를 포함하므로 빈 문자열 반환)
+  return "";
 };
 
 export const apiClient = createApiClient(getBaseUrl());
