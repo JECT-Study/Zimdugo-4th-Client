@@ -1,8 +1,8 @@
 import { createApiClient, createApiMethods } from "@repo/libs/axios";
 import type { InternalAxiosRequestConfig } from "axios";
+import { authService } from "#/features/auth/sign-in/api/authService";
 import { resolveAcceptLanguageHeader } from "#/shared/i18n/api-locale";
 import { useAuthStore } from "#/shared/store/authStore";
-import { authService } from "#/features/auth/sign-in/api/authService";
 
 const getBaseUrl = (): string => {
   if (typeof window === "undefined") {
@@ -11,14 +11,16 @@ const getBaseUrl = (): string => {
       if (process.env.VITE_API_BASE_URL) return process.env.VITE_API_BASE_URL;
       if (process.env.API_BASE_URL) return process.env.API_BASE_URL;
     }
-  } else {
-    // 클라이언트 사이드 (브라우저) 환경
-    if (import.meta.env?.VITE_API_BASE_URL) {
-      return import.meta.env.VITE_API_BASE_URL;
-    }
+    throw new Error("API_BASE_URL is not defined in server environment");
   }
-  // 기본 백엔드 API 도메인 (Fallback)
-  return "https://api.zimdugo.com";
+
+  // 클라이언트 사이드 (브라우저) 환경
+  if (import.meta.env?.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // 클라이언트 환경 기본 프록시 경로
+  return "/api";
 };
 
 export const apiClient = createApiClient(getBaseUrl());
