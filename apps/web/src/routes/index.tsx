@@ -349,37 +349,41 @@ export function IndexPage() {
     createDefaultSearchFilters,
   );
   const [sheetMode, setSheetMode] = useState<SheetModeForContext>(() => {
-    if (lockerIdFromQuery !== undefined) return "detail";
+    if (lockerIdFromQuery !== undefined && loaderData?.detail) return "detail";
     return readRestoredMapSheetSession()?.sheetMode ?? "idle";
   });
   const [activeLockerId, setActiveLockerId] = useState<number | null>(() => {
-    if (lockerIdFromQuery !== undefined) return lockerIdFromQuery;
+    if (lockerIdFromQuery !== undefined && loaderData?.detail)
+      return lockerIdFromQuery;
     return readRestoredMapSheetSession()?.activeLockerId ?? null;
   });
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(() => {
-      if (lockerIdFromQuery !== undefined && loaderData?.detail) {
-        return loaderData.detail;
+      if (lockerIdFromQuery !== undefined) {
+        return loaderData?.detail ?? null;
       }
       return readRestoredMapSheetSession()?.selectedLockerDetail ?? null;
     });
   const [selectedMapPin, setSelectedMapPin] =
     useState<LockerPinItemResponse | null>(() => {
-      if (lockerIdFromQuery !== undefined && loaderData?.detail) {
-        return {
-          pinType: "LOCKER",
-          lockerId: lockerIdFromQuery,
-          placeId: null,
-          latitude:
-            loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
-          longitude:
-            loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
-        };
+      if (lockerIdFromQuery !== undefined) {
+        if (loaderData?.detail) {
+          return {
+            pinType: "LOCKER",
+            lockerId: lockerIdFromQuery,
+            placeId: null,
+            latitude:
+              loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
+            longitude:
+              loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
+          };
+        }
+        return null;
       }
       return readRestoredMapSheetSession()?.selectedMapPin ?? null;
     });
   const [context, setContext] = useState<AppMapContext>(() => {
-    if (lockerIdFromQuery !== undefined) return "map";
+    if (lockerIdFromQuery !== undefined && loaderData?.detail) return "map";
     return readRestoredMapSheetSession()?.context ?? "idle";
   });
   const [overlayReturnContext, setOverlayReturnContext] =
