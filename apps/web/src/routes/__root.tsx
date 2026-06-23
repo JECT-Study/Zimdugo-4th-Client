@@ -97,13 +97,33 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
       }
     }
 
-    if (!normalized || normalized === baseLocale) return;
+    if (!normalized) return;
 
     var pathname = window.location.pathname;
-    var hasPathLocale = localePathPattern.test(pathname);
-    if (hasPathLocale) return;
+    var pathLocaleMatch = pathname.match(localePathPattern);
+    var pathLocale = null;
 
-    var nextPathname = "/" + normalized + (pathname === "/" ? "" : pathname);
+    if (pathLocaleMatch) {
+      var lowerPathLocale = pathLocaleMatch[0].slice(1).toLowerCase().replace(/_/g, "-");
+      for (var pathIndex = 0; pathIndex < normalizationGroups.length; pathIndex += 1) {
+        var pathGroup = normalizationGroups[pathIndex];
+        for (var prefixIndex = 0; prefixIndex < pathGroup.prefixes.length; prefixIndex += 1) {
+          if (lowerPathLocale.indexOf(pathGroup.prefixes[prefixIndex]) === 0) {
+            pathLocale = pathGroup.locale;
+            break;
+          }
+        }
+        if (pathLocale) break;
+      }
+    }
+
+    if (pathLocale === normalized) return;
+
+    var basePathname = pathname.replace(localePathPattern, "") || "/";
+    var nextPathname = normalized === baseLocale
+      ? basePathname
+      : "/" + normalized + (basePathname === "/" ? "" : basePathname);
+
     window.location.replace(nextPathname + window.location.search + window.location.hash);
   } catch (_) {
   }

@@ -135,7 +135,7 @@ describe("resolveLanguageSyncAction", () => {
     });
   });
 
-  it("prefers explicit URL locale over the persisted language", async () => {
+  it("redirects prefixed routes to the persisted language when they drift", async () => {
     const { resolveLanguageSyncAction } = await import("./language");
 
     expect(
@@ -143,6 +143,35 @@ describe("resolveLanguageSyncAction", () => {
         href: "/ja/settings",
         urlLanguage: "ja",
         persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "redirect", href: "/en/settings" });
+  });
+
+  it("strips the URL locale when the persisted language is the base language", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/en/settings?tab=language#current",
+        urlLanguage: "en",
+        persistedLanguage: "ko",
+        runtimeLanguage: "en",
+      }),
+    ).toEqual({
+      kind: "redirect",
+      href: "/settings?tab=language#current",
+    });
+  });
+
+  it("syncs explicit URL locale when it matches the persisted language", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/ja/settings",
+        urlLanguage: "ja",
+        persistedLanguage: "ja",
         runtimeLanguage: "ko",
       }),
     ).toEqual({ kind: "sync", language: "ja" });

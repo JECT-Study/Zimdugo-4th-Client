@@ -83,6 +83,13 @@ export const resolveLanguageSyncAction = ({
   const normalizedUrlLanguage = normalizeLanguage(urlLanguage);
 
   if (normalizedUrlLanguage) {
+    if (normalizedUrlLanguage !== persistedLanguage) {
+      return {
+        kind: "redirect",
+        href: getLocalizedHref(href, persistedLanguage),
+      };
+    }
+
     return { kind: "sync", language: normalizedUrlLanguage };
   }
 
