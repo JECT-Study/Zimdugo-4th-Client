@@ -154,7 +154,7 @@ export const DETAIL_FOCUS_ZOOM = 17;
 const parseLockerSearchParam = (raw: unknown): number | undefined => {
   if (raw === undefined || raw === null) return undefined;
   const str = String(raw).trim();
-  if (!/^\d+$/.test(str)) return undefined;
+  if (!/^\d+(?:-.*)?$/.test(str)) return undefined;
   const parsed = parseInt(str, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 };
@@ -174,7 +174,8 @@ export const Route = createFileRoute("/")({
     const safeSearch = search || {};
     const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
     const lockerNum = parseLockerSearchParam(safeSearch.locker);
-    const locker = lockerNum !== undefined ? String(lockerNum) : undefined;
+    const locker =
+      lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
     return {
       ...parsed,
       locker,
@@ -990,17 +991,8 @@ export function IndexPage() {
       optimisticDetail?: LockerDetailItem,
       options?: { detailSnap?: LockerDetailSnap },
     ) => {
+      handledOpenLockerIdRef.current = lockerId;
       void flushLockerSheetMutations();
-      setSelectedLockerDetail(
-        optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
-      );
-      setActiveLockerId(lockerId);
-      setIsNavigationPopupOpen(false);
-      setIsSearchOpen(false);
-      setLockerDetailOpensFull(options?.detailSnap === "full");
-      setSheetMode("detail");
-
-      isPendingFocusRef.current = true;
 
       // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
       const cleanName = optimisticDetail?.title
@@ -1013,38 +1005,61 @@ export function IndexPage() {
         : String(lockerId);
 
       if (String(search.locker ?? "") !== lockerSlug) {
-        void navigate({
-          to: "/",
-          search: (prev: any) =>
-            ({
+        console.log("DEBUG triggers navigate for lockerSlug:", lockerSlug);
+        navigate({
+          to: ".",
+          search: (prev: any) => {
+            console.log("DEBUG navigate prev:", prev);
+            return {
               ...prev,
               locker: lockerSlug,
-            }) as any,
-        });
+            };
+          },
+        })
+          .then((res) => console.log("DEBUG navigate SUCCESS:", res))
+          .catch((err) => console.error("DEBUG navigate ERROR:", err));
+      } else {
+        console.log(
+          "DEBUG String(search.locker) matches lockerSlug, skipping navigate",
+        );
       }
 
-      if (
-        optimisticDetail?.latitude !== undefined &&
-        optimisticDetail?.longitude !== undefined
-      ) {
-        isPendingFocusRef.current = false;
+      // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
+      setTimeout(() => {
+        setSelectedLockerDetail(
+          optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
+        );
+        setActiveLockerId(lockerId);
+        setIsNavigationPopupOpen(false);
+        setIsSearchOpen(false);
+        setLockerDetailOpensFull(options?.detailSnap === "full");
+        setSheetMode("detail");
+
+        isPendingFocusRef.current = true;
 
         if (
-          lastFocusedLockerIdRef.current !== lockerId &&
-          mapInstanceRef.current
+          optimisticDetail?.latitude !== undefined &&
+          optimisticDetail?.longitude !== undefined
         ) {
-          lastFocusedLockerIdRef.current = lockerId;
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: {
-              lat: optimisticDetail.latitude,
-              lng: optimisticDetail.longitude,
-            },
-            bottomInsetPx: getDetailFocusBottomInsetPx(),
-            zoom: DETAIL_FOCUS_ZOOM,
-          });
+          isPendingFocusRef.current = false;
+
+          if (
+            lastFocusedLockerIdRef.current !== lockerId &&
+            mapInstanceRef.current
+          ) {
+            lastFocusedLockerIdRef.current = lockerId;
+            focusNaverMapOnCoordinates({
+              map: mapInstanceRef.current,
+              coordinates: {
+                lat: optimisticDetail.latitude,
+                lng: optimisticDetail.longitude,
+              },
+              bottomInsetPx: getDetailFocusBottomInsetPx(),
+              zoom: DETAIL_FOCUS_ZOOM,
+            });
+          }
         }
-      }
+      }, 0);
     },
     [
       flushLockerSheetMutations,
@@ -1323,7 +1338,7 @@ export function IndexPage() {
     openLockerFromDeepLink(openLockerId, { detailSnap, focus })
       .then(() => {
         void navigate({
-          to: "/",
+          to: ".",
           search: (prev: any) => {
             const {
               openLockerId: _,
@@ -1345,7 +1360,7 @@ export function IndexPage() {
         handledOpenLockerIdRef.current = null;
         setLockerDetailQueryOrigin(null);
         void navigate({
-          to: "/",
+          to: ".",
           search: (prev: any) => {
             const {
               openLockerId: _,
@@ -1515,7 +1530,7 @@ export function IndexPage() {
         resetMapContext();
         if (search.locker) {
           void navigate({
-            to: "/",
+            to: ".",
             search: (prev: any) => {
               const { locker, ...rest } = prev;
               return rest as any;
@@ -1528,7 +1543,7 @@ export function IndexPage() {
       setSheetMode("list");
       if (search.locker) {
         void navigate({
-          to: "/",
+          to: ".",
           search: (prev: any) => {
             const { locker, ...rest } = prev;
             return rest as any;
@@ -1546,7 +1561,7 @@ export function IndexPage() {
     setSheetMode("list");
     if (search.locker) {
       void navigate({
-        to: "/",
+        to: ".",
         search: (prev: any) => {
           const { locker, ...rest } = prev;
           return rest as any;
@@ -1605,6 +1620,28 @@ export function IndexPage() {
       mergeLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
     );
 
+    // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
+    const cleanName = lockerDetail.title
+      ? lockerDetail.title
+          .replace(/[^\p{L}\p{N}\s-]/gu, "")
+          .replace(/\s+/g, "-")
+      : "";
+    const lockerSlug = cleanName
+      ? `${lockerDetail.lockerId}-${cleanName}`
+      : String(lockerDetail.lockerId);
+
+    if (String(search.locker ?? "") !== lockerSlug) {
+      console.log("DEBUG: normalizing URL slug after API load", lockerSlug);
+      void navigate({
+        to: ".",
+        search: (prev: any) => ({
+          ...prev,
+          locker: lockerSlug,
+        }),
+        replace: true,
+      });
+    }
+
     if (
       isPendingFocusRef.current &&
       mapInstance &&
@@ -1622,7 +1659,7 @@ export function IndexPage() {
         bottomInsetPx: getDetailFocusBottomInsetPx(),
       });
     }
-  }, [lockerDetail, mapInstance]);
+  }, [lockerDetail, mapInstance, search.locker, navigate]);
 
   useEffect(() => {
     if (sheetMode === "idle") {
