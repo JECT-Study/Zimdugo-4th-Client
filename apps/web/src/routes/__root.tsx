@@ -82,6 +82,10 @@ export const Route = createRootRouteWithContext<{
         name: "theme-color",
         content: "#3bd569",
       },
+      {
+        name: "google-site-verification",
+        content: "gpgSPQCFt-Gg188XTXUl8KrpB4gPuU6EH0b0i9OTlLE",
+      },
     ],
     links: [
       {
