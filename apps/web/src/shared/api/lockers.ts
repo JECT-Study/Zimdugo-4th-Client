@@ -339,3 +339,26 @@ export const getLockerDetail = async (
 
   return unwrapBackendData(response);
 };
+
+export interface SeoLockerItem {
+  lockerId: number;
+  names: {
+    ko: string;
+    en: string;
+    ja: string;
+    zh: string;
+    "zh-TW"?: string;
+    "zh-tw"?: string;
+  };
+}
+
+export const getSeoLockers = async (
+  signal?: AbortSignal,
+): Promise<SeoLockerItem[]> => {
+  const { data: response } = await httpGet<BackendResponse<SeoLockerItem[]>>(
+    "/api/v1/lockers/seo-list",
+    { signal },
+  );
+
+  return unwrapBackendData(response);
+};
