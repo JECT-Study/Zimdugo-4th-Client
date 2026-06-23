@@ -1005,23 +1005,13 @@ export function IndexPage() {
         : String(lockerId);
 
       if (String(search.locker ?? "") !== lockerSlug) {
-        console.log("DEBUG triggers navigate for lockerSlug:", lockerSlug);
         navigate({
           to: ".",
-          search: (prev: any) => {
-            console.log("DEBUG navigate prev:", prev);
-            return {
-              ...prev,
-              locker: lockerSlug,
-            };
-          },
-        })
-          .then((res) => console.log("DEBUG navigate SUCCESS:", res))
-          .catch((err) => console.error("DEBUG navigate ERROR:", err));
-      } else {
-        console.log(
-          "DEBUG String(search.locker) matches lockerSlug, skipping navigate",
-        );
+          search: (prev: any) => ({
+            ...prev,
+            locker: lockerSlug,
+          }),
+        }).catch((err) => console.error("navigate ERROR:", err));
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
@@ -1631,7 +1621,6 @@ export function IndexPage() {
       : String(lockerDetail.lockerId);
 
     if (String(search.locker ?? "") !== lockerSlug) {
-      console.log("DEBUG: normalizing URL slug after API load", lockerSlug);
       void navigate({
         to: ".",
         search: (prev: any) => ({
