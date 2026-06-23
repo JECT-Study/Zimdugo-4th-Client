@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as MyRouteImport } from './routes/my'
@@ -21,6 +22,11 @@ import { Route as SettingsLanguageRouteImport } from './routes/settings.language
 import { Route as MyReportsRouteImport } from './routes/my.reports'
 import { Route as MyFavoritesRouteImport } from './routes/my.favorites'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/my': typeof MyRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/my/favorites': typeof MyFavoritesRoute
   '/my/reports': typeof MyReportsRoute
   '/settings/language': typeof SettingsLanguageRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/my': typeof MyRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/my/favorites': typeof MyFavoritesRoute
   '/my/reports': typeof MyReportsRoute
   '/settings/language': typeof SettingsLanguageRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/my': typeof MyRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/my/favorites': typeof MyFavoritesRoute
   '/my/reports': typeof MyReportsRoute
   '/settings/language': typeof SettingsLanguageRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/my'
     | '/report'
     | '/settings'
+    | '/sitemap.xml'
     | '/my/favorites'
     | '/my/reports'
     | '/settings/language'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/my'
     | '/report'
     | '/settings'
+    | '/sitemap.xml'
     | '/my/favorites'
     | '/my/reports'
     | '/settings/language'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/my'
     | '/report'
     | '/settings'
+    | '/sitemap.xml'
     | '/my/favorites'
     | '/my/reports'
     | '/settings/language'
@@ -165,10 +177,18 @@ export interface RootRouteChildren {
   MyRoute: typeof MyRouteWithChildren
   ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRouteWithChildren
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -285,6 +305,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyRoute: MyRouteWithChildren,
   ReportRoute: ReportRoute,
   SettingsRoute: SettingsRouteWithChildren,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

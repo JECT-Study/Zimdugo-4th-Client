@@ -1,5 +1,5 @@
 {
-  "$schema": "https://inlang.com/schema/message-format",
+  "$schema": "https://inlang.com/schema/inlang-message-format",
   "hello": "こんにちは",
   "nav_home": "ホーム",
   "nav_report": "情報提供",
@@ -331,5 +331,11 @@
   "settings_document_error_helper": "ネットワーク接続を確認して、もう一度お試しください。",
   "settings_document_retry": "再試行",
   "settings_document_loading_aria": "ドキュメントを読み込み中",
-  "settings_notice_empty": "お知らせはまだありません。"
+  "settings_notice_empty": "お知らせはまだありません。",
+  "seo_locker_detail_title": "{name} | Zimdugo コインロッカー",
+  "seo_locker_detail_description": "{name} コインロッカーの位置（{address}）、{priceText}、営業時間などの詳細情報をZimdugoで簡単かつ迅速に確認してください。",
+  "seo_locker_detail_price_text": "最低料金 {price}ウォン",
+  "seo_locker_detail_price_unknown": "料金情報の確認可能",
+  "seo_global_title": "Zimdugo | 韓国のコインロッカー・荷物預かり所マップ",
+  "seo_global_description": "Zimdugoは、韓国全土のコインロッカーや荷物預かり所の場所、料金、営業時間などを簡単に探せる地図サービスです。地下鉄駅、ショッピングモール、観光地などのロッカー位置を確認し、新しい保管場所を直接報告してください。"
 }
