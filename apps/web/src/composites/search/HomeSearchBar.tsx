@@ -37,13 +37,15 @@ import {
   languageCheckIcon,
   languageChevron,
   languageDropdown,
-  languageDropdownOpen,
+  languageDropdownExpanded,
   languageOption,
   languageOptionSelected,
   languageOptions,
+  languageOptionsOpen,
   languageOptionText,
   languageTrigger,
   languageTriggerLabel,
+  languageTriggerLabelVisible,
   searchBarLayer,
   searchField,
   searchFieldWithClose,
@@ -136,7 +138,8 @@ export function HomeSearchBar({
   isSearchContextActive = false,
 }: HomeSearchBarProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
+  const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
   const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const shouldProbeStyle = !hasHomeSearchBarStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
@@ -150,11 +153,23 @@ export function HomeSearchBar({
   };
 
   const handleToggleLanguage = () => {
-    setIsLanguageOpen((isOpen) => !isOpen);
+    if (!isLanguageExpanded) {
+      setIsLanguageExpanded(true);
+      return;
+    }
+
+    if (!isLanguageOptionsOpen) {
+      setIsLanguageOptionsOpen(true);
+      return;
+    }
+
+    setIsLanguageOptionsOpen(false);
+    setIsLanguageExpanded(false);
   };
 
   const handleSelectLanguage = (language: AppLanguage) => {
-    setIsLanguageOpen(false);
+    setIsLanguageOptionsOpen(false);
+    setIsLanguageExpanded(false);
     setAppLanguage(language);
 
     const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -188,19 +203,21 @@ export function HomeSearchBar({
   }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
 
   useEffect(() => {
-    if (!isLanguageOpen) {
+    if (!isLanguageExpanded) {
       return;
     }
 
     const handleDocumentPointerDown = (event: globalThis.PointerEvent) => {
       if (!languageDropdownRef.current?.contains(event.target as Node)) {
-        setIsLanguageOpen(false);
+        setIsLanguageOptionsOpen(false);
+        setIsLanguageExpanded(false);
       }
     };
 
     const handleDocumentKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsLanguageOpen(false);
+        setIsLanguageOptionsOpen(false);
+        setIsLanguageExpanded(false);
       }
     };
 
@@ -211,7 +228,7 @@ export function HomeSearchBar({
       document.removeEventListener("pointerdown", handleDocumentPointerDown);
       document.removeEventListener("keydown", handleDocumentKeyDown);
     };
-  }, [isLanguageOpen]);
+  }, [isLanguageExpanded]);
 
   return (
     <div className={searchBarLayer} style={searchBarLayerFallbackStyle}>
@@ -276,7 +293,7 @@ export function HomeSearchBar({
               ref={languageDropdownRef}
               className={[
                 languageDropdown,
-                isLanguageOpen ? languageDropdownOpen : "",
+                isLanguageExpanded ? languageDropdownExpanded : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -285,52 +302,61 @@ export function HomeSearchBar({
                 type="button"
                 className={languageTrigger}
                 aria-label={m.settings_language()}
-                aria-expanded={isLanguageOpen}
+                aria-expanded={isLanguageOptionsOpen}
                 onClick={handleToggleLanguage}
               >
-                <IconNormalGlobe32
-                  state={isLanguageOpen ? "selected" : "default"}
-                />
-                {isLanguageOpen ? (
-                  <>
-                    <span className={languageTriggerLabel}>
-                      {appLanguageLabelMap[currentLanguage]}
-                    </span>
-                    <span className={languageChevron} aria-hidden />
-                  </>
-                ) : null}
+                <IconNormalGlobe32 />
+                <span
+                  className={[
+                    languageTriggerLabel,
+                    isLanguageExpanded ? languageTriggerLabelVisible : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {appLanguageLabelMap[currentLanguage]}
+                </span>
+                <span className={languageChevron} aria-hidden />
               </button>
-              {isLanguageOpen ? (
-                <div className={languageOptions} role="listbox">
-                  {APP_LANGUAGES.map((language) => {
-                    const isCurrent = language === currentLanguage;
-                    return (
-                      <button
-                        key={language}
-                        type="button"
-                        className={[
-                          languageOption,
-                          isCurrent ? languageOptionSelected : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                        role="option"
-                        aria-selected={isCurrent}
-                        onClick={() => handleSelectLanguage(language)}
-                      >
-                        <span className={languageOptionText}>
-                          {appLanguageLabelMap[language]}
+              <div
+                className={[
+                  languageOptions,
+                  isLanguageOptionsOpen ? languageOptionsOpen : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                role="listbox"
+                aria-hidden={!isLanguageOptionsOpen}
+              >
+                {APP_LANGUAGES.map((language) => {
+                  const isCurrent = language === currentLanguage;
+                  return (
+                    <button
+                      key={language}
+                      type="button"
+                      className={[
+                        languageOption,
+                        isCurrent ? languageOptionSelected : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      role="option"
+                      aria-selected={isCurrent}
+                      tabIndex={isLanguageOptionsOpen ? 0 : -1}
+                      onClick={() => handleSelectLanguage(language)}
+                    >
+                      <span className={languageOptionText}>
+                        {appLanguageLabelMap[language]}
+                      </span>
+                      {isCurrent ? (
+                        <span className={languageCheckIcon}>
+                          <IconCheck24 />
                         </span>
-                        {isCurrent ? (
-                          <span className={languageCheckIcon}>
-                            <IconCheck24 />
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : null}
         </>
