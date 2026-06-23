@@ -5,7 +5,11 @@ import {
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
@@ -120,7 +124,8 @@ import {
   shouldFetchPlaceLockers,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
-import type { LockerPinItemResponse } from "#/shared/api/lockers";
+import { getLockerDetail, type LockerPinItemResponse } from "#/shared/api/lockers";
+import { toLockerDetailItem } from "#/shared/api/locker-adapters";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
@@ -144,8 +149,83 @@ import {
 export const DETAIL_FOCUS_ZOOM = 17;
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown> | undefined): {
+    locker?: string;
+    openLockerId?: number;
+    detailSnap?: LockerDetailSnap;
+    focusLat?: number;
+    focusLng?: number;
+  } => {
+    const safeSearch = search || {};
+    const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
+    const locker = typeof safeSearch.locker === "string" ? safeSearch.locker : undefined;
+    return {
+      ...parsed,
+      locker,
+    };
+  },
+  loader: async ({ search }: any) => {
+    const lockerParam = search?.locker;
+    if (lockerParam) {
+      const lockerId = parseInt(lockerParam, 10);
+      if (Number.isInteger(lockerId) && lockerId > 0) {
+        try {
+          const rawDetail = await getLockerDetail({
+            lockerId,
+            lat: 37.498095,
+            lng: 127.02761,
+          });
+          const detail = toLockerDetailItem(rawDetail);
+          return { detail };
+        } catch (error) {
+          console.error(`Failed to load locker ${lockerId} in root loader:`, error);
+          return { detail: null };
+        }
+      }
+    }
+    return { detail: null };
+  },
+  head: ({ loaderData }) => {
+    const detail = loaderData?.detail;
+    if (detail) {
+      const name = detail.title || "물품보관함";
+      const address = detail.address || "";
+      const minPrice = detail.minPrice;
+      
+      const priceText = minPrice 
+        ? m.seo_locker_detail_price_text({ price: minPrice.toLocaleString() })
+        : m.seo_locker_detail_price_unknown();
+
+      return {
+        meta: [
+          {
+            title: m.seo_locker_detail_title({ name }),
+          },
+          {
+            name: "description",
+            content: m.seo_locker_detail_description({ name, address, priceText }),
+          },
+          {
+            property: "og:title",
+            content: m.seo_locker_detail_title({ name }),
+          },
+          {
+            property: "og:description",
+            content: m.seo_locker_detail_description({ name, address, priceText }),
+          },
+        ],
+      };
+    }
+    
+    return {
+      meta: [
+        {
+          title: "Zimdugo",
+        },
+      ],
+    };
+  },
   component: IndexPage,
-  validateSearch: parseOpenLockerDeepLinkSearch,
 });
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
@@ -167,9 +247,14 @@ const mergeLockerDetailWithPreviousDistance = (
   };
 };
 
-function IndexPage() {
+export function IndexPage() {
   const navigate = useNavigate();
-  const { openLockerId, detailSnap, focusLat, focusLng } = Route.useSearch();
+  const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
+  const loaderData = Route.useLoaderData();
+
+  const lockerIdFromQuery = search.locker ? parseInt(search.locker, 10) : undefined;
+  const openLockerId = lockerIdFromQuery ?? search.openLockerId;
+  const { detailSnap, focusLat, focusLng } = search;
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
@@ -240,21 +325,46 @@ function IndexPage() {
     createDefaultSearchFilters,
   );
   const [sheetMode, setSheetMode] = useState<SheetModeForContext>(
-    () => readRestoredMapSheetSession()?.sheetMode ?? "idle",
+    () => {
+      if (lockerIdFromQuery !== undefined) return "detail";
+      return readRestoredMapSheetSession()?.sheetMode ?? "idle";
+    },
   );
   const [activeLockerId, setActiveLockerId] = useState<number | null>(
-    () => readRestoredMapSheetSession()?.activeLockerId ?? null,
+    () => {
+      if (lockerIdFromQuery !== undefined) return lockerIdFromQuery;
+      return readRestoredMapSheetSession()?.activeLockerId ?? null;
+    },
   );
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(
-      () => readRestoredMapSheetSession()?.selectedLockerDetail ?? null,
+      () => {
+        if (lockerIdFromQuery !== undefined && loaderData?.detail) {
+          return loaderData.detail;
+        }
+        return readRestoredMapSheetSession()?.selectedLockerDetail ?? null;
+      },
     );
   const [selectedMapPin, setSelectedMapPin] =
     useState<LockerPinItemResponse | null>(
-      () => readRestoredMapSheetSession()?.selectedMapPin ?? null,
+      () => {
+        if (lockerIdFromQuery !== undefined && loaderData?.detail) {
+          return {
+            pinType: "LOCKER",
+            lockerId: lockerIdFromQuery,
+            placeId: null,
+            latitude: loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
+            longitude: loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
+          };
+        }
+        return readRestoredMapSheetSession()?.selectedMapPin ?? null;
+      },
     );
   const [context, setContext] = useState<AppMapContext>(
-    () => readRestoredMapSheetSession()?.context ?? "idle",
+    () => {
+      if (lockerIdFromQuery !== undefined) return "map";
+      return readRestoredMapSheetSession()?.context ?? "idle";
+    },
   );
   const [overlayReturnContext, setOverlayReturnContext] =
     useState<OverlayReturnContext>("idle");
@@ -317,6 +427,16 @@ function IndexPage() {
     useLocationTracking({ onFirstLocation: handleFirstLocation });
 
   const mapBootstrap = useMemo(() => {
+    if (lockerIdFromQuery !== undefined && loaderData?.detail) {
+      return {
+        center: {
+          lat: loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
+          lng: loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
+        },
+        zoom: DETAIL_FOCUS_ZOOM,
+      };
+    }
+
     const deepLinkCenter =
       focusLat != null && focusLng != null
         ? { lat: focusLat, lng: focusLng }
@@ -328,7 +448,7 @@ function IndexPage() {
       permission,
       gps: permission === "granted" && location ? location : null,
     });
-  }, [focusLat, focusLng, mapRemountKey, permission, location]);
+  }, [focusLat, focusLng, mapRemountKey, permission, location, lockerIdFromQuery, loaderData]);
 
   const {
     heading: deviceHeading,
@@ -503,6 +623,19 @@ function IndexPage() {
     mapInstanceRef.current = map;
     setMapInstance(map);
 
+    if (map && lockerIdFromQuery !== undefined && loaderData?.detail) {
+      focusNaverMapOnCoordinates({
+        map,
+        coordinates: {
+          lat: loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
+          lng: loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
+        },
+        bottomInsetPx: getDetailFocusBottomInsetPx(),
+        zoom: DETAIL_FOCUS_ZOOM,
+      });
+      return;
+    }
+
     const pin = pendingDeepLinkFocusPinRef.current;
     if (!map || !pin) {
       return;
@@ -515,7 +648,7 @@ function IndexPage() {
       zoom: DETAIL_FOCUS_ZOOM,
     });
     pendingDeepLinkFocusPinRef.current = null;
-  }, []);
+  }, [lockerIdFromQuery, loaderData]);
 
   const resetMapContext = useCallback(() => {
     void flushLockerSheetMutations();
@@ -677,14 +810,22 @@ function IndexPage() {
       return null;
     }
 
+    if (lockerIdFromQuery !== undefined && loaderData?.detail) {
+      return {
+        lockerId: activeLockerId,
+        lat: loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
+        lng: loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
+      };
+    }
+
     const origin = lockerDetailQueryOrigin ?? searchCoordinates;
 
     return {
       lockerId: activeLockerId,
-      lat: origin.lat,
-      lng: origin.lng,
+      lat: origin.lat ?? DEFAULT_SEARCH_COORDINATES.lat,
+      lng: origin.lng ?? DEFAULT_SEARCH_COORDINATES.lng,
     };
-  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates]);
+  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates, lockerIdFromQuery, loaderData]);
 
   const {
     data: lockerDetail,
@@ -825,6 +966,22 @@ function IndexPage() {
 
       isPendingFocusRef.current = true;
 
+      // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
+      const cleanName = optimisticDetail?.title
+        ? optimisticDetail.title.replace(/[^\p{L}\p{N}\s-]/gu, "").replace(/\s+/g, "-")
+        : "";
+      const lockerSlug = cleanName ? `${lockerId}-${cleanName}` : String(lockerId);
+
+      if (search.locker !== lockerSlug) {
+        void navigate({
+          to: "/",
+          search: (prev: any) => ({
+            ...prev,
+            locker: lockerSlug,
+          }) as any,
+        });
+      }
+
       if (
         optimisticDetail?.latitude !== undefined &&
         optimisticDetail?.longitude !== undefined
@@ -848,7 +1005,13 @@ function IndexPage() {
         }
       }
     },
-    [flushLockerSheetMutations, setIsSearchOpen, setSheetMode],
+    [
+      flushLockerSheetMutations,
+      setIsSearchOpen,
+      setSheetMode,
+      search.locker,
+      navigate,
+    ],
   );
 
   const openSearchPlaceList = useCallback(
@@ -1118,13 +1281,30 @@ function IndexPage() {
 
     openLockerFromDeepLink(openLockerId, { detailSnap, focus })
       .then(() => {
-        navigate({ to: "/", search: {}, replace: true });
+        void navigate({
+          to: "/",
+          search: (prev: any) => {
+            const { openLockerId: _, detailSnap: __, focusLat: ___, focusLng: ____, ...rest } = prev;
+            if (!rest.locker) {
+              rest.locker = String(openLockerId);
+            }
+            return rest as any;
+          },
+          replace: true,
+        });
       })
       .catch((error) => {
         console.error("Failed to open locker detail from deep link:", error);
         handledOpenLockerIdRef.current = null;
         setLockerDetailQueryOrigin(null);
-        navigate({ to: "/", search: {}, replace: true });
+        void navigate({
+          to: "/",
+          search: (prev: any) => {
+            const { openLockerId: _, detailSnap: __, focusLat: ___, focusLng: ____, ...rest } = prev;
+            return rest as any;
+          },
+          replace: true,
+        });
       });
   }, [
     detailSnap,
@@ -1280,10 +1460,28 @@ function IndexPage() {
     if (context === "map") {
       if (mapDetailBack === "idle") {
         resetMapContext();
+        if (search.locker) {
+          void navigate({
+            to: "/",
+            search: (prev: any) => {
+              const { locker, ...rest } = prev;
+              return rest as any;
+            },
+          });
+        }
         return;
       }
 
       setSheetMode("list");
+      if (search.locker) {
+        void navigate({
+          to: "/",
+          search: (prev: any) => {
+            const { locker, ...rest } = prev;
+            return rest as any;
+          },
+        });
+      }
       return;
     }
 
@@ -1293,12 +1491,26 @@ function IndexPage() {
     }
 
     setSheetMode("list");
+    if (search.locker) {
+      void navigate({
+        to: "/",
+        search: (prev: any) => {
+          const { locker, ...rest } = prev;
+          return rest as any;
+        },
+      });
+    }
   }, [
     context,
     flushLockerSheetMutations,
     mapDetailBack,
     resetMapContext,
     searchDetailBack,
+    setListKind,
+    setSearchPlaceId,
+    setSheetMode,
+    search.locker,
+    navigate,
   ]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
@@ -1682,7 +1894,7 @@ function IndexPage() {
                     : handleIdlePinSelect
               }
               spreadCenter={
-                ((markerLayer === "mapPlace") ||
+                (markerLayer === "mapPlace" ||
                   (markerLayer === "search" && listKind === "place")) &&
                 lastValidSpreadCenterRef.current?.placeId === activePlaceId
                   ? {
