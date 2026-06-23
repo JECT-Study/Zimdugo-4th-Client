@@ -328,5 +328,9 @@
   "settings_document_error_helper": "ネットワーク接続を確認して、もう一度お試しください。",
   "settings_document_retry": "再試行",
   "settings_document_loading_aria": "ドキュメントを読み込み中",
-  "settings_notice_empty": "お知らせはまだありません。"
+  "settings_notice_empty": "お知らせはまだありません。",
+  "seo_locker_detail_title": "{name} | Zimdugo コインロッカー",
+  "seo_locker_detail_description": "{name} コインロッカーの位置（{address}）、{priceText}、営業時間などの詳細 정보를 Zimdugoで簡単かつ迅速に確認してください。",
+  "seo_locker_detail_price_text": "最低料金 {price}ウォン",
+  "seo_locker_detail_price_unknown": "料金情報の確認可能"
 }

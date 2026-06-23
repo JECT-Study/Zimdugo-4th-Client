@@ -4,9 +4,24 @@ import { resolveAcceptLanguageHeader } from "#/shared/i18n/api-locale";
 import { useAuthStore } from "#/shared/store/authStore";
 import { authService } from "#/features/auth/sign-in/api/authService";
 
-export const apiClient = createApiClient(
-  import.meta.env.VITE_API_BASE_URL ?? "",
-);
+const getBaseUrl = (): string => {
+  if (typeof window === "undefined") {
+    // 서버 사이드 실행 (Node.js / Nitro) 환경
+    if (typeof process !== "undefined" && process.env) {
+      if (process.env.VITE_API_BASE_URL) return process.env.VITE_API_BASE_URL;
+      if (process.env.API_BASE_URL) return process.env.API_BASE_URL;
+    }
+  } else {
+    // 클라이언트 사이드 (브라우저) 환경
+    if (import.meta.env?.VITE_API_BASE_URL) {
+      return import.meta.env.VITE_API_BASE_URL;
+    }
+  }
+  // 기본 백엔드 API 도메인 (Fallback)
+  return "https://api.zimdugo.com";
+};
+
+export const apiClient = createApiClient(getBaseUrl());
 apiClient.defaults.withCredentials = true;
 
 const getRequestUrl = (config: InternalAxiosRequestConfig): string => {

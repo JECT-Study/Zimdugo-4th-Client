@@ -328,5 +328,9 @@
   "settings_document_error_helper": "Check your network connection and try again.",
   "settings_document_retry": "Try again",
   "settings_document_loading_aria": "Loading document",
-  "settings_notice_empty": "No notices available."
+  "settings_notice_empty": "No notices available.",
+  "seo_locker_detail_title": "{name} | Zimdugo Luggage Storage",
+  "seo_locker_detail_description": "Find detailed information about {name} luggage storage including location({address}), {priceText}, and operating hours easily on Zimdugo.",
+  "seo_locker_detail_price_text": "minimum price {price} KRW",
+  "seo_locker_detail_price_unknown": "pricing details available"
 }

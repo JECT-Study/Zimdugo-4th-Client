@@ -328,5 +328,9 @@
   "settings_document_error_helper": "请检查网络连接后重试。",
   "settings_document_retry": "重试",
   "settings_document_loading_aria": "正在加载文档",
-  "settings_notice_empty": "暂无公告。"
+  "settings_notice_empty": "暂无公告。",
+  "seo_locker_detail_title": "{name} | Zimdugo 行李寄存",
+  "seo_locker_detail_description": "在 Zimdugo 轻松快速地查看 {name} 行李寄存的详细信息，包括位置（{address}）、{priceText} 和营业时间。",
+  "seo_locker_detail_price_text": "最低费用 {price} 韩元",
+  "seo_locker_detail_price_unknown": "可查询费用信息"
 }
