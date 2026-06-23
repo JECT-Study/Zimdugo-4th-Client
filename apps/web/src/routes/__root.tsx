@@ -22,6 +22,11 @@ import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
 import {
+  BASE_LOCALE,
+  LOCALE_NORMALIZATION_GROUPS,
+  LOCALE_PATH_PREFIX,
+} from "#/shared/i18n/locales";
+import {
   getRuntimeLanguage,
   getUrlLanguage,
   resolveLanguageSyncAction,
@@ -68,6 +73,9 @@ const CRITICAL_LAYOUT_CSS = `
 const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
 (function () {
   try {
+    var baseLocale = ${JSON.stringify(BASE_LOCALE)};
+    var normalizationGroups = ${JSON.stringify(LOCALE_NORMALIZATION_GROUPS)};
+    var localePathPattern = new RegExp(${JSON.stringify(LOCALE_PATH_PREFIX.source)}, ${JSON.stringify(LOCALE_PATH_PREFIX.flags)});
     var raw = window.localStorage.getItem("app-language");
     if (!raw) return;
 
@@ -77,22 +85,22 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
 
     if (typeof language === "string") {
       var lower = language.toLowerCase().replace(/_/g, "-");
-      if (lower.indexOf("ko") === 0) normalized = "ko";
-      else if (lower.indexOf("en") === 0) normalized = "en";
-      else if (lower.indexOf("ja") === 0) normalized = "ja";
-      else if (
-        lower.indexOf("zh-tw") === 0 ||
-        lower.indexOf("zh-hant") === 0 ||
-        lower.indexOf("zh-hk") === 0 ||
-        lower.indexOf("zh-mo") === 0
-      ) normalized = "zh-TW";
-      else if (lower.indexOf("zh") === 0) normalized = "zh";
+      for (var i = 0; i < normalizationGroups.length; i += 1) {
+        var group = normalizationGroups[i];
+        for (var j = 0; j < group.prefixes.length; j += 1) {
+          if (lower.indexOf(group.prefixes[j]) === 0) {
+            normalized = group.locale;
+            break;
+          }
+        }
+        if (normalized) break;
+      }
     }
 
-    if (!normalized || normalized === "ko") return;
+    if (!normalized || normalized === baseLocale) return;
 
     var pathname = window.location.pathname;
-    var hasPathLocale = /^\\/(?:ko|en|ja|zh-tw|zh)(?=\\/|$)/i.test(pathname);
+    var hasPathLocale = localePathPattern.test(pathname);
     if (hasPathLocale) return;
 
     var nextPathname = "/" + normalized + (pathname === "/" ? "" : pathname);
