@@ -182,7 +182,7 @@ export const Route = createFileRoute("/")({
           });
           const detail = toLockerDetailItem(rawDetail);
           return { detail };
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Failed to load locker ${lockerId} in root loader:`, error);
           return { detail: null };
         }
@@ -395,7 +395,6 @@ export function IndexPage() {
     clear: clearSearchHistory,
   } = useSearchHistory();
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
-
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
@@ -1610,6 +1609,10 @@ export function IndexPage() {
       return;
     }
 
+    if (openLockerId != null) {
+      return;
+    }
+
     if (
       isRenderableSheetSession({
         sheetMode,
@@ -1635,6 +1638,7 @@ export function IndexPage() {
     sheetMode,
     shouldFetchKeywordList,
     shouldFetchPlaceList,
+    openLockerId,
   ]);
 
   // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
