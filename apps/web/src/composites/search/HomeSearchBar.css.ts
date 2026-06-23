@@ -8,9 +8,16 @@ export const searchBarLayer = style({
   right: vars.spacing[16],
   zIndex: vars.zIndex.ui,
   display: "flex",
-  alignItems: "center",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  gap: vars.spacing[8],
   maxWidth: `calc(${vars.layout.containerWidth} - 32px)`,
   margin: "0 auto",
+});
+
+export const searchInputFrame = style({
+  position: "relative",
+  width: "100%",
 });
 
 export const searchField = style({
@@ -87,4 +94,150 @@ export const fallbackLabel = style({
   lineHeight: 1.2,
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+});
+
+export const languageDropdown = style({
+  position: "relative",
+  display: "inline-flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  width: "32px",
+  zIndex: 1,
+});
+
+export const languageDropdownOpen = style({
+  width: "119px",
+});
+
+export const languageTrigger = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  width: "32px",
+  height: "32px",
+  minHeight: "32px",
+  padding: 0,
+  border: 0,
+  borderRadius: vars.radius.max,
+  backgroundColor: "transparent",
+  color: vars.color.text.title,
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    [`${languageDropdownOpen} &`]: {
+      width: "119px",
+      height: "36px",
+      gap: "4px",
+      padding: "2px 6px",
+      border: `1px solid ${vars.color.brand.primary}`,
+      backgroundColor: vars.color.bg.default,
+    },
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
+});
+
+export const languageTriggerLabel = style({
+  minWidth: 0,
+  flex: 1,
+  overflow: "hidden",
+  color: vars.color.text.content,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: "17px",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+
+export const languageChevron = style({
+  width: 0,
+  height: 0,
+  flexShrink: 0,
+  borderLeft: "5px solid transparent",
+  borderRight: "5px solid transparent",
+  borderTop: `6px solid ${vars.color.text.title}`,
+});
+
+export const languageOptions = style({
+  position: "absolute",
+  top: "46px",
+  left: 0,
+  display: "flex",
+  flexDirection: "column",
+  width: "119px",
+  paddingTop: "6px",
+  paddingBottom: "5px",
+  borderRadius: vars.radius[6],
+  backgroundColor: vars.color.bg.default,
+  boxShadow: vars.shadow[2],
+  overflow: "hidden",
+  "::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: "55px",
+    width: 0,
+    height: 0,
+    borderLeft: "5px solid transparent",
+    borderRight: "5px solid transparent",
+    borderBottom: `6px solid ${vars.color.bg.default}`,
+  },
+});
+
+export const languageOption = style({
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "119px",
+  height: "33px",
+  padding: "0 8px 0 36px",
+  border: 0,
+  borderBottom: `1px solid ${vars.color.border.default}`,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.disable,
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&:last-child": {
+      borderBottom: 0,
+    },
+    "&:hover": {
+      backgroundColor: vars.color.bg.surface,
+    },
+    "&:focus-visible": {
+      boxShadow: `inset 0 0 0 2px ${vars.color.focus}`,
+    },
+  },
+});
+
+export const languageOptionSelected = style({
+  backgroundColor: vars.color.bg.surface,
+  color: vars.color.text.title,
+});
+
+export const languageOptionText = style({
+  minWidth: 0,
+  overflow: "hidden",
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: "17px",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+
+export const languageCheckIcon = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "16px",
+  height: "16px",
+  flexShrink: 0,
+  color: vars.color.brand.primary,
+});
+
+globalStyle(`${languageCheckIcon} svg`, {
+  width: "16px",
+  height: "16px",
 });

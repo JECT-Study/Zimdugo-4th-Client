@@ -1,13 +1,29 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { SearchField } from "@repo/ui/components/search-field";
-import { IconNormalSearch24, IconX24 } from "@repo/ui/tokens/icons";
+import {
+  IconCheck24,
+  IconNormalGlobe32,
+  IconNormalSearch24,
+  IconX24,
+} from "@repo/ui/tokens/icons";
 import {
   type CSSProperties,
   type MouseEvent,
   type PointerEvent,
   useEffect,
+  useRef,
+  useState,
 } from "react";
+import { BASE_LOCALE } from "#/shared/i18n/locales";
+import {
+  APP_LANGUAGES,
+  type AppLanguage,
+  appLanguageLabelMap,
+  getLocalizedHref,
+  normalizeLanguage,
+  useAppLanguageStore,
+} from "#/shared/store/language";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   type StyleReadyProbe,
@@ -18,9 +34,20 @@ import {
   fallbackButton,
   fallbackIconSlot,
   fallbackLabel,
+  languageCheckIcon,
+  languageChevron,
+  languageDropdown,
+  languageDropdownOpen,
+  languageOption,
+  languageOptionSelected,
+  languageOptions,
+  languageOptionText,
+  languageTrigger,
+  languageTriggerLabel,
   searchBarLayer,
   searchField,
   searchFieldWithClose,
+  searchInputFrame,
 } from "./HomeSearchBar.css";
 
 export interface HomeSearchBarProps {
@@ -108,14 +135,39 @@ export function HomeSearchBar({
   searchQuery = "",
   isSearchContextActive = false,
 }: HomeSearchBarProps) {
+  const languageDropdownRef = useRef<HTMLDivElement>(null);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const shouldProbeStyle = !hasHomeSearchBarStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
     enabled: shouldProbeStyle,
     probes: HOME_SEARCH_BAR_STYLE_PROBES,
   });
+  const currentLanguage = normalizeLanguage(languageTag()) ?? BASE_LOCALE;
 
   const handleOpenSearch = () => {
     onOpenSearch();
+  };
+
+  const handleToggleLanguage = () => {
+    setIsLanguageOpen((isOpen) => !isOpen);
+  };
+
+  const handleSelectLanguage = (language: AppLanguage) => {
+    setIsLanguageOpen(false);
+    setAppLanguage(language);
+
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const localizedHref = getLocalizedHref(currentHref, language);
+
+    if (localizedHref !== currentHref) {
+      window.location.assign(localizedHref);
+      return;
+    }
+
+    if (currentLanguage !== language) {
+      window.location.reload();
+    }
   };
 
   const handleCloseSearchContext = (event: MouseEvent<HTMLButtonElement>) => {
@@ -134,6 +186,32 @@ export function HomeSearchBar({
       hasHomeSearchBarStyleResolved = true;
     }
   }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
+
+  useEffect(() => {
+    if (!isLanguageOpen) {
+      return;
+    }
+
+    const handleDocumentPointerDown = (event: globalThis.PointerEvent) => {
+      if (!languageDropdownRef.current?.contains(event.target as Node)) {
+        setIsLanguageOpen(false);
+      }
+    };
+
+    const handleDocumentKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsLanguageOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
+    document.addEventListener("keydown", handleDocumentKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+      document.removeEventListener("keydown", handleDocumentKeyDown);
+    };
+  }, [isLanguageOpen]);
 
   return (
     <div className={searchBarLayer} style={searchBarLayerFallbackStyle}>
@@ -164,32 +242,96 @@ export function HomeSearchBar({
         </button>
       ) : (
         <>
-          <SearchField
-            className={[
-              searchField,
-              isSearchContextActive ? searchFieldWithClose : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            variant="searchHome"
-            searchIconPlacement="left"
-            placeholder={m.search_placeholder()}
-            aria-label={m.search_input_aria()}
-            value={isSearchContextActive ? searchQuery : ""}
-            textTone={isSearchContextActive ? "on" : "auto"}
-            isReadOnly
-            onFocus={handleOpenSearch}
-          />
-          {isSearchContextActive ? (
-            <button
-              type="button"
-              className={closeButton}
-              onPointerDown={handleClosePointerDown}
-              onClick={handleCloseSearchContext}
-              aria-label={m.home_search_back_aria()}
+          <div className={searchInputFrame}>
+            <SearchField
+              className={[
+                searchField,
+                isSearchContextActive ? searchFieldWithClose : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              variant="searchHome"
+              searchIconPlacement="left"
+              placeholder={m.search_placeholder()}
+              aria-label={m.search_input_aria()}
+              value={isSearchContextActive ? searchQuery : ""}
+              textTone={isSearchContextActive ? "on" : "auto"}
+              isReadOnly
+              onFocus={handleOpenSearch}
+            />
+            {isSearchContextActive ? (
+              <button
+                type="button"
+                className={closeButton}
+                onPointerDown={handleClosePointerDown}
+                onClick={handleCloseSearchContext}
+                aria-label={m.home_search_back_aria()}
+              >
+                <IconX24 />
+              </button>
+            ) : null}
+          </div>
+          {!isSearchContextActive ? (
+            <div
+              ref={languageDropdownRef}
+              className={[
+                languageDropdown,
+                isLanguageOpen ? languageDropdownOpen : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
-              <IconX24 />
-            </button>
+              <button
+                type="button"
+                className={languageTrigger}
+                aria-label={m.settings_language()}
+                aria-expanded={isLanguageOpen}
+                onClick={handleToggleLanguage}
+              >
+                <IconNormalGlobe32
+                  state={isLanguageOpen ? "selected" : "default"}
+                />
+                {isLanguageOpen ? (
+                  <>
+                    <span className={languageTriggerLabel}>
+                      {appLanguageLabelMap[currentLanguage]}
+                    </span>
+                    <span className={languageChevron} aria-hidden />
+                  </>
+                ) : null}
+              </button>
+              {isLanguageOpen ? (
+                <div className={languageOptions} role="listbox">
+                  {APP_LANGUAGES.map((language) => {
+                    const isCurrent = language === currentLanguage;
+                    return (
+                      <button
+                        key={language}
+                        type="button"
+                        className={[
+                          languageOption,
+                          isCurrent ? languageOptionSelected : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        role="option"
+                        aria-selected={isCurrent}
+                        onClick={() => handleSelectLanguage(language)}
+                      >
+                        <span className={languageOptionText}>
+                          {appLanguageLabelMap[language]}
+                        </span>
+                        {isCurrent ? (
+                          <span className={languageCheckIcon}>
+                            <IconCheck24 />
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </>
       )}
