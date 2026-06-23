@@ -148,6 +148,8 @@ import {
 
 export const DETAIL_FOCUS_ZOOM = 17;
 
+const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
+
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown> | undefined): {
     locker?: string;
@@ -158,7 +160,10 @@ export const Route = createFileRoute("/")({
   } => {
     const safeSearch = search || {};
     const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
-    const locker = typeof safeSearch.locker === "string" ? safeSearch.locker : undefined;
+    const locker =
+      safeSearch.locker !== undefined && safeSearch.locker !== null
+        ? String(safeSearch.locker)
+        : undefined;
     return {
       ...parsed,
       locker,
@@ -172,8 +177,8 @@ export const Route = createFileRoute("/")({
         try {
           const rawDetail = await getLockerDetail({
             lockerId,
-            lat: 37.498095,
-            lng: 127.02761,
+            lat: DEFAULT_SEARCH_COORDINATES.lat,
+            lng: DEFAULT_SEARCH_COORDINATES.lng,
           });
           const detail = toLockerDetailItem(rawDetail);
           return { detail };
@@ -227,8 +232,6 @@ export const Route = createFileRoute("/")({
   },
   component: IndexPage,
 });
-
-const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
 
 const readRestoredMapSheetSession = () => readMapSheetSessionSnapshot();
 
@@ -972,7 +975,7 @@ export function IndexPage() {
         : "";
       const lockerSlug = cleanName ? `${lockerId}-${cleanName}` : String(lockerId);
 
-      if (search.locker !== lockerSlug) {
+      if (String(search.locker ?? "") !== lockerSlug) {
         void navigate({
           to: "/",
           search: (prev: any) => ({

@@ -54,12 +54,14 @@ export const Route = createFileRoute("/sitemap.xml")({
           }
         }
 
-        // 2. 동적 물품보관함 상세 페이지들을 추가합니다 (쿼리 파라미터 적용).
-        for (const lockerId of lockerIds) {
-          xml += `  <url>\n`;
-          xml += `    <loc>${baseUrl}/?locker=${lockerId}</loc>\n`;
-          xml += `    <priority>0.8</priority>\n`;
-          xml += `  </url>\n`;
+        // 2. 동적 물품보관함 상세 페이지들을 추가합니다 (다국어 및 쿼리 파라미터 적용).
+        for (const lang of languages) {
+          for (const lockerId of lockerIds) {
+            xml += `  <url>\n`;
+            xml += `    <loc>${baseUrl}${lang}/?locker=${lockerId}</loc>\n`;
+            xml += `    <priority>0.8</priority>\n`;
+            xml += `  </url>\n`;
+          }
         }
 
         xml += `</urlset>`;
