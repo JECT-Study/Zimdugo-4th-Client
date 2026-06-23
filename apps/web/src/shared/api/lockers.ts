@@ -352,13 +352,17 @@ export interface SeoLockerItem {
   };
 }
 
+export interface SeoLockerResponseData {
+  lockers: SeoLockerItem[];
+}
+
 export const getSeoLockers = async (
   signal?: AbortSignal,
 ): Promise<SeoLockerItem[]> => {
-  const { data: response } = await httpGet<BackendResponse<SeoLockerItem[]>>(
-    "/api/v1/lockers/seo-list",
-    { signal },
-  );
+  const { data: response } = await httpGet<
+    BackendResponse<SeoLockerResponseData>
+  >("/api/v1/lockers/seo-list", { signal });
 
-  return unwrapBackendData(response);
+  const data = unwrapBackendData(response);
+  return data.lockers || [];
 };
