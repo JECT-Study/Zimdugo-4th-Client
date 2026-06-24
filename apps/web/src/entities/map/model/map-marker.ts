@@ -11,10 +11,9 @@ const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const LOCKER_MARKER_SIZE = { width: 30, height: 40 };
-const SELECTED_LOCKER_MARKER_SIZE = { width: 38, height: 50 };
-const PLACE_MARKER_SIZE = { width: 46, height: 50 };
-const SELECTED_PLACE_MARKER_SIZE = PLACE_MARKER_SIZE;
+const LOCKER_MARKER_SIZE = { width: 130, height: 173 };
+const FAVORITE_LOCKER_MARKER_SIZE = { width: 126, height: 126 };
+const PLACE_MARKER_SIZE = { width: 180, height: 195 };
 
 export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
@@ -38,8 +37,8 @@ export const createMapPinIcon = (
   }
 
   return `<div data-type="${pin.pinType}" style="position: relative; display: block; width: 100%; height: 100%;">
-    <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="display: block; width: 100%; height: 100%; object-fit: contain;" />
-    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; top: -6px; right: -6px; overflow: visible;">
+    <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="position: absolute; left: 0; bottom: 0; display: block; width: 130px; height: 173px; object-fit: contain;" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; top: 0; right: 0; overflow: visible;">
       <g filter="url(#${badgeFilterId})">
         <circle cx="61.9049" cy="47.1469" r="33.0364" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
         <text x="61.9049" y="63.6651" text-anchor="middle" fill="${PLACE_BADGE_FILL}" font-family="Pretendard, sans-serif" font-size="43" font-weight="700">${badgeLabel}</text>
@@ -162,6 +161,12 @@ const getIconSignatureSuffix = ({
   }`;
 };
 
+const getMarkerSize = (pin: LockerPinItemResponse) => {
+  if (pin.pinType === "PLACE") return PLACE_MARKER_SIZE;
+  if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_SIZE;
+  return LOCKER_MARKER_SIZE;
+};
+
 const createMarkerIconOptions = (
   pin: LockerPinItemResponse,
   maps: typeof naver.maps,
@@ -195,17 +200,7 @@ const createMarkerIconOptions = (
   const cached = innerMap.get(key);
   if (cached) return cached;
 
-  const isSelectedState =
-    animationState === "selected-active" ||
-    animationState === "selected-static";
-  const markerSize =
-    pin.pinType === "LOCKER"
-      ? isSelectedState
-        ? SELECTED_LOCKER_MARKER_SIZE
-        : LOCKER_MARKER_SIZE
-      : isSelectedState
-        ? SELECTED_PLACE_MARKER_SIZE
-        : PLACE_MARKER_SIZE;
+  const markerSize = getMarkerSize(pin);
 
   const spreadClass = shouldAnimateSpread && hasSpread ? "spread" : "";
   const offsetClass = hasOffset ? " map-marker-offset-active" : "";
@@ -224,7 +219,7 @@ const createMarkerIconOptions = (
       </div>
     </div>`,
     size: new maps.Size(markerSize.width, markerSize.height),
-    anchor: new maps.Point(markerSize.width / 2, markerSize.height / 2),
+    anchor: new maps.Point(markerSize.width / 2, markerSize.height),
   };
   innerMap.set(key, options);
   return options;
