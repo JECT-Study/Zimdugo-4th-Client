@@ -19,9 +19,9 @@ const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = { width: 58, height: 88 };
 const PLACE_MARKER_DISPLAY_SIZE = { width: 88, height: 98 };
 const PIN_DISPLAY_SIZE = { width: 55, height: 73 };
 const FAVORITE_PIN_DISPLAY_SIZE = { width: 58, height: 58 };
-const PLACE_BADGE_DISPLAY_SIZE = 48;
-const PLACE_BADGE_PIN_OVERLAP_X = 25;
-const PLACE_BADGE_PIN_OVERLAP_Y = 8;
+const PLACE_BADGE_DISPLAY_SIZE = 66.073;
+const PLACE_BADGE_PIN_OVERLAP_X = 33;
+const PLACE_BADGE_PIN_OVERLAP_Y = 16;
 const PLACE_PIN_TOP = 21;
 const PIN_DOT_SIZE = 10;
 const PIN_DOT_GAP = 5;
@@ -71,13 +71,14 @@ export const createMapPinIcon = (
 
   return `<div data-type="${pin.pinType}" data-display-scale="${PLACE_MARKER_DISPLAY_SCALE.toFixed(3)}" style="position: relative; display: block; width: 100%; height: 100%;">
     <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="position: absolute; left: ${placePinLeft}px; top: ${placePinTop}px; display: block; width: ${PIN_DISPLAY_SIZE.width}px; height: ${PIN_DISPLAY_SIZE.height}px; object-fit: contain;" />
-    <svg xmlns="http://www.w3.org/2000/svg" width="${PLACE_BADGE_DISPLAY_SIZE}" height="${PLACE_BADGE_DISPLAY_SIZE}" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; left: ${placeBadgeLeft}px; top: ${placeBadgeTop}px; overflow: visible;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${PLACE_BADGE_DISPLAY_SIZE}" height="${PLACE_BADGE_DISPLAY_SIZE}" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; left: ${placeBadgeLeft}px; top: ${placeBadgeTop}px; overflow: visible; filter: drop-shadow(0 7.341px 29.366px rgba(22, 24, 28, 0.16));">
       <g filter="url(#${badgeFilterId})">
-        <circle cx="61.9049" cy="47.1469" r="33.0364" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
-        <text x="61.9049" y="63.6651" text-anchor="middle" fill="${PLACE_BADGE_FILL}" font-family="Pretendard, sans-serif" font-size="43" font-weight="700">${badgeLabel}</text>
+        <path d="M95.4383 55.0606C95.4383 36.8151 80.6474 22.0242 62.402 22.0242C44.1565 22.0242 29.3656 36.8151 29.3656 55.0606C29.3656 73.3061 44.1565 88.0969 62.402 88.0969C80.6474 88.0969 95.4383 73.3061 95.4383 55.0606Z" fill="white"/>
+        <path d="M95.4383 55.0606C95.4383 36.8151 80.6474 22.0242 62.402 22.0242C44.1565 22.0242 29.3656 36.8151 29.3656 55.0606C29.3656 73.3061 44.1565 88.0969 62.402 88.0969C80.6474 88.0969 95.4383 73.3061 95.4383 55.0606Z" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
+        <text x="62.402" y="71.5788" text-anchor="middle" fill="${PLACE_BADGE_FILL}" font-family="Pretendard, sans-serif" font-size="43" font-weight="700">${badgeLabel}</text>
       </g>
       <defs>
-        <filter id="${badgeFilterId}" x="-0.49707" y="-7.91366" width="124.804" height="124.804" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <filter id="${badgeFilterId}" x="-0.0000534058" y="-0.00000953674" width="124.804" height="124.804" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
           <feFlood flood-opacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset dy="7.34141"/>

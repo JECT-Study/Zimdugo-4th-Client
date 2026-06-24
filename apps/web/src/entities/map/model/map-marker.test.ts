@@ -217,11 +217,12 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('data-type="PLACE"');
     expect(icon).toContain("selected-map-pin.png");
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain('fill="white"');
     expect(icon).toContain(">9+<");
     expect(icon).toContain("<text");
     expect(icon).toContain("<span");
-    expect(icon).toContain('width="48"');
-    expect(icon).toContain("left: 46.5px; top: 13px");
+    expect(icon).toContain('width="66.073"');
+    expect(icon).toContain("left: 38.5px; top: 5px");
   });
 });
 
