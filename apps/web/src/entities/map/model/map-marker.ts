@@ -1,23 +1,21 @@
 import { vars } from "@repo/ui/vars";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
-import lockerMarkerIconUrl from "../assets/save-map-pin.png?url";
+import defaultMapPinIconUrl from "../assets/default-map-pin.png?url";
+import favoriteLockerMarkerIconUrl from "../assets/save-map-pin.png?url";
 import selectedLockerMarkerIconUrl from "../assets/selected-map-pin.png?url";
 
 export type LockerMarkerStatus = "active" | "inactive";
 
-const PLACE_MARKER_FILL = vars.color.palette.red[300];
-const PLACE_MARKER_BACKGROUND = vars.color.palette.gray[100];
+const PLACE_BADGE_FILL = vars.color.palette.green[500];
+const PLACE_BADGE_BACKGROUND = "#E2F3E7";
 const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const LOCKER_MARKER_SIZE = { width: 36, height: 36 };
+const LOCKER_MARKER_SIZE = { width: 36, height: 39 };
 const SELECTED_LOCKER_MARKER_SIZE = { width: 38, height: 50 };
-const PLACE_MARKER_SIZE = { width: 24, height: 24 };
-const SELECTED_PLACE_MARKER_SIZE = { width: 36, height: 36 };
-
-const PLACE_MARKER_PATH =
-  "M11 0C17.0751 0 22 4.92487 22 11C22 17.0751 17.0751 22 11 22C6.64579 22 2.88256 19.4701 1.09986 15.8L8.22852 12.4284C8.7645 13.385 9.80921 14.032 11.0049 14.0321C12.7503 14.0321 14.1797 12.6437 14.1797 10.9189H14.1935C14.1934 9.20771 12.7641 7.80645 11.0187 7.80645C9.27335 7.80647 7.84401 9.19425 7.84388 10.9189C7.84388 11.0806 7.85799 11.2424 7.88546 11.404L0.156628 12.8587C0.053794 12.2545 0 11.6335 0 11C0 4.92487 4.92487 0 11 0Z";
+const PLACE_MARKER_SIZE = { width: 46, height: 50 };
+const SELECTED_PLACE_MARKER_SIZE = PLACE_MARKER_SIZE;
 
 export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
@@ -27,25 +25,43 @@ export const createMapPinIcon = (
   isSelected = false,
 ): string => {
   const isPlace = pin.pinType === "PLACE";
-  // PLACE marker badge design is intentionally disabled until the final cluster marker spec lands.
-  const badgeSvg = "";
+  const lockerCount = pin.lockerCount ?? 0;
+  const badgeLabel = lockerCount > 9 ? "9+" : String(lockerCount);
+  const badgeFilterId = `place-badge-shadow-${getPinId(pin)}`;
 
   if (!isPlace) {
+    const isFavorite = pin.isFavorite === true;
     const iconUrl = isSelected
       ? selectedLockerMarkerIconUrl
-      : lockerMarkerIconUrl;
+      : isFavorite
+        ? favoriteLockerMarkerIconUrl
+        : defaultMapPinIconUrl;
 
     return `<img src="${iconUrl}" alt="" aria-hidden="true" data-type="${pin.pinType}" style="display: block; width: 100%; height: 100%; object-fit: contain;" />`;
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" role="img" aria-label="보관함 위치" data-type="${pin.pinType}">
-    <circle cx="12" cy="12" r="12" fill="${PLACE_MARKER_BACKGROUND}"/>
-    <svg x="1" y="1" width="22" height="22" viewBox="0 0 22 22" fill="none">
-      <path d="${PLACE_MARKER_PATH}" fill="${PLACE_MARKER_FILL}"/>
-    </svg>
-    ${badgeSvg}
-  </svg>`;
-};
 
+  return `<div data-type="${pin.pinType}" style="position: relative; display: block; width: 100%; height: 100%;">
+    <img src="${defaultMapPinIconUrl}" alt="" aria-hidden="true" style="display: block; width: 100%; height: 100%; object-fit: contain;" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; top: -6px; right: -6px; overflow: visible;">
+      <g filter="url(#${badgeFilterId})">
+        <circle cx="61.9049" cy="47.1469" r="33.0364" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
+        <text x="61.9049" y="63.6651" text-anchor="middle" fill="${PLACE_BADGE_FILL}" font-family="Pretendard, sans-serif" font-size="43" font-weight="700">${badgeLabel}</text>
+      </g>
+      <defs>
+        <filter id="${badgeFilterId}" x="-0.49707" y="-7.91366" width="124.804" height="124.804" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+          <feOffset dy="7.34141"/>
+          <feGaussianBlur stdDeviation="14.6828"/>
+          <feComposite in2="hardAlpha" operator="out"/>
+          <feColorMatrix type="matrix" values="0 0 0 0 0.0862745 0 0 0 0 0.0941176 0 0 0 0 0.109804 0 0 0 0.16 0"/>
+          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+        </filter>
+      </defs>
+    </svg>
+  </div>`;
+};
 /** @deprecated Use createMapPinIcon */
 export const createLockerMarkerIcon = createMapPinIcon;
 
@@ -226,7 +242,9 @@ const getPinIconSignature = (
   zoomLevel?: number,
 ): string => {
   const isStateful = isSelected;
-  return `${pin.pinType}:${pin.lockerCount ?? ""}:${isSelected ? "selected" : "default"}${
+  const favoriteSignature =
+    pin.pinType === "LOCKER" && pin.isFavorite === true ? ":favorite" : "";
+  return `${pin.pinType}:${pin.lockerCount ?? ""}:${isSelected ? "selected" : "default"}${favoriteSignature}${
     isStateful && zoomLevel != null ? `:${zoomLevel}` : ""
   }`;
 };

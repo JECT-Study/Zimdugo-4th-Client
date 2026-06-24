@@ -4,6 +4,7 @@ interface LockerPinBase {
   latitude: number;
   longitude: number;
   lockerCount?: number;
+  isFavorite?: boolean;
 }
 
 export type LockerPinItemResponse =
@@ -25,6 +26,7 @@ interface LockerPinItemRaw {
   latitude: number;
   longitude: number;
   lockerCount?: number;
+  isFavorite?: boolean;
 }
 
 const toLockerPinItem = (
@@ -38,6 +40,7 @@ const toLockerPinItem = (
       latitude: item.latitude,
       longitude: item.longitude,
       lockerCount: item.lockerCount,
+      isFavorite: item.isFavorite,
     };
   }
 
@@ -49,6 +52,7 @@ const toLockerPinItem = (
       latitude: item.latitude,
       longitude: item.longitude,
       lockerCount: item.lockerCount,
+      isFavorite: item.isFavorite,
     };
   }
 
