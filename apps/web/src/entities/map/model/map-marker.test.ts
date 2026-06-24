@@ -2,8 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const MOCK_ERROR_COLOR = "#FF4D4F";
-const MOCK_MARKER_DEFAULT_FILL = "#CACACA";
-const MOCK_MARKER_FILL = "#3BD569";
 
 vi.mock("@repo/ui/vars", () => ({
   vars: {
@@ -190,22 +188,19 @@ const getMarkerItemClass = (content: string): string =>
   content.match(/class="map-marker-item ([^"]+)"/)?.[1] ?? "";
 
 describe("createLockerMarkerIcon", () => {
-  it("renders the default locker marker SVG", () => {
+  it("renders the default locker map pin asset", () => {
     const icon = createLockerMarkerIcon(createLockerPin());
 
-    expect(icon).toContain('width="100%"');
-    expect(icon).toContain('height="100%"');
-    expect(icon).toContain('viewBox="0 0 59 53"');
+    expect(icon).toContain("save-map-pin.png");
     expect(icon).toContain('data-type="LOCKER"');
-    expect(icon).not.toContain("<circle");
-    expect(icon).toContain(`fill="${MOCK_MARKER_DEFAULT_FILL}"`);
+    expect(icon).toContain("object-fit: contain");
   });
 
-  it("renders the selected locker marker with the active fill", () => {
+  it("renders the selected locker map pin asset", () => {
     const icon = createLockerMarkerIcon(createLockerPin(), true);
 
-    expect(icon).toContain('viewBox="0 0 59 53"');
-    expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain("selected-map-pin.png");
+    expect(icon).toContain('data-type="LOCKER"');
   });
 
   it("renders place markers with a red marker icon and no count badge", () => {
@@ -256,12 +251,36 @@ describe("syncLockerMarkers", () => {
     });
 
     const options = FakeMarker.instances[0]?.options as {
-      icon?: { content?: string; anchor?: FakePoint };
+      icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
     };
 
     expect(options.icon?.content).toContain("map-marker-item");
     expect(options.icon?.content).toContain('data-type="LOCKER"');
+    expect(options.icon?.content).toContain("save-map-pin.png");
+    expect(options.icon?.size).toMatchObject({ width: 36, height: 36 });
     expect(options.icon?.anchor).toBeInstanceOf(FakePoint);
+  });
+
+  it("uses the selected locker map pin dimensions", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin()],
+      selectedPinId: "LOCKER-42",
+    });
+
+    const options = FakeMarker.instances[0]?.options as {
+      icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
+    };
+
+    expect(options.icon?.content).toContain("selected-map-pin.png");
+    expect(options.icon?.size).toMatchObject({ width: 38, height: 50 });
+    expect(options.icon?.anchor).toMatchObject({ x: 19, y: 25 });
   });
 
   it("uses an HTML icon option for place markers", () => {
