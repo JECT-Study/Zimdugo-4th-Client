@@ -124,12 +124,10 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
     var nextPathname = normalized === baseLocale
       ? basePathname
       : "/" + normalized + (basePathname === "/" ? "" : basePathname);
-    var nextHref = nextPathname + window.location.search + window.location.hash;
-    var currentHref = pathname + window.location.search + window.location.hash;
 
-    if (nextHref === currentHref) return;
+    if (nextPathname === pathname) return;
 
-    window.location.replace(nextHref);
+    window.location.replace(nextPathname + window.location.search + window.location.hash);
   } catch (_) {
   }
 })();
