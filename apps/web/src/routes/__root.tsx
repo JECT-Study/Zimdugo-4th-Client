@@ -118,13 +118,18 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
     }
 
     if (pathLocale === normalized) return;
+    if (!pathLocale && normalized === baseLocale) return;
 
     var basePathname = pathname.replace(localePathPattern, "") || "/";
     var nextPathname = normalized === baseLocale
       ? basePathname
       : "/" + normalized + (basePathname === "/" ? "" : basePathname);
+    var nextHref = nextPathname + window.location.search + window.location.hash;
+    var currentHref = pathname + window.location.search + window.location.hash;
 
-    window.location.replace(nextPathname + window.location.search + window.location.hash);
+    if (nextHref === currentHref) return;
+
+    window.location.replace(nextHref);
   } catch (_) {
   }
 })();
