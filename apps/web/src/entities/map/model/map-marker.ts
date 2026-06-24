@@ -11,9 +11,23 @@ const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const LOCKER_MARKER_SIZE = { width: 130, height: 173 };
-const FAVORITE_LOCKER_MARKER_SIZE = { width: 126, height: 126 };
-const PLACE_MARKER_SIZE = { width: 180, height: 195 };
+const LOCKER_MARKER_SOURCE_SIZE = { width: 130, height: 173 };
+const FAVORITE_LOCKER_MARKER_SOURCE_SIZE = { width: 126, height: 126 };
+const PLACE_MARKER_SOURCE_SIZE = { width: 180, height: 195 };
+const LOCKER_MARKER_DISPLAY_SIZE = { width: 55, height: 88 };
+const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = { width: 58, height: 88 };
+const PLACE_MARKER_DISPLAY_SIZE = { width: 88, height: 98 };
+const PIN_DISPLAY_SIZE = { width: 55, height: 73 };
+const FAVORITE_PIN_DISPLAY_SIZE = { width: 58, height: 58 };
+const PLACE_BADGE_DISPLAY_SIZE = 38;
+const PIN_DOT_SIZE = 10;
+const PIN_DOT_GAP = 5;
+const LOCKER_MARKER_DISPLAY_SCALE =
+  PIN_DISPLAY_SIZE.height / LOCKER_MARKER_SOURCE_SIZE.height;
+const FAVORITE_LOCKER_MARKER_DISPLAY_SCALE =
+  FAVORITE_PIN_DISPLAY_SIZE.width / FAVORITE_LOCKER_MARKER_SOURCE_SIZE.width;
+const PLACE_MARKER_DISPLAY_SCALE =
+  PLACE_MARKER_DISPLAY_SIZE.height / PLACE_MARKER_SOURCE_SIZE.height;
 
 export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
@@ -32,13 +46,26 @@ export const createMapPinIcon = (
     const iconUrl = isFavorite
       ? favoriteLockerMarkerIconUrl
       : defaultLockerMarkerIconUrl;
+    const pinSize = isFavorite ? FAVORITE_PIN_DISPLAY_SIZE : PIN_DISPLAY_SIZE;
+    const pinLeft = (getMarkerSize(pin).width - pinSize.width) / 2;
+    const displayScale = isFavorite
+      ? FAVORITE_LOCKER_MARKER_DISPLAY_SCALE
+      : LOCKER_MARKER_DISPLAY_SCALE;
 
-    return `<img src="${iconUrl}" alt="" aria-hidden="true" data-type="${pin.pinType}" style="display: block; width: 100%; height: 100%; object-fit: contain;" />`;
+    return `<div data-type="${pin.pinType}" data-display-scale="${displayScale.toFixed(3)}" style="position: relative; display: block; width: 100%; height: 100%;">
+      <img src="${iconUrl}" alt="" aria-hidden="true" style="position: absolute; left: ${pinLeft}px; top: 0; display: block; width: ${pinSize.width}px; height: ${pinSize.height}px; object-fit: contain;" />
+      <span aria-hidden="true" style="position: absolute; left: 50%; bottom: 0; display: block; width: ${PIN_DOT_SIZE}px; height: ${PIN_DOT_SIZE}px; border-radius: 999px; background: ${PLACE_BADGE_FILL}; transform: translateX(-50%);"></span>
+    </div>`;
   }
 
-  return `<div data-type="${pin.pinType}" style="position: relative; display: block; width: 100%; height: 100%;">
-    <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="position: absolute; left: 0; bottom: 0; display: block; width: 130px; height: 173px; object-fit: contain;" />
-    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; top: 0; right: 0; overflow: visible;">
+  const placePinLeft =
+    (PLACE_MARKER_DISPLAY_SIZE.width - PIN_DISPLAY_SIZE.width) / 2;
+  const placePinTop = PLACE_BADGE_DISPLAY_SIZE / 2;
+  const placeDotTop = placePinTop + PIN_DISPLAY_SIZE.height + PIN_DOT_GAP;
+
+  return `<div data-type="${pin.pinType}" data-display-scale="${PLACE_MARKER_DISPLAY_SCALE.toFixed(3)}" style="position: relative; display: block; width: 100%; height: 100%;">
+    <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="position: absolute; left: ${placePinLeft}px; top: ${placePinTop}px; display: block; width: ${PIN_DISPLAY_SIZE.width}px; height: ${PIN_DISPLAY_SIZE.height}px; object-fit: contain;" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="${PLACE_BADGE_DISPLAY_SIZE}" height="${PLACE_BADGE_DISPLAY_SIZE}" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; top: 0; right: 0; overflow: visible;">
       <g filter="url(#${badgeFilterId})">
         <circle cx="61.9049" cy="47.1469" r="33.0364" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
         <text x="61.9049" y="63.6651" text-anchor="middle" fill="${PLACE_BADGE_FILL}" font-family="Pretendard, sans-serif" font-size="43" font-weight="700">${badgeLabel}</text>
@@ -56,6 +83,7 @@ export const createMapPinIcon = (
         </filter>
       </defs>
     </svg>
+    <span aria-hidden="true" style="position: absolute; left: 50%; top: ${placeDotTop}px; display: block; width: ${PIN_DOT_SIZE}px; height: ${PIN_DOT_SIZE}px; border-radius: 999px; background: ${PLACE_BADGE_FILL}; transform: translateX(-50%);"></span>
   </div>`;
 };
 /** @deprecated Use createMapPinIcon */
@@ -162,9 +190,9 @@ const getIconSignatureSuffix = ({
 };
 
 const getMarkerSize = (pin: LockerPinItemResponse) => {
-  if (pin.pinType === "PLACE") return PLACE_MARKER_SIZE;
-  if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_SIZE;
-  return LOCKER_MARKER_SIZE;
+  if (pin.pinType === "PLACE") return PLACE_MARKER_DISPLAY_SIZE;
+  if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_DISPLAY_SIZE;
+  return LOCKER_MARKER_DISPLAY_SIZE;
 };
 
 const createMarkerIconOptions = (
