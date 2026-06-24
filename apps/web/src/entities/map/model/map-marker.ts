@@ -19,9 +19,10 @@ const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = { width: 58, height: 88 };
 const PLACE_MARKER_DISPLAY_SIZE = { width: 88, height: 98 };
 const PIN_DISPLAY_SIZE = { width: 55, height: 73 };
 const FAVORITE_PIN_DISPLAY_SIZE = { width: 58, height: 58 };
-const PLACE_BADGE_DISPLAY_SIZE = 42;
-const PLACE_BADGE_PIN_OVERLAP_X = 17;
-const PLACE_BADGE_PIN_OVERLAP_Y = 12;
+const PLACE_BADGE_DISPLAY_SIZE = 48;
+const PLACE_BADGE_PIN_OVERLAP_X = 25;
+const PLACE_BADGE_PIN_OVERLAP_Y = 8;
+const PLACE_PIN_TOP = 21;
 const PIN_DOT_SIZE = 10;
 const PIN_DOT_GAP = 5;
 const LOCKER_MARKER_DISPLAY_SCALE =
@@ -62,7 +63,7 @@ export const createMapPinIcon = (
 
   const placePinLeft =
     (PLACE_MARKER_DISPLAY_SIZE.width - PIN_DISPLAY_SIZE.width) / 2;
-  const placePinTop = PLACE_BADGE_DISPLAY_SIZE / 2;
+  const placePinTop = PLACE_PIN_TOP;
   const placeBadgeLeft =
     placePinLeft + PIN_DISPLAY_SIZE.width - PLACE_BADGE_PIN_OVERLAP_X;
   const placeBadgeTop = placePinTop - PLACE_BADGE_PIN_OVERLAP_Y;
