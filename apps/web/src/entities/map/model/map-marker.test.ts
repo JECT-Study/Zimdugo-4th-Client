@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const MOCK_ERROR_COLOR = "#FF4D4F";
-const MOCK_MARKER_BACKGROUND = "#F5F5F5";
+const MOCK_MARKER_DEFAULT_FILL = "#CACACA";
 const MOCK_MARKER_FILL = "#3BD569";
 
 vi.mock("@repo/ui/vars", () => ({
@@ -14,6 +14,7 @@ vi.mock("@repo/ui/vars", () => ({
       palette: {
         gray: {
           100: "#F5F5F5",
+          500: "#CACACA",
         },
         green: {
           500: "#3BD569",
@@ -189,19 +190,21 @@ const getMarkerItemClass = (content: string): string =>
   content.match(/class="map-marker-item ([^"]+)"/)?.[1] ?? "";
 
 describe("createLockerMarkerIcon", () => {
-  it("renders a 24x24 locker marker SVG", () => {
+  it("renders the default locker marker SVG", () => {
     const icon = createLockerMarkerIcon(createLockerPin());
 
     expect(icon).toContain('width="100%"');
     expect(icon).toContain('height="100%"');
-    expect(icon).toContain('viewBox="0 0 24 24"');
+    expect(icon).toContain('viewBox="0 0 59 53"');
     expect(icon).toContain('data-type="LOCKER"');
-    expect(icon).toContain(
-      `<circle cx="12" cy="12" r="12" fill="${MOCK_MARKER_BACKGROUND}"/>`,
-    );
-    expect(icon).toContain(
-      '<svg x="1" y="1" width="22" height="22" viewBox="0 0 22 22"',
-    );
+    expect(icon).not.toContain("<circle");
+    expect(icon).toContain(`fill="${MOCK_MARKER_DEFAULT_FILL}"`);
+  });
+
+  it("renders the selected locker marker with the active fill", () => {
+    const icon = createLockerMarkerIcon(createLockerPin(), true);
+
+    expect(icon).toContain('viewBox="0 0 59 53"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
