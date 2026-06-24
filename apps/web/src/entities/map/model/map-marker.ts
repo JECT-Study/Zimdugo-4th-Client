@@ -8,6 +8,8 @@ const LOCKER_MARKER_BACKGROUND = vars.color.palette.gray[100];
 const PLACE_MARKER_FILL = vars.color.palette.red[300];
 const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
+const MARKER_Z_INDEX = 10;
+const SELECTED_MARKER_Z_INDEX = 20;
 
 const LOCKER_MARKER_PATH =
   "M11 0C17.0751 0 22 4.92487 22 11C22 17.0751 17.0751 22 11 22C6.64579 22 2.88256 19.4701 1.09986 15.8L8.22852 12.4284C8.7645 13.385 9.80921 14.032 11.0049 14.0321C12.7503 14.0321 14.1797 12.6437 14.1797 10.9189H14.1935C14.1934 9.20771 12.7641 7.80645 11.0187 7.80645C9.27335 7.80647 7.84401 9.19425 7.84388 10.9189C7.84388 11.0806 7.85799 11.2424 7.88546 11.404L0.156628 12.8587C0.053794 12.2545 0 11.6335 0 11C0 4.92487 4.92487 0 11 0Z";
@@ -64,6 +66,7 @@ interface LockerMarkerEntry {
   listenerPin?: LockerPinItemResponse;
   listenerPinId?: string;
   positionSignature: string;
+  zIndex: number;
   wasSelectedBefore?: boolean;
   hadSpreadBefore?: boolean;
 }
@@ -223,6 +226,7 @@ const createLockerMarker = ({
   offsetX,
   offsetY,
   shouldAnimateSpread,
+  zIndex,
 }: {
   map: naver.maps.Map;
   maps: typeof naver.maps;
@@ -239,6 +243,7 @@ const createLockerMarker = ({
   offsetX?: number;
   offsetY?: number;
   shouldAnimateSpread?: boolean;
+  zIndex: number;
 }) => {
   const marker = new maps.Marker({
     map,
@@ -257,6 +262,7 @@ const createLockerMarker = ({
       offsetY,
       shouldAnimateSpread,
     ),
+    zIndex,
   });
   return marker;
 };
@@ -375,6 +381,7 @@ export const syncLockerMarkers = ({
 
     const positionSignature = getPinPositionSignature(pin);
     const isSelected = selectedPinId === pinId;
+    const zIndex = isSelected ? SELECTED_MARKER_Z_INDEX : MARKER_Z_INDEX;
     const position = new maps.LatLng(pin.latitude, pin.longitude);
     const isVisible = expandedBounds?.hasLatLng(position) ?? true;
     const zoomLevel = map.getZoom?.() ?? 0;
@@ -411,6 +418,11 @@ export const syncLockerMarkers = ({
       if (existingEntry.positionSignature !== positionSignature) {
         existingEntry.marker.setPosition(position);
         existingEntry.positionSignature = positionSignature;
+      }
+
+      if (existingEntry.zIndex !== zIndex) {
+        existingEntry.marker.setZIndex?.(zIndex);
+        existingEntry.zIndex = zIndex;
       }
 
       let animationState:
@@ -484,6 +496,7 @@ export const syncLockerMarkers = ({
       offsetX,
       offsetY,
       shouldAnimateSpread,
+      zIndex,
     });
     marker.setVisible(isVisible);
 
@@ -491,6 +504,7 @@ export const syncLockerMarkers = ({
       marker,
       iconSignature: `${iconSignature}:${animationState}`,
       positionSignature,
+      zIndex,
       wasSelectedBefore: isSelected,
       hadSpreadBefore: hasSpread,
     };

@@ -65,6 +65,7 @@ class FakeMarker {
   public readonly getMap = vi.fn(() => this.attachedMap);
   public readonly setIcon = vi.fn();
   public readonly setPosition = vi.fn();
+  public readonly setZIndex = vi.fn();
   public readonly setVisible = vi.fn((visible: boolean) => {
     this.visible = visible;
   });
@@ -419,6 +420,42 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances).toHaveLength(1);
     expect(FakeMarker.instances[0]?.setPosition).not.toHaveBeenCalled();
     expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
+  });
+
+  it("raises the selected marker above nearby markers", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin1 = createLockerPin({ lockerId: 101 });
+    const pin2 = createLockerPin({ lockerId: 102, latitude: 37.498 });
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      registry,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      selectedPinId: "LOCKER-102",
+      registry,
+    });
+
+    const marker1Options = FakeMarker.instances[0]?.options as {
+      zIndex?: number;
+    };
+    const marker2Options = FakeMarker.instances[1]?.options as {
+      zIndex?: number;
+    };
+
+    expect(marker1Options.zIndex).toBe(10);
+    expect(marker2Options.zIndex).toBe(10);
+    expect(FakeMarker.instances[0]?.setZIndex).not.toHaveBeenCalled();
+    expect(FakeMarker.instances[1]?.setZIndex).toHaveBeenCalledWith(20);
   });
 
   it("applies spread class and styles when spreadCenter is provided", () => {
