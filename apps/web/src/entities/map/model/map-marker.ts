@@ -1,8 +1,7 @@
 import { vars } from "@repo/ui/vars";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
-import defaultMapPinIconUrl from "../assets/default-map-pin.png?url";
 import favoriteLockerMarkerIconUrl from "../assets/save-map-pin.png?url";
-import selectedLockerMarkerIconUrl from "../assets/selected-map-pin.png?url";
+import defaultLockerMarkerIconUrl from "../assets/selected-map-pin.png?url";
 
 export type LockerMarkerStatus = "active" | "inactive";
 
@@ -12,7 +11,7 @@ const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const LOCKER_MARKER_SIZE = { width: 36, height: 39 };
+const LOCKER_MARKER_SIZE = { width: 30, height: 40 };
 const SELECTED_LOCKER_MARKER_SIZE = { width: 38, height: 50 };
 const PLACE_MARKER_SIZE = { width: 46, height: 50 };
 const SELECTED_PLACE_MARKER_SIZE = PLACE_MARKER_SIZE;
@@ -22,7 +21,7 @@ export const getPinId = (pin: LockerPinItemResponse): string =>
 
 export const createMapPinIcon = (
   pin: LockerPinItemResponse,
-  isSelected = false,
+  _isSelected = false,
 ): string => {
   const isPlace = pin.pinType === "PLACE";
   const lockerCount = pin.lockerCount ?? 0;
@@ -31,17 +30,15 @@ export const createMapPinIcon = (
 
   if (!isPlace) {
     const isFavorite = pin.isFavorite === true;
-    const iconUrl = isSelected
-      ? selectedLockerMarkerIconUrl
-      : isFavorite
-        ? favoriteLockerMarkerIconUrl
-        : defaultMapPinIconUrl;
+    const iconUrl = isFavorite
+      ? favoriteLockerMarkerIconUrl
+      : defaultLockerMarkerIconUrl;
 
     return `<img src="${iconUrl}" alt="" aria-hidden="true" data-type="${pin.pinType}" style="display: block; width: 100%; height: 100%; object-fit: contain;" />`;
   }
 
   return `<div data-type="${pin.pinType}" style="position: relative; display: block; width: 100%; height: 100%;">
-    <img src="${defaultMapPinIconUrl}" alt="" aria-hidden="true" style="display: block; width: 100%; height: 100%; object-fit: contain;" />
+    <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="display: block; width: 100%; height: 100%; object-fit: contain;" />
     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; top: -6px; right: -6px; overflow: visible;">
       <g filter="url(#${badgeFilterId})">
         <circle cx="61.9049" cy="47.1469" r="33.0364" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
