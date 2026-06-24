@@ -220,6 +220,8 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(">9+<");
     expect(icon).toContain("<text");
     expect(icon).toContain("<span");
+    expect(icon).toContain('width="42"');
+    expect(icon).toContain("left: 54.5px; top: 9px");
   });
 });
 

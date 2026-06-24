@@ -19,7 +19,9 @@ const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = { width: 58, height: 88 };
 const PLACE_MARKER_DISPLAY_SIZE = { width: 88, height: 98 };
 const PIN_DISPLAY_SIZE = { width: 55, height: 73 };
 const FAVORITE_PIN_DISPLAY_SIZE = { width: 58, height: 58 };
-const PLACE_BADGE_DISPLAY_SIZE = 38;
+const PLACE_BADGE_DISPLAY_SIZE = 42;
+const PLACE_BADGE_PIN_OVERLAP_X = 17;
+const PLACE_BADGE_PIN_OVERLAP_Y = 12;
 const PIN_DOT_SIZE = 10;
 const PIN_DOT_GAP = 5;
 const LOCKER_MARKER_DISPLAY_SCALE =
@@ -61,11 +63,14 @@ export const createMapPinIcon = (
   const placePinLeft =
     (PLACE_MARKER_DISPLAY_SIZE.width - PIN_DISPLAY_SIZE.width) / 2;
   const placePinTop = PLACE_BADGE_DISPLAY_SIZE / 2;
+  const placeBadgeLeft =
+    placePinLeft + PIN_DISPLAY_SIZE.width - PLACE_BADGE_PIN_OVERLAP_X;
+  const placeBadgeTop = placePinTop - PLACE_BADGE_PIN_OVERLAP_Y;
   const placeDotTop = placePinTop + PIN_DISPLAY_SIZE.height + PIN_DOT_GAP;
 
   return `<div data-type="${pin.pinType}" data-display-scale="${PLACE_MARKER_DISPLAY_SCALE.toFixed(3)}" style="position: relative; display: block; width: 100%; height: 100%;">
     <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="position: absolute; left: ${placePinLeft}px; top: ${placePinTop}px; display: block; width: ${PIN_DISPLAY_SIZE.width}px; height: ${PIN_DISPLAY_SIZE.height}px; object-fit: contain;" />
-    <svg xmlns="http://www.w3.org/2000/svg" width="${PLACE_BADGE_DISPLAY_SIZE}" height="${PLACE_BADGE_DISPLAY_SIZE}" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; top: 0; right: 0; overflow: visible;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${PLACE_BADGE_DISPLAY_SIZE}" height="${PLACE_BADGE_DISPLAY_SIZE}" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; left: ${placeBadgeLeft}px; top: ${placeBadgeTop}px; overflow: visible;">
       <g filter="url(#${badgeFilterId})">
         <circle cx="61.9049" cy="47.1469" r="33.0364" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
         <text x="61.9049" y="63.6651" text-anchor="middle" fill="${PLACE_BADGE_FILL}" font-family="Pretendard, sans-serif" font-size="43" font-weight="700">${badgeLabel}</text>
