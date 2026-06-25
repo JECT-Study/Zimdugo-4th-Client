@@ -62,6 +62,53 @@ export const getLocalizedHref = (
   return `${url.pathname}${url.search}${url.hash}`;
 };
 
+export const getRuntimeLanguage = (): AppLanguage =>
+  normalizeLanguage(languageTag()) ?? DEFAULT_APP_LANGUAGE;
+
+export type LanguageSyncAction =
+  | { kind: "sync"; language: AppLanguage }
+  | { kind: "redirect"; href: string };
+
+export const resolveLanguageSyncAction = ({
+  href,
+  urlLanguage,
+  persistedLanguage,
+  runtimeLanguage,
+}: {
+  href: string;
+  urlLanguage?: string | null;
+  persistedLanguage: AppLanguage;
+  runtimeLanguage?: string | null;
+}): LanguageSyncAction => {
+  const normalizedUrlLanguage = normalizeLanguage(urlLanguage);
+
+  if (normalizedUrlLanguage) {
+    if (normalizedUrlLanguage !== persistedLanguage) {
+      return {
+        kind: "redirect",
+        href: getLocalizedHref(href, persistedLanguage),
+      };
+    }
+
+    return { kind: "sync", language: normalizedUrlLanguage };
+  }
+
+  const normalizedRuntimeLanguage =
+    normalizeLanguage(runtimeLanguage) ?? getRuntimeLanguage();
+
+  if (
+    persistedLanguage !== DEFAULT_APP_LANGUAGE &&
+    persistedLanguage !== normalizedRuntimeLanguage
+  ) {
+    return {
+      kind: "redirect",
+      href: getLocalizedHref(href, persistedLanguage),
+    };
+  }
+
+  return { kind: "sync", language: normalizedRuntimeLanguage };
+};
+
 const getSystemLanguage = (): AppLanguage | null => {
   if (typeof navigator === "undefined" || !navigator.language) {
     return null;

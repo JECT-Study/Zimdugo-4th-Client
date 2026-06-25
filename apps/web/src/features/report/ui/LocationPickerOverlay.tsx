@@ -350,6 +350,10 @@ export function LocationPickerOverlay({
     onSelect(currentAddress, currentCoords);
   };
 
+  const handleCloseOverlay = () => {
+    onClose();
+  };
+
   const isAddressPending = !isMapInteractive || isMapMoving || isGeocoding;
   const isConfirmDisabled = isAddressPending;
 
@@ -363,7 +367,7 @@ export function LocationPickerOverlay({
         <button
           type="button"
           className={backButton}
-          onClick={onClose}
+          onClick={handleCloseOverlay}
           aria-label={m.locker_detail_back_aria()}
         >
           <IconChevronLeft13 className={backIcon} />

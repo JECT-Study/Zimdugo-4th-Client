@@ -13,6 +13,31 @@ export function getRouter() {
     defaultPreload: "intent",
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    parseSearch: (searchStr) => {
+      const params = new URLSearchParams(searchStr);
+      const result: Record<string, any> = {};
+      params.forEach((value, key) => {
+        try {
+          result[key] = JSON.parse(value);
+        } catch {
+          result[key] = value;
+        }
+      });
+      return result;
+    },
+    stringifySearch: (search) => {
+      const params = new URLSearchParams();
+      Object.entries(search).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        if (typeof value === "string") {
+          params.set(key, value);
+        } else {
+          params.set(key, JSON.stringify(value));
+        }
+      });
+      const query = params.toString();
+      return query ? `?${query}` : "";
+    },
     rewrite: {
       input: ({ url }) => deLocalizeUrl(url),
       output: ({ url }) => localizeUrl(url),

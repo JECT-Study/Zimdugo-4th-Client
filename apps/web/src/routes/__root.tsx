@@ -7,9 +7,9 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import "@repo/ui/styles/global.css";
-import { languageTag } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
 import {
@@ -21,7 +21,18 @@ import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
-import { getUrlLanguage, useAppLanguageStore } from "#/shared/store/language";
+import {
+  BASE_LOCALE,
+  LOCALE_NORMALIZATION_GROUPS,
+  LOCALE_PATH_PREFIX,
+  stripLocalePathPrefix,
+} from "#/shared/i18n/locales";
+import {
+  getRuntimeLanguage,
+  getUrlLanguage,
+  resolveLanguageSyncAction,
+  useAppLanguageStore,
+} from "#/shared/store/language";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
 
 const CRITICAL_LAYOUT_CSS = `
@@ -74,6 +85,69 @@ const CRITICAL_LAYOUT_CSS = `
   }
 `;
 
+const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
+(function () {
+  try {
+    var baseLocale = ${JSON.stringify(BASE_LOCALE)};
+    var normalizationGroups = ${JSON.stringify(LOCALE_NORMALIZATION_GROUPS)};
+    var localePathPattern = new RegExp(${JSON.stringify(LOCALE_PATH_PREFIX.source)}, ${JSON.stringify(LOCALE_PATH_PREFIX.flags)});
+    var raw = window.localStorage.getItem("app-language");
+    if (!raw) return;
+
+    var parsed = JSON.parse(raw);
+    var language = parsed && parsed.state && parsed.state.appLanguage;
+    var normalized = null;
+
+    if (typeof language === "string") {
+      var lower = language.toLowerCase().replace(/_/g, "-");
+      for (var i = 0; i < normalizationGroups.length; i += 1) {
+        var group = normalizationGroups[i];
+        for (var j = 0; j < group.prefixes.length; j += 1) {
+          if (lower.indexOf(group.prefixes[j]) === 0) {
+            normalized = group.locale;
+            break;
+          }
+        }
+        if (normalized) break;
+      }
+    }
+
+    if (!normalized) return;
+
+    var pathname = window.location.pathname;
+    var pathLocaleMatch = pathname.match(localePathPattern);
+    var pathLocale = null;
+
+    if (pathLocaleMatch) {
+      var lowerPathLocale = pathLocaleMatch[0].slice(1).toLowerCase().replace(/_/g, "-");
+      for (var pathIndex = 0; pathIndex < normalizationGroups.length; pathIndex += 1) {
+        var pathGroup = normalizationGroups[pathIndex];
+        for (var prefixIndex = 0; prefixIndex < pathGroup.prefixes.length; prefixIndex += 1) {
+          if (lowerPathLocale.indexOf(pathGroup.prefixes[prefixIndex]) === 0) {
+            pathLocale = pathGroup.locale;
+            break;
+          }
+        }
+        if (pathLocale) break;
+      }
+    }
+
+    if (pathLocale === normalized) return;
+    if (!pathLocale && normalized === baseLocale) return;
+
+    var basePathname = pathname.replace(localePathPattern, "") || "/";
+    var nextPathname = normalized === baseLocale
+      ? basePathname
+      : "/" + normalized + (basePathname === "/" ? "" : basePathname);
+
+    if (nextPathname === pathname) return;
+
+    window.location.replace(nextPathname + window.location.search + window.location.hash);
+  } catch (_) {
+  }
+})();
+`;
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -87,11 +161,23 @@ export const Route = createRootRouteWithContext<{
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       {
-        title: "Zimdugo",
+        title: m.seo_global_title(),
+      },
+      {
+        name: "description",
+        content: m.seo_global_description(),
       },
       {
         name: "theme-color",
         content: "#3bd569",
+      },
+      {
+        name: "google-site-verification",
+        content: "gpgSPQCFt-Gg188XTXUl8KrpB4gPuU6EH0b0i9OTlLE",
+      },
+      {
+        name: "naver-site-verification",
+        content: "afc6fa2a6561bcfafa769e5938396bb6e61fd894",
       },
     ],
     links: [
@@ -133,26 +219,44 @@ function RootDocument({ children }: { children: ReactNode }) {
   useBootstrapAuth();
   useLoginResultHandler();
 
-  // 경로 변경 때 URL locale과 앱 언어 상태를 다시 맞춘다.
+  // 경로가 바뀌면 URL locale과 runtime/store 언어를 다시 맞춘다.
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const appLanguage = useAppLanguageStore((state) => state.appLanguage);
+  const [runtimeLanguage, setRuntimeLanguage] = useState(() =>
+    getRuntimeLanguage(),
+  );
   const hasLanguageHydrated = useAppLanguageStore((state) => state.hasHydrated);
   const initializeLanguage = useAppLanguageStore(
     (state) => state.initializeLanguage,
   );
-  const lang = hasLanguageHydrated ? appLanguage : languageTag();
+  const lang = runtimeLanguage;
   const showBottomTab = shouldShowBottomTab(pathname);
-  const isDocumentScrollPage = pathname === "/report";
+  const normalizedPath = stripLocalePathPrefix(pathname);
+  const isDocumentScrollPage =
+    normalizedPath === "/report" || normalizedPath.startsWith("/report/");
 
   useEffect(() => {
     if (!hasLanguageHydrated) {
       return;
     }
 
-    initializeLanguage(getUrlLanguage(window.location.href));
-  }, [hasLanguageHydrated, initializeLanguage]);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const action = resolveLanguageSyncAction({
+      href: currentHref,
+      urlLanguage: getUrlLanguage(pathname),
+      persistedLanguage: useAppLanguageStore.getState().appLanguage,
+      runtimeLanguage: languageTag(),
+    });
+
+    if (action.kind === "redirect") {
+      window.location.replace(action.href);
+      return;
+    }
+
+    initializeLanguage(action.language);
+    setRuntimeLanguage(getRuntimeLanguage());
+  }, [hasLanguageHydrated, initializeLanguage, pathname]);
 
   return (
     <html
@@ -160,7 +264,11 @@ function RootDocument({ children }: { children: ReactNode }) {
       data-scroll-page={isDocumentScrollPage ? "true" : undefined}
     >
       <head>
-        <title>Zimdugo</title>
+        <title>{m.seo_global_title()}</title>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script runs before hydration to normalize locale-less URLs
+          dangerouslySetInnerHTML={{ __html: INITIAL_LANGUAGE_REDIRECT_SCRIPT }}
+        />
         <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
       </head>

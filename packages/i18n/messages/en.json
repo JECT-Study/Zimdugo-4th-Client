@@ -1,5 +1,5 @@
 {
-  "$schema": "https://inlang.com/schema/message-format",
+  "$schema": "https://inlang.com/schema/inlang-message-format",
   "hello": "Hello",
   "nav_home": "Home",
   "nav_report": "Report",
@@ -331,5 +331,11 @@
   "settings_document_error_helper": "Check your network connection and try again.",
   "settings_document_retry": "Try again",
   "settings_document_loading_aria": "Loading document",
-  "settings_notice_empty": "No notices available."
+  "settings_notice_empty": "No notices available.",
+  "seo_locker_detail_title": "{name} | Zimdugo Luggage Storage",
+  "seo_locker_detail_description": "Find detailed information about {name} luggage storage including location({address}), {priceText}, and operating hours easily on Zimdugo.",
+  "seo_locker_detail_price_text": "minimum price {price} KRW",
+  "seo_locker_detail_price_unknown": "pricing details available",
+  "seo_global_title": "Zimdugo | Interactive Luggage Storage & Locker Map of Korea",
+  "seo_global_description": "Zimdugo is a map service that helps you easily find luggage storage locations, rates, and operating hours across South Korea. Locate lockers in subway stations, shopping malls, and tourist spots, or report new storage spots."
 }

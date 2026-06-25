@@ -84,6 +84,51 @@ export function IconNormalSearch24({
   );
 }
 
+export function IconNormalGlobe32({
+  className,
+  state = "default",
+}: {
+  className?: string;
+  state?: "default" | "selected";
+}) {
+  return (
+    <span
+      className={className}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "32px",
+        height: "32px",
+        borderRadius: "9999px",
+        border:
+          state === "selected" ? `1px solid ${color.palette.green[500]}` : 0,
+        backgroundColor: color.bg.default,
+        boxSizing: "border-box",
+        flexShrink: 0,
+      }}
+      aria-hidden
+    >
+      <svg
+        className={iconSvgFixed}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        width={24}
+        height={24}
+        preserveAspectRatio="xMidYMid meet"
+        aria-hidden
+      >
+        <title>language</title>
+        <path
+          d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10ZM4.062 13c.438 3.33 3.144 5.936 6.522 6.245-.67-.87-1.31-2.192-1.686-3.95A16.553 16.553 0 0 1 8.598 13H4.062Zm0-2h4.536c.067-.8.168-1.572.3-2.295.376-1.758 1.016-3.08 1.686-3.95C7.206 5.064 4.5 7.67 4.062 11Zm15.876 2h-4.536c-.067.8-.168 1.572-.3 2.295-.376 1.758-1.016 3.08-1.686 3.95 3.378-.309 6.084-2.915 6.522-6.245Zm0-2c-.438-3.33-3.144-5.936-6.522-6.245.67.87 1.31 2.192 1.686 3.95.132.723.233 1.495.3 2.295h4.536ZM10.61 13c.06.655.147 1.273.26 1.834.33 1.64.819 2.826 1.13 3.408.311-.582.8-1.768 1.13-3.408.113-.561.2-1.179.26-1.834h-2.78Zm0-2h2.78a16.16 16.16 0 0 0-.26-1.834C12.8 7.526 12.311 6.34 12 5.758c-.311.582-.8 1.768-1.13 3.408-.113.561-.2 1.179-.26 1.834Z"
+          fill={color.palette.green[500]}
+        />
+      </svg>
+    </span>
+  );
+}
+
 export function IconStarOutline24({
   className,
   size = 24,
@@ -491,9 +536,7 @@ export function IconNormalMapPin24({
   }
 
   const fill =
-    state === "fill"
-      ? color.palette.green[500]
-      : color.palette.gray[800];
+    state === "fill" ? color.palette.green[500] : color.palette.gray[800];
   return (
     <svg
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
@@ -1393,7 +1436,11 @@ export function IconSearchRecentItem24({ className }: { className?: string }) {
 }
 
 /** 보관함 상세 시트 헤더 썸네일 */
-export function IconLockerDetailHeader24({ className }: { className?: string }) {
+export function IconLockerDetailHeader24({
+  className,
+}: {
+  className?: string;
+}) {
   return (
     <CircleBox size={24} className={className}>
       <IconMarker22 size={14} fill="green[500]" className={iconSvgFixed} />

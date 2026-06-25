@@ -1,5 +1,5 @@
 {
-  "$schema": "https://inlang.com/schema/message-format",
+  "$schema": "https://inlang.com/schema/inlang-message-format",
   "hello": "你好",
   "nav_home": "主页",
   "nav_report": "上报",
@@ -331,5 +331,11 @@
   "settings_document_error_helper": "请检查网络连接后重试。",
   "settings_document_retry": "重试",
   "settings_document_loading_aria": "正在加载文档",
-  "settings_notice_empty": "暂无公告。"
+  "settings_notice_empty": "暂无公告。",
+  "seo_locker_detail_title": "{name} | Zimdugo 行李寄存",
+  "seo_locker_detail_description": "在 Zimdugo 轻松快速地查看 {name} 行李寄存的详细信息，包括位置（{address}）、{priceText} 和营业时间。",
+  "seo_locker_detail_price_text": "最低费用 {price} 韩元",
+  "seo_locker_detail_price_unknown": "可查询费用信息",
+  "seo_global_title": "Zimdugo | 韩国行李寄存与寄存柜中文地图",
+  "seo_global_description": "Zimdugo 是一款帮助您轻松查找韩国全境行李寄存柜位置、收费标准和营业时间的地图服务。定位地铁站、商场和旅游景点的寄存处，或直接上报新的寄存点。"
 }

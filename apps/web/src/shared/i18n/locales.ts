@@ -11,6 +11,17 @@ export const LOCALE_PATH_PREFIX = /^\/(?:ko|en|ja|zh-tw|zh)(?=\/|$)/i;
 
 export type AppLocale = (typeof APP_LOCALES)[number];
 
+export const LOCALE_NORMALIZATION_GROUPS = [
+  { locale: "ko", prefixes: ["ko"] },
+  { locale: "en", prefixes: ["en"] },
+  { locale: "ja", prefixes: ["ja"] },
+  { locale: "zh-TW", prefixes: ["zh-tw", "zh-hant", "zh-hk", "zh-mo"] },
+  { locale: "zh", prefixes: ["zh"] },
+] as const satisfies readonly {
+  locale: AppLocale;
+  prefixes: readonly string[];
+}[];
+
 /** Browser Accept-Language / navigator has no supported app locale. */
 export const UNSUPPORTED_LOCALE_FALLBACK = "en" satisfies AppLocale;
 
@@ -19,18 +30,11 @@ export const normalizeLocale = (value?: string | null): AppLocale | null => {
 
   const lower = value.toLowerCase().replace(/_/g, "-");
 
-  if (lower.startsWith("ko")) return "ko";
-  if (lower.startsWith("en")) return "en";
-  if (lower.startsWith("ja")) return "ja";
-  if (
-    lower.startsWith("zh-tw") ||
-    lower.startsWith("zh-hant") ||
-    lower.startsWith("zh-hk") ||
-    lower.startsWith("zh-mo")
-  ) {
-    return "zh-TW";
+  for (const group of LOCALE_NORMALIZATION_GROUPS) {
+    if (group.prefixes.some((prefix) => lower.startsWith(prefix))) {
+      return group.locale;
+    }
   }
-  if (lower.startsWith("zh")) return "zh";
 
   return null;
 };

@@ -43,6 +43,9 @@
     "./components/layout/header": {
       "import": "./src/components/layout/header/Header.tsx"
     },
+    "./components/language-dropdown": {
+      "import": "./src/components/language-dropdown/LanguageDropdown.tsx"
+    },
     "./components/popup": {
       "import": "./src/components/popup/Popup.tsx"
     },

@@ -1,12 +1,29 @@
 import { createApiClient, createApiMethods } from "@repo/libs/axios";
 import type { InternalAxiosRequestConfig } from "axios";
+import { authService } from "#/features/auth/sign-in/api/authService";
 import { resolveAcceptLanguageHeader } from "#/shared/i18n/api-locale";
 import { useAuthStore } from "#/shared/store/authStore";
-import { authService } from "#/features/auth/sign-in/api/authService";
 
-export const apiClient = createApiClient(
-  import.meta.env.VITE_API_BASE_URL ?? "",
-);
+const getBaseUrl = (): string => {
+  if (typeof window === "undefined") {
+    // 서버 사이드 실행 (Node.js / Nitro) 환경
+    if (typeof process !== "undefined" && process.env) {
+      if (process.env.VITE_API_BASE_URL) return process.env.VITE_API_BASE_URL;
+      if (process.env.API_BASE_URL) return process.env.API_BASE_URL;
+    }
+    throw new Error("API_BASE_URL is not defined in server environment");
+  }
+
+  // 클라이언트 사이드 (브라우저) 환경
+  if (import.meta.env?.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // 클라이언트 환경 기본 상대 경로 fallback (API 래퍼들이 이미 /api를 포함하므로 빈 문자열 반환)
+  return "";
+};
+
+export const apiClient = createApiClient(getBaseUrl());
 apiClient.defaults.withCredentials = true;
 
 const getRequestUrl = (config: InternalAxiosRequestConfig): string => {
