@@ -92,7 +92,7 @@ describe("useReportContentFocusScroll", () => {
     );
 
     act(() => {
-      input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+      input.focus();
     });
 
     expect(requestAnimationFrame).toHaveBeenCalled();
@@ -150,7 +150,7 @@ describe("useReportContentFocusScroll", () => {
     renderHook(() => useReportContentFocusScroll(contentRef, true));
 
     act(() => {
-      input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+      input.focus();
     });
 
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
@@ -219,7 +219,7 @@ describe("useReportContentFocusScroll", () => {
     renderHook(() => useReportContentFocusScroll(contentRef, true));
 
     act(() => {
-      input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+      input.focus();
     });
 
     const initialScrollTop = container.scrollTop;
@@ -238,6 +238,70 @@ describe("useReportContentFocusScroll", () => {
     expect(container.scrollTop).toBeGreaterThan(0);
 
     vi.useRealTimers();
+  });
+
+  it("예약된 스크롤 실행 전에 포커스가 바뀌면 이전 요소를 스크롤하지 않는다", () => {
+    const frameCallbacks: FrameRequestCallback[] = [];
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      frameCallbacks.push(callback);
+      return frameCallbacks.length;
+    });
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      paddingTop: "0px",
+      paddingBottom: "0px",
+    } as CSSStyleDeclaration);
+
+    const contentRef = createRef<HTMLElement>();
+    const container = document.createElement("main");
+    Object.defineProperty(container, "scrollTop", {
+      writable: true,
+      value: 0,
+    });
+    const input = document.createElement("input");
+    const outsideInput = document.createElement("input");
+    container.appendChild(input);
+    document.body.appendChild(container);
+    document.body.appendChild(outsideInput);
+    contentRef.current = container;
+
+    vi.spyOn(container, "getBoundingClientRect").mockReturnValue({
+      top: 0,
+      bottom: 400,
+      left: 0,
+      right: 300,
+      width: 300,
+      height: 400,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(input, "getBoundingClientRect").mockReturnValue({
+      top: 500,
+      bottom: 530,
+      left: 0,
+      right: 300,
+      width: 300,
+      height: 30,
+      x: 0,
+      y: 500,
+      toJSON: () => ({}),
+    });
+
+    renderHook(() => useReportContentFocusScroll(contentRef, true));
+
+    act(() => {
+      input.focus();
+      outsideInput.focus();
+    });
+    act(() => {
+      frameCallbacks.forEach((callback) => {
+        callback(0);
+      });
+    });
+
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(container.scrollTop).toBe(0);
   });
 
   it("컨테이너 밖 포커스는 무시한다", () => {
