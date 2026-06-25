@@ -5,42 +5,53 @@ export const reportContainer = style({
   width: "100%",
   maxWidth: vars.layout.containerWidth,
   margin: "0 auto",
-  flex: 1,
-  minHeight: 0,
-  height: "100%",
+  minHeight: "100dvh",
   backgroundColor: vars.color.bg.default,
   position: "relative",
-  overflow: "hidden",
+  overflow: "visible",
   display: "flex",
   flexDirection: "column",
 });
 
 export const reportHeader = style({
-  position: "fixed",
+  position: "sticky",
   top: 0,
-  left: "50%",
-  transform: "translateX(-50%)",
+  left: "auto",
+  transform: "none",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: "none",
   backgroundColor: vars.color.bg.default,
   borderBottom: `1px solid ${vars.color.palette.gray[200]}`,
   paddingTop: "env(safe-area-inset-top, 0px)",
   zIndex: 100,
+  selectors: {
+    "&&": {
+      position: "sticky",
+      top: 0,
+      left: "auto",
+      transform: "none",
+      maxWidth: "none",
+    },
+  },
 });
 
 export const reportPageContent = style({
-  position: "absolute",
-  inset: 0,
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: "100dvh",
 });
 
 export const contentArea = style({
-  position: "absolute",
-  inset: 0,
+  position: "relative",
+  flex: 1,
   width: "100%",
-  padding: `calc(56px + env(safe-area-inset-top, 0px)) ${vars.layout.sidePadding} 100px`, // 헤더 높이 + 하단 버튼 여백
-  overflowY: "auto",
+  minHeight: 0,
+  padding: `${vars.spacing[16]} ${vars.layout.sidePadding} ${vars.spacing[28]}`,
+  overflowY: "visible",
   overflowAnchor: "none",
-  overscrollBehaviorY: "contain",
+  overscrollBehaviorY: "auto",
+  touchAction: "pan-y",
   WebkitOverflowScrolling: "touch",
   display: "flex",
   flexDirection: "column",
@@ -57,18 +68,16 @@ export const contentArea = style({
 export const stepWrapper = style({
   display: "flex",
   flexDirection: "column",
+  flexShrink: 0,
   gap: "32px",
   width: "100%",
   paddingTop: vars.spacing[16],
 });
 
 export const bottomButtonWrapper = style({
-  position: "fixed",
+  position: "sticky",
   bottom: 0,
-  left: "50%",
-  transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
   padding: `${vars.spacing[16]} ${vars.layout.sidePadding} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
   borderTop: `1px solid ${vars.color.palette.gray[200]}`,
   backgroundColor: "white",
@@ -309,6 +318,11 @@ export const priceInputContainer = style({
   position: "relative",
 });
 
+// iOS Safari: 16px 미만 입력 포커스 시 자동 줌 방지
+globalStyle(`${priceInputContainer} input`, {
+  fontSize: vars.typography.fontSize[16],
+});
+
 export const priceUnit = style({
   position: "absolute",
   right: vars.spacing[12],
@@ -344,7 +358,8 @@ export const reportTextareaField = style({
   border: "none",
   outline: "none",
   resize: "none",
-  fontSize: vars.typography.fontSize[14],
+  // iOS Safari: 16px 미만 입력 포커스 시 자동 줌 방지
+  fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: 1.5,
   fontFamily: "inherit",

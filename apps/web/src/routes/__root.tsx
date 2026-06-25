@@ -25,6 +25,7 @@ import {
   BASE_LOCALE,
   LOCALE_NORMALIZATION_GROUPS,
   LOCALE_PATH_PREFIX,
+  stripLocalePathPrefix,
 } from "#/shared/i18n/locales";
 import {
   getRuntimeLanguage,
@@ -57,6 +58,20 @@ const CRITICAL_LAYOUT_CSS = `
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
+
+  html[data-scroll-page="true"],
+  html[data-scroll-page="true"] body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-scroll-page="true"] #root {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
   }
 
   button,
@@ -217,6 +232,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   );
   const lang = runtimeLanguage;
   const showBottomTab = shouldShowBottomTab(pathname);
+  const normalizedPath = stripLocalePathPrefix(pathname);
+  const isDocumentScrollPage =
+    normalizedPath === "/report" || normalizedPath.startsWith("/report/");
 
   useEffect(() => {
     if (!hasLanguageHydrated) {
@@ -241,7 +259,10 @@ function RootDocument({ children }: { children: ReactNode }) {
   }, [hasLanguageHydrated, initializeLanguage, pathname]);
 
   return (
-    <html lang={lang}>
+    <html
+      lang={lang}
+      data-scroll-page={isDocumentScrollPage ? "true" : undefined}
+    >
       <head>
         <title>{m.seo_global_title()}</title>
         <script
@@ -252,8 +273,9 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <AppContainer>
+        <AppContainer mode={isDocumentScrollPage ? "document" : "app"}>
           <AppShell
+            mode={isDocumentScrollPage ? "document" : "app"}
             bottomTabBar={
               showBottomTab ? (
                 <BottomTabBar links={BOTTOM_TAB_LINKS} />

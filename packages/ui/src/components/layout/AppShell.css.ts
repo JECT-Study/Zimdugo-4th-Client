@@ -9,6 +9,12 @@ export const shell = style({
   overflow: "hidden",
 });
 
+export const documentShell = style({
+  height: "auto",
+  minHeight: "100dvh",
+  overflow: "visible",
+});
+
 export const main = style({
   flex: 1,
   minHeight: 0,
@@ -17,4 +23,8 @@ export const main = style({
   flexDirection: "column",
   position: "relative",
   paddingBottom: 0,
+});
+
+export const documentMain = style({
+  overflow: "visible",
 });

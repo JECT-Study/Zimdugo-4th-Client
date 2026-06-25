@@ -37,21 +37,27 @@ export const header = style({
 });
 
 export const backButton = style({
-  width: "40px",
-  height: "40px",
+  position: "absolute",
+  top: "calc(env(safe-area-inset-top, 0px) + 16px)",
+  left: vars.spacing[16],
+  width: "48px",
+  height: "48px",
+  padding: 0,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "transparent",
+  backgroundColor: vars.color.bg.default,
   border: "none",
+  borderRadius: vars.radius.max,
+  boxShadow: "0 4px 16px rgba(22, 24, 28, 0.16)",
   cursor: "pointer",
-  color: vars.color.text.title,
+  color: vars.color.icon.default,
   flexShrink: 0,
+  zIndex: 210,
 });
 
 export const backIcon = style({
-  width: "24px",
-  height: "24px",
+  flexShrink: 0,
 });
 
 export const searchFieldSlot = style({
