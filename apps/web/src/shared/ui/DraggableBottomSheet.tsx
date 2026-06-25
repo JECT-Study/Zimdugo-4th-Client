@@ -5,6 +5,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -16,6 +17,12 @@ import {
 
 const INTERACTIVE_DRAG_EXCLUSION_SELECTOR =
   'button, a, input, textarea, select, [role="button"], [contenteditable="true"]';
+
+export interface BottomSheetLiveOffsetState {
+  offset: number;
+  expandedProgress: number;
+  snapPoints: number[];
+}
 
 export interface DraggableBottomSheetProps {
   children: ReactNode;
@@ -30,8 +37,26 @@ export interface DraggableBottomSheetProps {
   /** 가장 아래로 내렸을 때 닫기/뒤로가기 처리를 실행할 스냅 위치 */
   dismissSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
+  onLiveOffsetChange?: (state: BottomSheetLiveOffsetState) => void;
   onDismiss?: () => void;
 }
+
+export const resolveBottomSheetExpandedProgress = ({
+  maxSnapPoint,
+  minSnapPoint,
+  offset,
+}: {
+  maxSnapPoint: number;
+  minSnapPoint: number;
+  offset: number;
+}) => {
+  if (maxSnapPoint === minSnapPoint) {
+    return 1;
+  }
+
+  const rawProgress = (maxSnapPoint - offset) / (maxSnapPoint - minSnapPoint);
+  return Math.min(1, Math.max(0, rawProgress));
+};
 
 export const shouldStartBottomSheetDrag = (
   target: EventTarget | null,
@@ -75,6 +100,7 @@ export function DraggableBottomSheet({
   maxSnapPoint = 760,
   dismissSnapPoint,
   onSnapChange,
+  onLiveOffsetChange,
   onDismiss,
 }: DraggableBottomSheetProps) {
   const controls = useAnimation();
@@ -92,13 +118,49 @@ export function DraggableBottomSheet({
   const DRAG_ELASTIC = 0.05;
   const SNAP_DISTANCE_THRESHOLD = 48;
   const SNAP_VELOCITY_THRESHOLD = 420;
+  const snapPoints = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            minSnapPoint,
+            snapPoint,
+            miniSnapPoint,
+            resolvedDismissSnapPoint,
+            maxSnapPoint,
+          ].filter((point): point is number => point !== undefined),
+        ),
+      ).sort((a, b) => a - b),
+    [
+      maxSnapPoint,
+      minSnapPoint,
+      miniSnapPoint,
+      resolvedDismissSnapPoint,
+      snapPoint,
+    ],
+  );
+  const notifyLiveOffsetChange = useCallback(
+    (offset: number) => {
+      onLiveOffsetChange?.({
+        offset,
+        expandedProgress: resolveBottomSheetExpandedProgress({
+          maxSnapPoint,
+          minSnapPoint,
+          offset,
+        }),
+        snapPoints,
+      });
+    },
+    [maxSnapPoint, minSnapPoint, onLiveOffsetChange, snapPoints],
+  );
 
   useEffect(() => {
     const nextSnap = clampSnap(resolvedInitialSnap);
     setCurrentSnap(nextSnap);
     setLiveOffset(nextSnap);
     dragStartSnapRef.current = nextSnap;
-  }, [resolvedInitialSnap, clampSnap]);
+    notifyLiveOffsetChange(nextSnap);
+  }, [resolvedInitialSnap, clampSnap, notifyLiveOffsetChange]);
 
   useEffect(() => {
     controls.start({ y: currentSnap });
@@ -137,22 +199,11 @@ export function DraggableBottomSheet({
           dragStartSnapRef.current + info.offset.y,
         );
         setLiveOffset(nextLiveOffset);
+        notifyLiveOffsetChange(nextLiveOffset);
       }}
       onDragEnd={(_, info) => {
         const offsetY = info.offset.y;
         const velocityY = info.velocity.y;
-
-        const snapPoints = Array.from(
-          new Set(
-            [
-              minSnapPoint,
-              snapPoint,
-              miniSnapPoint,
-              resolvedDismissSnapPoint,
-              maxSnapPoint,
-            ].filter((point): point is number => point !== undefined),
-          ),
-        ).sort((a, b) => a - b);
 
         const currentIndex = snapPoints.reduce((nearestIndex, point, index) => {
           const nearestDistance = Math.abs(
@@ -183,6 +234,7 @@ export function DraggableBottomSheet({
         controls.start({ y: clampedNextSnap });
         setLiveOffset(clampedNextSnap);
         setCurrentSnap(clampedNextSnap);
+        notifyLiveOffsetChange(clampedNextSnap);
         onSnapChange?.(clampedNextSnap);
 
         if (

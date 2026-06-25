@@ -3,6 +3,7 @@ import type { HTMLAttributes } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DraggableBottomSheet,
+  resolveBottomSheetExpandedProgress,
   shouldStartBottomSheetDrag,
 } from "./DraggableBottomSheet";
 
@@ -104,6 +105,42 @@ describe("shouldStartBottomSheetDrag", () => {
   });
 });
 
+describe("resolveBottomSheetExpandedProgress", () => {
+  it("returns 1 at the top and 0 at the bottom", () => {
+    expect(
+      resolveBottomSheetExpandedProgress({
+        minSnapPoint: 40,
+        maxSnapPoint: 720,
+        offset: 40,
+      }),
+    ).toBe(1);
+    expect(
+      resolveBottomSheetExpandedProgress({
+        minSnapPoint: 40,
+        maxSnapPoint: 720,
+        offset: 720,
+      }),
+    ).toBe(0);
+  });
+
+  it("clamps progress inside the 0 to 1 range", () => {
+    expect(
+      resolveBottomSheetExpandedProgress({
+        minSnapPoint: 40,
+        maxSnapPoint: 720,
+        offset: -100,
+      }),
+    ).toBe(1);
+    expect(
+      resolveBottomSheetExpandedProgress({
+        minSnapPoint: 40,
+        maxSnapPoint: 720,
+        offset: 900,
+      }),
+    ).toBe(0);
+  });
+});
+
 describe("DraggableBottomSheet", () => {
   it("starts dragging from a non-interactive sheet surface", () => {
     render(
@@ -166,6 +203,33 @@ describe("DraggableBottomSheet", () => {
     });
 
     expect(handleSnapChange).toHaveBeenCalledWith(480);
+  });
+
+  it("reports live offset changes while dragging", () => {
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        minSnapPoint={40}
+        snapPoint={240}
+        miniSnapPoint={480}
+        maxSnapPoint={720}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div>sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    dragHandlers.onDragStart?.();
+    dragHandlers.onDrag?.(null, {
+      offset: { y: 120 },
+    });
+
+    const lastState = handleLiveOffsetChange.mock.calls.at(-1)?.[0];
+
+    expect(lastState.offset).toBe(360);
+    expect(lastState.expandedProgress).toBeCloseTo(0.529, 3);
+    expect(lastState.snapPoints).toEqual([40, 240, 480, 720]);
   });
 
   it("calls onDismiss when the sheet reaches the dismiss snap", () => {
