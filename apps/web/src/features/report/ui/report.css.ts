@@ -16,11 +16,23 @@ export const reportContainer = style({
 export const reportHeader = style({
   position: "sticky",
   top: 0,
+  left: "auto",
+  transform: "none",
   width: "100%",
+  maxWidth: "none",
   backgroundColor: vars.color.bg.default,
   borderBottom: `1px solid ${vars.color.palette.gray[200]}`,
   paddingTop: "env(safe-area-inset-top, 0px)",
   zIndex: 100,
+  selectors: {
+    "&&": {
+      position: "sticky",
+      top: 0,
+      left: "auto",
+      transform: "none",
+      maxWidth: "none",
+    },
+  },
 });
 
 export const reportPageContent = style({
