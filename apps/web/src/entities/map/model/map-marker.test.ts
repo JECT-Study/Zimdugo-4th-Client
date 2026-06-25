@@ -269,8 +269,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain("map-marker-item");
     expect(options.icon?.content).toContain('data-type="LOCKER"');
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
-    expect(options.icon?.size).toMatchObject({ width: 63, height: 63 });
-    expect(options.icon?.anchor).toMatchObject({ x: 31.5, y: 31.5 });
+    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
 
   it("uses the selected locker map pin dimensions", () => {
@@ -291,8 +291,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
-    expect(options.icon?.size).toMatchObject({ width: 63, height: 63 });
-    expect(options.icon?.anchor).toMatchObject({ x: 31.5, y: 31.5 });
+    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
 
   it("uses the favorite locker map pin dimensions", () => {
@@ -312,8 +312,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="save"');
-    expect(options.icon?.size).toMatchObject({ width: 63, height: 63 });
-    expect(options.icon?.anchor).toMatchObject({ x: 31.5, y: 31.5 });
+    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
 
   it("uses an HTML icon option for place markers", () => {
@@ -336,8 +336,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain('data-type="PLACE"');
     expect(options.icon?.content).toContain('data-map-pin-variant="cluster"');
     expect(options.icon?.content).toContain(">3<");
-    expect(options.icon?.size).toMatchObject({ width: 84.7, height: 84.7 });
-    expect(options.icon?.anchor).toMatchObject({ x: 36.7, y: 44.1 });
+    expect(options.icon?.size).toMatchObject({ width: 54.5, height: 54.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
 
   it("passes pin type and id when a locker marker is clicked", () => {
