@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import { setLanguageTag } from "@repo/i18n";
-import { fireEvent, render, screen, within, cleanup } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -9,6 +15,22 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
     <div data-testid="mock-draggable-bottom-sheet">{children}</div>
   ),
+  resolveBottomSheetExpandedProgress: ({
+    maxSnapPoint,
+    minSnapPoint,
+    offset,
+  }: {
+    maxSnapPoint: number;
+    minSnapPoint: number;
+    offset: number;
+  }) => {
+    if (maxSnapPoint === minSnapPoint) return 1;
+
+    return Math.min(
+      1,
+      Math.max(0, (maxSnapPoint - offset) / (maxSnapPoint - minSnapPoint)),
+    );
+  },
 }));
 
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";

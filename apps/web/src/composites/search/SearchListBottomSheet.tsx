@@ -1,7 +1,13 @@
 import { m } from "@repo/i18n";
 import { ControlChip } from "@repo/ui/components/control-chip";
 import { IconChevronLeft13, IconFilter14 } from "@repo/ui/tokens/icons";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { NonSearch, SearchListResults } from "#/entities/search";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
@@ -12,16 +18,20 @@ import {
   resolveEnglishSubVisibility,
 } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
-import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
+import {
+  type BottomSheetLiveOffsetState,
+  DraggableBottomSheet,
+  resolveBottomSheetExpandedProgress,
+} from "#/shared/ui/DraggableBottomSheet";
 import {
   dropdownCompact,
   emptyState,
   filterChip,
-  listScrollArea,
-  listStack,
   headerLeadingButton,
   headerLeadingRow,
   headerTitleSlot,
+  listScrollArea,
+  listStack,
   resultHeader,
   resultScrollArea,
   resultSortRow,
@@ -137,6 +147,17 @@ export function SearchListBottomSheet({
   const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 44;
   const resolvedMiniSnapPoint =
     resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
+  const [expandedProgress, setExpandedProgress] = useState(() =>
+    resolveBottomSheetExpandedProgress({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      offset: resolvedSnapPoint,
+    }),
+  );
+  const resultHeaderStyle: CSSProperties = {
+    opacity: 0.84 + expandedProgress * 0.16,
+    transform: `translateY(${(1 - expandedProgress) * 6}px)`,
+  };
   const sortLabels: Record<SearchSortKey, string> = {
     distance: m.search_sort_distance(),
     updatedAt: m.search_sort_recent(),
@@ -158,6 +179,22 @@ export function SearchListBottomSheet({
     });
   };
 
+  const handleLiveOffsetChange = ({
+    expandedProgress,
+  }: BottomSheetLiveOffsetState) => {
+    setExpandedProgress(expandedProgress);
+  };
+
+  useEffect(() => {
+    setExpandedProgress(
+      resolveBottomSheetExpandedProgress({
+        maxSnapPoint: resolvedMaxSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: resolvedSnapPoint,
+      }),
+    );
+  }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedSnapPoint]);
+
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
@@ -171,11 +208,12 @@ export function SearchListBottomSheet({
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       onSnapChange={onSnapChange}
+      onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onDismiss}
     >
       <div className={sheetColumn}>
         {showResultHeader ? (
-          <div className={resultHeader}>
+          <div className={resultHeader} style={resultHeaderStyle}>
             <div className={headerLeadingRow}>
               {showHeaderBack && onHeaderBackPress ? (
                 <button

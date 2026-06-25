@@ -2,10 +2,14 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { ControlChipGroup } from "@repo/ui/components/control-chip-group";
 import { LabelTitle } from "@repo/ui/components/label-title";
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
-import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
+import {
+  type BottomSheetLiveOffsetState,
+  DraggableBottomSheet,
+  resolveBottomSheetExpandedProgress,
+} from "#/shared/ui/DraggableBottomSheet";
 import {
   applyButton,
   bottomActionBar,
@@ -57,7 +61,15 @@ export function SearchFilterBottomSheet({
 }: SearchFilterBottomSheetProps) {
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
   const [collapsedSnap, setCollapsedSnap] = useState(760);
-  const miniSnap = DEFAULT_SNAP_POINT + (collapsedSnap - DEFAULT_SNAP_POINT) / 2;
+  const miniSnap =
+    DEFAULT_SNAP_POINT + (collapsedSnap - DEFAULT_SNAP_POINT) / 2;
+  const [expandedProgress, setExpandedProgress] = useState(() =>
+    resolveBottomSheetExpandedProgress({
+      maxSnapPoint: collapsedSnap,
+      minSnapPoint: DEFAULT_SNAP_POINT,
+      offset: DEFAULT_SNAP_POINT,
+    }),
+  );
   const [indoorOutdoorState, setIndoorOutdoor] = useState<string[]>(
     restoredFilters.indoorOutdoorState,
   );
@@ -87,55 +99,45 @@ export function SearchFilterBottomSheet({
 
   const indoorOutdoorOptions = [
     {
-      label:
-        m.search_filter_indoor_short(),
+      label: m.search_filter_indoor_short(),
       value: "indoor",
     },
     {
-      label:
-        m.search_filter_outdoor_short(),
+      label: m.search_filter_outdoor_short(),
       value: "outdoor",
     },
   ];
   const placeTypeOptions = [
     {
-      label:
-        m.search_filter_place_museum_short(),
+      label: m.search_filter_place_museum_short(),
       value: "museum",
     },
     {
-      label:
-        m.search_filter_place_subway_short(),
+      label: m.search_filter_place_subway_short(),
       value: "subway",
     },
     {
-      label:
-        m.search_filter_place_department_short(),
+      label: m.search_filter_place_department_short(),
       value: "department",
     },
     {
-      label:
-        m.search_filter_place_convenience_short(),
+      label: m.search_filter_place_convenience_short(),
       value: "convenience",
     },
     {
-      label:
-        m.search_filter_place_public_short(),
+      label: m.search_filter_place_public_short(),
       value: "public",
     },
     {
-      label:
-        m.search_filter_place_private_short(),
+      label: m.search_filter_place_private_short(),
       value: "private",
     },
     {
-      label:
-        m.search_filter_place_train_short(),
+      label: m.search_filter_place_train_short(),
       value: "train",
     },
     {
-      label:
-        m.search_filter_place_other_short(),
+      label: m.search_filter_place_other_short(),
       value: "other",
     },
   ];
@@ -157,6 +159,25 @@ export function SearchFilterBottomSheet({
       selectedSizes,
     });
   };
+  const handleLiveOffsetChange = ({
+    expandedProgress,
+  }: BottomSheetLiveOffsetState) => {
+    setExpandedProgress(expandedProgress);
+  };
+  const actionBarStyle: CSSProperties = {
+    opacity: 0.88 + expandedProgress * 0.12,
+    transform: `translateY(${(1 - expandedProgress) * 8}px)`,
+  };
+
+  useEffect(() => {
+    setExpandedProgress(
+      resolveBottomSheetExpandedProgress({
+        maxSnapPoint: collapsedSnap,
+        minSnapPoint: DEFAULT_SNAP_POINT,
+        offset: DEFAULT_SNAP_POINT,
+      }),
+    );
+  }, [collapsedSnap]);
 
   return (
     <DraggableBottomSheet
@@ -164,6 +185,7 @@ export function SearchFilterBottomSheet({
       minSnapPoint={DEFAULT_SNAP_POINT}
       miniSnapPoint={miniSnap}
       maxSnapPoint={collapsedSnap}
+      onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onCollapseToResults}
     >
       <div className={[sheetColumn, className].filter(Boolean).join(" ")}>
@@ -208,9 +230,7 @@ export function SearchFilterBottomSheet({
                 value={indoorOutdoorState}
                 onChange={setIndoorOutdoor}
                 selectionMode="multiple"
-                ariaLabel={
-                  m.search_filter_section_indoor_outdoor_short()
-                }
+                ariaLabel={m.search_filter_section_indoor_outdoor_short()}
               />
             </div>
           </div>
@@ -225,15 +245,13 @@ export function SearchFilterBottomSheet({
                 value={placeTypeState}
                 onChange={setPlaceType}
                 selectionMode="multiple"
-                ariaLabel={
-                  m.search_filter_section_locker_type_short()
-                }
+                ariaLabel={m.search_filter_section_locker_type_short()}
               />
             </div>
           </div>
         </div>
 
-        <div className={bottomActionBar}>
+        <div className={bottomActionBar} style={actionBarStyle}>
           <Button
             className={resetButton}
             variant="filled"

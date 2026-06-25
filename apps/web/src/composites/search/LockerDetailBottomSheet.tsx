@@ -1,4 +1,3 @@
-import { type ReactNode, useEffect, useState } from "react";
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -13,17 +12,22 @@ import {
   IconStarFilled24,
   IconStarOutline24,
 } from "@repo/ui/tokens/icons";
-import type { LockerVoteType } from "#/shared/api/locker-votes";
+import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
-import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
+import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
+import type { LockerVoteType } from "#/shared/api/locker-votes";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
 } from "#/shared/lib/locker-detail-labels";
-import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
+import {
+  type BottomSheetLiveOffsetState,
+  DraggableBottomSheet,
+  resolveBottomSheetExpandedProgress,
+} from "#/shared/ui/DraggableBottomSheet";
 import {
   actionRow,
   addressText,
@@ -192,13 +196,20 @@ export function LockerDetailBottomSheet({
   const [currentSnapPoint, setCurrentSnapPoint] = useState(
     resolvedInitialSnapPoint,
   );
+  const [expandedProgress, setExpandedProgress] = useState(() =>
+    resolveBottomSheetExpandedProgress({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      offset: resolvedInitialSnapPoint,
+    }),
+  );
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
     : m.search_favorite_add();
-  const detailHelpText =
-    locker.detailHelpText ?? m.locker_detail_detail_help();
-  const isFull = currentSnapPoint <= resolvedMinSnapPoint + 24;
+  const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
+  const isFull =
+    currentSnapPoint <= resolvedMinSnapPoint + 24 || expandedProgress >= 0.92;
 
   const handleFavoritePress = () => {
     onFavoriteChange?.(locker, !locker.isFavorite);
@@ -221,9 +232,28 @@ export function LockerDetailBottomSheet({
     onSnapChange?.(nextSnap);
   };
 
+  const handleLiveOffsetChange = ({
+    expandedProgress,
+  }: BottomSheetLiveOffsetState) => {
+    setExpandedProgress(expandedProgress);
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: lockerId changes must reset snap state even when numeric snap points stay equal.
   useEffect(() => {
     setCurrentSnapPoint(resolvedInitialSnapPoint);
-  }, [locker.lockerId, resolvedInitialSnapPoint]);
+    setExpandedProgress(
+      resolveBottomSheetExpandedProgress({
+        maxSnapPoint: resolvedMaxSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: resolvedInitialSnapPoint,
+      }),
+    );
+  }, [
+    locker.lockerId,
+    resolvedInitialSnapPoint,
+    resolvedMaxSnapPoint,
+    resolvedMinSnapPoint,
+  ]);
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
@@ -240,6 +270,7 @@ export function LockerDetailBottomSheet({
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       onSnapChange={handleSnapChange}
+      onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={handleBack}
     >
       <div
