@@ -13,7 +13,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "pretest": "pnpm run i18n:compile",
-    "test": "vitest run"
+    "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
