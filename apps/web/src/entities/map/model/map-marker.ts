@@ -9,11 +9,30 @@ const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const LOCKER_MARKER_DISPLAY_SIZE = { width: 90, height: 90 };
-const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = { width: 90, height: 90 };
-const PLACE_MARKER_DISPLAY_SIZE = { width: 121, height: 121 };
-const DEFAULT_MARKER_ANCHOR = { x: 45, y: 45 };
-const PLACE_MARKER_ANCHOR = { x: 52.4, y: 63 };
+const MAP_PIN_DISPLAY_SCALE = 0.7;
+const LOCKER_MARKER_SOURCE_SIZE = { width: 90, height: 90 };
+const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
+const DEFAULT_MARKER_SOURCE_ANCHOR = { x: 45, y: 45 };
+const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
+const scaleMapPinValue = (value: number) =>
+  Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
+const LOCKER_MARKER_DISPLAY_SIZE = {
+  width: scaleMapPinValue(LOCKER_MARKER_SOURCE_SIZE.width),
+  height: scaleMapPinValue(LOCKER_MARKER_SOURCE_SIZE.height),
+};
+const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
+const PLACE_MARKER_DISPLAY_SIZE = {
+  width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
+  height: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.height),
+};
+const DEFAULT_MARKER_ANCHOR = {
+  x: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.x),
+  y: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.y),
+};
+const PLACE_MARKER_ANCHOR = {
+  x: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.x),
+  y: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.y),
+};
 
 export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
