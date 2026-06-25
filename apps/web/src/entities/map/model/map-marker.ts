@@ -1,45 +1,113 @@
 import { vars } from "@repo/ui/vars";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
-import favoriteLockerMarkerIconUrl from "../assets/save-map-pin.png?url";
-import defaultLockerMarkerIconUrl from "../assets/selected-map-pin.png?url";
 
 export type LockerMarkerStatus = "active" | "inactive";
 
 const PLACE_BADGE_FILL = vars.color.palette.green[500];
-const PLACE_BADGE_BACKGROUND = "#E2F3E7";
+const MAP_PIN_WHITE = "white";
 const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const LOCKER_MARKER_SOURCE_SIZE = { width: 130, height: 173 };
-const FAVORITE_LOCKER_MARKER_SOURCE_SIZE = { width: 126, height: 126 };
-const PLACE_MARKER_SOURCE_SIZE = { width: 180, height: 195 };
-const LOCKER_MARKER_DISPLAY_SIZE = { width: 55, height: 88 };
-const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = { width: 58, height: 88 };
-const PLACE_MARKER_DISPLAY_SIZE = { width: 88, height: 98 };
-const PIN_DISPLAY_SIZE = { width: 55, height: 73 };
-const FAVORITE_PIN_DISPLAY_SIZE = { width: 58, height: 58 };
-const PLACE_BADGE_SOURCE_SIZE = 66.073;
-const PLACE_BADGE_DISPLAY_SCALE = 0.82;
-const PLACE_BADGE_DISPLAY_SIZE = Math.round(
-  PLACE_BADGE_SOURCE_SIZE * PLACE_BADGE_DISPLAY_SCALE,
-);
-const PLACE_BADGE_PIN_OVERLAP_X = Math.round(33 * PLACE_BADGE_DISPLAY_SCALE);
-const PLACE_BADGE_PIN_OVERLAP_Y = Math.round(16 * PLACE_BADGE_DISPLAY_SCALE);
-const PLACE_BADGE_SHADOW_OFFSET_Y = 7.341 * PLACE_BADGE_DISPLAY_SCALE;
-const PLACE_BADGE_SHADOW_BLUR = 29.366 * PLACE_BADGE_DISPLAY_SCALE;
-const PLACE_PIN_TOP = 21;
-const PIN_DOT_SIZE = 10;
-const PIN_DOT_GAP = 5;
-const LOCKER_MARKER_DISPLAY_SCALE =
-  PIN_DISPLAY_SIZE.height / LOCKER_MARKER_SOURCE_SIZE.height;
-const FAVORITE_LOCKER_MARKER_DISPLAY_SCALE =
-  FAVORITE_PIN_DISPLAY_SIZE.width / FAVORITE_LOCKER_MARKER_SOURCE_SIZE.width;
-const PLACE_MARKER_DISPLAY_SCALE =
-  PLACE_MARKER_DISPLAY_SIZE.height / PLACE_MARKER_SOURCE_SIZE.height;
+const LOCKER_MARKER_DISPLAY_SIZE = { width: 90, height: 90 };
+const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = { width: 90, height: 90 };
+const PLACE_MARKER_DISPLAY_SIZE = { width: 121, height: 121 };
+const DEFAULT_MARKER_ANCHOR = { x: 45, y: 45 };
+const PLACE_MARKER_ANCHOR = { x: 52.4, y: 63 };
 
 export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
+
+const createSelectedLockerMapPinSvg = (): string => `
+  <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g clip-path="url(#selected-map-pin-clip)">
+      <g filter="url(#selected-map-pin-shadow)">
+        <path d="M44.5 16C60.2401 16 73 28.76 73 44.5C73 60.2402 60.2401 73 44.5 73C28.7599 73 16 60.2402 16 44.5C16 28.76 28.7599 16 44.5 16Z" fill="${MAP_PIN_WHITE}"/>
+        <path d="M44.5 16C60.2401 16 73 28.76 73 44.5C73 60.2402 60.2401 73 44.5 73C28.7599 73 16 60.2402 16 44.5C16 28.76 28.7599 16 44.5 16Z" stroke="${PLACE_BADGE_FILL}" stroke-width="3"/>
+      </g>
+      <path d="M48.4398 26.0612C51.9428 25.5465 55.0768 28.3442 55.0768 31.9866V32.5677H57.9845C61.1961 32.5677 63.7998 35.2476 63.8 38.5533V55.0141C63.7998 58.3201 61.1961 61 57.9845 61H31.8152C28.6036 61 26.0001 58.3201 26 55.0141V38.5533C26.0001 35.2476 28.6036 32.5678 31.8152 32.5677H34.7231V31.9866C34.7232 28.3443 37.857 25.5466 41.3599 26.0612L44.8926 26.5805L44.9 26.5815L44.9071 26.5803L48.4398 26.0612ZM31.8152 35.5605C30.2095 35.5606 28.9077 36.9006 28.9076 38.5533V55.0141C28.9077 56.6671 30.2095 58.007 31.8152 58.007H34.7231V50.692L44.0501 46.2083C44.6491 47.3851 45.8162 48.1806 47.1522 48.1806C49.1026 48.1806 50.6999 46.4735 50.6999 44.352H50.7152C50.7152 42.247 49.1181 40.5232 47.1678 40.5231C45.2173 40.5231 43.62 42.2305 43.62 44.352C43.62 44.5509 43.6355 44.7499 43.6662 44.9487L34.7231 46.9508V35.5605H31.8152ZM55.0768 58.007H57.9845C59.5904 58.007 60.892 56.6671 60.892 55.0141V38.5533C60.892 36.9005 59.5902 35.5605 57.9845 35.5605H55.0768V58.007ZM52.1693 31.9866C52.169 30.194 50.6507 28.8105 48.9326 29.0132L48.8509 29.024L45.3112 29.5443L45.3045 29.5452L45.0987 29.5745L44.9 29.6026L44.7012 29.5745L44.4954 29.5452L44.492 29.5447L44.4885 29.5443L40.9491 29.024C39.1976 28.7667 37.6308 30.1656 37.6307 31.9866V32.5677H37.6538C37.6387 32.6466 37.6307 32.7264 37.6307 32.8068C37.6308 34.4597 40.8854 35.7999 44.9 35.7999C48.9146 35.7999 52.1688 34.4597 52.169 32.8068C52.169 32.7264 52.1611 32.6466 52.1458 32.5677H52.1693V31.9866Z" fill="${PLACE_BADGE_FILL}"/>
+    </g>
+    <defs>
+      <filter id="selected-map-pin-shadow" x="-1.5" y="2.5" width="92" height="92" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+        <feOffset dy="4"/>
+        <feGaussianBlur stdDeviation="8"/>
+        <feComposite in2="hardAlpha" operator="out"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.0862745 0 0 0 0 0.0941176 0 0 0 0 0.109804 0 0 0 0.16 0"/>
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+      </filter>
+      <clipPath id="selected-map-pin-clip">
+        <rect width="90" height="90" fill="${MAP_PIN_WHITE}"/>
+      </clipPath>
+    </defs>
+  </svg>`;
+
+const createFavoriteLockerMapPinSvg = (): string => `
+  <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g clip-path="url(#favorite-map-pin-clip)">
+      <g filter="url(#favorite-map-pin-shadow)">
+        <path d="M16 44.5C16 28.7599 28.7599 16 44.5 16C60.2401 16 73 28.7599 73 44.5C73 60.2402 60.2401 73 44.5 73C28.7599 73 16 60.2402 16 44.5Z" fill="${PLACE_BADGE_FILL}"/>
+        <path d="M44.0258 53.6479L34.2538 59.1178L36.4362 48.1338L28.2144 40.5304L39.3352 39.2118L44.0258 29.0428L48.7162 39.2118L59.8369 40.5304L51.6152 48.1338L53.7977 59.1178L44.0258 53.6479Z" fill="${MAP_PIN_WHITE}"/>
+      </g>
+    </g>
+    <defs>
+      <filter id="favorite-map-pin-shadow" x="-6.4" y="-0.8" width="101.8" height="101.8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+        <feOffset dy="5.6"/>
+        <feGaussianBlur stdDeviation="11.2"/>
+        <feComposite in2="hardAlpha" operator="out"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.0862745 0 0 0 0 0.0941176 0 0 0 0 0.109804 0 0 0 0.16 0"/>
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+      </filter>
+      <clipPath id="favorite-map-pin-clip">
+        <rect width="90" height="90" fill="${MAP_PIN_WHITE}"/>
+      </clipPath>
+    </defs>
+  </svg>`;
+
+const createClusterMapPinSvg = (badgeLabel: string): string => {
+  const badgeFontSize = badgeLabel.length > 1 ? 24 : 31;
+  const badgeY = badgeLabel.length > 1 ? 43 : 45;
+
+  return `
+    <svg width="121" height="121" viewBox="0 0 121 121" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g filter="url(#cluster-map-pin-shadow)">
+        <path d="M22.4 63C22.4 46.4315 35.8315 33 52.4 33C68.9686 33 82.4 46.4315 82.4 63C82.4 79.5685 68.9686 93 52.4 93C35.8315 93 22.4 79.5685 22.4 63Z" fill="${MAP_PIN_WHITE}" shape-rendering="crispEdges"/>
+        <path d="M52.4 34.5C68.1401 34.5 80.9 47.2599 80.9 63C80.9 78.7401 68.1401 91.5 52.4 91.5C36.6599 91.5 23.9 78.7401 23.9 63C23.9 47.2599 36.6599 34.5 52.4 34.5Z" stroke="${PLACE_BADGE_FILL}" stroke-width="3" shape-rendering="crispEdges"/>
+        <path d="M55.2398 44.8611C58.7428 44.3465 61.8768 47.1442 61.8768 50.7865V51.3677H64.7846C67.9962 51.3677 70.5998 54.0476 70.6 57.3533V73.8141C70.5998 77.12 67.9962 79.7999 64.7846 79.7999H38.6153C35.4037 79.7999 32.8001 77.12 32.8 73.8141V57.3533C32.8001 54.0476 35.4037 51.3677 38.6153 51.3677H41.5231V50.7865C41.5232 47.1442 44.6571 44.3465 48.1599 44.8611L51.6927 45.3805L51.7 45.3814L51.7071 45.3803L55.2398 44.8611ZM38.6153 54.3605C37.0095 54.3606 35.7078 55.7005 35.7077 57.3533V73.8141C35.7077 75.467 37.0095 76.807 38.6153 76.807H41.5231V69.492L50.8502 65.0083C51.4491 66.185 52.6163 66.9806 53.9523 66.9806C55.9027 66.9806 57.4999 65.2735 57.4999 63.152H57.5152C57.5152 61.0469 55.9181 59.3231 53.9679 59.3231C52.0174 59.3231 50.42 61.0305 50.42 63.152C50.42 63.3508 50.4356 63.5498 50.4663 63.7487L41.5231 65.7507V54.3605H38.6153ZM61.8768 76.807H64.7846C66.3905 76.807 67.6921 75.467 67.6921 73.8141V57.3533C67.6921 55.7005 66.3903 54.3605 64.7846 54.3605H61.8768V76.807ZM58.9693 50.7865C58.9691 48.9939 57.4508 47.6105 55.7326 47.8132L55.6509 47.8239L52.1112 48.3442L52.1046 48.3451L51.8987 48.3744L51.7 48.4026L51.5013 48.3744L51.2954 48.3451L51.2921 48.3447L51.2885 48.3442L47.7492 47.8239C45.9977 47.5666 44.4308 48.9655 44.4307 50.7865V51.3677H44.4539C44.4387 51.4466 44.4308 51.5263 44.4307 51.6068C44.4308 53.2597 47.6854 54.5998 51.7 54.5998C55.7146 54.5998 58.9688 53.2597 58.9691 51.6068C58.9691 51.5263 58.9611 51.4466 58.9459 51.3677H58.9693V50.7865Z" fill="${PLACE_BADGE_FILL}"/>
+      </g>
+      <g filter="url(#cluster-map-pin-badge-shadow)">
+        <path d="M99.3436 33.2436C99.3436 20.3786 88.9144 9.94946 76.0495 9.94946C63.1845 9.94946 52.7554 20.3786 52.7554 33.2436C52.7554 46.1085 63.1845 56.5377 76.0495 56.5377C88.9144 56.5377 99.3436 46.1085 99.3436 33.2436Z" fill="#15B344"/>
+        <text x="76.05" y="${badgeY}" text-anchor="middle" fill="${MAP_PIN_WHITE}" font-family="Pretendard, sans-serif" font-size="${badgeFontSize}" font-weight="700">${badgeLabel}</text>
+      </g>
+      <defs>
+        <filter id="cluster-map-pin-shadow" x="0" y="16.2" width="104.8" height="104.8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+          <feOffset dy="5.6"/>
+          <feGaussianBlur stdDeviation="11.2"/>
+          <feComposite in2="hardAlpha" operator="out"/>
+          <feColorMatrix type="matrix" values="0 0 0 0 0.0862745 0 0 0 0 0.0941176 0 0 0 0 0.109804 0 0 0 0.16 0"/>
+          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+        </filter>
+        <filter id="cluster-map-pin-badge-shadow" x="47.1145" y="5.71883" width="57.8699" height="57.8699" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+          <feOffset dy="1.41021"/>
+          <feGaussianBlur stdDeviation="2.82042"/>
+          <feComposite in2="hardAlpha" operator="out"/>
+          <feColorMatrix type="matrix" values="0 0 0 0 0.0862745 0 0 0 0 0.0941176 0 0 0 0 0.109804 0 0 0 0.12 0"/>
+          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+        </filter>
+      </defs>
+    </svg>`;
+};
 
 export const createMapPinIcon = (
   pin: LockerPinItemResponse,
@@ -48,55 +116,20 @@ export const createMapPinIcon = (
   const isPlace = pin.pinType === "PLACE";
   const lockerCount = pin.lockerCount ?? 0;
   const badgeLabel = lockerCount > 9 ? "9+" : String(lockerCount);
-  const badgeFilterId = `place-badge-shadow-${getPinId(pin)}`;
 
   if (!isPlace) {
     const isFavorite = pin.isFavorite === true;
-    const iconUrl = isFavorite
-      ? favoriteLockerMarkerIconUrl
-      : defaultLockerMarkerIconUrl;
-    const pinSize = isFavorite ? FAVORITE_PIN_DISPLAY_SIZE : PIN_DISPLAY_SIZE;
-    const pinLeft = (getMarkerSize(pin).width - pinSize.width) / 2;
-    const displayScale = isFavorite
-      ? FAVORITE_LOCKER_MARKER_DISPLAY_SCALE
-      : LOCKER_MARKER_DISPLAY_SCALE;
+    const icon = isFavorite
+      ? createFavoriteLockerMapPinSvg()
+      : createSelectedLockerMapPinSvg();
 
-    return `<div data-type="${pin.pinType}" data-display-scale="${displayScale.toFixed(3)}" style="position: relative; display: block; width: 100%; height: 100%;">
-      <img src="${iconUrl}" alt="" aria-hidden="true" style="position: absolute; left: ${pinLeft}px; top: 0; display: block; width: ${pinSize.width}px; height: ${pinSize.height}px; object-fit: contain;" />
-      <span aria-hidden="true" style="position: absolute; left: 50%; bottom: 0; display: block; width: ${PIN_DOT_SIZE}px; height: ${PIN_DOT_SIZE}px; border-radius: 999px; background: ${PLACE_BADGE_FILL}; transform: translateX(-50%);"></span>
+    return `<div data-type="${pin.pinType}" data-map-pin-variant="${isFavorite ? "save" : "selected"}" style="position: relative; display: block; width: 100%; height: 100%;">
+      ${icon}
     </div>`;
   }
 
-  const placePinLeft =
-    (PLACE_MARKER_DISPLAY_SIZE.width - PIN_DISPLAY_SIZE.width) / 2;
-  const placePinTop = PLACE_PIN_TOP;
-  const placeBadgeLeft =
-    placePinLeft + PIN_DISPLAY_SIZE.width - PLACE_BADGE_PIN_OVERLAP_X;
-  const placeBadgeTop = placePinTop - PLACE_BADGE_PIN_OVERLAP_Y;
-  const placeDotTop = placePinTop + PIN_DISPLAY_SIZE.height + PIN_DOT_GAP;
-
-  return `<div data-type="${pin.pinType}" data-display-scale="${PLACE_MARKER_DISPLAY_SCALE.toFixed(3)}" style="position: relative; display: block; width: 100%; height: 100%;">
-    <img src="${defaultLockerMarkerIconUrl}" alt="" aria-hidden="true" style="position: absolute; left: ${placePinLeft}px; top: ${placePinTop}px; display: block; width: ${PIN_DISPLAY_SIZE.width}px; height: ${PIN_DISPLAY_SIZE.height}px; object-fit: contain;" />
-    <svg xmlns="http://www.w3.org/2000/svg" width="${PLACE_BADGE_DISPLAY_SIZE}" height="${PLACE_BADGE_DISPLAY_SIZE}" viewBox="0 0 125 125" fill="none" aria-hidden="true" style="position: absolute; left: ${placeBadgeLeft}px; top: ${placeBadgeTop}px; overflow: visible; filter: drop-shadow(0 ${PLACE_BADGE_SHADOW_OFFSET_Y}px ${PLACE_BADGE_SHADOW_BLUR}px rgba(22, 24, 28, 0.16));">
-      <g filter="url(#${badgeFilterId})">
-        <path d="M95.4383 55.0606C95.4383 36.8151 80.6474 22.0242 62.402 22.0242C44.1565 22.0242 29.3656 36.8151 29.3656 55.0606C29.3656 73.3061 44.1565 88.0969 62.402 88.0969C80.6474 88.0969 95.4383 73.3061 95.4383 55.0606Z" fill="white"/>
-        <path d="M95.4383 55.0606C95.4383 36.8151 80.6474 22.0242 62.402 22.0242C44.1565 22.0242 29.3656 36.8151 29.3656 55.0606C29.3656 73.3061 44.1565 88.0969 62.402 88.0969C80.6474 88.0969 95.4383 73.3061 95.4383 55.0606Z" fill="${PLACE_BADGE_BACKGROUND}" fill-opacity="0.2"/>
-        <text x="62.402" y="71.5788" text-anchor="middle" fill="${PLACE_BADGE_FILL}" font-family="Pretendard, sans-serif" font-size="43" font-weight="700">${badgeLabel}</text>
-      </g>
-      <defs>
-        <filter id="${badgeFilterId}" x="-0.0000534058" y="-0.00000953674" width="124.804" height="124.804" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-          <feOffset dy="7.34141"/>
-          <feGaussianBlur stdDeviation="14.6828"/>
-          <feComposite in2="hardAlpha" operator="out"/>
-          <feColorMatrix type="matrix" values="0 0 0 0 0.0862745 0 0 0 0 0.0941176 0 0 0 0 0.109804 0 0 0 0.16 0"/>
-          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
-          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
-        </filter>
-      </defs>
-    </svg>
-    <span aria-hidden="true" style="position: absolute; left: 50%; top: ${placeDotTop}px; display: block; width: ${PIN_DOT_SIZE}px; height: ${PIN_DOT_SIZE}px; border-radius: 999px; background: ${PLACE_BADGE_FILL}; transform: translateX(-50%);"></span>
+  return `<div data-type="${pin.pinType}" data-map-pin-variant="cluster" style="position: relative; display: block; width: 100%; height: 100%;">
+    ${createClusterMapPinSvg(badgeLabel)}
   </div>`;
 };
 /** @deprecated Use createMapPinIcon */
@@ -208,6 +241,11 @@ const getMarkerSize = (pin: LockerPinItemResponse) => {
   return LOCKER_MARKER_DISPLAY_SIZE;
 };
 
+const getMarkerAnchor = (pin: LockerPinItemResponse) => {
+  if (pin.pinType === "PLACE") return PLACE_MARKER_ANCHOR;
+  return DEFAULT_MARKER_ANCHOR;
+};
+
 const createMarkerIconOptions = (
   pin: LockerPinItemResponse,
   maps: typeof naver.maps,
@@ -242,6 +280,7 @@ const createMarkerIconOptions = (
   if (cached) return cached;
 
   const markerSize = getMarkerSize(pin);
+  const markerAnchor = getMarkerAnchor(pin);
 
   const spreadClass = shouldAnimateSpread && hasSpread ? "spread" : "";
   const offsetClass = hasOffset ? " map-marker-offset-active" : "";
@@ -260,7 +299,7 @@ const createMarkerIconOptions = (
       </div>
     </div>`,
     size: new maps.Size(markerSize.width, markerSize.height),
-    anchor: new maps.Point(markerSize.width / 2, markerSize.height),
+    anchor: new maps.Point(markerAnchor.x, markerAnchor.y),
   };
   innerMap.set(key, options);
   return options;

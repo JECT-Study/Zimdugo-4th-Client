@@ -191,38 +191,37 @@ describe("createLockerMarkerIcon", () => {
   it("renders the default locker map pin asset", () => {
     const icon = createLockerMarkerIcon(createLockerPin());
 
-    expect(icon).toContain("selected-map-pin.png");
     expect(icon).toContain('data-type="LOCKER"');
-    expect(icon).toContain("object-fit: contain");
-    expect(icon).toContain("<span");
+    expect(icon).toContain('data-map-pin-variant="selected"');
+    expect(icon).toContain('viewBox="0 0 90 90"');
+    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}"`);
   });
 
   it("renders the favorite locker map pin asset only when isFavorite is true", () => {
     const icon = createLockerMarkerIcon(createLockerPin({ isFavorite: true }));
 
-    expect(icon).toContain("save-map-pin.png");
     expect(icon).toContain('data-type="LOCKER"');
+    expect(icon).toContain('data-map-pin-variant="save"');
+    expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
   it("renders the selected locker map pin asset", () => {
     const icon = createLockerMarkerIcon(createLockerPin(), true);
 
-    expect(icon).toContain("selected-map-pin.png");
     expect(icon).toContain('data-type="LOCKER"');
+    expect(icon).toContain('data-map-pin-variant="selected"');
   });
 
   it("renders place markers with the default map pin and a count badge", () => {
     const icon = createLockerMarkerIcon(createPlacePin({ lockerCount: 12 }));
 
     expect(icon).toContain('data-type="PLACE"');
-    expect(icon).toContain("selected-map-pin.png");
+    expect(icon).toContain('data-map-pin-variant="cluster"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
     expect(icon).toContain('fill="white"');
     expect(icon).toContain(">9+<");
     expect(icon).toContain("<text");
-    expect(icon).toContain("<span");
-    expect(icon).toContain('width="54"');
-    expect(icon).toContain("left: 44.5px; top: 8px");
+    expect(icon).toContain('viewBox="0 0 121 121"');
   });
 });
 
@@ -269,9 +268,9 @@ describe("syncLockerMarkers", () => {
 
     expect(options.icon?.content).toContain("map-marker-item");
     expect(options.icon?.content).toContain('data-type="LOCKER"');
-    expect(options.icon?.content).toContain("selected-map-pin.png");
-    expect(options.icon?.size).toMatchObject({ width: 55, height: 88 });
-    expect(options.icon?.anchor).toMatchObject({ x: 27.5, y: 88 });
+    expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
+    expect(options.icon?.size).toMatchObject({ width: 90, height: 90 });
+    expect(options.icon?.anchor).toMatchObject({ x: 45, y: 45 });
   });
 
   it("uses the selected locker map pin dimensions", () => {
@@ -291,9 +290,9 @@ describe("syncLockerMarkers", () => {
       icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
     };
 
-    expect(options.icon?.content).toContain("selected-map-pin.png");
-    expect(options.icon?.size).toMatchObject({ width: 55, height: 88 });
-    expect(options.icon?.anchor).toMatchObject({ x: 27.5, y: 88 });
+    expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
+    expect(options.icon?.size).toMatchObject({ width: 90, height: 90 });
+    expect(options.icon?.anchor).toMatchObject({ x: 45, y: 45 });
   });
 
   it("uses the favorite locker map pin dimensions", () => {
@@ -312,9 +311,9 @@ describe("syncLockerMarkers", () => {
       icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
     };
 
-    expect(options.icon?.content).toContain("save-map-pin.png");
-    expect(options.icon?.size).toMatchObject({ width: 58, height: 88 });
-    expect(options.icon?.anchor).toMatchObject({ x: 29, y: 88 });
+    expect(options.icon?.content).toContain('data-map-pin-variant="save"');
+    expect(options.icon?.size).toMatchObject({ width: 90, height: 90 });
+    expect(options.icon?.anchor).toMatchObject({ x: 45, y: 45 });
   });
 
   it("uses an HTML icon option for place markers", () => {
@@ -330,14 +329,15 @@ describe("syncLockerMarkers", () => {
     });
 
     const options = FakeMarker.instances[0]?.options as {
-      icon?: { content?: string; size?: FakeSize };
+      icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
     };
 
     expect(options.icon?.content).toContain("map-marker-item");
     expect(options.icon?.content).toContain('data-type="PLACE"');
-    expect(options.icon?.content).toContain("selected-map-pin.png");
+    expect(options.icon?.content).toContain('data-map-pin-variant="cluster"');
     expect(options.icon?.content).toContain(">3<");
-    expect(options.icon?.size).toMatchObject({ width: 88, height: 98 });
+    expect(options.icon?.size).toMatchObject({ width: 121, height: 121 });
+    expect(options.icon?.anchor).toMatchObject({ x: 52.4, y: 63 });
   });
 
   it("passes pin type and id when a locker marker is clicked", () => {
@@ -503,7 +503,7 @@ describe("syncLockerMarkers", () => {
 
     expect(FakeMarker.instances).toHaveLength(1);
     expect(getSetIconContent(FakeMarker.instances[0])).toContain(
-      "save-map-pin.png",
+      'data-map-pin-variant="save"',
     );
   });
 
