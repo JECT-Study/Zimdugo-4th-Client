@@ -4,11 +4,13 @@ import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
-  IconLockerDetailHeader24,
   IconNormalCapacity24,
   IconNormalMapPin24,
   IconNormalWallet24,
   IconShare24,
+  IconStarFilled24,
+  IconStarOutline24,
+  IconX24,
 } from "@repo/ui/tokens/icons";
 import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
@@ -24,6 +26,7 @@ import {
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {
   actionRow,
+  addressText,
   backButton,
   backIcon,
   contentStack,
@@ -38,7 +41,9 @@ import {
   detailTextColumn,
   detailTitle,
   detailTrailing,
+  distanceRow,
   divider,
+  favoriteButton,
   feedbackButton,
   feedbackButtonNegative,
   feedbackButtonNegativeSelected,
@@ -50,12 +55,21 @@ import {
   fullIconActionButton,
   fullImageReportCard,
   fullPrimaryActionButton,
+  helperText,
   iconActionButton,
   imageReportCard,
   imageReportText,
+  lockerTitle,
+  metaDot,
+  metaRow,
   primaryActionButton,
   recentUpdatedText,
   sheetColumn,
+  summaryActions,
+  summaryCloseButton,
+  summaryRow,
+  summarySection,
+  summaryTextColumn,
 } from "./LockerDetailBottomSheet.css.ts";
 
 export interface LockerDetailItem extends SearchLockerResultItem {
@@ -118,7 +132,7 @@ export const createLockerDetailPlaceholder = (
 ): LockerDetailItem => ({
   itemType: "LOCKER",
   lockerId,
-  title: "…",
+  title: "...",
   address: "",
   categoryLabel: "",
   updatedLabel: "",
@@ -156,6 +170,7 @@ export function LockerDetailBottomSheet({
   locker,
   loadState = "ready",
   onRetry,
+  onFavoriteChange,
   onVoteChange,
   onBack,
   onShare,
@@ -176,7 +191,14 @@ export function LockerDetailBottomSheet({
   const resolvedMiniSnapPoint =
     resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
 
+  const favoriteLabel = locker.isFavorite
+    ? m.search_favorite_remove()
+    : m.search_favorite_add();
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
+
+  const handleFavoritePress = () => {
+    onFavoriteChange?.(locker, !locker.isFavorite);
+  };
 
   const handleBack = () => {
     onBack?.();
@@ -214,6 +236,9 @@ export function LockerDetailBottomSheet({
           <FullDetailContent
             locker={locker}
             detailHelpText={detailHelpText}
+            favoriteLabel={favoriteLabel}
+            onFavoritePress={handleFavoritePress}
+            onClose={handleBack}
             onShare={handleShare}
             onNavigate={handleNavigate}
             onVoteChange={onVoteChange}
@@ -244,12 +269,18 @@ function LockerDetailErrorContent({
 function FullDetailContent({
   locker,
   detailHelpText,
+  favoriteLabel,
+  onFavoritePress,
+  onClose,
   onShare,
   onNavigate,
   onVoteChange,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
+  favoriteLabel: string;
+  onFavoritePress: () => void;
+  onClose: () => void;
   onShare: () => void;
   onNavigate: () => void;
   onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
@@ -269,16 +300,14 @@ function FullDetailContent({
   return (
     <div className={fullContentScroll}>
       <div className={contentStack}>
-        <ImageReportCard isFull />
+        <SummarySection
+          locker={locker}
+          detailHelpText={detailHelpText}
+          favoriteLabel={favoriteLabel}
+          onFavoritePress={onFavoritePress}
+          onClose={onClose}
+        />
         <div className={fullDetailList}>
-          <DetailInfoRow
-            icon={<IconLockerDetailHeader24 />}
-            title={locker.title}
-            description={
-              locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
-            }
-            trailing={[locker.categoryLabel, locker.distanceLabel]}
-          />
           <DetailInfoRow
             icon={<IconNormalMapPin24 state="active" />}
             title={locker.address}
@@ -306,6 +335,10 @@ function FullDetailContent({
             descriptionClassName={detailDescriptionMultiline}
           />
         </div>
+        <ImageReportCard isFull />
+        {locker.lastUpdatedLabel ? (
+          <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
+        ) : null}
         {hasFeedbackVotes ? (
           <div className={feedbackRow}>
             {locker.accurateCount !== undefined ? (
@@ -335,7 +368,9 @@ function FullDetailContent({
                 className={[
                   feedbackButton,
                   feedbackButtonNegative,
-                  locker.isInaccurateVoted ? feedbackButtonNegativeSelected : "",
+                  locker.isInaccurateVoted
+                    ? feedbackButtonNegativeSelected
+                    : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -348,9 +383,6 @@ function FullDetailContent({
               </button>
             ) : null}
           </div>
-        ) : null}
-        {locker.lastUpdatedLabel ? (
-          <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
         <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
       </div>
@@ -370,6 +402,64 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
     >
       <IconChevronLeft13 className={backIcon} />
     </Button>
+  );
+}
+
+function SummarySection({
+  locker,
+  detailHelpText,
+  favoriteLabel,
+  onFavoritePress,
+  onClose,
+}: {
+  locker: LockerDetailItem;
+  detailHelpText: string;
+  favoriteLabel: string;
+  onFavoritePress: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <section
+      className={summarySection}
+      aria-label={m.locker_detail_summary_aria()}
+    >
+      <div className={summaryRow}>
+        <div className={summaryTextColumn}>
+          <h2 className={lockerTitle}>{locker.title}</h2>
+          <InlineMeta left={locker.categoryLabel} right={locker.updatedLabel} />
+          <InlineMeta
+            className={distanceRow}
+            left={locker.distanceLabel}
+            right={<span className={addressText}>{locker.address}</span>}
+          />
+        </div>
+
+        <div className={summaryActions}>
+          <button
+            type="button"
+            className={favoriteButton}
+            onClick={onFavoritePress}
+            aria-label={favoriteLabel}
+          >
+            {locker.isFavorite ? (
+              <IconStarFilled24 size={24} />
+            ) : (
+              <IconStarOutline24 size={24} />
+            )}
+          </button>
+          <button
+            type="button"
+            className={summaryCloseButton}
+            onClick={onClose}
+            aria-label={m.search_close_aria()}
+          >
+            <IconX24 />
+          </button>
+        </div>
+      </div>
+      <div className={divider} />
+      <p className={helperText}>{detailHelpText}</p>
+    </section>
   );
 }
 
@@ -462,6 +552,31 @@ function ActionRow({
       >
         {m.locker_detail_navigate()}
       </Button>
+    </div>
+  );
+}
+
+function InlineMeta({
+  left,
+  right,
+  className,
+}: {
+  left: ReactNode;
+  right: ReactNode;
+  className?: string;
+}) {
+  const hasLeft =
+    typeof left === "string" ? left.trim().length > 0 : left != null;
+  const hasRight =
+    typeof right === "string" ? right.trim().length > 0 : right != null;
+
+  return (
+    <div className={[metaRow, className].filter(Boolean).join(" ")}>
+      {hasLeft ? left : null}
+      {hasLeft && hasRight ? (
+        <span className={metaDot} aria-hidden="true" />
+      ) : null}
+      {right}
     </div>
   );
 }
