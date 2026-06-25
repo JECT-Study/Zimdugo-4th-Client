@@ -44,15 +44,16 @@ export function LanguageDropdown({
   const handleToggle = () => {
     if (!isExpanded) {
       setIsExpanded(true);
-      return;
-    }
-
-    if (!isOptionsOpen) {
       setIsOptionsOpen(true);
       return;
     }
 
-    setIsOptionsOpen(false);
+    if (isOptionsOpen) {
+      setIsOptionsOpen(false);
+      return;
+    }
+
+    setIsOptionsOpen(true);
   };
 
   const handleSelect = (nextValue: string) => {
