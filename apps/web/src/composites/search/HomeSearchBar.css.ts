@@ -106,7 +106,7 @@ export const languageDropdown = style({
 });
 
 export const languageDropdownExpanded = style({
-  width: "119px",
+  width: "max-content",
 });
 
 export const languageTrigger = style({
@@ -126,7 +126,7 @@ export const languageTrigger = style({
   overflow: "hidden",
   selectors: {
     [`${languageDropdownExpanded} &`]: {
-      width: "119px",
+      width: "max-content",
       height: "36px",
       gap: "4px",
       padding: "2px 6px",
@@ -140,15 +140,12 @@ export const languageTrigger = style({
 });
 
 export const languageTriggerLabel = style({
-  minWidth: 0,
-  flex: 1,
-  overflow: "hidden",
+  flexShrink: 0,
   color: vars.color.text.content,
   fontSize: vars.typography.fontSize[14],
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: "17px",
   opacity: 0,
-  textOverflow: "ellipsis",
   whiteSpace: "nowrap",
   transform: "translateX(-4px)",
 });
@@ -176,7 +173,8 @@ export const languageOptions = style({
   left: 0,
   display: "flex",
   flexDirection: "column",
-  width: "119px",
+  width: "max-content",
+  minWidth: "100%",
   paddingTop: "6px",
   paddingBottom: "5px",
   borderRadius: vars.radius[6],
@@ -188,7 +186,7 @@ export const languageOptions = style({
     content: '""',
     position: "absolute",
     top: 0,
-    left: "55px",
+    left: "11px",
     width: 0,
     height: 0,
     borderLeft: "5px solid transparent",
@@ -202,9 +200,10 @@ export const languageOption = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  width: "119px",
-  height: "33px",
-  padding: "0 8px 0 36px",
+  gap: vars.spacing[8],
+  width: "100%",
+  minHeight: "33px",
+  padding: "8px 8px 8px 36px",
   border: 0,
   borderBottom: `1px solid ${vars.color.border.default}`,
   backgroundColor: vars.color.bg.default,
@@ -230,12 +229,10 @@ export const languageOptionSelected = style({
 });
 
 export const languageOptionText = style({
-  minWidth: 0,
-  overflow: "hidden",
+  flexShrink: 0,
   fontSize: vars.typography.fontSize[12],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: "17px",
-  textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 });
 

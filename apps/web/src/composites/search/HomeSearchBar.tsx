@@ -164,15 +164,16 @@ export function HomeSearchBar({
   const handleToggleLanguage = () => {
     if (!isLanguageExpanded) {
       setIsLanguageExpanded(true);
-      return;
-    }
-
-    if (!isLanguageOptionsOpen) {
       setIsLanguageOptionsOpen(true);
       return;
     }
 
-    setIsLanguageOptionsOpen(false);
+    if (isLanguageOptionsOpen) {
+      setIsLanguageOptionsOpen(false);
+      return;
+    }
+
+    setIsLanguageOptionsOpen(true);
   };
 
   const handleSelectLanguage = (language: AppLanguage) => {
@@ -305,8 +306,6 @@ export function HomeSearchBar({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              animate={{ width: isLanguageExpanded ? 119 : 32 }}
-              transition={LANGUAGE_DROPDOWN_TRANSITION}
             >
               <motion.button
                 type="button"
@@ -315,7 +314,6 @@ export function HomeSearchBar({
                 aria-expanded={isLanguageOptionsOpen}
                 onClick={handleToggleLanguage}
                 animate={{
-                  width: isLanguageExpanded ? 119 : 32,
                   height: isLanguageExpanded ? 36 : 32,
                   padding: isLanguageExpanded ? "2px 6px" : "0px",
                   borderWidth: isLanguageExpanded ? 1 : 0,
