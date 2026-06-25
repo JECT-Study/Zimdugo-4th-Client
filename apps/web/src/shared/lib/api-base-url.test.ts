@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { normalizeApiBaseUrl, resolveApiBaseUrl } from "./api-base-url";
+import {
+  normalizeApiBaseUrl,
+  resolveApiBaseUrl,
+  shouldBlockServerRelativeApiRequest,
+} from "./api-base-url";
 
 describe("normalizeApiBaseUrl", () => {
   it("normalizes duplicate protocol and path slashes", () => {
@@ -11,6 +15,12 @@ describe("normalizeApiBaseUrl", () => {
   it("trims trailing slashes from the origin", () => {
     expect(normalizeApiBaseUrl(" https://api.example.com// ")).toBe(
       "https://api.example.com",
+    );
+  });
+
+  it("prevents double slashes when request paths start with /api", () => {
+    expect(normalizeApiBaseUrl("https://api.zimdugo.com/")).toBe(
+      "https://api.zimdugo.com",
     );
   });
 
@@ -94,5 +104,58 @@ describe("resolveApiBaseUrl", () => {
         valuePreview: "ftp://api.example.com/path",
       },
     });
+  });
+
+  it("sanitizes previews even when URL parsing fails", () => {
+    const reportWarning = vi.fn();
+
+    expect(
+      resolveApiBaseUrl({
+        isServer: true,
+        env: {
+          API_BASE_URL: "user:pass@api.example.com/path?token=abc#secret",
+        },
+        reportWarning,
+      }),
+    ).toBe("");
+    expect(reportWarning).toHaveBeenCalledWith({
+      code: "api_base_url_invalid",
+      message: "Invalid API base URL. Falling back to relative API paths.",
+      details: {
+        valuePreview: "api.example.com/path",
+      },
+    });
+  });
+});
+
+describe("shouldBlockServerRelativeApiRequest", () => {
+  it("blocks server /api requests when base URL is unavailable", () => {
+    expect(
+      shouldBlockServerRelativeApiRequest({
+        isServer: true,
+        baseUrl: "",
+        requestPath: "/api/v1/lockers/seo-list",
+      }),
+    ).toBe(true);
+  });
+
+  it("allows server API requests when base URL is absolute", () => {
+    expect(
+      shouldBlockServerRelativeApiRequest({
+        isServer: true,
+        baseUrl: "https://api.example.com",
+        requestPath: "/api/v1/lockers/seo-list",
+      }),
+    ).toBe(false);
+  });
+
+  it("allows client same-origin API requests", () => {
+    expect(
+      shouldBlockServerRelativeApiRequest({
+        isServer: false,
+        baseUrl: "",
+        requestPath: "/api/v1/lockers/seo-list",
+      }),
+    ).toBe(false);
   });
 });

@@ -3,22 +3,18 @@ import type { InternalAxiosRequestConfig } from "axios";
 import { authService } from "#/features/auth/sign-in/api/authService";
 import { resolveAcceptLanguageHeader } from "#/shared/i18n/api-locale";
 import { useAuthStore } from "#/shared/store/authStore";
-import { resolveApiBaseUrl } from "./api-base-url";
+import {
+  reportRuntimeConfigWarning,
+  resolveApiBaseUrl,
+  shouldBlockServerRelativeApiRequest,
+} from "./api-base-url";
 
 const getBaseUrl = (): string => {
   if (typeof window === "undefined") {
     // 서버 사이드 실행 (Node.js / Nitro) 환경
-    const serverEnv = typeof process !== "undefined" ? process.env : undefined;
-    if (serverEnv) {
-      if (serverEnv.VITE_API_BASE_URL || serverEnv.API_BASE_URL) {
-        return resolveApiBaseUrl({
-          isServer: true,
-          env: serverEnv,
-        });
-      }
-    }
     return resolveApiBaseUrl({
       isServer: true,
+      env: typeof process !== "undefined" ? process.env : undefined,
     });
   }
 
@@ -62,6 +58,26 @@ const getRequestUrl = (config: InternalAxiosRequestConfig): string => {
 };
 
 apiClient.interceptors.request.use((config) => {
+  if (
+    shouldBlockServerRelativeApiRequest({
+      isServer: typeof window === "undefined",
+      baseUrl: config.baseURL,
+      requestPath: config.url,
+    })
+  ) {
+    reportRuntimeConfigWarning({
+      code: "server_api_base_url_required",
+      message:
+        "Server API requests require API_BASE_URL or VITE_API_BASE_URL to be configured.",
+      details: {
+        path: config.url ?? "",
+      },
+    });
+    throw new Error(
+      "Server API request requires API_BASE_URL or VITE_API_BASE_URL.",
+    );
+  }
+
   const acceptLanguage = resolveAcceptLanguageHeader(getRequestUrl(config));
   if (acceptLanguage) {
     config.headers.set("Accept-Language", acceptLanguage);

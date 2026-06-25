@@ -10,10 +10,19 @@ interface ResolveApiBaseUrlOptions {
   reportWarning?: (warning: RuntimeConfigWarning) => void;
 }
 
+interface ShouldBlockServerRelativeApiRequestOptions {
+  isServer: boolean;
+  baseUrl?: string | null;
+  requestPath?: string | null;
+}
+
 const EMPTY_BASE_URL = "";
 
 export interface RuntimeConfigWarning {
-  code: "api_base_url_missing" | "api_base_url_invalid";
+  code:
+    | "api_base_url_missing"
+    | "api_base_url_invalid"
+    | "server_api_base_url_required";
   message: string;
   details?: Record<string, string>;
 }
@@ -54,17 +63,29 @@ export const normalizeApiBaseUrl = (rawBaseUrl: string): string | null => {
   }
 };
 
+const createFallbackBaseUrlPreview = (rawBaseUrl: string) => {
+  return rawBaseUrl
+    .trim()
+    .split(/[?#]/)[0]
+    .replace(/(^|\/\/)[^/\s:@]+:[^/\s:@]*@/g, "$1")
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
+};
+
 const createBaseUrlPreview = (rawBaseUrl: string) => {
   const trimmedBaseUrl = rawBaseUrl.trim();
   try {
     const url = new URL(normalizeProtocolSlashes(trimmedBaseUrl));
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return createFallbackBaseUrlPreview(rawBaseUrl);
+    }
     url.username = "";
     url.password = "";
     url.search = "";
     url.hash = "";
     return url.toString().slice(0, 120);
   } catch {
-    return trimmedBaseUrl.replace(/\s+/g, " ").slice(0, 120);
+    return createFallbackBaseUrlPreview(rawBaseUrl);
   }
 };
 
@@ -100,4 +121,12 @@ export const resolveApiBaseUrl = ({
   }
 
   return normalizedBaseUrl;
+};
+
+export const shouldBlockServerRelativeApiRequest = ({
+  isServer,
+  baseUrl,
+  requestPath,
+}: ShouldBlockServerRelativeApiRequestOptions) => {
+  return isServer && !baseUrl && (requestPath ?? "").startsWith("/api/");
 };
