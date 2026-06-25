@@ -82,6 +82,9 @@
     "./components/cluster-map-pin": {
       "import": "./src/components/cluster-map-pin/ClusterMapPin.tsx"
     },
+    "./components/map-pin-marker": {
+      "import": "./src/components/map-pin-marker/MapPinMarker.tsx"
+    },
     "./components/input": {
       "import": "./src/components/input/Input.tsx"
     },
