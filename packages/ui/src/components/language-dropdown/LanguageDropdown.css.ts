@@ -106,7 +106,7 @@ export const options = style({
     content: '""',
     position: "absolute",
     top: 0,
-    left: "11px",
+    left: "18px",
     width: 0,
     height: 0,
     borderLeft: "5px solid transparent",

@@ -306,6 +306,8 @@ export function HomeSearchBar({
               ]
                 .filter(Boolean)
                 .join(" ")}
+              animate={{ width: isLanguageExpanded ? "max-content" : 32 }}
+              transition={LANGUAGE_DROPDOWN_TRANSITION}
             >
               <motion.button
                 type="button"
