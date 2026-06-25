@@ -2,6 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Popup } from "@repo/ui/components/popup";
 import {
+  IconChevronLeft13,
   IconCircleboxCrosshair48,
   IconNavigationPin40,
 } from "@repo/ui/tokens/icons";
@@ -11,6 +12,8 @@ import {
   addressInfo,
   addressLabel,
   addressText,
+  backButton,
+  backIcon,
   bottomPanel,
   centerPin,
   centerPinContainer,
@@ -59,6 +62,7 @@ type GeocodeOptions = {
 };
 
 export function LocationPickerOverlay({
+  onClose,
   onSelect,
   initialCoords,
 }: LocationPickerOverlayProps) {
@@ -355,6 +359,15 @@ export function LocationPickerOverlay({
         <div ref={mapRef} className={map} />
 
         {!isMapInteractive && <ReportPageLoadingOverlay />}
+
+        <button
+          type="button"
+          className={backButton}
+          onClick={onClose}
+          aria-label={m.locker_detail_back_aria()}
+        >
+          <IconChevronLeft13 className={backIcon} />
+        </button>
 
         <div className={centerPinContainer}>
           <IconNavigationPin40

@@ -27,6 +27,8 @@ interface ReportTimeSectionProps {
 
 type TimeTarget = "open" | "close";
 
+const DEFAULT_START_PICKER_TIME = "05:00";
+
 const parseTime = (time: string) => {
   const [hour = "00", minute = "00"] = time.split(":");
 
@@ -98,7 +100,9 @@ export function ReportTimeSection({
   const handleOpenPicker = (target: TimeTarget) => {
     if (isAllDay) return;
 
-    const currentTime = parseTime(target === "open" ? openTime : closeTime);
+    const currentTime = parseTime(
+      target === "open" ? openTime || DEFAULT_START_PICKER_TIME : closeTime,
+    );
 
     setActiveTarget(target);
     setPendingHour(currentTime.hour);

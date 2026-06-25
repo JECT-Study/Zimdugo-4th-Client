@@ -37,10 +37,12 @@ export const contentArea = style({
   position: "absolute",
   inset: 0,
   width: "100%",
+  minHeight: 0,
   padding: `calc(56px + env(safe-area-inset-top, 0px)) ${vars.layout.sidePadding} 100px`, // 헤더 높이 + 하단 버튼 여백
   overflowY: "auto",
   overflowAnchor: "none",
   overscrollBehaviorY: "contain",
+  touchAction: "pan-y",
   WebkitOverflowScrolling: "touch",
   display: "flex",
   flexDirection: "column",
@@ -57,6 +59,7 @@ export const contentArea = style({
 export const stepWrapper = style({
   display: "flex",
   flexDirection: "column",
+  flexShrink: 0,
   gap: "32px",
   width: "100%",
   paddingTop: vars.spacing[16],
@@ -309,6 +312,11 @@ export const priceInputContainer = style({
   position: "relative",
 });
 
+// iOS Safari: 16px 미만 입력 포커스 시 자동 줌 방지
+globalStyle(`${priceInputContainer} input`, {
+  fontSize: vars.typography.fontSize[16],
+});
+
 export const priceUnit = style({
   position: "absolute",
   right: vars.spacing[12],
@@ -344,7 +352,8 @@ export const reportTextareaField = style({
   border: "none",
   outline: "none",
   resize: "none",
-  fontSize: vars.typography.fontSize[14],
+  // iOS Safari: 16px 미만 입력 포커스 시 자동 줌 방지
+  fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: 1.5,
   fontFamily: "inherit",
