@@ -153,7 +153,7 @@ describe("useReportContentFocusScroll", () => {
       input.focus();
     });
 
-    expect(scrollTo).toHaveBeenCalledWith(0, 0);
+    expect(scrollTo).not.toHaveBeenCalled();
     expect(container.scrollTop).toBeGreaterThan(0);
   });
 
@@ -234,7 +234,7 @@ describe("useReportContentFocusScroll", () => {
       viewportListeners.get("resize")?.(new Event("resize"));
     });
 
-    expect(scrollTo).toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
     expect(container.scrollTop).toBeGreaterThan(0);
 
     vi.useRealTimers();

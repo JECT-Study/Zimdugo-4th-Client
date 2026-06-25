@@ -1,11 +1,5 @@
 import { type RefObject, useEffect } from "react";
 
-const resetDocumentScroll = () => {
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-};
-
 /** 키보드·주소창 등으로 visual viewport가 줄어든 만큼 하단 inset */
 const getVisualViewportBottomInset = () => {
   if (typeof window === "undefined") return 0;
@@ -50,7 +44,6 @@ const scheduleScrollIntoView = (
     if (!container.isConnected || !target.isConnected) return;
     if (document.activeElement !== target) return;
 
-    resetDocumentScroll();
     scrollFocusedElementIntoView(container, target);
   };
 
