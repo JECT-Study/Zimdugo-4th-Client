@@ -57,6 +57,7 @@ export function SearchFilterBottomSheet({
 }: SearchFilterBottomSheetProps) {
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
   const [collapsedSnap, setCollapsedSnap] = useState(760);
+  const miniSnap = DEFAULT_SNAP_POINT + (collapsedSnap - DEFAULT_SNAP_POINT) / 2;
   const [indoorOutdoorState, setIndoorOutdoor] = useState<string[]>(
     restoredFilters.indoorOutdoorState,
   );
@@ -161,12 +162,9 @@ export function SearchFilterBottomSheet({
     <DraggableBottomSheet
       snapPoint={DEFAULT_SNAP_POINT}
       minSnapPoint={DEFAULT_SNAP_POINT}
+      miniSnapPoint={miniSnap}
       maxSnapPoint={collapsedSnap}
-      onSnapChange={(nextSnap) => {
-        if (nextSnap === collapsedSnap) {
-          onCollapseToResults?.();
-        }
-      }}
+      onDismiss={onCollapseToResults}
     >
       <div className={[sheetColumn, className].filter(Boolean).join(" ")}>
         <div className={scrollArea}>

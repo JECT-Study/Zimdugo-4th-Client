@@ -1,9 +1,17 @@
 // @vitest-environment jsdom
 
 import { setLanguageTag } from "@repo/i18n";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
+  DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
+    <div data-testid="mock-draggable-bottom-sheet">{children}</div>
+  ),
+}));
+
 import { SearchFilterBottomSheet } from "./SearchFilterBottomSheet";
 
 afterEach(cleanup);

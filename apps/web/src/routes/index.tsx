@@ -2065,6 +2065,7 @@ export function IndexPage() {
           onFavoriteChange={favoriteSession.handleSearchFavoriteChange}
           showHeaderBack={showPlaceSheetBack}
           onHeaderBackPress={listHeaderLeadingPress}
+          onDismiss={listHeaderLeadingPress}
         />
       ) : null}
 

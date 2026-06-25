@@ -187,6 +187,8 @@ export function LockerDetailBottomSheet({
   const resolvedInitialSnapPoint = initialSnapPoint ?? resolvedSnapPoint;
   const resolvedMinSnapPoint = minSnapPoint ?? 44;
   const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 52;
+  const resolvedMiniSnapPoint =
+    resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
   const [currentSnapPoint, setCurrentSnapPoint] = useState(
     resolvedInitialSnapPoint,
   );
@@ -235,8 +237,10 @@ export function LockerDetailBottomSheet({
       snapPoint={resolvedSnapPoint}
       initialSnapPoint={initialSnapPoint}
       minSnapPoint={resolvedMinSnapPoint}
+      miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       onSnapChange={handleSnapChange}
+      onDismiss={handleBack}
     >
       <div
         className={[sheetColumn, isFull ? fullSheetColumn : ""]

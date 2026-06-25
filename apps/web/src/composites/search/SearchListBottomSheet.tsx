@@ -27,11 +27,11 @@ import {
   resultSortRow,
   sheetColumn,
 } from "./SearchListBottomSheet.css.ts";
-import {
-  type SearchLockerResultItem,
-  type SearchResultItem,
-  type SearchSortDirection,
-  type SearchSortKey,
+import type {
+  SearchLockerResultItem,
+  SearchResultItem,
+  SearchSortDirection,
+  SearchSortKey,
 } from "./search-list-model";
 import {
   type LockerPrimarySortType,
@@ -65,6 +65,7 @@ export interface SearchListBottomSheetProps {
   snapPoint?: number;
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
+  onDismiss?: () => void;
   children?: ReactNode;
 }
 
@@ -93,6 +94,7 @@ export function SearchListBottomSheet({
   snapPoint,
   maxSnapPoint,
   onSnapChange,
+  onDismiss,
   children,
 }: SearchListBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(
@@ -133,6 +135,8 @@ export function SearchListBottomSheet({
   const resolvedMinSnapPoint = minSnapPoint ?? 0;
   const resolvedSnapPoint = snapPoint ?? 331;
   const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 44;
+  const resolvedMiniSnapPoint =
+    resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
   const sortLabels: Record<SearchSortKey, string> = {
     distance: m.search_sort_distance(),
     updatedAt: m.search_sort_recent(),
@@ -164,8 +168,10 @@ export function SearchListBottomSheet({
     <DraggableBottomSheet
       snapPoint={resolvedSnapPoint}
       minSnapPoint={resolvedMinSnapPoint}
+      miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       onSnapChange={onSnapChange}
+      onDismiss={onDismiss}
     >
       <div className={sheetColumn}>
         {showResultHeader ? (
