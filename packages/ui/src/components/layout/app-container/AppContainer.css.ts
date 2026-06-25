@@ -12,3 +12,9 @@ export const container = style({
   position: "relative",
   overflow: "hidden",
 });
+
+export const documentContainer = style({
+  height: "auto",
+  minHeight: "100dvh",
+  overflow: "visible",
+});

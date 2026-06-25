@@ -1,9 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
-import { container } from "./AppContainer.css.ts";
+import { container, documentContainer } from "./AppContainer.css.ts";
 
 export interface AppContainerProps {
   children: ReactNode;
   className?: string;
+  mode?: "app" | "document";
 }
 
 export const APP_SAFE_AREA_TOP =
@@ -33,11 +34,29 @@ const fallbackContainerStyle: CSSProperties & Record<`--${string}`, string> = {
   boxShadow: "0 8px 24px rgba(22, 24, 28, 0.08)",
 } as const;
 
-export function AppContainer({ children, className }: AppContainerProps) {
+const fallbackDocumentContainerStyle: CSSProperties &
+  Record<`--${string}`, string> = {
+  ...fallbackContainerStyle,
+  height: "auto",
+  minHeight: "100dvh",
+  overflow: "visible",
+};
+
+export function AppContainer({
+  children,
+  className,
+  mode = "app",
+}: AppContainerProps) {
+  const isDocumentMode = mode === "document";
+
   return (
     <div
-      className={[container, className].filter(Boolean).join(" ")}
-      style={fallbackContainerStyle}
+      className={[container, isDocumentMode ? documentContainer : "", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={
+        isDocumentMode ? fallbackDocumentContainerStyle : fallbackContainerStyle
+      }
     >
       {children}
     </div>

@@ -7,24 +7,21 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import "@repo/ui/styles/global.css";
 import { languageTag } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
-import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
-import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import {
   BOTTOM_TAB_LINKS,
   BottomTabBar,
   shouldShowBottomTab,
 } from "#/entities/navigation";
+import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
+import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
-import {
-  getUrlLanguage,
-  useAppLanguageStore,
-} from "#/shared/store/language";
+import { getUrlLanguage, useAppLanguageStore } from "#/shared/store/language";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
 
 const CRITICAL_LAYOUT_CSS = `
@@ -50,6 +47,20 @@ const CRITICAL_LAYOUT_CSS = `
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
+
+  html[data-scroll-page="true"],
+  html[data-scroll-page="true"] body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-scroll-page="true"] #root {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
   }
 
   button,
@@ -123,7 +134,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   useLoginResultHandler();
 
   // 경로 변경 때 URL locale과 앱 언어 상태를 다시 맞춘다.
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
   const appLanguage = useAppLanguageStore((state) => state.appLanguage);
   const hasLanguageHydrated = useAppLanguageStore((state) => state.hasHydrated);
   const initializeLanguage = useAppLanguageStore(
@@ -131,6 +144,7 @@ function RootDocument({ children }: { children: ReactNode }) {
   );
   const lang = hasLanguageHydrated ? appLanguage : languageTag();
   const showBottomTab = shouldShowBottomTab(pathname);
+  const isDocumentScrollPage = pathname === "/report";
 
   useEffect(() => {
     if (!hasLanguageHydrated) {
@@ -138,18 +152,22 @@ function RootDocument({ children }: { children: ReactNode }) {
     }
 
     initializeLanguage(getUrlLanguage(window.location.href));
-  }, [hasLanguageHydrated, initializeLanguage, pathname]);
+  }, [hasLanguageHydrated, initializeLanguage]);
 
   return (
-    <html lang={lang}>
+    <html
+      lang={lang}
+      data-scroll-page={isDocumentScrollPage ? "true" : undefined}
+    >
       <head>
         <title>Zimdugo</title>
         <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
       </head>
       <body>
-        <AppContainer>
+        <AppContainer mode={isDocumentScrollPage ? "document" : "app"}>
           <AppShell
+            mode={isDocumentScrollPage ? "document" : "app"}
             bottomTabBar={
               showBottomTab ? (
                 <BottomTabBar links={BOTTOM_TAB_LINKS} />

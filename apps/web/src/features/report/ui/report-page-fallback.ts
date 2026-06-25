@@ -14,11 +14,9 @@ export const reportPageLoadingShellStyle: CSSProperties = {
   width: "100%",
   maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   margin: "0 auto",
-  flex: 1,
-  minHeight: 0,
-  height: "100%",
+  minHeight: "100dvh",
   position: "relative",
-  overflow: "hidden",
+  overflow: "visible",
   backgroundColor: REPORT_PAGE_BG,
   display: "flex",
   flexDirection: "column",
@@ -29,12 +27,9 @@ export const reportPageInlineFallbackStyle: CSSProperties = {
 };
 
 export const reportHeaderInlineFallbackStyle: CSSProperties = {
-  position: "fixed",
+  position: "sticky",
   top: 0,
-  left: "50%",
-  transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   backgroundColor: REPORT_PAGE_BG,
   borderBottom: `1px solid ${color.border.default}`,
   paddingTop: "env(safe-area-inset-top, 0px)",
@@ -43,14 +38,14 @@ export const reportHeaderInlineFallbackStyle: CSSProperties = {
 };
 
 export const reportContentInlineFallbackStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
+  position: "relative",
+  flex: 1,
   width: "100%",
   minHeight: 0,
-  padding: `calc(56px + env(safe-area-inset-top, 0px)) ${REPORT_SIDE_PADDING} 100px`,
-  overflowY: "auto",
+  padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} ${spacing.scale[28]}`,
+  overflowY: "visible",
   overflowAnchor: "none",
-  overscrollBehaviorY: "contain",
+  overscrollBehaviorY: "auto",
   touchAction: "pan-y",
   display: "flex",
   flexDirection: "column",
@@ -58,12 +53,9 @@ export const reportContentInlineFallbackStyle: CSSProperties = {
 };
 
 export const reportBottomBarInlineFallbackStyle: CSSProperties = {
-  position: "fixed",
+  position: "sticky",
   bottom: 0,
-  left: "50%",
-  transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} calc(env(safe-area-inset-bottom, 0px) + ${spacing.scale[16]})`,
   borderTop: `1px solid ${color.border.default}`,
   backgroundColor: REPORT_PAGE_BG,
@@ -108,8 +100,10 @@ export const reportPageLoadingSpinnerStyle: CSSProperties = {
 };
 
 const reportPageContentShellStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: "100dvh",
 };
 
 export const reportPageHiddenContentStyle: CSSProperties = {

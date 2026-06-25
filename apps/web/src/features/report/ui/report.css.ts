@@ -5,23 +5,18 @@ export const reportContainer = style({
   width: "100%",
   maxWidth: vars.layout.containerWidth,
   margin: "0 auto",
-  flex: 1,
-  minHeight: 0,
-  height: "100%",
+  minHeight: "100dvh",
   backgroundColor: vars.color.bg.default,
   position: "relative",
-  overflow: "hidden",
+  overflow: "visible",
   display: "flex",
   flexDirection: "column",
 });
 
 export const reportHeader = style({
-  position: "fixed",
+  position: "sticky",
   top: 0,
-  left: "50%",
-  transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
   backgroundColor: vars.color.bg.default,
   borderBottom: `1px solid ${vars.color.palette.gray[200]}`,
   paddingTop: "env(safe-area-inset-top, 0px)",
@@ -29,19 +24,21 @@ export const reportHeader = style({
 });
 
 export const reportPageContent = style({
-  position: "absolute",
-  inset: 0,
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: "100dvh",
 });
 
 export const contentArea = style({
-  position: "absolute",
-  inset: 0,
+  position: "relative",
+  flex: 1,
   width: "100%",
   minHeight: 0,
-  padding: `calc(56px + env(safe-area-inset-top, 0px)) ${vars.layout.sidePadding} 100px`, // 헤더 높이 + 하단 버튼 여백
-  overflowY: "auto",
+  padding: `${vars.spacing[16]} ${vars.layout.sidePadding} ${vars.spacing[28]}`,
+  overflowY: "visible",
   overflowAnchor: "none",
-  overscrollBehaviorY: "contain",
+  overscrollBehaviorY: "auto",
   touchAction: "pan-y",
   WebkitOverflowScrolling: "touch",
   display: "flex",
@@ -66,12 +63,9 @@ export const stepWrapper = style({
 });
 
 export const bottomButtonWrapper = style({
-  position: "fixed",
+  position: "sticky",
   bottom: 0,
-  left: "50%",
-  transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
   padding: `${vars.spacing[16]} ${vars.layout.sidePadding} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
   borderTop: `1px solid ${vars.color.palette.gray[200]}`,
   backgroundColor: "white",
