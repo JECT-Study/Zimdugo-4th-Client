@@ -38,7 +38,7 @@ export const getPinId = (pin: LockerPinItemResponse): string =>
   `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
 
 const createSelectedLockerMapPinSvg = (): string => `
-  <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <svg width="100%" height="100%" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: block;">
     <g clip-path="url(#selected-map-pin-clip)">
       <g filter="url(#selected-map-pin-shadow)">
         <path d="M44.5 16C60.2401 16 73 28.76 73 44.5C73 60.2402 60.2401 73 44.5 73C28.7599 73 16 60.2402 16 44.5C16 28.76 28.7599 16 44.5 16Z" fill="${MAP_PIN_WHITE}"/>
@@ -64,7 +64,7 @@ const createSelectedLockerMapPinSvg = (): string => `
   </svg>`;
 
 const createFavoriteLockerMapPinSvg = (): string => `
-  <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <svg width="100%" height="100%" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: block;">
     <g clip-path="url(#favorite-map-pin-clip)">
       <g filter="url(#favorite-map-pin-shadow)">
         <path d="M16 44.5C16 28.7599 28.7599 16 44.5 16C60.2401 16 73 28.7599 73 44.5C73 60.2402 60.2401 73 44.5 73C28.7599 73 16 60.2402 16 44.5Z" fill="${PLACE_BADGE_FILL}"/>
@@ -93,7 +93,7 @@ const createClusterMapPinSvg = (badgeLabel: string): string => {
   const badgeY = badgeLabel.length > 1 ? 43 : 45;
 
   return `
-    <svg width="121" height="121" viewBox="0 0 121 121" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg width="100%" height="100%" viewBox="0 0 121 121" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: block;">
       <g filter="url(#cluster-map-pin-shadow)">
         <path d="M22.4 63C22.4 46.4315 35.8315 33 52.4 33C68.9686 33 82.4 46.4315 82.4 63C82.4 79.5685 68.9686 93 52.4 93C35.8315 93 22.4 79.5685 22.4 63Z" fill="${MAP_PIN_WHITE}" shape-rendering="crispEdges"/>
         <path d="M52.4 34.5C68.1401 34.5 80.9 47.2599 80.9 63C80.9 78.7401 68.1401 91.5 52.4 91.5C36.6599 91.5 23.9 78.7401 23.9 63C23.9 47.2599 36.6599 34.5 52.4 34.5Z" stroke="${PLACE_BADGE_FILL}" stroke-width="3" shape-rendering="crispEdges"/>

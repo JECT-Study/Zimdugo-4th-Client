@@ -194,6 +194,8 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain('data-map-pin-variant="selected"');
     expect(icon).toContain('viewBox="0 0 90 90"');
+    expect(icon).toContain('width="100%" height="100%"');
+    expect(icon).not.toContain('width="90" height="90"');
     expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}"`);
   });
 
@@ -202,6 +204,8 @@ describe("createLockerMarkerIcon", () => {
 
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain('data-map-pin-variant="save"');
+    expect(icon).toContain('width="100%" height="100%"');
+    expect(icon).not.toContain('width="90" height="90"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
@@ -222,6 +226,8 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(">9+<");
     expect(icon).toContain("<text");
     expect(icon).toContain('viewBox="0 0 121 121"');
+    expect(icon).toContain('width="100%" height="100%"');
+    expect(icon).not.toContain('width="121" height="121"');
   });
 });
 
@@ -269,6 +275,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain("map-marker-item");
     expect(options.icon?.content).toContain('data-type="LOCKER"');
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
+    expect(options.icon?.content).toContain('width="100%" height="100%"');
+    expect(options.icon?.content).not.toContain('width="90" height="90"');
     expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
     expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
@@ -336,6 +344,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain('data-type="PLACE"');
     expect(options.icon?.content).toContain('data-map-pin-variant="cluster"');
     expect(options.icon?.content).toContain(">3<");
+    expect(options.icon?.content).toContain('width="100%" height="100%"');
+    expect(options.icon?.content).not.toContain('width="121" height="121"');
     expect(options.icon?.size).toMatchObject({ width: 54.5, height: 54.5 });
     expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
