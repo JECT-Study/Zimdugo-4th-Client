@@ -110,8 +110,8 @@ export interface LockerDetailBottomSheetProps {
 const DETAIL_MIN_TOP_OFFSET = 60;
 const DETAIL_FULL_VISIBLE_HEIGHT = 780;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
-const DETAIL_MINI_VISIBLE_HEIGHT = 147;
-const DETAIL_HALF_VISIBLE_HEIGHT = 291;
+const DETAIL_MINI_VISIBLE_HEIGHT = 135;
+const DETAIL_HALF_VISIBLE_HEIGHT = 276;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 interface ResolveLockerDetailSnapPointsOptions {
@@ -251,9 +251,7 @@ export function LockerDetailBottomSheet({
   animateOnMount = false,
   onSnapChange,
 }: LockerDetailBottomSheetProps) {
-  const [windowHeight, setWindowHeight] = useState(
-    typeof window !== "undefined" ? window.innerHeight : 812,
-  );
+  const [windowHeight, setWindowHeight] = useState(812);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -265,7 +263,13 @@ export function LockerDetailBottomSheet({
     snapPoint,
     windowHeight,
   });
-  const resolvedInitialSnapPoint = initialSnapPoint ?? resolvedSnapPoint;
+  const resolvedInitialSnapPoint =
+    initialSnapPoint !== undefined
+      ? Math.min(
+          resolvedMaxSnapPoint,
+          Math.max(resolvedMinSnapPoint, initialSnapPoint),
+        )
+      : resolvedSnapPoint;
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
@@ -289,6 +293,7 @@ export function LockerDetailBottomSheet({
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);

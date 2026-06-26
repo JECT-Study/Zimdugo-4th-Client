@@ -322,6 +322,29 @@ describe("DraggableBottomSheet", () => {
     expect(handleLiveOffsetChange).not.toHaveBeenCalled();
   });
 
+  it("ignores secondary pointer buttons when starting sheet dragging", () => {
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+    handleLiveOffsetChange.mockClear();
+
+    fireEvent.pointerDown(screen.getByTestId("sheet-surface"), {
+      button: 2,
+      clientY: 120,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(window, { clientY: 240, pointerId: 1 });
+
+    expect(handleLiveOffsetChange).not.toHaveBeenCalled();
+  });
+
   it("keeps scrollable content gestures inside the content while it can scroll", () => {
     const handleLiveOffsetChange = vi.fn();
 
@@ -474,6 +497,38 @@ describe("DraggableBottomSheet", () => {
     const lastState = handleLiveOffsetChange.mock.calls.at(-1)?.[0];
 
     expect(lastState.offset).toBe(384);
+  });
+
+  it("re-clamps the current offset when snap bounds change", () => {
+    const handleLiveOffsetChange = vi.fn();
+    const { rerender } = render(
+      <DraggableBottomSheet
+        initialSnapPoint={720}
+        minSnapPoint={40}
+        snapPoint={240}
+        maxSnapPoint={720}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+    handleLiveOffsetChange.mockClear();
+
+    rerender(
+      <DraggableBottomSheet
+        initialSnapPoint={720}
+        minSnapPoint={40}
+        snapPoint={240}
+        maxSnapPoint={500}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    const lastState = handleLiveOffsetChange.mock.calls.at(-1)?.[0];
+
+    expect(lastState.offset).toBe(500);
   });
 
   it("calls onDismiss when the sheet reaches the dismiss snap", () => {

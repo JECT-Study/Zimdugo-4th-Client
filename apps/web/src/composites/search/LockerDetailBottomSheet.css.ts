@@ -383,7 +383,7 @@ export const feedbackRow = style({
 export const feedbackActionSection = style({
   display: "flex",
   flexDirection: "column",
-  gap: "19.5px",
+  gap: "20px",
   width: "100%",
 });
 

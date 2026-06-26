@@ -297,13 +297,23 @@ export function DraggableBottomSheet({
   );
 
   useEffect(() => {
-    const nextSnap = clampSnap(resolvedInitialSnap);
-    if (lastInitialSnapRef.current === nextSnap) {
+    const nextInitialSnap = clampSnap(resolvedInitialSnap);
+    const currentClampedSnap = clampSnap(currentSnapRef.current);
+    const shouldSyncInitialSnap =
+      lastInitialSnapRef.current !== nextInitialSnap;
+
+    if (
+      !shouldSyncInitialSnap &&
+      currentSnapRef.current === currentClampedSnap
+    ) {
       return;
     }
 
     settleAnimationRef.current?.stop();
-    lastInitialSnapRef.current = nextSnap;
+    const nextSnap = shouldSyncInitialSnap
+      ? nextInitialSnap
+      : currentClampedSnap;
+    lastInitialSnapRef.current = nextInitialSnap;
     currentSnapRef.current = nextSnap;
     setCurrentSnap(nextSnap);
     sheetOffset.set(nextSnap);
@@ -486,6 +496,10 @@ export function DraggableBottomSheet({
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) {
+      return;
+    }
+
     startPendingDrag({
       boundary: event.currentTarget,
       clientX: event.clientX,
@@ -523,7 +537,7 @@ export function DraggableBottomSheet({
       <motion.div
         animate={{ y: 0 }}
         className={sheetSurface}
-        initial={animateOnMount ? { y: "100%" } : false}
+        initial={animateOnMount ? { y: "100%" } : undefined}
         style={{ height: sheetHeight }}
         transition={SHEET_SETTLE_SPRING}
       >

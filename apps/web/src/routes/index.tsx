@@ -717,6 +717,7 @@ export function IndexPage() {
   }, [clearPendingLockerDetailOpen, flushLockerSheetMutations]);
 
   const resetSearchContext = useCallback(() => {
+    clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
     setSearchQuery("");
     setSearchDraft("");
@@ -732,9 +733,15 @@ export function IndexPage() {
     setContext("idle");
     setIsSearchOpen(false);
     writeMapSheetSessionSnapshot(null);
-  }, [flushLockerSheetMutations, setIsSearchOpen, setSearchQuery]);
+  }, [
+    clearPendingLockerDetailOpen,
+    flushLockerSheetMutations,
+    setIsSearchOpen,
+    setSearchQuery,
+  ]);
 
   const handleOpenSearch = useCallback(() => {
+    clearPendingLockerDetailOpen();
     const returnContext = resolveOverlayReturnContext(context);
 
     if (context === "map") {
@@ -743,7 +750,7 @@ export function IndexPage() {
 
     setOverlayReturnContext(returnContext);
     setIsSearchOpen(true);
-  }, [context, resetMapContext, setIsSearchOpen]);
+  }, [clearPendingLockerDetailOpen, context, resetMapContext, setIsSearchOpen]);
 
   const handleCloseSearch = useCallback(
     (draft?: string) => {
