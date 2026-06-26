@@ -238,6 +238,10 @@ export function DraggableBottomSheet({
   const sheetHeight = useMotionTemplate`calc(100dvh - ${sheetOffset}px)`;
   const dragStateRef = useRef<DragState | null>(null);
   const pendingDragStateRef = useRef<PendingDragState | null>(null);
+  const activeListenersRef = useRef<{
+    move: (event: MouseEvent | PointerEvent) => void;
+    end: (event: MouseEvent | PointerEvent) => void;
+  } | null>(null);
   const settleAnimationRef = useRef<{ stop: () => void } | null>(null);
   const currentSnapRef = useRef(clampedInitialSnap);
   const lastInitialSnapRef = useRef<number | null>(null);
@@ -300,7 +304,7 @@ export function DraggableBottomSheet({
 
   const settleToNextSnap = useCallback(
     ({ offsetY }: { offsetY: number }) => {
-      const startSnap = dragStateRef.current?.startSnap ?? currentSnap;
+      const startSnap = dragStateRef.current?.startSnap ?? currentSnapRef.current;
       const nextSnap = resolveBottomSheetNextSnap({
         offsetY,
         snapPoints,
@@ -315,20 +319,21 @@ export function DraggableBottomSheet({
           sheetOffset.set(clampedNextSnap);
         },
       });
+      
+      const prevSnap = currentSnapRef.current;
       currentSnapRef.current = clampedNextSnap;
       setCurrentSnap(clampedNextSnap);
       onSnapChange?.(clampedNextSnap);
 
       if (
         clampedNextSnap === resolvedDismissSnapPoint &&
-        currentSnap !== resolvedDismissSnapPoint
+        prevSnap !== resolvedDismissSnapPoint
       ) {
         onDismiss?.();
       }
     },
     [
       clampSnap,
-      currentSnap,
       onDismiss,
       onSnapChange,
       resolvedDismissSnapPoint,
@@ -337,22 +342,17 @@ export function DraggableBottomSheet({
     ],
   );
 
-  const removeDragListeners = useCallback(
-    ({
-      handleDragEnd,
-      handleDragMove,
-    }: {
-      handleDragEnd: (event: MouseEvent | PointerEvent) => void;
-      handleDragMove: (event: MouseEvent | PointerEvent) => void;
-    }) => {
-      window.removeEventListener("pointermove", handleDragMove);
-      window.removeEventListener("pointerup", handleDragEnd);
-      window.removeEventListener("pointercancel", handleDragEnd);
-      window.removeEventListener("mousemove", handleDragMove);
-      window.removeEventListener("mouseup", handleDragEnd);
-    },
-    [],
-  );
+  const removeDragListeners = useCallback(() => {
+    const listeners = activeListenersRef.current;
+    if (listeners) {
+      window.removeEventListener("pointermove", listeners.move);
+      window.removeEventListener("pointerup", listeners.end);
+      window.removeEventListener("pointercancel", listeners.end);
+      window.removeEventListener("mousemove", listeners.move);
+      window.removeEventListener("mouseup", listeners.end);
+      activeListenersRef.current = null;
+    }
+  }, []);
 
   const handlePointerMove = useCallback(
     (event: MouseEvent | PointerEvent) => {
@@ -410,10 +410,7 @@ export function DraggableBottomSheet({
       const dragState = dragStateRef.current;
       if (dragState == null) {
         pendingDragStateRef.current = null;
-        removeDragListeners({
-          handleDragEnd: finishDrag,
-          handleDragMove: handlePointerMove,
-        });
+        removeDragListeners();
         return;
       }
 
@@ -422,12 +419,9 @@ export function DraggableBottomSheet({
       });
       dragStateRef.current = null;
       pendingDragStateRef.current = null;
-      removeDragListeners({
-        handleDragEnd: finishDrag,
-        handleDragMove: handlePointerMove,
-      });
+      removeDragListeners();
     },
-    [handlePointerMove, removeDragListeners, settleToNextSnap],
+    [removeDragListeners, settleToNextSnap],
   );
 
   const startPendingDrag = ({
@@ -462,6 +456,7 @@ export function DraggableBottomSheet({
       startSnap: clampSnap(sheetOffset.get()),
       target,
     };
+    activeListenersRef.current = { move: handlePointerMove, end: finishDrag };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", finishDrag);
     window.addEventListener("pointercancel", finishDrag);
@@ -494,15 +489,12 @@ export function DraggableBottomSheet({
 
   useEffect(
     () => () => {
-      removeDragListeners({
-        handleDragEnd: finishDrag,
-        handleDragMove: handlePointerMove,
-      });
+      removeDragListeners();
       pendingDragStateRef.current = null;
       dragStateRef.current = null;
       settleAnimationRef.current?.stop();
     },
-    [finishDrag, handlePointerMove, removeDragListeners],
+    [removeDragListeners],
   );
 
   return (
