@@ -426,8 +426,14 @@ function SummarySection({
         <div className={summaryTextColumn}>
           <h2 className={lockerTitle}>{locker.title}</h2>
           <InlineMeta
-            className={distanceRow}
             left={locker.categoryLabel}
+            right={
+              locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
+            }
+          />
+          <InlineMeta
+            className={distanceRow}
+            left={locker.distanceLabel}
             right={<span className={addressText}>{locker.address}</span>}
           />
         </div>
