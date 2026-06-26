@@ -41,8 +41,7 @@ describe("getLockerPinQueryFromViewport", () => {
       },
     });
 
-    // 상단 검색바 보정으로 neLat이 원래 northEast보다 작아져야 한다
-    expect(query.neLat).toBeLessThan(37.51);
+    expect(query.neLat).toBe(37.5067);
     expect(query.swLat).toBeCloseTo(37.49, 3);
     expect(query.swLng).toBeCloseTo(126.99, 3);
     expect(query.neLng).toBeCloseTo(127.01, 3);

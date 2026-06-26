@@ -102,6 +102,51 @@ describe("getLockerPins", () => {
     ]);
   });
 
+  it("keeps valid multi-count CLUSTER responses with bounds", async () => {
+    const bounds = {
+      swLat: 37.49,
+      swLng: 126.99,
+      neLat: 37.51,
+      neLng: 127.01,
+    };
+
+    vi.mocked(httpGet).mockResolvedValue(
+      mockPinResponse([
+        {
+          pinType: "CLUSTER",
+          lockerId: null,
+          placeId: null,
+          latitude: 37.5,
+          longitude: 127,
+          pinCount: 3,
+          bounds,
+        },
+      ]),
+    );
+
+    await expect(
+      getLockerPins({
+        swLat: 37,
+        swLng: 126,
+        neLat: 38,
+        neLng: 128,
+        zoom: 12,
+      }),
+    ).resolves.toEqual([
+      {
+        pinType: "CLUSTER",
+        lockerId: null,
+        placeId: null,
+        latitude: 37.5,
+        longitude: 127,
+        isFavorite: null,
+        lockerCount: null,
+        pinCount: 3,
+        bounds,
+      },
+    ]);
+  });
+
   it("normalizes single-count CLUSTER responses with placeId to PLACE", async () => {
     vi.mocked(httpGet).mockResolvedValue(
       mockPinResponse([
