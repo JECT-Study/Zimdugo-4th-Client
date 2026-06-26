@@ -45,6 +45,7 @@ import {
   distanceRow,
   divider,
   favoriteButton,
+  feedbackActionSection,
   feedbackButton,
   feedbackButtonNegative,
   feedbackButtonNegativeSelected,
@@ -339,7 +340,7 @@ function FullDetailContent({
           <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
         {hasFeedbackVotes ? (
-          <>
+          <div className={feedbackActionSection}>
             <div className={feedbackRow}>
               {locker.accurateCount !== undefined ? (
                 <button
@@ -384,9 +385,11 @@ function FullDetailContent({
               ) : null}
             </div>
             <div className={actionDivider} />
-          </>
-        ) : null}
-        <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+            <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+          </div>
+        ) : (
+          <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+        )}
       </div>
     </div>
   );

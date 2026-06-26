@@ -79,7 +79,7 @@ export const summaryDivider = style({
   height: "1px",
   margin: `0 -${vars.spacing[16]}`,
   flexShrink: 0,
-  backgroundColor: vars.color.border.default,
+  backgroundColor: vars.color.palette.gray[500],
 });
 
 export const summaryTextColumn = style({
@@ -366,12 +366,19 @@ export const feedbackRow = style({
   width: "100%",
 });
 
+export const feedbackActionSection = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "39.5px",
+  width: "100%",
+});
+
 export const actionDivider = style({
   width: `calc(100% + (${vars.spacing[16]} * 2))`,
   height: "1px",
-  margin: `31.5px -${vars.spacing[16]}`,
+  margin: `0 -${vars.spacing[16]}`,
   flexShrink: 0,
-  backgroundColor: vars.color.border.default,
+  backgroundColor: vars.color.palette.gray[500],
 });
 
 export const feedbackButton = style({
