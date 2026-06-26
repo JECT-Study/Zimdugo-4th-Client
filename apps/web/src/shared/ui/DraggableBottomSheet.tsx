@@ -241,6 +241,7 @@ export function DraggableBottomSheet({
   const activeListenersRef = useRef<{
     move: (event: MouseEvent | PointerEvent) => void;
     end: (event: MouseEvent | PointerEvent) => void;
+    touchMove?: (event: TouchEvent) => void;
   } | null>(null);
   const settleAnimationRef = useRef<{ stop: () => void } | null>(null);
   const currentSnapRef = useRef(clampedInitialSnap);
@@ -350,6 +351,9 @@ export function DraggableBottomSheet({
       window.removeEventListener("pointercancel", listeners.end);
       window.removeEventListener("mousemove", listeners.move);
       window.removeEventListener("mouseup", listeners.end);
+      if (listeners.touchMove) {
+        window.removeEventListener("touchmove", listeners.touchMove);
+      }
       activeListenersRef.current = null;
     }
   }, []);
@@ -375,6 +379,7 @@ export function DraggableBottomSheet({
 
         if (intent === "content") {
           pendingDragStateRef.current = null;
+          removeDragListeners();
           return;
         }
 
@@ -402,7 +407,7 @@ export function DraggableBottomSheet({
       );
       sheetOffset.set(nextLiveOffset);
     },
-    [clampSnap, sheetOffset],
+    [clampSnap, sheetOffset, removeDragListeners],
   );
 
   const finishDrag = useCallback(
@@ -456,12 +461,18 @@ export function DraggableBottomSheet({
       startSnap: clampSnap(sheetOffset.get()),
       target,
     };
-    activeListenersRef.current = { move: handlePointerMove, end: finishDrag };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (dragStateRef.current != null && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    activeListenersRef.current = { move: handlePointerMove, end: finishDrag, touchMove: handleTouchMove };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", finishDrag);
     window.addEventListener("pointercancel", finishDrag);
     window.addEventListener("mousemove", handlePointerMove);
     window.addEventListener("mouseup", finishDrag);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
