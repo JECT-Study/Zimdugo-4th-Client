@@ -44,7 +44,7 @@ export const fullContentScroll = style({
   minHeight: 0,
   overflowY: "auto",
   overflowX: "hidden",
-  paddingBottom: "134px",
+  paddingBottom: vars.spacing[24],
   WebkitOverflowScrolling: "touch",
   overscrollBehavior: "contain",
   scrollbarWidth: "none",
@@ -278,19 +278,6 @@ export const feedbackButtonSelected = style({
 export const feedbackButtonNegativeSelected = style({
   backgroundColor: vars.color.danger.default,
   color: vars.color.text.white,
-});
-
-export const fullActionBar = style({
-  position: "absolute",
-  left: 0,
-  right: 0,
-  bottom: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
-  padding: `${vars.spacing[16]} ${vars.spacing[16]} 10px`,
-  borderTop: `1px solid ${vars.color.border.default}`,
-  backgroundColor: vars.color.bg.default,
 });
 
 export const fullActionRow = style({

@@ -252,7 +252,12 @@ export function DraggableBottomSheet({
       settleAnimationRef.current = animate(
         sheetHeight,
         offsetToHeight(clampedNextSnap),
-        SHEET_SETTLE_SPRING,
+        {
+          ...SHEET_SETTLE_SPRING,
+          onComplete: () => {
+            sheetHeight.set(offsetToHeight(clampedNextSnap));
+          },
+        },
       );
       currentSnapRef.current = clampedNextSnap;
       setCurrentSnap(clampedNextSnap);

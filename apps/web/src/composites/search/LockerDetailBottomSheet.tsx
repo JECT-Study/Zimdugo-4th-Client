@@ -44,7 +44,6 @@ import {
   feedbackButtonNegativeSelected,
   feedbackButtonSelected,
   feedbackRow,
-  fullActionBar,
   fullActionRow,
   fullContentScroll,
   fullDetailList,
@@ -268,100 +267,94 @@ function FullDetailContent({
   };
 
   return (
-    <>
-      <div className={fullContentScroll}>
-        <div className={contentStack}>
-          <ImageReportCard isFull />
-          <div className={fullDetailList}>
+    <div className={fullContentScroll}>
+      <div className={contentStack}>
+        <ImageReportCard isFull />
+        <div className={fullDetailList}>
+          <DetailInfoRow
+            icon={<IconLockerDetailHeader24 />}
+            title={locker.title}
+            description={
+              locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
+            }
+            trailing={[locker.categoryLabel, locker.distanceLabel]}
+          />
+          <DetailInfoRow
+            icon={<IconNormalMapPin24 state="active" />}
+            title={locker.address}
+            description={locker.floorLabel}
+          />
+          <DetailInfoRow
+            icon={<IconNormalWallet24 />}
+            title={m.locker_detail_price_section()}
+            description={locker.priceLabel ?? formatLockerPriceLabel()}
+            iconTone="neutral"
+          />
+          {locker.sizeLabel ? (
             <DetailInfoRow
-              icon={<IconLockerDetailHeader24 />}
-              title={locker.title}
-              description={
-                locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
-              }
-              trailing={[locker.categoryLabel, locker.distanceLabel]}
-            />
-            <DetailInfoRow
-              icon={<IconNormalMapPin24 state="active" />}
-              title={locker.address}
-              description={locker.floorLabel}
-            />
-            <DetailInfoRow
-              icon={<IconNormalWallet24 />}
-              title={m.locker_detail_price_section()}
-              description={locker.priceLabel ?? formatLockerPriceLabel()}
+              icon={<IconNormalCapacity24 />}
+              title={m.locker_detail_size_section()}
+              description={locker.sizeLabel}
               iconTone="neutral"
             />
-            {locker.sizeLabel ? (
-              <DetailInfoRow
-                icon={<IconNormalCapacity24 />}
-                title={m.locker_detail_size_section()}
-                description={locker.sizeLabel}
-                iconTone="neutral"
-              />
-            ) : null}
-            <DetailInfoRow
-              icon={<IconCaution24 />}
-              title={m.locker_detail_info_section()}
-              description={detailHelpText}
-              iconTone="neutral"
-              descriptionClassName={detailDescriptionMultiline}
-            />
-          </div>
-          {hasFeedbackVotes ? (
-            <div className={feedbackRow}>
-              {locker.accurateCount !== undefined ? (
-                <button
-                  type="button"
-                  disabled={!canVote}
-                  aria-disabled={!canVote}
-                  className={[
-                    feedbackButton,
-                    locker.isAccurateVoted ? feedbackButtonSelected : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-pressed={locker.isAccurateVoted === true}
-                  onClick={() => handleVotePress("CORRECT")}
-                >
-                  {m.locker_detail_feedback_accurate({
-                    count: String(locker.accurateCount),
-                  })}
-                </button>
-              ) : null}
-              {locker.inaccurateCount !== undefined ? (
-                <button
-                  type="button"
-                  disabled={!canVote}
-                  aria-disabled={!canVote}
-                  className={[
-                    feedbackButton,
-                    feedbackButtonNegative,
-                    locker.isInaccurateVoted
-                      ? feedbackButtonNegativeSelected
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-pressed={locker.isInaccurateVoted === true}
-                  onClick={() => handleVotePress("INCORRECT")}
-                >
-                  {m.locker_detail_feedback_inaccurate({
-                    count: String(locker.inaccurateCount),
-                  })}
-                </button>
-              ) : null}
-            </div>
           ) : null}
-          {locker.lastUpdatedLabel ? (
-            <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
-          ) : null}
+          <DetailInfoRow
+            icon={<IconCaution24 />}
+            title={m.locker_detail_info_section()}
+            description={detailHelpText}
+            iconTone="neutral"
+            descriptionClassName={detailDescriptionMultiline}
+          />
         </div>
-      </div>
-      <div className={fullActionBar}>
+        {hasFeedbackVotes ? (
+          <div className={feedbackRow}>
+            {locker.accurateCount !== undefined ? (
+              <button
+                type="button"
+                disabled={!canVote}
+                aria-disabled={!canVote}
+                className={[
+                  feedbackButton,
+                  locker.isAccurateVoted ? feedbackButtonSelected : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-pressed={locker.isAccurateVoted === true}
+                onClick={() => handleVotePress("CORRECT")}
+              >
+                {m.locker_detail_feedback_accurate({
+                  count: String(locker.accurateCount),
+                })}
+              </button>
+            ) : null}
+            {locker.inaccurateCount !== undefined ? (
+              <button
+                type="button"
+                disabled={!canVote}
+                aria-disabled={!canVote}
+                className={[
+                  feedbackButton,
+                  feedbackButtonNegative,
+                  locker.isInaccurateVoted ? feedbackButtonNegativeSelected : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-pressed={locker.isInaccurateVoted === true}
+                onClick={() => handleVotePress("INCORRECT")}
+              >
+                {m.locker_detail_feedback_inaccurate({
+                  count: String(locker.inaccurateCount),
+                })}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {locker.lastUpdatedLabel ? (
+          <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
+        ) : null}
         <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
       </div>
-    </>
+    </div>
   );
 }
 
