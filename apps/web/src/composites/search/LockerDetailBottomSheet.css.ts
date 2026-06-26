@@ -79,7 +79,7 @@ export const summaryDivider = style({
   height: "1px",
   margin: `0 -${vars.spacing[16]}`,
   flexShrink: 0,
-  backgroundColor: vars.color.palette.gray[500],
+  backgroundColor: vars.color.border.default,
 });
 
 export const summaryTextColumn = style({
@@ -176,7 +176,7 @@ export const divider = style({
   width: "100%",
   height: "1px",
   margin: `${vars.spacing[8]} 0`,
-  backgroundColor: vars.color.border.default,
+  backgroundColor: vars.color.palette.gray[500],
 });
 
 export const imageReportCard = style({
@@ -369,7 +369,7 @@ export const feedbackRow = style({
 export const feedbackActionSection = style({
   display: "flex",
   flexDirection: "column",
-  gap: "39.5px",
+  gap: "19.5px",
   width: "100%",
 });
 
