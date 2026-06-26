@@ -14,6 +14,10 @@ const toLockerPin = (
   placeId: null,
   latitude,
   longitude,
+  isFavorite: null,
+  lockerCount: null,
+  pinCount: null,
+  bounds: null,
 });
 
 const toPlacePin = (
@@ -26,6 +30,10 @@ const toPlacePin = (
   lockerId: null,
   latitude,
   longitude,
+  isFavorite: null,
+  lockerCount: 0,
+  pinCount: null,
+  bounds: null,
 });
 
 export const searchLockerItemToPin = (

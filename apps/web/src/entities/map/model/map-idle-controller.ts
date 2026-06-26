@@ -39,6 +39,11 @@ export interface SubscribeMapIdleOptions {
   map: naver.maps.Map;
   maps: typeof naver.maps;
   /**
+   * 줌 변경이 시작되면 idle 전에 기존 마커를 먼저 정리할 수 있도록 알린다.
+   * 실제 viewport 발행과 API 요청은 안정화된 idle 시점에만 수행한다.
+   */
+  onZoomChangeStart?: () => void;
+  /**
    * idle 시점의 viewport가 직전 발행값과 다를 때만 호출된다.
    * TODO(ZIM-19): 향후 viewport 기반 nearby lockers 요청과 연결한다.
    */
@@ -119,6 +124,7 @@ const isViewportChangedSignificantly = (
 export const subscribeMapIdle = ({
   map,
   maps,
+  onZoomChangeStart,
   onSettle,
 }: SubscribeMapIdleOptions): (() => void) => {
   let lastViewport: MapViewport | null = null;
@@ -135,10 +141,15 @@ export const subscribeMapIdle = ({
   };
 
   const listener = maps.Event.addListener(map, "idle", handler);
+  const zoomListener = maps.Event.addListener(map, "zoom_changed", () => {
+    if (isCancelled) return;
+    onZoomChangeStart?.();
+  });
   handler();
 
   return () => {
     isCancelled = true;
     maps.Event.removeListener(listener);
+    maps.Event.removeListener(zoomListener);
   };
 };

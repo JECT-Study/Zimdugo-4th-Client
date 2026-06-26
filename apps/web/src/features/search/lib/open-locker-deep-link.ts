@@ -63,4 +63,8 @@ export const createLockerPinAt = (
   placeId: null,
   latitude,
   longitude,
+  isFavorite: null,
+  lockerCount: null,
+  pinCount: null,
+  bounds: null,
 });

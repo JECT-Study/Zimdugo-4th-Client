@@ -44,7 +44,10 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
-import { fitNaverMapToBounds } from "#/entities/map/model/map-bounds";
+import {
+  fitNaverMapToBounds,
+  focusNaverMapOnClusterBounds,
+} from "#/entities/map/model/map-bounds";
 import { getPinId } from "#/entities/map/model/map-marker";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import {
@@ -127,6 +130,7 @@ import {
 import { toLockerDetailItem } from "#/shared/api/locker-adapters";
 import {
   getLockerDetail,
+  type LockerBoundsRaw,
   type LockerPinItemResponse,
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
@@ -369,7 +373,7 @@ export function IndexPage() {
     useState<LockerPinItemResponse | null>(() => {
       if (lockerIdFromQuery !== undefined) {
         if (loaderData?.detail) {
-          return {
+           return {
             pinType: "LOCKER",
             lockerId: lockerIdFromQuery,
             placeId: null,
@@ -377,6 +381,10 @@ export function IndexPage() {
               loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
             longitude:
               loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
+            isFavorite: null,
+            lockerCount: null,
+            pinCount: null,
+            bounds: null,
           };
         }
         return null;
@@ -1884,6 +1892,10 @@ export function IndexPage() {
         placeId: null,
         latitude: selectedLockerDetail.latitude,
         longitude: selectedLockerDetail.longitude,
+        isFavorite: null,
+        lockerCount: null,
+        pinCount: null,
+        bounds: null,
       },
     ];
   }, [context, selectedLockerDetail, selectedMapPin, sheetMode]);
@@ -1914,6 +1926,15 @@ export function IndexPage() {
       ? handleBackFromMapPlaceSheet
       : handleBackToKeywordList
     : undefined;
+  const handleClusterClick = useCallback(
+    (bounds: LockerBoundsRaw) => {
+      focusNaverMapOnClusterBounds({
+        map: mapInstance,
+        bounds,
+      });
+    },
+    [mapInstance],
+  );
 
   return (
     <main className={pageWrapper}>
@@ -1954,6 +1975,7 @@ export function IndexPage() {
             map={mapInstance}
             selectedPinId={selectedPinId}
             onSelectPin={handleIdlePinSelect}
+            onClusterClick={handleClusterClick}
           />
         )}
         {!isMapLoading &&
@@ -2122,6 +2144,7 @@ function LockerMarkersLayer({
   map,
   selectedPinId,
   onSelectPin,
+  onClusterClick,
   spreadCenter,
 }: {
   map: naver.maps.Map | null;
@@ -2131,6 +2154,7 @@ function LockerMarkersLayer({
     id: number,
     pin: LockerPinItemResponse,
   ) => void;
+  onClusterClick?: (bounds: import("#/shared/api/lockers").LockerBoundsRaw) => void;
   spreadCenter?: { lat: number; lng: number } | null;
 }) {
   const { maps } = useNaverMapSdk();
@@ -2140,6 +2164,7 @@ function LockerMarkersLayer({
     maps,
     selectedPinId,
     onSelectLocker: onSelectPin,
+    onClusterClick,
     spreadCenter,
   });
 

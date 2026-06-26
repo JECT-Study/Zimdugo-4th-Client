@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import type { LockerPinItemResponse } from "#/shared/api/lockers";
+import type { LockerBoundsRaw, LockerPinItemResponse } from "#/shared/api/lockers";
 
 export type LockerMarkerStatus = "active" | "inactive";
 
@@ -34,8 +34,17 @@ const PLACE_MARKER_ANCHOR = {
   y: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.y),
 };
 
-export const getPinId = (pin: LockerPinItemResponse): string =>
-  `${pin.pinType}-${pin.pinType === "LOCKER" ? pin.lockerId : pin.placeId}`;
+const CLUSTER_S_DISPLAY_SIZE = { width: 52, height: 52 };
+const CLUSTER_L_DISPLAY_SIZE = { width: 64, height: 64 };
+
+const CLUSTER_S_ANCHOR = { x: 26, y: 26 };
+const CLUSTER_L_ANCHOR = { x: 32, y: 32 };
+
+export const getPinId = (pin: LockerPinItemResponse): string => {
+  if (pin.pinType === "LOCKER") return `LOCKER-${pin.lockerId}`;
+  if (pin.pinType === "PLACE") return `PLACE-${pin.placeId}`;
+  return `CLUSTER-${pin.latitude}-${pin.longitude}`;
+};
 
 const createSelectedLockerMapPinSvg = (): string => `
   <svg width="100%" height="100%" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: block;">
@@ -88,7 +97,58 @@ const createFavoriteLockerMapPinSvg = (): string => `
     </defs>
   </svg>`;
 
-const createClusterMapPinSvg = (badgeLabel: string): string => {
+const CLUSTER_CONFIG = {
+  s: {
+    viewBoxSize: 330,
+    outerRadius: 162,
+    badgeRadius: 62,
+    badgeFill: vars.color.palette.gray[100],
+    textFill: vars.color.palette.green[500],
+    fontSize: 76,
+    filterId: "cluster-map-pin-badge-shadow-s",
+    textDy: 26,
+  },
+  l: {
+    viewBoxSize: 440,
+    outerRadius: 216,
+    badgeRadius: 82,
+    badgeFill: vars.color.palette.green[500],
+    textFill: vars.color.palette.gray[100],
+    fontSize: 78,
+    filterId: "cluster-map-pin-badge-shadow-l",
+    textDy: 27,
+  },
+} as const;
+
+const createClusterPinSvg = (count: number): string => {
+  const size = count >= 10 ? "l" : "s";
+  const config = CLUSTER_CONFIG[size];
+  const center = config.viewBoxSize / 2;
+  const label = count > 99 ? "99+" : String(count);
+
+  return `
+    <svg width="100%" height="100%" viewBox="0 0 ${config.viewBoxSize} ${config.viewBoxSize}" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: block;">
+      <circle cx="${center}" cy="${center}" r="${config.outerRadius}" fill="${vars.color.palette.green[100]}" fill-opacity="0.64" stroke="${vars.color.palette.green[500]}" stroke-width="2" />
+      <g filter="url(#${config.filterId})">
+        <circle cx="${center}" cy="${center}" r="${config.badgeRadius}" fill="${config.badgeFill}" />
+        <text x="${center}" y="${center + config.textDy}" text-anchor="middle" fill="${config.textFill}" font-family="Pretendard, sans-serif" font-size="${config.fontSize}" font-weight="700">${label}</text>
+      </g>
+      <defs>
+        <filter id="${config.filterId}" x="${center - config.badgeRadius - 30}" y="${center - config.badgeRadius - 20}" width="${(config.badgeRadius + 30) * 2}" height="${(config.badgeRadius + 40) * 2}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+          <feOffset dy="7.341" />
+          <feGaussianBlur stdDeviation="14.683" />
+          <feComposite in2="hardAlpha" operator="out" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0.0862745 0 0 0 0 0.0941176 0 0 0 0 0.109804 0 0 0 0.16 0" />
+          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+        </filter>
+      </defs>
+    </svg>`;
+};
+
+const createPlaceClusterMapPinSvg = (badgeLabel: string): string => {
   const badgeFontSize = badgeLabel.length > 1 ? 24 : 31;
   const badgeY = badgeLabel.length > 1 ? 43 : 45;
 
@@ -97,7 +157,7 @@ const createClusterMapPinSvg = (badgeLabel: string): string => {
       <g filter="url(#cluster-map-pin-shadow)">
         <path d="M22.4 63C22.4 46.4315 35.8315 33 52.4 33C68.9686 33 82.4 46.4315 82.4 63C82.4 79.5685 68.9686 93 52.4 93C35.8315 93 22.4 79.5685 22.4 63Z" fill="${MAP_PIN_WHITE}" shape-rendering="crispEdges"/>
         <path d="M52.4 34.5C68.1401 34.5 80.9 47.2599 80.9 63C80.9 78.7401 68.1401 91.5 52.4 91.5C36.6599 91.5 23.9 78.7401 23.9 63C23.9 47.2599 36.6599 34.5 52.4 34.5Z" stroke="${PLACE_BADGE_FILL}" stroke-width="3" shape-rendering="crispEdges"/>
-        <path d="M55.2398 44.8611C58.7428 44.3465 61.8768 47.1442 61.8768 50.7865V51.3677H64.7846C67.9962 51.3677 70.5998 54.0476 70.6 57.3533V73.8141C70.5998 77.12 67.9962 79.7999 64.7846 79.7999H38.6153C35.4037 79.7999 32.8001 77.12 32.8 73.8141V57.3533C32.8001 54.0476 35.4037 51.3677 38.6153 51.3677H41.5231V50.7865C41.5232 47.1442 44.6571 44.3465 48.1599 44.8611L51.6927 45.3805L51.7 45.3814L51.7071 45.3803L55.2398 44.8611ZM38.6153 54.3605C37.0095 54.3606 35.7078 55.7005 35.7077 57.3533V73.8141C35.7077 75.467 37.0095 76.807 38.6153 76.807H41.5231V69.492L50.8502 65.0083C51.4491 66.185 52.6163 66.9806 53.9523 66.9806C55.9027 66.9806 57.4999 65.2735 57.4999 63.152H57.5152C57.5152 61.0469 55.9181 59.3231 53.9679 59.3231C52.0174 59.3231 50.42 61.0305 50.42 63.152C50.42 63.3508 50.4356 63.5498 50.4663 63.7487L41.5231 65.7507V54.3605H38.6153ZM61.8768 76.807H64.7846C66.3905 76.807 67.6921 75.467 67.6921 73.8141V57.3533C67.6921 55.7005 66.3903 54.3605 64.7846 54.3605H61.8768V76.807ZM58.9693 50.7865C58.9691 48.9939 57.4508 47.6105 55.7326 47.8132L55.6509 47.8239L52.1112 48.3442L52.1046 48.3451L51.8987 48.3744L51.7 48.4026L51.5013 48.3744L51.2954 48.3451L51.2921 48.3447L51.2885 48.3442L47.7492 47.8239C45.9977 47.5666 44.4308 48.9655 44.4307 50.7865V51.3677H44.4539C44.4387 51.4466 44.4308 51.5263 44.4307 51.6068C44.4308 53.2597 47.6854 54.5998 51.7 54.5998C55.7146 54.5998 58.9688 53.2597 58.9691 51.6068C58.9691 51.5263 58.9611 51.4466 58.9459 51.3677H58.9693V50.7865Z" fill="${PLACE_BADGE_FILL}"/>
+        <path d="M55.2398 44.8611C58.7428 44.3465 61.8768 47.1442 61.8768 50.7865V51.3677H64.7846C67.9962 51.3677 70.5998 54.0476 70.6 57.3533V73.8141C70.5998 77.12 67.9962 79.7999 64.7846 79.7999H38.6153C35.4037 79.7999 32.8001 77.12 32.8 73.8141V57.3533C32.8001 54.0476 35.4037 51.3677 38.6153 51.3677H41.5231V50.7865C41.5232 47.1442 44.6571 44.3465 48.1599 44.8611L51.6927 45.3805L51.7 45.3814L51.7071 45.3803L55.2398 44.8611ZM38.6153 54.3605C37.0095 54.3606 35.7078 55.7005 35.7077 57.3533V73.8141C35.7077 75.467 37.0095 76.807 38.6153 76.807H41.5231V69.492L50.8502 65.0083C51.4491 66.185 52.6163 66.9806 53.9523 66.9806C55.9027 66.9806 57.4999 65.2735 57.4999 63.152H57.5152C57.5152 61.0469 55.9181 59.3231 53.9679 59.3231C52.0174 59.3231 50.42 61.0305 50.42 63.152C50.42 63.152 50.4356 63.5498 50.4663 63.7487L41.5231 65.7507V54.3605H38.6153ZM61.8768 76.807H64.7846C66.3905 76.807 67.6921 75.467 67.6921 73.8141V57.3533C67.6921 55.7005 66.3903 54.3605 64.7846 54.3605H61.8768V76.807ZM58.9693 50.7865C58.9691 48.9939 57.4508 47.6105 55.7326 47.8132L55.6509 47.8239L52.1112 48.3442L52.1046 48.3451L51.8987 48.3744L51.7 48.4026L51.5013 48.3744L51.2954 48.3451L51.2921 48.3447L51.2885 48.3442L47.7492 47.8239C45.9977 47.5666 44.4308 48.9655 44.4307 50.7865V51.3677H44.4539C44.4387 51.4466 44.4308 51.5263 44.4307 51.6068C44.4308 53.2597 47.6854 54.5998 51.7 54.5998C55.7146 54.5998 58.9688 53.2597 58.9691 51.6068C58.9691 51.5263 58.9611 51.4466 58.9459 51.3677H58.9693V50.7865Z" fill="${PLACE_BADGE_FILL}"/>
       </g>
       <g filter="url(#cluster-map-pin-badge-shadow)">
         <path d="M99.3436 33.2436C99.3436 20.3786 88.9144 9.94946 76.0495 9.94946C63.1845 9.94946 52.7554 20.3786 52.7554 33.2436C52.7554 46.1085 63.1845 56.5377 76.0495 56.5377C88.9144 56.5377 99.3436 46.1085 99.3436 33.2436Z" fill="#15B344"/>
@@ -132,6 +192,14 @@ export const createMapPinIcon = (
   pin: LockerPinItemResponse,
   _isSelected = false,
 ): string => {
+  if (pin.pinType === "CLUSTER") {
+    const pinCount = pin.pinCount ?? 0;
+    return `<div data-type="${pin.pinType}" data-map-pin-variant="cluster" style="position: relative; display: block; width: 100%; height: 100%;">
+      ${createClusterPinSvg(pinCount)}
+    </div>`;
+  }
+
+
   const isPlace = pin.pinType === "PLACE";
   const lockerCount = pin.lockerCount ?? 0;
   const badgeLabel = lockerCount > 9 ? "9+" : String(lockerCount);
@@ -148,7 +216,7 @@ export const createMapPinIcon = (
   }
 
   return `<div data-type="${pin.pinType}" data-map-pin-variant="cluster" style="position: relative; display: block; width: 100%; height: 100%;">
-    ${createClusterMapPinSvg(badgeLabel)}
+    ${createPlaceClusterMapPinSvg(badgeLabel)}
   </div>`;
 };
 /** @deprecated Use createMapPinIcon */
@@ -170,6 +238,7 @@ interface SyncLockerMarkersOptions {
     id: number,
     pin: LockerPinItemResponse,
   ) => void;
+  onClusterClick?: (bounds: LockerBoundsRaw) => void;
   registry?: LockerMarkerRegistry;
   spreadCenter?: { lat: number; lng: number } | null;
 }
@@ -179,6 +248,7 @@ interface LockerMarkerEntry {
   iconSignature: string;
   listener?: naver.maps.MapEventListener;
   listenerHandler?: SyncLockerMarkersOptions["onSelectLocker"];
+  listenerClusterHandler?: SyncLockerMarkersOptions["onClusterClick"];
   listenerPin?: LockerPinItemResponse;
   listenerPinId?: string;
   positionSignature: string;
@@ -255,12 +325,20 @@ const getIconSignatureSuffix = ({
 };
 
 const getMarkerSize = (pin: LockerPinItemResponse) => {
+  if (pin.pinType === "CLUSTER") {
+    const pinCount = pin.pinCount ?? 0;
+    return pinCount >= 10 ? CLUSTER_L_DISPLAY_SIZE : CLUSTER_S_DISPLAY_SIZE;
+  }
   if (pin.pinType === "PLACE") return PLACE_MARKER_DISPLAY_SIZE;
   if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_DISPLAY_SIZE;
   return LOCKER_MARKER_DISPLAY_SIZE;
 };
 
 const getMarkerAnchor = (pin: LockerPinItemResponse) => {
+  if (pin.pinType === "CLUSTER") {
+    const pinCount = pin.pinCount ?? 0;
+    return pinCount >= 10 ? CLUSTER_L_ANCHOR : CLUSTER_S_ANCHOR;
+  }
   if (pin.pinType === "PLACE") return PLACE_MARKER_ANCHOR;
   return DEFAULT_MARKER_ANCHOR;
 };
@@ -335,7 +413,11 @@ const getPinIconSignature = (
   const isStateful = isSelected;
   const favoriteSignature =
     pin.pinType === "LOCKER" && pin.isFavorite === true ? ":favorite" : "";
-  return `${pin.pinType}:${pin.lockerCount ?? ""}:${isSelected ? "selected" : "default"}${favoriteSignature}${
+  const countPart =
+    pin.pinType === "CLUSTER"
+      ? (pin.pinCount ?? "")
+      : (pin.lockerCount ?? "");
+  return `${pin.pinType}:${countPart}:${isSelected ? "selected" : "default"}${favoriteSignature}${
     isStateful && zoomLevel != null ? `:${zoomLevel}` : ""
   }`;
 };
@@ -374,7 +456,12 @@ const createLockerMarker = ({
   const marker = new maps.Marker({
     map,
     clickable: true,
-    title: pin.pinType === "LOCKER" ? "보관함" : "보관함 모음",
+    title:
+      pin.pinType === "LOCKER"
+        ? "보관함"
+        : pin.pinType === "PLACE"
+          ? "보관함 모음"
+          : "클러스터",
     position: new maps.LatLng(pin.latitude, pin.longitude),
     icon: createMarkerIconOptions(
       pin,
@@ -397,11 +484,14 @@ const attachMarkerSelectListener = (
   entry: LockerMarkerEntry,
   maps: typeof naver.maps,
   pin: LockerPinItemResponse,
-  onSelectLocker: (
-    pinType: "LOCKER" | "PLACE",
-    id: number,
-    pin: LockerPinItemResponse,
-  ) => void,
+  onSelectLocker:
+    | ((
+        pinType: "LOCKER" | "PLACE",
+        id: number,
+        pin: LockerPinItemResponse,
+      ) => void)
+    | undefined,
+  onClusterClick: ((bounds: LockerBoundsRaw) => void) | undefined,
 ) => {
   const pinId = getPinId(pin);
   entry.listenerPin = pin;
@@ -409,7 +499,8 @@ const attachMarkerSelectListener = (
   if (
     entry.listener &&
     entry.listenerPinId === pinId &&
-    entry.listenerHandler === onSelectLocker
+    entry.listenerHandler === onSelectLocker &&
+    entry.listenerClusterHandler === onClusterClick
   ) {
     return;
   }
@@ -422,14 +513,25 @@ const attachMarkerSelectListener = (
     const listenerPin = entry.listenerPin;
     if (!listenerPin) return;
 
+    if (listenerPin.pinType === "CLUSTER" && onClusterClick) {
+      if (listenerPin.bounds) {
+        onClusterClick(listenerPin.bounds);
+      }
+      return;
+    }
+
+    if (!onSelectLocker) return;
     const id =
       listenerPin.pinType === "LOCKER"
         ? listenerPin.lockerId
-        : listenerPin.placeId;
+        : listenerPin.pinType === "PLACE"
+          ? listenerPin.placeId
+          : null;
     if (id == null) return;
-    onSelectLocker(listenerPin.pinType, id, listenerPin);
+    onSelectLocker(listenerPin.pinType as "LOCKER" | "PLACE", id, listenerPin);
   });
   entry.listenerHandler = onSelectLocker;
+  entry.listenerClusterHandler = onClusterClick;
   entry.listenerPinId = pinId;
 };
 
@@ -442,6 +544,7 @@ const clearMarkerEntry = (
   }
   entry.listener = undefined;
   entry.listenerHandler = undefined;
+  entry.listenerClusterHandler = undefined;
   entry.listenerPin = undefined;
   entry.listenerPinId = undefined;
   entry.marker.setMap(null);
@@ -463,6 +566,7 @@ export const syncLockerMarkers = ({
   lockers,
   selectedPinId,
   onSelectLocker,
+  onClusterClick,
   registry = new Map(),
   spreadCenter,
 }: SyncLockerMarkersOptions) => {
@@ -547,7 +651,7 @@ export const syncLockerMarkers = ({
       }
 
       if (existingEntry.zIndex !== zIndex) {
-        existingEntry.marker.setZIndex?.(zIndex);
+        (existingEntry.marker as any).setZIndex?.(zIndex);
         existingEntry.zIndex = zIndex;
       }
 
@@ -595,12 +699,13 @@ export const syncLockerMarkers = ({
         existingEntry.marker.setVisible(isVisible);
       }
 
-      if (onSelectLocker) {
-        attachMarkerSelectListener(existingEntry, maps, pin, onSelectLocker);
+      if (onSelectLocker || onClusterClick) {
+        attachMarkerSelectListener(existingEntry, maps, pin, onSelectLocker, onClusterClick);
       } else if (existingEntry.listener) {
         maps.Event.removeListener(existingEntry.listener);
         existingEntry.listener = undefined;
         existingEntry.listenerHandler = undefined;
+        existingEntry.listenerClusterHandler = undefined;
         existingEntry.listenerPin = undefined;
         existingEntry.listenerPinId = undefined;
       }
@@ -635,8 +740,8 @@ export const syncLockerMarkers = ({
       hadSpreadBefore: hasSpread,
     };
 
-    if (onSelectLocker) {
-      attachMarkerSelectListener(entry, maps, pin, onSelectLocker);
+    if (onSelectLocker || onClusterClick) {
+      attachMarkerSelectListener(entry, maps, pin, onSelectLocker, onClusterClick);
     }
 
     registry.set(pinId, entry);

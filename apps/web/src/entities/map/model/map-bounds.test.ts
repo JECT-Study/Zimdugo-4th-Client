@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  MIN_FIT_BOUNDS_RADIUS_METERS,
+  CLUSTER_FIT_BOUNDS_BOTTOM_PADDING_PX,
+  CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX,
+  CLUSTER_FIT_BOUNDS_TOP_PADDING_PX,
   fitNaverMapToBounds,
+  focusNaverMapOnClusterBounds,
+  getFitBoundsZoom,
+  MIN_CLUSTER_FIT_BOUNDS_RADIUS_METERS,
+  MIN_FIT_BOUNDS_RADIUS_METERS,
   normalizeLockerBounds,
 } from "./map-bounds";
 
@@ -58,6 +64,183 @@ describe("normalizeLockerBounds", () => {
   });
 });
 
+describe("focusNaverMapOnClusterBounds", () => {
+  it("morphs to the bounds center using a fit zoom within min and max zoom", () => {
+    const morph = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 10),
+      getSize: vi.fn(() => ({ width: 375, height: 812 })),
+      morph,
+    } as unknown as naver.maps.Map;
+    const maps = createFakeMaps();
+    const bounds = {
+      swLat: 37.45,
+      swLng: 126.95,
+      neLat: 37.55,
+      neLng: 127.05,
+    };
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps,
+      bounds,
+    });
+
+    const [latLng, zoom, options] = morph.mock.calls[0] ?? [];
+    const center = latLng as FakeLatLng;
+    const expectedZoom = Math.min(
+      Math.max(
+        Math.min(
+          getFitBoundsZoom({
+            bounds: normalizeLockerBounds(
+              bounds,
+              MIN_CLUSTER_FIT_BOUNDS_RADIUS_METERS,
+            ),
+            mapSize: { width: 375, height: 812 },
+            topPadding: CLUSTER_FIT_BOUNDS_TOP_PADDING_PX,
+            rightPadding: CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX,
+            bottomPadding: CLUSTER_FIT_BOUNDS_BOTTOM_PADDING_PX,
+            leftPadding: CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX,
+          }),
+          14,
+        ),
+        12,
+      ),
+      16,
+    );
+
+    expect(morph).toHaveBeenCalledTimes(1);
+    expect(center.latitude).toBeCloseTo(37.5);
+    expect(center.longitude).toBe(127);
+    expect(zoom).toBe(expectedZoom);
+    expect(options).toMatchObject({
+      duration: 800,
+      easing: "easeOutCubic",
+    });
+  });
+
+  it("does not zoom past the max zoom for tiny cluster bounds", () => {
+    const morph = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 15),
+      getSize: vi.fn(() => ({ width: 375, height: 812 })),
+      morph,
+    } as unknown as naver.maps.Map;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds: {
+        swLat: 37.497958,
+        swLng: 127.027539,
+        neLat: 37.497958,
+        neLng: 127.027539,
+      },
+      maxZoom: 16,
+      minRadiusMeters: 1,
+    });
+
+    expect(morph.mock.calls[0]?.[1]).toBe(16);
+  });
+
+  it("uses the minimum +2 zoom", () => {
+    const morph = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 6),
+      morph,
+    } as unknown as naver.maps.Map;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds: {
+        swLat: 33,
+        swLng: 126,
+        neLat: 38,
+        neLng: 129,
+      },
+    });
+
+    expect(morph.mock.calls[0]?.[1]).toBe(8);
+  });
+
+  it("uses the minimum +2 zoom above zoom level 9", () => {
+    const morph = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 10),
+      morph,
+    } as unknown as naver.maps.Map;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds: {
+        swLat: 33,
+        swLng: 126,
+        neLat: 38,
+        neLng: 129,
+      },
+    });
+
+    expect(morph.mock.calls[0]?.[1]).toBe(12);
+  });
+
+  it("does not zoom more than four levels from the current zoom", () => {
+    const morph = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 10),
+      getSize: vi.fn(() => ({ width: 375, height: 812 })),
+      morph,
+    } as unknown as naver.maps.Map;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds: {
+        swLat: 37.497958,
+        swLng: 127.027539,
+        neLat: 37.497958,
+        neLng: 127.027539,
+      },
+      maxZoom: 16,
+      minRadiusMeters: 1,
+    });
+
+    expect(morph.mock.calls[0]?.[1]).toBe(14);
+  });
+
+  it("sets both center and zoom when morph is unavailable", () => {
+    const setCenter = vi.fn();
+    const setZoom = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 10),
+      getSize: vi.fn(() => ({ width: 375, height: 812 })),
+      setCenter,
+      setZoom,
+    } as unknown as naver.maps.Map;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds: {
+        swLat: 37.45,
+        swLng: 126.95,
+        neLat: 37.55,
+        neLng: 127.05,
+      },
+    });
+
+    const [latLng] = setCenter.mock.calls[0] ?? [];
+    const center = latLng as FakeLatLng;
+
+    expect(setCenter).toHaveBeenCalledTimes(1);
+    expect(center.latitude).toBeCloseTo(37.5);
+    expect(center.longitude).toBe(127);
+    expect(setZoom).toHaveBeenCalledTimes(1);
+    expect(setZoom.mock.calls[0]?.[0]).toBeTypeOf("number");
+  });
+});
+
 describe("fitNaverMapToBounds", () => {
   it("uses normalized bounds before calling fitBounds", () => {
     const fitBounds = vi.fn();
@@ -96,6 +279,31 @@ describe("fitNaverMapToBounds", () => {
 
     expect(37.497958 - normalized.swLat).toBeGreaterThan(
       MIN_FIT_BOUNDS_RADIUS_METERS / 111_320,
+    );
+  });
+
+  it("can use the cluster minimum radius before fitting bounds", () => {
+    const fitBounds = vi.fn();
+    const map = { fitBounds } as unknown as naver.maps.Map;
+    const maps = createFakeMaps();
+
+    fitNaverMapToBounds({
+      map,
+      maps,
+      bounds: {
+        swLat: 37.497958,
+        swLng: 127.027539,
+        neLat: 37.497958,
+        neLng: 127.027539,
+      },
+      minRadiusMeters: MIN_CLUSTER_FIT_BOUNDS_RADIUS_METERS,
+    });
+
+    const [latLngBounds] = fitBounds.mock.calls[0] ?? [];
+    const normalizedBounds = latLngBounds as unknown as FakeLatLngBounds;
+
+    expect(37.497958 - normalizedBounds.southWest.latitude).toBeCloseTo(
+      MIN_CLUSTER_FIT_BOUNDS_RADIUS_METERS / 111_320,
     );
   });
 });
