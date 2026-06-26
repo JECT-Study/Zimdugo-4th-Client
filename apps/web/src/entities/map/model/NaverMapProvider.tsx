@@ -10,8 +10,8 @@ import {
 
 import {
   DEFAULT_NAVER_MAP_LANGUAGE,
-  normalizeNaverMapLanguage,
   type NaverMapLanguage,
+  normalizeNaverMapLanguage,
 } from "./naver-map-language";
 
 export type NaverMapSdkStatus = "idle" | "loading" | "ready" | "error";
@@ -84,6 +84,13 @@ const getNaverMapAuthUrl = ({
   return `${NAVER_MAP_AUTH_BASE_URL}?${params.toString()}`;
 };
 
+type NaverMapAuthCallbackWindow = Window &
+  typeof globalThis &
+  Record<string, unknown>;
+
+const getNaverMapAuthCallbackWindow = () =>
+  window as unknown as NaverMapAuthCallbackWindow;
+
 const verifyNaverMapAuth = async (clientId: string) => {
   if (typeof window === "undefined") return;
 
@@ -92,8 +99,9 @@ const verifyNaverMapAuth = async (clientId: string) => {
       .toString(36)
       .slice(2)}`;
     const script = document.createElement("script");
+    const callbackWindow = getNaverMapAuthCallbackWindow();
     const cleanup = () => {
-      delete (window as Record<string, unknown>)[callbackName];
+      delete callbackWindow[callbackName];
       script.remove();
     };
     const timeoutId = window.setTimeout(() => {
@@ -101,7 +109,7 @@ const verifyNaverMapAuth = async (clientId: string) => {
       reject(new Error("Naver Maps authentication request timed out."));
     }, 5000);
 
-    (window as Record<string, unknown>)[callbackName] = () => {
+    callbackWindow[callbackName] = () => {
       window.clearTimeout(timeoutId);
       cleanup();
       resolve();
@@ -179,7 +187,12 @@ export function NaverMapProvider({
 
   const naverMapLanguage = normalizeNaverMapLanguage(language);
   const submoduleKey = submodules.join(",");
+  const stableSubmodules = useMemo(
+    () => (submoduleKey ? submoduleKey.split(",") : []),
+    [submoduleKey],
+  );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey intentionally forces a manual SDK reload.
   useEffect(() => {
     let isMounted = true;
 
@@ -189,7 +202,7 @@ export function NaverMapProvider({
     loadNaverMapSdk({
       clientId,
       language: naverMapLanguage,
-      submodules,
+      submodules: stableSubmodules,
     })
       .then((loadedMaps) => {
         if (!isMounted) return;
@@ -215,7 +228,7 @@ export function NaverMapProvider({
     return () => {
       isMounted = false;
     };
-  }, [clientId, naverMapLanguage, submoduleKey, reloadKey]);
+  }, [clientId, naverMapLanguage, stableSubmodules, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((key) => key + 1);

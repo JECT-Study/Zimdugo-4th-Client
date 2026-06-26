@@ -533,7 +533,7 @@ export function DraggableBottomSheet({
   );
 
   return (
-    <div className={sheetWrapper}>
+    <div className={sheetWrapper} data-map-pinch-zoom-disabled="true">
       <motion.div
         animate={{ y: 0 }}
         className={sheetSurface}

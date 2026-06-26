@@ -107,6 +107,7 @@ declare namespace naver.maps {
     setMap(map: Map | null): void;
     setPosition(latlng: LatLng | LatLngLiteral): void;
     setIcon?(icon: MarkerIcon): void;
+    setZIndex?(zIndex: number): void;
     setVisible(visible: boolean): void;
   }
   // Event.addListener와 removeListener에만 전달하는 opaque 핸들이다.

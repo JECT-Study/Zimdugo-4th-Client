@@ -122,7 +122,6 @@ const createClusterPin = (
     ...overrides,
   }) as LockerPinItemResponse;
 
-
 class FakeLatLngBounds {
   constructor(
     public readonly sw: FakeLatLng,
@@ -319,8 +318,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('<svg width="90" height="90"');
-    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(options.icon?.size).toMatchObject({ width: 56.5, height: 56.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 28.3, y: 36.3 });
   });
 
   it("uses the selected locker map pin dimensions", () => {
@@ -341,8 +340,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
-    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(options.icon?.size).toMatchObject({ width: 56.5, height: 56.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 28.3, y: 36.3 });
   });
 
   it("uses the favorite locker map pin dimensions", () => {
@@ -362,8 +361,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="save"');
-    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(options.icon?.size).toMatchObject({ width: 56.5, height: 56.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 28.3, y: 36.3 });
   });
 
   it("uses an HTML icon option for place markers", () => {
@@ -388,8 +387,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain(">3<");
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('width="121" height="121"');
-    expect(options.icon?.size).toMatchObject({ width: 54.5, height: 54.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
+    expect(options.icon?.size).toMatchObject({ width: 70.5, height: 70.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 31.6, y: 44.4 });
   });
 
   it("uses S size and anchor for cluster markers with < 10 items", () => {
