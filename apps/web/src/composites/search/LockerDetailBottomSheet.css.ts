@@ -103,7 +103,7 @@ export const metaRow = style({
 });
 
 export const distanceRow = style({
-  color: vars.color.text.content,
+  color: vars.color.text.surface,
 });
 
 export const addressText = style({
@@ -165,18 +165,6 @@ export const divider = style({
   height: "1px",
   margin: `${vars.spacing[8]} 0`,
   backgroundColor: vars.color.border.default,
-});
-
-export const helperText = style({
-  overflow: "hidden",
-  margin: 0,
-  padding: `0 calc(${vars.spacing[4]} + 32px + ${vars.spacing[8]})`,
-  color: vars.color.text.surface,
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
 });
 
 export const imageReportCard = style({
@@ -291,6 +279,7 @@ export const detailIcon = style({
   width: "24px",
   height: "24px",
   flexShrink: 0,
+  color: vars.color.text.surface,
 });
 
 export const detailIconNeutral = style({});
@@ -363,6 +352,14 @@ export const feedbackRow = style({
   alignItems: "center",
   gap: vars.spacing[8],
   width: "100%",
+});
+
+export const actionDivider = style({
+  width: `calc(100% + (${vars.spacing[16]} * 2))`,
+  height: "1px",
+  margin: `${vars.spacing[8]} -${vars.spacing[16]}`,
+  flexShrink: 0,
+  backgroundColor: vars.color.border.default,
 });
 
 export const feedbackButton = style({

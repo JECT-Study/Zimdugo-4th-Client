@@ -4,9 +4,9 @@ import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
-  IconNormalCapacity24,
-  IconNormalMapPin24,
-  IconNormalWallet24,
+  IconLockerDetailCapacity24,
+  IconLockerDetailMapPin24,
+  IconLockerDetailWallet24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
@@ -25,6 +25,7 @@ import {
 } from "#/shared/lib/locker-detail-labels";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {
+  actionDivider,
   actionRow,
   addressText,
   backButton,
@@ -55,7 +56,6 @@ import {
   fullIconActionButton,
   fullImageReportCard,
   fullPrimaryActionButton,
-  helperText,
   iconActionButton,
   imageReportCard,
   imageReportText,
@@ -195,7 +195,6 @@ export function LockerDetailBottomSheet({
     ? m.search_favorite_remove()
     : m.search_favorite_add();
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
-
   const handleFavoritePress = () => {
     onFavoriteChange?.(locker, !locker.isFavorite);
   };
@@ -302,26 +301,25 @@ function FullDetailContent({
       <div className={contentStack}>
         <SummarySection
           locker={locker}
-          detailHelpText={detailHelpText}
           favoriteLabel={favoriteLabel}
           onFavoritePress={onFavoritePress}
           onClose={onClose}
         />
         <div className={fullDetailList}>
           <DetailInfoRow
-            icon={<IconNormalMapPin24 state="active" />}
+            icon={<IconLockerDetailMapPin24 />}
             title={locker.address}
             description={locker.floorLabel}
           />
           <DetailInfoRow
-            icon={<IconNormalWallet24 />}
+            icon={<IconLockerDetailWallet24 />}
             title={m.locker_detail_price_section()}
             description={locker.priceLabel ?? formatLockerPriceLabel()}
             iconTone="neutral"
           />
           {locker.sizeLabel ? (
             <DetailInfoRow
-              icon={<IconNormalCapacity24 />}
+              icon={<IconLockerDetailCapacity24 />}
               title={m.locker_detail_size_section()}
               description={locker.sizeLabel}
               iconTone="neutral"
@@ -340,49 +338,52 @@ function FullDetailContent({
           <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
         {hasFeedbackVotes ? (
-          <div className={feedbackRow}>
-            {locker.accurateCount !== undefined ? (
-              <button
-                type="button"
-                disabled={!canVote}
-                aria-disabled={!canVote}
-                className={[
-                  feedbackButton,
-                  locker.isAccurateVoted ? feedbackButtonSelected : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                aria-pressed={locker.isAccurateVoted === true}
-                onClick={() => handleVotePress("CORRECT")}
-              >
-                {m.locker_detail_feedback_accurate({
-                  count: String(locker.accurateCount),
-                })}
-              </button>
-            ) : null}
-            {locker.inaccurateCount !== undefined ? (
-              <button
-                type="button"
-                disabled={!canVote}
-                aria-disabled={!canVote}
-                className={[
-                  feedbackButton,
-                  feedbackButtonNegative,
-                  locker.isInaccurateVoted
-                    ? feedbackButtonNegativeSelected
-                    : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                aria-pressed={locker.isInaccurateVoted === true}
-                onClick={() => handleVotePress("INCORRECT")}
-              >
-                {m.locker_detail_feedback_inaccurate({
-                  count: String(locker.inaccurateCount),
-                })}
-              </button>
-            ) : null}
-          </div>
+          <>
+            <div className={feedbackRow}>
+              {locker.accurateCount !== undefined ? (
+                <button
+                  type="button"
+                  disabled={!canVote}
+                  aria-disabled={!canVote}
+                  className={[
+                    feedbackButton,
+                    locker.isAccurateVoted ? feedbackButtonSelected : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-pressed={locker.isAccurateVoted === true}
+                  onClick={() => handleVotePress("CORRECT")}
+                >
+                  {m.locker_detail_feedback_accurate({
+                    count: String(locker.accurateCount),
+                  })}
+                </button>
+              ) : null}
+              {locker.inaccurateCount !== undefined ? (
+                <button
+                  type="button"
+                  disabled={!canVote}
+                  aria-disabled={!canVote}
+                  className={[
+                    feedbackButton,
+                    feedbackButtonNegative,
+                    locker.isInaccurateVoted
+                      ? feedbackButtonNegativeSelected
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-pressed={locker.isInaccurateVoted === true}
+                  onClick={() => handleVotePress("INCORRECT")}
+                >
+                  {m.locker_detail_feedback_inaccurate({
+                    count: String(locker.inaccurateCount),
+                  })}
+                </button>
+              ) : null}
+            </div>
+            <div className={actionDivider} />
+          </>
         ) : null}
         <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
       </div>
@@ -407,13 +408,11 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
 
 function SummarySection({
   locker,
-  detailHelpText,
   favoriteLabel,
   onFavoritePress,
   onClose,
 }: {
   locker: LockerDetailItem;
-  detailHelpText: string;
   favoriteLabel: string;
   onFavoritePress: () => void;
   onClose: () => void;
@@ -426,11 +425,10 @@ function SummarySection({
       <div className={summaryRow}>
         <div className={summaryTextColumn}>
           <h2 className={lockerTitle}>{locker.title}</h2>
-          <InlineMeta left={locker.categoryLabel} right={locker.updatedLabel} />
           <InlineMeta
             className={distanceRow}
-            left={locker.distanceLabel}
-            right={<span className={addressText}>{locker.address}</span>}
+            left={<span className={addressText}>{locker.address}</span>}
+            right={null}
           />
         </div>
 
@@ -457,8 +455,6 @@ function SummarySection({
           </button>
         </div>
       </div>
-      <div className={divider} />
-      <p className={helperText}>{detailHelpText}</p>
     </section>
   );
 }
