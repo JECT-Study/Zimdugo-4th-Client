@@ -3,8 +3,6 @@ import { httpGet } from "#/shared/lib/apiClient";
 interface LockerPinBase {
   latitude: number;
   longitude: number;
-  lockerCount?: number;
-  isFavorite?: boolean;
 }
 
 export type LockerPinItemResponse =
@@ -12,26 +10,55 @@ export type LockerPinItemResponse =
       pinType: "LOCKER";
       lockerId: number;
       placeId: null;
+      isFavorite: boolean | null;
+      lockerCount: null;
+      pinCount: null;
+      bounds: null;
     })
   | (LockerPinBase & {
       pinType: "PLACE";
       placeId: number;
       lockerId: null;
+      isFavorite: null;
+      lockerCount: number;
+      pinCount: null;
+      bounds: null;
+    })
+  | (LockerPinBase & {
+      pinType: "CLUSTER";
+      placeId: null;
+      lockerId: null;
+      isFavorite: null;
+      lockerCount: null;
+      pinCount: number;
+      bounds: LockerBoundsRaw;
     });
 
 interface LockerPinItemRaw {
-  pinType: "LOCKER" | "PLACE";
+  pinType: "LOCKER" | "PLACE" | "CLUSTER";
   placeId: number | null;
   lockerId: number | null;
   latitude: number;
   longitude: number;
-  lockerCount?: number;
-  isFavorite?: boolean;
+  isFavorite?: boolean | null;
+  lockerCount?: number | null;
+  pinCount?: number | null;
+  bounds?: LockerBoundsRaw | null;
 }
 
 const toLockerPinItem = (
   item: LockerPinItemRaw,
 ): LockerPinItemResponse | null => {
+  if (item.pinType === "CLUSTER" && (item.pinCount ?? 0) <= 1) {
+    if (item.lockerId !== null) {
+      return toLockerPinItem({ ...item, pinType: "LOCKER" });
+    }
+
+    if (item.placeId !== null) {
+      return toLockerPinItem({ ...item, pinType: "PLACE" });
+    }
+  }
+
   if (item.pinType === "LOCKER" && item.lockerId !== null) {
     return {
       pinType: "LOCKER",
@@ -39,8 +66,10 @@ const toLockerPinItem = (
       placeId: null,
       latitude: item.latitude,
       longitude: item.longitude,
-      lockerCount: item.lockerCount,
-      isFavorite: item.isFavorite,
+      isFavorite: item.isFavorite ?? null,
+      lockerCount: null,
+      pinCount: null,
+      bounds: null,
     };
   }
 
@@ -51,8 +80,29 @@ const toLockerPinItem = (
       lockerId: null,
       latitude: item.latitude,
       longitude: item.longitude,
-      lockerCount: item.lockerCount,
-      isFavorite: item.isFavorite,
+      isFavorite: null,
+      lockerCount: item.lockerCount ?? 0,
+      pinCount: null,
+      bounds: null,
+    };
+  }
+
+  if (
+    item.pinType === "CLUSTER" &&
+    item.pinCount != null &&
+    item.pinCount > 1 &&
+    item.bounds != null
+  ) {
+    return {
+      pinType: "CLUSTER",
+      placeId: null,
+      lockerId: null,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      isFavorite: null,
+      lockerCount: null,
+      pinCount: item.pinCount,
+      bounds: item.bounds,
     };
   }
 
@@ -220,9 +270,11 @@ export interface PlaceLockersFilterParams {
 }
 
 export interface GetLockerPinsParams {
-  lat: number;
-  lng: number;
-  radius?: number;
+  swLat: number;
+  swLng: number;
+  neLat: number;
+  neLng: number;
+  zoom: number;
   signal?: AbortSignal;
 }
 
@@ -250,7 +302,9 @@ export interface GetLockerDetailParams extends LockerSearchLocationParams {
   signal?: AbortSignal;
 }
 
-// B안 확정: 줌 레벨에 따른 고정 반경(Max 1000m) 매핑
+/**
+ * @deprecated bounds 기반 API로 전환됨. 호환성을 위해 유지.
+ */
 export const ZOOM_TO_RADIUS_MAP: Record<number, number> = {
   10: 1000,
   11: 1000,
@@ -266,6 +320,9 @@ export const ZOOM_TO_RADIUS_MAP: Record<number, number> = {
   21: 10,
 };
 
+/**
+ * @deprecated bounds 기반 API로 전환됨. 호환성을 위해 유지.
+ */
 export const getRadiusFromZoom = (zoom: number): number => {
   if (zoom < 10) return 1000;
   if (zoom > 21) return 10;
