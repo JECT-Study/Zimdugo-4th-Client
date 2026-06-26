@@ -18,8 +18,8 @@ import {
 const INTERACTIVE_DRAG_EXCLUSION_SELECTOR =
   'button, a, input, textarea, select, [role="button"], [contenteditable="true"]';
 
-const SNAP_DISTANCE_THRESHOLD = 48;
-const SNAP_VELOCITY_THRESHOLD = 420;
+const SNAP_VELOCITY_PROJECTION_MS = 120;
+const MAX_VELOCITY_PROJECTION_PX = 96;
 
 export interface BottomSheetLiveOffsetState {
   offset: number;
@@ -163,26 +163,31 @@ export function DraggableBottomSheet({
   const settleToNextSnap = useCallback(
     ({ offsetY, velocityY }: { offsetY: number; velocityY: number }) => {
       const startSnap = dragStateRef.current?.startSnap ?? currentSnap;
-      const currentIndex = snapPoints.reduce((nearestIndex, point, index) => {
-        const nearestDistance = Math.abs(snapPoints[nearestIndex] - startSnap);
-        const currentDistance = Math.abs(point - startSnap);
-        return currentDistance < nearestDistance ? index : nearestIndex;
-      }, 0);
+      const velocityProjection = Math.min(
+        MAX_VELOCITY_PROJECTION_PX,
+        Math.max(
+          -MAX_VELOCITY_PROJECTION_PX,
+          (velocityY * SNAP_VELOCITY_PROJECTION_MS) / 1000,
+        ),
+      );
+      const direction = Math.sign(offsetY || velocityY);
+      const projectedSnap = clampSnap(startSnap + offsetY + velocityProjection);
+      const nextSnap = snapPoints.reduce((nearestSnap, point) => {
+        const nearestDistance = Math.abs(nearestSnap - projectedSnap);
+        const currentDistance = Math.abs(point - projectedSnap);
 
-      const hasIntent =
-        Math.abs(offsetY) >= SNAP_DISTANCE_THRESHOLD ||
-        Math.abs(velocityY) >= SNAP_VELOCITY_THRESHOLD;
-
-      let nextSnap = startSnap;
-      if (hasIntent) {
-        if (offsetY < 0 || velocityY < -SNAP_VELOCITY_THRESHOLD) {
-          const nextIndex = Math.max(0, currentIndex - 1);
-          nextSnap = snapPoints[nextIndex];
-        } else if (offsetY > 0 || velocityY > SNAP_VELOCITY_THRESHOLD) {
-          const nextIndex = Math.min(snapPoints.length - 1, currentIndex + 1);
-          nextSnap = snapPoints[nextIndex];
+        if (currentDistance < nearestDistance) {
+          return point;
         }
-      }
+        if (currentDistance === nearestDistance && direction > 0) {
+          return Math.max(nearestSnap, point);
+        }
+        if (currentDistance === nearestDistance && direction < 0) {
+          return Math.min(nearestSnap, point);
+        }
+
+        return nearestSnap;
+      }, snapPoints[0]);
 
       const clampedNextSnap = clampSnap(nextSnap);
       setLiveOffset(clampedNextSnap);

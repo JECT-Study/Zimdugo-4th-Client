@@ -22,7 +22,7 @@ export const sheetSurface = style({
   right: 0,
   bottom: 0,
   height: "calc(100dvh - var(--sheet-offset, 0px))",
-  transition: "height 220ms ease-out",
+  transition: "height 260ms cubic-bezier(0.16, 1, 0.3, 1)",
   willChange: "height",
   pointerEvents: "none",
 });
