@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DraggableBottomSheet,
   resolveBottomSheetExpandedProgress,
+  resolveBottomSheetNextSnap,
   shouldStartBottomSheetDrag,
 } from "./DraggableBottomSheet";
 
@@ -167,6 +168,45 @@ describe("resolveBottomSheetExpandedProgress", () => {
         offset: 900,
       }),
     ).toBe(0);
+  });
+});
+
+describe("resolveBottomSheetNextSnap", () => {
+  it("uses the nearest configured snap from the actual release offset", () => {
+    expect(
+      resolveBottomSheetNextSnap({
+        startSnap: 240,
+        offsetY: 310,
+        snapPoints: [40, 240, 480, 720],
+      }),
+    ).toBe(480);
+  });
+
+  it("does not skip the mini snap when the release point is closer to mini than dismiss", () => {
+    expect(
+      resolveBottomSheetNextSnap({
+        startSnap: 240,
+        offsetY: 350,
+        snapPoints: [40, 240, 480, 720],
+      }),
+    ).toBe(480);
+  });
+
+  it("uses drag direction to break an exact midpoint tie", () => {
+    expect(
+      resolveBottomSheetNextSnap({
+        startSnap: 240,
+        offsetY: 120,
+        snapPoints: [40, 240, 480, 720],
+      }),
+    ).toBe(480);
+    expect(
+      resolveBottomSheetNextSnap({
+        startSnap: 480,
+        offsetY: -120,
+        snapPoints: [40, 240, 480, 720],
+      }),
+    ).toBe(240);
   });
 });
 

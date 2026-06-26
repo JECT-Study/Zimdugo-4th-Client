@@ -24,8 +24,6 @@ import {
 const INTERACTIVE_DRAG_EXCLUSION_SELECTOR =
   'button, a, input, textarea, select, [role="button"], [contenteditable="true"]';
 
-const SNAP_VELOCITY_PROJECTION_MS = 120;
-const MAX_VELOCITY_PROJECTION_PX = 96;
 const SHEET_SETTLE_SPRING = {
   type: "spring",
   stiffness: 420,
@@ -102,10 +100,37 @@ export const shouldStartBottomSheetDrag = (
 interface DragState {
   startY: number;
   startSnap: number;
-  lastY: number;
-  lastTime: number;
-  velocityY: number;
 }
+
+export const resolveBottomSheetNextSnap = ({
+  offsetY,
+  snapPoints,
+  startSnap,
+}: {
+  offsetY: number;
+  snapPoints: number[];
+  startSnap: number;
+}) => {
+  const projectedSnap = startSnap + offsetY;
+  const direction = Math.sign(offsetY);
+
+  return snapPoints.reduce((nearestSnap, point) => {
+    const nearestDistance = Math.abs(nearestSnap - projectedSnap);
+    const currentDistance = Math.abs(point - projectedSnap);
+
+    if (currentDistance < nearestDistance) {
+      return point;
+    }
+    if (currentDistance === nearestDistance && direction > 0) {
+      return Math.max(nearestSnap, point);
+    }
+    if (currentDistance === nearestDistance && direction < 0) {
+      return Math.min(nearestSnap, point);
+    }
+
+    return nearestSnap;
+  }, snapPoints[0]);
+};
 
 export function DraggableBottomSheet({
   children,
@@ -191,33 +216,13 @@ export function DraggableBottomSheet({
   }, [resolvedInitialSnap, clampSnap, sheetOffset]);
 
   const settleToNextSnap = useCallback(
-    ({ offsetY, velocityY }: { offsetY: number; velocityY: number }) => {
+    ({ offsetY }: { offsetY: number }) => {
       const startSnap = dragStateRef.current?.startSnap ?? currentSnap;
-      const velocityProjection = Math.min(
-        MAX_VELOCITY_PROJECTION_PX,
-        Math.max(
-          -MAX_VELOCITY_PROJECTION_PX,
-          (velocityY * SNAP_VELOCITY_PROJECTION_MS) / 1000,
-        ),
-      );
-      const direction = Math.sign(offsetY || velocityY);
-      const projectedSnap = clampSnap(startSnap + offsetY + velocityProjection);
-      const nextSnap = snapPoints.reduce((nearestSnap, point) => {
-        const nearestDistance = Math.abs(nearestSnap - projectedSnap);
-        const currentDistance = Math.abs(point - projectedSnap);
-
-        if (currentDistance < nearestDistance) {
-          return point;
-        }
-        if (currentDistance === nearestDistance && direction > 0) {
-          return Math.max(nearestSnap, point);
-        }
-        if (currentDistance === nearestDistance && direction < 0) {
-          return Math.min(nearestSnap, point);
-        }
-
-        return nearestSnap;
-      }, snapPoints[0]);
+      const nextSnap = resolveBottomSheetNextSnap({
+        offsetY,
+        snapPoints,
+        startSnap,
+      });
 
       const clampedNextSnap = clampSnap(nextSnap);
       settleAnimationRef.current?.stop();
@@ -256,13 +261,6 @@ export function DraggableBottomSheet({
         return;
       }
 
-      const now = performance.now();
-      const elapsed = Math.max(1, now - dragState.lastTime);
-      dragState.velocityY =
-        ((event.clientY - dragState.lastY) / elapsed) * 1000;
-      dragState.lastY = event.clientY;
-      dragState.lastTime = now;
-
       const nextLiveOffset = clampSnap(
         dragState.startSnap + event.clientY - dragState.startY,
       );
@@ -280,7 +278,6 @@ export function DraggableBottomSheet({
 
       settleToNextSnap({
         offsetY: event.clientY - dragState.startY,
-        velocityY: dragState.velocityY,
       });
       dragStateRef.current = null;
       window.removeEventListener("pointermove", handlePointerMove);
@@ -300,9 +297,6 @@ export function DraggableBottomSheet({
     dragStateRef.current = {
       startY: event.clientY,
       startSnap: clampSnap(sheetOffset.get()),
-      lastY: event.clientY,
-      lastTime: performance.now(),
-      velocityY: 0,
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", finishDrag);
