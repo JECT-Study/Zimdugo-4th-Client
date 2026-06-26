@@ -4,11 +4,11 @@ import {
   CLUSTER_FIT_BOUNDS_BOTTOM_PADDING_PX,
   CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX,
   CLUSTER_FIT_BOUNDS_TOP_PADDING_PX,
+  fitNaverMapToBounds,
+  focusNaverMapOnClusterBounds,
+  getFitBoundsZoom,
   MIN_CLUSTER_FIT_BOUNDS_RADIUS_METERS,
   MIN_FIT_BOUNDS_RADIUS_METERS,
-  focusNaverMapOnClusterBounds,
-  fitNaverMapToBounds,
-  getFitBoundsZoom,
   normalizeLockerBounds,
 } from "./map-bounds";
 
@@ -208,6 +208,37 @@ describe("focusNaverMapOnClusterBounds", () => {
 
     expect(morph.mock.calls[0]?.[1]).toBe(14);
   });
+
+  it("sets both center and zoom when morph is unavailable", () => {
+    const setCenter = vi.fn();
+    const setZoom = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 10),
+      getSize: vi.fn(() => ({ width: 375, height: 812 })),
+      setCenter,
+      setZoom,
+    } as unknown as naver.maps.Map;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds: {
+        swLat: 37.45,
+        swLng: 126.95,
+        neLat: 37.55,
+        neLng: 127.05,
+      },
+    });
+
+    const [latLng] = setCenter.mock.calls[0] ?? [];
+    const center = latLng as FakeLatLng;
+
+    expect(setCenter).toHaveBeenCalledTimes(1);
+    expect(center.latitude).toBeCloseTo(37.5);
+    expect(center.longitude).toBe(127);
+    expect(setZoom).toHaveBeenCalledTimes(1);
+    expect(setZoom.mock.calls[0]?.[0]).toBeTypeOf("number");
+  });
 });
 
 describe("fitNaverMapToBounds", () => {
@@ -271,8 +302,8 @@ describe("fitNaverMapToBounds", () => {
     const [latLngBounds] = fitBounds.mock.calls[0] ?? [];
     const normalizedBounds = latLngBounds as unknown as FakeLatLngBounds;
 
-    expect(37.497958 - normalizedBounds.southWest.latitude).toBeGreaterThan(
-      MIN_FIT_BOUNDS_RADIUS_METERS / 111_320,
+    expect(37.497958 - normalizedBounds.southWest.latitude).toBeCloseTo(
+      MIN_CLUSTER_FIT_BOUNDS_RADIUS_METERS / 111_320,
     );
   });
 });

@@ -55,8 +55,7 @@ export const normalizeLockerBounds = (
   const centerLat = (swLat + neLat) / 2;
   const centerLng = (swLng + neLng) / 2;
   const minLatDelta = minRadiusMeters / METERS_PER_LATITUDE_DEGREE;
-  const minLngDelta =
-    minRadiusMeters / getLongitudeMetersPerDegree(centerLat);
+  const minLngDelta = minRadiusMeters / getLongitudeMetersPerDegree(centerLat);
   const latDelta = Math.max((neLat - swLat) / 2, minLatDelta);
   const lngDelta = Math.max((neLng - swLng) / 2, minLngDelta);
 
@@ -136,8 +135,14 @@ export const getFitBoundsZoom = ({
   const neLng = Math.max(bounds.swLng, bounds.neLng);
   const latSpan = Math.abs(getMercatorY(swLat) - getMercatorY(neLat));
   const lngSpan = Math.abs(getMercatorX(neLng) - getMercatorX(swLng));
-  const availableWidth = Math.max(mapSize.width - leftPadding - rightPadding, 1);
-  const availableHeight = Math.max(mapSize.height - topPadding - bottomPadding, 1);
+  const availableWidth = Math.max(
+    mapSize.width - leftPadding - rightPadding,
+    1,
+  );
+  const availableHeight = Math.max(
+    mapSize.height - topPadding - bottomPadding,
+    1,
+  );
   const lngZoom =
     lngSpan > 0
       ? Math.log2(availableWidth / (WEB_MERCATOR_TILE_SIZE_PX * lngSpan))
@@ -175,8 +180,7 @@ export const focusNaverMapOnClusterBounds = ({
   const centerLng = (normalizedBounds.swLng + normalizedBounds.neLng) / 2;
   const currentZoom = map.getZoom?.() ?? 0;
   const mapSize = map.getSize?.();
-  const minimumZoom =
-    minZoom ?? Math.min(currentZoom + minZoomStep, maxZoom);
+  const minimumZoom = minZoom ?? Math.min(currentZoom + minZoomStep, maxZoom);
   const maximumZoom = Math.min(currentZoom + maxZoomStep, maxZoom);
   const fitZoom = mapSize
     ? getFitBoundsZoom({
@@ -199,8 +203,12 @@ export const focusNaverMapOnClusterBounds = ({
     return true;
   }
 
-  if (typeof map.panTo === "function") {
-    map.panTo(targetLatLng);
+  if (
+    typeof map.setCenter === "function" &&
+    typeof map.setZoom === "function"
+  ) {
+    map.setCenter(targetLatLng);
+    map.setZoom(targetZoom);
     return true;
   }
 

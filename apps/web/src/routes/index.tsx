@@ -130,6 +130,7 @@ import {
 import { toLockerDetailItem } from "#/shared/api/locker-adapters";
 import {
   getLockerDetail,
+  type LockerBoundsRaw,
   type LockerPinItemResponse,
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
@@ -1925,6 +1926,15 @@ export function IndexPage() {
       ? handleBackFromMapPlaceSheet
       : handleBackToKeywordList
     : undefined;
+  const handleClusterClick = useCallback(
+    (bounds: LockerBoundsRaw) => {
+      focusNaverMapOnClusterBounds({
+        map: mapInstance,
+        bounds,
+      });
+    },
+    [mapInstance],
+  );
 
   return (
     <main className={pageWrapper}>
@@ -1965,12 +1975,7 @@ export function IndexPage() {
             map={mapInstance}
             selectedPinId={selectedPinId}
             onSelectPin={handleIdlePinSelect}
-            onClusterClick={(bounds) => {
-              focusNaverMapOnClusterBounds({
-                map: mapInstance,
-                bounds,
-              });
-            }}
+            onClusterClick={handleClusterClick}
           />
         )}
         {!isMapLoading &&

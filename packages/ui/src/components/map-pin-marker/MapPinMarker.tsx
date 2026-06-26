@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { vars } from "../../vars.css.ts";
-import { clusterPin, root } from "./MapPinMarker.css.ts";
 import { ClusterMapPin } from "../cluster-map-pin/ClusterMapPin.tsx";
+import { clusterPin, root } from "./MapPinMarker.css.ts";
 
 export type MapPinMarkerVariant =
   | "locker"
@@ -20,14 +20,28 @@ export interface MapPinMarkerProps {
 const LOCKER_SOURCE_SIZE = 90;
 const PLACE_CLUSTER_SOURCE_SIZE = 121;
 
+const normalizeCount = (count?: number | string): number | null => {
+  if (typeof count === "number") {
+    return Number.isFinite(count) ? count : null;
+  }
+
+  if (typeof count === "string") {
+    const normalizedCount = count.trim();
+    return /^\d+$/.test(normalizedCount) ? Number(normalizedCount) : null;
+  }
+
+  return null;
+};
+
+const getClusterSize = (count?: number | string): "s" | "l" =>
+  (normalizeCount(count) ?? 0) >= 10 ? "l" : "s";
+
 const getSourceSize = (
   variant: MapPinMarkerVariant,
   count?: number | string,
 ): number => {
   if (variant === "cluster") {
-    const numCount =
-      typeof count === "string" ? parseInt(count, 10) : (count ?? 0);
-    return numCount >= 10 ? 400 : 300;
+    return getClusterSize(count) === "l" ? 400 : 300;
   }
   return variant === "placeCluster"
     ? PLACE_CLUSTER_SOURCE_SIZE
@@ -35,7 +49,8 @@ const getSourceSize = (
 };
 
 const formatCount = (count: number | string): string => {
-  if (typeof count === "number" && count > 9) return "9+";
+  const normalizedCount = normalizeCount(count);
+  if (normalizedCount != null && normalizedCount > 9) return "9+";
   return String(count);
 };
 
@@ -349,15 +364,7 @@ export function MapPinMarker({
       ) : variant === "cluster" ? (
         <ClusterMapPin
           className={clusterPin}
-          size={
-            typeof count === "number"
-              ? count >= 10
-                ? "l"
-                : "s"
-              : typeof count === "string" && parseInt(count, 10) >= 10
-                ? "l"
-                : "s"
-          }
+          size={getClusterSize(count)}
           count={count}
         />
       ) : (
