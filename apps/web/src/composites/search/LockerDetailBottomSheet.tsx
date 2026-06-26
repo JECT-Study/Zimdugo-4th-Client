@@ -427,8 +427,8 @@ function SummarySection({
           <h2 className={lockerTitle}>{locker.title}</h2>
           <InlineMeta
             className={distanceRow}
-            left={<span className={addressText}>{locker.address}</span>}
-            right={null}
+            left={locker.categoryLabel}
+            right={<span className={addressText}>{locker.address}</span>}
           />
         </div>
 

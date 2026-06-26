@@ -357,7 +357,7 @@ export const feedbackRow = style({
 export const actionDivider = style({
   width: `calc(100% + (${vars.spacing[16]} * 2))`,
   height: "1px",
-  margin: `${vars.spacing[8]} -${vars.spacing[16]}`,
+  margin: `11.5px -${vars.spacing[16]}`,
   flexShrink: 0,
   backgroundColor: vars.color.border.default,
 });
