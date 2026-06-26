@@ -1,23 +1,23 @@
-import { type ReactNode, useEffect, useState } from "react";
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
-  IconLockerDetailHeader24,
-  IconNormalCapacity24,
-  IconNormalMapPin24,
-  IconNormalWallet24,
+  IconLockerDetailCapacity24,
+  IconLockerDetailMapPin24,
+  IconLockerDetailWallet24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
+  IconX24,
 } from "@repo/ui/tokens/icons";
-import type { LockerVoteType } from "#/shared/api/locker-votes";
+import { type ReactNode, useEffect, useState } from "react";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
-import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
+import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
+import type { LockerVoteType } from "#/shared/api/locker-votes";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   formatLockerOperatingHoursLabel,
@@ -25,6 +25,7 @@ import {
 } from "#/shared/lib/locker-detail-labels";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import {
+  actionDivider,
   actionRow,
   addressText,
   backButton,
@@ -32,6 +33,7 @@ import {
   contentStack,
   detailDescription,
   detailDescriptionMultiline,
+  detailHeader,
   detailIcon,
   detailIconNeutral,
   detailItem,
@@ -43,20 +45,18 @@ import {
   distanceRow,
   divider,
   favoriteButton,
+  feedbackActionSection,
   feedbackButton,
   feedbackButtonNegative,
   feedbackButtonNegativeSelected,
   feedbackButtonSelected,
   feedbackRow,
-  fullActionBar,
   fullActionRow,
   fullContentScroll,
   fullDetailList,
   fullIconActionButton,
   fullImageReportCard,
   fullPrimaryActionButton,
-  fullSheetColumn,
-  helperText,
   iconActionButton,
   imageReportCard,
   imageReportText,
@@ -66,6 +66,9 @@ import {
   primaryActionButton,
   recentUpdatedText,
   sheetColumn,
+  summaryActions,
+  summaryCloseButton,
+  summaryDivider,
   summaryRow,
   summarySection,
   summaryTextColumn,
@@ -100,8 +103,75 @@ export interface LockerDetailBottomSheetProps {
   /** 풀 스냅으로 열 때만 지정. 하프 스냅은 snapPoint에 유지 */
   initialSnapPoint?: number;
   maxSnapPoint?: number;
+  animateOnMount?: boolean;
   onSnapChange?: (nextSnap: number) => void;
 }
+
+const DETAIL_MIN_TOP_OFFSET = 60;
+const DETAIL_FULL_VISIBLE_HEIGHT = 780;
+const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
+const DETAIL_MINI_VISIBLE_HEIGHT = 111;
+const DETAIL_HALF_VISIBLE_HEIGHT = 246;
+const DETAIL_DRAG_SENSITIVITY = 1.2;
+
+interface ResolveLockerDetailSnapPointsOptions {
+  windowHeight: number;
+  minSnapPoint?: number;
+  snapPoint?: number;
+  maxSnapPoint?: number;
+}
+
+export const resolveLockerDetailSnapOffset = ({
+  maxSnapPoint,
+  minSnapPoint,
+  visibleHeight,
+  windowHeight,
+}: {
+  maxSnapPoint: number;
+  minSnapPoint: number;
+  visibleHeight: number;
+  windowHeight: number;
+}) =>
+  Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
+
+export const resolveLockerDetailSnapPoints = ({
+  maxSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  windowHeight,
+}: ResolveLockerDetailSnapPointsOptions) => {
+  const resolvedMaxSnapPoint =
+    maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
+  const resolvedMinSnapPoint =
+    minSnapPoint ??
+    resolveLockerDetailSnapOffset({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: DETAIL_MIN_TOP_OFFSET,
+      visibleHeight: DETAIL_FULL_VISIBLE_HEIGHT,
+      windowHeight,
+    });
+  const resolvedSnapPoint =
+    snapPoint ??
+    resolveLockerDetailSnapOffset({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      visibleHeight: DETAIL_HALF_VISIBLE_HEIGHT,
+      windowHeight,
+    });
+  const resolvedMiniSnapPoint = resolveLockerDetailSnapOffset({
+    maxSnapPoint: resolvedMaxSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    visibleHeight: DETAIL_MINI_VISIBLE_HEIGHT,
+    windowHeight,
+  });
+
+  return {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  };
+};
 
 export const createLockerDetailFromSearchItem = (
   item: SearchLockerResultItem,
@@ -131,7 +201,7 @@ export const createLockerDetailPlaceholder = (
 ): LockerDetailItem => ({
   itemType: "LOCKER",
   lockerId,
-  title: "…",
+  title: "...",
   address: "",
   categoryLabel: "",
   updatedLabel: "",
@@ -178,26 +248,33 @@ export function LockerDetailBottomSheet({
   snapPoint,
   initialSnapPoint,
   maxSnapPoint,
+  animateOnMount = false,
   onSnapChange,
 }: LockerDetailBottomSheetProps) {
-  const [windowHeight, setWindowHeight] = useState(
-    typeof window !== "undefined" ? window.innerHeight : 812,
-  );
-  const resolvedSnapPoint = snapPoint ?? Math.max(44, windowHeight - 380);
-  const resolvedInitialSnapPoint = initialSnapPoint ?? resolvedSnapPoint;
-  const resolvedMinSnapPoint = minSnapPoint ?? 44;
-  const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 52;
-  const [currentSnapPoint, setCurrentSnapPoint] = useState(
-    resolvedInitialSnapPoint,
-  );
+  const [windowHeight, setWindowHeight] = useState(812);
+  const {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  } = resolveLockerDetailSnapPoints({
+    maxSnapPoint,
+    minSnapPoint,
+    snapPoint,
+    windowHeight,
+  });
+  const resolvedInitialSnapPoint =
+    initialSnapPoint !== undefined
+      ? Math.min(
+          resolvedMaxSnapPoint,
+          Math.max(resolvedMinSnapPoint, initialSnapPoint),
+        )
+      : resolvedSnapPoint;
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
     : m.search_favorite_add();
-  const detailHelpText =
-    locker.detailHelpText ?? m.locker_detail_detail_help();
-  const isFull = currentSnapPoint <= resolvedMinSnapPoint + 24;
-
+  const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const handleFavoritePress = () => {
     onFavoriteChange?.(locker, !locker.isFavorite);
   };
@@ -214,17 +291,9 @@ export function LockerDetailBottomSheet({
     onNavigate?.(locker);
   };
 
-  const handleSnapChange = (nextSnap: number) => {
-    setCurrentSnapPoint(nextSnap);
-    onSnapChange?.(nextSnap);
-  };
-
-  useEffect(() => {
-    setCurrentSnapPoint(resolvedInitialSnapPoint);
-  }, [locker.lockerId, resolvedInitialSnapPoint]);
-
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -233,35 +302,29 @@ export function LockerDetailBottomSheet({
     <DraggableBottomSheet
       key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
       snapPoint={resolvedSnapPoint}
-      initialSnapPoint={initialSnapPoint}
+      initialSnapPoint={resolvedInitialSnapPoint}
       minSnapPoint={resolvedMinSnapPoint}
+      miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
-      onSnapChange={handleSnapChange}
+      dragSensitivity={DETAIL_DRAG_SENSITIVITY}
+      animateOnMount={animateOnMount}
+      showHomeIndicator={false}
+      onSnapChange={onSnapChange}
+      onDismiss={handleBack}
     >
-      <div
-        className={[sheetColumn, isFull ? fullSheetColumn : ""]
-          .filter(Boolean)
-          .join(" ")}
-      >
+      <div className={sheetColumn}>
         {loadState === "error" ? (
           <LockerDetailErrorContent onBack={handleBack} onRetry={onRetry} />
-        ) : isFull ? (
-          <FullDetailContent
-            locker={locker}
-            detailHelpText={detailHelpText}
-            onShare={handleShare}
-            onNavigate={handleNavigate}
-            onVoteChange={onVoteChange}
-          />
         ) : (
-          <HalfDetailContent
+          <FullDetailContent
             locker={locker}
             detailHelpText={detailHelpText}
             favoriteLabel={favoriteLabel}
             onFavoritePress={handleFavoritePress}
-            onBack={handleBack}
+            onClose={handleBack}
             onShare={handleShare}
             onNavigate={handleNavigate}
+            onVoteChange={onVoteChange}
           />
         )}
       </div>
@@ -278,7 +341,7 @@ function LockerDetailErrorContent({
 }) {
   return (
     <div className={contentStack}>
-      <div className={summaryRow}>
+      <div className={detailHeader}>
         <DetailBackButton onBack={onBack} />
       </div>
       <SearchAsyncFeedback variant="result-error" onRetry={onRetry} />
@@ -286,47 +349,21 @@ function LockerDetailErrorContent({
   );
 }
 
-function HalfDetailContent({
+function FullDetailContent({
   locker,
   detailHelpText,
   favoriteLabel,
   onFavoritePress,
-  onBack,
-  onShare,
-  onNavigate,
-}: {
-  locker: LockerDetailItem;
-  detailHelpText: string;
-  favoriteLabel: string;
-  onFavoritePress: () => void;
-  onBack: () => void;
-  onShare: () => void;
-  onNavigate: () => void;
-}) {
-  return (
-    <div className={contentStack}>
-      <SummarySection
-        locker={locker}
-        detailHelpText={detailHelpText}
-        favoriteLabel={favoriteLabel}
-        onFavoritePress={onFavoritePress}
-        leadingBack={<DetailBackButton onBack={onBack} />}
-      />
-      <ImageReportCard />
-      <ActionRow onShare={onShare} onNavigate={onNavigate} />
-    </div>
-  );
-}
-
-function FullDetailContent({
-  locker,
-  detailHelpText,
+  onClose,
   onShare,
   onNavigate,
   onVoteChange,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
+  favoriteLabel: string;
+  onFavoritePress: () => void;
+  onClose: () => void;
   onShare: () => void;
   onNavigate: () => void;
   onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
@@ -344,47 +381,48 @@ function FullDetailContent({
   };
 
   return (
-    <>
-      <div className={fullContentScroll}>
-        <div className={contentStack}>
-          <ImageReportCard isFull />
-          <div className={fullDetailList}>
+    <div className={fullContentScroll}>
+      <div className={contentStack}>
+        <SummarySection
+          locker={locker}
+          favoriteLabel={favoriteLabel}
+          onFavoritePress={onFavoritePress}
+          onClose={onClose}
+        />
+        <div className={fullDetailList}>
+          <DetailInfoRow
+            icon={<IconLockerDetailMapPin24 />}
+            title={locker.address}
+            description={locker.floorLabel}
+          />
+          <DetailInfoRow
+            icon={<IconLockerDetailWallet24 />}
+            title={m.locker_detail_price_section()}
+            description={locker.priceLabel ?? formatLockerPriceLabel()}
+            iconTone="neutral"
+          />
+          {locker.sizeLabel ? (
             <DetailInfoRow
-              icon={<IconLockerDetailHeader24 />}
-              title={locker.title}
-              description={
-                locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
-              }
-              trailing={[locker.categoryLabel, locker.distanceLabel]}
-            />
-            <DetailInfoRow
-              icon={<IconNormalMapPin24 state="active" />}
-              title={locker.address}
-              description={locker.floorLabel}
-            />
-            <DetailInfoRow
-              icon={<IconNormalWallet24 />}
-              title={m.locker_detail_price_section()}
-              description={locker.priceLabel ?? formatLockerPriceLabel()}
+              icon={<IconLockerDetailCapacity24 />}
+              title={m.locker_detail_size_section()}
+              description={locker.sizeLabel}
               iconTone="neutral"
             />
-            {locker.sizeLabel ? (
-              <DetailInfoRow
-                icon={<IconNormalCapacity24 />}
-                title={m.locker_detail_size_section()}
-                description={locker.sizeLabel}
-                iconTone="neutral"
-              />
-            ) : null}
-            <DetailInfoRow
-              icon={<IconCaution24 />}
-              title={m.locker_detail_info_section()}
-              description={detailHelpText}
-              iconTone="neutral"
-              descriptionClassName={detailDescriptionMultiline}
-            />
-          </div>
-          {hasFeedbackVotes ? (
+          ) : null}
+          <DetailInfoRow
+            icon={<IconCaution24 />}
+            title={m.locker_detail_info_section()}
+            description={detailHelpText}
+            iconTone="neutral"
+            descriptionClassName={detailDescriptionMultiline}
+          />
+        </div>
+        <ImageReportCard isFull />
+        {locker.lastUpdatedLabel ? (
+          <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
+        ) : null}
+        {hasFeedbackVotes ? (
+          <div className={feedbackActionSection}>
             <div className={feedbackRow}>
               {locker.accurateCount !== undefined ? (
                 <button
@@ -428,16 +466,14 @@ function FullDetailContent({
                 </button>
               ) : null}
             </div>
-          ) : null}
-          {locker.lastUpdatedLabel ? (
-            <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
-          ) : null}
-        </div>
+            <div className={actionDivider} />
+            <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+          </div>
+        ) : (
+          <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+        )}
       </div>
-      <div className={fullActionBar}>
-        <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -458,16 +494,14 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
 
 function SummarySection({
   locker,
-  detailHelpText,
   favoriteLabel,
   onFavoritePress,
-  leadingBack,
+  onClose,
 }: {
   locker: LockerDetailItem;
-  detailHelpText: string;
   favoriteLabel: string;
   onFavoritePress: () => void;
-  leadingBack?: ReactNode;
+  onClose: () => void;
 }) {
   return (
     <section
@@ -475,10 +509,14 @@ function SummarySection({
       aria-label={m.locker_detail_summary_aria()}
     >
       <div className={summaryRow}>
-        {leadingBack}
         <div className={summaryTextColumn}>
           <h2 className={lockerTitle}>{locker.title}</h2>
-          <InlineMeta left={locker.categoryLabel} right={locker.updatedLabel} />
+          <InlineMeta
+            left={locker.categoryLabel}
+            right={
+              locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
+            }
+          />
           <InlineMeta
             className={distanceRow}
             left={locker.distanceLabel}
@@ -486,21 +524,30 @@ function SummarySection({
           />
         </div>
 
-        <button
-          type="button"
-          className={favoriteButton}
-          onClick={onFavoritePress}
-          aria-label={favoriteLabel}
-        >
-          {locker.isFavorite ? (
-            <IconStarFilled24 size={24} />
-          ) : (
-            <IconStarOutline24 size={24} />
-          )}
-        </button>
+        <div className={summaryActions}>
+          <button
+            type="button"
+            className={favoriteButton}
+            onClick={onFavoritePress}
+            aria-label={favoriteLabel}
+          >
+            {locker.isFavorite ? (
+              <IconStarFilled24 size={24} />
+            ) : (
+              <IconStarOutline24 size={24} />
+            )}
+          </button>
+          <button
+            type="button"
+            className={summaryCloseButton}
+            onClick={onClose}
+            aria-label={m.search_close_aria()}
+          >
+            <IconX24 />
+          </button>
+        </div>
       </div>
-      <div className={divider} />
-      <p className={helperText}>{detailHelpText}</p>
+      <div className={summaryDivider} />
     </section>
   );
 }

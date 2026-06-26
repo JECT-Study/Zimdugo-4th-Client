@@ -1,37 +1,71 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { m, setLanguageTag } from "@repo/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
+  DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
+    <div data-testid="mock-draggable-bottom-sheet">{children}</div>
+  ),
+  resolveBottomSheetExpandedProgress: ({
+    maxSnapPoint,
+    minSnapPoint,
+    offset,
+  }: {
+    maxSnapPoint: number;
+    minSnapPoint: number;
+    offset: number;
+  }) => {
+    if (maxSnapPoint === minSnapPoint) return 1;
+
+    return Math.min(
+      1,
+      Math.max(0, (maxSnapPoint - offset) / (maxSnapPoint - minSnapPoint)),
+    );
+  },
+}));
+
 import { SearchFilterBottomSheet } from "./SearchFilterBottomSheet";
 
 afterEach(cleanup);
+
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const getButtonByText = (name: string) => {
+  const element = screen.getByText(name).closest("button");
+  if (!element) {
+    throw new Error(`${name} button not found`);
+  }
+
+  return element;
+};
 
 describe("SearchFilterBottomSheet", () => {
   it("applies selected indoor/outdoor and place filters", () => {
     setLanguageTag("ko");
     const handleApply = vi.fn();
 
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
-
     render(
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={createQueryClient()}>
         <SearchFilterBottomSheet onApply={handleApply} />
       </QueryClientProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "실내" }));
-    fireEvent.click(screen.getByRole("button", { name: "실외" }));
-    fireEvent.click(screen.getByRole("button", { name: "박물관" }));
-    fireEvent.click(screen.getByRole("button", { name: "지하철역" }));
-    fireEvent.click(screen.getByRole("button", { name: "보관함 보기" }));
+    fireEvent.click(getButtonByText(m.search_filter_indoor_short()));
+    fireEvent.click(getButtonByText(m.search_filter_outdoor_short()));
+    fireEvent.click(getButtonByText(m.search_filter_place_museum_short()));
+    fireEvent.click(getButtonByText(m.search_filter_place_subway_short()));
+    fireEvent.click(getButtonByText(m.search_filter_view_lockers()));
 
     expect(handleApply).toHaveBeenCalledWith({
       regionActive: true,
@@ -46,16 +80,8 @@ describe("SearchFilterBottomSheet", () => {
   it("restores previously applied filter values when reopened", () => {
     setLanguageTag("ko");
 
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
-
     render(
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={createQueryClient()}>
         <SearchFilterBottomSheet
           initialFilters={{
             regionActive: false,
@@ -70,12 +96,14 @@ describe("SearchFilterBottomSheet", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "실내" }).getAttribute("data-active"),
+      getButtonByText(m.search_filter_indoor_short()).getAttribute(
+        "data-active",
+      ),
     ).toBe("true");
     expect(
-      screen
-        .getByRole("button", { name: "박물관" })
-        .getAttribute("data-active"),
+      getButtonByText(m.search_filter_place_museum_short()).getAttribute(
+        "data-active",
+      ),
     ).toBe("true");
   });
 });

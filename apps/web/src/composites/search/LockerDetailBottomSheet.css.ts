@@ -7,17 +7,13 @@ export const sheetColumn = style({
   width: "100%",
   height: "100%",
   minHeight: 0,
-  padding: `${vars.spacing[24]} ${vars.spacing[16]} 0`,
-});
-
-export const fullSheetColumn = style({
-  paddingTop: vars.spacing[24],
+  padding: `${vars.spacing[8]} ${vars.spacing[16]} 0`,
 });
 
 export const contentStack = style({
   display: "flex",
   flexDirection: "column",
-  gap: vars.spacing[16],
+  gap: vars.spacing[8],
   width: "100%",
   minHeight: 0,
 });
@@ -48,7 +44,7 @@ export const fullContentScroll = style({
   minHeight: 0,
   overflowY: "auto",
   overflowX: "hidden",
-  paddingBottom: "134px",
+  paddingBottom: vars.spacing[24],
   WebkitOverflowScrolling: "touch",
   overscrollBehavior: "contain",
   scrollbarWidth: "none",
@@ -60,19 +56,30 @@ export const fullContentScroll = style({
 });
 
 export const summarySection = style({
+  position: "sticky",
+  top: 0,
+  zIndex: 1,
   display: "flex",
   flexDirection: "column",
   width: "100%",
+  backgroundColor: vars.color.bg.default,
 });
 
 export const summaryRow = style({
-  display: "grid",
-  gridTemplateColumns: "32px minmax(0, 1fr) 32px",
-  columnGap: vars.spacing[8],
+  display: "flex",
+  gap: vars.spacing[8],
   alignItems: "start",
   width: "100%",
   padding: `${vars.spacing[8]} ${vars.spacing[4]}`,
   boxSizing: "border-box",
+});
+
+export const summaryDivider = style({
+  width: `calc(100% + (${vars.spacing[16]} * 2))`,
+  height: "1px",
+  margin: `0 -${vars.spacing[16]}`,
+  flexShrink: 0,
+  backgroundColor: vars.color.border.default,
 });
 
 export const summaryTextColumn = style({
@@ -108,7 +115,7 @@ export const metaRow = style({
 });
 
 export const distanceRow = style({
-  color: vars.color.text.content,
+  color: vars.color.text.surface,
 });
 
 export const addressText = style({
@@ -139,27 +146,51 @@ export const favoriteButton = style({
   border: 0,
   borderRadius: vars.radius[6],
   background: "transparent",
-  cursor: "pointer",
   color: vars.color.text.disable,
+  cursor: "pointer",
+});
+
+export const summaryActions = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: vars.spacing[8],
+  flexShrink: 0,
+});
+
+export const summaryCloseButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  padding: 0,
+  flexShrink: 0,
+  border: 0,
+  borderRadius: vars.radius[4],
+  background: "transparent",
+  color: vars.color.text.disable,
+  cursor: "pointer",
 });
 
 export const divider = style({
+  position: "relative",
   width: "100%",
   height: "1px",
   margin: `${vars.spacing[8]} 0`,
-  backgroundColor: vars.color.border.default,
-});
-
-export const helperText = style({
-  overflow: "hidden",
-  margin: 0,
-  padding: `0 calc(${vars.spacing[4]} + 32px + ${vars.spacing[8]})`,
-  color: vars.color.text.surface,
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
+  flexShrink: 0,
+  selectors: {
+    "&::before": {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      left: 0,
+      height: "1px",
+      backgroundColor: vars.color.palette.gray[500],
+      content: '""',
+      transform: "scaleY(0.5)",
+      transformOrigin: "top",
+    },
+  },
 });
 
 export const imageReportCard = style({
@@ -169,7 +200,7 @@ export const imageReportCard = style({
   justifyContent: "center",
   gap: vars.spacing[12],
   width: "100%",
-  height: "130px",
+  height: "160px",
   padding: vars.spacing[24],
   boxSizing: "border-box",
   border: `1px dashed ${vars.color.border.hover}`,
@@ -179,7 +210,7 @@ export const imageReportCard = style({
 });
 
 export const fullImageReportCard = style({
-  height: "200px",
+  height: "160px",
   flexShrink: 0,
 });
 
@@ -262,7 +293,7 @@ export const detailItemContent = style({
 export const detailLeading = style({
   display: "flex",
   alignItems: "flex-start",
-  gap: vars.spacing[8],
+  gap: vars.spacing[12],
   minWidth: 0,
   flex: 1,
 });
@@ -274,6 +305,7 @@ export const detailIcon = style({
   width: "24px",
   height: "24px",
   flexShrink: 0,
+  color: vars.color.text.surface,
 });
 
 export const detailIconNeutral = style({});
@@ -293,7 +325,7 @@ export const detailTextColumn = style({
 export const detailTitle = style({
   overflow: "hidden",
   color: vars.color.text.title,
-  fontSize: vars.typography.fontSize[16],
+  fontSize: vars.typography.fontSize[14],
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: 1.2,
   whiteSpace: "nowrap",
@@ -333,7 +365,7 @@ export const detailTrailing = style({
 });
 
 export const recentUpdatedText = style({
-  margin: 0,
+  margin: `${vars.spacing[4]} 0 ${vars.spacing[8]}`,
   color: vars.color.text.disable,
   fontSize: "10px",
   fontWeight: vars.typography.fontWeight.Medium,
@@ -346,6 +378,34 @@ export const feedbackRow = style({
   alignItems: "center",
   gap: vars.spacing[8],
   width: "100%",
+});
+
+export const feedbackActionSection = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "20px",
+  width: "100%",
+});
+
+export const actionDivider = style({
+  position: "relative",
+  width: `calc(100% + (${vars.spacing[16]} * 2))`,
+  height: "1px",
+  margin: `0 -${vars.spacing[16]}`,
+  flexShrink: 0,
+  selectors: {
+    "&::before": {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      left: 0,
+      height: "1px",
+      backgroundColor: vars.color.palette.gray[500],
+      content: '""',
+      transform: "scaleY(0.5)",
+      transformOrigin: "top",
+    },
+  },
 });
 
 export const feedbackButton = style({
@@ -380,19 +440,6 @@ export const feedbackButtonNegativeSelected = style({
   color: vars.color.text.white,
 });
 
-export const fullActionBar = style({
-  position: "absolute",
-  left: 0,
-  right: 0,
-  bottom: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
-  padding: `${vars.spacing[16]} ${vars.spacing[16]} 10px`,
-  borderTop: `1px solid ${vars.color.border.default}`,
-  backgroundColor: vars.color.bg.default,
-});
-
 export const fullActionRow = style({
   display: "flex",
   alignItems: "center",
@@ -401,7 +448,7 @@ export const fullActionRow = style({
 });
 
 export const fullIconActionButton = style({
-  width: "64px",
+  width: "56px",
   height: "40px",
   padding: 0,
   flexShrink: 0,

@@ -10,9 +10,20 @@ export const sheetWrapper = style({
   width: "100%",
   // Bottom sheet should cover Naver map controls.
   zIndex: vars.zIndex.bottomSheet,
-  height: "100%",
+  height: "100dvh",
   // Keep content scroll gestures available on mobile.
   touchAction: "auto",
+  pointerEvents: "none",
+});
+
+export const sheetSurface = style({
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  maxHeight: "100dvh",
+  overflow: "hidden",
+  willChange: "height",
   pointerEvents: "none",
 });
 

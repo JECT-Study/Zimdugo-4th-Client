@@ -28,8 +28,7 @@ export const sheet = style({
 
 /** 기디팀 바텀시트(`1097-5907`) 전체 높이·세로 플렉스 체인 */
 export const sheetNavLayout = style({
-  height: "min(760px, calc(100dvh - var(--sheet-offset, 0px)))",
-  maxHeight: "760px",
+  height: "100%",
   display: "flex",
   flexDirection: "column",
 });
