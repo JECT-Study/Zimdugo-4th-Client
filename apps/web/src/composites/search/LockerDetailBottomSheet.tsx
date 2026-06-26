@@ -67,6 +67,7 @@ import {
   sheetColumn,
   summaryActions,
   summaryCloseButton,
+  summaryDivider,
   summaryRow,
   summarySection,
   summaryTextColumn,
@@ -461,6 +462,7 @@ function SummarySection({
           </button>
         </div>
       </div>
+      <div className={summaryDivider} />
     </section>
   );
 }

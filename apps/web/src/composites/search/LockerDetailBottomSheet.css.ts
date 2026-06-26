@@ -56,9 +56,13 @@ export const fullContentScroll = style({
 });
 
 export const summarySection = style({
+  position: "sticky",
+  top: 0,
+  zIndex: 1,
   display: "flex",
   flexDirection: "column",
   width: "100%",
+  backgroundColor: vars.color.bg.default,
 });
 
 export const summaryRow = style({
@@ -68,6 +72,14 @@ export const summaryRow = style({
   width: "100%",
   padding: `${vars.spacing[8]} ${vars.spacing[4]}`,
   boxSizing: "border-box",
+});
+
+export const summaryDivider = style({
+  width: `calc(100% + (${vars.spacing[16]} * 2))`,
+  height: "1px",
+  margin: `0 -${vars.spacing[16]}`,
+  flexShrink: 0,
+  backgroundColor: vars.color.border.default,
 });
 
 export const summaryTextColumn = style({
@@ -357,7 +369,7 @@ export const feedbackRow = style({
 export const actionDivider = style({
   width: `calc(100% + (${vars.spacing[16]} * 2))`,
   height: "1px",
-  margin: `11.5px -${vars.spacing[16]}`,
+  margin: `31.5px -${vars.spacing[16]}`,
   flexShrink: 0,
   backgroundColor: vars.color.border.default,
 });
