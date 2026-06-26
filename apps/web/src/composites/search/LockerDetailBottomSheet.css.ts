@@ -173,10 +173,24 @@ export const summaryCloseButton = style({
 });
 
 export const divider = style({
+  position: "relative",
   width: "100%",
   height: "1px",
   margin: `${vars.spacing[8]} 0`,
-  backgroundColor: vars.color.palette.gray[500],
+  flexShrink: 0,
+  selectors: {
+    "&::before": {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      left: 0,
+      height: "1px",
+      backgroundColor: vars.color.palette.gray[500],
+      content: '""',
+      transform: "scaleY(0.5)",
+      transformOrigin: "top",
+    },
+  },
 });
 
 export const imageReportCard = style({
@@ -374,11 +388,24 @@ export const feedbackActionSection = style({
 });
 
 export const actionDivider = style({
+  position: "relative",
   width: `calc(100% + (${vars.spacing[16]} * 2))`,
   height: "1px",
   margin: `0 -${vars.spacing[16]}`,
   flexShrink: 0,
-  backgroundColor: vars.color.palette.gray[500],
+  selectors: {
+    "&::before": {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      left: 0,
+      height: "1px",
+      backgroundColor: vars.color.palette.gray[500],
+      content: '""',
+      transform: "scaleY(0.5)",
+      transformOrigin: "top",
+    },
+  },
 });
 
 export const feedbackButton = style({
