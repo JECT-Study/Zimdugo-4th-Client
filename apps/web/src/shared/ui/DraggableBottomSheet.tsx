@@ -1,5 +1,4 @@
 import { BottomSheetFrame } from "@repo/ui/components/bottom-sheet-frame";
-import { motion, useAnimation, useDragControls } from "motion/react";
 import {
   type ReactNode,
   type PointerEvent as ReactPointerEvent,
@@ -18,6 +17,9 @@ import {
 const INTERACTIVE_DRAG_EXCLUSION_SELECTOR =
   'button, a, input, textarea, select, [role="button"], [contenteditable="true"]';
 
+const SNAP_DISTANCE_THRESHOLD = 48;
+const SNAP_VELOCITY_THRESHOLD = 420;
+
 export interface BottomSheetLiveOffsetState {
   offset: number;
   expandedProgress: number;
@@ -26,15 +28,11 @@ export interface BottomSheetLiveOffsetState {
 
 export interface DraggableBottomSheetProps {
   children: ReactNode;
-  /** 중간(하프) 스냅 위치 */
   snapPoint: number;
-  /** 첫 렌더 시 시작 스냅. 미지정 시 snapPoint에서 시작 */
   initialSnapPoint?: number;
   minSnapPoint?: number;
-  /** half와 dismiss 사이에 둘 수 있는 축약 스냅 위치 */
   miniSnapPoint?: number;
   maxSnapPoint?: number;
-  /** 가장 아래로 내렸을 때 닫기/뒤로가기 처리를 실행할 스냅 위치 */
   dismissSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
   onLiveOffsetChange?: (state: BottomSheetLiveOffsetState) => void;
@@ -87,10 +85,14 @@ export const shouldStartBottomSheetDrag = (
   return true;
 };
 
-/**
- * 드래그 가능한 바텀시트.
- * [minSnapPoint, snapPoint, maxSnapPoint] 3단 스냅을 지원합니다.
- */
+interface DragState {
+  startY: number;
+  startSnap: number;
+  lastY: number;
+  lastTime: number;
+  velocityY: number;
+}
+
 export function DraggableBottomSheet({
   children,
   snapPoint,
@@ -103,8 +105,6 @@ export function DraggableBottomSheet({
   onLiveOffsetChange,
   onDismiss,
 }: DraggableBottomSheetProps) {
-  const controls = useAnimation();
-  const dragControls = useDragControls();
   const resolvedDismissSnapPoint = dismissSnapPoint ?? maxSnapPoint;
   const resolvedInitialSnap = initialSnapPoint ?? snapPoint;
   const clampSnap = useCallback(
@@ -114,10 +114,8 @@ export function DraggableBottomSheet({
   const clampedInitialSnap = clampSnap(resolvedInitialSnap);
   const [currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
   const [liveOffset, setLiveOffset] = useState(clampedInitialSnap);
-  const dragStartSnapRef = useRef(clampedInitialSnap);
-  const DRAG_ELASTIC = 0.05;
-  const SNAP_DISTANCE_THRESHOLD = 48;
-  const SNAP_VELOCITY_THRESHOLD = 420;
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStateRef = useRef<DragState | null>(null);
   const snapPoints = useMemo(
     () =>
       Array.from(
@@ -158,98 +156,140 @@ export function DraggableBottomSheet({
     const nextSnap = clampSnap(resolvedInitialSnap);
     setCurrentSnap(nextSnap);
     setLiveOffset(nextSnap);
-    dragStartSnapRef.current = nextSnap;
     notifyLiveOffsetChange(nextSnap);
   }, [resolvedInitialSnap, clampSnap, notifyLiveOffsetChange]);
 
-  useEffect(() => {
-    controls.start({ y: currentSnap });
-  }, [currentSnap, controls]);
+  const settleToNextSnap = useCallback(
+    ({ offsetY, velocityY }: { offsetY: number; velocityY: number }) => {
+      const startSnap = dragStateRef.current?.startSnap ?? currentSnap;
+      const currentIndex = snapPoints.reduce((nearestIndex, point, index) => {
+        const nearestDistance = Math.abs(snapPoints[nearestIndex] - startSnap);
+        const currentDistance = Math.abs(point - startSnap);
+        return currentDistance < nearestDistance ? index : nearestIndex;
+      }, 0);
 
-  const handleDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+      const hasIntent =
+        Math.abs(offsetY) >= SNAP_DISTANCE_THRESHOLD ||
+        Math.abs(velocityY) >= SNAP_VELOCITY_THRESHOLD;
+
+      let nextSnap = startSnap;
+      if (hasIntent) {
+        if (offsetY < 0 || velocityY < -SNAP_VELOCITY_THRESHOLD) {
+          const nextIndex = Math.max(0, currentIndex - 1);
+          nextSnap = snapPoints[nextIndex];
+        } else if (offsetY > 0 || velocityY > SNAP_VELOCITY_THRESHOLD) {
+          const nextIndex = Math.min(snapPoints.length - 1, currentIndex + 1);
+          nextSnap = snapPoints[nextIndex];
+        }
+      }
+
+      const clampedNextSnap = clampSnap(nextSnap);
+      setLiveOffset(clampedNextSnap);
+      setCurrentSnap(clampedNextSnap);
+      notifyLiveOffsetChange(clampedNextSnap);
+      onSnapChange?.(clampedNextSnap);
+
+      if (
+        clampedNextSnap === resolvedDismissSnapPoint &&
+        currentSnap !== resolvedDismissSnapPoint
+      ) {
+        onDismiss?.();
+      }
+    },
+    [
+      clampSnap,
+      currentSnap,
+      notifyLiveOffsetChange,
+      onDismiss,
+      onSnapChange,
+      resolvedDismissSnapPoint,
+      snapPoints,
+    ],
+  );
+
+  const handlePointerMove = useCallback(
+    (event: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      if (dragState == null) {
+        return;
+      }
+
+      const now = performance.now();
+      const elapsed = Math.max(1, now - dragState.lastTime);
+      dragState.velocityY =
+        ((event.clientY - dragState.lastY) / elapsed) * 1000;
+      dragState.lastY = event.clientY;
+      dragState.lastTime = now;
+
+      const nextLiveOffset = clampSnap(
+        dragState.startSnap + event.clientY - dragState.startY,
+      );
+      setLiveOffset(nextLiveOffset);
+      notifyLiveOffsetChange(nextLiveOffset);
+    },
+    [clampSnap, notifyLiveOffsetChange],
+  );
+
+  const finishDrag = useCallback(
+    (event: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      if (dragState == null) {
+        return;
+      }
+
+      setIsDragging(false);
+      settleToNextSnap({
+        offsetY: event.clientY - dragState.startY,
+        velocityY: dragState.velocityY,
+      });
+      dragStateRef.current = null;
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", finishDrag);
+      window.removeEventListener("pointercancel", finishDrag);
+    },
+    [handlePointerMove, settleToNextSnap],
+  );
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!shouldStartBottomSheetDrag(event.target, event.currentTarget)) {
       return;
     }
 
-    dragControls.start(event);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    dragStateRef.current = {
+      startY: event.clientY,
+      startSnap: currentSnap,
+      lastY: event.clientY,
+      lastTime: performance.now(),
+      velocityY: 0,
+    };
+    setIsDragging(true);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", finishDrag);
+    window.addEventListener("pointercancel", finishDrag);
   };
 
+  useEffect(
+    () => () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", finishDrag);
+      window.removeEventListener("pointercancel", finishDrag);
+    },
+    [finishDrag, handlePointerMove],
+  );
+
   return (
-    <motion.div
+    <div
       className={sheetWrapper}
-      style={{ ["--sheet-offset" as string]: `${liveOffset}px` }}
-      initial={{ y: "100%" }}
-      animate={controls}
-      exit={{ y: "100%" }}
-      drag="y"
-      dragConstraints={{
-        // motion은 위쪽이 -, 아래쪽이 +이므로 max가 bottom(더 큰 양수), min이 top(더 작은 양수)
-        top: minSnapPoint,
-        bottom: maxSnapPoint,
+      style={{
+        ["--sheet-offset" as string]: `${liveOffset}px`,
+        transition: isDragging ? "none" : undefined,
       }}
-      dragControls={dragControls}
-      dragListener={false}
-      dragElastic={DRAG_ELASTIC}
-      dragMomentum={false}
-      onDragStart={() => {
-        dragStartSnapRef.current = currentSnap;
-      }}
-      onDrag={(_, info) => {
-        const nextLiveOffset = clampSnap(
-          dragStartSnapRef.current + info.offset.y,
-        );
-        setLiveOffset(nextLiveOffset);
-        notifyLiveOffsetChange(nextLiveOffset);
-      }}
-      onDragEnd={(_, info) => {
-        const offsetY = info.offset.y;
-        const velocityY = info.velocity.y;
-
-        const currentIndex = snapPoints.reduce((nearestIndex, point, index) => {
-          const nearestDistance = Math.abs(
-            snapPoints[nearestIndex] - currentSnap,
-          );
-          const currentDistance = Math.abs(point - currentSnap);
-          return currentDistance < nearestDistance ? index : nearestIndex;
-        }, 0);
-
-        const hasIntent =
-          Math.abs(offsetY) >= SNAP_DISTANCE_THRESHOLD ||
-          Math.abs(velocityY) >= SNAP_VELOCITY_THRESHOLD;
-
-        let nextSnap = currentSnap;
-        if (hasIntent) {
-          // 리액트-모션 좌표계: 위로 드래그 = offsetY가 음수 -> 더 작은 snapPoint(위쪽)로 이동
-          // 아래로 드래그 = offsetY가 양수 -> 더 큰 snapPoint(아래쪽)로 이동
-          if (offsetY < 0 || velocityY < -SNAP_VELOCITY_THRESHOLD) {
-            const nextIndex = Math.max(0, currentIndex - 1);
-            nextSnap = snapPoints[nextIndex];
-          } else if (offsetY > 0 || velocityY > SNAP_VELOCITY_THRESHOLD) {
-            const nextIndex = Math.min(snapPoints.length - 1, currentIndex + 1);
-            nextSnap = snapPoints[nextIndex];
-          }
-        }
-
-        const clampedNextSnap = clampSnap(nextSnap);
-        controls.start({ y: clampedNextSnap });
-        setLiveOffset(clampedNextSnap);
-        setCurrentSnap(clampedNextSnap);
-        notifyLiveOffsetChange(clampedNextSnap);
-        onSnapChange?.(clampedNextSnap);
-
-        if (
-          clampedNextSnap === resolvedDismissSnapPoint &&
-          currentSnap !== resolvedDismissSnapPoint
-        ) {
-          onDismiss?.();
-        }
-      }}
-      transition={{ type: "spring", damping: 30, stiffness: 200 }}
     >
-      <div className={dragHandleZone} onPointerDown={handleDragStart} />
-      <div className={interactiveContent} onPointerDown={handleDragStart}>
+      <div className={dragHandleZone} onPointerDown={handlePointerDown} />
+      <div className={interactiveContent} onPointerDown={handlePointerDown}>
         <BottomSheetFrame layout="nav">{children}</BottomSheetFrame>
       </div>
-    </motion.div>
+    </div>
   );
 }

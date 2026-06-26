@@ -10,7 +10,9 @@ export const sheetWrapper = style({
   width: "100%",
   // Bottom sheet should cover Naver map controls.
   zIndex: vars.zIndex.bottomSheet,
-  height: "100%",
+  height: "calc(100dvh - var(--sheet-offset, 0px))",
+  transition: "height 240ms cubic-bezier(0.2, 0, 0, 1)",
+  willChange: "height",
   // Keep content scroll gestures available on mobile.
   touchAction: "auto",
   pointerEvents: "none",
