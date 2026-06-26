@@ -10,10 +10,6 @@ export const sheetColumn = style({
   padding: `${vars.spacing[24]} ${vars.spacing[16]} 0`,
 });
 
-export const fullSheetColumn = style({
-  paddingTop: vars.spacing[24],
-});
-
 export const contentStack = style({
   display: "flex",
   flexDirection: "column",
@@ -59,107 +55,11 @@ export const fullContentScroll = style({
   },
 });
 
-export const summarySection = style({
-  display: "flex",
-  flexDirection: "column",
-  width: "100%",
-});
-
-export const summaryRow = style({
-  display: "grid",
-  gridTemplateColumns: "32px minmax(0, 1fr) 32px",
-  columnGap: vars.spacing[8],
-  alignItems: "start",
-  width: "100%",
-  padding: `${vars.spacing[8]} ${vars.spacing[4]}`,
-  boxSizing: "border-box",
-});
-
-export const summaryTextColumn = style({
-  display: "flex",
-  flexDirection: "column",
-  gap: vars.spacing[4],
-  minWidth: 0,
-  flex: 1,
-  paddingRight: 0,
-});
-
-export const lockerTitle = style({
-  overflow: "hidden",
-  margin: 0,
-  color: vars.color.text.title,
-  fontSize: vars.typography.fontSize[16],
-  fontWeight: vars.typography.fontWeight.SemiBold,
-  lineHeight: 1.2,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
-});
-
-export const metaRow = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.spacing[8],
-  minWidth: 0,
-  overflow: "hidden",
-  color: vars.color.text.disable,
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: "18px",
-});
-
-export const distanceRow = style({
-  color: vars.color.text.content,
-});
-
-export const addressText = style({
-  minWidth: 0,
-  overflow: "hidden",
-  color: vars.color.text.surface,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
-});
-
-export const metaDot = style({
-  width: "2px",
-  height: "2px",
-  flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.text.disable,
-});
-
-export const favoriteButton = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "32px",
-  height: "32px",
-  padding: 0,
-  alignSelf: "start",
-  flexShrink: 0,
-  border: 0,
-  borderRadius: vars.radius[6],
-  background: "transparent",
-  cursor: "pointer",
-  color: vars.color.text.disable,
-});
-
 export const divider = style({
   width: "100%",
   height: "1px",
   margin: `${vars.spacing[8]} 0`,
   backgroundColor: vars.color.border.default,
-});
-
-export const helperText = style({
-  overflow: "hidden",
-  margin: 0,
-  padding: `0 calc(${vars.spacing[4]} + 32px + ${vars.spacing[8]})`,
-  color: vars.color.text.surface,
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
 });
 
 export const imageReportCard = style({
