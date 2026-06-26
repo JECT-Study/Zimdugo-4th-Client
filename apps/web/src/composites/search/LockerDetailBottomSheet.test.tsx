@@ -54,18 +54,18 @@ describe("LockerDetailBottomSheet", () => {
   it("resolves detail-specific mini and half snap heights", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
-      miniSnapPoint: 689,
+      miniSnapPoint: 701,
       minSnapPoint: 60,
-      snapPoint: 551,
+      snapPoint: 566,
     });
   });
 
   it("caps the full snap height on tall viewports", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 1000 })).toEqual({
       maxSnapPoint: 948,
-      miniSnapPoint: 877,
+      miniSnapPoint: 889,
       minSnapPoint: 220,
-      snapPoint: 739,
+      snapPoint: 754,
     });
   });
 
