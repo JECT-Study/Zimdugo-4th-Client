@@ -103,11 +103,12 @@ export interface LockerDetailBottomSheetProps {
   /** 풀 스냅으로 열 때만 지정. 하프 스냅은 snapPoint에 유지 */
   initialSnapPoint?: number;
   maxSnapPoint?: number;
+  animateOnMount?: boolean;
   onSnapChange?: (nextSnap: number) => void;
 }
 
-const DETAIL_MIN_TOP_OFFSET = 108;
-const DETAIL_FULL_VISIBLE_HEIGHT = 704;
+const DETAIL_MIN_TOP_OFFSET = 76;
+const DETAIL_FULL_VISIBLE_HEIGHT = 760;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 147;
 const DETAIL_HALF_VISIBLE_HEIGHT = 291;
@@ -247,6 +248,7 @@ export function LockerDetailBottomSheet({
   snapPoint,
   initialSnapPoint,
   maxSnapPoint,
+  animateOnMount = false,
   onSnapChange,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(
@@ -300,6 +302,7 @@ export function LockerDetailBottomSheet({
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       dragSensitivity={DETAIL_DRAG_SENSITIVITY}
+      animateOnMount={animateOnMount}
       onSnapChange={onSnapChange}
       onDismiss={handleBack}
     >

@@ -55,7 +55,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
       miniSnapPoint: 665,
-      minSnapPoint: 108,
+      minSnapPoint: 76,
       snapPoint: 521,
     });
   });
@@ -64,7 +64,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 1000 })).toEqual({
       maxSnapPoint: 948,
       miniSnapPoint: 853,
-      minSnapPoint: 296,
+      minSnapPoint: 240,
       snapPoint: 709,
     });
   });

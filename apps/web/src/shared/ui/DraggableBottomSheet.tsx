@@ -49,6 +49,7 @@ export interface DraggableBottomSheetProps {
   maxSnapPoint?: number;
   dismissSnapPoint?: number;
   dragSensitivity?: number;
+  animateOnMount?: boolean;
   onSnapChange?: (nextSnap: number) => void;
   onLiveOffsetChange?: (state: BottomSheetLiveOffsetState) => void;
   onDismiss?: () => void;
@@ -224,6 +225,7 @@ export function DraggableBottomSheet({
   maxSnapPoint = 760,
   dismissSnapPoint,
   dragSensitivity = 1,
+  animateOnMount = false,
   onSnapChange,
   onLiveOffsetChange,
   onDismiss,
@@ -516,7 +518,13 @@ export function DraggableBottomSheet({
 
   return (
     <div className={sheetWrapper}>
-      <motion.div className={sheetSurface} style={{ height: sheetHeight }}>
+      <motion.div
+        animate={{ y: 0 }}
+        className={sheetSurface}
+        initial={animateOnMount ? { y: "100%" } : false}
+        style={{ height: sheetHeight }}
+        transition={SHEET_SETTLE_SPRING}
+      >
         <div
           className={dragHandleZone}
           onMouseDownCapture={handleMouseDown}
