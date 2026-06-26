@@ -110,8 +110,8 @@ export interface LockerDetailBottomSheetProps {
 const DETAIL_MIN_TOP_OFFSET = 60;
 const DETAIL_FULL_VISIBLE_HEIGHT = 780;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
-const DETAIL_MINI_VISIBLE_HEIGHT = 135;
-const DETAIL_HALF_VISIBLE_HEIGHT = 276;
+const DETAIL_MINI_VISIBLE_HEIGHT = 123;
+const DETAIL_HALF_VISIBLE_HEIGHT = 261;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 interface ResolveLockerDetailSnapPointsOptions {
