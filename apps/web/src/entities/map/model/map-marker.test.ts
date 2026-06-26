@@ -103,6 +103,26 @@ const createPlacePin = (
     ...overrides,
   }) as LockerPinItemResponse;
 
+const createClusterPin = (
+  overrides: Partial<LockerPinItemResponse> = {},
+): LockerPinItemResponse =>
+  ({
+    pinType: "CLUSTER",
+    placeId: null,
+    lockerId: null,
+    latitude: 37.5547,
+    longitude: 126.9706,
+    pinCount: 5,
+    bounds: {
+      swLat: 37.55,
+      swLng: 126.97,
+      neLat: 37.56,
+      neLng: 126.98,
+    },
+    ...overrides,
+  }) as LockerPinItemResponse;
+
+
 class FakeLatLngBounds {
   constructor(
     public readonly sw: FakeLatLng,
@@ -195,7 +215,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('data-map-pin-variant="selected"');
     expect(icon).toContain('viewBox="0 0 90 90"');
     expect(icon).toContain('width="100%" height="100%"');
-    expect(icon).not.toContain('width="90" height="90"');
+    expect(icon).not.toContain('<svg width="90" height="90"');
     expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}"`);
   });
 
@@ -205,7 +225,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain('data-map-pin-variant="save"');
     expect(icon).toContain('width="100%" height="100%"');
-    expect(icon).not.toContain('width="90" height="90"');
+    expect(icon).not.toContain('<svg width="90" height="90"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
@@ -228,6 +248,28 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('viewBox="0 0 121 121"');
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('width="121" height="121"');
+  });
+
+  it("renders cluster markers for count < 10 (S size)", () => {
+    const icon = createLockerMarkerIcon(createClusterPin({ pinCount: 5 }));
+
+    expect(icon).toContain('data-type="CLUSTER"');
+    expect(icon).toContain('data-map-pin-variant="cluster"');
+    expect(icon).toContain('viewBox="0 0 330 330"');
+    expect(icon).toContain(">5<");
+    expect(icon).toContain('font-size="76"');
+    expect(icon).toContain('fill-opacity="0.64"');
+    expect(icon).toContain('font-weight="700"');
+  });
+
+  it("renders cluster markers for count >= 10 (L size)", () => {
+    const icon = createLockerMarkerIcon(createClusterPin({ pinCount: 15 }));
+
+    expect(icon).toContain('data-type="CLUSTER"');
+    expect(icon).toContain('data-map-pin-variant="cluster"');
+    expect(icon).toContain('viewBox="0 0 440 440"');
+    expect(icon).toContain(">15<");
+    expect(icon).toContain('font-size="78"');
   });
 });
 
@@ -276,7 +318,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain('data-type="LOCKER"');
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
     expect(options.icon?.content).toContain('width="100%" height="100%"');
-    expect(options.icon?.content).not.toContain('width="90" height="90"');
+    expect(options.icon?.content).not.toContain('<svg width="90" height="90"');
     expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
     expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
@@ -350,6 +392,48 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
 
+  it("uses S size and anchor for cluster markers with < 10 items", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createClusterPin({ pinCount: 5 })],
+    });
+
+    const options = FakeMarker.instances[0]?.options as {
+      icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
+    };
+
+    expect(options.icon?.content).toContain('data-type="CLUSTER"');
+    expect(options.icon?.size).toMatchObject({ width: 52, height: 52 });
+    expect(options.icon?.anchor).toMatchObject({ x: 26, y: 26 });
+  });
+
+  it("uses L size and anchor for cluster markers with >= 10 items", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createClusterPin({ pinCount: 15 })],
+    });
+
+    const options = FakeMarker.instances[0]?.options as {
+      icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
+    };
+
+    expect(options.icon?.content).toContain('data-type="CLUSTER"');
+    expect(options.icon?.size).toMatchObject({ width: 64, height: 64 });
+    expect(options.icon?.anchor).toMatchObject({ x: 32, y: 32 });
+  });
+
   it("passes pin type and id when a locker marker is clicked", () => {
     FakeMarker.instances = [];
 
@@ -394,6 +478,37 @@ describe("syncLockerMarkers", () => {
       7,
       expect.any(Object),
     );
+  });
+
+  it("uses the latest cluster click handler when reusing an existing marker", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const firstClusterClick = vi.fn();
+    const nextClusterClick = vi.fn();
+    const pin = createClusterPin();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin],
+      onClusterClick: firstClusterClick,
+      registry,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin],
+      onClusterClick: nextClusterClick,
+      registry,
+    });
+
+    FakeMarker.instances[0]?.listeners.at(-1)?.();
+
+    expect(firstClusterClick).not.toHaveBeenCalled();
+    expect(nextClusterClick).toHaveBeenCalledWith(pin.bounds);
   });
 
   it("removes click listeners on cleanup", () => {
@@ -849,7 +964,7 @@ describe("syncLockerMarkers", () => {
           Math.round(latlng.lng() * projectionScale),
         );
       }),
-    })) as naver.maps.Map["getProjection"];
+    })) as unknown as naver.maps.Map["getProjection"];
     const maps = createFakeMaps();
     const registry = new Map();
     const pin1 = createLockerPin({

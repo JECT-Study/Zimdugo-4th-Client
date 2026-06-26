@@ -8,7 +8,7 @@ const meta = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["locker", "favoriteLocker", "placeCluster"],
+      options: ["locker", "favoriteLocker", "placeCluster", "cluster"],
     },
     count: {
       control: "text",
@@ -39,6 +39,8 @@ export const Variants: Story = {
       <MapPinMarker variant="favoriteLocker" />
       <MapPinMarker variant="placeCluster" count={3} />
       <MapPinMarker variant="placeCluster" count={12} />
+      <MapPinMarker variant="cluster" count={3} />
+      <MapPinMarker variant="cluster" count={12} />
     </div>
   ),
 };
@@ -51,6 +53,8 @@ export const MapDisplayScale: Story = {
       <MapPinMarker variant="favoriteLocker" scale={0.45} />
       <MapPinMarker variant="placeCluster" count={3} scale={0.45} />
       <MapPinMarker variant="placeCluster" count={12} scale={0.45} />
+      <MapPinMarker variant="cluster" count={3} scale={0.45} />
+      <MapPinMarker variant="cluster" count={12} scale={0.45} />
     </div>
   ),
 };

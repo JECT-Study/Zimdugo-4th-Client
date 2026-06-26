@@ -4,3 +4,8 @@ export const root = style({
   display: "inline-block",
   flexShrink: 0,
 });
+
+export const clusterPin = style({
+  width: "100% !important",
+  height: "100% !important",
+});

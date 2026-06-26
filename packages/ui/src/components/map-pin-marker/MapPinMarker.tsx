@@ -1,8 +1,13 @@
 import { useId } from "react";
 import { vars } from "../../vars.css.ts";
-import { root } from "./MapPinMarker.css.ts";
+import { clusterPin, root } from "./MapPinMarker.css.ts";
+import { ClusterMapPin } from "../cluster-map-pin/ClusterMapPin.tsx";
 
-export type MapPinMarkerVariant = "locker" | "favoriteLocker" | "placeCluster";
+export type MapPinMarkerVariant =
+  | "locker"
+  | "favoriteLocker"
+  | "placeCluster"
+  | "cluster";
 
 export interface MapPinMarkerProps {
   variant?: MapPinMarkerVariant;
@@ -15,8 +20,19 @@ export interface MapPinMarkerProps {
 const LOCKER_SOURCE_SIZE = 90;
 const PLACE_CLUSTER_SOURCE_SIZE = 121;
 
-const getSourceSize = (variant: MapPinMarkerVariant): number =>
-  variant === "placeCluster" ? PLACE_CLUSTER_SOURCE_SIZE : LOCKER_SOURCE_SIZE;
+const getSourceSize = (
+  variant: MapPinMarkerVariant,
+  count?: number | string,
+): number => {
+  if (variant === "cluster") {
+    const numCount =
+      typeof count === "string" ? parseInt(count, 10) : (count ?? 0);
+    return numCount >= 10 ? 400 : 300;
+  }
+  return variant === "placeCluster"
+    ? PLACE_CLUSTER_SOURCE_SIZE
+    : LOCKER_SOURCE_SIZE;
+};
 
 const formatCount = (count: number | string): string => {
   if (typeof count === "number" && count > 9) return "9+";
@@ -316,7 +332,7 @@ export function MapPinMarker({
   "aria-label": ariaLabel,
 }: MapPinMarkerProps) {
   const reactId = sanitizeId(useId());
-  const sourceSize = getSourceSize(variant);
+  const sourceSize = getSourceSize(variant, count);
   const displaySize = sourceSize * scale;
 
   return (
@@ -330,6 +346,20 @@ export function MapPinMarker({
         <FavoriteLockerMarker id={reactId} />
       ) : variant === "placeCluster" ? (
         <PlaceClusterMarker count={count} id={reactId} />
+      ) : variant === "cluster" ? (
+        <ClusterMapPin
+          className={clusterPin}
+          size={
+            typeof count === "number"
+              ? count >= 10
+                ? "l"
+                : "s"
+              : typeof count === "string" && parseInt(count, 10) >= 10
+                ? "l"
+                : "s"
+          }
+          count={count}
+        />
       ) : (
         <LockerMarker id={reactId} />
       )}
