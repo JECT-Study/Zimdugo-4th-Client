@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { LockerBoundsRaw } from "#/shared/api/lockers";
 import { subscribeMapIdle } from "./map-idle-controller";
 import type { MapViewport } from "./map-idle-controller";
 import {
   getLockerPinQueryFromViewport,
-  getRadiusFromViewport,
   isLockerPinQueryWithinCapacity,
   type LockerPinQueryViewport,
 } from "./locker-pin-query";
@@ -21,7 +21,6 @@ import {
 export const LOCKER_PINS_QUERY_KEY = "lockerPins";
 export {
   getLockerPinQueryFromViewport,
-  getRadiusFromViewport,
   isLockerPinQueryWithinCapacity,
 };
 export type { LockerPinQueryViewport };
@@ -35,6 +34,7 @@ export interface UseLockerMarkersOptions {
     id: number,
     pin: LockerPinItemResponse,
   ) => void;
+  onClusterClick?: (bounds: LockerBoundsRaw) => void;
   spreadCenter?: { lat: number; lng: number } | null;
 }
 
@@ -43,10 +43,12 @@ export const useLockerMarkers = ({
   maps,
   selectedPinId,
   onSelectLocker,
+  onClusterClick,
   spreadCenter,
 }: UseLockerMarkersOptions) => {
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
+  const lastRenderedZoomRef = useRef<number | null>(null);
   const onSelectLockerRef = useRef(onSelectLocker);
 
   useEffect(() => {
@@ -79,6 +81,10 @@ export const useLockerMarkers = ({
     const unsubscribeIdle = subscribeMapIdle({
       map,
       maps,
+      onZoomChangeStart: () => {
+        clearLockerMarkers(markerRegistryRef.current, maps);
+        lastRenderedZoomRef.current = null;
+      },
       onSettle: (newViewport) => setViewport(newViewport),
     });
 
@@ -91,23 +97,26 @@ export const useLockerMarkers = ({
   const { data: lockers, isFetching } = useQuery({
     queryKey: [
       LOCKER_PINS_QUERY_KEY,
-      lockerPinQuery?.lat,
-      lockerPinQuery?.lng,
-      lockerPinQuery?.radius,
+      lockerPinQuery?.swLat,
+      lockerPinQuery?.swLng,
+      lockerPinQuery?.neLat,
+      lockerPinQuery?.neLng,
+      lockerPinQuery?.zoom,
     ],
     queryFn: ({ signal }) => {
       if (!lockerPinQuery) return Promise.resolve([]);
       return getLockerPins({
-        lat: lockerPinQuery.lat,
-        lng: lockerPinQuery.lng,
-        radius: lockerPinQuery.radius,
+        swLat: lockerPinQuery.swLat,
+        swLng: lockerPinQuery.swLng,
+        neLat: lockerPinQuery.neLat,
+        neLng: lockerPinQuery.neLng,
+        zoom: lockerPinQuery.zoom,
         signal,
       });
     },
     enabled: canFetchLockerPins,
     staleTime: 1000 * 60 * 5, // 5분 캐싱
     gcTime: 1000 * 60 * 5,
-    placeholderData: (prev) => prev,
   });
 
   // 3. 서버에서 받아온 데이터를 지도 마커와 동기화
@@ -115,7 +124,16 @@ export const useLockerMarkers = ({
   useEffect(() => {
     if (!map || !maps) return;
 
-    if (!canFetchLockerPins || !lockers) {
+    if (!canFetchLockerPins) {
+      clearLockerMarkers(markerRegistryRef.current, maps);
+      lastRenderedZoomRef.current = null;
+      return;
+    }
+
+    if (!lockers) {
+      if (lastRenderedZoomRef.current === lockerPinQuery?.zoom) {
+        return;
+      }
       clearLockerMarkers(markerRegistryRef.current, maps);
       return;
     }
@@ -126,17 +144,21 @@ export const useLockerMarkers = ({
       lockers,
       selectedPinId,
       onSelectLocker: handleSelectLocker,
+      onClusterClick,
       registry: markerRegistryRef.current,
       spreadCenter,
     });
+    lastRenderedZoomRef.current = lockerPinQuery?.zoom ?? null;
   }, [
     map,
     maps,
     lockers,
     selectedPinId,
     handleSelectLocker,
+    onClusterClick,
     viewport,
     canFetchLockerPins,
+    lockerPinQuery?.zoom,
     spreadCenter,
   ]);
 
@@ -147,6 +169,7 @@ export const useLockerMarkers = ({
       } else {
         markerRegistryRef.current.clear();
       }
+      lastRenderedZoomRef.current = null;
     };
   }, [maps]);
 
