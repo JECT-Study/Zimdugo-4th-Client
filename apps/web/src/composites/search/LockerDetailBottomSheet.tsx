@@ -107,8 +107,8 @@ export interface LockerDetailBottomSheetProps {
   onSnapChange?: (nextSnap: number) => void;
 }
 
-const DETAIL_MIN_TOP_OFFSET = 76;
-const DETAIL_FULL_VISIBLE_HEIGHT = 760;
+const DETAIL_MIN_TOP_OFFSET = 60;
+const DETAIL_FULL_VISIBLE_HEIGHT = 780;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 147;
 const DETAIL_HALF_VISIBLE_HEIGHT = 291;
@@ -303,6 +303,7 @@ export function LockerDetailBottomSheet({
       maxSnapPoint={resolvedMaxSnapPoint}
       dragSensitivity={DETAIL_DRAG_SENSITIVITY}
       animateOnMount={animateOnMount}
+      showHomeIndicator={false}
       onSnapChange={onSnapChange}
       onDismiss={handleBack}
     >

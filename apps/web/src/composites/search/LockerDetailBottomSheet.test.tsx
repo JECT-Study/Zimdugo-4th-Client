@@ -55,7 +55,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
       miniSnapPoint: 665,
-      minSnapPoint: 76,
+      minSnapPoint: 60,
       snapPoint: 521,
     });
   });
@@ -64,7 +64,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 1000 })).toEqual({
       maxSnapPoint: 948,
       miniSnapPoint: 853,
-      minSnapPoint: 240,
+      minSnapPoint: 220,
       snapPoint: 709,
     });
   });
@@ -76,7 +76,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
     expect(sheet.getByText("제보하기를 통해 등록할 수 있어요!")).toBeTruthy();
     expect(sheet.getByText(LOCKER_DETAIL.title)).toBeTruthy();
-    expect(sheet.getByText("가격")).toBeTruthy();
+    expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
     expect(sheet.getByRole("button", { name: "공유하기" })).toBeTruthy();

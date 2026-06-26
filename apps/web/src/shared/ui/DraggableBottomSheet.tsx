@@ -50,6 +50,7 @@ export interface DraggableBottomSheetProps {
   dismissSnapPoint?: number;
   dragSensitivity?: number;
   animateOnMount?: boolean;
+  showHomeIndicator?: boolean;
   onSnapChange?: (nextSnap: number) => void;
   onLiveOffsetChange?: (state: BottomSheetLiveOffsetState) => void;
   onDismiss?: () => void;
@@ -226,6 +227,7 @@ export function DraggableBottomSheet({
   dismissSnapPoint,
   dragSensitivity = 1,
   animateOnMount = false,
+  showHomeIndicator = true,
   onSnapChange,
   onLiveOffsetChange,
   onDismiss,
@@ -537,7 +539,9 @@ export function DraggableBottomSheet({
           onPointerDown={handlePointerDown}
           role="presentation"
         >
-          <BottomSheetFrame layout="nav">{children}</BottomSheetFrame>
+          <BottomSheetFrame layout="nav" showHomeIndicator={showHomeIndicator}>
+            {children}
+          </BottomSheetFrame>
         </div>
       </motion.div>
     </div>
