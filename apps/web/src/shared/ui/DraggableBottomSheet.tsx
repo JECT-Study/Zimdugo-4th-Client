@@ -1,5 +1,10 @@
 import { BottomSheetFrame } from "@repo/ui/components/bottom-sheet-frame";
-import { animate, motion, useMotionValue } from "motion/react";
+import {
+  animate,
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+} from "motion/react";
 import {
   type ReactNode,
   type PointerEvent as ReactPointerEvent,
@@ -21,7 +26,6 @@ const INTERACTIVE_DRAG_EXCLUSION_SELECTOR =
 
 const SNAP_VELOCITY_PROJECTION_MS = 120;
 const MAX_VELOCITY_PROJECTION_PX = 96;
-const DEFAULT_VIEWPORT_HEIGHT = 812;
 const SHEET_SETTLE_SPRING = {
   type: "spring",
   stiffness: 420,
@@ -103,14 +107,6 @@ interface DragState {
   velocityY: number;
 }
 
-const getViewportHeight = () => {
-  if (typeof window === "undefined") {
-    return DEFAULT_VIEWPORT_HEIGHT;
-  }
-
-  return window.innerHeight;
-};
-
 export function DraggableBottomSheet({
   children,
   snapPoint,
@@ -131,10 +127,8 @@ export function DraggableBottomSheet({
   );
   const clampedInitialSnap = clampSnap(resolvedInitialSnap);
   const [currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
-  const [viewportHeight, setViewportHeight] = useState(getViewportHeight);
-  const sheetHeight = useMotionValue(
-    Math.max(0, getViewportHeight() - clampedInitialSnap),
-  );
+  const sheetOffset = useMotionValue(clampedInitialSnap);
+  const sheetHeight = useMotionTemplate`calc(100dvh - ${sheetOffset}px)`;
   const dragStateRef = useRef<DragState | null>(null);
   const settleAnimationRef = useRef<{ stop: () => void } | null>(null);
   const currentSnapRef = useRef(clampedInitialSnap);
@@ -160,14 +154,6 @@ export function DraggableBottomSheet({
       snapPoint,
     ],
   );
-  const offsetToHeight = useCallback(
-    (offset: number) => Math.max(0, viewportHeight - clampSnap(offset)),
-    [clampSnap, viewportHeight],
-  );
-  const heightToOffset = useCallback(
-    (height: number) => clampSnap(viewportHeight - height),
-    [clampSnap, viewportHeight],
-  );
   const notifyLiveOffsetChange = useCallback(
     (offset: number) => {
       onLiveOffsetChange?.({
@@ -183,26 +169,12 @@ export function DraggableBottomSheet({
     [maxSnapPoint, minSnapPoint, onLiveOffsetChange, snapPoints],
   );
 
-  useEffect(() => {
-    const handleResize = () => {
-      const nextViewportHeight = getViewportHeight();
-      setViewportHeight(nextViewportHeight);
-      sheetHeight.set(Math.max(0, nextViewportHeight - currentSnapRef.current));
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [sheetHeight]);
-
   useEffect(
     () =>
-      sheetHeight.on("change", (height) => {
-        notifyLiveOffsetChange(heightToOffset(height));
+      sheetOffset.on("change", (offset) => {
+        notifyLiveOffsetChange(clampSnap(offset));
       }),
-    [heightToOffset, notifyLiveOffsetChange, sheetHeight],
+    [clampSnap, notifyLiveOffsetChange, sheetOffset],
   );
 
   useEffect(() => {
@@ -215,8 +187,8 @@ export function DraggableBottomSheet({
     lastInitialSnapRef.current = nextSnap;
     currentSnapRef.current = nextSnap;
     setCurrentSnap(nextSnap);
-    sheetHeight.set(offsetToHeight(nextSnap));
-  }, [resolvedInitialSnap, clampSnap, offsetToHeight, sheetHeight]);
+    sheetOffset.set(nextSnap);
+  }, [resolvedInitialSnap, clampSnap, sheetOffset]);
 
   const settleToNextSnap = useCallback(
     ({ offsetY, velocityY }: { offsetY: number; velocityY: number }) => {
@@ -249,16 +221,12 @@ export function DraggableBottomSheet({
 
       const clampedNextSnap = clampSnap(nextSnap);
       settleAnimationRef.current?.stop();
-      settleAnimationRef.current = animate(
-        sheetHeight,
-        offsetToHeight(clampedNextSnap),
-        {
-          ...SHEET_SETTLE_SPRING,
-          onComplete: () => {
-            sheetHeight.set(offsetToHeight(clampedNextSnap));
-          },
+      settleAnimationRef.current = animate(sheetOffset, clampedNextSnap, {
+        ...SHEET_SETTLE_SPRING,
+        onComplete: () => {
+          sheetOffset.set(clampedNextSnap);
         },
-      );
+      });
       currentSnapRef.current = clampedNextSnap;
       setCurrentSnap(clampedNextSnap);
       onSnapChange?.(clampedNextSnap);
@@ -273,11 +241,10 @@ export function DraggableBottomSheet({
     [
       clampSnap,
       currentSnap,
-      offsetToHeight,
       onDismiss,
       onSnapChange,
       resolvedDismissSnapPoint,
-      sheetHeight,
+      sheetOffset,
       snapPoints,
     ],
   );
@@ -299,9 +266,9 @@ export function DraggableBottomSheet({
       const nextLiveOffset = clampSnap(
         dragState.startSnap + event.clientY - dragState.startY,
       );
-      sheetHeight.set(offsetToHeight(nextLiveOffset));
+      sheetOffset.set(nextLiveOffset);
     },
-    [clampSnap, offsetToHeight, sheetHeight],
+    [clampSnap, sheetOffset],
   );
 
   const finishDrag = useCallback(
@@ -332,7 +299,7 @@ export function DraggableBottomSheet({
     settleAnimationRef.current?.stop();
     dragStateRef.current = {
       startY: event.clientY,
-      startSnap: heightToOffset(sheetHeight.get()),
+      startSnap: clampSnap(sheetOffset.get()),
       lastY: event.clientY,
       lastTime: performance.now(),
       velocityY: 0,

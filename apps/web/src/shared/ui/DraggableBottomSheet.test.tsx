@@ -7,7 +7,8 @@ import {
   shouldStartBottomSheetDrag,
 } from "./DraggableBottomSheet";
 
-const { animationStop } = vi.hoisted(() => ({
+const { animateTargets, animationStop } = vi.hoisted(() => ({
+  animateTargets: [] as number[],
   animationStop: vi.fn(),
 }));
 
@@ -48,6 +49,7 @@ vi.mock("motion/react", () => {
 
   return {
     animate: (motionValue: TestMotionValue, targetValue: number) => {
+      animateTargets.push(targetValue);
       motionValue.set(targetValue);
       return { stop: animationStop };
     },
@@ -65,6 +67,7 @@ vi.mock("motion/react", () => {
         return <div style={{ ...style, height }} {...props} />;
       },
     },
+    useMotionTemplate: () => "calc(100dvh - 0px)",
     useMotionValue: createMotionValue,
   };
 });
@@ -72,6 +75,7 @@ vi.mock("motion/react", () => {
 afterEach(() => {
   document.body.innerHTML = "";
   vi.restoreAllMocks();
+  animateTargets.length = 0;
   animationStop.mockClear();
 });
 
@@ -236,6 +240,27 @@ describe("DraggableBottomSheet", () => {
     fireEvent.pointerMove(window, { clientY: 240, pointerId: 1 });
 
     expect(handleLiveOffsetChange).not.toHaveBeenCalled();
+  });
+
+  it("settles by animating the offset to a configured snap", () => {
+    render(
+      <DraggableBottomSheet
+        minSnapPoint={40}
+        snapPoint={240}
+        miniSnapPoint={480}
+        maxSnapPoint={720}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    dragSheet({
+      target: screen.getByTestId("sheet-surface"),
+      from: 0,
+      to: 120,
+    });
+
+    expect(animateTargets.at(-1)).toBe(480);
   });
 
   it("uses the mini snap between half and dismiss", () => {
