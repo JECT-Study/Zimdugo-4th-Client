@@ -172,7 +172,7 @@ export function LockerDetailBottomSheet({
   );
   const resolvedSnapPoint = snapPoint ?? Math.max(44, windowHeight - 380);
   const resolvedInitialSnapPoint = initialSnapPoint ?? resolvedSnapPoint;
-  const resolvedMinSnapPoint = minSnapPoint ?? 44;
+  const resolvedMinSnapPoint = minSnapPoint ?? 76;
   const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 52;
   const resolvedMiniSnapPoint =
     resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;

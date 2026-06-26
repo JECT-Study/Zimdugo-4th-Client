@@ -11,6 +11,7 @@ import {
 import {
   dragHandleZone,
   interactiveContent,
+  sheetSurface,
   sheetWrapper,
 } from "./DraggableBottomSheet.css.ts";
 
@@ -283,12 +284,18 @@ export function DraggableBottomSheet({
       className={sheetWrapper}
       style={{
         ["--sheet-offset" as string]: `${liveOffset}px`,
-        transition: isDragging ? "none" : undefined,
       }}
     >
-      <div className={dragHandleZone} onPointerDown={handlePointerDown} />
-      <div className={interactiveContent} onPointerDown={handlePointerDown}>
-        <BottomSheetFrame layout="nav">{children}</BottomSheetFrame>
+      <div
+        className={sheetSurface}
+        style={{
+          transition: isDragging ? "none" : undefined,
+        }}
+      >
+        <div className={dragHandleZone} onPointerDown={handlePointerDown} />
+        <div className={interactiveContent} onPointerDown={handlePointerDown}>
+          <BottomSheetFrame layout="nav">{children}</BottomSheetFrame>
+        </div>
       </div>
     </div>
   );
