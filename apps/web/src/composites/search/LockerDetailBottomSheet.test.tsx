@@ -18,7 +18,10 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
 }));
 
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
-import { LockerDetailBottomSheet } from "./LockerDetailBottomSheet";
+import {
+  LockerDetailBottomSheet,
+  resolveLockerDetailSnapPoints,
+} from "./LockerDetailBottomSheet";
 
 const LOCKER_DETAIL: LockerDetailItem = {
   itemType: "LOCKER",
@@ -46,6 +49,15 @@ describe("LockerDetailBottomSheet", () => {
 
   afterEach(() => {
     cleanup();
+  });
+
+  it("resolves detail-specific mini and half snap heights", () => {
+    expect(resolveLockerDetailSnapPoints({ windowHeight: 812 })).toEqual({
+      maxSnapPoint: 760,
+      miniSnapPoint: 665,
+      minSnapPoint: 108,
+      snapPoint: 521,
+    });
   });
 
   it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {

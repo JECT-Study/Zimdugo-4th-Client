@@ -106,6 +106,63 @@ export interface LockerDetailBottomSheetProps {
   onSnapChange?: (nextSnap: number) => void;
 }
 
+const DETAIL_FULL_SNAP_POINT = 108;
+const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
+const DETAIL_MINI_VISIBLE_HEIGHT = 147;
+const DETAIL_HALF_VISIBLE_HEIGHT = 291;
+
+interface ResolveLockerDetailSnapPointsOptions {
+  windowHeight: number;
+  minSnapPoint?: number;
+  snapPoint?: number;
+  maxSnapPoint?: number;
+}
+
+export const resolveLockerDetailSnapOffset = ({
+  maxSnapPoint,
+  minSnapPoint,
+  visibleHeight,
+  windowHeight,
+}: {
+  maxSnapPoint: number;
+  minSnapPoint: number;
+  visibleHeight: number;
+  windowHeight: number;
+}) =>
+  Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
+
+export const resolveLockerDetailSnapPoints = ({
+  maxSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  windowHeight,
+}: ResolveLockerDetailSnapPointsOptions) => {
+  const resolvedMinSnapPoint = minSnapPoint ?? DETAIL_FULL_SNAP_POINT;
+  const resolvedMaxSnapPoint =
+    maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
+  const resolvedSnapPoint =
+    snapPoint ??
+    resolveLockerDetailSnapOffset({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      visibleHeight: DETAIL_HALF_VISIBLE_HEIGHT,
+      windowHeight,
+    });
+  const resolvedMiniSnapPoint = resolveLockerDetailSnapOffset({
+    maxSnapPoint: resolvedMaxSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    visibleHeight: DETAIL_MINI_VISIBLE_HEIGHT,
+    windowHeight,
+  });
+
+  return {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  };
+};
+
 export const createLockerDetailFromSearchItem = (
   item: SearchLockerResultItem,
 ): LockerDetailItem => ({
@@ -186,12 +243,18 @@ export function LockerDetailBottomSheet({
   const [windowHeight, setWindowHeight] = useState(
     typeof window !== "undefined" ? window.innerHeight : 812,
   );
-  const resolvedSnapPoint = snapPoint ?? Math.max(44, windowHeight - 380);
+  const {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  } = resolveLockerDetailSnapPoints({
+    maxSnapPoint,
+    minSnapPoint,
+    snapPoint,
+    windowHeight,
+  });
   const resolvedInitialSnapPoint = initialSnapPoint ?? resolvedSnapPoint;
-  const resolvedMinSnapPoint = minSnapPoint ?? 108;
-  const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 52;
-  const resolvedMiniSnapPoint =
-    resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
@@ -223,7 +286,7 @@ export function LockerDetailBottomSheet({
     <DraggableBottomSheet
       key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
       snapPoint={resolvedSnapPoint}
-      initialSnapPoint={initialSnapPoint}
+      initialSnapPoint={resolvedInitialSnapPoint}
       minSnapPoint={resolvedMinSnapPoint}
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
