@@ -6,6 +6,7 @@ import {
   useMotionValue,
 } from "motion/react";
 import {
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type PointerEvent as ReactPointerEvent,
   useCallback,
@@ -105,7 +106,7 @@ interface DragState {
 
 interface PendingDragState extends DragState {
   boundary: HTMLElement;
-  pointerId: number;
+  pointerId?: number;
   startX: number;
   target: EventTarget | null;
 }
@@ -336,8 +337,25 @@ export function DraggableBottomSheet({
     ],
   );
 
+  const removeDragListeners = useCallback(
+    ({
+      handleDragEnd,
+      handleDragMove,
+    }: {
+      handleDragEnd: (event: MouseEvent | PointerEvent) => void;
+      handleDragMove: (event: MouseEvent | PointerEvent) => void;
+    }) => {
+      window.removeEventListener("pointermove", handleDragMove);
+      window.removeEventListener("pointerup", handleDragEnd);
+      window.removeEventListener("pointercancel", handleDragEnd);
+      window.removeEventListener("mousemove", handleDragMove);
+      window.removeEventListener("mouseup", handleDragEnd);
+    },
+    [],
+  );
+
   const handlePointerMove = useCallback(
-    (event: PointerEvent) => {
+    (event: MouseEvent | PointerEvent) => {
       let dragState = dragStateRef.current;
       const pendingDragState = pendingDragStateRef.current;
 
@@ -357,13 +375,14 @@ export function DraggableBottomSheet({
 
         if (intent === "content") {
           pendingDragStateRef.current = null;
-          window.removeEventListener("pointermove", handlePointerMove);
           return;
         }
 
-        pendingDragState.boundary.setPointerCapture?.(
-          pendingDragState.pointerId,
-        );
+        if (pendingDragState.pointerId !== undefined) {
+          pendingDragState.boundary.setPointerCapture?.(
+            pendingDragState.pointerId,
+          );
+        }
         settleAnimationRef.current?.stop();
         dragState = {
           startY: pendingDragState.startY,
@@ -387,13 +406,14 @@ export function DraggableBottomSheet({
   );
 
   const finishDrag = useCallback(
-    (event: PointerEvent) => {
+    (event: MouseEvent | PointerEvent) => {
       const dragState = dragStateRef.current;
       if (dragState == null) {
         pendingDragStateRef.current = null;
-        window.removeEventListener("pointermove", handlePointerMove);
-        window.removeEventListener("pointerup", finishDrag);
-        window.removeEventListener("pointercancel", finishDrag);
+        removeDragListeners({
+          handleDragEnd: finishDrag,
+          handleDragMove: handlePointerMove,
+        });
         return;
       }
 
@@ -402,18 +422,29 @@ export function DraggableBottomSheet({
       });
       dragStateRef.current = null;
       pendingDragStateRef.current = null;
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", finishDrag);
-      window.removeEventListener("pointercancel", finishDrag);
+      removeDragListeners({
+        handleDragEnd: finishDrag,
+        handleDragMove: handlePointerMove,
+      });
     },
-    [handlePointerMove, settleToNextSnap],
+    [handlePointerMove, removeDragListeners, settleToNextSnap],
   );
 
-  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.target instanceof HTMLElement) {
-      const isInteractive = event.target.closest(
-        INTERACTIVE_DRAG_EXCLUSION_SELECTOR,
-      );
+  const startPendingDrag = ({
+    boundary,
+    clientX,
+    clientY,
+    pointerId,
+    target,
+  }: {
+    boundary: HTMLElement;
+    clientX: number;
+    clientY: number;
+    pointerId?: number;
+    target: EventTarget | null;
+  }) => {
+    if (target instanceof HTMLElement) {
+      const isInteractive = target.closest(INTERACTIVE_DRAG_EXCLUSION_SELECTOR);
       if (isInteractive) {
         return;
       }
@@ -424,35 +455,71 @@ export function DraggableBottomSheet({
     }
 
     pendingDragStateRef.current = {
-      boundary: event.currentTarget,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
+      boundary,
+      pointerId,
+      startX: clientX,
+      startY: clientY,
       startSnap: clampSnap(sheetOffset.get()),
-      target: event.target,
+      target,
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", finishDrag);
     window.addEventListener("pointercancel", finishDrag);
+    window.addEventListener("mousemove", handlePointerMove);
+    window.addEventListener("mouseup", finishDrag);
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    startPendingDrag({
+      boundary: event.currentTarget,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      pointerId: event.pointerId,
+      target: event.target,
+    });
+  };
+
+  const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (event.button > 0) {
+      return;
+    }
+
+    startPendingDrag({
+      boundary: event.currentTarget,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: event.target,
+    });
   };
 
   useEffect(
     () => () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", finishDrag);
-      window.removeEventListener("pointercancel", finishDrag);
+      removeDragListeners({
+        handleDragEnd: finishDrag,
+        handleDragMove: handlePointerMove,
+      });
       pendingDragStateRef.current = null;
       dragStateRef.current = null;
       settleAnimationRef.current?.stop();
     },
-    [finishDrag, handlePointerMove],
+    [finishDrag, handlePointerMove, removeDragListeners],
   );
 
   return (
     <div className={sheetWrapper}>
       <motion.div className={sheetSurface} style={{ height: sheetHeight }}>
-        <div className={dragHandleZone} onPointerDown={handlePointerDown} />
-        <div className={interactiveContent} onPointerDown={handlePointerDown}>
+        <div
+          className={dragHandleZone}
+          onMouseDownCapture={handleMouseDown}
+          onPointerDown={handlePointerDown}
+          role="presentation"
+        />
+        <div
+          className={interactiveContent}
+          onMouseDownCapture={handleMouseDown}
+          onPointerDown={handlePointerDown}
+          role="presentation"
+        >
           <BottomSheetFrame layout="nav">{children}</BottomSheetFrame>
         </div>
       </motion.div>
