@@ -448,6 +448,34 @@ describe("DraggableBottomSheet", () => {
     expect(lastState.snapPoints).toEqual([40, 240, 480, 720]);
   });
 
+  it("applies drag sensitivity to live dragging", () => {
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        minSnapPoint={40}
+        snapPoint={240}
+        miniSnapPoint={480}
+        maxSnapPoint={720}
+        dragSensitivity={1.2}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+    handleLiveOffsetChange.mockClear();
+
+    fireEvent.pointerDown(screen.getByTestId("sheet-surface"), {
+      clientY: 0,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(window, { clientY: 120, pointerId: 1 });
+
+    const lastState = handleLiveOffsetChange.mock.calls.at(-1)?.[0];
+
+    expect(lastState.offset).toBe(384);
+  });
+
   it("calls onDismiss when the sheet reaches the dismiss snap", () => {
     const handleDismiss = vi.fn();
     const handleSnapChange = vi.fn();

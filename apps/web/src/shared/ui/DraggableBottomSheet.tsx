@@ -48,6 +48,7 @@ export interface DraggableBottomSheetProps {
   miniSnapPoint?: number;
   maxSnapPoint?: number;
   dismissSnapPoint?: number;
+  dragSensitivity?: number;
   onSnapChange?: (nextSnap: number) => void;
   onLiveOffsetChange?: (state: BottomSheetLiveOffsetState) => void;
   onDismiss?: () => void;
@@ -222,6 +223,7 @@ export function DraggableBottomSheet({
   miniSnapPoint,
   maxSnapPoint = 760,
   dismissSnapPoint,
+  dragSensitivity = 1,
   onSnapChange,
   onLiveOffsetChange,
   onDismiss,
@@ -233,7 +235,7 @@ export function DraggableBottomSheet({
     [maxSnapPoint, minSnapPoint],
   );
   const clampedInitialSnap = clampSnap(resolvedInitialSnap);
-  const [currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
+  const [_currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
   const sheetOffset = useMotionValue(clampedInitialSnap);
   const sheetHeight = useMotionTemplate`calc(100dvh - ${sheetOffset}px)`;
   const dragStateRef = useRef<DragState | null>(null);
@@ -305,7 +307,8 @@ export function DraggableBottomSheet({
 
   const settleToNextSnap = useCallback(
     ({ offsetY }: { offsetY: number }) => {
-      const startSnap = dragStateRef.current?.startSnap ?? currentSnapRef.current;
+      const startSnap =
+        dragStateRef.current?.startSnap ?? currentSnapRef.current;
       const nextSnap = resolveBottomSheetNextSnap({
         offsetY,
         snapPoints,
@@ -320,7 +323,7 @@ export function DraggableBottomSheet({
           sheetOffset.set(clampedNextSnap);
         },
       });
-      
+
       const prevSnap = currentSnapRef.current;
       currentSnapRef.current = clampedNextSnap;
       setCurrentSnap(clampedNextSnap);
@@ -402,12 +405,11 @@ export function DraggableBottomSheet({
       }
 
       event.preventDefault();
-      const nextLiveOffset = clampSnap(
-        dragState.startSnap + event.clientY - dragState.startY,
-      );
+      const offsetY = (event.clientY - dragState.startY) * dragSensitivity;
+      const nextLiveOffset = clampSnap(dragState.startSnap + offsetY);
       sheetOffset.set(nextLiveOffset);
     },
-    [clampSnap, sheetOffset, removeDragListeners],
+    [clampSnap, dragSensitivity, sheetOffset, removeDragListeners],
   );
 
   const finishDrag = useCallback(
@@ -420,13 +422,13 @@ export function DraggableBottomSheet({
       }
 
       settleToNextSnap({
-        offsetY: event.clientY - dragState.startY,
+        offsetY: (event.clientY - dragState.startY) * dragSensitivity,
       });
       dragStateRef.current = null;
       pendingDragStateRef.current = null;
       removeDragListeners();
     },
-    [removeDragListeners, settleToNextSnap],
+    [dragSensitivity, removeDragListeners, settleToNextSnap],
   );
 
   const startPendingDrag = ({
@@ -466,7 +468,11 @@ export function DraggableBottomSheet({
         e.preventDefault();
       }
     };
-    activeListenersRef.current = { move: handlePointerMove, end: finishDrag, touchMove: handleTouchMove };
+    activeListenersRef.current = {
+      move: handlePointerMove,
+      end: finishDrag,
+      touchMove: handleTouchMove,
+    };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", finishDrag);
     window.addEventListener("pointercancel", finishDrag);

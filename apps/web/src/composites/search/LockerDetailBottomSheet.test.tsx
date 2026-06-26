@@ -60,6 +60,15 @@ describe("LockerDetailBottomSheet", () => {
     });
   });
 
+  it("caps the full snap height on tall viewports", () => {
+    expect(resolveLockerDetailSnapPoints({ windowHeight: 1000 })).toEqual({
+      maxSnapPoint: 948,
+      miniSnapPoint: 853,
+      minSnapPoint: 296,
+      snapPoint: 709,
+    });
+  });
+
   it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
     render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
     const sheet = getSheetRoot();

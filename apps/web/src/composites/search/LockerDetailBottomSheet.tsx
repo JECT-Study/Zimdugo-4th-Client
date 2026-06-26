@@ -106,10 +106,12 @@ export interface LockerDetailBottomSheetProps {
   onSnapChange?: (nextSnap: number) => void;
 }
 
-const DETAIL_FULL_SNAP_POINT = 108;
+const DETAIL_MIN_TOP_OFFSET = 108;
+const DETAIL_FULL_VISIBLE_HEIGHT = 704;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 147;
 const DETAIL_HALF_VISIBLE_HEIGHT = 291;
+const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 interface ResolveLockerDetailSnapPointsOptions {
   windowHeight: number;
@@ -137,9 +139,16 @@ export const resolveLockerDetailSnapPoints = ({
   snapPoint,
   windowHeight,
 }: ResolveLockerDetailSnapPointsOptions) => {
-  const resolvedMinSnapPoint = minSnapPoint ?? DETAIL_FULL_SNAP_POINT;
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
+  const resolvedMinSnapPoint =
+    minSnapPoint ??
+    resolveLockerDetailSnapOffset({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: DETAIL_MIN_TOP_OFFSET,
+      visibleHeight: DETAIL_FULL_VISIBLE_HEIGHT,
+      windowHeight,
+    });
   const resolvedSnapPoint =
     snapPoint ??
     resolveLockerDetailSnapOffset({
@@ -290,6 +299,7 @@ export function LockerDetailBottomSheet({
       minSnapPoint={resolvedMinSnapPoint}
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
+      dragSensitivity={DETAIL_DRAG_SENSITIVITY}
       onSnapChange={onSnapChange}
       onDismiss={handleBack}
     >
