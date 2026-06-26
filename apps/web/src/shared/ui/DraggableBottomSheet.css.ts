@@ -21,8 +21,8 @@ export const sheetSurface = style({
   left: 0,
   right: 0,
   bottom: 0,
-  height: "calc(100dvh - var(--sheet-offset, 0px))",
-  transition: "height 260ms cubic-bezier(0.16, 1, 0.3, 1)",
+  maxHeight: "100dvh",
+  overflow: "hidden",
   willChange: "height",
   pointerEvents: "none",
 });

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { CSSProperties, HTMLAttributes } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DraggableBottomSheet,
@@ -6,9 +7,72 @@ import {
   shouldStartBottomSheetDrag,
 } from "./DraggableBottomSheet";
 
+const { animationStop } = vi.hoisted(() => ({
+  animationStop: vi.fn(),
+}));
+
+vi.mock("motion/react", () => {
+  const createMotionValue = (initial: number) => {
+    let value = initial;
+    const listeners = new Set<(value: number) => void>();
+
+    return {
+      get: () => value,
+      set: (nextValue: number) => {
+        value = nextValue;
+        listeners.forEach((listener) => {
+          listener(nextValue);
+        });
+      },
+      on: (event: string, listener: (value: number) => void) => {
+        if (event !== "change") {
+          return () => {};
+        }
+
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
+    };
+  };
+  type TestMotionValue = ReturnType<typeof createMotionValue>;
+  type TestMotionStyle = Omit<CSSProperties, "height"> & {
+    height?: CSSProperties["height"] | TestMotionValue;
+  };
+
+  const isMotionValue = (
+    value: TestMotionStyle["height"],
+  ): value is TestMotionValue =>
+    typeof value === "object" && value != null && "get" in value;
+
+  return {
+    animate: (motionValue: TestMotionValue, targetValue: number) => {
+      motionValue.set(targetValue);
+      return { stop: animationStop };
+    },
+    motion: {
+      div: ({
+        style,
+        ...props
+      }: HTMLAttributes<HTMLDivElement> & {
+        style?: TestMotionStyle;
+      }) => {
+        const height = isMotionValue(style?.height)
+          ? style.height.get()
+          : style?.height;
+
+        return <div style={{ ...style, height }} {...props} />;
+      },
+    },
+    useMotionValue: createMotionValue,
+  };
+});
+
 afterEach(() => {
   document.body.innerHTML = "";
   vi.restoreAllMocks();
+  animationStop.mockClear();
 });
 
 const setScrollableSize = (element: HTMLElement) => {
