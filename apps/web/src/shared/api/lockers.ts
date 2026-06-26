@@ -49,6 +49,16 @@ interface LockerPinItemRaw {
 const toLockerPinItem = (
   item: LockerPinItemRaw,
 ): LockerPinItemResponse | null => {
+  if (item.pinType === "CLUSTER" && (item.pinCount ?? 0) <= 1) {
+    if (item.lockerId !== null) {
+      return toLockerPinItem({ ...item, pinType: "LOCKER" });
+    }
+
+    if (item.placeId !== null) {
+      return toLockerPinItem({ ...item, pinType: "PLACE" });
+    }
+  }
+
   if (item.pinType === "LOCKER" && item.lockerId !== null) {
     return {
       pinType: "LOCKER",

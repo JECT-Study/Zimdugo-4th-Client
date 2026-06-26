@@ -58,7 +58,95 @@ describe("getLockerPins", () => {
     ]);
   });
 
-  it("drops invalid CLUSTER responses with pinCount less than or equal to 1", async () => {
+  it("normalizes single-count CLUSTER responses with lockerId to LOCKER", async () => {
+    vi.mocked(httpGet).mockResolvedValue(
+      mockPinResponse([
+        {
+          pinType: "CLUSTER",
+          lockerId: 1,
+          placeId: null,
+          latitude: 37.5,
+          longitude: 127,
+          isFavorite: true,
+          pinCount: 1,
+          bounds: {
+            swLat: 37.49,
+            swLng: 126.99,
+            neLat: 37.51,
+            neLng: 127.01,
+          },
+        },
+      ]),
+    );
+
+    await expect(
+      getLockerPins({
+        swLat: 37,
+        swLng: 126,
+        neLat: 38,
+        neLng: 128,
+        zoom: 15,
+      }),
+    ).resolves.toEqual([
+      {
+        pinType: "LOCKER",
+        lockerId: 1,
+        placeId: null,
+        latitude: 37.5,
+        longitude: 127,
+        isFavorite: true,
+        lockerCount: null,
+        pinCount: null,
+        bounds: null,
+      },
+    ]);
+  });
+
+  it("normalizes single-count CLUSTER responses with placeId to PLACE", async () => {
+    vi.mocked(httpGet).mockResolvedValue(
+      mockPinResponse([
+        {
+          pinType: "CLUSTER",
+          lockerId: null,
+          placeId: 10,
+          latitude: 37.5,
+          longitude: 127,
+          lockerCount: 2,
+          pinCount: 1,
+          bounds: {
+            swLat: 37.49,
+            swLng: 126.99,
+            neLat: 37.51,
+            neLng: 127.01,
+          },
+        },
+      ]),
+    );
+
+    await expect(
+      getLockerPins({
+        swLat: 37,
+        swLng: 126,
+        neLat: 38,
+        neLng: 128,
+        zoom: 15,
+      }),
+    ).resolves.toEqual([
+      {
+        pinType: "PLACE",
+        lockerId: null,
+        placeId: 10,
+        latitude: 37.5,
+        longitude: 127,
+        isFavorite: null,
+        lockerCount: 2,
+        pinCount: null,
+        bounds: null,
+      },
+    ]);
+  });
+
+  it("drops single-count CLUSTER responses without a lockerId or placeId", async () => {
     vi.mocked(httpGet).mockResolvedValue(
       mockPinResponse([
         {
@@ -68,12 +156,7 @@ describe("getLockerPins", () => {
           latitude: 37.5,
           longitude: 127,
           pinCount: 1,
-          bounds: {
-            swLat: 37.49,
-            swLng: 126.99,
-            neLat: 37.51,
-            neLng: 127.01,
-          },
+          bounds: null,
         },
       ]),
     );
