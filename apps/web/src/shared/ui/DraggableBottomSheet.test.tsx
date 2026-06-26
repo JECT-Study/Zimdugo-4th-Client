@@ -3,6 +3,7 @@ import type { CSSProperties, HTMLAttributes } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DraggableBottomSheet,
+  resolveBottomSheetDragIntent,
   resolveBottomSheetExpandedProgress,
   resolveBottomSheetNextSnap,
   shouldStartBottomSheetDrag,
@@ -88,6 +89,13 @@ const setScrollableSize = (element: HTMLElement) => {
   Object.defineProperty(element, "scrollHeight", {
     configurable: true,
     value: 200,
+  });
+};
+
+const setScrollTop = (element: HTMLElement, value: number) => {
+  Object.defineProperty(element, "scrollTop", {
+    configurable: true,
+    value,
   });
 };
 
@@ -210,6 +218,63 @@ describe("resolveBottomSheetNextSnap", () => {
   });
 });
 
+describe("resolveBottomSheetDragIntent", () => {
+  it("keeps a vertical gesture inside scrollable content while the content can scroll", () => {
+    const boundary = document.createElement("div");
+    const scrollArea = document.createElement("div");
+    const row = document.createElement("div");
+    scrollArea.style.overflowY = "auto";
+    setScrollableSize(scrollArea);
+    setScrollTop(scrollArea, 40);
+    scrollArea.append(row);
+    boundary.append(scrollArea);
+
+    expect(
+      resolveBottomSheetDragIntent({
+        boundary,
+        deltaX: 0,
+        deltaY: 24,
+        target: row,
+      }),
+    ).toBe("content");
+  });
+
+  it("starts sheet dragging from scrollable content when pulling past the top", () => {
+    const boundary = document.createElement("div");
+    const scrollArea = document.createElement("div");
+    const row = document.createElement("div");
+    scrollArea.style.overflowY = "auto";
+    setScrollableSize(scrollArea);
+    setScrollTop(scrollArea, 0);
+    scrollArea.append(row);
+    boundary.append(scrollArea);
+
+    expect(
+      resolveBottomSheetDragIntent({
+        boundary,
+        deltaX: 0,
+        deltaY: 24,
+        target: row,
+      }),
+    ).toBe("sheet");
+  });
+
+  it("keeps horizontal gestures inside content", () => {
+    const boundary = document.createElement("div");
+    const surface = document.createElement("div");
+    boundary.append(surface);
+
+    expect(
+      resolveBottomSheetDragIntent({
+        boundary,
+        deltaX: 24,
+        deltaY: 8,
+        target: surface,
+      }),
+    ).toBe("content");
+  });
+});
+
 describe("DraggableBottomSheet", () => {
   it("updates live offset from a non-interactive sheet surface", () => {
     const handleLiveOffsetChange = vi.fn();
@@ -257,7 +322,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleLiveOffsetChange).not.toHaveBeenCalled();
   });
 
-  it("keeps scrollable content gestures inside the content", () => {
+  it("keeps scrollable content gestures inside the content while it can scroll", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -272,6 +337,7 @@ describe("DraggableBottomSheet", () => {
     );
 
     setScrollableSize(screen.getByTestId("scroll-area"));
+    setScrollTop(screen.getByTestId("scroll-area"), 40);
     handleLiveOffsetChange.mockClear();
     fireEvent.pointerDown(screen.getByTestId("scroll-row"), {
       clientY: 120,
@@ -280,6 +346,32 @@ describe("DraggableBottomSheet", () => {
     fireEvent.pointerMove(window, { clientY: 240, pointerId: 1 });
 
     expect(handleLiveOffsetChange).not.toHaveBeenCalled();
+  });
+
+  it("starts sheet dragging from scrollable content at its edge", () => {
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="scroll-area" style={{ overflowY: "auto" }}>
+          <div data-testid="scroll-row">scroll row</div>
+        </div>
+      </DraggableBottomSheet>,
+    );
+
+    setScrollableSize(screen.getByTestId("scroll-area"));
+    setScrollTop(screen.getByTestId("scroll-area"), 0);
+    handleLiveOffsetChange.mockClear();
+    fireEvent.pointerDown(screen.getByTestId("scroll-row"), {
+      clientY: 120,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(window, { clientY: 240, pointerId: 1 });
+
+    expect(handleLiveOffsetChange).toHaveBeenCalled();
   });
 
   it("settles by animating the offset to a configured snap", () => {
