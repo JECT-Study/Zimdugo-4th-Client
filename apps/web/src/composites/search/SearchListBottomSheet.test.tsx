@@ -28,6 +28,7 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
 }));
 
 import {
+  resolveLegacySearchListSnapPoints,
   resolveSearchListSnapPoints,
   SearchListBottomSheet,
 } from "./SearchListBottomSheet";
@@ -42,6 +43,21 @@ describe("SearchListBottomSheet", () => {
       minSnapPoint: 44,
       snapPoint: 331,
     });
+  });
+
+  it("keeps the legacy snap calculation available for rollback", () => {
+    expect(resolveLegacySearchListSnapPoints({ windowHeight: 812 })).toEqual({
+      maxSnapPoint: 768,
+      miniSnapPoint: 549.5,
+      minSnapPoint: 0,
+      snapPoint: 331,
+    });
+    expect(
+      resolveSearchListSnapPoints({
+        behavior: "legacy",
+        windowHeight: 812,
+      }),
+    ).toEqual(resolveLegacySearchListSnapPoints({ windowHeight: 812 }));
   });
 
   it("keeps caller-provided snap bounds", () => {

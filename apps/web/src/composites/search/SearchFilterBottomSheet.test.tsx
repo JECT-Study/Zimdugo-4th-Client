@@ -29,6 +29,7 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
 }));
 
 import {
+  resolveLegacySearchFilterSnapPoints,
   resolveSearchFilterSnapPoints,
   SearchFilterBottomSheet,
 } from "./SearchFilterBottomSheet";
@@ -61,6 +62,21 @@ describe("SearchFilterBottomSheet", () => {
       minSnapPoint: 52,
       snapPoint: 52,
     });
+  });
+
+  it("keeps the legacy filter snap calculation available for rollback", () => {
+    expect(resolveLegacySearchFilterSnapPoints({ windowHeight: 812 })).toEqual({
+      maxSnapPoint: 788,
+      miniSnapPoint: 420,
+      minSnapPoint: 52,
+      snapPoint: 52,
+    });
+    expect(
+      resolveSearchFilterSnapPoints({
+        behavior: "legacy",
+        windowHeight: 812,
+      }),
+    ).toEqual(resolveLegacySearchFilterSnapPoints({ windowHeight: 812 }));
   });
 
   it("applies selected indoor/outdoor and place filters", () => {

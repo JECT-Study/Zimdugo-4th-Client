@@ -75,6 +75,7 @@ export interface SearchListBottomSheetProps {
   onRetry?: () => void;
   showHeaderBack?: boolean;
   onHeaderBackPress?: () => void;
+  snapBehavior?: SearchBottomSheetSnapBehavior;
   minSnapPoint?: number;
   snapPoint?: number;
   initialSnapPoint?: number;
@@ -94,9 +95,17 @@ const SEARCH_LIST_DISMISS_VISIBLE_HEIGHT = 52;
 const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT = 481;
 const SEARCH_LIST_MINI_VISIBLE_HEIGHT = 242;
 const SEARCH_LIST_DRAG_SENSITIVITY = 1.2;
+const LEGACY_SEARCH_LIST_MIN_TOP_OFFSET = 0;
+const LEGACY_SEARCH_LIST_MAX_TOP_OFFSET = 44;
+const LEGACY_SEARCH_LIST_DEFAULT_SNAP_POINT = 331;
+
+export type SearchBottomSheetSnapBehavior = "detail" | "legacy";
+export const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
+  "detail";
 
 interface ResolveSearchListSnapPointsOptions {
   windowHeight: number;
+  behavior?: SearchBottomSheetSnapBehavior;
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
@@ -115,12 +124,44 @@ export const resolveSearchListSnapOffset = ({
 }) =>
   Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
 
+export const resolveLegacySearchListSnapPoints = ({
+  maxSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  windowHeight,
+}: Omit<ResolveSearchListSnapPointsOptions, "behavior">) => {
+  const resolvedMinSnapPoint =
+    minSnapPoint ?? LEGACY_SEARCH_LIST_MIN_TOP_OFFSET;
+  const resolvedSnapPoint = snapPoint ?? LEGACY_SEARCH_LIST_DEFAULT_SNAP_POINT;
+  const resolvedMaxSnapPoint =
+    maxSnapPoint ?? windowHeight - LEGACY_SEARCH_LIST_MAX_TOP_OFFSET;
+  const resolvedMiniSnapPoint =
+    resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
+
+  return {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  };
+};
+
 export const resolveSearchListSnapPoints = ({
+  behavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
   maxSnapPoint,
   minSnapPoint,
   snapPoint,
   windowHeight,
 }: ResolveSearchListSnapPointsOptions) => {
+  if (behavior === "legacy") {
+    return resolveLegacySearchListSnapPoints({
+      maxSnapPoint,
+      minSnapPoint,
+      snapPoint,
+      windowHeight,
+    });
+  }
+
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
   const resolvedMinSnapPoint = minSnapPoint ?? SEARCH_LIST_MIN_TOP_OFFSET;
@@ -164,6 +205,7 @@ export function SearchListBottomSheet({
   onRetry,
   showHeaderBack = false,
   onHeaderBackPress,
+  snapBehavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
   minSnapPoint,
   snapPoint,
   initialSnapPoint,
@@ -182,6 +224,7 @@ export function SearchListBottomSheet({
     minSnapPoint: resolvedMinSnapPoint,
     snapPoint: resolvedSnapPoint,
   } = resolveSearchListSnapPoints({
+    behavior: snapBehavior,
     maxSnapPoint,
     minSnapPoint,
     snapPoint,

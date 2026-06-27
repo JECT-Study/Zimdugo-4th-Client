@@ -36,6 +36,7 @@ export interface SearchFilterAppliedState {
 export interface SearchFilterBottomSheetProps {
   className?: string;
   initialFilters?: SearchFilterAppliedState;
+  snapBehavior?: SearchBottomSheetSnapBehavior;
   initialSnapPoint?: number;
   minSnapPoint?: number;
   snapPoint?: number;
@@ -50,19 +51,24 @@ const SEARCH_FILTER_FULL_TOP_OFFSET = 52;
 const SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT = 24;
 const SEARCH_FILTER_DRAG_SENSITIVITY = 1.2;
 
+export type SearchBottomSheetSnapBehavior = "detail" | "legacy";
+export const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
+  "detail";
+
 interface ResolveSearchFilterSnapPointsOptions {
   windowHeight: number;
+  behavior?: SearchBottomSheetSnapBehavior;
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
 }
 
-export const resolveSearchFilterSnapPoints = ({
+export const resolveLegacySearchFilterSnapPoints = ({
   maxSnapPoint,
   minSnapPoint,
   snapPoint,
   windowHeight,
-}: ResolveSearchFilterSnapPointsOptions) => {
+}: Omit<ResolveSearchFilterSnapPointsOptions, "behavior">) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT;
   const resolvedMinSnapPoint = minSnapPoint ?? SEARCH_FILTER_FULL_TOP_OFFSET;
@@ -78,6 +84,30 @@ export const resolveSearchFilterSnapPoints = ({
   };
 };
 
+export const resolveSearchFilterSnapPoints = ({
+  behavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
+  maxSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  windowHeight,
+}: ResolveSearchFilterSnapPointsOptions) => {
+  if (behavior === "legacy") {
+    return resolveLegacySearchFilterSnapPoints({
+      maxSnapPoint,
+      minSnapPoint,
+      snapPoint,
+      windowHeight,
+    });
+  }
+
+  return resolveLegacySearchFilterSnapPoints({
+    maxSnapPoint,
+    minSnapPoint,
+    snapPoint,
+    windowHeight,
+  });
+};
+
 export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
   regionActive: false,
   sizeActive: false,
@@ -90,6 +120,7 @@ export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
 export function SearchFilterBottomSheet({
   className,
   initialFilters,
+  snapBehavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
   initialSnapPoint,
   minSnapPoint,
   snapPoint,
@@ -109,6 +140,7 @@ export function SearchFilterBottomSheet({
     minSnapPoint: resolvedMinSnapPoint,
     snapPoint: resolvedSnapPoint,
   } = resolveSearchFilterSnapPoints({
+    behavior: snapBehavior,
     maxSnapPoint,
     minSnapPoint,
     snapPoint,
