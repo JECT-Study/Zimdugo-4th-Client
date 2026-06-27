@@ -133,8 +133,8 @@ export const markerBadge = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "40.5px",
-  height: "40.5px",
+  width: "40px",
+  height: "40px",
   flexShrink: 0,
 });
 
@@ -208,8 +208,8 @@ export const recentIconSlot = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "40.5px",
-  height: "40.5px",
+  width: "40px",
+  height: "40px",
   flexShrink: 0,
 });
 

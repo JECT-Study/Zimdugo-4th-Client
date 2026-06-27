@@ -35,8 +35,8 @@ export const marker = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "40.5px",
-  height: "40.5px",
+  width: "40px",
+  height: "40px",
   flexShrink: 0,
 });
 
