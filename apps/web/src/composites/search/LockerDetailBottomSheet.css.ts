@@ -267,7 +267,8 @@ export const imagePreviewOverlay = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  padding: vars.spacing[16],
+  minHeight: "100dvh",
+  padding: `calc(env(safe-area-inset-top, 0px) + 64px) ${vars.spacing[12]} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[20]})`,
   boxSizing: "border-box",
   backgroundColor: "rgba(0, 0, 0, 0.82)",
 });

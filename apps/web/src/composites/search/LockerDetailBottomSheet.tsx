@@ -13,6 +13,7 @@ import {
   IconX24,
 } from "@repo/ui/tokens/icons";
 import { type ReactNode, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
@@ -762,7 +763,11 @@ function ImagePreviewOverlay({
   imageUrl: string;
   onClose: () => void;
 }) {
-  return (
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
     <div className={imagePreviewOverlay}>
       <div
         className={imagePreviewDialog}
@@ -784,6 +789,7 @@ function ImagePreviewOverlay({
           <IconX24 />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
