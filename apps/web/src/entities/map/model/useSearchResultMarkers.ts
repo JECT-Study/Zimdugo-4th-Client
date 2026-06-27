@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
+import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   clearLockerMarkers,
-  syncLockerMarkers,
+  type LockerMarkerOffset,
   type LockerMarkerRegistry,
+  syncLockerMarkers,
 } from "./map-marker";
-import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 export interface UseSearchResultMarkersOptions {
   map: naver.maps.Map | null;
@@ -16,8 +17,10 @@ export interface UseSearchResultMarkersOptions {
     pinType: "LOCKER" | "PLACE",
     id: number,
     pin: LockerPinItemResponse,
+    offset: LockerMarkerOffset,
   ) => void;
   spreadCenter?: { lat: number; lng: number } | null;
+  preservedOffsets?: ReadonlyMap<string, LockerMarkerOffset>;
 }
 
 export const useSearchResultMarkers = ({
@@ -28,6 +31,7 @@ export const useSearchResultMarkers = ({
   selectedPinId,
   onSelectLocker,
   spreadCenter,
+  preservedOffsets,
 }: UseSearchResultMarkersOptions) => {
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
   const onSelectLockerRef = useRef(onSelectLocker);
@@ -50,12 +54,13 @@ export const useSearchResultMarkers = ({
       maps,
       lockers: pins,
       selectedPinId,
-      onSelectLocker: (pinType, id, pin) =>
-        onSelectLockerRef.current?.(pinType, id, pin),
+      onSelectLocker: (pinType, id, pin, offset) =>
+        onSelectLockerRef.current?.(pinType, id, pin, offset),
       registry: markerRegistryRef.current,
       spreadCenter,
+      preservedOffsets,
     });
-  }, [enabled, map, maps, pins, selectedPinId, spreadCenter]);
+  }, [enabled, map, maps, pins, selectedPinId, spreadCenter, preservedOffsets]);
 
   useEffect(() => {
     return () => {

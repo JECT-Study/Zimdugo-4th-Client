@@ -203,4 +203,18 @@ describe("locker-adapters", () => {
     expect(detail.operatingHoursLabel).toBe("운영시간 미제공");
     expect(detail.priceLabel).toBe("미제공");
   });
+
+  it("maps locker detail imageUrl", () => {
+    const detail = toLockerDetailItem({
+      lockerId: 1,
+      lockerName: "Locker",
+      roadAddress: "Seoul",
+      lockerType: "SUBWAY_STATION",
+      latitude: 37.5,
+      longitude: 127.0,
+      imageUrl: " https://example.com/locker.jpg ",
+    });
+
+    expect(detail.imageUrl).toBe("https://example.com/locker.jpg");
+  });
 });

@@ -48,7 +48,10 @@ import {
   fitNaverMapToBounds,
   focusNaverMapOnClusterBounds,
 } from "#/entities/map/model/map-bounds";
-import { getPinId } from "#/entities/map/model/map-marker";
+import {
+  getPinId,
+  type LockerMarkerOffset,
+} from "#/entities/map/model/map-marker";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import {
   LOCKER_PINS_QUERY_KEY,
@@ -56,6 +59,7 @@ import {
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
+import { MapSkeleton } from "#/entities/map/ui/map-skeleton/MapSkeleton";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
@@ -332,6 +336,8 @@ export function IndexPage() {
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const isCameraCenteredRef = useRef(false);
+  const didApplyInitialGpsCenterRef = useRef(false);
+  const hasUserMovedMapBeforeInitialGpsRef = useRef(false);
   const lastFocusedLockerIdRef = useRef<number | null>(null);
   const isPendingFocusRef = useRef<boolean>(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
@@ -379,7 +385,7 @@ export function IndexPage() {
     useState<LockerPinItemResponse | null>(() => {
       if (lockerIdFromQuery !== undefined) {
         if (loaderData?.detail) {
-           return {
+          return {
             pinType: "LOCKER",
             lockerId: lockerIdFromQuery,
             placeId: null,
@@ -397,6 +403,8 @@ export function IndexPage() {
       }
       return readRestoredMapSheetSession()?.selectedMapPin ?? null;
     });
+  const [selectedMapPinOffset, setSelectedMapPinOffset] =
+    useState<LockerMarkerOffset | null>(null);
   const [context, setContext] = useState<AppMapContext>(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) return "map";
     return readRestoredMapSheetSession()?.context ?? "idle";
@@ -457,8 +465,39 @@ export function IndexPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const { permission, isTracking, location, startTracking } =
+  const { permission, isTracking, isLocating, location, error, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
+  const shouldPreferHomeLocation =
+    lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
+  const shouldDeferHomeMapForLocation =
+    shouldPreferHomeLocation &&
+    permission !== "denied" &&
+    location == null &&
+    error == null;
+
+  useEffect(() => {
+    if (
+      !shouldPreferHomeLocation ||
+      location != null ||
+      permission === "denied" ||
+      isTracking ||
+      isLocating ||
+      error != null
+    ) {
+      return;
+    }
+
+    hasPendingLocationRequestRef.current = true;
+    startTracking();
+  }, [
+    error,
+    isLocating,
+    isTracking,
+    location,
+    permission,
+    shouldPreferHomeLocation,
+    startTracking,
+  ]);
 
   const mapBootstrap = useMemo(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) {
@@ -478,7 +517,9 @@ export function IndexPage() {
 
     return resolveMapBootstrapViewport({
       deepLinkCenter,
-      cache: useMapViewportStore.getState().cache,
+      cache: shouldPreferHomeLocation
+        ? null
+        : useMapViewportStore.getState().cache,
       permission,
       gps: permission === "granted" && location ? location : null,
     });
@@ -490,6 +531,48 @@ export function IndexPage() {
     location,
     lockerIdFromQuery,
     loaderData,
+    shouldPreferHomeLocation,
+  ]);
+
+  useEffect(() => {
+    if (
+      didApplyInitialGpsCenterRef.current ||
+      hasUserMovedMapBeforeInitialGpsRef.current ||
+      permission !== "granted" ||
+      !location ||
+      !mapInstance ||
+      lockerIdFromQuery !== undefined ||
+      focusLat != null ||
+      focusLng != null ||
+      context !== "idle" ||
+      sheetMode !== "idle"
+    ) {
+      return;
+    }
+
+    if (
+      Math.abs(mapBootstrap.center.lat - location.lat) > 0.000001 ||
+      Math.abs(mapBootstrap.center.lng - location.lng) > 0.000001
+    ) {
+      return;
+    }
+
+    didApplyInitialGpsCenterRef.current = true;
+    focusNaverMapOnCoordinates({
+      map: mapInstance,
+      coordinates: location,
+      zoom: mapBootstrap.zoom,
+    });
+  }, [
+    context,
+    focusLat,
+    focusLng,
+    lockerIdFromQuery,
+    location,
+    mapBootstrap,
+    mapInstance,
+    permission,
+    sheetMode,
   ]);
 
   const {
@@ -708,6 +791,7 @@ export function IndexPage() {
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setSelectedMapPin(null);
+    setSelectedMapPinOffset(null);
     setMapDetailBack(null);
     setSearchFilters(createDefaultSearchFilters());
     setIsNavigationPopupOpen(false);
@@ -728,6 +812,7 @@ export function IndexPage() {
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setSelectedMapPin(null);
+    setSelectedMapPinOffset(null);
     setIsNavigationPopupOpen(false);
     setSheetMode("idle");
     setContext("idle");
@@ -1139,6 +1224,7 @@ export function IndexPage() {
       setActiveLockerId(null);
       setSelectedLockerDetail(null);
       setSelectedMapPin(null);
+      setSelectedMapPinOffset(null);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
       setSheetMode("list");
@@ -1164,6 +1250,7 @@ export function IndexPage() {
       setActiveLockerId(null);
       setSelectedLockerDetail(null);
       setSelectedMapPin(null);
+      setSelectedMapPinOffset(null);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
       setSheetMode("list");
@@ -1355,6 +1442,7 @@ export function IndexPage() {
         setContext("map");
         setMapDetailBack("idle");
         setSelectedMapPin(pin);
+        setSelectedMapPinOffset(null);
         setLockerDetailQueryOrigin({
           lat: pin.latitude,
           lng: pin.longitude,
@@ -1461,19 +1549,26 @@ export function IndexPage() {
   }, [activeLockerId, sheetMode]);
 
   const handleIdlePinSelect = useCallback(
-    (pinType: "LOCKER" | "PLACE", id: number, pin?: LockerPinItemResponse) => {
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin?: LockerPinItemResponse,
+      offset?: LockerMarkerOffset,
+    ) => {
       if (context !== "idle") {
         return;
       }
 
       if (pinType === "PLACE") {
         setSelectedMapPin(null);
+        setSelectedMapPinOffset(null);
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
         openMapPlaceList(id);
         return;
       }
 
       setSelectedMapPin(pin ?? null);
+      setSelectedMapPinOffset(offset ?? null);
       setContext("map");
       setMapDetailBack("idle");
       const detail =
@@ -1495,18 +1590,25 @@ export function IndexPage() {
   );
 
   const handleMapPlaceMarkerSelect = useCallback(
-    (pinType: "LOCKER" | "PLACE", id: number, pin?: LockerPinItemResponse) => {
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin?: LockerPinItemResponse,
+      offset?: LockerMarkerOffset,
+    ) => {
       if (context !== "map") {
         return;
       }
 
       if (pinType === "PLACE") {
+        setSelectedMapPinOffset(null);
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
         openMapPlaceList(id);
         return;
       }
 
       setSelectedMapPin(pin ?? null);
+      setSelectedMapPinOffset(offset ?? null);
       setMapDetailBack("placeList");
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
@@ -1527,7 +1629,12 @@ export function IndexPage() {
   );
 
   const handleSearchMarkerSelect = useCallback(
-    (pinType: "LOCKER" | "PLACE", id: number, pin?: LockerPinItemResponse) => {
+    (
+      pinType: "LOCKER" | "PLACE",
+      id: number,
+      pin?: LockerPinItemResponse,
+      offset?: LockerMarkerOffset,
+    ) => {
       if (context !== "search") {
         return;
       }
@@ -1539,6 +1646,7 @@ export function IndexPage() {
         setSearchDetailBack(null);
         setSelectedLockerDetail(null);
         setSelectedMapPin(null);
+        setSelectedMapPinOffset(null);
         setSheetMode("list");
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
         return;
@@ -1552,6 +1660,7 @@ export function IndexPage() {
       );
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
+      setSelectedMapPinOffset(offset ?? null);
       const shouldDelayDetailOpen =
         pin != null &&
         mapInstanceRef.current != null &&
@@ -1603,6 +1712,7 @@ export function IndexPage() {
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setSelectedMapPin(null);
+    setSelectedMapPinOffset(null);
     setIsNavigationPopupOpen(false);
 
     if (context === "map") {
@@ -1822,6 +1932,7 @@ export function IndexPage() {
     if (!mapInstance || !maps?.Event) return;
 
     const listener = maps.Event.addListener(mapInstance, "dragstart", () => {
+      hasUserMovedMapBeforeInitialGpsRef.current = true;
       setIsCameraCentered(false);
       stopOrientationTracking();
       isPendingFocusRef.current = false;
@@ -2001,6 +2112,13 @@ export function IndexPage() {
     }
     return null;
   }, [selectedMapPin, activeLockerId, openLockerId, sheetMode]);
+  const selectedPinPreservedOffsets = useMemo(() => {
+    if (!selectedPinId || !selectedMapPinOffset) {
+      return undefined;
+    }
+
+    return new Map([[selectedPinId, selectedMapPinOffset]]);
+  }, [selectedPinId, selectedMapPinOffset]);
   const showPlaceSheetBack =
     context === "map" || (context === "search" && listKind === "place");
   const listHeaderLeadingPress = showPlaceSheetBack
@@ -2037,15 +2155,19 @@ export function IndexPage() {
       )}
 
       <NaverMapProvider language={languageTag()}>
-        <NaverMapCanvas
-          key={mapRemountKey}
-          onLoad={handleMapLoad}
-          onWillDestroy={persistMapViewport}
-          onLoadingChange={setIsMapLoading}
-          onErrorChange={setHasMapError}
-          initialCenter={mapBootstrap.center}
-          initialZoom={mapBootstrap.zoom}
-        />
+        {shouldDeferHomeMapForLocation ? (
+          <MapSkeleton />
+        ) : (
+          <NaverMapCanvas
+            key={mapRemountKey}
+            onLoad={handleMapLoad}
+            onWillDestroy={persistMapViewport}
+            onLoadingChange={setIsMapLoading}
+            onErrorChange={setHasMapError}
+            initialCenter={mapBootstrap.center}
+            initialZoom={mapBootstrap.zoom}
+          />
+        )}
         <MyLocationMarker
           map={mapInstance}
           location={location}
@@ -2089,6 +2211,11 @@ export function IndexPage() {
                       lat: lastValidSpreadCenterRef.current.latitude,
                       lng: lastValidSpreadCenterRef.current.longitude,
                     }
+                  : undefined
+              }
+              preservedOffsets={
+                markerLayer === "selectedMapDetail"
+                  ? selectedPinPreservedOffsets
                   : undefined
               }
             />
@@ -2237,8 +2364,11 @@ function LockerMarkersLayer({
     pinType: "LOCKER" | "PLACE",
     id: number,
     pin: LockerPinItemResponse,
+    offset: LockerMarkerOffset,
   ) => void;
-  onClusterClick?: (bounds: import("#/shared/api/lockers").LockerBoundsRaw) => void;
+  onClusterClick?: (
+    bounds: import("#/shared/api/lockers").LockerBoundsRaw,
+  ) => void;
   spreadCenter?: { lat: number; lng: number } | null;
 }) {
   const { maps } = useNaverMapSdk();
@@ -2261,6 +2391,7 @@ function SearchResultMarkersLayer({
   selectedPinId,
   onSelectLocker,
   spreadCenter,
+  preservedOffsets,
 }: {
   map: naver.maps.Map | null;
   pins: ReturnType<typeof searchResultItemsToPins>;
@@ -2269,8 +2400,10 @@ function SearchResultMarkersLayer({
     pinType: "LOCKER" | "PLACE",
     id: number,
     pin: LockerPinItemResponse,
+    offset: LockerMarkerOffset,
   ) => void;
   spreadCenter?: { lat: number; lng: number } | null;
+  preservedOffsets?: ReadonlyMap<string, LockerMarkerOffset>;
 }) {
   const { maps } = useNaverMapSdk();
 
@@ -2281,6 +2414,7 @@ function SearchResultMarkersLayer({
     selectedPinId,
     onSelectLocker,
     spreadCenter,
+    preservedOffsets,
   });
 
   return null;

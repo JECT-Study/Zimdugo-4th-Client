@@ -230,6 +230,83 @@ export const imageReportText = style({
   textAlign: "center",
 });
 
+export const lockerImage = style({
+  width: "100%",
+  height: "160px",
+  objectFit: "cover",
+  borderRadius: vars.radius[6],
+  border: `1px solid ${vars.color.border.default}`,
+  boxSizing: "border-box",
+  backgroundColor: vars.color.bg.surface,
+});
+
+export const lockerImageButton = style({
+  display: "block",
+  width: "100%",
+  padding: 0,
+  border: 0,
+  background: "transparent",
+  cursor: "pointer",
+  borderRadius: vars.radius[6],
+  selectors: {
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "2px",
+    },
+  },
+});
+
+export const fullLockerImage = style({
+  flexShrink: 0,
+});
+
+export const imagePreviewOverlay = style({
+  position: "fixed",
+  inset: 0,
+  zIndex: vars.zIndex.modal,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "100dvh",
+  padding: `calc(env(safe-area-inset-top, 0px) + 64px) ${vars.spacing[12]} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[20]})`,
+  boxSizing: "border-box",
+  backgroundColor: "rgba(0, 0, 0, 0.82)",
+});
+
+export const imagePreviewDialog = style({
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "100%",
+  height: "100%",
+  outline: "none",
+});
+
+export const imagePreviewImage = style({
+  maxWidth: "100%",
+  maxHeight: "100%",
+  objectFit: "contain",
+  borderRadius: vars.radius[6],
+});
+
+export const imagePreviewCloseButton = style({
+  position: "absolute",
+  top: "calc(env(safe-area-inset-top, 0px) + 12px)",
+  right: vars.spacing[12],
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "44px",
+  height: "44px",
+  padding: 0,
+  border: 0,
+  borderRadius: vars.radius.max,
+  backgroundColor: "rgba(255, 255, 255, 0.16)",
+  color: vars.color.palette.gray[0],
+  cursor: "pointer",
+});
+
 export const actionRow = style({
   display: "flex",
   alignItems: "center",

@@ -13,6 +13,7 @@ import {
   IconX24,
 } from "@repo/ui/tokens/icons";
 import { type ReactNode, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
@@ -56,10 +57,17 @@ import {
   fullDetailList,
   fullIconActionButton,
   fullImageReportCard,
+  fullLockerImage,
   fullPrimaryActionButton,
   iconActionButton,
+  imagePreviewCloseButton,
+  imagePreviewDialog,
+  imagePreviewImage,
+  imagePreviewOverlay,
   imageReportCard,
   imageReportText,
+  lockerImage,
+  lockerImageButton,
   lockerTitle,
   metaDot,
   metaRow,
@@ -85,6 +93,7 @@ export interface LockerDetailItem extends SearchLockerResultItem {
   isAccurateVoted?: boolean;
   isInaccurateVoted?: boolean;
   lastUpdatedLabel?: string;
+  imageUrl?: string;
 }
 
 export type LockerDetailLoadState = "ready" | "loading" | "error";
@@ -371,6 +380,7 @@ function FullDetailContent({
   const hasFeedbackVotes =
     locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
   const canVote = typeof onVoteChange === "function";
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const handleVotePress = (voteType: LockerVoteType) => {
     if (!canVote) {
@@ -379,6 +389,29 @@ function FullDetailContent({
 
     onVoteChange(locker, voteType);
   };
+
+  const handleOpenImagePreview = (imageUrl: string) => {
+    setPreviewImageUrl(imageUrl);
+  };
+
+  const handleCloseImagePreview = () => {
+    setPreviewImageUrl(null);
+  };
+
+  useEffect(() => {
+    if (!previewImageUrl) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPreviewImageUrl(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewImageUrl]);
 
   return (
     <div className={fullContentScroll}>
@@ -417,7 +450,11 @@ function FullDetailContent({
             descriptionClassName={detailDescriptionMultiline}
           />
         </div>
-        <ImageReportCard isFull />
+        <ImageReportCard
+          isFull
+          imageUrl={locker.imageUrl}
+          onOpenPreview={handleOpenImagePreview}
+        />
         {locker.lastUpdatedLabel ? (
           <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
@@ -473,6 +510,12 @@ function FullDetailContent({
           <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
         )}
       </div>
+      {previewImageUrl ? (
+        <ImagePreviewOverlay
+          imageUrl={previewImageUrl}
+          onClose={handleCloseImagePreview}
+        />
+      ) : null}
     </div>
   );
 }
@@ -670,7 +713,34 @@ function InlineMeta({
   );
 }
 
-function ImageReportCard({ isFull = false }: { isFull?: boolean }) {
+function ImageReportCard({
+  isFull = false,
+  imageUrl,
+  onOpenPreview,
+}: {
+  isFull?: boolean;
+  imageUrl?: string;
+  onOpenPreview?: (imageUrl: string) => void;
+}) {
+  if (imageUrl) {
+    return (
+      <button
+        type="button"
+        className={[lockerImageButton, isFull ? fullLockerImage : ""]
+          .filter(Boolean)
+          .join(" ")}
+        onClick={() => onOpenPreview?.(imageUrl)}
+        aria-label={m.report_section_photo()}
+      >
+        <img
+          className={lockerImage}
+          src={imageUrl}
+          alt={m.report_section_photo()}
+        />
+      </button>
+    );
+  }
+
   return (
     <div
       className={[imageReportCard, isFull ? fullImageReportCard : ""]
@@ -683,5 +753,43 @@ function ImageReportCard({ isFull = false }: { isFull?: boolean }) {
         <span>{m.locker_detail_no_image_helper()}</span>
       </div>
     </div>
+  );
+}
+
+function ImagePreviewOverlay({
+  imageUrl,
+  onClose,
+}: {
+  imageUrl: string;
+  onClose: () => void;
+}) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div className={imagePreviewOverlay}>
+      <div
+        className={imagePreviewDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-label={m.report_section_photo()}
+      >
+        <img
+          className={imagePreviewImage}
+          src={imageUrl}
+          alt={m.report_section_photo()}
+        />
+        <button
+          type="button"
+          className={imagePreviewCloseButton}
+          onClick={onClose}
+          aria-label={m.search_close_aria()}
+        >
+          <IconX24 />
+        </button>
+      </div>
+    </div>,
+    document.body,
   );
 }
