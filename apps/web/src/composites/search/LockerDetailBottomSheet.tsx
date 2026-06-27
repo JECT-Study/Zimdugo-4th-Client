@@ -57,6 +57,7 @@ import {
   feedbackRow,
   fullActionRow,
   fullContentScroll,
+  fullContentScrollEnabled,
   fullDetailList,
   fullIconActionButton,
   fullImageReportCard,
@@ -333,6 +334,16 @@ export function LockerDetailBottomSheet({
                 : resolvedMaxSnapPoint,
       }
     : null;
+  const [currentSnapStage, setCurrentSnapStage] =
+    useState<LockerDetailSheetSnapStage>(() =>
+      resolveLockerDetailSnapStage({
+        maxSnapPoint: resolvedMaxSnapPoint,
+        miniSnapPoint: resolvedMiniSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: resolvedInitialSnapPoint,
+        snapPoint: resolvedSnapPoint,
+      }),
+    );
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
@@ -354,16 +365,17 @@ export function LockerDetailBottomSheet({
     onNavigate?.(locker);
   };
   const handleSnapChange = (nextSnap: number) => {
+    const nextStage = resolveLockerDetailSnapStage({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      miniSnapPoint: resolvedMiniSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      offset: nextSnap,
+      snapPoint: resolvedSnapPoint,
+    });
+
+    setCurrentSnapStage(nextStage);
     onSnapChange?.(nextSnap);
-    onSnapStageChange?.(
-      resolveLockerDetailSnapStage({
-        maxSnapPoint: resolvedMaxSnapPoint,
-        miniSnapPoint: resolvedMiniSnapPoint,
-        minSnapPoint: resolvedMinSnapPoint,
-        offset: nextSnap,
-        snapPoint: resolvedSnapPoint,
-      }),
-    );
+    onSnapStageChange?.(nextStage);
   };
 
   useEffect(() => {
@@ -372,6 +384,24 @@ export function LockerDetailBottomSheet({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    setCurrentSnapStage(
+      resolveLockerDetailSnapStage({
+        maxSnapPoint: resolvedMaxSnapPoint,
+        miniSnapPoint: resolvedMiniSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: resolvedInitialSnapPoint,
+        snapPoint: resolvedSnapPoint,
+      }),
+    );
+  }, [
+    resolvedInitialSnapPoint,
+    resolvedMaxSnapPoint,
+    resolvedMiniSnapPoint,
+    resolvedMinSnapPoint,
+    resolvedSnapPoint,
+  ]);
 
   return (
     <DraggableBottomSheet
@@ -401,6 +431,7 @@ export function LockerDetailBottomSheet({
             onShare={handleShare}
             onNavigate={handleNavigate}
             onVoteChange={onVoteChange}
+            isScrollEnabled={currentSnapStage === "full"}
           />
         )}
       </div>
@@ -434,6 +465,7 @@ function FullDetailContent({
   onShare,
   onNavigate,
   onVoteChange,
+  isScrollEnabled,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
@@ -443,6 +475,7 @@ function FullDetailContent({
   onShare: () => void;
   onNavigate: () => void;
   onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
+  isScrollEnabled: boolean;
 }) {
   const hasFeedbackVotes =
     locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
@@ -481,7 +514,15 @@ function FullDetailContent({
   }, [previewImageUrl]);
 
   return (
-    <div className={fullContentScroll}>
+    <div
+      className={[
+        fullContentScroll,
+        isScrollEnabled ? fullContentScrollEnabled : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-scroll-enabled={isScrollEnabled ? "true" : "false"}
+    >
       <div className={contentStack}>
         <SummarySection
           locker={locker}

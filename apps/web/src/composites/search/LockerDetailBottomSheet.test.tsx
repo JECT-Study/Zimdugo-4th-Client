@@ -210,4 +210,26 @@ describe("LockerDetailBottomSheet", () => {
       screen.queryByRole("dialog", { name: m.report_section_photo() }),
     ).toBeNull();
   });
+
+  it("enables internal content scroll only when the detail sheet opens full", () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+    );
+
+    expect(
+      document
+        .querySelector("[data-scroll-enabled]")
+        ?.getAttribute("data-scroll-enabled"),
+    ).toBe("false");
+
+    rerender(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={60} />,
+    );
+
+    expect(
+      document
+        .querySelector("[data-scroll-enabled]")
+        ?.getAttribute("data-scroll-enabled"),
+    ).toBe("true");
+  });
 });

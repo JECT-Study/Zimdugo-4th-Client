@@ -42,10 +42,9 @@ export const backIcon = style({
 export const fullContentScroll = style({
   flex: 1,
   minHeight: 0,
-  overflowY: "auto",
+  overflowY: "hidden",
   overflowX: "hidden",
   paddingBottom: vars.spacing[24],
-  WebkitOverflowScrolling: "touch",
   overscrollBehavior: "contain",
   scrollbarWidth: "none",
   selectors: {
@@ -53,6 +52,11 @@ export const fullContentScroll = style({
       display: "none",
     },
   },
+});
+
+export const fullContentScrollEnabled = style({
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
 });
 
 export const summarySection = style({

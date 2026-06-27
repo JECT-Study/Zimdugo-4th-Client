@@ -68,9 +68,9 @@ describe("SearchListBottomSheet", () => {
   it("resolves search-list snaps from visible heights", () => {
     expect(resolveSearchListSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
-      miniSnapPoint: 585,
+      miniSnapPoint: 609,
       minSnapPoint: 112,
-      snapPoint: 422,
+      snapPoint: 447,
     });
   });
 
@@ -78,14 +78,14 @@ describe("SearchListBottomSheet", () => {
     expect(
       resolveSearchListVisibleHeight({
         maxVisibleHeight: 481,
-        ratio: 0.48,
+        ratio: 0.45,
         windowHeight: 812,
       }),
-    ).toBe(390);
+    ).toBe(365);
     expect(
       resolveSearchListVisibleHeight({
         maxVisibleHeight: 481,
-        ratio: 0.48,
+        ratio: 0.45,
         windowHeight: 1200,
       }),
     ).toBe(481);
@@ -112,12 +112,12 @@ describe("SearchListBottomSheet", () => {
     expect(draggableBottomSheetMock).toHaveBeenCalledWith(
       expect.objectContaining({
         dragSensitivity: 1.2,
-        initialSnapPoint: 422,
+        initialSnapPoint: 447,
         maxSnapPoint: 760,
-        miniSnapPoint: 585,
+        miniSnapPoint: 609,
         minSnapPoint: 112,
         showHomeIndicator: false,
-        snapPoint: 422,
+        snapPoint: 447,
       }),
     );
   });
@@ -182,7 +182,7 @@ describe("SearchListBottomSheet", () => {
       expect.objectContaining({
         snapRequest: {
           id: 1,
-          snapPoint: 585,
+          snapPoint: 609,
         },
       }),
     );
