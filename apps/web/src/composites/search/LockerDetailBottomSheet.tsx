@@ -1,5 +1,6 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import {
   IconCamera24,
   IconCaution24,
@@ -12,7 +13,7 @@ import {
   IconStarOutline24,
   IconX24,
 } from "@repo/ui/tokens/icons";
-import { type ReactNode, useEffect, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
@@ -28,6 +29,7 @@ import {
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
 } from "#/shared/ui/DraggableBottomSheet";
+import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
   actionRow,
@@ -70,6 +72,12 @@ import {
   imagePreviewOverlay,
   imageReportCard,
   imageReportText,
+  loadingActionRow,
+  loadingContent,
+  loadingDetailList,
+  loadingDetailRow,
+  loadingSummary,
+  loadingTextStack,
   lockerImage,
   lockerImageButton,
   lockerTitle,
@@ -85,6 +93,9 @@ import {
   summarySection,
   summaryTextColumn,
 } from "./LockerDetailBottomSheet.css.ts";
+
+const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
+const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
 
 export interface LockerDetailItem extends SearchLockerResultItem {
   operatingHoursLabel?: string;
@@ -411,7 +422,9 @@ export function LockerDetailBottomSheet({
       onDismiss={handleBack}
     >
       <div className={sheetColumn}>
-        {loadState === "error" ? (
+        {loadState === "loading" ? (
+          <LockerDetailLoadingContent />
+        ) : loadState === "error" ? (
           <LockerDetailErrorContent onBack={handleBack} onRetry={onRetry} />
         ) : (
           <FullDetailContent
@@ -428,6 +441,92 @@ export function LockerDetailBottomSheet({
         )}
       </div>
     </DraggableBottomSheet>
+  );
+}
+
+function LockerDetailLoadingContent() {
+  return (
+    <output
+      className={loadingContent}
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={m.search_result_loading_aria()}
+    >
+      <div className={loadingSummary}>
+        <div className={loadingTextStack}>
+          <Skeleton
+            width="72%"
+            height={18}
+            borderRadius={6}
+            style={skeletonSurfaceStyle}
+          />
+          <Skeleton
+            width="54%"
+            height={14}
+            borderRadius={6}
+            style={skeletonSurfaceStyle}
+          />
+          <Skeleton
+            width="86%"
+            height={14}
+            borderRadius={6}
+            style={skeletonSurfaceStyle}
+          />
+        </div>
+        <Skeleton
+          width={32}
+          height={32}
+          borderRadius={16}
+          style={skeletonSurfaceStyle}
+        />
+      </div>
+      <div className={loadingDetailList}>
+        {LOCKER_DETAIL_SKELETON_ROWS.map((rowKey) => (
+          <div key={rowKey} className={loadingDetailRow}>
+            <Skeleton
+              width={24}
+              height={24}
+              borderRadius={6}
+              style={skeletonSurfaceStyle}
+            />
+            <div className={loadingTextStack}>
+              <Skeleton
+                width="70%"
+                height={15}
+                borderRadius={6}
+                style={skeletonSurfaceStyle}
+              />
+              <Skeleton
+                width="48%"
+                height={13}
+                borderRadius={6}
+                style={skeletonSurfaceStyle}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <Skeleton
+        width="100%"
+        height={160}
+        borderRadius={6}
+        style={skeletonSurfaceStyle}
+      />
+      <div className={loadingActionRow}>
+        <Skeleton
+          width={56}
+          height={40}
+          borderRadius={8}
+          style={skeletonSurfaceStyle}
+        />
+        <Skeleton
+          width="100%"
+          height={40}
+          borderRadius={8}
+          style={skeletonSurfaceStyle}
+        />
+      </div>
+    </output>
   );
 }
 

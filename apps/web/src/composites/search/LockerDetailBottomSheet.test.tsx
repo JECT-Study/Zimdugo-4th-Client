@@ -171,6 +171,18 @@ describe("LockerDetailBottomSheet", () => {
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
 
+  it("renders a loading skeleton while locker detail is loading", () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} loadState="loading" />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(
+      sheet.getByRole("status", { name: m.search_result_loading_aria() }),
+    ).toBeTruthy();
+    expect(sheet.queryByText(LOCKER_DETAIL.title)).toBeNull();
+  });
+
   it("renders detail image when imageUrl exists", () => {
     render(
       <LockerDetailBottomSheet
@@ -224,10 +236,13 @@ describe("LockerDetailBottomSheet", () => {
     );
 
     const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
+    const { miniSnapPoint } = resolveLockerDetailSnapPoints({
+      windowHeight: window.innerHeight,
+    });
 
     expect(latestSheetProps?.snapRequest).toEqual({
       id: 1,
-      snapPoint: 701,
+      snapPoint: miniSnapPoint,
     });
   });
 

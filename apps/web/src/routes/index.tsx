@@ -99,6 +99,7 @@ import {
 } from "#/features/search/lib/sanitize-search-query";
 import {
   searchLockerItemsToPins,
+  searchLockerItemToPin,
   searchResultItemsToPins,
 } from "#/features/search/lib/search-result-pins";
 import {
@@ -1377,26 +1378,6 @@ export function IndexPage() {
     ],
   );
 
-  const handleOpenLockerDetail = useCallback(
-    (item: SearchLockerResultItem) => {
-      if (context === "map") {
-        setMapDetailBack("placeList");
-      } else if (context === "search") {
-        setSearchDetailBack(
-          listKind === "place" && searchPlaceId != null
-            ? createPlaceDetailBackTarget(searchPlaceId)
-            : createKeywordDetailBackTarget(),
-        );
-      }
-
-      openLockerDetailById(
-        item.lockerId,
-        createLockerDetailFromSearchItem(item),
-      );
-    },
-    [context, listKind, openLockerDetailById, searchPlaceId],
-  );
-
   const focusMapOnLockerPin = useCallback(
     (pin?: LockerPinItemResponse, zoom?: number) => {
       if (!pin || !mapInstanceRef.current) {
@@ -1415,6 +1396,44 @@ export function IndexPage() {
       });
     },
     [],
+  );
+
+  const handleOpenLockerDetail = useCallback(
+    (item: SearchLockerResultItem) => {
+      const pin = searchLockerItemToPin(item);
+
+      if (context === "map") {
+        setMapDetailBack("placeList");
+      } else if (context === "search") {
+        setSearchDetailBack(
+          listKind === "place" && searchPlaceId != null
+            ? createPlaceDetailBackTarget(searchPlaceId)
+            : createKeywordDetailBackTarget(),
+        );
+      }
+
+      setSelectedMapPin(pin);
+      setSelectedMapPinOffset(null);
+      if (pin) {
+        setLockerDetailQueryOrigin({
+          lat: pin.latitude,
+          lng: pin.longitude,
+        });
+        focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
+      }
+
+      openLockerDetailById(
+        item.lockerId,
+        createLockerDetailFromSearchItem(item),
+      );
+    },
+    [
+      context,
+      focusMapOnLockerPin,
+      listKind,
+      openLockerDetailById,
+      searchPlaceId,
+    ],
   );
 
   const openLockerDetailAfterPinFocus = useCallback(
@@ -2080,8 +2099,6 @@ export function IndexPage() {
       focusNaverMapOnCoordinates({ map: mapInstance, coordinates: location });
     }
   }, [isCameraCentered, location, mapInstance]);
-
-
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
