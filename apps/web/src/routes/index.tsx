@@ -335,6 +335,8 @@ export function IndexPage() {
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const isCameraCenteredRef = useRef(false);
+  const didApplyInitialGpsCenterRef = useRef(false);
+  const hasUserMovedMapBeforeInitialGpsRef = useRef(false);
   const lastFocusedLockerIdRef = useRef<number | null>(null);
   const isPendingFocusRef = useRef<boolean>(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
@@ -495,6 +497,47 @@ export function IndexPage() {
     location,
     lockerIdFromQuery,
     loaderData,
+  ]);
+
+  useEffect(() => {
+    if (
+      didApplyInitialGpsCenterRef.current ||
+      hasUserMovedMapBeforeInitialGpsRef.current ||
+      permission !== "granted" ||
+      !location ||
+      !mapInstance ||
+      lockerIdFromQuery !== undefined ||
+      focusLat != null ||
+      focusLng != null ||
+      context !== "idle" ||
+      sheetMode !== "idle"
+    ) {
+      return;
+    }
+
+    if (
+      Math.abs(mapBootstrap.center.lat - location.lat) > 0.000001 ||
+      Math.abs(mapBootstrap.center.lng - location.lng) > 0.000001
+    ) {
+      return;
+    }
+
+    didApplyInitialGpsCenterRef.current = true;
+    focusNaverMapOnCoordinates({
+      map: mapInstance,
+      coordinates: location,
+      zoom: mapBootstrap.zoom,
+    });
+  }, [
+    context,
+    focusLat,
+    focusLng,
+    lockerIdFromQuery,
+    location,
+    mapBootstrap,
+    mapInstance,
+    permission,
+    sheetMode,
   ]);
 
   const {
@@ -1854,6 +1897,7 @@ export function IndexPage() {
     if (!mapInstance || !maps?.Event) return;
 
     const listener = maps.Event.addListener(mapInstance, "dragstart", () => {
+      hasUserMovedMapBeforeInitialGpsRef.current = true;
       setIsCameraCentered(false);
       stopOrientationTracking();
       isPendingFocusRef.current = false;

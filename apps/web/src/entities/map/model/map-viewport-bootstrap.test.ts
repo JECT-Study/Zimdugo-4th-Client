@@ -5,8 +5,8 @@ import {
   isMapViewportCacheStale,
   MAP_VIEWPORT_STALE_DISTANCE_M,
   MAP_VIEWPORT_STALE_MS,
-  resolveMapBootstrapViewport,
   type MapViewportCache,
+  resolveMapBootstrapViewport,
 } from "./map-viewport-bootstrap";
 
 const createCache = (
@@ -43,6 +43,24 @@ describe("map-viewport-bootstrap", () => {
     expect(result.zoom).toBe(13);
   });
 
+  it("GPS가 있으면 유효한 캐시보다 GPS를 우선한다", () => {
+    const cache = createCache({
+      center: { lat: 37.55, lng: 127.02 },
+      zoom: 13,
+    });
+    const gps = { lat: 37.56, lng: 127.03 };
+
+    const result = resolveMapBootstrapViewport({
+      cache,
+      permission: "granted",
+      gps,
+      now: cache.savedAt + 1_000,
+    });
+
+    expect(result.center).toEqual(gps);
+    expect(result.zoom).toBe(15);
+  });
+
   it("캐시가 stale이면 GPS로 초기 center를 잡는다", () => {
     const cache = createCache({
       center: { lat: 37.5, lng: 127.0 },
@@ -76,9 +94,9 @@ describe("map-viewport-bootstrap", () => {
     });
     const farGps = { lat: 37.52, lng: 127.0 };
 
-    expect(
-      haversineDistanceM(cache.center, farGps),
-    ).toBeGreaterThan(MAP_VIEWPORT_STALE_DISTANCE_M);
+    expect(haversineDistanceM(cache.center, farGps)).toBeGreaterThan(
+      MAP_VIEWPORT_STALE_DISTANCE_M,
+    );
 
     expect(
       isMapViewportCacheStale(cache, {

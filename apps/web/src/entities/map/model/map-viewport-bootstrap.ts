@@ -31,8 +31,7 @@ export const haversineDistanceM = (
   const sinDLat = Math.sin(dLat / 2);
   const sinDLng = Math.sin(dLng / 2);
   const h =
-    sinDLat * sinDLat +
-    Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
 
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
 };
@@ -53,7 +52,8 @@ export const isMapViewportCacheStale = (
   if (
     options.permission === "granted" &&
     options.gps != null &&
-    haversineDistanceM(cache.center, options.gps) > MAP_VIEWPORT_STALE_DISTANCE_M
+    haversineDistanceM(cache.center, options.gps) >
+      MAP_VIEWPORT_STALE_DISTANCE_M
   ) {
     return true;
   }
@@ -92,21 +92,20 @@ export const resolveMapBootstrapViewport = ({
     };
   }
 
+  if (permission === "granted" && gps != null) {
+    return {
+      center: gps,
+      zoom: defaultZoom,
+    };
+  }
+
   const cacheIsFresh =
-    cache != null &&
-    !isMapViewportCacheStale(cache, { now, gps, permission });
+    cache != null && !isMapViewportCacheStale(cache, { now, gps, permission });
 
   if (cacheIsFresh) {
     return {
       center: cache.center,
       zoom: cache.zoom,
-    };
-  }
-
-  if (permission === "granted" && gps != null) {
-    return {
-      center: gps,
-      zoom: defaultZoom,
     };
   }
 
