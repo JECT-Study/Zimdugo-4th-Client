@@ -157,4 +157,20 @@ describe("LockerDetailBottomSheet", () => {
 
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
+
+  it("renders detail image when imageUrl exists", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          imageUrl: "https://example.com/locker.jpg",
+        }}
+      />,
+    );
+    const sheet = getSheetRoot();
+    const image = sheet.getByRole("img");
+
+    expect(image.getAttribute("src")).toBe("https://example.com/locker.jpg");
+    expect(sheet.queryByText("?꾩쭅 ?대?吏媛 ?놁뼱??")).toBeNull();
+  });
 });

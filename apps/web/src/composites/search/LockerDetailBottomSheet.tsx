@@ -56,10 +56,12 @@ import {
   fullDetailList,
   fullIconActionButton,
   fullImageReportCard,
+  fullLockerImage,
   fullPrimaryActionButton,
   iconActionButton,
   imageReportCard,
   imageReportText,
+  lockerImage,
   lockerTitle,
   metaDot,
   metaRow,
@@ -85,6 +87,7 @@ export interface LockerDetailItem extends SearchLockerResultItem {
   isAccurateVoted?: boolean;
   isInaccurateVoted?: boolean;
   lastUpdatedLabel?: string;
+  imageUrl?: string;
 }
 
 export type LockerDetailLoadState = "ready" | "loading" | "error";
@@ -417,7 +420,7 @@ function FullDetailContent({
             descriptionClassName={detailDescriptionMultiline}
           />
         </div>
-        <ImageReportCard isFull />
+        <ImageReportCard isFull imageUrl={locker.imageUrl} />
         {locker.lastUpdatedLabel ? (
           <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
@@ -670,7 +673,25 @@ function InlineMeta({
   );
 }
 
-function ImageReportCard({ isFull = false }: { isFull?: boolean }) {
+function ImageReportCard({
+  isFull = false,
+  imageUrl,
+}: {
+  isFull?: boolean;
+  imageUrl?: string;
+}) {
+  if (imageUrl) {
+    return (
+      <img
+        className={[lockerImage, isFull ? fullLockerImage : ""]
+          .filter(Boolean)
+          .join(" ")}
+        src={imageUrl}
+        alt={m.report_section_photo()}
+      />
+    );
+  }
+
   return (
     <div
       className={[imageReportCard, isFull ? fullImageReportCard : ""]

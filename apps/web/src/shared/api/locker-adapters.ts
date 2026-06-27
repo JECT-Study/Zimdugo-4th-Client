@@ -220,6 +220,7 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   updatedAt: raw.updatedAt,
   minPrice: raw.minPrice,
   isFavorite: raw.isFavorite,
+  imageUrl: raw.imageUrl?.trim() || undefined,
   operatingHoursLabel: formatOperatingHoursLabel(raw),
   floorLabel: formatLockerFloorLabel(
     raw.floor,

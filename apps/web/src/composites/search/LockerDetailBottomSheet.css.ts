@@ -230,6 +230,20 @@ export const imageReportText = style({
   textAlign: "center",
 });
 
+export const lockerImage = style({
+  width: "100%",
+  height: "160px",
+  objectFit: "cover",
+  borderRadius: vars.radius[6],
+  border: `1px solid ${vars.color.border.default}`,
+  boxSizing: "border-box",
+  backgroundColor: vars.color.bg.surface,
+});
+
+export const fullLockerImage = style({
+  flexShrink: 0,
+});
+
 export const actionRow = style({
   display: "flex",
   alignItems: "center",
