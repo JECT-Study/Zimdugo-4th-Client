@@ -10,15 +10,15 @@ const PLACE_BADGE_FILL = vars.color.palette.green[500];
 const MAP_PIN_WHITE = "white";
 const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
-const MARKER_Z_INDEX = 10;
-const SELECTED_MARKER_Z_INDEX = 20;
+const CLUSTER_MARKER_Z_INDEX = 5;
+const PLACE_MARKER_Z_INDEX = 10;
+const LOCKER_MARKER_Z_INDEX = 20;
+const SELECTED_MARKER_Z_INDEX = 30;
 const MAP_PIN_DISPLAY_SCALE = 0.45;
 const LOCKER_MARKER_SOURCE_SIZE = { width: 90, height: 90 };
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const DEFAULT_MARKER_SOURCE_ANCHOR = { x: 45, y: 45 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
-const MARKER_HIT_AREA_PADDING_PX = 8;
-const PIN_MARKER_VERTICAL_LIFT_PX = 8;
 const scaleMapPinValue = (value: number) =>
   Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
 const LOCKER_MARKER_DISPLAY_SIZE = {
@@ -263,6 +263,10 @@ interface LockerMarkerEntry {
 
 export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
 
+type ZIndexableMarker = naver.maps.Marker & {
+  setZIndex?: (zIndex: number) => void;
+};
+
 const lockerIconCache = new WeakMap<
   typeof naver.maps,
   Map<string, naver.maps.HtmlIcon>
@@ -347,27 +351,14 @@ const getMarkerAnchor = (pin: LockerPinItemResponse) => {
   return DEFAULT_MARKER_ANCHOR;
 };
 
-const getMarkerHitAreaSize = (pin: LockerPinItemResponse) => {
-  const markerSize = getMarkerSize(pin);
-
-  if (pin.pinType === "CLUSTER") return markerSize;
-
-  return {
-    width: markerSize.width + MARKER_HIT_AREA_PADDING_PX * 2,
-    height: markerSize.height + MARKER_HIT_AREA_PADDING_PX * 2,
-  };
-};
-
-const getMarkerHitAreaAnchor = (pin: LockerPinItemResponse) => {
-  const markerAnchor = getMarkerAnchor(pin);
-
-  if (pin.pinType === "CLUSTER") return markerAnchor;
-
-  return {
-    x: markerAnchor.x + MARKER_HIT_AREA_PADDING_PX,
-    y:
-      markerAnchor.y + MARKER_HIT_AREA_PADDING_PX + PIN_MARKER_VERTICAL_LIFT_PX,
-  };
+const getMarkerZIndex = (
+  pin: LockerPinItemResponse,
+  isSelected: boolean,
+): number => {
+  if (isSelected) return SELECTED_MARKER_Z_INDEX;
+  if (pin.pinType === "LOCKER") return LOCKER_MARKER_Z_INDEX;
+  if (pin.pinType === "PLACE") return PLACE_MARKER_Z_INDEX;
+  return CLUSTER_MARKER_Z_INDEX;
 };
 
 const createMarkerIconOptions = (
@@ -404,8 +395,7 @@ const createMarkerIconOptions = (
   if (cached) return cached;
 
   const markerSize = getMarkerSize(pin);
-  const hitAreaSize = getMarkerHitAreaSize(pin);
-  const markerAnchor = getMarkerHitAreaAnchor(pin);
+  const markerAnchor = getMarkerAnchor(pin);
 
   const spreadClass = shouldAnimateSpread && hasSpread ? "spread" : "";
   const offsetClass = hasOffset ? " map-marker-offset-active" : "";
@@ -418,12 +408,12 @@ const createMarkerIconOptions = (
     : "";
 
   const options = {
-    content: `<div class="map-marker-offset-wrapper${offsetClass}" style="width: ${hitAreaSize.width}px; height: ${hitAreaSize.height}px; padding: ${pin.pinType === "CLUSTER" ? 0 : MARKER_HIT_AREA_PADDING_PX}px; box-sizing: border-box; ${offsetStyle}">
-      <div class="map-marker-item ${animationState} ${spreadClass}" style="width: ${markerSize.width}px; height: ${markerSize.height}px; ${spreadStyle}">
+    content: `<div class="map-marker-offset-wrapper${offsetClass}" style="width: ${markerSize.width}px; height: ${markerSize.height}px; ${offsetStyle}">
+      <div class="map-marker-item ${animationState} ${spreadClass}" style="width: 100%; height: 100%; ${spreadStyle}">
         ${createLockerMarkerIcon(pin, isSelected)}
       </div>
     </div>`,
-    size: new maps.Size(hitAreaSize.width, hitAreaSize.height),
+    size: new maps.Size(markerSize.width, markerSize.height),
     anchor: new maps.Point(markerAnchor.x, markerAnchor.y),
   };
   innerMap.set(key, options);
@@ -637,7 +627,7 @@ export const syncLockerMarkers = ({
 
     const positionSignature = getPinPositionSignature(pin);
     const isSelected = selectedPinId === pinId;
-    const zIndex = isSelected ? SELECTED_MARKER_Z_INDEX : MARKER_Z_INDEX;
+    const zIndex = getMarkerZIndex(pin, isSelected);
     const position = new maps.LatLng(pin.latitude, pin.longitude);
     const isVisible = expandedBounds?.hasLatLng(position) ?? true;
     const zoomLevel = map.getZoom?.() ?? 0;
@@ -677,7 +667,7 @@ export const syncLockerMarkers = ({
       }
 
       if (existingEntry.zIndex !== zIndex) {
-        existingEntry.marker.setZIndex?.(zIndex);
+        (existingEntry.marker as ZIndexableMarker).setZIndex?.(zIndex);
         existingEntry.zIndex = zIndex;
       }
 

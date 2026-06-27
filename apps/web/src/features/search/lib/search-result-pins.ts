@@ -24,6 +24,7 @@ const toPlacePin = (
   placeId: number,
   latitude: number,
   longitude: number,
+  lockerCount: number,
 ): LockerPinItemResponse => ({
   pinType: "PLACE",
   placeId,
@@ -31,7 +32,7 @@ const toPlacePin = (
   latitude,
   longitude,
   isFavorite: null,
-  lockerCount: 0,
+  lockerCount,
   pinCount: null,
   bounds: null,
 });
@@ -55,7 +56,14 @@ export const searchResultItemsToPins = (
     }
 
     if (item.itemType === "PLACE") {
-      return [toPlacePin(item.placeId, item.latitude, item.longitude)];
+      return [
+        toPlacePin(
+          item.placeId,
+          item.latitude,
+          item.longitude,
+          item.lockers.length,
+        ),
+      ];
     }
 
     return [toLockerPin(item.lockerId, item.latitude, item.longitude)];

@@ -124,7 +124,6 @@ export function NaverMapCanvas({
           zoomControl: false,
           scaleControl: true,
           mapDataControl: false,
-          pinchZoom: true,
         });
 
         if (cancelled) {

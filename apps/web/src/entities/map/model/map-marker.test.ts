@@ -318,8 +318,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('<svg width="90" height="90"');
-    expect(options.icon?.size).toMatchObject({ width: 56.5, height: 56.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 28.3, y: 36.3 });
+    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
 
   it("uses the selected locker map pin dimensions", () => {
@@ -340,8 +340,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
-    expect(options.icon?.size).toMatchObject({ width: 56.5, height: 56.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 28.3, y: 36.3 });
+    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
 
   it("uses the favorite locker map pin dimensions", () => {
@@ -361,8 +361,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="save"');
-    expect(options.icon?.size).toMatchObject({ width: 56.5, height: 56.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 28.3, y: 36.3 });
+    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
 
   it("uses an HTML icon option for place markers", () => {
@@ -387,8 +387,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain(">3<");
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('width="121" height="121"');
-    expect(options.icon?.size).toMatchObject({ width: 70.5, height: 70.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 31.6, y: 44.4 });
+    expect(options.icon?.size).toMatchObject({ width: 54.5, height: 54.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
 
   it("uses S size and anchor for cluster markers with < 10 items", () => {
@@ -661,10 +661,43 @@ describe("syncLockerMarkers", () => {
       zIndex?: number;
     };
 
-    expect(marker1Options.zIndex).toBe(10);
-    expect(marker2Options.zIndex).toBe(10);
+    expect(marker1Options.zIndex).toBe(20);
+    expect(marker2Options.zIndex).toBe(20);
     expect(FakeMarker.instances[0]?.setZIndex).not.toHaveBeenCalled();
-    expect(FakeMarker.instances[1]?.setZIndex).toHaveBeenCalledWith(20);
+    expect(FakeMarker.instances[1]?.setZIndex).toHaveBeenCalledWith(30);
+  });
+
+  it("keeps locker markers above overlapping place markers", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const lockerPin = createLockerPin({
+      lockerId: 101,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+    const placePin = createPlacePin({
+      placeId: 201,
+      latitude: 37.5,
+      longitude: 127.0,
+    });
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [placePin, lockerPin],
+    });
+
+    const placeOptions = FakeMarker.instances[0]?.options as {
+      zIndex?: number;
+    };
+    const lockerOptions = FakeMarker.instances[1]?.options as {
+      zIndex?: number;
+    };
+
+    expect(placeOptions.zIndex).toBe(10);
+    expect(lockerOptions.zIndex).toBeGreaterThan(placeOptions.zIndex ?? 0);
   });
 
   it("applies spread class and styles when spreadCenter is provided", () => {
