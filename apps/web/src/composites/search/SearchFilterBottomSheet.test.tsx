@@ -28,7 +28,10 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   },
 }));
 
-import { SearchFilterBottomSheet } from "./SearchFilterBottomSheet";
+import {
+  resolveSearchFilterSnapPoints,
+  SearchFilterBottomSheet,
+} from "./SearchFilterBottomSheet";
 
 afterEach(cleanup);
 
@@ -51,6 +54,15 @@ const getButtonByText = (name: string) => {
 };
 
 describe("SearchFilterBottomSheet", () => {
+  it("resolves filter sheet snaps without changing its expanded default", () => {
+    expect(resolveSearchFilterSnapPoints({ windowHeight: 812 })).toEqual({
+      maxSnapPoint: 788,
+      miniSnapPoint: 420,
+      minSnapPoint: 52,
+      snapPoint: 52,
+    });
+  });
+
   it("applies selected indoor/outdoor and place filters", () => {
     setLanguageTag("ko");
     const handleApply = vi.fn();

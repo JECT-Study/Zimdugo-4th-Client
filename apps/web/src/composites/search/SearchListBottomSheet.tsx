@@ -73,6 +73,7 @@ export interface SearchListBottomSheetProps {
   onHeaderBackPress?: () => void;
   minSnapPoint?: number;
   snapPoint?: number;
+  initialSnapPoint?: number;
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
   onDismiss?: () => void;
@@ -83,6 +84,64 @@ interface ActiveSort {
   key: SearchSortKey;
   direction: SearchSortDirection;
 }
+
+const SEARCH_LIST_MIN_TOP_OFFSET = 44;
+const SEARCH_LIST_DISMISS_VISIBLE_HEIGHT = 52;
+const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT = 481;
+const SEARCH_LIST_MINI_VISIBLE_HEIGHT = 242;
+const SEARCH_LIST_DRAG_SENSITIVITY = 1.2;
+
+interface ResolveSearchListSnapPointsOptions {
+  windowHeight: number;
+  minSnapPoint?: number;
+  snapPoint?: number;
+  maxSnapPoint?: number;
+}
+
+export const resolveSearchListSnapOffset = ({
+  maxSnapPoint,
+  minSnapPoint,
+  visibleHeight,
+  windowHeight,
+}: {
+  maxSnapPoint: number;
+  minSnapPoint: number;
+  visibleHeight: number;
+  windowHeight: number;
+}) =>
+  Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
+
+export const resolveSearchListSnapPoints = ({
+  maxSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  windowHeight,
+}: ResolveSearchListSnapPointsOptions) => {
+  const resolvedMaxSnapPoint =
+    maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
+  const resolvedMinSnapPoint = minSnapPoint ?? SEARCH_LIST_MIN_TOP_OFFSET;
+  const resolvedSnapPoint =
+    snapPoint ??
+    resolveSearchListSnapOffset({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      visibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
+      windowHeight,
+    });
+  const resolvedMiniSnapPoint = resolveSearchListSnapOffset({
+    maxSnapPoint: resolvedMaxSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    visibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
+    windowHeight,
+  });
+
+  return {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  };
+};
 
 export function SearchListBottomSheet({
   searchQuery,
@@ -102,15 +161,34 @@ export function SearchListBottomSheet({
   onHeaderBackPress,
   minSnapPoint,
   snapPoint,
+  initialSnapPoint,
   maxSnapPoint,
   onSnapChange,
   onDismiss,
   children,
 }: SearchListBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(
-    typeof window !== "undefined" ? window.innerHeight : 800,
+    typeof window !== "undefined" ? window.innerHeight : 812,
   );
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
+  const {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  } = resolveSearchListSnapPoints({
+    maxSnapPoint,
+    minSnapPoint,
+    snapPoint,
+    windowHeight,
+  });
+  const resolvedInitialSnapPoint =
+    initialSnapPoint !== undefined
+      ? Math.min(
+          resolvedMaxSnapPoint,
+          Math.max(resolvedMinSnapPoint, initialSnapPoint),
+        )
+      : resolvedSnapPoint;
 
   const visibleItems = useMemo(() => {
     const primarySortType: Record<SearchSortKey, LockerPrimarySortType> = {
@@ -142,11 +220,6 @@ export function SearchListBottomSheet({
     appLanguage,
     policy: englishSubPolicy,
   });
-  const resolvedMinSnapPoint = minSnapPoint ?? 0;
-  const resolvedSnapPoint = snapPoint ?? 331;
-  const resolvedMaxSnapPoint = maxSnapPoint ?? windowHeight - 44;
-  const resolvedMiniSnapPoint =
-    resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
   const [expandedProgress, setExpandedProgress] = useState(() =>
     resolveBottomSheetExpandedProgress({
       maxSnapPoint: resolvedMaxSnapPoint,
@@ -204,9 +277,12 @@ export function SearchListBottomSheet({
   return (
     <DraggableBottomSheet
       snapPoint={resolvedSnapPoint}
+      initialSnapPoint={resolvedInitialSnapPoint}
       minSnapPoint={resolvedMinSnapPoint}
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
+      dragSensitivity={SEARCH_LIST_DRAG_SENSITIVITY}
+      showHomeIndicator={false}
       onSnapChange={onSnapChange}
       onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onDismiss}
