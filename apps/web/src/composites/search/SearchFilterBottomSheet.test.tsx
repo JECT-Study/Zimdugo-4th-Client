@@ -59,8 +59,8 @@ describe("SearchFilterBottomSheet", () => {
     expect(resolveSearchFilterSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 788,
       miniSnapPoint: undefined,
-      minSnapPoint: 52,
-      snapPoint: 52,
+      minSnapPoint: 112,
+      snapPoint: 112,
     });
   });
 

@@ -47,7 +47,8 @@ export interface SearchFilterBottomSheetProps {
   onSnapChange?: (nextSnap: number) => void;
 }
 
-const SEARCH_FILTER_FULL_TOP_OFFSET = 52;
+const SEARCH_FILTER_FULL_TOP_OFFSET = 112;
+const LEGACY_SEARCH_FILTER_FULL_TOP_OFFSET = 52;
 const SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT = 24;
 const SEARCH_FILTER_DRAG_SENSITIVITY = 1.2;
 const SEARCH_FILTER_SHEET_TOP_PADDING = 16;
@@ -73,7 +74,8 @@ export const resolveLegacySearchFilterSnapPoints = ({
 }: Omit<ResolveSearchFilterSnapPointsOptions, "behavior">) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT;
-  const resolvedMinSnapPoint = minSnapPoint ?? SEARCH_FILTER_FULL_TOP_OFFSET;
+  const resolvedMinSnapPoint =
+    minSnapPoint ?? LEGACY_SEARCH_FILTER_FULL_TOP_OFFSET;
   const resolvedSnapPoint = snapPoint ?? resolvedMinSnapPoint;
   const resolvedMiniSnapPoint =
     resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
