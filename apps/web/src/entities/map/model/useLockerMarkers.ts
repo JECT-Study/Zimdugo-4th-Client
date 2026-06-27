@@ -1,28 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LockerBoundsRaw } from "#/shared/api/lockers";
-import { subscribeMapIdle } from "./map-idle-controller";
-import type { MapViewport } from "./map-idle-controller";
+import {
+  getLockerPins,
+  type LockerPinItemResponse,
+} from "#/shared/api/lockers";
 import {
   getLockerPinQueryFromViewport,
   isLockerPinQueryWithinCapacity,
   type LockerPinQueryViewport,
 } from "./locker-pin-query";
+import type { MapViewport } from "./map-idle-controller";
+import { subscribeMapIdle } from "./map-idle-controller";
 import {
   clearLockerMarkers,
-  syncLockerMarkers,
+  type LockerMarkerOffset,
   type LockerMarkerRegistry,
+  syncLockerMarkers,
 } from "./map-marker";
-import {
-  getLockerPins,
-  type LockerPinItemResponse,
-} from "#/shared/api/lockers";
 
 export const LOCKER_PINS_QUERY_KEY = "lockerPins";
-export {
-  getLockerPinQueryFromViewport,
-  isLockerPinQueryWithinCapacity,
-};
+export { getLockerPinQueryFromViewport, isLockerPinQueryWithinCapacity };
 export type { LockerPinQueryViewport };
 
 export interface UseLockerMarkersOptions {
@@ -33,6 +31,7 @@ export interface UseLockerMarkersOptions {
     pinType: "LOCKER" | "PLACE",
     id: number,
     pin: LockerPinItemResponse,
+    offset: LockerMarkerOffset,
   ) => void;
   onClusterClick?: (bounds: LockerBoundsRaw) => void;
   spreadCenter?: { lat: number; lng: number } | null;
@@ -60,8 +59,9 @@ export const useLockerMarkers = ({
       pinType: "LOCKER" | "PLACE",
       id: number,
       pin: LockerPinItemResponse,
+      offset: LockerMarkerOffset,
     ) => {
-      onSelectLockerRef.current?.(pinType, id, pin);
+      onSelectLockerRef.current?.(pinType, id, pin, offset);
     },
     [],
   );
@@ -122,6 +122,8 @@ export const useLockerMarkers = ({
   // 3. 서버에서 받아온 데이터를 지도 마커와 동기화
   // viewport가 변경될 때마다(드래그 등) 화면 밖 마커 컬링 로직이 수행되도록 의존성 추가
   useEffect(() => {
+    void viewport;
+
     if (!map || !maps) return;
 
     if (!canFetchLockerPins) {

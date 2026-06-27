@@ -461,6 +461,7 @@ describe("syncLockerMarkers", () => {
       "LOCKER",
       42,
       expect.any(Object),
+      { offsetX: 0, offsetY: 0 },
     );
   });
 
@@ -484,6 +485,7 @@ describe("syncLockerMarkers", () => {
       "PLACE",
       7,
       expect.any(Object),
+      { offsetX: 0, offsetY: 0 },
     );
   });
 
@@ -567,6 +569,7 @@ describe("syncLockerMarkers", () => {
       "LOCKER",
       42,
       expect.objectContaining({ latitude: 37.6 }),
+      { offsetX: 0, offsetY: 0 },
     );
   });
 
@@ -818,6 +821,31 @@ describe("syncLockerMarkers", () => {
     expect(content2).toContain('data-offset-y="0"');
     expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
       x: 48.3,
+      y: 20.3,
+    });
+  });
+
+  it("keeps a preserved offset when only the selected marker is rendered", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const pin = createLockerPin({ lockerId: 101 });
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin],
+      selectedPinId: "LOCKER-101",
+      preservedOffsets: new Map([["LOCKER-101", { offsetX: 28, offsetY: 0 }]]),
+    });
+
+    const content = getMarkerContent(FakeMarker.instances[0]);
+
+    expect(content).toContain('data-offset-x="28"');
+    expect(content).toContain('data-offset-y="0"');
+    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
+      x: -7.7,
       y: 20.3,
     });
   });

@@ -6,6 +6,11 @@ import type {
 
 export type LockerMarkerStatus = "active" | "inactive";
 
+export interface LockerMarkerOffset {
+  offsetX: number;
+  offsetY: number;
+}
+
 const PLACE_BADGE_FILL = vars.color.palette.green[500];
 const MAP_PIN_WHITE = "white";
 const COORDINATE_GROUP_PRECISION = 4;
@@ -240,10 +245,12 @@ interface SyncLockerMarkersOptions {
     pinType: "LOCKER" | "PLACE",
     id: number,
     pin: LockerPinItemResponse,
+    offset: LockerMarkerOffset,
   ) => void;
   onClusterClick?: (bounds: LockerBoundsRaw) => void;
   registry?: LockerMarkerRegistry;
   spreadCenter?: { lat: number; lng: number } | null;
+  preservedOffsets?: ReadonlyMap<string, LockerMarkerOffset>;
 }
 
 interface LockerMarkerEntry {
@@ -254,6 +261,7 @@ interface LockerMarkerEntry {
   listenerClusterHandler?: SyncLockerMarkersOptions["onClusterClick"];
   listenerPin?: LockerPinItemResponse;
   listenerPinId?: string;
+  offset: LockerMarkerOffset;
   positionSignature: string;
   zIndex: number;
   wasSelectedBefore?: boolean;
@@ -597,6 +605,7 @@ const attachMarkerSelectListener = (
         pinType: "LOCKER" | "PLACE",
         id: number,
         pin: LockerPinItemResponse,
+        offset: LockerMarkerOffset,
       ) => void)
     | undefined,
   onClusterClick: ((bounds: LockerBoundsRaw) => void) | undefined,
@@ -636,7 +645,12 @@ const attachMarkerSelectListener = (
           ? listenerPin.placeId
           : null;
     if (id == null) return;
-    onSelectLocker(listenerPin.pinType as "LOCKER" | "PLACE", id, listenerPin);
+    onSelectLocker(
+      listenerPin.pinType as "LOCKER" | "PLACE",
+      id,
+      listenerPin,
+      entry.offset,
+    );
   });
   entry.listenerHandler = onSelectLocker;
   entry.listenerClusterHandler = onClusterClick;
@@ -677,6 +691,7 @@ export const syncLockerMarkers = ({
   onClusterClick,
   registry = new Map(),
   spreadCenter,
+  preservedOffsets,
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
 
@@ -733,7 +748,9 @@ export const syncLockerMarkers = ({
     }
 
     const hasSpread = spreadX !== 0 || spreadY !== 0;
-    const { offsetX = 0, offsetY = 0 } = offsetMap.get(pinId) ?? {};
+    const { offsetX = 0, offsetY = 0 } =
+      offsetMap.get(pinId) ?? preservedOffsets?.get(pinId) ?? {};
+    const offset = { offsetX, offsetY };
 
     const baseIconSignature = getPinIconSignature(pin, isSelected, zoomLevel);
     const iconSignature = `${baseIconSignature}${getIconSignatureSuffix({
@@ -802,6 +819,7 @@ export const syncLockerMarkers = ({
       }
       existingEntry.wasSelectedBefore = isSelected;
       existingEntry.hadSpreadBefore = hasSpread;
+      existingEntry.offset = offset;
 
       if (existingEntry.marker.getVisible() !== isVisible) {
         existingEntry.marker.setVisible(isVisible);
@@ -848,6 +866,7 @@ export const syncLockerMarkers = ({
     const entry: LockerMarkerEntry = {
       marker,
       iconSignature: `${iconSignature}:${animationState}`,
+      offset,
       positionSignature,
       zIndex,
       wasSelectedBefore: isSelected,
