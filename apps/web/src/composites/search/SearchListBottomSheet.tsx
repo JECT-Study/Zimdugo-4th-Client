@@ -90,7 +90,7 @@ interface ActiveSort {
   direction: SearchSortDirection;
 }
 
-const SEARCH_LIST_MIN_TOP_OFFSET = 44;
+const SEARCH_LIST_MIN_TOP_OFFSET = 60;
 const SEARCH_LIST_DISMISS_VISIBLE_HEIGHT = 52;
 const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT = 481;
 const SEARCH_LIST_MINI_VISIBLE_HEIGHT = 242;
@@ -214,9 +214,7 @@ export function SearchListBottomSheet({
   onDismiss,
   children,
 }: SearchListBottomSheetProps) {
-  const [windowHeight, setWindowHeight] = useState(
-    typeof window !== "undefined" ? window.innerHeight : 812,
-  );
+  const [windowHeight, setWindowHeight] = useState(812);
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
@@ -273,7 +271,7 @@ export function SearchListBottomSheet({
     resolveBottomSheetExpandedProgress({
       maxSnapPoint: resolvedMaxSnapPoint,
       minSnapPoint: resolvedMinSnapPoint,
-      offset: resolvedSnapPoint,
+      offset: resolvedInitialSnapPoint,
     }),
   );
   const resultHeaderStyle: CSSProperties = {
@@ -312,13 +310,14 @@ export function SearchListBottomSheet({
       resolveBottomSheetExpandedProgress({
         maxSnapPoint: resolvedMaxSnapPoint,
         minSnapPoint: resolvedMinSnapPoint,
-        offset: resolvedSnapPoint,
+        offset: resolvedInitialSnapPoint,
       }),
     );
-  }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedSnapPoint]);
+  }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);

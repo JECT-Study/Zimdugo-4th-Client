@@ -131,9 +131,7 @@ export function SearchFilterBottomSheet({
   onSnapChange,
 }: SearchFilterBottomSheetProps) {
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
-  const [windowHeight, setWindowHeight] = useState(
-    typeof window !== "undefined" ? window.innerHeight : 812,
-  );
+  const [windowHeight, setWindowHeight] = useState(812);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -157,7 +155,7 @@ export function SearchFilterBottomSheet({
     resolveBottomSheetExpandedProgress({
       maxSnapPoint: resolvedMaxSnapPoint,
       minSnapPoint: resolvedMinSnapPoint,
-      offset: resolvedSnapPoint,
+      offset: resolvedInitialSnapPoint,
     }),
   );
   const [indoorOutdoorState, setIndoorOutdoor] = useState<string[]>(
@@ -262,10 +260,10 @@ export function SearchFilterBottomSheet({
       resolveBottomSheetExpandedProgress({
         maxSnapPoint: resolvedMaxSnapPoint,
         minSnapPoint: resolvedMinSnapPoint,
-        offset: resolvedSnapPoint,
+        offset: resolvedInitialSnapPoint,
       }),
     );
-  }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedSnapPoint]);
+  }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
   return (
     <DraggableBottomSheet
