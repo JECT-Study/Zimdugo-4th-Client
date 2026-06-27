@@ -45,6 +45,7 @@ export interface NaverMapCanvasProps {
   onWillDestroy?: (map: naver.maps.Map) => void;
   onLoadingChange?: (isLoading: boolean) => void;
   onErrorChange?: (hasError: boolean) => void;
+  onMapPress?: () => void;
   initialCenter?: MapCanvasCoordinates | null;
   initialZoom?: number;
 }
@@ -54,6 +55,7 @@ export function NaverMapCanvas({
   onWillDestroy,
   onLoadingChange,
   onErrorChange,
+  onMapPress,
   initialCenter = null,
   initialZoom = DEFAULT_MAP_ZOOM,
 }: NaverMapCanvasProps) {
@@ -74,6 +76,9 @@ export function NaverMapCanvas({
 
   const onErrorChangeRef = useRef(onErrorChange);
   onErrorChangeRef.current = onErrorChange;
+
+  const onMapPressRef = useRef(onMapPress);
+  onMapPressRef.current = onMapPress;
 
   const initialCenterRef = useRef(initialCenter);
   initialCenterRef.current = initialCenter;
@@ -100,6 +105,7 @@ export function NaverMapCanvas({
     let refreshFrameId = 0;
     let bootstrapTimeoutId = 0;
     let bootstrapIdleListener: naver.maps.MapEventListener | null = null;
+    let mapPressListener: naver.maps.MapEventListener | null = null;
 
     const finishBootstrapping = () => {
       if (cancelled) return;
@@ -134,6 +140,9 @@ export function NaverMapCanvas({
         map.setSize(new maps.Size(size.width, size.height));
         mapRef.current = map;
         onLoadRef.current?.(map);
+        mapPressListener = maps.Event.addListener(map, "click", () => {
+          onMapPressRef.current?.();
+        });
 
         bootstrapIdleListener = maps.Event.addListener(map, "idle", () => {
           if (bootstrapIdleListener) {
@@ -172,6 +181,10 @@ export function NaverMapCanvas({
           maps.Event.removeListener(bootstrapIdleListener);
           bootstrapIdleListener = null;
         }
+        if (mapPressListener) {
+          maps.Event.removeListener(mapPressListener);
+          mapPressListener = null;
+        }
         setIsMapBootstrapping(false);
         onLoadRef.current?.(null);
         setMapInitError(
@@ -190,6 +203,9 @@ export function NaverMapCanvas({
       window.clearTimeout(bootstrapTimeoutId);
       if (bootstrapIdleListener) {
         maps.Event.removeListener(bootstrapIdleListener);
+      }
+      if (mapPressListener) {
+        maps.Event.removeListener(mapPressListener);
       }
       if (resizeObserver) {
         resizeObserver.disconnect();

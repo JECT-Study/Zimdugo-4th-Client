@@ -2,7 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { ControlChipGroup } from "@repo/ui/components/control-chip-group";
 import { LabelTitle } from "@repo/ui/components/label-title";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
 import {
@@ -36,12 +36,96 @@ export interface SearchFilterAppliedState {
 export interface SearchFilterBottomSheetProps {
   className?: string;
   initialFilters?: SearchFilterAppliedState;
+  snapBehavior?: SearchBottomSheetSnapBehavior;
+  animateOnMount?: boolean;
+  initialSnapPoint?: number;
+  minSnapPoint?: number;
+  snapPoint?: number;
+  maxSnapPoint?: number;
   onCollapseToResults?: () => void;
   onReset?: () => void;
   onApply?: (filters: SearchFilterAppliedState) => void;
+  onSnapChange?: (nextSnap: number) => void;
 }
 
-const DEFAULT_SNAP_POINT = 52;
+const SEARCH_FILTER_FULL_TOP_OFFSET = 112;
+const LEGACY_SEARCH_FILTER_FULL_TOP_OFFSET = 52;
+const SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT = 24;
+const SEARCH_FILTER_DRAG_SENSITIVITY = 1.2;
+const SEARCH_FILTER_SHEET_TOP_PADDING = 16;
+
+export type SearchBottomSheetSnapBehavior = "detail" | "legacy";
+export const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
+  "detail";
+
+interface ResolveSearchFilterSnapPointsOptions {
+  windowHeight: number;
+  behavior?: SearchBottomSheetSnapBehavior;
+  minSnapPoint?: number;
+  snapPoint?: number;
+  maxSnapPoint?: number;
+  contentHeight?: number;
+}
+
+export const resolveLegacySearchFilterSnapPoints = ({
+  maxSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  windowHeight,
+}: Omit<ResolveSearchFilterSnapPointsOptions, "behavior">) => {
+  const resolvedMaxSnapPoint =
+    maxSnapPoint ?? windowHeight - SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT;
+  const resolvedMinSnapPoint =
+    minSnapPoint ?? LEGACY_SEARCH_FILTER_FULL_TOP_OFFSET;
+  const resolvedSnapPoint = snapPoint ?? resolvedMinSnapPoint;
+  const resolvedMiniSnapPoint =
+    resolvedSnapPoint + (resolvedMaxSnapPoint - resolvedSnapPoint) / 2;
+
+  return {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  };
+};
+
+export const resolveSearchFilterSnapPoints = ({
+  behavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
+  maxSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  windowHeight,
+  contentHeight,
+}: ResolveSearchFilterSnapPointsOptions) => {
+  if (behavior === "legacy") {
+    return resolveLegacySearchFilterSnapPoints({
+      maxSnapPoint,
+      minSnapPoint,
+      snapPoint,
+      windowHeight,
+    });
+  }
+
+  const resolvedMaxSnapPoint =
+    maxSnapPoint ?? windowHeight - SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT;
+  const maxFullVisibleHeight = windowHeight - SEARCH_FILTER_FULL_TOP_OFFSET;
+  const resolvedContentHeight =
+    contentHeight !== undefined
+      ? Math.min(contentHeight, maxFullVisibleHeight)
+      : maxFullVisibleHeight;
+  const contentBasedTopOffset = windowHeight - resolvedContentHeight;
+  const resolvedMinSnapPoint =
+    minSnapPoint ??
+    Math.max(SEARCH_FILTER_FULL_TOP_OFFSET, contentBasedTopOffset);
+  const resolvedSnapPoint = snapPoint ?? resolvedMinSnapPoint;
+
+  return {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: undefined,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  };
+};
 
 export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
   regionActive: false,
@@ -55,19 +139,47 @@ export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
 export function SearchFilterBottomSheet({
   className,
   initialFilters,
+  snapBehavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
+  animateOnMount = false,
+  initialSnapPoint,
+  minSnapPoint,
+  snapPoint,
+  maxSnapPoint,
   onCollapseToResults,
   onReset,
   onApply,
+  onSnapChange,
 }: SearchFilterBottomSheetProps) {
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
-  const [collapsedSnap, setCollapsedSnap] = useState(760);
-  const miniSnap =
-    DEFAULT_SNAP_POINT + (collapsedSnap - DEFAULT_SNAP_POINT) / 2;
+  const [windowHeight, setWindowHeight] = useState(812);
+  const [contentHeight, setContentHeight] = useState<number | undefined>();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const actionBarRef = useRef<HTMLDivElement>(null);
+  const {
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  } = resolveSearchFilterSnapPoints({
+    behavior: snapBehavior,
+    maxSnapPoint,
+    minSnapPoint,
+    snapPoint,
+    windowHeight,
+    contentHeight,
+  });
+  const resolvedInitialSnapPoint =
+    initialSnapPoint !== undefined
+      ? Math.min(
+          resolvedMaxSnapPoint,
+          Math.max(resolvedMinSnapPoint, initialSnapPoint),
+        )
+      : resolvedSnapPoint;
   const [expandedProgress, setExpandedProgress] = useState(() =>
     resolveBottomSheetExpandedProgress({
-      maxSnapPoint: collapsedSnap,
-      minSnapPoint: DEFAULT_SNAP_POINT,
-      offset: DEFAULT_SNAP_POINT,
+      maxSnapPoint: resolvedMaxSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      offset: resolvedInitialSnapPoint,
     }),
   );
   const [indoorOutdoorState, setIndoorOutdoor] = useState<string[]>(
@@ -81,12 +193,37 @@ export function SearchFilterBottomSheet({
   );
 
   useEffect(() => {
-    const updateCollapsedSnap = () => {
-      setCollapsedSnap(window.innerHeight - 24);
+    const handleResize = () => setWindowHeight(window.innerHeight);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const updateContentHeight = () => {
+      const scrollArea = scrollAreaRef.current;
+      const actionBar = actionBarRef.current;
+
+      if (!scrollArea || !actionBar) return;
+
+      setContentHeight(
+        scrollArea.scrollHeight +
+          actionBar.offsetHeight +
+          SEARCH_FILTER_SHEET_TOP_PADDING,
+      );
     };
-    updateCollapsedSnap();
-    window.addEventListener("resize", updateCollapsedSnap);
-    return () => window.removeEventListener("resize", updateCollapsedSnap);
+
+    updateContentHeight();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(updateContentHeight);
+    if (scrollAreaRef.current) resizeObserver.observe(scrollAreaRef.current);
+    if (actionBarRef.current) resizeObserver.observe(actionBarRef.current);
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   useEffect(() => {
@@ -172,24 +309,29 @@ export function SearchFilterBottomSheet({
   useEffect(() => {
     setExpandedProgress(
       resolveBottomSheetExpandedProgress({
-        maxSnapPoint: collapsedSnap,
-        minSnapPoint: DEFAULT_SNAP_POINT,
-        offset: DEFAULT_SNAP_POINT,
+        maxSnapPoint: resolvedMaxSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: resolvedInitialSnapPoint,
       }),
     );
-  }, [collapsedSnap]);
+  }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
   return (
     <DraggableBottomSheet
-      snapPoint={DEFAULT_SNAP_POINT}
-      minSnapPoint={DEFAULT_SNAP_POINT}
-      miniSnapPoint={miniSnap}
-      maxSnapPoint={collapsedSnap}
+      snapPoint={resolvedSnapPoint}
+      initialSnapPoint={resolvedInitialSnapPoint}
+      minSnapPoint={resolvedMinSnapPoint}
+      miniSnapPoint={resolvedMiniSnapPoint}
+      maxSnapPoint={resolvedMaxSnapPoint}
+      dragSensitivity={SEARCH_FILTER_DRAG_SENSITIVITY}
+      animateOnMount={animateOnMount}
+      showHomeIndicator={false}
+      onSnapChange={onSnapChange}
       onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onCollapseToResults}
     >
       <div className={[sheetColumn, className].filter(Boolean).join(" ")}>
-        <div className={scrollArea}>
+        <div ref={scrollAreaRef} className={scrollArea}>
           <div className={section}>
             <LabelTitle size="small">
               {m.search_filter_section_size()}
@@ -251,7 +393,11 @@ export function SearchFilterBottomSheet({
           </div>
         </div>
 
-        <div className={bottomActionBar} style={actionBarStyle}>
+        <div
+          ref={actionBarRef}
+          className={bottomActionBar}
+          style={actionBarStyle}
+        >
           <Button
             className={resetButton}
             variant="filled"

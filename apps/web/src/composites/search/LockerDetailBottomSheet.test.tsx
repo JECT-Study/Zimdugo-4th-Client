@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
+import { m, setLanguageTag } from "@repo/i18n";
 import {
   cleanup,
   fireEvent,
@@ -11,10 +11,22 @@ import {
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
+
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
-  DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
-    <div data-testid="mock-draggable-bottom-sheet">{children}</div>
-  ),
+  DraggableBottomSheet: (props: {
+    animateOnMount?: boolean;
+    children: ReactNode;
+    initialSnapPoint?: number;
+    minSnapPoint?: number;
+    onSnapChange?: (nextSnap: number) => void;
+    snapRequest?: { id: number; snapPoint: number } | null;
+  }) => {
+    draggableBottomSheetMock(props);
+    return (
+      <div data-testid="mock-draggable-bottom-sheet">{props.children}</div>
+    );
+  },
 }));
 
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
@@ -49,13 +61,14 @@ describe("LockerDetailBottomSheet", () => {
 
   afterEach(() => {
     cleanup();
+    draggableBottomSheetMock.mockClear();
   });
 
   it("resolves detail-specific mini and half snap heights", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
       miniSnapPoint: 701,
-      minSnapPoint: 60,
+      minSnapPoint: 112,
       snapPoint: 566,
     });
   });
@@ -64,7 +77,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 1000 })).toEqual({
       maxSnapPoint: 948,
       miniSnapPoint: 889,
-      minSnapPoint: 220,
+      minSnapPoint: 112,
       snapPoint: 754,
     });
   });
@@ -184,15 +197,80 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "사진" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: m.report_section_photo() }),
+    );
 
-    const dialog = screen.getByRole("dialog", { name: "사진" });
+    const dialog = screen.getByRole("dialog", {
+      name: m.report_section_photo(),
+    });
     expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
       "https://example.com/locker.jpg",
     );
 
     fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
 
-    expect(screen.queryByRole("dialog", { name: "사진" })).toBeNull();
+    expect(
+      screen.queryByRole("dialog", { name: m.report_section_photo() }),
+    ).toBeNull();
+  });
+
+  it("converts stage snap requests to detail snap points", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        snapRequest={{ id: 1, stage: "mini" }}
+      />,
+    );
+
+    const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
+
+    expect(latestSheetProps?.snapRequest).toEqual({
+      id: 1,
+      snapPoint: 701,
+    });
+  });
+
+  it("forwards snap changes as detail snap stages", () => {
+    const handleSnapStageChange = vi.fn();
+
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        snapRequest={{ id: 1, stage: "full" }}
+        onSnapStageChange={handleSnapStageChange}
+      />,
+    );
+
+    const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
+    latestSheetProps?.onSnapChange?.(112);
+
+    expect(handleSnapStageChange).toHaveBeenCalledWith("full");
+    expect(latestSheetProps?.snapRequest).toEqual({
+      id: 1,
+      snapPoint: 112,
+    });
+  });
+
+  it("enables internal content scroll only when the detail sheet opens full", () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+    );
+
+    expect(
+      document
+        .querySelector("[data-scroll-enabled]")
+        ?.getAttribute("data-scroll-enabled"),
+    ).toBe("false");
+
+    rerender(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={112} />,
+    );
+
+    expect(
+      document
+        .querySelector("[data-scroll-enabled]")
+        ?.getAttribute("data-scroll-enabled"),
+    ).toBe("true");
   });
 });

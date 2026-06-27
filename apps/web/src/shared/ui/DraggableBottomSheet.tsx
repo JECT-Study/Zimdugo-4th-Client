@@ -40,6 +40,11 @@ export interface BottomSheetLiveOffsetState {
   snapPoints: number[];
 }
 
+export interface BottomSheetSnapRequest {
+  id: number;
+  snapPoint: number;
+}
+
 export interface DraggableBottomSheetProps {
   children: ReactNode;
   snapPoint: number;
@@ -51,6 +56,7 @@ export interface DraggableBottomSheetProps {
   dragSensitivity?: number;
   animateOnMount?: boolean;
   showHomeIndicator?: boolean;
+  snapRequest?: BottomSheetSnapRequest | null;
   onSnapChange?: (nextSnap: number) => void;
   onLiveOffsetChange?: (state: BottomSheetLiveOffsetState) => void;
   onDismiss?: () => void;
@@ -228,6 +234,7 @@ export function DraggableBottomSheet({
   dragSensitivity = 1,
   animateOnMount = false,
   showHomeIndicator = true,
+  snapRequest = null,
   onSnapChange,
   onLiveOffsetChange,
   onDismiss,
@@ -252,6 +259,7 @@ export function DraggableBottomSheet({
   const settleAnimationRef = useRef<{ stop: () => void } | null>(null);
   const currentSnapRef = useRef(clampedInitialSnap);
   const lastInitialSnapRef = useRef<number | null>(null);
+  const lastSnapRequestIdRef = useRef<number | null>(null);
   const snapPoints = useMemo(
     () =>
       Array.from(
@@ -319,16 +327,8 @@ export function DraggableBottomSheet({
     sheetOffset.set(nextSnap);
   }, [resolvedInitialSnap, clampSnap, sheetOffset]);
 
-  const settleToNextSnap = useCallback(
-    ({ offsetY }: { offsetY: number }) => {
-      const startSnap =
-        dragStateRef.current?.startSnap ?? currentSnapRef.current;
-      const nextSnap = resolveBottomSheetNextSnap({
-        offsetY,
-        snapPoints,
-        startSnap,
-      });
-
+  const settleToSnapPoint = useCallback(
+    (nextSnap: number) => {
       const clampedNextSnap = clampSnap(nextSnap);
       settleAnimationRef.current?.stop();
       settleAnimationRef.current = animate(sheetOffset, clampedNextSnap, {
@@ -350,14 +350,22 @@ export function DraggableBottomSheet({
         onDismiss?.();
       }
     },
-    [
-      clampSnap,
-      onDismiss,
-      onSnapChange,
-      resolvedDismissSnapPoint,
-      sheetOffset,
-      snapPoints,
-    ],
+    [clampSnap, onDismiss, onSnapChange, resolvedDismissSnapPoint, sheetOffset],
+  );
+
+  const settleToNextSnap = useCallback(
+    ({ offsetY }: { offsetY: number }) => {
+      const startSnap =
+        dragStateRef.current?.startSnap ?? currentSnapRef.current;
+      const nextSnap = resolveBottomSheetNextSnap({
+        offsetY,
+        snapPoints,
+        startSnap,
+      });
+
+      settleToSnapPoint(nextSnap);
+    },
+    [settleToSnapPoint, snapPoints],
   );
 
   const removeDragListeners = useCallback(() => {
@@ -531,6 +539,18 @@ export function DraggableBottomSheet({
     },
     [removeDragListeners],
   );
+
+  useEffect(() => {
+    if (
+      snapRequest == null ||
+      lastSnapRequestIdRef.current === snapRequest.id
+    ) {
+      return;
+    }
+
+    lastSnapRequestIdRef.current = snapRequest.id;
+    settleToSnapPoint(snapRequest.snapPoint);
+  }, [settleToSnapPoint, snapRequest]);
 
   return (
     <div className={sheetWrapper}>
