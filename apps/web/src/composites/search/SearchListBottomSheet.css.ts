@@ -116,6 +116,17 @@ export const emptyState = style({
   minHeight: "100%",
 });
 
+export const emptyStateStack = style({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: vars.spacing[16],
+});
+
+export const emptyStateResetButton = style({
+  minWidth: "112px",
+});
+
 export const resultScrollArea = style({
   paddingTop: "17px",
 });

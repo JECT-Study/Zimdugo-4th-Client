@@ -1,4 +1,5 @@
 import { m } from "@repo/i18n";
+import { Button } from "@repo/ui/components/button";
 import { ControlChip } from "@repo/ui/components/control-chip";
 import { IconChevronLeft13, IconFilter14 } from "@repo/ui/tokens/icons";
 import {
@@ -26,6 +27,8 @@ import {
 import {
   dropdownCompact,
   emptyState,
+  emptyStateResetButton,
+  emptyStateStack,
   filterChip,
   headerLeadingButton,
   headerLeadingRow,
@@ -61,6 +64,7 @@ export interface SearchListBottomSheetProps {
   appLanguage?: AppLocale;
   englishSubPolicy?: EnglishSubPolicy;
   onOpenFilter?: () => void;
+  onResetFilter?: () => void;
   isFilterActive?: boolean;
   isFilterOpen?: boolean;
   placeName?: string | null;
@@ -149,6 +153,7 @@ export function SearchListBottomSheet({
   appLanguage = "ko",
   englishSubPolicy = "auto",
   onOpenFilter,
+  onResetFilter,
   isFilterActive = false,
   isFilterOpen = false,
   placeName = null,
@@ -215,7 +220,8 @@ export function SearchListBottomSheet({
   const isPlaceScope = Boolean(placeName);
   const hasResult = !isLoading && !isError && visibleItems.length > 0;
   const showEmpty = !isLoading && !isError && visibleItems.length === 0;
-  const showResultHeader = hasResult || isPlaceScope;
+  const showFilterEmpty = showEmpty && isFilterActive;
+  const showResultHeader = hasResult || isPlaceScope || showFilterEmpty;
   const showEnglishSub = resolveEnglishSubVisibility({
     appLanguage,
     policy: englishSubPolicy,
@@ -306,7 +312,11 @@ export function SearchListBottomSheet({
                   className={inSheetHeader}
                   queryText={searchQuery}
                   titleText={resultTitleText}
-                  resultCount={hasResult ? visibleItems.length : undefined}
+                  resultCount={
+                    hasResult || showFilterEmpty
+                      ? visibleItems.length
+                      : undefined
+                  }
                 />
               </div>
             </div>
@@ -365,10 +375,23 @@ export function SearchListBottomSheet({
               </div>
             ) : showEmpty ? (
               <div className={emptyState}>
-                <NonSearch
-                  query={searchQuery}
-                  showEnglishSub={showEnglishSub}
-                />
+                <div className={emptyStateStack}>
+                  <NonSearch
+                    query={searchQuery}
+                    showEnglishSub={showEnglishSub}
+                  />
+                  {showFilterEmpty && onResetFilter ? (
+                    <Button
+                      className={emptyStateResetButton}
+                      variant="filled"
+                      intent="neutral"
+                      size="M"
+                      onPress={onResetFilter}
+                    >
+                      {m.search_filter_reset()}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             ) : null)}
         </div>

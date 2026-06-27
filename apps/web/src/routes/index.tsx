@@ -2292,6 +2292,7 @@ export function IndexPage() {
           isError={isSearchListError}
           onRetry={() => void refetchSearchList()}
           onOpenFilter={handleOpenSearchFilter}
+          onResetFilter={handleResetSearchFilter}
           onLockerPress={handleOpenLockerDetail}
           onFavoriteChange={favoriteSession.handleSearchFavoriteChange}
           showHeaderBack={showPlaceSheetBack}

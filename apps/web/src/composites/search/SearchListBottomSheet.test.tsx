@@ -1,5 +1,38 @@
-import { describe, expect, it } from "vitest";
-import { resolveSearchListSnapPoints } from "./SearchListBottomSheet";
+// @vitest-environment jsdom
+
+import { m, setLanguageTag } from "@repo/i18n";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
+  DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
+    <div data-testid="mock-draggable-bottom-sheet">{children}</div>
+  ),
+  resolveBottomSheetExpandedProgress: ({
+    maxSnapPoint,
+    minSnapPoint,
+    offset,
+  }: {
+    maxSnapPoint: number;
+    minSnapPoint: number;
+    offset: number;
+  }) => {
+    if (maxSnapPoint === minSnapPoint) return 1;
+
+    return Math.min(
+      1,
+      Math.max(0, (maxSnapPoint - offset) / (maxSnapPoint - minSnapPoint)),
+    );
+  },
+}));
+
+import {
+  resolveSearchListSnapPoints,
+  SearchListBottomSheet,
+} from "./SearchListBottomSheet";
+
+afterEach(cleanup);
 
 describe("SearchListBottomSheet", () => {
   it("resolves search-list snaps from visible heights", () => {
@@ -25,5 +58,28 @@ describe("SearchListBottomSheet", () => {
       minSnapPoint: 80,
       snapPoint: 320,
     });
+  });
+
+  it("keeps filter and sort controls visible when active filters return no lockers", () => {
+    setLanguageTag("ko");
+    const handleResetFilter = vi.fn();
+
+    render(
+      <SearchListBottomSheet
+        searchQuery="강남"
+        items={[]}
+        isFilterActive
+        onOpenFilter={vi.fn()}
+        onResetFilter={handleResetFilter}
+      />,
+    );
+
+    expect(screen.getByText(m.search_sort_distance())).toBeTruthy();
+    expect(screen.getByText(m.search_sort_recent())).toBeTruthy();
+    expect(screen.getByText(m.search_sort_price())).toBeTruthy();
+
+    fireEvent.click(screen.getByText(m.search_filter_reset()));
+
+    expect(handleResetFilter).toHaveBeenCalledOnce();
   });
 });
