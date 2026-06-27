@@ -1121,7 +1121,11 @@ export function IndexPage() {
     (
       lockerId: number,
       optimisticDetail?: LockerDetailItem,
-      options?: { detailSnap?: LockerDetailSnap; animateOnMount?: boolean },
+      options?: {
+        detailSnap?: LockerDetailSnap;
+        animateOnMount?: boolean;
+        searchDetailBack?: SearchDetailBackTarget | null;
+      },
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
@@ -1155,6 +1159,9 @@ export function IndexPage() {
         setActiveLockerId(lockerId);
         setIsNavigationPopupOpen(false);
         setIsSearchOpen(false);
+        if (options?.searchDetailBack !== undefined) {
+          setSearchDetailBack(options.searchDetailBack);
+        }
         setLockerDetailOpensFull(options?.detailSnap === "full");
         setLockerDetailAnimatesOnMount(options?.animateOnMount ?? true);
         setSheetMode("detail");
@@ -1302,6 +1309,7 @@ export function IndexPage() {
         openLockerDetailById(
           item.lockerId,
           createLockerDetailFromAutocompleteItem(item),
+          { searchDetailBack: createKeywordDetailBackTarget() },
         );
         return;
       }
@@ -1350,6 +1358,7 @@ export function IndexPage() {
         openLockerDetailById(
           entry.lockerId,
           createLockerDetailFromHistoryEntry(entry),
+          { searchDetailBack: createKeywordDetailBackTarget() },
         );
         void queryClient.invalidateQueries({
           queryKey: [LOCKER_DETAIL_QUERY_KEY, entry.lockerId],
@@ -1426,6 +1435,14 @@ export function IndexPage() {
       openLockerDetailById(
         item.lockerId,
         createLockerDetailFromSearchItem(item),
+        {
+          searchDetailBack:
+            context === "search"
+              ? listKind === "place" && searchPlaceId != null
+                ? createPlaceDetailBackTarget(searchPlaceId)
+                : createKeywordDetailBackTarget()
+              : undefined,
+        },
       );
     },
     [
@@ -1442,17 +1459,24 @@ export function IndexPage() {
       lockerId: number,
       detail: LockerDetailItem | undefined,
       shouldDelay: boolean,
+      options?: { searchDetailBack?: SearchDetailBackTarget | null },
     ) => {
       clearPendingLockerDetailOpen();
 
       if (!shouldDelay) {
-        openLockerDetailById(lockerId, detail, { animateOnMount: true });
+        openLockerDetailById(lockerId, detail, {
+          animateOnMount: true,
+          searchDetailBack: options?.searchDetailBack,
+        });
         return;
       }
 
       pendingLockerDetailOpenTimerRef.current = window.setTimeout(() => {
         pendingLockerDetailOpenTimerRef.current = undefined;
-        openLockerDetailById(lockerId, detail, { animateOnMount: true });
+        openLockerDetailById(lockerId, detail, {
+          animateOnMount: true,
+          searchDetailBack: options?.searchDetailBack,
+        });
       }, DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS);
     },
     [clearPendingLockerDetailOpen, openLockerDetailById],
@@ -1805,12 +1829,11 @@ export function IndexPage() {
         return;
       }
 
-      setSearchDetailBack(
-        createSearchDetailBackTarget({
-          listKind: listKind ?? "keyword",
-          placeId: listKind === "place" ? searchPlaceId : null,
-        }),
-      );
+      const nextSearchDetailBack = createSearchDetailBackTarget({
+        listKind: listKind ?? "keyword",
+        placeId: listKind === "place" ? searchPlaceId : null,
+      });
+      setSearchDetailBack(nextSearchDetailBack);
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       setSelectedMapPinOffset(offset ?? null);
@@ -1820,7 +1843,9 @@ export function IndexPage() {
         (mapInstanceRef.current.getZoom?.() ?? DETAIL_FOCUS_ZOOM) <
           DETAIL_FOCUS_ZOOM;
       focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
-      openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
+      openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen, {
+        searchDetailBack: nextSearchDetailBack,
+      });
     },
     [
       context,
