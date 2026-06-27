@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
+import { m, setLanguageTag } from "@repo/i18n";
 import {
   cleanup,
   fireEvent,
@@ -11,10 +11,18 @@ import {
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
+
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
-  DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
-    <div data-testid="mock-draggable-bottom-sheet">{children}</div>
-  ),
+  DraggableBottomSheet: (props: {
+    children: ReactNode;
+    snapRequest?: { id: number; snapPoint: number } | null;
+  }) => {
+    draggableBottomSheetMock(props);
+    return (
+      <div data-testid="mock-draggable-bottom-sheet">{props.children}</div>
+    );
+  },
 }));
 
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
@@ -49,6 +57,7 @@ describe("LockerDetailBottomSheet", () => {
 
   afterEach(() => {
     cleanup();
+    draggableBottomSheetMock.mockClear();
   });
 
   it("resolves detail-specific mini and half snap heights", () => {
@@ -184,15 +193,21 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "사진" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: m.report_section_photo() }),
+    );
 
-    const dialog = screen.getByRole("dialog", { name: "사진" });
+    const dialog = screen.getByRole("dialog", {
+      name: m.report_section_photo(),
+    });
     expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
       "https://example.com/locker.jpg",
     );
 
     fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
 
-    expect(screen.queryByRole("dialog", { name: "사진" })).toBeNull();
+    expect(
+      screen.queryByRole("dialog", { name: m.report_section_photo() }),
+    ).toBeNull();
   });
 });

@@ -21,6 +21,8 @@ import {
   LockerDetailBottomSheet,
   type LockerDetailItem,
   type LockerDetailLoadState,
+  type LockerDetailSheetSnapRequest,
+  type LockerDetailSheetSnapStage,
 } from "#/composites/search/LockerDetailBottomSheet";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
@@ -29,9 +31,9 @@ import {
   SearchFilterBottomSheet,
 } from "#/composites/search/SearchFilterBottomSheet";
 import {
+  SearchListBottomSheet,
   type SearchListSheetSnapRequest,
   type SearchListSheetSnapStage,
-  SearchListBottomSheet,
 } from "#/composites/search/SearchListBottomSheet";
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
 import type {
@@ -383,6 +385,10 @@ export function IndexPage() {
     useState<SearchListSheetSnapStage>("half");
   const [listSheetSnapRequest, setListSheetSnapRequest] =
     useState<SearchListSheetSnapRequest | null>(null);
+  const [detailSheetSnapStage, setDetailSheetSnapStage] =
+    useState<LockerDetailSheetSnapStage>("half");
+  const [detailSheetSnapRequest, setDetailSheetSnapRequest] =
+    useState<LockerDetailSheetSnapRequest | null>(null);
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(() => {
       if (lockerIdFromQuery !== undefined) {
@@ -1440,9 +1446,26 @@ export function IndexPage() {
     [],
   );
 
+  const requestDetailSheetSnap = useCallback(
+    (stage: LockerDetailSheetSnapStage) => {
+      setDetailSheetSnapRequest((previousRequest) => ({
+        id: (previousRequest?.id ?? 0) + 1,
+        stage,
+      }));
+    },
+    [],
+  );
+
   const handleListSheetSnapStageChange = useCallback(
     (nextStage: SearchListSheetSnapStage) => {
       setListSheetSnapStage(nextStage);
+    },
+    [],
+  );
+
+  const handleDetailSheetSnapStageChange = useCallback(
+    (nextStage: LockerDetailSheetSnapStage) => {
+      setDetailSheetSnapStage(nextStage);
     },
     [],
   );
@@ -1462,11 +1485,27 @@ export function IndexPage() {
 
   const shouldRaiseSelectedPinFromMini = useCallback(
     (pin: LockerPinItemResponse | undefined) =>
-      sheetMode === "list" &&
-      listSheetSnapStage === "mini" &&
+      (sheetMode === "list"
+        ? listSheetSnapStage === "mini"
+        : sheetMode === "detail" && detailSheetSnapStage === "mini") &&
       pin?.pinType === "LOCKER" &&
       selectedPinId === getPinId(pin),
-    [listSheetSnapStage, selectedPinId, sheetMode],
+    [detailSheetSnapStage, listSheetSnapStage, selectedPinId, sheetMode],
+  );
+
+  const raiseSelectedPinFromMini = useCallback(
+    (pin: LockerPinItemResponse | undefined, offset?: LockerMarkerOffset) => {
+      setSelectedMapPin(pin ?? null);
+      setSelectedMapPinOffset(offset ?? null);
+
+      if (sheetMode === "detail") {
+        requestDetailSheetSnap("half");
+        return;
+      }
+
+      requestListSheetSnap("half");
+    },
+    [requestDetailSheetSnap, requestListSheetSnap, sheetMode],
   );
 
   const openLockerFromDeepLink = useCallback(
@@ -1660,9 +1699,7 @@ export function IndexPage() {
       }
 
       if (shouldRaiseSelectedPinFromMini(pin)) {
-        setSelectedMapPin(pin ?? null);
-        setSelectedMapPinOffset(offset ?? null);
-        requestListSheetSnap("half");
+        raiseSelectedPinFromMini(pin, offset);
         return;
       }
 
@@ -1684,7 +1721,7 @@ export function IndexPage() {
       focusMapOnLockerPin,
       openLockerDetailAfterPinFocus,
       openMapPlaceList,
-      requestListSheetSnap,
+      raiseSelectedPinFromMini,
       shouldRaiseSelectedPinFromMini,
     ],
   );
@@ -1716,9 +1753,7 @@ export function IndexPage() {
       }
 
       if (shouldRaiseSelectedPinFromMini(pin)) {
-        setSelectedMapPin(pin ?? null);
-        setSelectedMapPinOffset(offset ?? null);
-        requestListSheetSnap("half");
+        raiseSelectedPinFromMini(pin, offset);
         return;
       }
 
@@ -1744,11 +1779,27 @@ export function IndexPage() {
       focusMapOnLockerPin,
       listKind,
       openLockerDetailAfterPinFocus,
-      requestListSheetSnap,
+      raiseSelectedPinFromMini,
       searchPlaceId,
       setSheetMode,
       shouldRaiseSelectedPinFromMini,
     ],
+  );
+
+  const handleSelectedMapDetailMarkerSelect = useCallback(
+    (
+      pinType: "LOCKER" | "PLACE",
+      _id: number,
+      pin?: LockerPinItemResponse,
+      offset?: LockerMarkerOffset,
+    ) => {
+      shouldIgnoreNextMapPressRef.current = true;
+
+      if (pinType === "LOCKER" && shouldRaiseSelectedPinFromMini(pin)) {
+        raiseSelectedPinFromMini(pin, offset);
+      }
+    },
+    [raiseSelectedPinFromMini, shouldRaiseSelectedPinFromMini],
   );
 
   const handleOpenNavigationPopup = useCallback(() => {
@@ -2198,6 +2249,13 @@ export function IndexPage() {
     }
   }, [searchListSheetKey, sheetMode]);
 
+  useEffect(() => {
+    if (sheetMode === "detail") {
+      setDetailSheetSnapStage(lockerDetailOpensFull ? "full" : "half");
+      setDetailSheetSnapRequest(null);
+    }
+  }, [activeLockerId, lockerDetailOpensFull, sheetMode]);
+
   const handleMapPress = useCallback(() => {
     if (shouldIgnoreNextMapPressRef.current) {
       shouldIgnoreNextMapPressRef.current = false;
@@ -2211,11 +2269,23 @@ export function IndexPage() {
       listSheetSnapStage === "half"
     ) {
       requestListSheetSnap("mini");
+      return;
+    }
+
+    if (
+      (context === "search" || context === "map") &&
+      sheetMode === "detail" &&
+      !isSearchOpen &&
+      detailSheetSnapStage === "half"
+    ) {
+      requestDetailSheetSnap("mini");
     }
   }, [
     context,
+    detailSheetSnapStage,
     isSearchOpen,
     listSheetSnapStage,
+    requestDetailSheetSnap,
     requestListSheetSnap,
     sheetMode,
   ]);
@@ -2296,7 +2366,7 @@ export function IndexPage() {
                   ? handleSearchMarkerSelect
                   : markerLayer === "mapPlace"
                     ? handleMapPlaceMarkerSelect
-                    : handleIdlePinSelect
+                    : handleSelectedMapDetailMarkerSelect
               }
               spreadCenter={
                 (markerLayer === "mapPlace" ||
@@ -2413,6 +2483,8 @@ export function IndexPage() {
           onNavigate={handleOpenNavigationPopup}
           initialSnapPoint={lockerDetailOpensFull ? 44 : undefined}
           animateOnMount={lockerDetailAnimatesOnMount}
+          snapRequest={detailSheetSnapRequest}
+          onSnapStageChange={handleDetailSheetSnapStageChange}
         />
       ) : null}
 

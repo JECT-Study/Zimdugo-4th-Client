@@ -24,7 +24,10 @@ import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
 } from "#/shared/lib/locker-detail-labels";
-import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
+import {
+  type BottomSheetSnapRequest,
+  DraggableBottomSheet,
+} from "#/shared/ui/DraggableBottomSheet";
 import {
   actionDivider,
   actionRow,
@@ -114,6 +117,8 @@ export interface LockerDetailBottomSheetProps {
   maxSnapPoint?: number;
   animateOnMount?: boolean;
   onSnapChange?: (nextSnap: number) => void;
+  onSnapStageChange?: (nextStage: LockerDetailSheetSnapStage) => void;
+  snapRequest?: LockerDetailSheetSnapRequest | null;
 }
 
 const DETAIL_MIN_TOP_OFFSET = 60;
@@ -122,6 +127,13 @@ const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 const DETAIL_HALF_VISIBLE_HEIGHT = 246;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
+
+export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
+
+export interface LockerDetailSheetSnapRequest {
+  id: number;
+  stage: LockerDetailSheetSnapStage;
+}
 
 interface ResolveLockerDetailSnapPointsOptions {
   windowHeight: number;
@@ -142,6 +154,33 @@ export const resolveLockerDetailSnapOffset = ({
   windowHeight: number;
 }) =>
   Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
+
+export const resolveLockerDetailSnapStage = ({
+  maxSnapPoint,
+  miniSnapPoint,
+  minSnapPoint,
+  offset,
+  snapPoint,
+}: {
+  maxSnapPoint: number;
+  miniSnapPoint: number;
+  minSnapPoint: number;
+  offset: number;
+  snapPoint: number;
+}): LockerDetailSheetSnapStage => {
+  const entries = [
+    { stage: "full" as const, point: minSnapPoint },
+    { stage: "half" as const, point: snapPoint },
+    { stage: "mini" as const, point: miniSnapPoint },
+    { stage: "dismiss" as const, point: maxSnapPoint },
+  ];
+
+  return entries.reduce((nearestEntry, entry) =>
+    Math.abs(entry.point - offset) < Math.abs(nearestEntry.point - offset)
+      ? entry
+      : nearestEntry,
+  ).stage;
+};
 
 export const resolveLockerDetailSnapPoints = ({
   maxSnapPoint,
@@ -259,6 +298,8 @@ export function LockerDetailBottomSheet({
   maxSnapPoint,
   animateOnMount = false,
   onSnapChange,
+  onSnapStageChange,
+  snapRequest,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
   const {
@@ -279,6 +320,19 @@ export function LockerDetailBottomSheet({
           Math.max(resolvedMinSnapPoint, initialSnapPoint),
         )
       : resolvedSnapPoint;
+  const resolvedSnapRequest: BottomSheetSnapRequest | null = snapRequest
+    ? {
+        id: snapRequest.id,
+        snapPoint:
+          snapRequest.stage === "full"
+            ? resolvedMinSnapPoint
+            : snapRequest.stage === "half"
+              ? resolvedSnapPoint
+              : snapRequest.stage === "mini"
+                ? resolvedMiniSnapPoint
+                : resolvedMaxSnapPoint,
+      }
+    : null;
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
@@ -299,6 +353,18 @@ export function LockerDetailBottomSheet({
   const handleNavigate = () => {
     onNavigate?.(locker);
   };
+  const handleSnapChange = (nextSnap: number) => {
+    onSnapChange?.(nextSnap);
+    onSnapStageChange?.(
+      resolveLockerDetailSnapStage({
+        maxSnapPoint: resolvedMaxSnapPoint,
+        miniSnapPoint: resolvedMiniSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: nextSnap,
+        snapPoint: resolvedSnapPoint,
+      }),
+    );
+  };
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
@@ -318,7 +384,8 @@ export function LockerDetailBottomSheet({
       dragSensitivity={DETAIL_DRAG_SENSITIVITY}
       animateOnMount={animateOnMount}
       showHomeIndicator={false}
-      onSnapChange={onSnapChange}
+      snapRequest={resolvedSnapRequest}
+      onSnapChange={handleSnapChange}
       onDismiss={handleBack}
     >
       <div className={sheetColumn}>
