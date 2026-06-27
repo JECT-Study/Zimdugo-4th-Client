@@ -11,7 +11,7 @@ interface SearchMarkerIconProps {
 
 export const SEARCH_MARKER_ICON_SIZE = {
   locker: 40.5,
-  place: 54.5,
+  place: 40.5,
 } as const;
 
 const LOCKER_PATH =
@@ -33,14 +33,12 @@ const getMarkerColors = (
   if (kind === "place") {
     return {
       background: placeFill,
-      stroke: "none",
       symbol: vars.color.bg.surface,
     };
   }
 
   return {
     background: vars.color.bg.surface,
-    stroke: accent,
     symbol: accent,
   };
 };
@@ -66,8 +64,8 @@ export function SearchMarkerIcon({
         cy="44.5"
         r="28.5"
         fill={colors.background}
-        stroke={colors.stroke}
-        strokeWidth={kind === "locker" ? 3 : 0}
+        stroke={vars.color.palette.gray[500]}
+        strokeWidth={3}
       />
       <path d={LOCKER_PATH} fill={colors.symbol} />
     </svg>
