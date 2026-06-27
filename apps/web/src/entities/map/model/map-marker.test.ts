@@ -661,43 +661,70 @@ describe("syncLockerMarkers", () => {
       zIndex?: number;
     };
 
-    expect(marker1Options.zIndex).toBe(20);
-    expect(marker2Options.zIndex).toBe(20);
+    expect(marker1Options.zIndex).toBe(10);
+    expect(marker2Options.zIndex).toBe(10);
     expect(FakeMarker.instances[0]?.setZIndex).not.toHaveBeenCalled();
-    expect(FakeMarker.instances[1]?.setZIndex).toHaveBeenCalledWith(30);
+    expect(FakeMarker.instances[1]?.setZIndex).toHaveBeenCalledWith(20);
   });
 
-  it("keeps locker markers above overlapping place markers", () => {
+  it("keeps marker hit boxes aligned to visible marker dimensions", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
     const maps = createFakeMaps();
-    const lockerPin = createLockerPin({
-      lockerId: 101,
-      latitude: 37.5,
-      longitude: 127.0,
-    });
-    const placePin = createPlacePin({
-      placeId: 201,
-      latitude: 37.5,
-      longitude: 127.0,
-    });
 
     syncLockerMarkers({
       map,
       maps,
-      lockers: [placePin, lockerPin],
+      lockers: [createLockerPin(), createPlacePin()],
     });
 
-    const placeOptions = FakeMarker.instances[0]?.options as {
-      zIndex?: number;
+    const lockerOptions = FakeMarker.instances[0]?.options as {
+      icon?: { size?: FakeSize; anchor?: FakePoint };
     };
-    const lockerOptions = FakeMarker.instances[1]?.options as {
-      zIndex?: number;
+    const placeOptions = FakeMarker.instances[1]?.options as {
+      icon?: { size?: FakeSize; anchor?: FakePoint };
     };
 
-    expect(placeOptions.zIndex).toBe(10);
-    expect(lockerOptions.zIndex).toBeGreaterThan(placeOptions.zIndex ?? 0);
+    expect(lockerOptions.icon?.size).toMatchObject({
+      width: 40.5,
+      height: 40.5,
+    });
+    expect(lockerOptions.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(placeOptions.icon?.size).toMatchObject({
+      width: 54.5,
+      height: 54.5,
+    });
+    expect(placeOptions.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
+  });
+
+  it("spreads nearby locker and place markers instead of relying on z-index", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [
+        createPlacePin({ placeId: 201, latitude: 37.5, longitude: 127.0 }),
+        createLockerPin({
+          lockerId: 101,
+          latitude: 37.50001,
+          longitude: 127.0,
+        }),
+      ],
+    });
+
+    const placeContent = getMarkerContent(FakeMarker.instances[0]);
+    const lockerContent = getMarkerContent(FakeMarker.instances[1]);
+
+    expect(placeContent).toContain("map-marker-offset-active");
+    expect(lockerContent).toContain("map-marker-offset-active");
+    expect(
+      new Set([getOffsetStyle(placeContent), getOffsetStyle(lockerContent)]),
+    ).toEqual(new Set(["-15,0", "15,0"]));
   });
 
   it("applies spread class and styles when spreadCenter is provided", () => {
@@ -822,7 +849,7 @@ describe("syncLockerMarkers", () => {
     expect(locker101Content).toContain("--offset-y: 0px");
   });
 
-  it("does not apply offset to PLACE type markers even when coordinates are shared", () => {
+  it("applies offset to PLACE type markers when coordinates are shared", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -850,10 +877,10 @@ describe("syncLockerMarkers", () => {
     const content1 = getMarkerContent(FakeMarker.instances[0]);
     const content2 = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(content1).not.toContain("--offset-x");
-    expect(content2).not.toContain("--offset-x");
-    expect(content1).not.toContain("map-marker-offset-active");
-    expect(content2).not.toContain("map-marker-offset-active");
+    expect(content1).toContain("--offset-x");
+    expect(content2).toContain("--offset-x");
+    expect(content1).toContain("map-marker-offset-active");
+    expect(content2).toContain("map-marker-offset-active");
   });
 
   it("keeps offset styles when an existing spread marker icon is updated", () => {
@@ -1041,7 +1068,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[2]?.setIcon).not.toHaveBeenCalled();
   });
 
-  it("does not activate offset transform for markers without offset", () => {
+  it("does not activate offset transform for markers far enough apart", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1052,7 +1079,7 @@ describe("syncLockerMarkers", () => {
       maps,
       lockers: [
         createLockerPin({ lockerId: 101, latitude: 37.5, longitude: 127.0 }),
-        createPlacePin({ placeId: 201, latitude: 37.5, longitude: 127.0 }),
+        createPlacePin({ placeId: 201, latitude: 37.7, longitude: 127.0 }),
       ],
     });
 

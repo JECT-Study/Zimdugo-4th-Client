@@ -10,10 +10,9 @@ const PLACE_BADGE_FILL = vars.color.palette.green[500];
 const MAP_PIN_WHITE = "white";
 const COORDINATE_GROUP_PRECISION = 4;
 const OFFSET_RADIUS_PX = 15;
-const CLUSTER_MARKER_Z_INDEX = 5;
-const PLACE_MARKER_Z_INDEX = 10;
-const LOCKER_MARKER_Z_INDEX = 20;
-const SELECTED_MARKER_Z_INDEX = 30;
+const MARKER_PROXIMITY_THRESHOLD_PX = 44;
+const MARKER_Z_INDEX = 10;
+const SELECTED_MARKER_Z_INDEX = 20;
 const MAP_PIN_DISPLAY_SCALE = 0.45;
 const LOCKER_MARKER_SOURCE_SIZE = { width: 90, height: 90 };
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
@@ -280,7 +279,7 @@ const getLockerSortId = (pin: LockerPinItemResponse): number =>
     ? (pin.lockerId ?? Number.MAX_SAFE_INTEGER)
     : Number.MAX_SAFE_INTEGER;
 
-const createLockerOffsetMap = (
+const createCoordinateOffsetMap = (
   pins: LockerPinItemResponse[],
 ): Map<string, { offsetX: number; offsetY: number }> => {
   const groups = new Map<string, LockerPinItemResponse[]>();
@@ -316,6 +315,98 @@ const createLockerOffsetMap = (
   return offsetMap;
 };
 
+const getPinSortKey = (pin: LockerPinItemResponse): string => {
+  if (pin.pinType === "LOCKER") {
+    return `1-${pin.lockerId ?? Number.MAX_SAFE_INTEGER}`;
+  }
+  if (pin.pinType === "PLACE") {
+    return `2-${pin.placeId ?? Number.MAX_SAFE_INTEGER}`;
+  }
+  return `3-${pin.latitude}-${pin.longitude}`;
+};
+
+const getDistance = (left: naver.maps.Point, right: naver.maps.Point) =>
+  Math.hypot(left.x - right.x, left.y - right.y);
+
+const createOffsetMapFromGroups = (
+  groups: LockerPinItemResponse[][],
+): Map<string, { offsetX: number; offsetY: number }> => {
+  const offsetMap = new Map<string, { offsetX: number; offsetY: number }>();
+
+  for (const group of groups) {
+    if (group.length <= 1) continue;
+
+    [...group]
+      .sort((left, right) =>
+        getPinSortKey(left).localeCompare(getPinSortKey(right)),
+      )
+      .forEach((pin, index) => {
+        const angle = (2 * Math.PI * index) / group.length;
+
+        offsetMap.set(getPinId(pin), {
+          offsetX: Math.round(OFFSET_RADIUS_PX * Math.cos(angle)),
+          offsetY: Math.round(OFFSET_RADIUS_PX * Math.sin(angle)),
+        });
+      });
+  }
+
+  return offsetMap;
+};
+
+const createProximityOffsetMap = (
+  pins: LockerPinItemResponse[],
+  maps: typeof naver.maps,
+  projection: naver.maps.MapSystemProjection | null,
+): Map<string, { offsetX: number; offsetY: number }> => {
+  if (!projection) {
+    return createCoordinateOffsetMap(pins);
+  }
+
+  const projectedPins = pins
+    .filter((pin) => pin.pinType !== "CLUSTER")
+    .map((pin) => ({
+      pin,
+      point: projection.fromCoordToOffset(
+        new maps.LatLng(pin.latitude, pin.longitude),
+      ),
+    }));
+
+  const visited = new Set<string>();
+  const groups: LockerPinItemResponse[][] = [];
+
+  for (const item of projectedPins) {
+    const pinId = getPinId(item.pin);
+    if (visited.has(pinId)) continue;
+
+    const group: LockerPinItemResponse[] = [];
+    const queue = [item];
+    visited.add(pinId);
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) continue;
+      group.push(current.pin);
+
+      for (const next of projectedPins) {
+        const nextPinId = getPinId(next.pin);
+        if (visited.has(nextPinId)) continue;
+        if (
+          getDistance(current.point, next.point) > MARKER_PROXIMITY_THRESHOLD_PX
+        ) {
+          continue;
+        }
+
+        visited.add(nextPinId);
+        queue.push(next);
+      }
+    }
+
+    groups.push(group);
+  }
+
+  return createOffsetMapFromGroups(groups);
+};
+
 const getIconSignatureSuffix = ({
   hasSpread,
   offsetX,
@@ -349,16 +440,6 @@ const getMarkerAnchor = (pin: LockerPinItemResponse) => {
   }
   if (pin.pinType === "PLACE") return PLACE_MARKER_ANCHOR;
   return DEFAULT_MARKER_ANCHOR;
-};
-
-const getMarkerZIndex = (
-  pin: LockerPinItemResponse,
-  isSelected: boolean,
-): number => {
-  if (isSelected) return SELECTED_MARKER_Z_INDEX;
-  if (pin.pinType === "LOCKER") return LOCKER_MARKER_Z_INDEX;
-  if (pin.pinType === "PLACE") return PLACE_MARKER_Z_INDEX;
-  return CLUSTER_MARKER_Z_INDEX;
 };
 
 const createMarkerIconOptions = (
@@ -587,7 +668,6 @@ export const syncLockerMarkers = ({
   spreadCenter,
 }: SyncLockerMarkersOptions) => {
   const nextPinIds = new Set(lockers.map(getPinId));
-  const offsetMap = createLockerOffsetMap(lockers);
 
   // 뷰포트 기반 마커 컬링(Culling)을 위해 여유 공간(10%)을 둔 Bounds 계산
   const mapBounds = map.getBounds?.() as
@@ -607,6 +687,7 @@ export const syncLockerMarkers = ({
   }
 
   const proj = map.getProjection ? map.getProjection() : null;
+  const offsetMap = createProximityOffsetMap(lockers, maps, proj);
   let centerPoint: naver.maps.Point | null = null;
   if (spreadCenter && proj) {
     centerPoint = proj.fromCoordToOffset(
@@ -627,7 +708,7 @@ export const syncLockerMarkers = ({
 
     const positionSignature = getPinPositionSignature(pin);
     const isSelected = selectedPinId === pinId;
-    const zIndex = getMarkerZIndex(pin, isSelected);
+    const zIndex = isSelected ? SELECTED_MARKER_Z_INDEX : MARKER_Z_INDEX;
     const position = new maps.LatLng(pin.latitude, pin.longitude);
     const isVisible = expandedBounds?.hasLatLng(position) ?? true;
     const zoomLevel = map.getZoom?.() ?? 0;
