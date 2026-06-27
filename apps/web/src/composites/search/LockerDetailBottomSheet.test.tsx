@@ -223,14 +223,12 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    expect(draggableBottomSheetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        snapRequest: {
-          id: 1,
-          snapPoint: 701,
-        },
-      }),
-    );
+    const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
+
+    expect(latestSheetProps?.snapRequest).toEqual({
+      id: 1,
+      snapPoint: 701,
+    });
   });
 
   it("forwards snap changes as detail snap stages", () => {
