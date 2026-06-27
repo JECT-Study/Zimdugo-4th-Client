@@ -9,18 +9,17 @@ import {
   chevron,
   content,
   imageFrameSlot,
-  thumbnailImage,
   metaDetail,
   metaDot,
   metaRow,
   metaTime,
-  reportStatus,
   root,
   statusRow,
-  statusVariants,
   textColumn,
+  thumbnailImage,
   titleLabel,
 } from "./ReportListItem.css.ts";
+import { ReportStatusBadge } from "./ReportStatusBadge";
 
 export type ReportListItemStatus = "pending" | "approved" | "rejected";
 
@@ -58,19 +57,13 @@ export function ReportListItem({
     <span className={content}>
       {resolvedStatusLabel && status ? (
         <span className={statusRow} data-slot="status-row">
-          <span className={[reportStatus, statusVariants[status]].join(" ")}>
-            {resolvedStatusLabel}
-          </span>
+          <ReportStatusBadge status={status} label={resolvedStatusLabel} />
         </span>
       ) : null}
 
       <span className={bodyContent}>
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt=""
-            className={thumbnailImage}
-          />
+          <img src={imageUrl} alt="" className={thumbnailImage} />
         ) : (
           <LockerImageReportFrame
             size="compact"

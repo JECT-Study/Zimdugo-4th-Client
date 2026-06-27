@@ -4,6 +4,7 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
 import { formatReportViewerInformationGroups } from "../lib/format-report-viewer-sections";
+import { resolveReportStatusDisplay } from "../lib/resolve-report-status";
 import {
   closeButton,
   footer,
@@ -25,6 +26,7 @@ import {
   photoPlaceholder,
   stateMessage,
 } from "./ReportDetailViewerModal.css.ts";
+import { ReportStatusBadge } from "./ReportStatusBadge";
 
 export type ReportDetailViewerLoadState =
   | "idle"
@@ -53,6 +55,10 @@ export function ReportDetailViewerModal({
     detail != null && loadState === "ready"
       ? formatReportViewerInformationGroups(detail)
       : [];
+  const statusDisplay =
+    detail?.reportStatus != null
+      ? resolveReportStatusDisplay(detail.reportStatus)
+      : null;
 
   const handleClose = () => {
     onOpenChange(false);
@@ -75,6 +81,12 @@ export function ReportDetailViewerModal({
                 </span>
                 <h2 className={informationLockerTitle}>{titleText}</h2>
               </div>
+              {statusDisplay ? (
+                <ReportStatusBadge
+                  status={statusDisplay.variant}
+                  label={statusDisplay.label}
+                />
+              ) : null}
             </div>
 
             {loadState === "loading" ? (

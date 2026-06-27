@@ -75,8 +75,12 @@ export const informationBody = style({
 });
 
 export const informationTitleRow = style({
-  display: "block",
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: vars.spacing[8],
   width: "100%",
+  minWidth: 0,
 });
 
 export const informationTitleCopy = style({

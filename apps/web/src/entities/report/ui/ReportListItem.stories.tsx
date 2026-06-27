@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import {
   ReportListItem,
   type ReportListItemProps,
+  type ReportListItemStatus,
 } from "./ReportListItem.tsx";
 
 const DEFAULT_ARGS = {
@@ -12,6 +13,15 @@ const DEFAULT_ARGS = {
   imageTitleText: "이미지 없음",
   imageHelperText: "",
 } satisfies ReportListItemProps;
+
+const STATUS_VARIANTS: Array<{
+  status: ReportListItemStatus;
+  statusLabel: string;
+}> = [
+  { status: "pending", statusLabel: "검토 중" },
+  { status: "approved", statusLabel: "승인" },
+  { status: "rejected", statusLabel: "반려" },
+];
 
 const meta = {
   title: "Product/My/Report List Item",
@@ -39,21 +49,20 @@ export const Status: Story = {
   render: (args) => (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 335px)",
+        display: "flex",
+        flexDirection: "column",
         gap: 16,
-        maxWidth: "calc(100vw - 32px)",
-        overflowX: "auto",
-        padding: 4,
+        width: 335,
       }}
     >
-      <ReportListItem
-        {...args}
-        status="pending"
-        statusLabel="검토 중"
-      />
-      <ReportListItem {...args} status="approved" statusLabel="승인" />
-      <ReportListItem {...args} status="rejected" statusLabel="반려" />
+      {STATUS_VARIANTS.map(({ status, statusLabel }) => (
+        <ReportListItem
+          key={status}
+          {...args}
+          status={status}
+          statusLabel={statusLabel}
+        />
+      ))}
     </div>
   ),
 };

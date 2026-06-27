@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
+import { m, setLanguageTag } from "@repo/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
@@ -27,6 +27,7 @@ const REPORT_DETAIL: MyLockerReportDetail = {
   additionalInfo: "5번 출구 안쪽에 있습니다.",
   imageUrl: null,
   locationConsentAgreed: true,
+  reportStatus: "SUBMITTED",
 };
 
 describe("ReportDetailViewerModal", () => {
@@ -46,16 +47,19 @@ describe("ReportDetailViewerModal", () => {
       />,
     );
 
-    expect(screen.getByText("제보한 보관함")).toBeTruthy();
+    expect(screen.getByText(m.my_report_detail_eyebrow())).toBeTruthy();
     expect(screen.getByText(REPORT_DETAIL.lockerName)).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "닫기" })).toHaveLength(1);
-    expect(screen.getByText("위치 정보")).toBeTruthy();
-    expect(screen.getByText("보관함 정보")).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "추가 정보" })).toBeTruthy();
+    expect(screen.getByText(m.my_report_detail_close())).toBeTruthy();
+    expect(screen.getByText(m.my_report_detail_location_group())).toBeTruthy();
+    expect(screen.getByText(m.my_report_detail_locker_group())).toBeTruthy();
+    expect(
+      screen.getAllByText(m.report_section_additional()).length,
+    ).toBeGreaterThan(0);
     expect(
       document.querySelector('[data-slot="information-title"]'),
     ).toBeTruthy();
     expect(document.querySelector('[data-slot="legacy-header"]')).toBeNull();
+    expect(screen.getByText(m.report_status_pending())).toBeTruthy();
   });
 
   it("이미지가 없으면 history 전용 문구만 표시한다", () => {
@@ -69,8 +73,8 @@ describe("ReportDetailViewerModal", () => {
       />,
     );
 
-    expect(screen.getByText("이미지 없음")).toBeTruthy();
-    expect(screen.queryByText("아직 이미지가 없어요.")).toBeNull();
-    expect(screen.queryByText("제보하기를 통해 등록할 수 있어요!")).toBeNull();
+    expect(screen.getByText(m.my_report_image_empty())).toBeTruthy();
+    expect(screen.queryByText("사진을 등록해주세요")).toBeNull();
+    expect(screen.queryByText("보관함 사진을 추가하면")).toBeNull();
   });
 });

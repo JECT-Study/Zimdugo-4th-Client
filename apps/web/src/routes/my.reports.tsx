@@ -9,6 +9,7 @@ import {
   ReportDetailViewerModal,
   ReportListItem,
 } from "#/entities/report";
+import { resolveReportStatusDisplay } from "#/entities/report/lib/resolve-report-status";
 import { NonSearch } from "#/entities/search";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { useReportHistoryList } from "#/features/my/hooks/useReportHistoryList";
@@ -136,22 +137,32 @@ function MyReportsPage() {
         {!isError && items.length > 0 ? (
           <section aria-label={m.my_report_history_list_aria()}>
             <ul className={childList}>
-              {items.map((item) => (
-                <li key={item.reportId} className={childListItem}>
-                  <ReportListItem
-                    titleText={item.lockerName}
-                    locationLabel={item.roadAddress}
-                    detailText={formatReportListDetailText(item)}
-                    updatedLabel={
-                      item.updatedAt ? formatUpdatedLabel(item.updatedAt) : "-"
-                    }
-                    imageUrl={item.imageUrl}
-                    imageTitleText={m.my_report_image_empty()}
-                    imageHelperText=""
-                    onPress={() => handleSelectReport(item.reportId)}
-                  />
-                </li>
-              ))}
+              {items.map((item) => {
+                const statusDisplay = resolveReportStatusDisplay(
+                  item.reportStatus,
+                );
+
+                return (
+                  <li key={item.reportId} className={childListItem}>
+                    <ReportListItem
+                      titleText={item.lockerName}
+                      locationLabel={item.roadAddress}
+                      detailText={formatReportListDetailText(item)}
+                      updatedLabel={
+                        item.updatedAt
+                          ? formatUpdatedLabel(item.updatedAt)
+                          : "-"
+                      }
+                      status={statusDisplay?.variant}
+                      statusLabel={statusDisplay?.label}
+                      imageUrl={item.imageUrl}
+                      imageTitleText={m.my_report_image_empty()}
+                      imageHelperText=""
+                      onPress={() => handleSelectReport(item.reportId)}
+                    />
+                  </li>
+                );
+              })}
             </ul>
 
             {listQuery.hasNextPage ? (
