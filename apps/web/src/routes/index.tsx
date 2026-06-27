@@ -2343,8 +2343,10 @@ export function IndexPage() {
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
           onOpenSearch={handleOpenSearch}
+          onBackPress={listHeaderLeadingPress}
           onCloseSearchContext={handleExitSearchContext}
           searchQuery={searchQuery}
+          showBackButton={showPlaceSheetBack}
           isSearchContextActive={context === "search"}
         />
       ) : null}
@@ -2499,8 +2501,7 @@ export function IndexPage() {
           onResetFilter={handleResetSearchFilter}
           onLockerPress={handleOpenLockerDetail}
           onFavoriteChange={favoriteSession.handleSearchFavoriteChange}
-          showHeaderBack={showPlaceSheetBack}
-          onHeaderBackPress={listHeaderLeadingPress}
+          animateOnMount
           onDismiss={listSheetDismissPress}
           snapRequest={listSheetSnapRequest}
           onSnapStageChange={handleListSheetSnapStageChange}
@@ -2540,6 +2541,7 @@ export function IndexPage() {
           onCollapseToResults={() => setSheetMode("list")}
           onReset={handleResetSearchFilter}
           onApply={handleApplySearchFilter}
+          animateOnMount
         />
       ) : null}
 

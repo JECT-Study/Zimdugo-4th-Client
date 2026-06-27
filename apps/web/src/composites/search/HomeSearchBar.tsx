@@ -3,6 +3,7 @@ import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { SearchField } from "@repo/ui/components/search-field";
 import {
   IconCheck24,
+  IconChevronLeft13,
   IconNormalGlobe32,
   IconNormalSearch24,
   IconX24,
@@ -45,7 +46,9 @@ import {
   languageOptionText,
   languageTrigger,
   languageTriggerLabel,
+  leadingBackButton,
   searchBarLayer,
+  searchControlRow,
   searchField,
   searchFieldWithClose,
   searchInputFrame,
@@ -53,8 +56,10 @@ import {
 
 export interface HomeSearchBarProps {
   onOpenSearch: () => void;
+  onBackPress?: () => void;
   onCloseSearchContext?: () => void;
   searchQuery?: string;
+  showBackButton?: boolean;
   isSearchContextActive?: boolean;
 }
 
@@ -142,8 +147,10 @@ let hasHomeSearchBarStyleResolved = false;
 
 export function HomeSearchBar({
   onOpenSearch,
+  onBackPress,
   onCloseSearchContext,
   searchQuery = "",
+  showBackButton = false,
   isSearchContextActive = false,
 }: HomeSearchBarProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
@@ -203,6 +210,17 @@ export function HomeSearchBar({
   const handleClosePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+  };
+
+  const handleBackPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleBackPress = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onBackPress?.();
   };
 
   useEffect(() => {
@@ -268,34 +286,47 @@ export function HomeSearchBar({
         </button>
       ) : (
         <>
-          <div className={searchInputFrame}>
-            <SearchField
-              className={[
-                searchField,
-                isSearchContextActive ? searchFieldWithClose : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              variant="searchHome"
-              searchIconPlacement="left"
-              placeholder={m.search_placeholder()}
-              aria-label={m.search_input_aria()}
-              value={isSearchContextActive ? searchQuery : ""}
-              textTone={isSearchContextActive ? "on" : "auto"}
-              isReadOnly
-              onFocus={handleOpenSearch}
-            />
-            {isSearchContextActive ? (
+          <div className={searchControlRow}>
+            {showBackButton && onBackPress ? (
               <button
                 type="button"
-                className={closeButton}
-                onPointerDown={handleClosePointerDown}
-                onClick={handleCloseSearchContext}
+                className={leadingBackButton}
+                onPointerDown={handleBackPointerDown}
+                onClick={handleBackPress}
                 aria-label={m.home_search_back_aria()}
               >
-                <IconX24 />
+                <IconChevronLeft13 />
               </button>
             ) : null}
+            <div className={searchInputFrame}>
+              <SearchField
+                className={[
+                  searchField,
+                  isSearchContextActive ? searchFieldWithClose : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                variant="searchHome"
+                searchIconPlacement="left"
+                placeholder={m.search_placeholder()}
+                aria-label={m.search_input_aria()}
+                value={isSearchContextActive ? searchQuery : ""}
+                textTone={isSearchContextActive ? "on" : "auto"}
+                isReadOnly
+                onFocus={handleOpenSearch}
+              />
+              {isSearchContextActive ? (
+                <button
+                  type="button"
+                  className={closeButton}
+                  onPointerDown={handleClosePointerDown}
+                  onClick={handleCloseSearchContext}
+                  aria-label={m.home_search_back_aria()}
+                >
+                  <IconX24 />
+                </button>
+              ) : null}
+            </div>
           </div>
           {!isSearchContextActive ? (
             <motion.div

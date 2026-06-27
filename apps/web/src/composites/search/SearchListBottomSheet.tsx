@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { ControlChip } from "@repo/ui/components/control-chip";
-import { IconChevronLeft13, IconFilter14 } from "@repo/ui/tokens/icons";
+import { IconFilter14 } from "@repo/ui/tokens/icons";
 import {
   type CSSProperties,
   type ReactNode,
@@ -31,7 +31,6 @@ import {
   emptyStateResetButton,
   emptyStateStack,
   filterChip,
-  headerLeadingButton,
   headerLeadingRow,
   headerTitleSlot,
   listScrollArea,
@@ -74,8 +73,7 @@ export interface SearchListBottomSheetProps {
   isLoading?: boolean;
   isError?: boolean;
   onRetry?: () => void;
-  showHeaderBack?: boolean;
-  onHeaderBackPress?: () => void;
+  animateOnMount?: boolean;
   snapBehavior?: SearchBottomSheetSnapBehavior;
   minSnapPoint?: number;
   snapPoint?: number;
@@ -260,8 +258,7 @@ export function SearchListBottomSheet({
   isLoading = false,
   isError = false,
   onRetry,
-  showHeaderBack = false,
-  onHeaderBackPress,
+  animateOnMount = false,
   snapBehavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
   minSnapPoint,
   snapPoint,
@@ -414,6 +411,7 @@ export function SearchListBottomSheet({
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       dragSensitivity={SEARCH_LIST_DRAG_SENSITIVITY}
+      animateOnMount={animateOnMount}
       showHomeIndicator={false}
       snapRequest={resolvedSnapRequest}
       onSnapChange={handleSnapChange}
@@ -424,16 +422,6 @@ export function SearchListBottomSheet({
         {showResultHeader ? (
           <div className={resultHeader} style={resultHeaderStyle}>
             <div className={headerLeadingRow}>
-              {showHeaderBack && onHeaderBackPress ? (
-                <button
-                  type="button"
-                  className={headerLeadingButton}
-                  onClick={onHeaderBackPress}
-                  aria-label={m.locker_detail_back_aria()}
-                >
-                  <IconChevronLeft13 />
-                </button>
-              ) : null}
               <div className={headerTitleSlot}>
                 <SearchResultsHeading
                   className={inSheetHeader}

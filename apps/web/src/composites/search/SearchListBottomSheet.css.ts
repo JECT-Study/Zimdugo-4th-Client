@@ -41,21 +41,6 @@ export const headerLeadingRow = style({
   width: "100%",
 });
 
-export const headerLeadingButton = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-  width: "32px",
-  height: "32px",
-  padding: 0,
-  border: "none",
-  borderRadius: vars.radius[8],
-  backgroundColor: "transparent",
-  color: vars.color.text.title,
-  cursor: "pointer",
-});
-
 export const headerTitleSlot = style({
   flex: 1,
   minWidth: 0,

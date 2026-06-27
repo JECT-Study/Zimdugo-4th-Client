@@ -17,7 +17,43 @@ export const searchBarLayer = style({
 
 export const searchInputFrame = style({
   position: "relative",
+  flex: 1,
+  minWidth: 0,
   width: "100%",
+});
+
+export const searchControlRow = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.spacing[8],
+  width: "100%",
+});
+
+export const leadingBackButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: "48px",
+  height: "48px",
+  padding: 0,
+  border: `2px solid ${vars.color.border.hover}`,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.surface,
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
+});
+
+globalStyle(`${leadingBackButton} svg`, {
+  width: "13px",
+  height: "24px",
+  transform: "translateX(-1.5px)",
 });
 
 export const searchField = style({

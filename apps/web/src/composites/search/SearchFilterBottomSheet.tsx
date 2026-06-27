@@ -37,6 +37,7 @@ export interface SearchFilterBottomSheetProps {
   className?: string;
   initialFilters?: SearchFilterAppliedState;
   snapBehavior?: SearchBottomSheetSnapBehavior;
+  animateOnMount?: boolean;
   initialSnapPoint?: number;
   minSnapPoint?: number;
   snapPoint?: number;
@@ -139,6 +140,7 @@ export function SearchFilterBottomSheet({
   className,
   initialFilters,
   snapBehavior = SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR,
+  animateOnMount = false,
   initialSnapPoint,
   minSnapPoint,
   snapPoint,
@@ -322,6 +324,7 @@ export function SearchFilterBottomSheet({
       miniSnapPoint={resolvedMiniSnapPoint}
       maxSnapPoint={resolvedMaxSnapPoint}
       dragSensitivity={SEARCH_FILTER_DRAG_SENSITIVITY}
+      animateOnMount={animateOnMount}
       showHomeIndicator={false}
       onSnapChange={onSnapChange}
       onLiveOffsetChange={handleLiveOffsetChange}
