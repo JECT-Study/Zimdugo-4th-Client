@@ -122,8 +122,7 @@ export interface LockerDetailBottomSheetProps {
   snapRequest?: LockerDetailSheetSnapRequest | null;
 }
 
-const DETAIL_MIN_TOP_OFFSET = 60;
-const DETAIL_FULL_VISIBLE_HEIGHT = 780;
+export const LOCKER_DETAIL_FULL_TOP_OFFSET = 112;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 const DETAIL_HALF_VISIBLE_HEIGHT = 246;
@@ -191,14 +190,7 @@ export const resolveLockerDetailSnapPoints = ({
 }: ResolveLockerDetailSnapPointsOptions) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
-  const resolvedMinSnapPoint =
-    minSnapPoint ??
-    resolveLockerDetailSnapOffset({
-      maxSnapPoint: resolvedMaxSnapPoint,
-      minSnapPoint: DETAIL_MIN_TOP_OFFSET,
-      visibleHeight: DETAIL_FULL_VISIBLE_HEIGHT,
-      windowHeight,
-    });
+  const resolvedMinSnapPoint = minSnapPoint ?? LOCKER_DETAIL_FULL_TOP_OFFSET;
   const resolvedSnapPoint =
     snapPoint ??
     resolveLockerDetailSnapOffset({

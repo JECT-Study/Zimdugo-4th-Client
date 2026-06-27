@@ -15,7 +15,10 @@ const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
 
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   DraggableBottomSheet: (props: {
+    animateOnMount?: boolean;
     children: ReactNode;
+    initialSnapPoint?: number;
+    minSnapPoint?: number;
     onSnapChange?: (nextSnap: number) => void;
     snapRequest?: { id: number; snapPoint: number } | null;
   }) => {
@@ -65,7 +68,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
       miniSnapPoint: 701,
-      minSnapPoint: 60,
+      minSnapPoint: 112,
       snapPoint: 566,
     });
   });
@@ -74,7 +77,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 1000 })).toEqual({
       maxSnapPoint: 948,
       miniSnapPoint: 889,
-      minSnapPoint: 220,
+      minSnapPoint: 112,
       snapPoint: 754,
     });
   });
@@ -242,9 +245,13 @@ describe("LockerDetailBottomSheet", () => {
     );
 
     const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
-    latestSheetProps?.onSnapChange?.(60);
+    latestSheetProps?.onSnapChange?.(112);
 
     expect(handleSnapStageChange).toHaveBeenCalledWith("full");
+    expect(latestSheetProps?.snapRequest).toEqual({
+      id: 1,
+      snapPoint: 112,
+    });
   });
 
   it("enables internal content scroll only when the detail sheet opens full", () => {
@@ -259,7 +266,7 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe("false");
 
     rerender(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={60} />,
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={112} />,
     );
 
     expect(

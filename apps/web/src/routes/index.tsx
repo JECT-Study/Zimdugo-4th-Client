@@ -18,6 +18,7 @@ import {
   createLockerDetailFromPin,
   createLockerDetailFromSearchItem,
   createLockerDetailPlaceholder,
+  LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
   type LockerDetailItem,
   type LockerDetailLoadState,
@@ -1153,7 +1154,7 @@ export function IndexPage() {
         setIsNavigationPopupOpen(false);
         setIsSearchOpen(false);
         setLockerDetailOpensFull(options?.detailSnap === "full");
-        setLockerDetailAnimatesOnMount(options?.animateOnMount === true);
+        setLockerDetailAnimatesOnMount(options?.animateOnMount ?? true);
         setSheetMode("detail");
 
         isPendingFocusRef.current = true;
@@ -2527,7 +2528,9 @@ export function IndexPage() {
           onVoteChange={voteSession.handleDetailVoteChange}
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
-          initialSnapPoint={lockerDetailOpensFull ? 44 : undefined}
+          initialSnapPoint={
+            lockerDetailOpensFull ? LOCKER_DETAIL_FULL_TOP_OFFSET : undefined
+          }
           animateOnMount={lockerDetailAnimatesOnMount}
           snapRequest={detailSheetSnapRequest}
           onSnapStageChange={handleDetailSheetSnapStageChange}
