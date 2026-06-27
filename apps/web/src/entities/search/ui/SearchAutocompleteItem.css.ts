@@ -35,11 +35,9 @@ export const marker = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "24px",
-  height: "24px",
+  width: "54.5px",
+  height: "54.5px",
   flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
 });
 
 export const textColumn = style({

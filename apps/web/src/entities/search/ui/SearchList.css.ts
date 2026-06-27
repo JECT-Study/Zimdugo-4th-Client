@@ -133,11 +133,9 @@ export const markerBadge = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "24px",
-  height: "24px",
+  width: "54.5px",
+  height: "54.5px",
   flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
 });
 
 export const arrowSlot = style({
@@ -210,8 +208,8 @@ export const recentIconSlot = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "24px",
-  height: "24px",
+  width: "54.5px",
+  height: "54.5px",
   flexShrink: 0,
 });
 
