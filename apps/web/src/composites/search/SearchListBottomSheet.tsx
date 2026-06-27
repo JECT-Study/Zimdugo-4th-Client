@@ -96,7 +96,9 @@ interface ActiveSort {
 const SEARCH_LIST_MIN_TOP_OFFSET = 112;
 const SEARCH_LIST_DISMISS_VISIBLE_HEIGHT = 52;
 const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT = 481;
+const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO = 0.48;
 const SEARCH_LIST_MINI_VISIBLE_HEIGHT = 242;
+const SEARCH_LIST_MINI_VISIBLE_HEIGHT_RATIO = 0.28;
 const SEARCH_LIST_DRAG_SENSITIVITY = 1.2;
 const LEGACY_SEARCH_LIST_MIN_TOP_OFFSET = 0;
 const LEGACY_SEARCH_LIST_MAX_TOP_OFFSET = 44;
@@ -133,6 +135,16 @@ export const resolveSearchListSnapOffset = ({
   windowHeight: number;
 }) =>
   Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
+
+export const resolveSearchListVisibleHeight = ({
+  maxVisibleHeight,
+  ratio,
+  windowHeight,
+}: {
+  maxVisibleHeight: number;
+  ratio: number;
+  windowHeight: number;
+}) => Math.min(maxVisibleHeight, Math.round(windowHeight * ratio));
 
 export const resolveSearchListSnapStage = ({
   maxSnapPoint,
@@ -207,13 +219,21 @@ export const resolveSearchListSnapPoints = ({
     resolveSearchListSnapOffset({
       maxSnapPoint: resolvedMaxSnapPoint,
       minSnapPoint: resolvedMinSnapPoint,
-      visibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
+      visibleHeight: resolveSearchListVisibleHeight({
+        maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
+        ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
+        windowHeight,
+      }),
       windowHeight,
     });
   const resolvedMiniSnapPoint = resolveSearchListSnapOffset({
     maxSnapPoint: resolvedMaxSnapPoint,
     minSnapPoint: resolvedMinSnapPoint,
-    visibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
+    visibleHeight: resolveSearchListVisibleHeight({
+      maxVisibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
+      ratio: SEARCH_LIST_MINI_VISIBLE_HEIGHT_RATIO,
+      windowHeight,
+    }),
     windowHeight,
   });
 
