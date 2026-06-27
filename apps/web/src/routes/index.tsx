@@ -358,6 +358,7 @@ export function IndexPage() {
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
   const shouldIgnoreNextMapPressRef = useRef(false);
+  const mapPressSuppressionTimerRef = useRef<number | undefined>(undefined);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -1493,6 +1494,31 @@ export function IndexPage() {
     [detailSheetSnapStage, listSheetSnapStage, selectedPinId, sheetMode],
   );
 
+  const clearNextMapPressSuppression = useCallback(() => {
+    if (mapPressSuppressionTimerRef.current !== undefined) {
+      window.clearTimeout(mapPressSuppressionTimerRef.current);
+      mapPressSuppressionTimerRef.current = undefined;
+    }
+
+    shouldIgnoreNextMapPressRef.current = false;
+  }, []);
+
+  const suppressNextMapPressForMarkerInteraction = useCallback(() => {
+    clearNextMapPressSuppression();
+    shouldIgnoreNextMapPressRef.current = true;
+    mapPressSuppressionTimerRef.current = window.setTimeout(() => {
+      mapPressSuppressionTimerRef.current = undefined;
+      shouldIgnoreNextMapPressRef.current = false;
+    }, 120);
+  }, [clearNextMapPressSuppression]);
+
+  useEffect(
+    () => () => {
+      clearNextMapPressSuppression();
+    },
+    [clearNextMapPressSuppression],
+  );
+
   const raiseSelectedPinFromMini = useCallback(
     (pin: LockerPinItemResponse | undefined, offset?: LockerMarkerOffset) => {
       setSelectedMapPin(pin ?? null);
@@ -1646,7 +1672,7 @@ export function IndexPage() {
         return;
       }
 
-      shouldIgnoreNextMapPressRef.current = true;
+      suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
         setSelectedMapPin(null);
@@ -1675,6 +1701,7 @@ export function IndexPage() {
       focusMapOnLockerPin,
       openLockerDetailAfterPinFocus,
       openMapPlaceList,
+      suppressNextMapPressForMarkerInteraction,
     ],
   );
 
@@ -1689,7 +1716,7 @@ export function IndexPage() {
         return;
       }
 
-      shouldIgnoreNextMapPressRef.current = true;
+      suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
         setSelectedMapPinOffset(null);
@@ -1723,6 +1750,7 @@ export function IndexPage() {
       openMapPlaceList,
       raiseSelectedPinFromMini,
       shouldRaiseSelectedPinFromMini,
+      suppressNextMapPressForMarkerInteraction,
     ],
   );
 
@@ -1737,7 +1765,7 @@ export function IndexPage() {
         return;
       }
 
-      shouldIgnoreNextMapPressRef.current = true;
+      suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
         setListKind("place");
@@ -1783,6 +1811,7 @@ export function IndexPage() {
       searchPlaceId,
       setSheetMode,
       shouldRaiseSelectedPinFromMini,
+      suppressNextMapPressForMarkerInteraction,
     ],
   );
 
@@ -1793,13 +1822,17 @@ export function IndexPage() {
       pin?: LockerPinItemResponse,
       offset?: LockerMarkerOffset,
     ) => {
-      shouldIgnoreNextMapPressRef.current = true;
+      suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "LOCKER" && shouldRaiseSelectedPinFromMini(pin)) {
         raiseSelectedPinFromMini(pin, offset);
       }
     },
-    [raiseSelectedPinFromMini, shouldRaiseSelectedPinFromMini],
+    [
+      raiseSelectedPinFromMini,
+      shouldRaiseSelectedPinFromMini,
+      suppressNextMapPressForMarkerInteraction,
+    ],
   );
 
   const handleOpenNavigationPopup = useCallback(() => {
@@ -2258,7 +2291,7 @@ export function IndexPage() {
 
   const handleMapPress = useCallback(() => {
     if (shouldIgnoreNextMapPressRef.current) {
-      shouldIgnoreNextMapPressRef.current = false;
+      clearNextMapPressSuppression();
       return;
     }
 
@@ -2282,6 +2315,7 @@ export function IndexPage() {
     }
   }, [
     context,
+    clearNextMapPressSuppression,
     detailSheetSnapStage,
     isSearchOpen,
     listSheetSnapStage,
@@ -2291,13 +2325,13 @@ export function IndexPage() {
   ]);
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
-      shouldIgnoreNextMapPressRef.current = true;
+      suppressNextMapPressForMarkerInteraction();
       focusNaverMapOnClusterBounds({
         map: mapInstance,
         bounds,
       });
     },
-    [mapInstance],
+    [mapInstance, suppressNextMapPressForMarkerInteraction],
   );
 
   return (
