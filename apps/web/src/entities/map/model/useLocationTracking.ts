@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type LocationPermissionState = "prompt" | "granted" | "denied";
 
+export const LOCATION_TRACKING_CONSENT_STORAGE_KEY =
+  "zimdugo-location-tracking-consented";
+
 interface LocationData {
   lat: number;
   lng: number;
@@ -11,6 +14,32 @@ interface LocationData {
 interface UseLocationTrackingOptions {
   onFirstLocation?: () => void;
 }
+
+const readStoredLocationTrackingConsent = () => {
+  if (typeof window === "undefined") return false;
+  try {
+    return (
+      window.localStorage.getItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY) ===
+      "true"
+    );
+  } catch {
+    return false;
+  }
+};
+
+const writeStoredLocationTrackingConsent = () => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY, "true");
+  } catch {}
+};
+
+const clearStoredLocationTrackingConsent = () => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY);
+  } catch {}
+};
 
 export function useLocationTracking({
   onFirstLocation,
@@ -27,7 +56,14 @@ export function useLocationTracking({
 
   // 권한 상태 초기화 및 감지
   useEffect(() => {
-    if (typeof window === "undefined" || !navigator.permissions) return;
+    if (typeof window === "undefined") return;
+
+    if (!navigator.permissions) {
+      if (readStoredLocationTrackingConsent()) {
+        setIsTracking(true);
+      }
+      return;
+    }
 
     let isCancelled = false;
     let permissionStatus: PermissionStatus | null = null;
@@ -38,7 +74,11 @@ export function useLocationTracking({
         if (state === "granted" || state === "denied" || state === "prompt") {
           setPermission(state);
         }
+        if (state === "granted") {
+          writeStoredLocationTrackingConsent();
+        }
         if (state === "denied") {
+          clearStoredLocationTrackingConsent();
           setIsTracking(false);
           setIsLocating(false);
         }
@@ -53,6 +93,12 @@ export function useLocationTracking({
         const state = status.state;
         if (state === "granted" || state === "denied" || state === "prompt") {
           setPermission(state);
+        }
+        if (state === "granted") {
+          writeStoredLocationTrackingConsent();
+        }
+        if (state === "denied") {
+          clearStoredLocationTrackingConsent();
         }
         status.addEventListener("change", handlePermissionChange);
       })
@@ -71,7 +117,13 @@ export function useLocationTracking({
   // 권한이 이미 허용되어 있다면 자동으로 백그라운드 추적 시작
   useEffect(() => {
     if (permission === "granted") {
+      writeStoredLocationTrackingConsent();
       setIsTracking(true);
+      return;
+    }
+
+    if (permission === "denied") {
+      clearStoredLocationTrackingConsent();
     }
   }, [permission]);
 
@@ -92,6 +144,7 @@ export function useLocationTracking({
           heading: position.coords.heading,
         });
         setError(null);
+        writeStoredLocationTrackingConsent();
         setPermission("granted");
         setIsLocating(false);
       },
@@ -100,6 +153,7 @@ export function useLocationTracking({
         setIsTracking(false);
         setIsLocating(false);
         if (err.code === 1) {
+          clearStoredLocationTrackingConsent();
           setPermission("denied");
         }
       },
