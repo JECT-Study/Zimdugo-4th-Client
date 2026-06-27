@@ -2247,11 +2247,18 @@ export function IndexPage() {
   }, [selectedPinId, selectedMapPinOffset]);
   const showPlaceSheetBack =
     context === "map" || (context === "search" && listKind === "place");
+  const showKeywordSheetBack =
+    context === "search" && listKind === "keyword" && sheetMode === "list";
   const listHeaderLeadingPress = showPlaceSheetBack
     ? context === "map"
       ? handleBackFromMapPlaceSheet
       : handleBackToKeywordList
     : undefined;
+  const searchBarBackPress = listHeaderLeadingPress
+    ? listHeaderLeadingPress
+    : showKeywordSheetBack
+      ? resetSearchContext
+      : undefined;
   const listSheetDismissPress = listHeaderLeadingPress ?? resetSearchContext;
   const searchListSheetKey =
     context === "search" && listKind === "keyword"
@@ -2343,10 +2350,10 @@ export function IndexPage() {
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
           onOpenSearch={handleOpenSearch}
-          onBackPress={listHeaderLeadingPress}
+          onBackPress={searchBarBackPress}
           onCloseSearchContext={handleExitSearchContext}
           searchQuery={searchQuery}
-          showBackButton={showPlaceSheetBack}
+          showBackButton={showPlaceSheetBack || showKeywordSheetBack}
           isSearchContextActive={context === "search"}
         />
       ) : null}
