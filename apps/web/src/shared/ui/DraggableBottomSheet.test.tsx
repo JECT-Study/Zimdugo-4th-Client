@@ -442,6 +442,38 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).toHaveBeenCalledWith(480);
   });
 
+  it("settles to an external snap request", () => {
+    const handleSnapChange = vi.fn();
+
+    const { rerender } = render(
+      <DraggableBottomSheet
+        minSnapPoint={40}
+        snapPoint={240}
+        miniSnapPoint={480}
+        maxSnapPoint={720}
+        onSnapChange={handleSnapChange}
+      >
+        <div>sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    rerender(
+      <DraggableBottomSheet
+        minSnapPoint={40}
+        snapPoint={240}
+        miniSnapPoint={480}
+        maxSnapPoint={720}
+        snapRequest={{ id: 1, snapPoint: 480 }}
+        onSnapChange={handleSnapChange}
+      >
+        <div>sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(animateTargets.at(-1)).toBe(480);
+    expect(handleSnapChange).toHaveBeenLastCalledWith(480);
+  });
+
   it("reports live offset changes while dragging", () => {
     const handleLiveOffsetChange = vi.fn();
 

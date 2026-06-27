@@ -28,7 +28,11 @@ import {
   type SearchFilterAppliedState,
   SearchFilterBottomSheet,
 } from "#/composites/search/SearchFilterBottomSheet";
-import { SearchListBottomSheet } from "#/composites/search/SearchListBottomSheet";
+import {
+  type SearchListSheetSnapRequest,
+  type SearchListSheetSnapStage,
+  SearchListBottomSheet,
+} from "#/composites/search/SearchListBottomSheet";
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
 import type {
   SearchLockerResultItem,
@@ -351,6 +355,7 @@ export function IndexPage() {
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
+  const shouldIgnoreNextMapPressRef = useRef(false);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -374,6 +379,10 @@ export function IndexPage() {
       return lockerIdFromQuery;
     return readRestoredMapSheetSession()?.activeLockerId ?? null;
   });
+  const [listSheetSnapStage, setListSheetSnapStage] =
+    useState<SearchListSheetSnapStage>("half");
+  const [listSheetSnapRequest, setListSheetSnapRequest] =
+    useState<SearchListSheetSnapRequest | null>(null);
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(() => {
       if (lockerIdFromQuery !== undefined) {
@@ -1421,6 +1430,45 @@ export function IndexPage() {
     [clearPendingLockerDetailOpen, openLockerDetailById],
   );
 
+  const requestListSheetSnap = useCallback(
+    (stage: SearchListSheetSnapStage) => {
+      setListSheetSnapRequest((previousRequest) => ({
+        id: (previousRequest?.id ?? 0) + 1,
+        stage,
+      }));
+    },
+    [],
+  );
+
+  const handleListSheetSnapStageChange = useCallback(
+    (nextStage: SearchListSheetSnapStage) => {
+      setListSheetSnapStage(nextStage);
+    },
+    [],
+  );
+
+  const selectedPinId = useMemo(() => {
+    if (selectedMapPin) {
+      return getPinId(selectedMapPin);
+    }
+    if (activeLockerId != null) {
+      return `LOCKER-${activeLockerId}`;
+    }
+    if (sheetMode === "detail" && openLockerId != null) {
+      return `LOCKER-${openLockerId}`;
+    }
+    return null;
+  }, [selectedMapPin, activeLockerId, openLockerId, sheetMode]);
+
+  const shouldRaiseSelectedPinFromMini = useCallback(
+    (pin: LockerPinItemResponse | undefined) =>
+      sheetMode === "list" &&
+      listSheetSnapStage === "mini" &&
+      pin?.pinType === "LOCKER" &&
+      selectedPinId === getPinId(pin),
+    [listSheetSnapStage, selectedPinId, sheetMode],
+  );
+
   const openLockerFromDeepLink = useCallback(
     async (
       lockerId: number,
@@ -1559,6 +1607,8 @@ export function IndexPage() {
         return;
       }
 
+      shouldIgnoreNextMapPressRef.current = true;
+
       if (pinType === "PLACE") {
         setSelectedMapPin(null);
         setSelectedMapPinOffset(null);
@@ -1600,10 +1650,19 @@ export function IndexPage() {
         return;
       }
 
+      shouldIgnoreNextMapPressRef.current = true;
+
       if (pinType === "PLACE") {
         setSelectedMapPinOffset(null);
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
         openMapPlaceList(id);
+        return;
+      }
+
+      if (shouldRaiseSelectedPinFromMini(pin)) {
+        setSelectedMapPin(pin ?? null);
+        setSelectedMapPinOffset(offset ?? null);
+        requestListSheetSnap("half");
         return;
       }
 
@@ -1625,6 +1684,8 @@ export function IndexPage() {
       focusMapOnLockerPin,
       openLockerDetailAfterPinFocus,
       openMapPlaceList,
+      requestListSheetSnap,
+      shouldRaiseSelectedPinFromMini,
     ],
   );
 
@@ -1639,6 +1700,8 @@ export function IndexPage() {
         return;
       }
 
+      shouldIgnoreNextMapPressRef.current = true;
+
       if (pinType === "PLACE") {
         setListKind("place");
         setSearchPlaceId(id);
@@ -1649,6 +1712,13 @@ export function IndexPage() {
         setSelectedMapPinOffset(null);
         setSheetMode("list");
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
+        return;
+      }
+
+      if (shouldRaiseSelectedPinFromMini(pin)) {
+        setSelectedMapPin(pin ?? null);
+        setSelectedMapPinOffset(offset ?? null);
+        requestListSheetSnap("half");
         return;
       }
 
@@ -1674,8 +1744,10 @@ export function IndexPage() {
       focusMapOnLockerPin,
       listKind,
       openLockerDetailAfterPinFocus,
+      requestListSheetSnap,
       searchPlaceId,
       setSheetMode,
+      shouldRaiseSelectedPinFromMini,
     ],
   );
 
@@ -2100,18 +2172,6 @@ export function IndexPage() {
     mapDetailBack,
     selectedMapDetailPinCount: selectedMapDetailPins.length,
   });
-  const selectedPinId = useMemo(() => {
-    if (selectedMapPin) {
-      return getPinId(selectedMapPin);
-    }
-    if (activeLockerId != null) {
-      return `LOCKER-${activeLockerId}`;
-    }
-    if (sheetMode === "detail" && openLockerId != null) {
-      return `LOCKER-${openLockerId}`;
-    }
-    return null;
-  }, [selectedMapPin, activeLockerId, openLockerId, sheetMode]);
   const selectedPinPreservedOffsets = useMemo(() => {
     if (!selectedPinId || !selectedMapPinOffset) {
       return undefined;
@@ -2131,8 +2191,37 @@ export function IndexPage() {
     context === "search" && listKind === "keyword"
       ? `search-keyword-${searchQuery}`
       : `${context}-${listKind ?? "none"}-${activePlaceId ?? "none"}`;
+  useEffect(() => {
+    if (sheetMode === "list") {
+      setListSheetSnapStage("half");
+      setListSheetSnapRequest(null);
+    }
+  }, [searchListSheetKey, sheetMode]);
+
+  const handleMapPress = useCallback(() => {
+    if (shouldIgnoreNextMapPressRef.current) {
+      shouldIgnoreNextMapPressRef.current = false;
+      return;
+    }
+
+    if (
+      (context === "search" || context === "map") &&
+      sheetMode === "list" &&
+      !isSearchOpen &&
+      listSheetSnapStage === "half"
+    ) {
+      requestListSheetSnap("mini");
+    }
+  }, [
+    context,
+    isSearchOpen,
+    listSheetSnapStage,
+    requestListSheetSnap,
+    sheetMode,
+  ]);
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
+      shouldIgnoreNextMapPressRef.current = true;
       focusNaverMapOnClusterBounds({
         map: mapInstance,
         bounds,
@@ -2169,6 +2258,7 @@ export function IndexPage() {
             onWillDestroy={persistMapViewport}
             onLoadingChange={setIsMapLoading}
             onErrorChange={setHasMapError}
+            onMapPress={handleMapPress}
             initialCenter={mapBootstrap.center}
             initialZoom={mapBootstrap.zoom}
           />
@@ -2304,6 +2394,8 @@ export function IndexPage() {
           showHeaderBack={showPlaceSheetBack}
           onHeaderBackPress={listHeaderLeadingPress}
           onDismiss={listSheetDismissPress}
+          snapRequest={listSheetSnapRequest}
+          onSnapStageChange={handleListSheetSnapStageChange}
         />
       ) : null}
 

@@ -21,6 +21,7 @@ import {
 import type { AppLocale } from "#/shared/i18n/locales";
 import {
   type BottomSheetLiveOffsetState,
+  type BottomSheetSnapRequest,
   DraggableBottomSheet,
   resolveBottomSheetExpandedProgress,
 } from "#/shared/ui/DraggableBottomSheet";
@@ -81,6 +82,8 @@ export interface SearchListBottomSheetProps {
   initialSnapPoint?: number;
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
+  onSnapStageChange?: (nextStage: SearchListSheetSnapStage) => void;
+  snapRequest?: SearchListSheetSnapRequest | null;
   onDismiss?: () => void;
   children?: ReactNode;
 }
@@ -100,6 +103,13 @@ const LEGACY_SEARCH_LIST_MAX_TOP_OFFSET = 44;
 const LEGACY_SEARCH_LIST_DEFAULT_SNAP_POINT = 331;
 
 export type SearchBottomSheetSnapBehavior = "detail" | "legacy";
+export type SearchListSheetSnapStage = "full" | "half" | "mini" | "dismiss";
+
+export interface SearchListSheetSnapRequest {
+  id: number;
+  stage: SearchListSheetSnapStage;
+}
+
 export const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
   "detail";
 
@@ -123,6 +133,33 @@ export const resolveSearchListSnapOffset = ({
   windowHeight: number;
 }) =>
   Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
+
+export const resolveSearchListSnapStage = ({
+  maxSnapPoint,
+  miniSnapPoint,
+  minSnapPoint,
+  offset,
+  snapPoint,
+}: {
+  maxSnapPoint: number;
+  miniSnapPoint: number;
+  minSnapPoint: number;
+  offset: number;
+  snapPoint: number;
+}): SearchListSheetSnapStage => {
+  const entries = [
+    { stage: "full" as const, point: minSnapPoint },
+    { stage: "half" as const, point: snapPoint },
+    { stage: "mini" as const, point: miniSnapPoint },
+    { stage: "dismiss" as const, point: maxSnapPoint },
+  ];
+
+  return entries.reduce((nearestEntry, entry) =>
+    Math.abs(entry.point - offset) < Math.abs(nearestEntry.point - offset)
+      ? entry
+      : nearestEntry,
+  ).stage;
+};
 
 export const resolveLegacySearchListSnapPoints = ({
   maxSnapPoint,
@@ -211,6 +248,8 @@ export function SearchListBottomSheet({
   initialSnapPoint,
   maxSnapPoint,
   onSnapChange,
+  onSnapStageChange,
+  snapRequest,
   onDismiss,
   children,
 }: SearchListBottomSheetProps) {
@@ -235,6 +274,19 @@ export function SearchListBottomSheet({
           Math.max(resolvedMinSnapPoint, initialSnapPoint),
         )
       : resolvedSnapPoint;
+  const resolvedSnapRequest: BottomSheetSnapRequest | null = snapRequest
+    ? {
+        id: snapRequest.id,
+        snapPoint:
+          snapRequest.stage === "full"
+            ? resolvedMinSnapPoint
+            : snapRequest.stage === "half"
+              ? resolvedSnapPoint
+              : snapRequest.stage === "mini"
+                ? resolvedMiniSnapPoint
+                : resolvedMaxSnapPoint,
+      }
+    : null;
 
   const visibleItems = useMemo(() => {
     const primarySortType: Record<SearchSortKey, LockerPrimarySortType> = {
@@ -304,6 +356,18 @@ export function SearchListBottomSheet({
   }: BottomSheetLiveOffsetState) => {
     setExpandedProgress(expandedProgress);
   };
+  const handleSnapChange = (nextSnap: number) => {
+    onSnapChange?.(nextSnap);
+    onSnapStageChange?.(
+      resolveSearchListSnapStage({
+        maxSnapPoint: resolvedMaxSnapPoint,
+        miniSnapPoint: resolvedMiniSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: nextSnap,
+        snapPoint: resolvedSnapPoint,
+      }),
+    );
+  };
 
   useEffect(() => {
     setExpandedProgress(
@@ -331,7 +395,8 @@ export function SearchListBottomSheet({
       maxSnapPoint={resolvedMaxSnapPoint}
       dragSensitivity={SEARCH_LIST_DRAG_SENSITIVITY}
       showHomeIndicator={false}
-      onSnapChange={onSnapChange}
+      snapRequest={resolvedSnapRequest}
+      onSnapChange={handleSnapChange}
       onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onDismiss}
     >
@@ -427,7 +492,7 @@ export function SearchListBottomSheet({
                       className={emptyStateResetButton}
                       variant="filled"
                       intent="neutral"
-                      size="M"
+                      size="S"
                       onPress={onResetFilter}
                     >
                       {m.search_filter_reset()}

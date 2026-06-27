@@ -16,6 +16,7 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
     miniSnapPoint?: number;
     minSnapPoint?: number;
     showHomeIndicator?: boolean;
+    snapRequest?: { id: number; snapPoint: number } | null;
     snapPoint?: number;
   }) => {
     draggableBottomSheetMock(props);
@@ -44,6 +45,7 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
 import {
   resolveLegacySearchListSnapPoints,
   resolveSearchListSnapPoints,
+  resolveSearchListSnapStage,
   SearchListBottomSheet,
 } from "./SearchListBottomSheet";
 
@@ -135,6 +137,37 @@ describe("SearchListBottomSheet", () => {
       minSnapPoint: 80,
       snapPoint: 320,
     });
+  });
+
+  it("resolves the nearest search-list snap stage", () => {
+    expect(
+      resolveSearchListSnapStage({
+        maxSnapPoint: 760,
+        miniSnapPoint: 570,
+        minSnapPoint: 112,
+        offset: 580,
+        snapPoint: 331,
+      }),
+    ).toBe("mini");
+  });
+
+  it("passes stage snap requests as concrete snap points", () => {
+    render(
+      <SearchListBottomSheet
+        searchQuery="媛뺣궓"
+        items={[]}
+        snapRequest={{ id: 1, stage: "mini" }}
+      />,
+    );
+
+    expect(draggableBottomSheetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        snapRequest: {
+          id: 1,
+          snapPoint: 570,
+        },
+      }),
+    );
   });
 
   it("keeps filter and sort controls visible when active filters return no lockers", () => {

@@ -55,12 +55,26 @@ const getButtonByText = (name: string) => {
 };
 
 describe("SearchFilterBottomSheet", () => {
-  it("resolves filter sheet snaps without changing its expanded default", () => {
+  it("resolves filter sheet snaps without a half step by default", () => {
     expect(resolveSearchFilterSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 788,
-      miniSnapPoint: 420,
+      miniSnapPoint: undefined,
       minSnapPoint: 52,
       snapPoint: 52,
+    });
+  });
+
+  it("fits full height to content while keeping the previous full height as the maximum", () => {
+    expect(
+      resolveSearchFilterSnapPoints({
+        windowHeight: 812,
+        contentHeight: 560,
+      }),
+    ).toEqual({
+      maxSnapPoint: 788,
+      miniSnapPoint: undefined,
+      minSnapPoint: 252,
+      snapPoint: 252,
     });
   });
 
