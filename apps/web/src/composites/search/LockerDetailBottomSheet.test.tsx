@@ -16,6 +16,7 @@ const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   DraggableBottomSheet: (props: {
     children: ReactNode;
+    onSnapChange?: (nextSnap: number) => void;
     snapRequest?: { id: number; snapPoint: number } | null;
   }) => {
     draggableBottomSheetMock(props);
@@ -209,6 +210,41 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       screen.queryByRole("dialog", { name: m.report_section_photo() }),
     ).toBeNull();
+  });
+
+  it("converts stage snap requests to detail snap points", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        snapRequest={{ id: 1, stage: "mini" }}
+      />,
+    );
+
+    expect(draggableBottomSheetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        snapRequest: {
+          id: 1,
+          snapPoint: 701,
+        },
+      }),
+    );
+  });
+
+  it("forwards snap changes as detail snap stages", () => {
+    const handleSnapStageChange = vi.fn();
+
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        snapRequest={{ id: 1, stage: "full" }}
+        onSnapStageChange={handleSnapStageChange}
+      />,
+    );
+
+    const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
+    latestSheetProps?.onSnapChange?.(60);
+
+    expect(handleSnapStageChange).toHaveBeenCalledWith("full");
   });
 
   it("enables internal content scroll only when the detail sheet opens full", () => {

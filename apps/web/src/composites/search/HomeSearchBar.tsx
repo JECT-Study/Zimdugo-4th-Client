@@ -321,7 +321,7 @@ export function HomeSearchBar({
                   className={closeButton}
                   onPointerDown={handleClosePointerDown}
                   onClick={handleCloseSearchContext}
-                  aria-label={m.home_search_back_aria()}
+                  aria-label={m.search_close_aria()}
                 >
                   <IconX24 />
                 </button>
