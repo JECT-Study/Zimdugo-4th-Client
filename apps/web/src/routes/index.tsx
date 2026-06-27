@@ -1486,12 +1486,11 @@ export function IndexPage() {
 
   const shouldRaiseSelectedPinFromMini = useCallback(
     (pin: LockerPinItemResponse | undefined) =>
-      (sheetMode === "list"
-        ? listSheetSnapStage === "mini"
-        : sheetMode === "detail" && detailSheetSnapStage === "mini") &&
+      sheetMode === "detail" &&
+      detailSheetSnapStage === "mini" &&
       pin?.pinType === "LOCKER" &&
       selectedPinId === getPinId(pin),
-    [detailSheetSnapStage, listSheetSnapStage, selectedPinId, sheetMode],
+    [detailSheetSnapStage, selectedPinId, sheetMode],
   );
 
   const clearNextMapPressSuppression = useCallback(() => {
@@ -2290,29 +2289,31 @@ export function IndexPage() {
   }, [activeLockerId, lockerDetailOpensFull, sheetMode]);
 
   const handleMapPress = useCallback(() => {
-    if (shouldIgnoreNextMapPressRef.current) {
-      clearNextMapPressSuppression();
-      return;
-    }
+    setTimeout(() => {
+      if (shouldIgnoreNextMapPressRef.current) {
+        clearNextMapPressSuppression();
+        return;
+      }
 
-    if (
-      (context === "search" || context === "map") &&
-      sheetMode === "list" &&
-      !isSearchOpen &&
-      listSheetSnapStage === "half"
-    ) {
-      requestListSheetSnap("mini");
-      return;
-    }
+      if (
+        (context === "search" || context === "map") &&
+        sheetMode === "list" &&
+        !isSearchOpen &&
+        listSheetSnapStage === "half"
+      ) {
+        requestListSheetSnap("mini");
+        return;
+      }
 
-    if (
-      (context === "search" || context === "map") &&
-      sheetMode === "detail" &&
-      !isSearchOpen &&
-      detailSheetSnapStage === "half"
-    ) {
-      requestDetailSheetSnap("mini");
-    }
+      if (
+        (context === "search" || context === "map") &&
+        sheetMode === "detail" &&
+        !isSearchOpen &&
+        detailSheetSnapStage === "half"
+      ) {
+        requestDetailSheetSnap("mini");
+      }
+    }, 20);
   }, [
     context,
     clearNextMapPressSuppression,
