@@ -171,6 +171,6 @@ describe("LockerDetailBottomSheet", () => {
     const image = sheet.getByRole("img");
 
     expect(image.getAttribute("src")).toBe("https://example.com/locker.jpg");
-    expect(sheet.queryByText("?꾩쭅 ?대?吏媛 ?놁뼱??")).toBeNull();
+    expect(sheet.queryByText("아직 이미지가 없어요.")).toBeNull();
   });
 });
