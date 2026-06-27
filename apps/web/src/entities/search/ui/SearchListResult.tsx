@@ -1,8 +1,6 @@
 import { m } from "@repo/i18n";
 import {
   IconNormalArrow24,
-  IconSearchLockerRow14,
-  IconSearchPlaceRow14,
   IconStarFilled24,
   IconStarOutline24,
 } from "@repo/ui/tokens/icons";
@@ -30,8 +28,6 @@ import {
   lockerMain,
   lockerRow,
   markerBadge,
-  markerLocker,
-  markerPlace,
   metaDot,
   nestedLockerRow,
   placeMain,
@@ -41,6 +37,7 @@ import {
   titleText,
   updatedText,
 } from "./SearchList.css.ts";
+import { SearchMarkerIcon } from "./SearchMarkerIcon";
 
 export interface SearchListResultsProps {
   items: SearchResultItem[];
@@ -256,18 +253,12 @@ function ResultMarker({
   tone: "place" | "locker" | "standalone";
   isClosed?: boolean;
 }) {
-  const Icon =
-    tone === "place" ? IconSearchPlaceRow14 : IconSearchLockerRow14;
-
   return (
-    <span
-      className={[
-        markerBadge,
-        tone === "place" && !isClosed ? markerPlace : markerLocker,
-      ].join(" ")}
-      aria-hidden="true"
-    >
-      <Icon isClosed={isClosed} />
+    <span className={markerBadge} aria-hidden="true">
+      <SearchMarkerIcon
+        kind={tone === "place" ? "place" : "locker"}
+        tone={isClosed ? "muted" : "brand"}
+      />
     </span>
   );
 }

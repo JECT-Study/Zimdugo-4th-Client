@@ -1,9 +1,4 @@
-import {
-  IconLockerDetailHeader24,
-  IconSearchAutocompletePlace14,
-  IconSearchRecentItem24,
-  IconX16,
-} from "@repo/ui/tokens/icons";
+import { IconSearchRecentItem24, IconX16 } from "@repo/ui/tokens/icons";
 import type { ReactNode } from "react";
 import { Button, type ButtonProps } from "react-aria-components";
 import {
@@ -11,12 +6,12 @@ import {
   recentIconSlot,
   recentLabel,
   recentLeft,
-  recentPlaceIcon,
   recentRight,
   recentRow,
   recentTextCol,
   removeBtn,
 } from "./SearchList.css.ts";
+import { SearchMarkerIcon } from "./SearchMarkerIcon";
 
 export type SearchListRecentKind = "keyword" | "locker" | "place";
 
@@ -33,13 +28,9 @@ export interface SearchListRecentProps {
 function RecentHistoryIcon({ kind }: { kind: SearchListRecentKind }) {
   switch (kind) {
     case "locker":
-      return <IconLockerDetailHeader24 />;
+      return <SearchMarkerIcon kind="locker" tone="muted" />;
     case "place":
-      return (
-        <span className={recentPlaceIcon}>
-          <IconSearchAutocompletePlace14 />
-        </span>
-      );
+      return <SearchMarkerIcon kind="place" tone="muted" />;
     default:
       return <IconSearchRecentItem24 />;
   }

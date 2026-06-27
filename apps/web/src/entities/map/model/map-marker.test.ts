@@ -235,6 +235,8 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('<svg width="90" height="90"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+    expect(icon).toContain('fill="white"');
   });
 
   it("renders the favorite locker map pin asset only when isFavorite is true", () => {
@@ -261,8 +263,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('data-map-pin-variant="cluster"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
     expect(icon).toContain('fill="white"');
-    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
-    expect(icon).toContain(`text-anchor="middle" fill="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain('text-anchor="middle" fill="white"');
     expect(icon).toContain(">9+<");
     expect(icon).toContain("<text");
     expect(icon).toContain('viewBox="0 0 121 121"');
