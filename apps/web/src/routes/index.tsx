@@ -282,12 +282,19 @@ const mergeLockerDetailWithPreviousDistance = (
   detail: LockerDetailItem,
   previousDetail: LockerDetailItem | null,
 ): LockerDetailItem => {
+  const detailSnapshot = { ...detail };
+  delete detailSnapshot.isFavorite;
+  delete detailSnapshot.accurateCount;
+  delete detailSnapshot.inaccurateCount;
+  delete detailSnapshot.isAccurateVoted;
+  delete detailSnapshot.isInaccurateVoted;
+
   if (!previousDetail || previousDetail.lockerId !== detail.lockerId) {
-    return detail;
+    return detailSnapshot;
   }
 
   return {
-    ...detail,
+    ...detailSnapshot,
     distanceLabel: detail.distanceLabel || previousDetail.distanceLabel,
     distanceMeters: detail.distanceMeters ?? previousDetail.distanceMeters,
   };
@@ -2237,12 +2244,19 @@ export function IndexPage() {
   ]);
 
   const displayedLockerDetail = useMemo(() => {
-    if (!selectedLockerDetail) {
+    const detailBase = lockerDetail
+      ? mergeLockerDetailWithPreviousDistance(
+          lockerDetail,
+          selectedLockerDetail,
+        )
+      : selectedLockerDetail;
+
+    if (!detailBase) {
       return null;
     }
 
     const withFavorite = applyFavoriteOverlayToLockerDetail(
-      selectedLockerDetail,
+      detailBase,
       favoriteSession.getEffectiveIsFavorite,
     );
 
@@ -2253,6 +2267,7 @@ export function IndexPage() {
     );
   }, [
     favoriteSession.getEffectiveIsFavorite,
+    lockerDetail,
     selectedLockerDetail,
     voteSession.getEffectiveVoteFlagOverlay,
     voteSession.getEffectiveVoteCountOverlay,
@@ -2599,8 +2614,25 @@ export function IndexPage() {
           locker={displayedLockerDetail}
           loadState={lockerDetailLoadState}
           onRetry={() => void refetchLockerDetail()}
-          onFavoriteChange={favoriteSession.handleDetailFavoriteChange}
-          onVoteChange={voteSession.handleDetailVoteChange}
+          onFavoriteChange={
+            lockerDetail
+              ? (item, next) =>
+                  favoriteSession.handleDetailFavoriteChange(
+                    item,
+                    next,
+                    lockerDetail.isFavorite,
+                  )
+              : undefined
+          }
+          onVoteChange={
+            lockerDetail
+              ? (item, voteType) =>
+                  voteSession.handleDetailVoteChange(item, voteType, {
+                    isAccurateVoted: lockerDetail.isAccurateVoted,
+                    isInaccurateVoted: lockerDetail.isInaccurateVoted,
+                  })
+              : undefined
+          }
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
           initialSnapPoint={

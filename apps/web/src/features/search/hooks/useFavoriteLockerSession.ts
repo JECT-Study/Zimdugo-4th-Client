@@ -6,23 +6,17 @@ import {
   addFavoriteLocker,
   removeFavoriteLocker,
 } from "#/shared/api/favorite-lockers";
-import { useAuthStore } from "#/shared/store/authStore";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
+import { useAuthStore } from "#/shared/store/authStore";
 import { collectServerFavoriteByLockerId } from "../lib/collect-server-favorite-state";
 import { patchFavoriteInQueryCaches } from "../lib/patch-favorite-query-cache";
-import { readLockerDetailFromQueryCache } from "../lib/read-locker-detail-from-query-cache";
 import {
   buildFavoriteFlushOperations,
+  type FavoriteLockerPending,
   getEffectiveFavorite,
   rollbackFailedFlush,
   toggleFavoritePending,
-  type FavoriteLockerPending,
 } from "../model/favorite-locker-session";
-import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
-import {
-  LOCKER_SEARCH_QUERY_KEY,
-  PLACE_LOCKERS_QUERY_KEY,
-} from "./useSearch";
 
 export function useFavoriteLockerSession() {
   const queryClient = useQueryClient();
@@ -42,23 +36,14 @@ export function useFavoriteLockerSession() {
   );
 
   const toggle = useCallback(
-    (
-      lockerId: number,
-      next: boolean,
-      serverIsFavorite?: boolean,
-    ): boolean => {
+    (lockerId: number, next: boolean, serverIsFavorite?: boolean): boolean => {
       if (!isAuthenticated || accessToken == null) {
         openAuthPopup("/");
         return false;
       }
 
       setPending((currentPending) =>
-        toggleFavoritePending(
-          currentPending,
-          lockerId,
-          next,
-          serverIsFavorite,
-        ),
+        toggleFavoritePending(currentPending, lockerId, next, serverIsFavorite),
       );
       return true;
     },
@@ -132,18 +117,6 @@ export function useFavoriteLockerSession() {
         }
         return updatedPending;
       });
-
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: [LOCKER_SEARCH_QUERY_KEY],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: [PLACE_LOCKERS_QUERY_KEY],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: [LOCKER_DETAIL_QUERY_KEY],
-        }),
-      ]);
     }
 
     if (failedLockerIds.length > 0) {
@@ -157,10 +130,9 @@ export function useFavoriteLockerSession() {
 
   const handleSearchFavoriteChange = useCallback(
     (item: SearchLockerResultItem, next: boolean) => {
-      const serverIsFavorite = collectServerFavoriteByLockerId(
-        queryClient,
-        [item.lockerId],
-      ).get(item.lockerId);
+      const serverIsFavorite = collectServerFavoriteByLockerId(queryClient, [
+        item.lockerId,
+      ]).get(item.lockerId);
 
       toggle(item.lockerId, next, serverIsFavorite);
     },
@@ -168,19 +140,10 @@ export function useFavoriteLockerSession() {
   );
 
   const handleDetailFavoriteChange = useCallback(
-    (item: LockerDetailItem, next: boolean) => {
-      const serverDetail = readLockerDetailFromQueryCache(
-        queryClient,
-        item.lockerId,
-      );
-
-      toggle(
-        item.lockerId,
-        next,
-        serverDetail?.isFavorite ?? item.isFavorite,
-      );
+    (item: LockerDetailItem, next: boolean, serverIsFavorite?: boolean) => {
+      toggle(item.lockerId, next, serverIsFavorite);
     },
-    [queryClient, toggle],
+    [toggle],
   );
 
   return {

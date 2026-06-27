@@ -157,6 +157,17 @@ describe("LockerDetailBottomSheet", () => {
     expect(handleNavigate).toHaveBeenCalledWith(LOCKER_DETAIL);
   });
 
+  it("즐겨찾기 handler가 없으면 하트 버튼을 비활성화한다", () => {
+    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    const sheet = getSheetRoot();
+
+    expect(
+      sheet
+        .getByRole("button", { name: "즐겨찾기 추가" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
   it("정확성 투표 버튼 클릭 시 onVoteChange를 호출한다", () => {
     const handleVoteChange = vi.fn();
     const lockerWithVote = {

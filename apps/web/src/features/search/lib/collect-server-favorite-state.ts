@@ -1,22 +1,22 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
-import { FAVORITE_LOCKER_LIST_QUERY_KEY } from "#/features/my/hooks/useFavoriteLockerList";
 import type {
   SearchLockerResultItem,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
-import type {
-  FavoriteLockerListItem,
-  PaginatedListData,
-} from "#/shared/api/my-page";
+import { FAVORITE_LOCKER_LIST_QUERY_KEY } from "#/features/my/hooks/useFavoriteLockerList";
 import type {
   LockerKeywordViewModel,
   PlaceLockersViewModel,
 } from "#/shared/api/locker-adapters";
-import { readLockerDetailFromQueryCache } from "./read-locker-detail-from-query-cache";
+import type {
+  FavoriteLockerListItem,
+  PaginatedListData,
+} from "#/shared/api/my-page";
 import {
   LOCKER_KEYWORD_QUERY_KEY,
   PLACE_LOCKERS_QUERY_KEY,
 } from "../hooks/useSearch";
+import { readLockerDetailFromQueryCache } from "./read-locker-detail-from-query-cache";
 
 const forEachLockerInSearchData = (
   items: SearchResultItem[] | SearchLockerResultItem[],
@@ -74,7 +74,10 @@ export const collectServerFavoriteByLockerId = (
     }
 
     forEachLockerInSearchData(data.items, (locker) => {
-      if (targetIds.has(locker.lockerId)) {
+      if (
+        targetIds.has(locker.lockerId) &&
+        !serverByLockerId.has(locker.lockerId)
+      ) {
         serverByLockerId.set(locker.lockerId, locker.isFavorite ?? false);
       }
     });
@@ -90,7 +93,10 @@ export const collectServerFavoriteByLockerId = (
     }
 
     for (const locker of data.lockers) {
-      if (targetIds.has(locker.lockerId)) {
+      if (
+        targetIds.has(locker.lockerId) &&
+        !serverByLockerId.has(locker.lockerId)
+      ) {
         serverByLockerId.set(locker.lockerId, locker.isFavorite ?? false);
       }
     }
@@ -109,7 +115,10 @@ export const collectServerFavoriteByLockerId = (
 
     for (const page of data.pages) {
       for (const item of page.items) {
-        if (targetIds.has(item.lockerId)) {
+        if (
+          targetIds.has(item.lockerId) &&
+          !serverByLockerId.has(item.lockerId)
+        ) {
           serverByLockerId.set(item.lockerId, item.isFavorite ?? true);
         }
       }

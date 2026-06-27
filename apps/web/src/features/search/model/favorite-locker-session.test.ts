@@ -27,6 +27,14 @@ describe("favorite-locker-session", () => {
     expect(settled.size).toBe(0);
   });
 
+  it("displayed overlay 값이 아니라 query server 값으로 pending 취소를 판단한다", () => {
+    const pending = new Map([[1, false]]);
+
+    const settled = toggleFavoritePending(pending, 1, true, true);
+
+    expect(settled.has(1)).toBe(false);
+  });
+
   it("flush 시 서버 대비 변경분만 압축한다", () => {
     const pending = new Map([
       [1, true],
@@ -63,17 +71,17 @@ describe("favorite-locker-session", () => {
     expect(
       rollbackFailedFlush(pending, [1], pendingSnapshot).get(1),
     ).toBeUndefined();
-    expect(
-      rollbackFailedFlush(pending, [1], pendingSnapshot).get(2),
-    ).toBe(false);
+    expect(rollbackFailedFlush(pending, [1], pendingSnapshot).get(2)).toBe(
+      false,
+    );
   });
 
   it("flush 실패 후 변경된 pending은 유지한다", () => {
     const pendingSnapshot = new Map([[1, true]]);
     const pending = new Map([[1, false]]);
 
-    expect(
-      rollbackFailedFlush(pending, [1], pendingSnapshot).get(1),
-    ).toBe(false);
+    expect(rollbackFailedFlush(pending, [1], pendingSnapshot).get(1)).toBe(
+      false,
+    );
   });
 });

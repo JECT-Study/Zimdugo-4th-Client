@@ -1,23 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
-import {
-  postLockerVote,
-  type LockerVoteType,
-} from "#/shared/api/locker-votes";
-import { useAuthStore } from "#/shared/store/authStore";
+import { type LockerVoteType, postLockerVote } from "#/shared/api/locker-votes";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
+import { useAuthStore } from "#/shared/store/authStore";
 import { collectServerVoteByLockerId } from "../lib/collect-server-vote-state";
-import { readLockerDetailFromQueryCache } from "../lib/read-locker-detail-from-query-cache";
 import {
   buildVoteFlushOperations,
   computeVoteDetailAfterFlush,
   getEffectiveVoteCounts,
   getEffectiveVoteFlags,
-  rollbackFailedVoteFlush,
-  toggleVotePending,
   type LockerVotePending,
   type LockerVoteServerState,
+  rollbackFailedVoteFlush,
+  toggleVotePending,
 } from "../model/vote-locker-session";
 import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 
@@ -122,6 +118,14 @@ export function useVoteLockerSession() {
     });
 
     if (succeededLockerIds.length > 0) {
+      await Promise.all(
+        succeededLockerIds.map((lockerId) =>
+          queryClient.cancelQueries({
+            queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
+          }),
+        ),
+      );
+
       for (const lockerId of succeededLockerIds) {
         const pendingVote = pendingSnapshot.get(lockerId);
         if (pendingVote === undefined) {
@@ -164,14 +168,6 @@ export function useVoteLockerSession() {
         }
         return updatedPending;
       });
-
-      await Promise.all(
-        succeededLockerIds.map((lockerId) =>
-          queryClient.invalidateQueries({
-            queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
-          }),
-        ),
-      );
     }
 
     if (failedLockerIds.length > 0) {
@@ -188,20 +184,17 @@ export function useVoteLockerSession() {
   }, [accessToken, isAuthenticated, queryClient]);
 
   const handleDetailVoteChange = useCallback(
-    (item: LockerDetailItem, voteType: LockerVoteType) => {
-      const serverDetail = readLockerDetailFromQueryCache(
-        queryClient,
-        item.lockerId,
-      );
-
+    (
+      item: LockerDetailItem,
+      voteType: LockerVoteType,
+      server?: LockerVoteServerState,
+    ) => {
       toggle(item.lockerId, voteType, {
-        isAccurateVoted:
-          serverDetail?.isAccurateVoted ?? item.isAccurateVoted,
-        isInaccurateVoted:
-          serverDetail?.isInaccurateVoted ?? item.isInaccurateVoted,
+        isAccurateVoted: server?.isAccurateVoted,
+        isInaccurateVoted: server?.isInaccurateVoted,
       });
     },
-    [queryClient, toggle],
+    [toggle],
   );
 
   return {

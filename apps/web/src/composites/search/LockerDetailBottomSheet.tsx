@@ -418,7 +418,14 @@ export function LockerDetailBottomSheet({
     ? m.search_favorite_remove()
     : m.search_favorite_add();
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
+  const isFull = currentSnapPoint <= resolvedMinSnapPoint + 24;
+  const canFavorite = typeof onFavoriteChange === "function";
+
   const handleFavoritePress = () => {
+    if (!canFavorite) {
+      return;
+    }
+
     onFavoriteChange?.(locker, !locker.isFavorite);
   };
 
@@ -516,6 +523,7 @@ export function LockerDetailBottomSheet({
             locker={locker}
             detailHelpText={detailHelpText}
             favoriteLabel={favoriteLabel}
+            canFavorite={canFavorite}
             onFavoritePress={handleFavoritePress}
             onClose={handleBack}
             onShare={handleShare}
@@ -636,6 +644,7 @@ function FullDetailContent({
   locker,
   detailHelpText,
   favoriteLabel,
+  canFavorite,
   onFavoritePress,
   onClose,
   onShare,
@@ -647,6 +656,7 @@ function FullDetailContent({
   locker: LockerDetailItem;
   detailHelpText: string;
   favoriteLabel: string;
+  canFavorite: boolean;
   onFavoritePress: () => void;
   onClose: () => void;
   onShare: () => void;
@@ -705,6 +715,7 @@ function FullDetailContent({
         <SummarySection
           locker={locker}
           favoriteLabel={favoriteLabel}
+          canFavorite={canFavorite}
           onFavoritePress={onFavoritePress}
           onClose={onClose}
         />
@@ -824,11 +835,13 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
 function SummarySection({
   locker,
   favoriteLabel,
+  canFavorite,
   onFavoritePress,
   onClose,
 }: {
   locker: LockerDetailItem;
   favoriteLabel: string;
+  canFavorite: boolean;
   onFavoritePress: () => void;
   onClose: () => void;
 }) {
@@ -859,6 +872,8 @@ function SummarySection({
             className={favoriteButton}
             onClick={onFavoritePress}
             aria-label={favoriteLabel}
+            disabled={!canFavorite}
+            aria-disabled={!canFavorite}
           >
             {locker.isFavorite ? (
               <IconStarFilled24 size={24} />
