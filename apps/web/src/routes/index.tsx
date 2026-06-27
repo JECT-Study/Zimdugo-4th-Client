@@ -59,6 +59,7 @@ import {
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
+import { MapSkeleton } from "#/entities/map/ui/map-skeleton/MapSkeleton";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
@@ -464,8 +465,39 @@ export function IndexPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const { permission, isTracking, location, startTracking } =
+  const { permission, isTracking, isLocating, location, error, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
+  const shouldPreferHomeLocation =
+    lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
+  const shouldDeferHomeMapForLocation =
+    shouldPreferHomeLocation &&
+    permission !== "denied" &&
+    location == null &&
+    error == null;
+
+  useEffect(() => {
+    if (
+      !shouldPreferHomeLocation ||
+      location != null ||
+      permission === "denied" ||
+      isTracking ||
+      isLocating ||
+      error != null
+    ) {
+      return;
+    }
+
+    hasPendingLocationRequestRef.current = true;
+    startTracking();
+  }, [
+    error,
+    isLocating,
+    isTracking,
+    location,
+    permission,
+    shouldPreferHomeLocation,
+    startTracking,
+  ]);
 
   const mapBootstrap = useMemo(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) {
@@ -485,7 +517,9 @@ export function IndexPage() {
 
     return resolveMapBootstrapViewport({
       deepLinkCenter,
-      cache: useMapViewportStore.getState().cache,
+      cache: shouldPreferHomeLocation
+        ? null
+        : useMapViewportStore.getState().cache,
       permission,
       gps: permission === "granted" && location ? location : null,
     });
@@ -497,6 +531,7 @@ export function IndexPage() {
     location,
     lockerIdFromQuery,
     loaderData,
+    shouldPreferHomeLocation,
   ]);
 
   useEffect(() => {
@@ -2120,15 +2155,19 @@ export function IndexPage() {
       )}
 
       <NaverMapProvider language={languageTag()}>
-        <NaverMapCanvas
-          key={mapRemountKey}
-          onLoad={handleMapLoad}
-          onWillDestroy={persistMapViewport}
-          onLoadingChange={setIsMapLoading}
-          onErrorChange={setHasMapError}
-          initialCenter={mapBootstrap.center}
-          initialZoom={mapBootstrap.zoom}
-        />
+        {shouldDeferHomeMapForLocation ? (
+          <MapSkeleton />
+        ) : (
+          <NaverMapCanvas
+            key={mapRemountKey}
+            onLoad={handleMapLoad}
+            onWillDestroy={persistMapViewport}
+            onLoadingChange={setIsMapLoading}
+            onErrorChange={setHasMapError}
+            initialCenter={mapBootstrap.center}
+            initialZoom={mapBootstrap.zoom}
+          />
+        )}
         <MyLocationMarker
           map={mapInstance}
           location={location}
