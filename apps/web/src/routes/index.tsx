@@ -2080,7 +2080,7 @@ export function IndexPage() {
     }
   }, [isCameraCentered, location, mapInstance]);
 
-  // 지도 드래그 시 카메라 고정 해제 및 나침반 해제 (GPS는 유지)
+  // 지도 드래그 시 카메라 고정 해제 및 나침반 해제 (GPS는 유지), 바텀시트 snap 다운
   useEffect(() => {
     const maps = typeof window !== "undefined" ? window.naver?.maps : null;
 
@@ -2092,12 +2092,13 @@ export function IndexPage() {
       stopOrientationTracking();
       isPendingFocusRef.current = false;
       mapInstance.setCenter(mapInstance.getCenter());
+      handleMapPress();
     });
 
     return () => {
       maps.Event.removeListener(listener);
     };
-  }, [mapInstance, stopOrientationTracking]);
+  }, [mapInstance, stopOrientationTracking, handleMapPress]);
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
