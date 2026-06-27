@@ -93,6 +93,20 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).toHaveBeenCalled();
   });
 
+  it("should resume tracking from stored consent when Permissions API query fails", async () => {
+    queryMock.mockRejectedValueOnce(new Error("Permissions API failed"));
+    window.localStorage.setItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY, "true");
+
+    const { result } = renderHook(() => useLocationTracking());
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.isTracking).toBe(true);
+    expect(watchPositionMock).toHaveBeenCalled();
+  });
+
   it("should not request location on mount without stored consent when Permissions API is unavailable", async () => {
     Object.defineProperty(global.navigator, "permissions", {
       value: undefined,

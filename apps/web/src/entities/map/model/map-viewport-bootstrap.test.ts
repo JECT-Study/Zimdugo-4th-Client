@@ -57,8 +57,8 @@ describe("map-viewport-bootstrap", () => {
       now: cache.savedAt + 1_000,
     });
 
-    expect(result.center).toEqual(gps);
-    expect(result.zoom).toBe(15);
+    expect(result.center).toEqual(cache.center);
+    expect(result.zoom).toBe(13);
   });
 
   it("캐시가 stale이면 GPS로 초기 center를 잡는다", () => {

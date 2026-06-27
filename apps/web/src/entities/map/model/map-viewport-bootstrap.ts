@@ -92,13 +92,6 @@ export const resolveMapBootstrapViewport = ({
     };
   }
 
-  if (permission === "granted" && gps != null) {
-    return {
-      center: gps,
-      zoom: defaultZoom,
-    };
-  }
-
   const cacheIsFresh =
     cache != null && !isMapViewportCacheStale(cache, { now, gps, permission });
 
@@ -106,6 +99,13 @@ export const resolveMapBootstrapViewport = ({
     return {
       center: cache.center,
       zoom: cache.zoom,
+    };
+  }
+
+  if (permission === "granted" && gps != null) {
+    return {
+      center: gps,
+      zoom: defaultZoom,
     };
   }
 

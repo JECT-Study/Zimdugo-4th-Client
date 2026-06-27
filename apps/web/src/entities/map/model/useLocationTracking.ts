@@ -103,7 +103,11 @@ export function useLocationTracking({
         status.addEventListener("change", handlePermissionChange);
       })
       .catch((err) => {
+        if (isCancelled) return;
         console.warn("Permissions API not supported for geolocation:", err);
+        if (readStoredLocationTrackingConsent()) {
+          setIsTracking(true);
+        }
       });
 
     return () => {
