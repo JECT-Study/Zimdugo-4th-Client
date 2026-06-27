@@ -195,12 +195,20 @@ const getSetIconContent = (marker: FakeMarker | undefined): string => {
 };
 
 const getOffsetStyle = (content: string): string | undefined => {
-  const offsetX = content.match(/--offset-x: (-?\d+)px/)?.[1];
-  const offsetY = content.match(/--offset-y: (-?\d+)px/)?.[1];
+  const offsetX = content.match(/data-offset-x="(-?\d+)"/)?.[1];
+  const offsetY = content.match(/data-offset-y="(-?\d+)"/)?.[1];
 
   if (offsetX == null || offsetY == null) return undefined;
 
   return `${offsetX},${offsetY}`;
+};
+
+const getMarkerAnchor = (marker: FakeMarker | undefined): FakePoint | null => {
+  const options = marker?.options as {
+    icon?: { anchor?: FakePoint };
+  };
+
+  return options.icon?.anchor ?? null;
 };
 
 const getMarkerItemClass = (content: string): string =>
@@ -720,11 +728,17 @@ describe("syncLockerMarkers", () => {
     const placeContent = getMarkerContent(FakeMarker.instances[0]);
     const lockerContent = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(placeContent).toContain("map-marker-offset-active");
-    expect(lockerContent).toContain("map-marker-offset-active");
     expect(
       new Set([getOffsetStyle(placeContent), getOffsetStyle(lockerContent)]),
-    ).toEqual(new Set(["-15,0", "15,0"]));
+    ).toEqual(new Set(["-28,0", "28,0"]));
+    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
+      x: 51.6,
+      y: 28.4,
+    });
+    expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
+      x: -7.7,
+      y: 20.3,
+    });
   });
 
   it("applies spread class and styles when spreadCenter is provided", () => {
@@ -793,13 +807,19 @@ describe("syncLockerMarkers", () => {
     const content1 = getMarkerContent(FakeMarker.instances[0]);
     const content2 = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(content1).toContain("map-marker-offset-active");
-    expect(content1).toContain("--offset-x: 15px");
-    expect(content1).toContain("--offset-y: 0px");
+    expect(content1).toContain('data-offset-x="28"');
+    expect(content1).toContain('data-offset-y="0"');
+    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
+      x: -7.7,
+      y: 20.3,
+    });
 
-    expect(content2).toContain("map-marker-offset-active");
-    expect(content2).toContain("--offset-x: -15px");
-    expect(content2).toContain("--offset-y: 0px");
+    expect(content2).toContain('data-offset-x="-28"');
+    expect(content2).toContain('data-offset-y="0"');
+    expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
+      x: 48.3,
+      y: 20.3,
+    });
   });
 
   it("distributes three or more lockers with the same coordinates", () => {
@@ -822,7 +842,7 @@ describe("syncLockerMarkers", () => {
       getOffsetStyle(getMarkerContent(marker)),
     );
 
-    expect(new Set(offsets)).toEqual(new Set(["15,0", "-7,13", "-8,-13"]));
+    expect(new Set(offsets)).toEqual(new Set(["28,0", "-14,24", "-14,-24"]));
   });
 
   it("keeps the same locker offset when server response order changes", () => {
@@ -843,10 +863,10 @@ describe("syncLockerMarkers", () => {
     const locker102Content = getMarkerContent(FakeMarker.instances[0]);
     const locker101Content = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(locker102Content).toContain("--offset-x: -15px");
-    expect(locker102Content).toContain("--offset-y: 0px");
-    expect(locker101Content).toContain("--offset-x: 15px");
-    expect(locker101Content).toContain("--offset-y: 0px");
+    expect(locker102Content).toContain('data-offset-x="-28"');
+    expect(locker102Content).toContain('data-offset-y="0"');
+    expect(locker101Content).toContain('data-offset-x="28"');
+    expect(locker101Content).toContain('data-offset-y="0"');
   });
 
   it("applies offset to PLACE type markers when coordinates are shared", () => {
@@ -877,10 +897,16 @@ describe("syncLockerMarkers", () => {
     const content1 = getMarkerContent(FakeMarker.instances[0]);
     const content2 = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(content1).toContain("--offset-x");
-    expect(content2).toContain("--offset-x");
-    expect(content1).toContain("map-marker-offset-active");
-    expect(content2).toContain("map-marker-offset-active");
+    expect(content1).toContain("data-offset-x");
+    expect(content2).toContain("data-offset-x");
+    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
+      x: -7.7,
+      y: 20.3,
+    });
+    expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
+      x: 51.6,
+      y: 28.4,
+    });
   });
 
   it("keeps offset styles when an existing spread marker icon is updated", () => {
@@ -922,8 +948,8 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
     expect(content).not.toContain("--spread-x");
     expect(content).not.toContain("--spread-y");
-    expect(content).toContain("--offset-x: 15px");
-    expect(content).toContain("--offset-y: 0px");
+    expect(content).toContain('data-offset-x="28"');
+    expect(content).toContain('data-offset-y="0"');
   });
 
   it("does not replay spread animation when a spread marker becomes selected", () => {
@@ -1006,9 +1032,8 @@ describe("syncLockerMarkers", () => {
     expect(markerItemClass).not.toContain("spread");
     expect(content).not.toContain("--spread-x");
     expect(content).not.toContain("--spread-y");
-    expect(content).toContain("map-marker-offset-active");
-    expect(content).toContain("--offset-x: 15px");
-    expect(content).toContain("--offset-y: 0px");
+    expect(content).toContain('data-offset-x="28"');
+    expect(content).toContain('data-offset-y="0"');
   });
 
   it("does not update unrelated spread markers when selection changes after map projection changes", () => {
@@ -1088,9 +1113,7 @@ describe("syncLockerMarkers", () => {
 
     expect(lockerContent).toContain("map-marker-offset-wrapper");
     expect(placeContent).toContain("map-marker-offset-wrapper");
-    expect(lockerContent).not.toContain("map-marker-offset-active");
-    expect(placeContent).not.toContain("map-marker-offset-active");
-    expect(lockerContent).not.toContain("--offset-x");
-    expect(placeContent).not.toContain("--offset-x");
+    expect(lockerContent).not.toContain("data-offset-x");
+    expect(placeContent).not.toContain("data-offset-x");
   });
 });

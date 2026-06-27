@@ -211,7 +211,3 @@ globalStyle(".map-marker-offset-wrapper", {
   position: "relative",
   transformOrigin: "center center",
 });
-
-globalStyle(".map-marker-offset-wrapper.map-marker-offset-active", {
-  transform: "translate(var(--offset-x, 0px), var(--offset-y, 0px))",
-});

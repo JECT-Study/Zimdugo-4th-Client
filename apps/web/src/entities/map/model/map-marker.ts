@@ -9,7 +9,6 @@ export type LockerMarkerStatus = "active" | "inactive";
 const PLACE_BADGE_FILL = vars.color.palette.green[500];
 const MAP_PIN_WHITE = "white";
 const COORDINATE_GROUP_PRECISION = 4;
-const OFFSET_RADIUS_PX = 15;
 const MARKER_PROXIMITY_THRESHOLD_PX = 44;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
@@ -29,6 +28,7 @@ const PLACE_MARKER_DISPLAY_SIZE = {
   width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
   height: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.height),
 };
+const MARKER_SPREAD_RADIUS_PX = Math.ceil(PLACE_MARKER_DISPLAY_SIZE.width / 2);
 const DEFAULT_MARKER_ANCHOR = {
   x: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.x),
   y: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.y),
@@ -306,8 +306,8 @@ const createCoordinateOffsetMap = (
       const angle = (2 * Math.PI * index) / group.length;
 
       offsetMap.set(getPinId(pin), {
-        offsetX: Math.round(OFFSET_RADIUS_PX * Math.cos(angle)),
-        offsetY: Math.round(OFFSET_RADIUS_PX * Math.sin(angle)),
+        offsetX: Math.round(MARKER_SPREAD_RADIUS_PX * Math.cos(angle)),
+        offsetY: Math.round(MARKER_SPREAD_RADIUS_PX * Math.sin(angle)),
       });
     });
   }
@@ -344,8 +344,8 @@ const createOffsetMapFromGroups = (
         const angle = (2 * Math.PI * index) / group.length;
 
         offsetMap.set(getPinId(pin), {
-          offsetX: Math.round(OFFSET_RADIUS_PX * Math.cos(angle)),
-          offsetY: Math.round(OFFSET_RADIUS_PX * Math.sin(angle)),
+          offsetX: Math.round(MARKER_SPREAD_RADIUS_PX * Math.cos(angle)),
+          offsetY: Math.round(MARKER_SPREAD_RADIUS_PX * Math.sin(angle)),
         });
       });
   }
@@ -433,13 +433,25 @@ const getMarkerSize = (pin: LockerPinItemResponse) => {
   return LOCKER_MARKER_DISPLAY_SIZE;
 };
 
-const getMarkerAnchor = (pin: LockerPinItemResponse) => {
+const getMarkerAnchor = (
+  pin: LockerPinItemResponse,
+  offsetX = 0,
+  offsetY = 0,
+) => {
   if (pin.pinType === "CLUSTER") {
     const pinCount = pin.pinCount ?? 0;
-    return pinCount >= 10 ? CLUSTER_L_ANCHOR : CLUSTER_S_ANCHOR;
+    const anchor = pinCount >= 10 ? CLUSTER_L_ANCHOR : CLUSTER_S_ANCHOR;
+    return {
+      x: anchor.x - offsetX,
+      y: anchor.y - offsetY,
+    };
   }
-  if (pin.pinType === "PLACE") return PLACE_MARKER_ANCHOR;
-  return DEFAULT_MARKER_ANCHOR;
+  const anchor =
+    pin.pinType === "PLACE" ? PLACE_MARKER_ANCHOR : DEFAULT_MARKER_ANCHOR;
+  return {
+    x: anchor.x - offsetX,
+    y: anchor.y - offsetY,
+  };
 };
 
 const createMarkerIconOptions = (
@@ -476,20 +488,19 @@ const createMarkerIconOptions = (
   if (cached) return cached;
 
   const markerSize = getMarkerSize(pin);
-  const markerAnchor = getMarkerAnchor(pin);
+  const markerAnchor = getMarkerAnchor(pin, offsetX ?? 0, offsetY ?? 0);
 
   const spreadClass = shouldAnimateSpread && hasSpread ? "spread" : "";
-  const offsetClass = hasOffset ? " map-marker-offset-active" : "";
   const spreadStyle =
     shouldAnimateSpread && hasSpread
       ? `--spread-x: ${spreadX}px; --spread-y: ${spreadY}px;`
       : "";
-  const offsetStyle = hasOffset
-    ? `--offset-x: ${offsetX}px; --offset-y: ${offsetY}px;`
+  const offsetAttributes = hasOffset
+    ? ` data-offset-x="${offsetX}" data-offset-y="${offsetY}"`
     : "";
 
   const options = {
-    content: `<div class="map-marker-offset-wrapper${offsetClass}" style="width: ${markerSize.width}px; height: ${markerSize.height}px; ${offsetStyle}">
+    content: `<div class="map-marker-offset-wrapper"${offsetAttributes} style="width: ${markerSize.width}px; height: ${markerSize.height}px;">
       <div class="map-marker-item ${animationState} ${spreadClass}" style="width: 100%; height: 100%; ${spreadStyle}">
         ${createLockerMarkerIcon(pin, isSelected)}
       </div>
