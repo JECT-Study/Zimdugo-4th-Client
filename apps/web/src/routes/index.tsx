@@ -2126,6 +2126,7 @@ export function IndexPage() {
       ? handleBackFromMapPlaceSheet
       : handleBackToKeywordList
     : undefined;
+  const listSheetDismissPress = listHeaderLeadingPress ?? resetSearchContext;
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
       focusNaverMapOnClusterBounds({
@@ -2297,7 +2298,7 @@ export function IndexPage() {
           onFavoriteChange={favoriteSession.handleSearchFavoriteChange}
           showHeaderBack={showPlaceSheetBack}
           onHeaderBackPress={listHeaderLeadingPress}
-          onDismiss={listHeaderLeadingPress}
+          onDismiss={listSheetDismissPress}
         />
       ) : null}
 

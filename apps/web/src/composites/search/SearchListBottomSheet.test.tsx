@@ -3,12 +3,26 @@
 import { m, setLanguageTag } from "@repo/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
 
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
-  DraggableBottomSheet: ({ children }: { children: ReactNode }) => (
-    <div data-testid="mock-draggable-bottom-sheet">{children}</div>
-  ),
+  DraggableBottomSheet: (props: {
+    children: ReactNode;
+    dragSensitivity?: number;
+    initialSnapPoint?: number;
+    maxSnapPoint?: number;
+    miniSnapPoint?: number;
+    minSnapPoint?: number;
+    showHomeIndicator?: boolean;
+    snapPoint?: number;
+  }) => {
+    draggableBottomSheetMock(props);
+    return (
+      <div data-testid="mock-draggable-bottom-sheet">{props.children}</div>
+    );
+  },
   resolveBottomSheetExpandedProgress: ({
     maxSnapPoint,
     minSnapPoint,
@@ -36,6 +50,18 @@ import {
 afterEach(cleanup);
 
 describe("SearchListBottomSheet", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 812,
+      writable: true,
+    });
+  });
+
+  afterEach(() => {
+    draggableBottomSheetMock.mockClear();
+  });
+
   it("resolves search-list snaps from visible heights", () => {
     expect(resolveSearchListSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
@@ -58,6 +84,41 @@ describe("SearchListBottomSheet", () => {
         windowHeight: 812,
       }),
     ).toEqual(resolveLegacySearchListSnapPoints({ windowHeight: 812 }));
+  });
+
+  it("passes detail-style snap props to the draggable sheet by default", () => {
+    render(<SearchListBottomSheet searchQuery="강남" items={[]} />);
+
+    expect(draggableBottomSheetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dragSensitivity: 1.2,
+        initialSnapPoint: 331,
+        maxSnapPoint: 760,
+        miniSnapPoint: 570,
+        minSnapPoint: 44,
+        showHomeIndicator: false,
+        snapPoint: 331,
+      }),
+    );
+  });
+
+  it("passes legacy snap props only when explicitly requested", () => {
+    render(
+      <SearchListBottomSheet
+        searchQuery="강남"
+        items={[]}
+        snapBehavior="legacy"
+      />,
+    );
+
+    expect(draggableBottomSheetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxSnapPoint: 768,
+        miniSnapPoint: 549.5,
+        minSnapPoint: 0,
+        snapPoint: 331,
+      }),
+    );
   });
 
   it("keeps caller-provided snap bounds", () => {
