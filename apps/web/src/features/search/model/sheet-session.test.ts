@@ -6,6 +6,7 @@ import {
   isRenderableSheetSession,
   resolveActivePlaceId,
   resolveOverlayReturnContext,
+  resolveSearchBarBackAction,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
   shouldShowIdleMarkers,
@@ -149,12 +150,12 @@ describe("sheet-session v2", () => {
   });
 
   it("마커 표시 조건을 판별한다", () => {
-    expect(
-      shouldShowIdleMarkers({ context: "idle", sheetMode: "idle" }),
-    ).toBe(true);
-    expect(
-      shouldShowIdleMarkers({ context: "map", sheetMode: "list" }),
-    ).toBe(false);
+    expect(shouldShowIdleMarkers({ context: "idle", sheetMode: "idle" })).toBe(
+      true,
+    );
+    expect(shouldShowIdleMarkers({ context: "map", sheetMode: "list" })).toBe(
+      false,
+    );
     expect(
       shouldShowSearchMarkers({
         context: "search",
@@ -258,5 +259,48 @@ describe("sheet-session v2", () => {
         activePlaceId: 42,
       }),
     ).toBe(false);
+  });
+
+  it("검색바 뒤로가기 액션을 검색 시트 상태별로 판정한다", () => {
+    expect(
+      resolveSearchBarBackAction({
+        context: "search",
+        listKind: "place",
+        sheetMode: "list",
+        searchDetailBack: null,
+      }),
+    ).toBe("searchPlaceList");
+    expect(
+      resolveSearchBarBackAction({
+        context: "search",
+        listKind: "keyword",
+        sheetMode: "list",
+        searchDetailBack: null,
+      }),
+    ).toBe("searchKeywordList");
+    expect(
+      resolveSearchBarBackAction({
+        context: "search",
+        listKind: "keyword",
+        sheetMode: "filter",
+        searchDetailBack: null,
+      }),
+    ).toBe("searchFilter");
+    expect(
+      resolveSearchBarBackAction({
+        context: "search",
+        listKind: "keyword",
+        sheetMode: "detail",
+        searchDetailBack: createKeywordDetailBackTarget(),
+      }),
+    ).toBe("searchDetail");
+    expect(
+      resolveSearchBarBackAction({
+        context: "search",
+        listKind: "keyword",
+        sheetMode: "detail",
+        searchDetailBack: null,
+      }),
+    ).toBeNull();
   });
 });

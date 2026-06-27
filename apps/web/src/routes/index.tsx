@@ -132,6 +132,7 @@ import {
   type OverlayReturnContext,
   resolveActivePlaceId,
   resolveOverlayReturnContext,
+  resolveSearchBarBackAction,
   type SearchDetailBackTarget,
   type SearchListKind,
   type SheetModeForContext,
@@ -1960,6 +1961,10 @@ export function IndexPage() {
     setSheetMode("list");
   }, [flushLockerSheetMutations, searchDraft]);
 
+  const handleBackFromSearchFilter = useCallback(() => {
+    setSheetMode("list");
+  }, []);
+
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
   }, [setSheetMode]);
@@ -2263,21 +2268,30 @@ export function IndexPage() {
 
     return new Map([[selectedPinId, selectedMapPinOffset]]);
   }, [selectedPinId, selectedMapPinOffset]);
-  const showPlaceSheetBack =
-    context === "map" || (context === "search" && listKind === "place");
-  const showKeywordSheetBack =
-    context === "search" && listKind === "keyword" && sheetMode === "list";
-  const listHeaderLeadingPress = showPlaceSheetBack
-    ? context === "map"
+  const searchBarBackAction = resolveSearchBarBackAction({
+    context,
+    listKind,
+    sheetMode,
+    searchDetailBack,
+  });
+  const searchBarBackPress =
+    searchBarBackAction === "mapPlaceList"
       ? handleBackFromMapPlaceSheet
-      : handleBackToKeywordList
-    : undefined;
-  const searchBarBackPress = listHeaderLeadingPress
-    ? listHeaderLeadingPress
-    : showKeywordSheetBack
-      ? resetSearchContext
-      : undefined;
-  const listSheetDismissPress = listHeaderLeadingPress ?? resetSearchContext;
+      : searchBarBackAction === "searchDetail"
+        ? handleBackFromDetail
+        : searchBarBackAction === "searchFilter"
+          ? handleBackFromSearchFilter
+          : searchBarBackAction === "searchPlaceList"
+            ? handleBackToKeywordList
+            : searchBarBackAction === "searchKeywordList"
+              ? resetSearchContext
+              : undefined;
+  const listSheetDismissPress =
+    searchBarBackAction === "mapPlaceList"
+      ? handleBackFromMapPlaceSheet
+      : searchBarBackAction === "searchPlaceList"
+        ? handleBackToKeywordList
+        : resetSearchContext;
   const searchListSheetKey =
     context === "search" && listKind === "keyword"
       ? `search-keyword-${searchQuery}`
@@ -2371,7 +2385,7 @@ export function IndexPage() {
           onBackPress={searchBarBackPress}
           onCloseSearchContext={handleExitSearchContext}
           searchQuery={searchQuery}
-          showBackButton={showPlaceSheetBack || showKeywordSheetBack}
+          showBackButton={searchBarBackPress !== undefined}
           isSearchContextActive={context === "search"}
         />
       ) : null}

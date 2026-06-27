@@ -19,6 +19,13 @@ export type SearchDetailBackTarget = {
 /** map context detail ‹ */
 export type MapDetailBack = "placeList" | "idle";
 
+export type SearchBarBackAction =
+  | "mapPlaceList"
+  | "searchDetail"
+  | "searchFilter"
+  | "searchKeywordList"
+  | "searchPlaceList";
+
 export const createKeywordDetailBackTarget = (): SearchDetailBackTarget => ({
   listKind: "keyword",
   placeId: null,
@@ -70,7 +77,10 @@ export const shouldFetchKeywordSearch = (input: {
   searchDetailBack: SearchDetailBackTarget | null;
   searchQuery: string;
 }): boolean => {
-  if (input.context !== "search" || !getValidatedSearchQuery(input.searchQuery)) {
+  if (
+    input.context !== "search" ||
+    !getValidatedSearchQuery(input.searchQuery)
+  ) {
     return false;
   }
 
@@ -137,6 +147,41 @@ export const shouldShowSearchMarkers = (input: {
   }
 
   return true;
+};
+
+export const resolveSearchBarBackAction = (input: {
+  context: AppMapContext;
+  listKind: SearchListKind | null;
+  sheetMode: SheetModeForContext;
+  searchDetailBack: SearchDetailBackTarget | null;
+}): SearchBarBackAction | null => {
+  if (input.context === "map" && input.sheetMode !== "idle") {
+    return "mapPlaceList";
+  }
+
+  if (input.context !== "search") {
+    return null;
+  }
+
+  if (input.sheetMode === "detail") {
+    return input.searchDetailBack ? "searchDetail" : null;
+  }
+
+  if (input.sheetMode === "filter") {
+    return "searchFilter";
+  }
+
+  if (input.sheetMode === "list") {
+    if (input.listKind === "place") {
+      return "searchPlaceList";
+    }
+
+    if (input.listKind === "keyword") {
+      return "searchKeywordList";
+    }
+  }
+
+  return null;
 };
 
 /** fetch가 비활성화된 쿼리는 isPending이 true로 남아 스켈레톤이 멈추지 않을 수 있다 */
