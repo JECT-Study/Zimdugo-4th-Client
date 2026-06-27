@@ -173,4 +173,26 @@ describe("LockerDetailBottomSheet", () => {
     expect(image.getAttribute("src")).toBe("https://example.com/locker.jpg");
     expect(sheet.queryByText("아직 이미지가 없어요.")).toBeNull();
   });
+
+  it("opens original image preview when detail image is clicked", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          imageUrl: "https://example.com/locker.jpg",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "사진" }));
+
+    const dialog = screen.getByRole("dialog", { name: "사진" });
+    expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
+      "https://example.com/locker.jpg",
+    );
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+
+    expect(screen.queryByRole("dialog", { name: "사진" })).toBeNull();
+  });
 });
