@@ -1,4 +1,4 @@
-import { IconSearchRecentItem24, IconX16 } from "@repo/ui/tokens/icons";
+import { IconX16 } from "@repo/ui/tokens/icons";
 import type { ReactNode } from "react";
 import { Button, type ButtonProps } from "react-aria-components";
 import {
@@ -28,11 +28,11 @@ export interface SearchListRecentProps {
 function RecentHistoryIcon({ kind }: { kind: SearchListRecentKind }) {
   switch (kind) {
     case "locker":
-      return <SearchMarkerIcon kind="locker" tone="muted" />;
+      return <SearchMarkerIcon kind="locker" />;
     case "place":
-      return <SearchMarkerIcon kind="place" tone="muted" />;
+      return <SearchMarkerIcon kind="place" />;
     default:
-      return <IconSearchRecentItem24 />;
+      return <SearchMarkerIcon kind="place" tone="muted" />;
   }
 }
 

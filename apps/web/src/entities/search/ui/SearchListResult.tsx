@@ -130,7 +130,7 @@ export function SearchListResult({
           aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
         >
           <span className={resultContent}>
-            <ResultMarker tone="place" isClosed={item.isOpen === false} />
+            <ResultMarker tone="place" />
             <span className={resultTextColumn}>
               <span className={titleText}>{item.title}</span>
               <span className={detailMetaRow}>
@@ -207,10 +207,7 @@ export function SearchLockerResult({
         aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
       >
         <span className={resultContent}>
-          <ResultMarker
-            tone={isNested ? "locker" : "standalone"}
-            isClosed={item.isOpen === false}
-          />
+          <ResultMarker tone={isNested ? "locker" : "standalone"} />
           <span className={resultTextColumn}>
             <span className={titleText}>{item.title}</span>
             <span className={detailMetaRow}>
@@ -246,18 +243,12 @@ export function SearchLockerResult({
   );
 }
 
-function ResultMarker({
-  tone,
-  isClosed,
-}: {
-  tone: "place" | "locker" | "standalone";
-  isClosed?: boolean;
-}) {
+function ResultMarker({ tone }: { tone: "place" | "locker" | "standalone" }) {
   return (
     <span className={markerBadge} aria-hidden="true">
       <SearchMarkerIcon
         kind={tone === "place" ? "place" : "locker"}
-        tone={isClosed ? "muted" : "brand"}
+        tone="brand"
       />
     </span>
   );
