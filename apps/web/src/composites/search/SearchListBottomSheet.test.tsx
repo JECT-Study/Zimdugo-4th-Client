@@ -66,7 +66,7 @@ describe("SearchListBottomSheet", () => {
     expect(resolveSearchListSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
       miniSnapPoint: 570,
-      minSnapPoint: 60,
+      minSnapPoint: 112,
       snapPoint: 331,
     });
   });
@@ -95,7 +95,7 @@ describe("SearchListBottomSheet", () => {
         initialSnapPoint: 331,
         maxSnapPoint: 760,
         miniSnapPoint: 570,
-        minSnapPoint: 60,
+        minSnapPoint: 112,
         showHomeIndicator: false,
         snapPoint: 331,
       }),

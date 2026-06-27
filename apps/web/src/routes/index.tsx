@@ -2127,6 +2127,10 @@ export function IndexPage() {
       : handleBackToKeywordList
     : undefined;
   const listSheetDismissPress = listHeaderLeadingPress ?? resetSearchContext;
+  const searchListSheetKey =
+    context === "search" && listKind === "keyword"
+      ? `search-keyword-${searchQuery}`
+      : `${context}-${listKind ?? "none"}-${activePlaceId ?? "none"}`;
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
       focusNaverMapOnClusterBounds({
@@ -2284,6 +2288,7 @@ export function IndexPage() {
 
       {!isMapLoading && sheetMode === "list" && !isSearchOpen ? (
         <SearchListBottomSheet
+          key={searchListSheetKey}
           searchQuery={searchQuery}
           items={searchBottomSheetDisplayItems}
           placeName={activePlaceName}
