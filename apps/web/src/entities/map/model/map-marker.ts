@@ -33,7 +33,7 @@ const PLACE_MARKER_DISPLAY_SIZE = {
   width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
   height: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.height),
 };
-const MARKER_SPREAD_RADIUS_PX = Math.ceil(PLACE_MARKER_DISPLAY_SIZE.width / 2);
+const MARKER_SPREAD_RADIUS_PX = 24;
 const DEFAULT_MARKER_ANCHOR = {
   x: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.x),
   y: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.y),

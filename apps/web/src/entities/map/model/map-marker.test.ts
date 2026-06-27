@@ -733,13 +733,13 @@ describe("syncLockerMarkers", () => {
 
     expect(
       new Set([getOffsetStyle(placeContent), getOffsetStyle(lockerContent)]),
-    ).toEqual(new Set(["-28,0", "28,0"]));
+    ).toEqual(new Set(["-24,0", "24,0"]));
     expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
-      x: 51.6,
+      x: 47.6,
       y: 28.4,
     });
     expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
-      x: -7.7,
+      x: -3.7,
       y: 20.3,
     });
   });
@@ -810,17 +810,17 @@ describe("syncLockerMarkers", () => {
     const content1 = getMarkerContent(FakeMarker.instances[0]);
     const content2 = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(content1).toContain('data-offset-x="28"');
+    expect(content1).toContain('data-offset-x="24"');
     expect(content1).toContain('data-offset-y="0"');
     expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
-      x: -7.7,
+      x: -3.7,
       y: 20.3,
     });
 
-    expect(content2).toContain('data-offset-x="-28"');
+    expect(content2).toContain('data-offset-x="-24"');
     expect(content2).toContain('data-offset-y="0"');
     expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
-      x: 48.3,
+      x: 44.3,
       y: 20.3,
     });
   });
@@ -837,15 +837,15 @@ describe("syncLockerMarkers", () => {
       maps,
       lockers: [pin],
       selectedPinId: "LOCKER-101",
-      preservedOffsets: new Map([["LOCKER-101", { offsetX: 28, offsetY: 0 }]]),
+      preservedOffsets: new Map([["LOCKER-101", { offsetX: 24, offsetY: 0 }]]),
     });
 
     const content = getMarkerContent(FakeMarker.instances[0]);
 
-    expect(content).toContain('data-offset-x="28"');
+    expect(content).toContain('data-offset-x="24"');
     expect(content).toContain('data-offset-y="0"');
     expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
-      x: -7.7,
+      x: -3.7,
       y: 20.3,
     });
   });
@@ -870,7 +870,7 @@ describe("syncLockerMarkers", () => {
       getOffsetStyle(getMarkerContent(marker)),
     );
 
-    expect(new Set(offsets)).toEqual(new Set(["28,0", "-14,24", "-14,-24"]));
+    expect(new Set(offsets)).toEqual(new Set(["24,0", "-12,21", "-12,-21"]));
   });
 
   it("keeps the same locker offset when server response order changes", () => {
@@ -891,9 +891,9 @@ describe("syncLockerMarkers", () => {
     const locker102Content = getMarkerContent(FakeMarker.instances[0]);
     const locker101Content = getMarkerContent(FakeMarker.instances[1]);
 
-    expect(locker102Content).toContain('data-offset-x="-28"');
+    expect(locker102Content).toContain('data-offset-x="-24"');
     expect(locker102Content).toContain('data-offset-y="0"');
-    expect(locker101Content).toContain('data-offset-x="28"');
+    expect(locker101Content).toContain('data-offset-x="24"');
     expect(locker101Content).toContain('data-offset-y="0"');
   });
 
@@ -928,11 +928,11 @@ describe("syncLockerMarkers", () => {
     expect(content1).toContain("data-offset-x");
     expect(content2).toContain("data-offset-x");
     expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
-      x: -7.7,
+      x: -3.7,
       y: 20.3,
     });
     expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
-      x: 51.6,
+      x: 47.6,
       y: 28.4,
     });
   });
@@ -976,7 +976,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
     expect(content).not.toContain("--spread-x");
     expect(content).not.toContain("--spread-y");
-    expect(content).toContain('data-offset-x="28"');
+    expect(content).toContain('data-offset-x="24"');
     expect(content).toContain('data-offset-y="0"');
   });
 
@@ -1060,7 +1060,7 @@ describe("syncLockerMarkers", () => {
     expect(markerItemClass).not.toContain("spread");
     expect(content).not.toContain("--spread-x");
     expect(content).not.toContain("--spread-y");
-    expect(content).toContain('data-offset-x="28"');
+    expect(content).toContain('data-offset-x="24"');
     expect(content).toContain('data-offset-y="0"');
   });
 
