@@ -24,29 +24,6 @@ const MAP_AUTH_ERROR_SIGNATURES = [
 ];
 
 const MAP_BOOTSTRAP_TIMEOUT_MS = 3_000;
-const PINCH_ZOOM_STEP_THRESHOLD = 0.18;
-const MIN_PINCH_ZOOM = 6;
-const MAX_PINCH_ZOOM = 21;
-const MAP_PINCH_ZOOM_DISABLED_SELECTOR =
-  '[data-map-pinch-zoom-disabled="true"], [aria-modal="true"], [role="dialog"]';
-
-const isPinchZoomTargetAllowed = (target: EventTarget | null) => {
-  if (!(target instanceof Element)) return true;
-
-  return target.closest(MAP_PINCH_ZOOM_DISABLED_SELECTOR) == null;
-};
-
-const getTouchDistance = (touches: TouchList) => {
-  const firstTouch = touches.item(0);
-  const secondTouch = touches.item(1);
-
-  if (!firstTouch || !secondTouch) return null;
-
-  return Math.hypot(
-    firstTouch.clientX - secondTouch.clientX,
-    firstTouch.clientY - secondTouch.clientY,
-  );
-};
 
 const getMapErrorMessage = (message?: string) => {
   if (!message) return m.map_error_default_message();
@@ -85,7 +62,6 @@ export function NaverMapCanvas({
   const { status, isReady, maps, error, reload } = useNaverMapSdk();
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [isMapBootstrapping, setIsMapBootstrapping] = useState(false);
-  const [gestureMap, setGestureMap] = useState<naver.maps.Map | null>(null);
 
   const onLoadRef = useRef(onLoad);
   onLoadRef.current = onLoad;
@@ -148,6 +124,7 @@ export function NaverMapCanvas({
           zoomControl: false,
           scaleControl: true,
           mapDataControl: false,
+          pinchZoom: true,
         });
 
         if (cancelled) {
@@ -157,7 +134,6 @@ export function NaverMapCanvas({
 
         map.setSize(new maps.Size(size.width, size.height));
         mapRef.current = map;
-        setGestureMap(map);
         onLoadRef.current?.(map);
 
         bootstrapIdleListener = maps.Event.addListener(map, "idle", () => {
@@ -223,77 +199,11 @@ export function NaverMapCanvas({
         onWillDestroyRef.current?.(mapRef.current);
         mapRef.current.destroy();
         mapRef.current = null;
-        setGestureMap(null);
         onLoadRef.current?.(null);
       }
       setIsMapBootstrapping(false);
     };
   }, [isReady, maps]);
-
-  useEffect(() => {
-    const map = gestureMap;
-    if (!map) return;
-
-    let startDistance: number | null = null;
-    let startZoom = map.getZoom?.() ?? initialZoomRef.current;
-    let lastAppliedZoom = startZoom;
-
-    const handleTouchStart = (event: TouchEvent) => {
-      if (
-        event.touches.length !== 2 ||
-        !isPinchZoomTargetAllowed(event.target)
-      ) {
-        startDistance = null;
-        return;
-      }
-
-      startDistance = getTouchDistance(event.touches);
-      startZoom = map.getZoom?.() ?? initialZoomRef.current;
-      lastAppliedZoom = startZoom;
-    };
-
-    const handleTouchMove = (event: TouchEvent) => {
-      if (event.touches.length !== 2 || startDistance == null) return;
-
-      const currentDistance = getTouchDistance(event.touches);
-      if (currentDistance == null || startDistance <= 0) return;
-
-      event.preventDefault();
-
-      const zoomDelta = Math.log2(currentDistance / startDistance);
-      if (Math.abs(zoomDelta) < PINCH_ZOOM_STEP_THRESHOLD) return;
-
-      const nextZoom = Math.min(
-        MAX_PINCH_ZOOM,
-        Math.max(MIN_PINCH_ZOOM, Math.round(startZoom + zoomDelta)),
-      );
-
-      if (nextZoom === lastAppliedZoom) return;
-
-      map.setZoom(nextZoom, true);
-      lastAppliedZoom = nextZoom;
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      if (event.touches.length < 2) {
-        startDistance = null;
-      }
-    };
-
-    document.addEventListener("touchstart", handleTouchStart, {
-      passive: true,
-    });
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("touchend", handleTouchEnd, { passive: true });
-    document.addEventListener("touchcancel", handleTouchEnd, { passive: true });
-
-    return () => {
-      document.removeEventListener("touchstart", handleTouchStart);
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", handleTouchEnd);
-      document.removeEventListener("touchcancel", handleTouchEnd);
-    };
-  }, [gestureMap]);
 
   useEffect(() => {
     onLoadingChangeRef.current?.(isLoading);
