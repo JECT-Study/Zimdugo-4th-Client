@@ -1,23 +1,22 @@
 import { describe, expect, it } from "vitest";
 import type {
-  LockerVoteBaseline,
   LockerVotePending,
+  LockerVotePendingEntry,
 } from "./vote-locker-session";
 import {
-  applySuccessfulVoteFlush,
   buildVoteFlushOperations,
+  computeVoteDetailAfterFlush,
   effectiveVoteToServerState,
   getEffectiveVote,
   getEffectiveVoteCounts,
   getEffectiveVoteFlags,
   rollbackFailedVoteFlush,
-  seedVoteBaseline,
   serverVoteStateToEffective,
   toggleVotePending,
 } from "./vote-locker-session";
 
 describe("vote-locker-session", () => {
-  it("서버 boolean 플래그를 effective vote로 변환한다", () => {
+  it("converts server boolean flags to effective vote", () => {
     expect(
       serverVoteStateToEffective({
         isAccurateVoted: true,
@@ -38,116 +37,48 @@ describe("vote-locker-session", () => {
     ).toBeNull();
   });
 
-  it("펜딩 중인 변경 사항이 없을 때만 서버 투표 상태로 baseline을 갱신한다", () => {
-    const baseline = new Map();
-
-    seedVoteBaseline(
-      baseline,
-      1,
-      {
-        isAccurateVoted: true,
-        isInaccurateVoted: false,
-        accurateCount: 3,
-        inaccurateCount: 1,
-      },
-      false,
-    );
-
-    seedVoteBaseline(
-      baseline,
-      1,
-      {
-        isAccurateVoted: false,
-        isInaccurateVoted: true,
-        accurateCount: 99,
-        inaccurateCount: 99,
-      },
-      false,
-    );
-
-    expect(baseline.get(1)).toEqual({
-      vote: "INCORRECT",
-      accurateCount: 99,
-      inaccurateCount: 99,
+  it("keeps the server vote when the same vote is clicked again", () => {
+    const pending = toggleVotePending(new Map(), 1, "CORRECT", {
+      isAccurateVoted: true,
+      isInaccurateVoted: false,
     });
 
-    seedVoteBaseline(
-      baseline,
-      1,
-      {
-        isAccurateVoted: true,
-        isInaccurateVoted: false,
-        accurateCount: 3,
-        inaccurateCount: 1,
-      },
-      true,
-    );
-
-    expect(baseline.get(1)).toEqual({
-      vote: "INCORRECT",
-      accurateCount: 99,
-      inaccurateCount: 99,
+    expect(pending.get(1)).toEqual({
+      nextVote: null,
+      serverVote: "CORRECT",
     });
   });
 
-  it("동일 투표를 다시 누르면 pending에서 취소한다", () => {
-    const baseline = new Map([
-      [
-        1,
-        { vote: "CORRECT" as const, accurateCount: 3, inaccurateCount: 0 },
-      ],
-    ]);
-    const pending = toggleVotePending(
-      baseline,
-      new Map(),
-      1,
-      "CORRECT",
-      { isAccurateVoted: true, isInaccurateVoted: false },
-    );
-
-    expect(pending.get(1)).toBeNull();
-  });
-
-  it("다른 투표를 누르면 pending을 변경한다", () => {
-    const baseline = new Map([
-      [
-        1,
-        { vote: "CORRECT" as const, accurateCount: 3, inaccurateCount: 0 },
-      ],
-    ]);
-    const pending = toggleVotePending(
-      baseline,
-      new Map(),
-      1,
-      "INCORRECT",
-      { isAccurateVoted: true, isInaccurateVoted: false },
-    );
+  it("uses the clicked vote when a different vote is selected", () => {
+    const pending = toggleVotePending(new Map(), 1, "INCORRECT", {
+      isAccurateVoted: true,
+      isInaccurateVoted: false,
+    });
 
     expect(
-      getEffectiveVote(pending, baseline, 1, {
+      getEffectiveVote(pending, 1, {
         isAccurateVoted: true,
         isInaccurateVoted: false,
       }),
     ).toBe("INCORRECT");
   });
 
-  it("effective vote를 UI boolean 플래그로 변환한다", () => {
-    const baseline = new Map([
-      [1, { vote: "INCORRECT" as const, accurateCount: 1, inaccurateCount: 2 }],
+  it("converts effective vote to UI flags", () => {
+    const pending: LockerVotePending = new Map([
+      [1, { nextVote: "CORRECT", serverVote: "INCORRECT" }],
     ]);
-    const pending = new Map([[1, "CORRECT" as const]]);
 
     expect(
-      getEffectiveVoteFlags(pending, baseline, 1, {
+      getEffectiveVoteFlags(pending, 1, {
         isAccurateVoted: false,
         isInaccurateVoted: true,
       }),
     ).toEqual(effectiveVoteToServerState("CORRECT"));
   });
 
-  it("서버가 제공하지 않은 카운트는 overlay에서 undefined를 유지한다", () => {
+  it("keeps undefined counts when server does not provide them", () => {
     expect(
-      getEffectiveVoteCounts(new Map(), new Map(), 1, {
+      getEffectiveVoteCounts(new Map(), 1, {
         isAccurateVoted: false,
         isInaccurateVoted: false,
         accurateCount: 5,
@@ -158,20 +89,14 @@ describe("vote-locker-session", () => {
     });
   });
 
-  it("pending overlay가 카운트를 낙관적으로 반영한다", () => {
-    const baseline = new Map([
-      [1, { vote: null, accurateCount: 10, inaccurateCount: 2 }],
-    ]);
-    const pending = toggleVotePending(
-      baseline,
-      new Map(),
-      1,
-      "CORRECT",
-      { isAccurateVoted: false, isInaccurateVoted: false },
-    );
+  it("applies pending vote to counts optimistically", () => {
+    const pending = toggleVotePending(new Map(), 1, "CORRECT", {
+      isAccurateVoted: false,
+      isInaccurateVoted: false,
+    });
 
     expect(
-      getEffectiveVoteCounts(pending, baseline, 1, {
+      getEffectiveVoteCounts(pending, 1, {
         isAccurateVoted: false,
         isInaccurateVoted: false,
         accurateCount: 10,
@@ -183,59 +108,80 @@ describe("vote-locker-session", () => {
     });
   });
 
-  it("flush 시 baseline 대비 변경분만 압축한다", () => {
-    const baseline: LockerVoteBaseline = new Map([
-      [1, { vote: null, accurateCount: 1, inaccurateCount: 0 }],
-      [2, { vote: "CORRECT" as const, accurateCount: 2, inaccurateCount: 0 }],
-    ]);
+  it("builds flush operations only for server differences", () => {
     const pending: LockerVotePending = new Map([
-      [1, "CORRECT"],
-      [2, null],
+      [1, { nextVote: "CORRECT", serverVote: null }],
+      [2, { nextVote: null, serverVote: "CORRECT" }],
     ]);
-
-    expect(buildVoteFlushOperations(baseline, pending)).toEqual([
+    expect(buildVoteFlushOperations(pending)).toEqual([
       { lockerId: 1, voteType: "CORRECT" },
       { lockerId: 2, voteType: "CORRECT" },
     ]);
   });
 
-  it("flush 성공 시 baseline과 pending을 갱신한다", () => {
-    const baseline: LockerVoteBaseline = new Map([
-      [1, { vote: null, accurateCount: 1, inaccurateCount: 0 }],
+  it("keeps cancel operations when the server cache is missing", () => {
+    const pending: LockerVotePending = new Map([
+      [2, { nextVote: null, serverVote: "CORRECT" }],
     ]);
-    const pending: LockerVotePending = new Map([[1, "CORRECT"]]);
 
-    const next = applySuccessfulVoteFlush(baseline, pending, [1]);
+    expect(buildVoteFlushOperations(pending)).toEqual([
+      { lockerId: 2, voteType: "CORRECT" },
+    ]);
+  });
 
-    expect(next.baseline.get(1)).toEqual({
-      vote: "CORRECT",
+  it("computes detail cache patch after flush", () => {
+    expect(
+      computeVoteDetailAfterFlush(
+        {
+          isAccurateVoted: false,
+          isInaccurateVoted: false,
+          accurateCount: 1,
+          inaccurateCount: 0,
+        },
+        "CORRECT",
+      ),
+    ).toEqual({
+      voteFlags: effectiveVoteToServerState("CORRECT"),
       accurateCount: 2,
       inaccurateCount: 0,
     });
-    expect(next.pending.size).toBe(0);
   });
 
-  it("flush 실패 locker는 flush 시작 시점과 동일한 pending만 롤백한다", () => {
+  it("rolls back unchanged failed pending entries", () => {
+    const firstEntry: LockerVotePendingEntry = {
+      nextVote: "CORRECT",
+      serverVote: null,
+    };
+    const secondEntry: LockerVotePendingEntry = {
+      nextVote: "INCORRECT",
+      serverVote: null,
+    };
     const pendingSnapshot: LockerVotePending = new Map([
-      [1, "CORRECT"],
-      [2, "INCORRECT"],
+      [1, firstEntry],
+      [2, secondEntry],
     ]);
     const pending = new Map(pendingSnapshot);
 
     expect(
       rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(1),
     ).toBeUndefined();
-    expect(
-      rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(2),
-    ).toBe("INCORRECT");
+    expect(rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(2)).toBe(
+      secondEntry,
+    );
   });
 
-  it("flush 실패 후 변경된 pending은 유지한다", () => {
-    const pendingSnapshot: LockerVotePending = new Map([[1, "CORRECT"]]);
-    const pending: LockerVotePending = new Map([[1, "INCORRECT"]]);
+  it("keeps pending entries changed after failed flush started", () => {
+    const changedEntry: LockerVotePendingEntry = {
+      nextVote: "INCORRECT",
+      serverVote: null,
+    };
+    const pendingSnapshot: LockerVotePending = new Map([
+      [1, { nextVote: "CORRECT", serverVote: null }],
+    ]);
+    const pending: LockerVotePending = new Map([[1, changedEntry]]);
 
-    expect(
-      rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(1),
-    ).toBe("INCORRECT");
+    expect(rollbackFailedVoteFlush(pending, [1], pendingSnapshot).get(1)).toBe(
+      changedEntry,
+    );
   });
 });

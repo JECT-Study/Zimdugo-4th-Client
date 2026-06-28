@@ -418,7 +418,13 @@ export function LockerDetailBottomSheet({
     ? m.search_favorite_remove()
     : m.search_favorite_add();
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
+  const canFavorite = typeof onFavoriteChange === "function";
+
   const handleFavoritePress = () => {
+    if (!canFavorite) {
+      return;
+    }
+
     onFavoriteChange?.(locker, !locker.isFavorite);
   };
 
@@ -516,6 +522,7 @@ export function LockerDetailBottomSheet({
             locker={locker}
             detailHelpText={detailHelpText}
             favoriteLabel={favoriteLabel}
+            canFavorite={canFavorite}
             onFavoritePress={handleFavoritePress}
             onClose={handleBack}
             onShare={handleShare}
@@ -636,6 +643,7 @@ function FullDetailContent({
   locker,
   detailHelpText,
   favoriteLabel,
+  canFavorite,
   onFavoritePress,
   onClose,
   onShare,
@@ -647,6 +655,7 @@ function FullDetailContent({
   locker: LockerDetailItem;
   detailHelpText: string;
   favoriteLabel: string;
+  canFavorite: boolean;
   onFavoritePress: () => void;
   onClose: () => void;
   onShare: () => void;
@@ -655,10 +664,10 @@ function FullDetailContent({
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
-  const hasFeedbackVotes =
-    locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
-  const canVote = typeof onVoteChange === "function";
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const canVote = typeof onVoteChange === "function";
+  const accurateCount = locker.accurateCount ?? 0;
+  const inaccurateCount = locker.inaccurateCount ?? 0;
 
   const handleVotePress = (voteType: LockerVoteType) => {
     if (!canVote) {
@@ -705,6 +714,7 @@ function FullDetailContent({
         <SummarySection
           locker={locker}
           favoriteLabel={favoriteLabel}
+          canFavorite={canFavorite}
           onFavoritePress={onFavoritePress}
           onClose={onClose}
         />
@@ -744,57 +754,47 @@ function FullDetailContent({
         {locker.lastUpdatedLabel ? (
           <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
-        {hasFeedbackVotes ? (
-          <div className={feedbackActionSection}>
-            <div className={feedbackRow}>
-              {locker.accurateCount !== undefined ? (
-                <button
-                  type="button"
-                  disabled={!canVote}
-                  aria-disabled={!canVote}
-                  className={[
-                    feedbackButton,
-                    locker.isAccurateVoted ? feedbackButtonSelected : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-pressed={locker.isAccurateVoted === true}
-                  onClick={() => handleVotePress("CORRECT")}
-                >
-                  {m.locker_detail_feedback_accurate({
-                    count: String(locker.accurateCount),
-                  })}
-                </button>
-              ) : null}
-              {locker.inaccurateCount !== undefined ? (
-                <button
-                  type="button"
-                  disabled={!canVote}
-                  aria-disabled={!canVote}
-                  className={[
-                    feedbackButton,
-                    feedbackButtonNegative,
-                    locker.isInaccurateVoted
-                      ? feedbackButtonNegativeSelected
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-pressed={locker.isInaccurateVoted === true}
-                  onClick={() => handleVotePress("INCORRECT")}
-                >
-                  {m.locker_detail_feedback_inaccurate({
-                    count: String(locker.inaccurateCount),
-                  })}
-                </button>
-              ) : null}
-            </div>
-            <div className={actionDivider} />
-            <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+        <div className={feedbackActionSection}>
+          <div className={feedbackRow}>
+            <button
+              type="button"
+              disabled={!canVote}
+              aria-disabled={!canVote}
+              className={[
+                feedbackButton,
+                locker.isAccurateVoted ? feedbackButtonSelected : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={locker.isAccurateVoted === true}
+              onClick={() => handleVotePress("CORRECT")}
+            >
+              {m.locker_detail_feedback_accurate({
+                count: String(accurateCount),
+              })}
+            </button>
+            <button
+              type="button"
+              disabled={!canVote}
+              aria-disabled={!canVote}
+              className={[
+                feedbackButton,
+                feedbackButtonNegative,
+                locker.isInaccurateVoted ? feedbackButtonNegativeSelected : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={locker.isInaccurateVoted === true}
+              onClick={() => handleVotePress("INCORRECT")}
+            >
+              {m.locker_detail_feedback_inaccurate({
+                count: String(inaccurateCount),
+              })}
+            </button>
           </div>
-        ) : (
+          <div className={actionDivider} />
           <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
-        )}
+        </div>
       </div>
       {previewImageUrl ? (
         <ImagePreviewOverlay
@@ -824,11 +824,13 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
 function SummarySection({
   locker,
   favoriteLabel,
+  canFavorite,
   onFavoritePress,
   onClose,
 }: {
   locker: LockerDetailItem;
   favoriteLabel: string;
+  canFavorite: boolean;
   onFavoritePress: () => void;
   onClose: () => void;
 }) {
@@ -859,6 +861,8 @@ function SummarySection({
             className={favoriteButton}
             onClick={onFavoritePress}
             aria-label={favoriteLabel}
+            disabled={!canFavorite}
+            aria-disabled={!canFavorite}
           >
             {locker.isFavorite ? (
               <IconStarFilled24 size={24} />

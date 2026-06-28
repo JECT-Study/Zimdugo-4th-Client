@@ -238,6 +238,8 @@
   "my_favorites_list_aria": "즐겨찾기 목록",
   "my_favorites_empty_title": "즐겨찾기가 없어요",
   "my_favorites_empty": "아직 즐겨찾기가 없어요\n맘에드는 보관함을 등록해주세요!",
+  "my_favorites_empty_title_en": "No favorite lockers yet",
+  "my_favorites_empty_en": "Save lockers you like here",
   "my_favorite_delete": "삭제",
   "my_favorite_delete_toast": "즐겨찾기에서 삭제했습니다",
   "my_favorite_delete_undo": "실행 취소",

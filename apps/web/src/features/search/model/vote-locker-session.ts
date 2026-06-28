@@ -7,14 +7,12 @@ export type LockerVoteServerState = {
   isInaccurateVoted?: boolean;
 };
 
-export type LockerVoteBaselineEntry = {
-  vote: EffectiveLockerVote;
-  accurateCount: number;
-  inaccurateCount: number;
-};
+export interface LockerVotePendingEntry {
+  nextVote: EffectiveLockerVote;
+  serverVote: EffectiveLockerVote;
+}
 
-export type LockerVoteBaseline = Map<number, LockerVoteBaselineEntry>;
-export type LockerVotePending = Map<number, EffectiveLockerVote>;
+export type LockerVotePending = Map<number, LockerVotePendingEntry>;
 
 export type VoteFlushOperation = {
   lockerId: number;
@@ -44,39 +42,13 @@ export function effectiveVoteToServerState(
   };
 }
 
-export function seedVoteBaseline(
-  baseline: LockerVoteBaseline,
-  lockerId: number,
-  server: LockerVoteServerState & {
-    accurateCount?: number;
-    inaccurateCount?: number;
-  },
-  hasPending = false,
-): void {
-  if (baseline.has(lockerId) && hasPending) {
-    return;
-  }
-
-  baseline.set(lockerId, {
-    vote: serverVoteStateToEffective(server),
-    accurateCount: server.accurateCount ?? 0,
-    inaccurateCount: server.inaccurateCount ?? 0,
-  });
-}
-
 export function getEffectiveVote(
   pending: LockerVotePending,
-  baseline: LockerVoteBaseline,
   lockerId: number,
   server?: LockerVoteServerState,
 ): EffectiveLockerVote {
   if (pending.has(lockerId)) {
-    return pending.get(lockerId) ?? null;
-  }
-
-  const baselineEntry = baseline.get(lockerId);
-  if (baselineEntry) {
-    return baselineEntry.vote;
+    return pending.get(lockerId)?.nextVote ?? null;
   }
 
   return server ? serverVoteStateToEffective(server) : null;
@@ -84,33 +56,36 @@ export function getEffectiveVote(
 
 export function getEffectiveVoteFlags(
   pending: LockerVotePending,
-  baseline: LockerVoteBaseline,
   lockerId: number,
   server?: LockerVoteServerState,
 ): Required<LockerVoteServerState> {
   return effectiveVoteToServerState(
-    getEffectiveVote(pending, baseline, lockerId, server),
+    getEffectiveVote(pending, lockerId, server),
   );
 }
 
 export function toggleVotePending(
-  baseline: LockerVoteBaseline,
   pending: LockerVotePending,
   lockerId: number,
   clicked: LockerVoteType,
   server?: LockerVoteServerState,
 ): LockerVotePending {
-  const current = getEffectiveVote(pending, baseline, lockerId, server);
+  const serverVote = server ? serverVoteStateToEffective(server) : null;
+  const pendingEntry = pending.get(lockerId);
+  const current = getEffectiveVote(pending, lockerId, server);
   const next: EffectiveLockerVote = current === clicked ? null : clicked;
-  const baseVote =
-    baseline.get(lockerId)?.vote ??
-    (server ? serverVoteStateToEffective(server) : null);
   const nextPending = new Map(pending);
+  const referenceServerVote = pendingEntry
+    ? pendingEntry.serverVote
+    : serverVote;
 
-  if (next === baseVote) {
+  if (next === referenceServerVote) {
     nextPending.delete(lockerId);
   } else {
-    nextPending.set(lockerId, next);
+    nextPending.set(lockerId, {
+      nextVote: next,
+      serverVote: referenceServerVote,
+    });
   }
 
   return nextPending;
@@ -141,38 +116,38 @@ const countDelta = (
 
 export function getEffectiveVoteCounts(
   pending: LockerVotePending,
-  baseline: LockerVoteBaseline,
   lockerId: number,
   server: LockerVoteServerState & {
     accurateCount?: number;
     inaccurateCount?: number;
   },
 ): { accurateCount?: number; inaccurateCount?: number } | null {
-  if (
-    server.accurateCount === undefined &&
-    server.inaccurateCount === undefined &&
-    !baseline.has(lockerId)
-  ) {
-    return null;
+  if (!pending.has(lockerId)) {
+    if (
+      server.accurateCount === undefined &&
+      server.inaccurateCount === undefined
+    ) {
+      return null;
+    }
+
+    return {
+      accurateCount: server.accurateCount,
+      inaccurateCount: server.inaccurateCount,
+    };
   }
 
-  const hasBaselineEntry = baseline.has(lockerId);
-  const baselineEntry = baseline.get(lockerId) ?? {
-    vote: serverVoteStateToEffective(server),
-    accurateCount: server.accurateCount ?? 0,
-    inaccurateCount: server.inaccurateCount ?? 0,
-  };
-  const effectiveVote = getEffectiveVote(pending, baseline, lockerId, server);
-  const delta = countDelta(baselineEntry.vote, effectiveVote);
+  const serverVote = serverVoteStateToEffective(server);
+  const effectiveVote = pending.get(lockerId)?.nextVote ?? null;
+  const delta = countDelta(serverVote, effectiveVote);
 
   const accurateCount =
-    !hasBaselineEntry && server.accurateCount === undefined
+    server.accurateCount === undefined
       ? undefined
-      : Math.max(0, baselineEntry.accurateCount + delta.accurate);
+      : Math.max(0, (server.accurateCount ?? 0) + delta.accurate);
   const inaccurateCount =
-    !hasBaselineEntry && server.inaccurateCount === undefined
+    server.inaccurateCount === undefined
       ? undefined
-      : Math.max(0, baselineEntry.inaccurateCount + delta.inaccurate);
+      : Math.max(0, (server.inaccurateCount ?? 0) + delta.inaccurate);
 
   return {
     accurateCount,
@@ -181,18 +156,18 @@ export function getEffectiveVoteCounts(
 }
 
 export function buildVoteFlushOperations(
-  baseline: LockerVoteBaseline,
   pending: LockerVotePending,
 ): VoteFlushOperation[] {
   const operations: VoteFlushOperation[] = [];
 
-  for (const [lockerId, nextVote] of pending) {
-    const baseVote = baseline.get(lockerId)?.vote ?? null;
-    if (nextVote === baseVote) {
+  for (const [lockerId, pendingEntry] of pending) {
+    const nextVote = pendingEntry.nextVote;
+    const serverVote = pendingEntry.serverVote;
+    if (nextVote === serverVote) {
       continue;
     }
 
-    const voteType = nextVote ?? baseVote;
+    const voteType = nextVote ?? serverVote;
     if (voteType == null) {
       continue;
     }
@@ -203,38 +178,31 @@ export function buildVoteFlushOperations(
   return operations;
 }
 
-export function applySuccessfulVoteFlush(
-  baseline: LockerVoteBaseline,
-  pending: LockerVotePending,
-  succeededLockerIds: number[],
-): { baseline: LockerVoteBaseline; pending: LockerVotePending } {
-  const nextBaseline = new Map(baseline);
-  const nextPending = new Map(pending);
+export function computeVoteDetailAfterFlush(
+  server: LockerVoteServerState & {
+    accurateCount?: number;
+    inaccurateCount?: number;
+  },
+  pendingVote: EffectiveLockerVote,
+): {
+  voteFlags: Required<LockerVoteServerState>;
+  accurateCount?: number;
+  inaccurateCount?: number;
+} {
+  const serverVote = serverVoteStateToEffective(server);
+  const delta = countDelta(serverVote, pendingVote);
 
-  for (const lockerId of succeededLockerIds) {
-    const nextVote = nextPending.get(lockerId);
-    if (nextVote === undefined) {
-      continue;
-    }
-
-    const currentBaseline = nextBaseline.get(lockerId);
-    if (!currentBaseline) {
-      continue;
-    }
-
-    const delta = countDelta(currentBaseline.vote, nextVote);
-    nextBaseline.set(lockerId, {
-      vote: nextVote,
-      accurateCount: Math.max(0, currentBaseline.accurateCount + delta.accurate),
-      inaccurateCount: Math.max(
-        0,
-        currentBaseline.inaccurateCount + delta.inaccurate,
-      ),
-    });
-    nextPending.delete(lockerId);
-  }
-
-  return { baseline: nextBaseline, pending: nextPending };
+  return {
+    voteFlags: effectiveVoteToServerState(pendingVote),
+    accurateCount:
+      server.accurateCount === undefined
+        ? undefined
+        : Math.max(0, (server.accurateCount ?? 0) + delta.accurate),
+    inaccurateCount:
+      server.inaccurateCount === undefined
+        ? undefined
+        : Math.max(0, (server.inaccurateCount ?? 0) + delta.inaccurate),
+  };
 }
 
 export function rollbackFailedVoteFlush(

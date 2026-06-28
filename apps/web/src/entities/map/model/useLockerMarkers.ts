@@ -6,6 +6,8 @@ import {
   type LockerPinItemResponse,
   type LockerPinSearchParams,
 } from "#/shared/api/lockers";
+import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
+import { useAuthStore } from "#/shared/store/authStore";
 import {
   getLockerPinQueryFromViewport,
   isLockerPinQueryWithinCapacity,
@@ -61,6 +63,8 @@ export const useLockerMarkers = ({
   onClusterClick,
   spreadCenter,
 }: UseLockerMarkersOptions) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userId = useAuthStore((state) => state.userId);
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
   const lastRenderedZoomRef = useRef<number | null>(null);
@@ -103,6 +107,7 @@ export const useLockerMarkers = ({
   const canFetchLockerPins =
     lockerPinQuery !== undefined &&
     isLockerPinQueryWithinCapacity(lockerPinQuery);
+  const authScope = getAuthQueryCacheScope(isAuthenticated, userId);
 
   useEffect(() => {
     if (!maps) {
@@ -156,6 +161,7 @@ export const useLockerMarkers = ({
       searchParams?.minPrice,
       searchParams?.maxPrice,
       searchParams?.isFree,
+      authScope,
     ],
     queryFn: ({ signal }) => {
       if (!lockerPinQuery) return Promise.resolve([]);

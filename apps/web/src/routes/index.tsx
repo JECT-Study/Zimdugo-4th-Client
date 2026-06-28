@@ -64,7 +64,6 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
-import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { MapSkeleton } from "#/entities/map/ui/map-skeleton/MapSkeleton";
@@ -107,6 +106,10 @@ import {
   toLockerSearchFilterParams,
   toPlaceLockersFilterParams,
 } from "#/features/search/lib/to-locker-search-filter-params";
+import {
+  mergeDisplayLockerDetailWithPreviousDistance,
+  mergeStoredLockerDetailWithPreviousDistance,
+} from "#/features/search/model/locker-detail-display";
 import { resolveMapMarkerLayer } from "#/features/search/model/map-marker-layer-policy";
 import {
   readMapSheetSessionSnapshot,
@@ -142,6 +145,7 @@ import {
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
 import { toLockerDetailItem } from "#/shared/api/locker-adapters";
+import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import {
   getLockerDetail,
   type LockerBoundsRaw,
@@ -277,21 +281,6 @@ export const Route = createFileRoute("/")({
 });
 
 const readRestoredMapSheetSession = () => readMapSheetSessionSnapshot();
-
-const mergeLockerDetailWithPreviousDistance = (
-  detail: LockerDetailItem,
-  previousDetail: LockerDetailItem | null,
-): LockerDetailItem => {
-  if (!previousDetail || previousDetail.lockerId !== detail.lockerId) {
-    return detail;
-  }
-
-  return {
-    ...detail,
-    distanceLabel: detail.distanceLabel || previousDetail.distanceLabel,
-    distanceMeters: detail.distanceMeters ?? previousDetail.distanceMeters,
-  };
-};
 
 export function IndexPage() {
   const navigate = useNavigate();
@@ -991,12 +980,7 @@ export function IndexPage() {
       lat: origin.lat ?? DEFAULT_SEARCH_COORDINATES.lat,
       lng: origin.lng ?? DEFAULT_SEARCH_COORDINATES.lng,
     };
-  }, [
-    activeLockerId,
-    lockerDetailQueryOrigin,
-    lockerIdFromQuery,
-    loaderData,
-  ]);
+  }, [activeLockerId, lockerDetailQueryOrigin, lockerIdFromQuery, loaderData]);
 
   const {
     data: lockerDetail,
@@ -1120,7 +1104,7 @@ export function IndexPage() {
   );
 
   const openLockerDetailById = useCallback(
-    (
+    async (
       lockerId: number,
       optimisticDetail?: LockerDetailItem,
       options?: {
@@ -1131,7 +1115,7 @@ export function IndexPage() {
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
-      void flushLockerSheetMutations();
+      await flushLockerSheetMutations();
 
       // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
       const cleanName = optimisticDetail?.title
@@ -1154,7 +1138,8 @@ export function IndexPage() {
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
-      setTimeout(() => {
+      pendingLockerDetailOpenTimerRef.current = window.setTimeout(() => {
+        pendingLockerDetailOpenTimerRef.current = undefined;
         setSelectedLockerDetail(
           optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
         );
@@ -2048,7 +2033,7 @@ export function IndexPage() {
     }
 
     setSelectedLockerDetail((previousDetail) =>
-      mergeLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
+      mergeStoredLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
@@ -2218,18 +2203,6 @@ export function IndexPage() {
     ? (placeLockersResults?.lockers ?? [])
     : (keywordSearchResults?.items ?? []);
 
-  useEffect(() => {
-    favoriteSession.syncBaselineFromSearchData(searchBottomSheetItems);
-  }, [favoriteSession.syncBaselineFromSearchData, searchBottomSheetItems]);
-
-  useEffect(() => {
-    favoriteSession.syncBaselineFromLockerDetail(lockerDetail);
-  }, [favoriteSession.syncBaselineFromLockerDetail, lockerDetail]);
-
-  useEffect(() => {
-    voteSession.syncBaselineFromLockerDetail(lockerDetail);
-  }, [voteSession.syncBaselineFromLockerDetail, lockerDetail]);
-
   const searchBottomSheetDisplayItems = useMemo((): SearchResultItem[] => {
     if (isPlaceListScope) {
       return applyFavoriteOverlayToLockerItems(
@@ -2249,12 +2222,19 @@ export function IndexPage() {
   ]);
 
   const displayedLockerDetail = useMemo(() => {
-    if (!selectedLockerDetail) {
+    const detailBase = lockerDetail
+      ? mergeDisplayLockerDetailWithPreviousDistance(
+          lockerDetail,
+          selectedLockerDetail,
+        )
+      : selectedLockerDetail;
+
+    if (!detailBase) {
       return null;
     }
 
     const withFavorite = applyFavoriteOverlayToLockerDetail(
-      selectedLockerDetail,
+      detailBase,
       favoriteSession.getEffectiveIsFavorite,
     );
 
@@ -2265,6 +2245,7 @@ export function IndexPage() {
     );
   }, [
     favoriteSession.getEffectiveIsFavorite,
+    lockerDetail,
     selectedLockerDetail,
     voteSession.getEffectiveVoteFlagOverlay,
     voteSession.getEffectiveVoteCountOverlay,
@@ -2611,8 +2592,28 @@ export function IndexPage() {
           locker={displayedLockerDetail}
           loadState={lockerDetailLoadState}
           onRetry={() => void refetchLockerDetail()}
-          onFavoriteChange={favoriteSession.handleDetailFavoriteChange}
-          onVoteChange={voteSession.handleDetailVoteChange}
+          onFavoriteChange={
+            lockerDetail
+              ? (item, next) =>
+                  favoriteSession.handleDetailFavoriteChange(
+                    item,
+                    next,
+                    lockerDetail.isFavorite,
+                  )
+              : undefined
+          }
+          onVoteChange={(item, voteType) =>
+            voteSession.handleDetailVoteChange(
+              item,
+              voteType,
+              lockerDetail
+                ? {
+                    isAccurateVoted: lockerDetail.isAccurateVoted,
+                    isInaccurateVoted: lockerDetail.isInaccurateVoted,
+                  }
+                : undefined,
+            )
+          }
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
           initialSnapPoint={

@@ -44,12 +44,6 @@ export const markerBadge = style({
   width: "40px",
   height: "40px",
   flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
-});
-
-globalStyle(`${markerBadge} svg path`, {
-  fill: vars.color.palette.green[500],
 });
 
 export const textColumn = style({

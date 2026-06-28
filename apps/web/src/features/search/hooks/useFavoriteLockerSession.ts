@@ -1,125 +1,53 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
-import type {
-  SearchLockerResultItem,
-  SearchResultItem,
-} from "#/composites/search/search-list-model";
+import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import {
   addFavoriteLocker,
   removeFavoriteLocker,
 } from "#/shared/api/favorite-lockers";
-import { useAuthStore } from "#/shared/store/authStore";
+import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
-import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
+import { useAuthStore } from "#/shared/store/authStore";
+import { collectServerFavoriteByLockerId } from "../lib/collect-server-favorite-state";
+import { patchFavoriteInQueryCaches } from "../lib/patch-favorite-query-cache";
 import {
-  LOCKER_SEARCH_QUERY_KEY,
-  PLACE_LOCKERS_QUERY_KEY,
-} from "./useSearch";
-import {
-  applySuccessfulFlush,
   buildFavoriteFlushOperations,
+  type FavoriteLockerPending,
   getEffectiveFavorite,
   rollbackFailedFlush,
-  seedFavoriteBaseline,
   toggleFavoritePending,
-  type FavoriteLockerPending,
 } from "../model/favorite-locker-session";
-
-const forEachLockerInSearchData = (
-  items: SearchResultItem[] | SearchLockerResultItem[],
-  visit: (locker: SearchLockerResultItem) => void,
-) => {
-  for (const item of items) {
-    if ("itemType" in item && item.itemType === "PLACE") {
-      for (const locker of item.lockers) {
-        visit(locker);
-      }
-      continue;
-    }
-
-    visit(item as SearchLockerResultItem);
-  }
-};
+import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 
 export function useFavoriteLockerSession() {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userId = useAuthStore((state) => state.userId);
   const accessToken = useAuthStore((state) => state.getAccessToken());
   const openAuthPopup = useAuthPopupStore((state) => state.openPopup);
-  const baselineRef = useRef(new Map<number, boolean>());
   const [pending, setPending] = useState<FavoriteLockerPending>(
     () => new Map(),
   );
   const pendingRef = useRef(pending);
+  const authScope = getAuthQueryCacheScope(isAuthenticated, userId);
   pendingRef.current = pending;
 
   const getEffectiveIsFavorite = useCallback(
     (lockerId: number, serverIsFavorite?: boolean) =>
-      getEffectiveFavorite(
-        pending,
-        baselineRef.current,
-        lockerId,
-        serverIsFavorite,
-      ),
+      getEffectiveFavorite(pending, lockerId, serverIsFavorite),
     [pending],
   );
 
-  const syncBaselineFromSearchData = useCallback(
-    (items: SearchResultItem[] | SearchLockerResultItem[]) => {
-      forEachLockerInSearchData(items, (locker) => {
-        seedFavoriteBaseline(
-          baselineRef.current,
-          locker.lockerId,
-          locker.isFavorite,
-        );
-      });
-    },
-    [],
-  );
-
-  const syncBaselineFromLockerDetail = useCallback(
-    (locker: LockerDetailItem | null | undefined) => {
-      if (!locker) {
-        return;
-      }
-
-      seedFavoriteBaseline(
-        baselineRef.current,
-        locker.lockerId,
-        locker.isFavorite,
-      );
-    },
-    [],
-  );
-
-  const syncBaselineFromLockerItems = useCallback(
-    (items: Array<{ lockerId: number; isFavorite?: boolean }>) => {
-      for (const item of items) {
-        seedFavoriteBaseline(
-          baselineRef.current,
-          item.lockerId,
-          item.isFavorite,
-        );
-      }
-    },
-    [],
-  );
-
   const toggle = useCallback(
-    (lockerId: number, next: boolean): boolean => {
+    (lockerId: number, next: boolean, serverIsFavorite?: boolean): boolean => {
       if (!isAuthenticated || accessToken == null) {
         openAuthPopup("/");
         return false;
       }
 
       setPending((currentPending) =>
-        toggleFavoritePending(
-          baselineRef.current,
-          currentPending,
-          lockerId,
-          next,
-        ),
+        toggleFavoritePending(currentPending, lockerId, next, serverIsFavorite),
       );
       return true;
     },
@@ -133,14 +61,22 @@ export function useFavoriteLockerSession() {
       return { hadChanges: false };
     }
 
-    const operations = buildFavoriteFlushOperations(
-      baselineRef.current,
-      currentPending,
+    const serverByLockerId = collectServerFavoriteByLockerId(
+      queryClient,
+      currentPending.keys(),
+      authScope,
     );
+    const operations = buildFavoriteFlushOperations(
+      currentPending,
+      serverByLockerId,
+    );
+
     if (operations.length === 0) {
       setPending(new Map());
       return { hadChanges: false };
     }
+
+    const pendingSnapshot = new Map(currentPending);
 
     const results = await Promise.allSettled(
       operations.map((operation) =>
@@ -168,16 +104,30 @@ export function useFavoriteLockerSession() {
     });
 
     if (succeededLockerIds.length > 0) {
-      const pendingSnapshot = new Map(currentPending);
-      const nextState = applySuccessfulFlush(
-        baselineRef.current,
-        pendingSnapshot,
-        succeededLockerIds,
+      await Promise.all(
+        succeededLockerIds.map((lockerId) =>
+          queryClient.cancelQueries({
+            queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
+          }),
+        ),
       );
-      baselineRef.current = nextState.baseline;
 
-      setPending((currentPending) => {
-        const updatedPending = new Map(currentPending);
+      for (const lockerId of succeededLockerIds) {
+        const nextFavorite = pendingSnapshot.get(lockerId);
+        if (nextFavorite === undefined) {
+          continue;
+        }
+
+        patchFavoriteInQueryCaches(
+          queryClient,
+          lockerId,
+          nextFavorite,
+          authScope,
+        );
+      }
+
+      setPending((latestPending) => {
+        const updatedPending = new Map(latestPending);
         for (const lockerId of succeededLockerIds) {
           if (updatedPending.get(lockerId) === pendingSnapshot.get(lockerId)) {
             updatedPending.delete(lockerId);
@@ -185,39 +135,33 @@ export function useFavoriteLockerSession() {
         }
         return updatedPending;
       });
-
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: [LOCKER_SEARCH_QUERY_KEY],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: [PLACE_LOCKERS_QUERY_KEY],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: [LOCKER_DETAIL_QUERY_KEY],
-        }),
-      ]);
     }
 
     if (failedLockerIds.length > 0) {
-      setPending((currentPending) =>
-        rollbackFailedFlush(currentPending, failedLockerIds),
+      setPending((latestPending) =>
+        rollbackFailedFlush(latestPending, failedLockerIds, pendingSnapshot),
       );
     }
 
     return { hadChanges: true };
-  }, [accessToken, isAuthenticated, queryClient]);
+  }, [accessToken, authScope, isAuthenticated, queryClient]);
 
   const handleSearchFavoriteChange = useCallback(
     (item: SearchLockerResultItem, next: boolean) => {
-      toggle(item.lockerId, next);
+      const serverIsFavorite = collectServerFavoriteByLockerId(
+        queryClient,
+        [item.lockerId],
+        authScope,
+      ).get(item.lockerId);
+
+      toggle(item.lockerId, next, serverIsFavorite);
     },
-    [toggle],
+    [authScope, queryClient, toggle],
   );
 
   const handleDetailFavoriteChange = useCallback(
-    (item: LockerDetailItem, next: boolean) => {
-      toggle(item.lockerId, next);
+    (item: LockerDetailItem, next: boolean, serverIsFavorite?: boolean) => {
+      toggle(item.lockerId, next, serverIsFavorite);
     },
     [toggle],
   );
@@ -225,9 +169,6 @@ export function useFavoriteLockerSession() {
   return {
     pending,
     getEffectiveIsFavorite,
-    syncBaselineFromSearchData,
-    syncBaselineFromLockerDetail,
-    syncBaselineFromLockerItems,
     toggle,
     flush,
     handleSearchFavoriteChange,

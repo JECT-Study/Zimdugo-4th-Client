@@ -238,6 +238,8 @@
   "my_favorites_list_aria": "お気に入り一覧",
   "my_favorites_empty_title": "お気に入りがありません",
   "my_favorites_empty": "まだお気に入りがありません\n気になるロッカーを登録してください！",
+  "my_favorites_empty_title_en": "No favorite lockers yet",
+  "my_favorites_empty_en": "Save lockers you like here",
   "my_favorite_delete": "削除",
   "my_favorite_delete_toast": "お気に入りから削除しました",
   "my_favorite_delete_undo": "元に戻す",

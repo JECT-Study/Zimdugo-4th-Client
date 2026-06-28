@@ -23,7 +23,6 @@ export function useFavoriteRemoval() {
     pending,
     flush,
     getEffectiveIsFavorite,
-    syncBaselineFromLockerItems,
     toggle,
   } = useFavoriteLockerSession();
   const [hiddenLockerIds, setHiddenLockerIds] = useState<Set<number>>(
@@ -32,11 +31,6 @@ export function useFavoriteRemoval() {
   const [undoItem, setUndoItem] = useState<FavoriteLockerListItem | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const pendingRemovalRef = useRef<PendingFavoriteRemoval | null>(null);
-
-  useEffect(() => {
-    const items = listQuery.data?.pages.flatMap((page) => page.items) ?? [];
-    syncBaselineFromLockerItems(items);
-  }, [listQuery.data, syncBaselineFromLockerItems]);
 
   const invalidateMyFavoriteQueries = useCallback(async () => {
     await Promise.all([
@@ -115,7 +109,7 @@ export function useFavoriteRemoval() {
       void commitPendingRemoval();
       setErrorMessage(null);
 
-      if (!toggle(item.lockerId, false)) {
+      if (!toggle(item.lockerId, false, true)) {
         return;
       }
 
@@ -138,7 +132,7 @@ export function useFavoriteRemoval() {
     if (!pending) return;
 
     clearPendingTimer();
-    toggle(pending.item.lockerId, true);
+    toggle(pending.item.lockerId, true, true);
     setHiddenLockerIds((current) => {
       const next = new Set(current);
       next.delete(pending.item.lockerId);
@@ -149,7 +143,7 @@ export function useFavoriteRemoval() {
   const handleFavoriteChange = useCallback(
     (item: FavoriteLockerListItem, index: number, next: boolean) => {
       if (next) {
-        toggle(item.lockerId, true);
+        toggle(item.lockerId, true, true);
         return;
       }
 

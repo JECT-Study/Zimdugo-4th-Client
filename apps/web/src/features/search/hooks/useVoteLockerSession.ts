@@ -1,45 +1,33 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
-import {
-  postLockerVote,
-  type LockerVoteType,
-} from "#/shared/api/locker-votes";
-import { useAuthStore } from "#/shared/store/authStore";
+import { type LockerVoteType, postLockerVote } from "#/shared/api/locker-votes";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
-import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
+import { useAuthStore } from "#/shared/store/authStore";
 import {
-  applySuccessfulVoteFlush,
   buildVoteFlushOperations,
-  effectiveVoteToServerState,
+  computeVoteDetailAfterFlush,
   getEffectiveVoteCounts,
   getEffectiveVoteFlags,
-  rollbackFailedVoteFlush,
-  seedVoteBaseline,
-  toggleVotePending,
-  type LockerVoteBaseline,
   type LockerVotePending,
   type LockerVoteServerState,
+  rollbackFailedVoteFlush,
+  toggleVotePending,
 } from "../model/vote-locker-session";
+import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 
 export function useVoteLockerSession() {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const accessToken = useAuthStore((state) => state.getAccessToken());
   const openAuthPopup = useAuthPopupStore((state) => state.openPopup);
-  const baselineRef = useRef<LockerVoteBaseline>(new Map());
   const [pending, setPending] = useState<LockerVotePending>(() => new Map());
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
 
   const getEffectiveVoteFlagOverlay = useCallback(
     (lockerId: number, server: LockerVoteServerState) =>
-      getEffectiveVoteFlags(
-        pending,
-        baselineRef.current,
-        lockerId,
-        server,
-      ),
+      getEffectiveVoteFlags(pending, lockerId, server),
     [pending],
   );
 
@@ -54,34 +42,13 @@ export function useVoteLockerSession() {
         | "inaccurateCount"
       >,
     ) =>
-      getEffectiveVoteCounts(pending, baselineRef.current, lockerId, {
+      getEffectiveVoteCounts(pending, lockerId, {
         isAccurateVoted: server.isAccurateVoted,
         isInaccurateVoted: server.isInaccurateVoted,
         accurateCount: server.accurateCount,
         inaccurateCount: server.inaccurateCount,
       }),
     [pending],
-  );
-
-  const syncBaselineFromLockerDetail = useCallback(
-    (locker: LockerDetailItem | null | undefined) => {
-      if (!locker) {
-        return;
-      }
-
-      seedVoteBaseline(
-        baselineRef.current,
-        locker.lockerId,
-        {
-          isAccurateVoted: locker.isAccurateVoted,
-          isInaccurateVoted: locker.isInaccurateVoted,
-          accurateCount: locker.accurateCount,
-          inaccurateCount: locker.inaccurateCount,
-        },
-        pendingRef.current.has(locker.lockerId),
-      );
-    },
-    [],
   );
 
   const toggle = useCallback(
@@ -96,13 +63,7 @@ export function useVoteLockerSession() {
       }
 
       setPending((currentPending) =>
-        toggleVotePending(
-          baselineRef.current,
-          currentPending,
-          lockerId,
-          voteType,
-          server,
-        ),
+        toggleVotePending(currentPending, lockerId, voteType, server),
       );
       return true;
     },
@@ -116,10 +77,8 @@ export function useVoteLockerSession() {
       return { hadChanges: false };
     }
 
-    const operations = buildVoteFlushOperations(
-      baselineRef.current,
-      currentPending,
-    );
+    const operations = buildVoteFlushOperations(currentPending);
+
     if (operations.length === 0) {
       setPending(new Map());
       return { hadChanges: false };
@@ -151,26 +110,17 @@ export function useVoteLockerSession() {
     });
 
     if (succeededLockerIds.length > 0) {
-      const nextState = applySuccessfulVoteFlush(
-        baselineRef.current,
-        pendingSnapshot,
-        succeededLockerIds,
+      await Promise.all(
+        succeededLockerIds.map((lockerId) =>
+          queryClient.cancelQueries({
+            queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
+          }),
+        ),
       );
-      baselineRef.current = nextState.baseline;
-
-      setPending((latestPending) => {
-        const updatedPending = new Map(latestPending);
-        for (const lockerId of succeededLockerIds) {
-          if (updatedPending.get(lockerId) === pendingSnapshot.get(lockerId)) {
-            updatedPending.delete(lockerId);
-          }
-        }
-        return updatedPending;
-      });
 
       for (const lockerId of succeededLockerIds) {
-        const baselineEntry = baselineRef.current.get(lockerId);
-        if (!baselineEntry) {
+        const pendingEntry = pendingSnapshot.get(lockerId);
+        if (pendingEntry === undefined) {
           continue;
         }
 
@@ -181,18 +131,34 @@ export function useVoteLockerSession() {
               return previousDetail;
             }
 
+            const patched = computeVoteDetailAfterFlush(
+              {
+                isAccurateVoted: previousDetail.isAccurateVoted,
+                isInaccurateVoted: previousDetail.isInaccurateVoted,
+                accurateCount: previousDetail.accurateCount,
+                inaccurateCount: previousDetail.inaccurateCount,
+              },
+              pendingEntry.nextVote,
+            );
+
             return {
               ...previousDetail,
-              ...effectiveVoteToServerState(baselineEntry.vote),
-              accurateCount: baselineEntry.accurateCount,
-              inaccurateCount: baselineEntry.inaccurateCount,
+              ...patched.voteFlags,
+              accurateCount: patched.accurateCount,
+              inaccurateCount: patched.inaccurateCount,
             };
           },
         );
       }
 
-      await queryClient.invalidateQueries({
-        queryKey: [LOCKER_DETAIL_QUERY_KEY],
+      setPending((latestPending) => {
+        const updatedPending = new Map(latestPending);
+        for (const lockerId of succeededLockerIds) {
+          if (updatedPending.get(lockerId) === pendingSnapshot.get(lockerId)) {
+            updatedPending.delete(lockerId);
+          }
+        }
+        return updatedPending;
       });
     }
 
@@ -210,8 +176,15 @@ export function useVoteLockerSession() {
   }, [accessToken, isAuthenticated, queryClient]);
 
   const handleDetailVoteChange = useCallback(
-    (item: LockerDetailItem, voteType: LockerVoteType) => {
-      toggle(item.lockerId, voteType);
+    (
+      item: LockerDetailItem,
+      voteType: LockerVoteType,
+      server?: LockerVoteServerState,
+    ) => {
+      toggle(item.lockerId, voteType, {
+        isAccurateVoted: server?.isAccurateVoted,
+        isInaccurateVoted: server?.isInaccurateVoted,
+      });
     },
     [toggle],
   );
@@ -220,7 +193,6 @@ export function useVoteLockerSession() {
     pending,
     getEffectiveVoteFlagOverlay,
     getEffectiveVoteCountOverlay,
-    syncBaselineFromLockerDetail,
     toggle,
     flush,
     handleDetailVoteChange,

@@ -350,7 +350,7 @@ export const imagePreviewCloseButton = style({
   border: 0,
   borderRadius: vars.radius.max,
   backgroundColor: "rgba(255, 255, 255, 0.16)",
-  color: vars.color.palette.gray[0],
+  color: vars.color.palette.gray[100],
   cursor: "pointer",
 });
 
