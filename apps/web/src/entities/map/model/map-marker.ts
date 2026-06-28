@@ -19,16 +19,15 @@ const MARKER_PROXIMITY_THRESHOLD_PX = 44;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
 const MAP_PIN_DISPLAY_SCALE = 0.45;
-const LOCKER_MARKER_SOURCE_SIZE = { width: 90, height: 90 };
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
-const DEFAULT_MARKER_SOURCE_ANCHOR = { x: 45, y: 45 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
 const scaleMapPinValue = (value: number) =>
   Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
 const LOCKER_MARKER_DISPLAY_SIZE = {
-  width: scaleMapPinValue(LOCKER_MARKER_SOURCE_SIZE.width),
-  height: scaleMapPinValue(LOCKER_MARKER_SOURCE_SIZE.height),
+  width: 24,
+  height: 24,
 };
+const SELECTED_LOCKER_MARKER_DISPLAY_SIZE = { width: 36, height: 36 };
 const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
 const PLACE_MARKER_DISPLAY_SIZE = {
   width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
@@ -36,8 +35,12 @@ const PLACE_MARKER_DISPLAY_SIZE = {
 };
 const MARKER_SPREAD_RADIUS_PX = 24;
 const DEFAULT_MARKER_ANCHOR = {
-  x: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.x),
-  y: scaleMapPinValue(DEFAULT_MARKER_SOURCE_ANCHOR.y),
+  x: LOCKER_MARKER_DISPLAY_SIZE.width / 2,
+  y: LOCKER_MARKER_DISPLAY_SIZE.height / 2,
+};
+const SELECTED_LOCKER_MARKER_ANCHOR = {
+  x: SELECTED_LOCKER_MARKER_DISPLAY_SIZE.width / 2,
+  y: SELECTED_LOCKER_MARKER_DISPLAY_SIZE.height / 2,
 };
 const PLACE_MARKER_ANCHOR = {
   x: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.x),
@@ -442,18 +445,34 @@ const getIconSignatureSuffix = ({
   }`;
 };
 
-const getMarkerSize = (pin: LockerPinItemResponse) => {
+type MarkerAnimationState =
+  | "selected-active"
+  | "selected-static"
+  | "unselected-active"
+  | "normal";
+
+const getMarkerSize = (
+  pin: LockerPinItemResponse,
+  animationState: MarkerAnimationState,
+) => {
   if (pin.pinType === "CLUSTER") {
     const pinCount = pin.pinCount ?? 0;
     return pinCount >= 10 ? CLUSTER_L_DISPLAY_SIZE : CLUSTER_S_DISPLAY_SIZE;
   }
   if (pin.pinType === "PLACE") return PLACE_MARKER_DISPLAY_SIZE;
+  if (
+    animationState === "selected-active" ||
+    animationState === "selected-static"
+  ) {
+    return SELECTED_LOCKER_MARKER_DISPLAY_SIZE;
+  }
   if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_DISPLAY_SIZE;
   return LOCKER_MARKER_DISPLAY_SIZE;
 };
 
 const getMarkerAnchor = (
   pin: LockerPinItemResponse,
+  animationState: MarkerAnimationState,
   offsetX = 0,
   offsetY = 0,
 ) => {
@@ -466,7 +485,12 @@ const getMarkerAnchor = (
     };
   }
   const anchor =
-    pin.pinType === "PLACE" ? PLACE_MARKER_ANCHOR : DEFAULT_MARKER_ANCHOR;
+    pin.pinType === "PLACE"
+      ? PLACE_MARKER_ANCHOR
+      : animationState === "selected-active" ||
+          animationState === "selected-static"
+        ? SELECTED_LOCKER_MARKER_ANCHOR
+        : DEFAULT_MARKER_ANCHOR;
   return {
     x: anchor.x - offsetX,
     y: anchor.y - offsetY,
@@ -477,11 +501,7 @@ const createMarkerIconOptions = (
   pin: LockerPinItemResponse,
   maps: typeof naver.maps,
   isSelected: boolean,
-  animationState:
-    | "selected-active"
-    | "selected-static"
-    | "unselected-active"
-    | "normal",
+  animationState: MarkerAnimationState,
   zoomLevel?: number,
   spreadX?: number,
   spreadY?: number,
@@ -506,8 +526,13 @@ const createMarkerIconOptions = (
   const cached = innerMap.get(key);
   if (cached) return cached;
 
-  const markerSize = getMarkerSize(pin);
-  const markerAnchor = getMarkerAnchor(pin, offsetX ?? 0, offsetY ?? 0);
+  const markerSize = getMarkerSize(pin, animationState);
+  const markerAnchor = getMarkerAnchor(
+    pin,
+    animationState,
+    offsetX ?? 0,
+    offsetY ?? 0,
+  );
 
   const spreadClass = shouldAnimateSpread && hasSpread ? "spread" : "";
   const spreadStyle =
@@ -568,11 +593,7 @@ const createLockerMarker = ({
   maps: typeof naver.maps;
   pin: LockerPinItemResponse;
   isSelected: boolean;
-  animationState:
-    | "selected-active"
-    | "selected-static"
-    | "unselected-active"
-    | "normal";
+  animationState: MarkerAnimationState;
   zoomLevel: number;
   spreadX?: number;
   spreadY?: number;
@@ -792,11 +813,7 @@ export const syncLockerMarkers = ({
         existingEntry.zIndex = zIndex;
       }
 
-      let animationState:
-        | "selected-active"
-        | "selected-static"
-        | "unselected-active"
-        | "normal" = "normal";
+      let animationState: MarkerAnimationState = "normal";
       if (isSelected) {
         animationState = existingEntry.wasSelectedBefore
           ? "selected-static"
