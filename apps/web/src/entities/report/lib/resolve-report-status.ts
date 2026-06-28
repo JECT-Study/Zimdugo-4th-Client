@@ -1,14 +1,14 @@
 import { m } from "@repo/i18n";
-import type { ReportListItemStatus } from "../ui/ReportListItem";
+import type { ReportStatusVariant } from "../model/report-status";
 
 export type LockerReportApiStatus = "SUBMITTED" | "APPROVED" | "REJECTED";
 
 export type ReportStatusDisplay = {
-  variant: ReportListItemStatus;
+  variant: ReportStatusVariant;
   label: string;
 };
 
-const resolveStatusLabel = (variant: ReportListItemStatus): string => {
+const resolveStatusLabel = (variant: ReportStatusVariant): string => {
   switch (variant) {
     case "pending":
       return m.report_status_pending();
@@ -21,7 +21,7 @@ const resolveStatusLabel = (variant: ReportListItemStatus): string => {
 
 const API_STATUS_TO_VARIANT: Record<
   LockerReportApiStatus,
-  ReportListItemStatus
+  ReportStatusVariant
 > = {
   SUBMITTED: "pending",
   APPROVED: "approved",

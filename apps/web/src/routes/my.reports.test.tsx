@@ -101,6 +101,7 @@ describe("MyReportsPage", () => {
     const { container } = render(<MyReportsPage />);
 
     expect(screen.queryByLabelText("제보 히스토리 목록")).toBeNull();
+    expect(screen.getByRole("status")).toBeTruthy();
     expect(
       container.querySelectorAll('[aria-hidden="true"]').length,
     ).toBeGreaterThan(5);

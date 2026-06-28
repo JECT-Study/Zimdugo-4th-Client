@@ -1,9 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import {
-  ReportListItem,
-  type ReportListItemProps,
-  type ReportListItemStatus,
-} from "./ReportListItem.tsx";
+import type { ReportStatusVariant } from "../model/report-status";
+import { ReportListItem, type ReportListItemProps } from "./ReportListItem.tsx";
 
 const DEFAULT_ARGS = {
   titleText: "신촌역 5번 출구 B2 보관함",
@@ -15,7 +12,7 @@ const DEFAULT_ARGS = {
 } satisfies ReportListItemProps;
 
 const STATUS_VARIANTS: Array<{
-  status: ReportListItemStatus;
+  status: ReportStatusVariant;
   statusLabel: string;
 }> = [
   { status: "pending", statusLabel: "검토 중" },

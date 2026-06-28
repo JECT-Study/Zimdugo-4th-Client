@@ -1,8 +1,8 @@
-import type { ReportListItemStatus } from "./ReportListItem";
-import { reportStatus, statusVariants } from "./ReportListItem.css.ts";
+import type { ReportStatusVariant } from "../model/report-status";
+import { reportStatus, statusVariants } from "./ReportStatusBadge.css.ts";
 
 export interface ReportStatusBadgeProps {
-  status: ReportListItemStatus;
+  status: ReportStatusVariant;
   label: string;
   className?: string;
 }

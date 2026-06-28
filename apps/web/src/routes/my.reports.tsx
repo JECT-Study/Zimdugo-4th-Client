@@ -28,6 +28,7 @@ import {
   childEmpty,
   childList,
   childListItem,
+  childLoadingStatus,
   childLoadMoreSlot,
   childPage,
   childSkeletonFavorite,
@@ -127,14 +128,21 @@ function MyReportsPage() {
         onBack={handleBack}
       />
 
-      <main className={childContent}>
+      <main className={childContent} aria-busy={isInitialLoading}>
         {totalCount > 0 ? (
           <p className={summaryText}>
             {m.my_report_history_total({ count: String(totalCount) })}
           </p>
         ) : null}
 
-        {isInitialLoading ? <MyReportsSkeleton /> : null}
+        {isInitialLoading ? (
+          <>
+            <output className={childLoadingStatus}>
+              {m.my_summary_loading()}
+            </output>
+            <MyReportsSkeleton />
+          </>
+        ) : null}
 
         {isError ? <MyListErrorState onRetry={handleRetry} /> : null}
 

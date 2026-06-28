@@ -83,7 +83,9 @@ export function ReportDetailViewerModal({
 
   useEffect(() => {
     const updateCollapsedSnap = () => {
-      setCollapsedSnap(window.innerHeight - COLLAPSED_BOTTOM_GAP);
+      setCollapsedSnap(
+        Math.max(DEFAULT_SNAP_POINT, window.innerHeight - COLLAPSED_BOTTOM_GAP),
+      );
     };
     updateCollapsedSnap();
     window.addEventListener("resize", updateCollapsedSnap);

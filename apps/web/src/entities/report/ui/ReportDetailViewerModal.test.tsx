@@ -33,7 +33,7 @@ const REPORT_DETAIL: MyLockerReportDetail = {
 describe("ReportDetailViewerModal", () => {
   beforeEach(() => {
     cleanup();
-    setLanguageTag("ko");
+    setLanguageTag("ko", { reload: false });
   });
 
   it("기본 디자인은 Header와 상단 X 없이 정렬된 상세 정보를 표시한다", () => {
@@ -76,5 +76,20 @@ describe("ReportDetailViewerModal", () => {
     expect(screen.getByText(m.my_report_image_empty())).toBeTruthy();
     expect(screen.queryByText("사진을 등록해주세요")).toBeNull();
     expect(screen.queryByText("보관함 사진을 추가하면")).toBeNull();
+  });
+  it("reportStatus가 없으면 상태 배지를 표시하지 않는다", () => {
+    render(
+      <ReportDetailViewerModal
+        isOpen
+        onOpenChange={vi.fn()}
+        titleText={REPORT_DETAIL.lockerName}
+        detail={{ ...REPORT_DETAIL, reportStatus: null }}
+        loadState="ready"
+      />,
+    );
+
+    expect(screen.queryByText(m.report_status_pending())).toBeNull();
+    expect(screen.queryByText(m.report_status_approved())).toBeNull();
+    expect(screen.queryByText(m.report_status_rejected())).toBeNull();
   });
 });

@@ -1,10 +1,17 @@
-import { setLanguageTag } from "@repo/i18n";
-import { beforeAll, describe, expect, it } from "vitest";
+import { languageTag, setLanguageTag } from "@repo/i18n";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { resolveReportStatusDisplay } from "./resolve-report-status";
 
 describe("resolveReportStatusDisplay", () => {
+  let initialLanguage: ReturnType<typeof languageTag>;
+
   beforeAll(() => {
-    setLanguageTag("ko");
+    initialLanguage = languageTag();
+    setLanguageTag("ko", { reload: false });
+  });
+
+  afterAll(() => {
+    setLanguageTag(initialLanguage, { reload: false });
   });
 
   it("SUBMITTED만 검토 중 pending 배지로 매핑한다", () => {

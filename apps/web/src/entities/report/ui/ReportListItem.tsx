@@ -2,6 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
+import type { ReportStatusVariant } from "../model/report-status";
 import {
   address,
   bodyContent,
@@ -21,14 +22,12 @@ import {
 } from "./ReportListItem.css.ts";
 import { ReportStatusBadge } from "./ReportStatusBadge";
 
-export type ReportListItemStatus = "pending" | "approved" | "rejected";
-
 export interface ReportListItemProps {
   titleText: string;
   locationLabel: string;
   detailText: string;
   updatedLabel: string;
-  status?: ReportListItemStatus;
+  status?: ReportStatusVariant;
   statusLabel?: string;
   imageTitleText?: string;
   imageHelperText?: string;
