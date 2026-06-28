@@ -74,8 +74,6 @@ export function ReportDetailViewerModal({
     detail?.reportStatus != null
       ? resolveReportStatusDisplay(detail.reportStatus)
       : null;
-  const miniSnap =
-    DEFAULT_SNAP_POINT + (collapsedSnap - DEFAULT_SNAP_POINT) / 2;
 
   const handleClose = () => {
     onOpenChange(false);
@@ -102,9 +100,11 @@ export function ReportDetailViewerModal({
       <Modal className={className}>
         <DraggableBottomSheet
           snapPoint={DEFAULT_SNAP_POINT}
+          initialSnapPoint={DEFAULT_SNAP_POINT}
           minSnapPoint={DEFAULT_SNAP_POINT}
-          miniSnapPoint={miniSnap}
           maxSnapPoint={collapsedSnap}
+          dismissSnapPoint={collapsedSnap}
+          animateOnMount
           onDismiss={handleClose}
         >
           <Dialog
