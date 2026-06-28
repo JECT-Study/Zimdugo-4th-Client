@@ -27,6 +27,16 @@ export {
 };
 export type { LockerPinQueryViewport };
 
+export const getLockerPinSearchSignature = (
+  searchParams?: LockerPinSearchParams | null,
+) =>
+  JSON.stringify({
+    keyword: searchParams?.keyword ?? null,
+    sizeTypes: searchParams?.sizeTypes ?? [],
+    lockerTypes: searchParams?.lockerTypes ?? [],
+    indoorOutdoorTypes: searchParams?.indoorOutdoorTypes ?? [],
+  });
+
 export interface UseLockerMarkersOptions {
   map: naver.maps.Map | null;
   maps: typeof naver.maps | null;
@@ -78,22 +88,12 @@ export const useLockerMarkers = ({
     [viewport],
   );
   const searchSignature = useMemo(
-    () =>
-      JSON.stringify({
-        lat: searchParams?.lat ?? null,
-        lng: searchParams?.lng ?? null,
-        keyword: searchParams?.keyword ?? null,
-        sizeTypes: searchParams?.sizeTypes ?? [],
-        lockerTypes: searchParams?.lockerTypes ?? [],
-        indoorOutdoorTypes: searchParams?.indoorOutdoorTypes ?? [],
-      }),
+    () => getLockerPinSearchSignature(searchParams),
     [
-      searchParams?.indoorOutdoorTypes,
+      searchParams?.indoorOutdoorTypes?.join(","),
       searchParams?.keyword,
-      searchParams?.lat,
-      searchParams?.lng,
-      searchParams?.lockerTypes,
-      searchParams?.sizeTypes,
+      searchParams?.lockerTypes?.join(","),
+      searchParams?.sizeTypes?.join(","),
     ],
   );
   const canFetchLockerPins =
