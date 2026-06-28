@@ -238,7 +238,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('<svg width="90" height="90"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
-    expect(icon).not.toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
     expect(icon).toContain('fill="white"');
   });
 
@@ -257,7 +257,7 @@ describe("createLockerMarkerIcon", () => {
 
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain('data-map-pin-variant="default"');
-    expect(icon).not.toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
   });
 
   it("renders inactive locker markers in gray", () => {
@@ -268,6 +268,9 @@ describe("createLockerMarkerIcon", () => {
 
     expect(icon).toContain('data-map-pin-variant="inactive"');
     expect(icon).toContain(`fill="${MOCK_INACTIVE_MARKER_FILL}"`);
+    expect(icon).toContain(
+      `stroke="${MOCK_INACTIVE_MARKER_FILL}" stroke-width="3"`,
+    );
   });
 
   it("renders place markers with the default map pin and a count badge", () => {
@@ -371,8 +374,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain('data-map-pin-variant="default"');
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('<svg width="90" height="90"');
-    expect(options.icon?.size).toMatchObject({ width: 24, height: 24 });
-    expect(options.icon?.anchor).toMatchObject({ x: 12, y: 12 });
+    expect(options.icon?.size).toMatchObject({ width: 40, height: 40 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20, y: 20 });
   });
 
   it("uses the selected locker map pin dimensions", () => {
@@ -394,8 +397,8 @@ describe("syncLockerMarkers", () => {
 
     expect(options.icon?.content).toContain('data-map-pin-variant="default"');
     expect(options.icon?.content).toContain("selected-active");
-    expect(options.icon?.size).toMatchObject({ width: 36, height: 36 });
-    expect(options.icon?.anchor).toMatchObject({ x: 18, y: 18 });
+    expect(options.icon?.size).toMatchObject({ width: 40, height: 40 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20, y: 20 });
   });
 
   it("uses the favorite locker map pin dimensions", () => {
@@ -415,8 +418,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="save"');
-    expect(options.icon?.size).toMatchObject({ width: 24, height: 24 });
-    expect(options.icon?.anchor).toMatchObject({ x: 12, y: 12 });
+    expect(options.icon?.size).toMatchObject({ width: 40, height: 40 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20, y: 20 });
   });
 
   it("uses an HTML icon option for place markers", () => {
@@ -744,10 +747,10 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(lockerOptions.icon?.size).toMatchObject({
-      width: 24,
-      height: 24,
+      width: 40,
+      height: 40,
     });
-    expect(lockerOptions.icon?.anchor).toMatchObject({ x: 12, y: 12 });
+    expect(lockerOptions.icon?.anchor).toMatchObject({ x: 20, y: 20 });
     expect(placeOptions.icon?.size).toMatchObject({
       width: 54.5,
       height: 54.5,
@@ -785,8 +788,8 @@ describe("syncLockerMarkers", () => {
       y: 28.4,
     });
     expectMarkerAnchorToMatch(FakeMarker.instances[1], {
-      x: -12,
-      y: 12,
+      x: -4,
+      y: 20,
     });
   });
 
@@ -859,15 +862,15 @@ describe("syncLockerMarkers", () => {
     expect(content1).toContain('data-offset-x="24"');
     expect(content1).toContain('data-offset-y="0"');
     expectMarkerAnchorToMatch(FakeMarker.instances[0], {
-      x: -12,
-      y: 12,
+      x: -4,
+      y: 20,
     });
 
     expect(content2).toContain('data-offset-x="-24"');
     expect(content2).toContain('data-offset-y="0"');
     expectMarkerAnchorToMatch(FakeMarker.instances[1], {
-      x: 36,
-      y: 12,
+      x: 44,
+      y: 20,
     });
   });
 
@@ -891,8 +894,8 @@ describe("syncLockerMarkers", () => {
     expect(content).toContain('data-offset-x="24"');
     expect(content).toContain('data-offset-y="0"');
     expectMarkerAnchorToMatch(FakeMarker.instances[0], {
-      x: -6,
-      y: 18,
+      x: -4,
+      y: 20,
     });
   });
 
@@ -974,8 +977,8 @@ describe("syncLockerMarkers", () => {
     expect(content1).toContain("data-offset-x");
     expect(content2).toContain("data-offset-x");
     expectMarkerAnchorToMatch(FakeMarker.instances[0], {
-      x: -12,
-      y: 12,
+      x: -4,
+      y: 20,
     });
     expectMarkerAnchorToMatch(FakeMarker.instances[1], {
       x: 47.6,
