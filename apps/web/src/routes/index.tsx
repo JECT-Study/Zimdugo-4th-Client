@@ -511,6 +511,16 @@ export function IndexPage() {
   const didApplyInitialGpsCenterRef = useRef(false);
   const hasUserMovedMapBeforeInitialGpsRef = useRef(false);
   const lastFocusedLockerIdRef = useRef<number | null>(null);
+  const shouldIgnoreNextMapPressRef = useRef(false);
+  const mapPressSuppressionTimerRef = useRef<number | undefined>(undefined);
+
+  // 방향 트래킹 pending 처리용 refs
+  // GPS 첫 위치 수신 후 자동으로 방향 트래킹을 시작해야 할 때 사용
+  const pendingOrientationStartRef = useRef(false);
+  const requestOrientationPermissionRef = useRef<() => Promise<boolean>>(
+    async () => false,
+  );
+  const startOrientationTrackingRef = useRef<() => void>(() => {});
   const isPendingFocusRef = useRef<boolean>(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -523,8 +533,6 @@ export function IndexPage() {
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
-  const shouldIgnoreNextMapPressRef = useRef(false);
-  const mapPressSuppressionTimerRef = useRef<number | undefined>(undefined);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -756,6 +764,16 @@ export function IndexPage() {
     locationLoadingTimerRef.current = undefined;
     // GPS 응답 시점에 오버레이 해제(애니메이션을 늦추면 사용자 경험 저하)
     setIsLocationDelayedLoading(false);
+
+    // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
+    // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
+    // 항상 최신 함수를 참조하므로 deps []가 안전하다.
+    if (pendingOrientationStartRef.current) {
+      pendingOrientationStartRef.current = false;
+      void requestOrientationPermissionRef.current().then((granted) => {
+        if (granted) startOrientationTrackingRef.current();
+      });
+    }
   }, []);
 
   // 위치 및 방향 트래킹
@@ -888,10 +906,15 @@ export function IndexPage() {
   const {
     heading: deviceHeading,
     isTracking: isOrientationTracking,
+    isSupported: isOrientationSupported,
     requestPermission: requestOrientationPermission,
     startTracking: startOrientationTracking,
     stopTracking: stopOrientationTracking,
   } = useDeviceOrientation();
+
+  // 방향 트래킹 함수들을 ref로 최신 참조 유지 (handleFirstLocation deps [] 유지 목적)
+  requestOrientationPermissionRef.current = requestOrientationPermission;
+  startOrientationTrackingRef.current = startOrientationTracking;
   const {
     isOpen: isLocationPopupOpen,
     openPopup: openLocationPopup,
@@ -1013,52 +1036,96 @@ export function IndexPage() {
     });
   }, [mapInstance, saveMapViewport]);
 
-  const handleMyLocation = useCallback(async () => {
-    if (permission === "denied") {
-      hasPendingLocationRequestRef.current = false;
-      openLocationPopup();
-      return;
-    }
+  const handleMyLocation = useCallback(
+    async () => {
+      if (permission === "denied") {
+        hasPendingLocationRequestRef.current = false;
+        openLocationPopup();
+        return;
+      }
 
-    if (!isCameraCentered) {
-      // 상태 1: 카메라 중앙 고정 ON (만약 GPS가 안 켜져있다면 켜기)
+      // 홈 화면 idle 컨텍스트 여부 판단
+      // 검색 중이거나 핀/시트가 활성화된 상황에서는 단순 위치 이동만 수행한다.
+      const isHomeContext =
+        context === "idle" && sheetMode === "idle" && !isSearchOpen;
+
+      if (!isHomeContext) {
+        // 비홈 컨텍스트: isCameraCentered 변경 없이 단순 위치 이동만 수행
+        if (location && mapInstanceRef.current) {
+          focusNaverMapOnCoordinates({
+            map: mapInstanceRef.current,
+            coordinates: location,
+          });
+        } else if (!isTracking) {
+          // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
+          hasPendingLocationRequestRef.current = true;
+          window.clearTimeout(locationLoadingTimerRef.current);
+          locationLoadingTimerRef.current = window.setTimeout(() => {
+            setIsLocationDelayedLoading(true);
+          }, 300);
+          startTracking();
+        }
+        return;
+      }
+
+      // ── 홈 idle 컨텍스트 전용 로직 ──────────────────────────────
+
+      // 상태 2(방향 트래킹 활성) → 상태 0으로 복귀
+      if (isOrientationTracking) {
+        setIsCameraCentered(false);
+        stopOrientationTracking();
+        return;
+      }
+
+      // 방향 트래킹 지원 여부 확인
+      // isOrientationSupported: null = 아직 미확정(시도), false = 미지원, true = 지원
+      const canUseOrientation = isOrientationSupported !== false;
+
       if (!isTracking) {
+        // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
         hasPendingLocationRequestRef.current = true;
         window.clearTimeout(locationLoadingTimerRef.current);
         locationLoadingTimerRef.current = window.setTimeout(() => {
           setIsLocationDelayedLoading(true);
         }, 300);
         startTracking();
-      } else if (location && mapInstanceRef.current) {
-        focusNaverMapOnCoordinates({
-          map: mapInstanceRef.current,
-          coordinates: location,
-        });
+        setIsCameraCentered(true);
+        // GPS 첫 위치 수신 후 handleFirstLocation에서 이어받아 처리
+        if (canUseOrientation) {
+          pendingOrientationStartRef.current = true;
+        }
+      } else {
+        // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
+        // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
+        if (location && mapInstanceRef.current) {
+          focusNaverMapOnCoordinates({
+            map: mapInstanceRef.current,
+            coordinates: location,
+          });
+        }
+        setIsCameraCentered(true);
+        if (canUseOrientation) {
+          const granted = await requestOrientationPermission();
+          if (granted) startOrientationTracking();
+        }
       }
-      setIsCameraCentered(true);
-    } else if (isCameraCentered && !isOrientationTracking) {
-      // 상태 2: 나침반 모드 ON
-      const granted = await requestOrientationPermission();
-      if (granted) {
-        startOrientationTracking();
-      }
-    } else {
-      // 상태 0으로 복귀: 카메라 중앙 고정 OFF, 나침반 OFF (GPS는 계속 켜둠)
-      setIsCameraCentered(false);
-      stopOrientationTracking();
-    }
-  }, [
-    permission,
-    isCameraCentered,
-    isTracking,
-    location,
-    isOrientationTracking,
-    openLocationPopup,
-    requestOrientationPermission,
-    startTracking,
-    startOrientationTracking,
-    stopOrientationTracking,
-  ]);
+    },
+    [
+      permission,
+      context,
+      sheetMode,
+      isSearchOpen,
+      location,
+      isTracking,
+      isOrientationTracking,
+      isOrientationSupported,
+      openLocationPopup,
+      startTracking,
+      requestOrientationPermission,
+      startOrientationTracking,
+      stopOrientationTracking,
+    ],
+  );
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
@@ -2572,6 +2639,7 @@ export function IndexPage() {
     }
   }, [isCameraCentered, location, mapInstance, context, sheetMode, isSearchOpen]);
 
+
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
       return;
@@ -2796,7 +2864,8 @@ export function IndexPage() {
   const handleMapPressRef = useRef(handleMapPress);
   handleMapPressRef.current = handleMapPress;
 
-  // 지도 드래그 시 카메라 고정 해제 및 나침반 해제 (GPS는 유지), 바텀시트 snap 다운
+  // 지도 드래그 시 카메라 고정 해제 (GPS 유지), 바텀시트 snap 다운
+  // 방향 트래킹은 드래그 후에도 유지된다 (Q1 결정 사항: 아이콘 방향 표시 유지).
   useEffect(() => {
     const maps = typeof window !== "undefined" ? window.naver?.maps : null;
 
@@ -2804,8 +2873,8 @@ export function IndexPage() {
 
     const listener = maps.Event.addListener(mapInstance, "dragstart", () => {
       hasUserMovedMapBeforeInitialGpsRef.current = true;
-      setIsCameraCentered(false);
-      stopOrientationTracking();
+      setIsCameraCentered(false); // 카메라 고정 해제 (위치 추적 중단)
+      // stopOrientationTracking()은 호출하지 않음 → 방향 트래킹 유지
       isPendingFocusRef.current = false;
       mapInstance.setCenter(mapInstance.getCenter());
       handleMapPressRef.current();
@@ -2814,7 +2883,7 @@ export function IndexPage() {
     return () => {
       maps.Event.removeListener(listener);
     };
-  }, [mapInstance, stopOrientationTracking]);
+  }, [mapInstance]);
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
       suppressNextMapPressForMarkerInteraction();
@@ -2964,7 +3033,7 @@ export function IndexPage() {
               state={
                 permission === "denied"
                   ? "denied"
-                  : isCameraCentered
+                  : isCameraCentered || isOrientationTracking
                     ? "active"
                     : "default"
               }
