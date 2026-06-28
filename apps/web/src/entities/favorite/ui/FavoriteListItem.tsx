@@ -1,7 +1,7 @@
 ﻿import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
+import { MapPinMarker } from "@repo/ui/components/map-pin-marker";
 import {
-  IconMarker22,
   IconStarFilled24,
   IconStarOutline24,
 } from "@repo/ui/tokens/icons";
@@ -53,7 +53,7 @@ export function FavoriteListItem({
   const content = (
     <>
       <span className={markerBadge} aria-hidden="true">
-        <IconMarker22 size={24} />
+        <MapPinMarker variant="favoriteLocker" scale={0.45} />
       </span>
       <span className={textColumn}>
         <span className={titleGroup}>

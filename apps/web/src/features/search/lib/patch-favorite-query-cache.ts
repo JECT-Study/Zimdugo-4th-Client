@@ -5,10 +5,12 @@ import type {
   SearchLockerResultItems,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
+import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import type {
   LockerSearchViewModel,
   PlaceLockersViewModel,
 } from "#/shared/api/locker-adapters";
+import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
 import {
   LOCKER_SEARCH_QUERY_KEY,
@@ -38,6 +40,15 @@ const patchSearchResultItem = (
     ) as SearchLockerResultItems,
   };
 };
+
+const patchLockerPinFavorite = (
+  pin: LockerPinItemResponse,
+  lockerId: number,
+  isFavorite: boolean,
+): LockerPinItemResponse =>
+  pin.pinType === "LOCKER" && pin.lockerId === lockerId
+    ? { ...pin, isFavorite }
+    : pin;
 
 export const patchFavoriteInQueryCaches = (
   queryClient: QueryClient,
@@ -84,6 +95,19 @@ export const patchFavoriteInQueryCaches = (
       }
 
       return { ...previous, isFavorite };
+    },
+  );
+
+  queryClient.setQueriesData<LockerPinItemResponse[]>(
+    { queryKey: [LOCKER_PINS_QUERY_KEY] },
+    (previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      return previous.map((pin) =>
+        patchLockerPinFavorite(pin, lockerId, isFavorite),
+      );
     },
   );
 };
