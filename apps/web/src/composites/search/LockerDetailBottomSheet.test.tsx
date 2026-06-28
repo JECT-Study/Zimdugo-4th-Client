@@ -189,6 +189,36 @@ describe("LockerDetailBottomSheet", () => {
     expect(handleVoteChange).toHaveBeenCalledWith(lockerWithVote, "CORRECT");
   });
 
+  it("투표 카운트가 없어도 투표 버튼을 표시한다", () => {
+    const handleVoteChange = vi.fn();
+    const lockerWithoutVoteCounts: LockerDetailItem = { ...LOCKER_DETAIL };
+    delete lockerWithoutVoteCounts.accurateCount;
+    delete lockerWithoutVoteCounts.inaccurateCount;
+
+    render(
+      <LockerDetailBottomSheet
+        locker={lockerWithoutVoteCounts}
+        onVoteChange={handleVoteChange}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    const accurateButton = sheet.getByRole("button", {
+      name: m.locker_detail_feedback_accurate({ count: "0" }),
+    });
+    const inaccurateButton = sheet.getByRole("button", {
+      name: m.locker_detail_feedback_inaccurate({ count: "0" }),
+    });
+
+    fireEvent.click(accurateButton);
+
+    expect(inaccurateButton).toBeTruthy();
+    expect(handleVoteChange).toHaveBeenCalledWith(
+      lockerWithoutVoteCounts,
+      "CORRECT",
+    );
+  });
+
   it("닫힘 단계의 뒤로가기는 에러 화면에서 유지한다", () => {
     const handleBack = vi.fn();
 

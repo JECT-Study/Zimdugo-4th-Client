@@ -664,9 +664,9 @@ function FullDetailContent({
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
-  const hasFeedbackVotes =
-    locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
   const canVote = typeof onVoteChange === "function";
+  const accurateCount = locker.accurateCount ?? 0;
+  const inaccurateCount = locker.inaccurateCount ?? 0;
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const handleVotePress = (voteType: LockerVoteType) => {
@@ -754,57 +754,47 @@ function FullDetailContent({
         {locker.lastUpdatedLabel ? (
           <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
-        {hasFeedbackVotes ? (
-          <div className={feedbackActionSection}>
-            <div className={feedbackRow}>
-              {locker.accurateCount !== undefined ? (
-                <button
-                  type="button"
-                  disabled={!canVote}
-                  aria-disabled={!canVote}
-                  className={[
-                    feedbackButton,
-                    locker.isAccurateVoted ? feedbackButtonSelected : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-pressed={locker.isAccurateVoted === true}
-                  onClick={() => handleVotePress("CORRECT")}
-                >
-                  {m.locker_detail_feedback_accurate({
-                    count: String(locker.accurateCount),
-                  })}
-                </button>
-              ) : null}
-              {locker.inaccurateCount !== undefined ? (
-                <button
-                  type="button"
-                  disabled={!canVote}
-                  aria-disabled={!canVote}
-                  className={[
-                    feedbackButton,
-                    feedbackButtonNegative,
-                    locker.isInaccurateVoted
-                      ? feedbackButtonNegativeSelected
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-pressed={locker.isInaccurateVoted === true}
-                  onClick={() => handleVotePress("INCORRECT")}
-                >
-                  {m.locker_detail_feedback_inaccurate({
-                    count: String(locker.inaccurateCount),
-                  })}
-                </button>
-              ) : null}
-            </div>
-            <div className={actionDivider} />
-            <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+        <div className={feedbackActionSection}>
+          <div className={feedbackRow}>
+            <button
+              type="button"
+              disabled={!canVote}
+              aria-disabled={!canVote}
+              className={[
+                feedbackButton,
+                locker.isAccurateVoted ? feedbackButtonSelected : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={locker.isAccurateVoted === true}
+              onClick={() => handleVotePress("CORRECT")}
+            >
+              {m.locker_detail_feedback_accurate({
+                count: String(accurateCount),
+              })}
+            </button>
+            <button
+              type="button"
+              disabled={!canVote}
+              aria-disabled={!canVote}
+              className={[
+                feedbackButton,
+                feedbackButtonNegative,
+                locker.isInaccurateVoted ? feedbackButtonNegativeSelected : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={locker.isInaccurateVoted === true}
+              onClick={() => handleVotePress("INCORRECT")}
+            >
+              {m.locker_detail_feedback_inaccurate({
+                count: String(inaccurateCount),
+              })}
+            </button>
           </div>
-        ) : (
+          <div className={actionDivider} />
           <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
-        )}
+        </div>
       </div>
       {previewImageUrl ? (
         <ImagePreviewOverlay

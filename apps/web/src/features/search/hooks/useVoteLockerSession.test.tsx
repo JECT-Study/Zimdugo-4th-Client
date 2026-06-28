@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import { postLockerVote } from "#/shared/api/locker-votes";
+import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
 import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 import { useVoteLockerSession } from "./useVoteLockerSession";
@@ -47,6 +48,10 @@ describe("useVoteLockerSession", () => {
   beforeEach(() => {
     vi.mocked(postLockerVote).mockReset();
     vi.mocked(postLockerVote).mockResolvedValue(undefined);
+    useAuthPopupStore.setState({
+      isOpen: false,
+      returnPath: "/",
+    });
     useAuthStore.setState({
       accessToken: "token",
       userId: 1,
@@ -121,5 +126,30 @@ describe("useVoteLockerSession", () => {
     });
 
     expect(result.current.pending.has(9)).toBe(false);
+  });
+
+  it("비로그인 투표 클릭 시 로그인 팝업을 열고 pending을 만들지 않는다", () => {
+    const queryClient = createQueryClient();
+    useAuthStore.setState({
+      accessToken: null,
+      userId: null,
+      email: null,
+      provider: null,
+      isAuthenticated: false,
+    });
+
+    const { result } = renderHook(() => useVoteLockerSession(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      result.current.handleDetailVoteChange(createLockerDetail(), "CORRECT");
+    });
+
+    expect(useAuthPopupStore.getState()).toMatchObject({
+      isOpen: true,
+      returnPath: "/",
+    });
+    expect(result.current.pending.size).toBe(0);
   });
 });

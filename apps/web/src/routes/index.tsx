@@ -2625,13 +2625,17 @@ export function IndexPage() {
               : undefined
           }
           onVoteChange={
-            lockerDetail
-              ? (item, voteType) =>
-                  voteSession.handleDetailVoteChange(item, voteType, {
-                    isAccurateVoted: lockerDetail.isAccurateVoted,
-                    isInaccurateVoted: lockerDetail.isInaccurateVoted,
-                  })
-              : undefined
+            (item, voteType) =>
+              voteSession.handleDetailVoteChange(
+                item,
+                voteType,
+                lockerDetail
+                  ? {
+                      isAccurateVoted: lockerDetail.isAccurateVoted,
+                      isInaccurateVoted: lockerDetail.isInaccurateVoted,
+                    }
+                  : undefined,
+              )
           }
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}
