@@ -45,6 +45,7 @@ interface LockerPinItemRaw {
   lockerCount?: number | null;
   pinCount?: number | null;
   bounds?: LockerBoundsRaw | null;
+  markerStatus?: "active" | "inactive";
 }
 
 const toLockerPinItem = (
@@ -71,6 +72,7 @@ const toLockerPinItem = (
       lockerCount: null,
       pinCount: null,
       bounds: null,
+      markerStatus: item.markerStatus,
     };
   }
 
@@ -85,6 +87,7 @@ const toLockerPinItem = (
       lockerCount: item.lockerCount ?? 0,
       pinCount: null,
       bounds: null,
+      markerStatus: item.markerStatus,
     };
   }
 
@@ -104,6 +107,7 @@ const toLockerPinItem = (
       lockerCount: null,
       pinCount: item.pinCount,
       bounds: item.bounds,
+      markerStatus: item.markerStatus,
     };
   }
 

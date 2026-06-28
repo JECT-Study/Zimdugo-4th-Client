@@ -136,4 +136,36 @@ describe("getLockerPinSearchSignature", () => {
 
     expect(movedSignature).toBe(baseSignature);
   });
+
+  it("minPrice, maxPrice, isFree 조건이 다르면 다른 시그니처를 반환한다", () => {
+    const baseSignature = getLockerPinSearchSignature({
+      lat: 37.5,
+      lng: 127,
+      keyword: "잠실",
+      minPrice: 1000,
+      maxPrice: 5000,
+      isFree: false,
+    });
+
+    const differentPriceSignature = getLockerPinSearchSignature({
+      lat: 37.5,
+      lng: 127,
+      keyword: "잠실",
+      minPrice: 2000,
+      maxPrice: 5000,
+      isFree: false,
+    });
+
+    const differentFreeSignature = getLockerPinSearchSignature({
+      lat: 37.5,
+      lng: 127,
+      keyword: "잠실",
+      minPrice: 1000,
+      maxPrice: 5000,
+      isFree: true,
+    });
+
+    expect(differentPriceSignature).not.toBe(baseSignature);
+    expect(differentFreeSignature).not.toBe(baseSignature);
+  });
 });

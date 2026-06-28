@@ -1,30 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LockerBoundsRaw } from "#/shared/api/lockers";
-import { subscribeMapIdle } from "./map-idle-controller";
-import type { MapViewport } from "./map-idle-controller";
+import {
+  getLockerPins,
+  type LockerPinItemResponse,
+  type LockerPinSearchParams,
+} from "#/shared/api/lockers";
 import {
   getLockerPinQueryFromViewport,
   isLockerPinQueryWithinCapacity,
   type LockerPinQueryViewport,
 } from "./locker-pin-query";
+import type { MapViewport } from "./map-idle-controller";
+import { subscribeMapIdle } from "./map-idle-controller";
 import {
   clearLockerMarkers,
-  syncLockerMarkers,
-  type LockerMarkerRegistry,
   type LockerMarkerOffset,
+  type LockerMarkerRegistry,
+  syncLockerMarkers,
 } from "./map-marker";
-import {
-  getLockerPins,
-  type LockerPinSearchParams,
-  type LockerPinItemResponse,
-} from "#/shared/api/lockers";
 
 export const LOCKER_PINS_QUERY_KEY = "lockerPins";
-export {
-  getLockerPinQueryFromViewport,
-  isLockerPinQueryWithinCapacity,
-};
+export { getLockerPinQueryFromViewport, isLockerPinQueryWithinCapacity };
 export type { LockerPinQueryViewport };
 
 export const getLockerPinSearchSignature = (
@@ -35,6 +32,9 @@ export const getLockerPinSearchSignature = (
     sizeTypes: searchParams?.sizeTypes ?? [],
     lockerTypes: searchParams?.lockerTypes ?? [],
     indoorOutdoorTypes: searchParams?.indoorOutdoorTypes ?? [],
+    minPrice: searchParams?.minPrice ?? null,
+    maxPrice: searchParams?.maxPrice ?? null,
+    isFree: searchParams?.isFree ?? null,
   });
 
 export interface UseLockerMarkersOptions {
@@ -87,6 +87,7 @@ export const useLockerMarkers = ({
     () => (viewport ? getLockerPinQueryFromViewport(viewport) : undefined),
     [viewport],
   );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getLockerPinSearchSignature only uses filter properties
   const searchSignature = useMemo(
     () => getLockerPinSearchSignature(searchParams),
     [
@@ -94,6 +95,9 @@ export const useLockerMarkers = ({
       searchParams?.keyword,
       searchParams?.lockerTypes?.join(","),
       searchParams?.sizeTypes?.join(","),
+      searchParams?.minPrice,
+      searchParams?.maxPrice,
+      searchParams?.isFree,
     ],
   );
   const canFetchLockerPins =
@@ -149,6 +153,9 @@ export const useLockerMarkers = ({
       searchParams?.sizeTypes,
       searchParams?.lockerTypes,
       searchParams?.indoorOutdoorTypes,
+      searchParams?.minPrice,
+      searchParams?.maxPrice,
+      searchParams?.isFree,
     ],
     queryFn: ({ signal }) => {
       if (!lockerPinQuery) return Promise.resolve([]);
@@ -169,6 +176,7 @@ export const useLockerMarkers = ({
 
   // 3. 서버에서 받아온 데이터를 지도 마커와 동기화
   // viewport가 변경될 때마다(드래그 등) 화면 밖 마커 컬링 로직이 수행되도록 의존성 추가
+  // biome-ignore lint/correctness/useExhaustiveDependencies: force sync on viewport change
   useEffect(() => {
     if (!map || !maps) return;
 
