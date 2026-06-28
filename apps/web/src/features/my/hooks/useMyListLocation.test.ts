@@ -51,4 +51,18 @@ describe("useMyListLocation", () => {
     expect(options.refetchOnWindowFocus).toBe(false);
     expect(options.retry).toBe(false);
   });
+
+  it("현재 위치 조회에 실패하면 정규화된 기본 좌표를 반환한다", async () => {
+    mocks.getCurrentMapCoordinates.mockRejectedValue(
+      new Error("permission denied"),
+    );
+
+    useMyListLocation();
+
+    const options = getQueryOptions();
+    await expect(options.queryFn()).resolves.toEqual({
+      lat: 37.4981,
+      lng: 127.0276,
+    });
+  });
 });

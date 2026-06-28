@@ -71,7 +71,7 @@ export function ReportDetailViewerModal({
       ? formatReportViewerInformationGroups(detail)
       : [];
   const statusDisplay =
-    detail?.reportStatus != null
+    loadState === "ready" && detail?.reportStatus != null
       ? resolveReportStatusDisplay(detail.reportStatus)
       : null;
 

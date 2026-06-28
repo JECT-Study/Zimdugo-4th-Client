@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MY_HISTORY_LIST_STALE_TIME_MS } from "../lib/my-list-query-options";
 
 const mocks = vi.hoisted(() => ({
+  getMyLockerReportHistory: vi.fn(),
   useInfiniteQuery: vi.fn(),
   useMyListLocation: vi.fn(),
   authState: {
@@ -12,6 +13,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@tanstack/react-query", () => ({
   useInfiniteQuery: mocks.useInfiniteQuery,
+}));
+
+vi.mock("#/shared/api/my-page", () => ({
+  getMyLockerReportHistory: mocks.getMyLockerReportHistory,
 }));
 
 vi.mock("#/shared/store/authStore", () => ({
@@ -41,6 +46,10 @@ interface InfiniteQueryOptions {
   enabled: boolean;
   staleTime: number;
   refetchOnWindowFocus: boolean;
+  queryFn: (context: {
+    pageParam: number;
+    signal?: AbortSignal;
+  }) => Promise<unknown>;
 }
 
 const getInfiniteQueryOptions = () => {
@@ -51,6 +60,11 @@ const getInfiniteQueryOptions = () => {
 describe("my history query options", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getMyLockerReportHistory.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      hasNext: false,
+    });
     mocks.authState.isAuthenticated = true;
     mocks.authState.userId = 1;
     mocks.useMyListLocation.mockReturnValue({
@@ -85,5 +99,32 @@ describe("my history query options", () => {
     expect(options.enabled).toBe(true);
     expect(options.staleTime).toBe(MY_HISTORY_LIST_STALE_TIME_MS);
     expect(options.refetchOnWindowFocus).toBe(false);
+  });
+
+  it("제보 히스토리 queryFn은 페이지 정보와 signal을 전달한다", async () => {
+    const signal = new AbortController().signal;
+    useReportHistoryList();
+
+    const options = getInfiniteQueryOptions();
+    await options.queryFn({ pageParam: 1, signal });
+
+    expect(mocks.getMyLockerReportHistory).toHaveBeenCalledWith({
+      lat: 37.1235,
+      lng: 127.1235,
+      page: 1,
+      size: 10,
+      signal,
+    });
+  });
+
+  it("제보 히스토리 queryFn은 위치가 없으면 요청하지 않는다", () => {
+    mocks.useMyListLocation.mockReturnValue({ data: undefined });
+    useReportHistoryList();
+
+    const options = getInfiniteQueryOptions();
+    expect(() => options.queryFn({ pageParam: 0 })).toThrow(
+      "Report history list location is required.",
+    );
+    expect(mocks.getMyLockerReportHistory).not.toHaveBeenCalled();
   });
 });

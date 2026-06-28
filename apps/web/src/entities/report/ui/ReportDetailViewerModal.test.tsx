@@ -92,4 +92,18 @@ describe("ReportDetailViewerModal", () => {
     expect(screen.queryByText(m.report_status_approved())).toBeNull();
     expect(screen.queryByText(m.report_status_rejected())).toBeNull();
   });
+
+  it("로딩 중에는 이전 상세 데이터의 상태 배지를 표시하지 않는다", () => {
+    render(
+      <ReportDetailViewerModal
+        isOpen
+        onOpenChange={vi.fn()}
+        titleText={REPORT_DETAIL.lockerName}
+        detail={REPORT_DETAIL}
+        loadState="loading"
+      />,
+    );
+
+    expect(screen.queryByText(m.report_status_pending())).toBeNull();
+  });
 });
