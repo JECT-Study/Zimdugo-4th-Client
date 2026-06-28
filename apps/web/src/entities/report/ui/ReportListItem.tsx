@@ -2,6 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
+import type { ReportStatusVariant } from "../model/report-status";
 import {
   address,
   bodyContent,
@@ -9,27 +10,24 @@ import {
   chevron,
   content,
   imageFrameSlot,
-  thumbnailImage,
   metaDetail,
   metaDot,
   metaRow,
   metaTime,
-  reportStatus,
   root,
   statusRow,
-  statusVariants,
   textColumn,
+  thumbnailImage,
   titleLabel,
 } from "./ReportListItem.css.ts";
-
-export type ReportListItemStatus = "pending" | "approved" | "rejected";
+import { ReportStatusBadge } from "./ReportStatusBadge";
 
 export interface ReportListItemProps {
   titleText: string;
   locationLabel: string;
   detailText: string;
   updatedLabel: string;
-  status?: ReportListItemStatus;
+  status?: ReportStatusVariant;
   statusLabel?: string;
   imageTitleText?: string;
   imageHelperText?: string;
@@ -58,19 +56,13 @@ export function ReportListItem({
     <span className={content}>
       {resolvedStatusLabel && status ? (
         <span className={statusRow} data-slot="status-row">
-          <span className={[reportStatus, statusVariants[status]].join(" ")}>
-            {resolvedStatusLabel}
-          </span>
+          <ReportStatusBadge status={status} label={resolvedStatusLabel} />
         </span>
       ) : null}
 
       <span className={bodyContent}>
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt=""
-            className={thumbnailImage}
-          />
+          <img src={imageUrl} alt="" className={thumbnailImage} />
         ) : (
           <LockerImageReportFrame
             size="compact"

@@ -11,7 +11,6 @@ import { NonSearch } from "#/entities/search";
 import { useFavoriteRemoval } from "#/features/my/hooks/useFavoriteRemoval";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
-import { MyUndoToast } from "#/features/my/ui/MyUndoToast";
 import type { FavoriteLockerListItem } from "#/shared/api/my-page";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
@@ -51,12 +50,10 @@ function MyFavoritesPage() {
   const {
     listQuery,
     filteredItems,
-    undoItem,
     errorMessage,
     setErrorMessage,
     getEffectiveIsFavorite,
     handleFavoriteChange,
-    undoRemoval,
   } = useFavoriteRemoval();
 
   const canLoadMore =
@@ -180,14 +177,6 @@ function MyFavoritesPage() {
           </section>
         ) : null}
       </main>
-
-      {undoItem ? (
-        <MyUndoToast
-          message={m.my_favorite_delete_toast()}
-          actionLabel={m.my_favorite_delete_undo()}
-          onUndo={undoRemoval}
-        />
-      ) : null}
 
       <Popup
         isOpen={errorMessage != null}

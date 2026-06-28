@@ -16,11 +16,8 @@ export const panel = style({
   display: "flex",
   flexDirection: "column",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
-  maxHeight: "92dvh",
-  borderRadius: `${vars.radius[12]} ${vars.radius[12]} 0 0`,
+  height: "100%",
   backgroundColor: vars.color.bg.default,
-  boxShadow: vars.shadow[2],
   overflow: "hidden",
   outline: "none",
 });
@@ -75,8 +72,12 @@ export const informationBody = style({
 });
 
 export const informationTitleRow = style({
-  display: "block",
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: vars.spacing[8],
   width: "100%",
+  minWidth: 0,
 });
 
 export const informationTitleCopy = style({
@@ -160,4 +161,33 @@ export const informationValue = style({
   whiteSpace: "pre-wrap",
   wordBreak: "keep-all",
   overflowWrap: "anywhere",
+});
+
+export const skeletonContent = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[20],
+  width: "100%",
+});
+
+export const skeletonHeader = style({
+  width: "100%",
+});
+
+export const skeletonGroup = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[8],
+  width: "100%",
+});
+
+export const skeletonRows = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[8],
+  width: "100%",
+});
+
+export const skeletonBlock = style({
+  width: "100%",
 });

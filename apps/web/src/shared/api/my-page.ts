@@ -42,6 +42,7 @@ export interface MyLockerReportHistoryItem {
   distanceMeters: number;
   updatedAt: string;
   imageUrl?: string | null;
+  reportStatus?: string | null;
 }
 
 export interface MyLockerReportDetail {
@@ -65,6 +66,7 @@ export interface MyLockerReportDetail {
   additionalInfo: string | null;
   imageUrl: string | null;
   locationConsentAgreed: boolean;
+  reportStatus?: string | null;
 }
 
 export interface MyListLocationParams {
