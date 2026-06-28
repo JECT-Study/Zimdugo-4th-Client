@@ -64,6 +64,7 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
+import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { MapSkeleton } from "#/entities/map/ui/map-skeleton/MapSkeleton";
@@ -74,7 +75,7 @@ import {
   useLockerDetail,
 } from "#/features/search/hooks/useLockerDetail";
 import {
-  useLockerKeywordSearch,
+  useLockerSearch,
   usePlaceLockers,
 } from "#/features/search/hooks/useSearch";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
@@ -961,7 +962,7 @@ export function IndexPage() {
     isPending: isKeywordSearchPending,
     isError: isKeywordSearchError,
     refetch: refetchKeywordSearch,
-  } = useLockerKeywordSearch(keywordSearchParams);
+  } = useLockerSearch(keywordSearchParams);
 
   const {
     data: placeLockersResults,
@@ -2321,6 +2322,10 @@ export function IndexPage() {
     mapDetailBack,
     selectedMapDetailPinCount: selectedMapDetailPins.length,
   });
+  const searchMarkerListKind =
+    sheetMode === "detail" ? searchDetailBack?.listKind : listKind;
+  const shouldUseKeywordSearchPinLayer =
+    markerLayer === "search" && searchMarkerListKind === "keyword";
   const selectedPinPreservedOffsets = useMemo(() => {
     if (!selectedPinId || !selectedMapPinOffset) {
       return undefined;
@@ -2465,7 +2470,17 @@ export function IndexPage() {
             onClusterClick={handleClusterClick}
           />
         )}
+        {!isMapLoading && shouldUseKeywordSearchPinLayer && (
+          <LockerMarkersLayer
+            map={mapInstance}
+            searchParams={keywordSearchParams}
+            selectedPinId={selectedPinId}
+            onSelectPin={handleSearchMarkerSelect}
+            onClusterClick={handleClusterClick}
+          />
+        )}
         {!isMapLoading &&
+          !shouldUseKeywordSearchPinLayer &&
           (markerLayer === "search" ||
             markerLayer === "mapPlace" ||
             markerLayer === "selectedMapDetail") && (
@@ -2644,12 +2659,14 @@ export function IndexPage() {
 
 function LockerMarkersLayer({
   map,
+  searchParams,
   selectedPinId,
   onSelectPin,
   onClusterClick,
   spreadCenter,
 }: {
   map: naver.maps.Map | null;
+  searchParams?: LockerPinSearchParams | null;
   selectedPinId?: string | null;
   onSelectPin?: (
     pinType: "LOCKER" | "PLACE",
@@ -2667,6 +2684,7 @@ function LockerMarkersLayer({
   useLockerMarkers({
     map,
     maps,
+    searchParams,
     selectedPinId,
     onSelectLocker: onSelectPin,
     onClusterClick,

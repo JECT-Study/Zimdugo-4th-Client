@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
-import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   clearLockerMarkers,
-  type LockerMarkerOffset,
-  type LockerMarkerRegistry,
   syncLockerMarkers,
+  type LockerMarkerRegistry,
+  type LockerMarkerOffset,
 } from "./map-marker";
+import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 export interface UseSearchResultMarkersOptions {
   map: naver.maps.Map | null;
