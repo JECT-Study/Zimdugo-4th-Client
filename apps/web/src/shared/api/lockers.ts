@@ -274,7 +274,12 @@ export interface LockerPinSearchParams
   extends LockerSearchLocationParams,
     Pick<
       LockerSearchFilterParams,
-      "sizeTypes" | "lockerTypes" | "indoorOutdoorTypes"
+      | "sizeTypes"
+      | "lockerTypes"
+      | "indoorOutdoorTypes"
+      | "minPrice"
+      | "maxPrice"
+      | "isFree"
     > {
   keyword: string;
 }
@@ -297,6 +302,9 @@ export interface GetLockerPinsParams {
   sizeTypes?: string[];
   lockerTypes?: string[];
   indoorOutdoorTypes?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  isFree?: boolean;
   signal?: AbortSignal;
 }
 

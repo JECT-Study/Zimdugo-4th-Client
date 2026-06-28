@@ -2325,7 +2325,9 @@ export function IndexPage() {
   const searchMarkerListKind =
     sheetMode === "detail" ? searchDetailBack?.listKind : listKind;
   const shouldUseKeywordSearchPinLayer =
-    markerLayer === "search" && searchMarkerListKind === "keyword";
+    markerLayer === "search" &&
+    searchMarkerListKind === "keyword" &&
+    keywordSearchParams !== null;
   const selectedPinPreservedOffsets = useMemo(() => {
     if (!selectedPinId || !selectedMapPinOffset) {
       return undefined;

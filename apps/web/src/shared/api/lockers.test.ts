@@ -232,6 +232,9 @@ describe("getLockerPins", () => {
       sizeTypes: ["SMALL"],
       indoorOutdoorTypes: ["INDOOR"],
       lockerTypes: ["SUBWAY_STATION"],
+      minPrice: 1000,
+      maxPrice: 3000,
+      isFree: false,
     });
 
     expect(httpGet).toHaveBeenCalledWith("/api/v1/lockers/pins", {
@@ -247,6 +250,9 @@ describe("getLockerPins", () => {
         sizeTypes: ["SMALL"],
         indoorOutdoorTypes: ["INDOOR"],
         lockerTypes: ["SUBWAY_STATION"],
+        minPrice: 1000,
+        maxPrice: 3000,
+        isFree: false,
       },
       signal: undefined,
     });
