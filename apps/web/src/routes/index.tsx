@@ -983,7 +983,7 @@ export function IndexPage() {
       };
     }
 
-    const origin = lockerDetailQueryOrigin ?? searchCoordinates;
+    const origin = lockerDetailQueryOrigin ?? DEFAULT_SEARCH_COORDINATES;
 
     return {
       lockerId: activeLockerId,
@@ -993,7 +993,6 @@ export function IndexPage() {
   }, [
     activeLockerId,
     lockerDetailQueryOrigin,
-    searchCoordinates,
     lockerIdFromQuery,
     loaderData,
   ]);
