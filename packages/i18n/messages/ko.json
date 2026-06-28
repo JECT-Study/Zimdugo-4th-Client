@@ -226,6 +226,8 @@
   "my_history_title": "마이 제보 내역",
   "my_history_empty_title": "제보 히스토리가 없어요",
   "my_history_empty": "아직 제보한 보관함이 없어요\n보관함을 제보해주세요!",
+  "my_history_empty_title_en": "No report history yet",
+  "my_history_empty_en": "Report lockers and review them here",
   "my_history_go_report": "첫 제보하러 가기",
   "my_history_item_type": "유형",
   "my_history_item_floor": "위치",

@@ -1,6 +1,8 @@
 import { languageTag, m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
+import { IconPencil24 } from "@repo/ui/tokens/icons";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
@@ -20,6 +22,7 @@ import { getMyLockerReportDetail } from "#/shared/api/my-page";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
+import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   childContent,
   childEmpty,
@@ -27,6 +30,10 @@ import {
   childListItem,
   childLoadMoreSlot,
   childPage,
+  childSkeletonFavorite,
+  childSkeletonItem,
+  childSkeletonList,
+  childSkeletonText,
   header,
 } from "./-my.css.ts";
 import { requireAuthenticatedMyRoute } from "./-my-auth";
@@ -37,6 +44,13 @@ export const Route = createFileRoute("/my/reports")({
 });
 
 const MY_REPORT_DETAIL_QUERY_KEY = "my-report-detail";
+const REPORT_SKELETON_ROW_KEYS = [
+  "report-skeleton-1",
+  "report-skeleton-2",
+  "report-skeleton-3",
+  "report-skeleton-4",
+  "report-skeleton-5",
+] as const;
 
 function MyReportsPage() {
   const navigate = useNavigate();
@@ -120,15 +134,18 @@ function MyReportsPage() {
           </p>
         ) : null}
 
-        {isInitialLoading ? <p>{m.my_summary_loading()}</p> : null}
+        {isInitialLoading ? <MyReportsSkeleton /> : null}
 
         {isError ? <MyListErrorState onRetry={handleRetry} /> : null}
 
         {isEmpty ? (
           <div className={childEmpty}>
             <NonSearch
+              icon={<IconPencil24 />}
               titleText={m.my_history_empty_title()}
               descriptionText={m.my_history_empty()}
+              englishTitleText={m.my_history_empty_title_en()}
+              englishDescriptionText={m.my_history_empty_en()}
               showEnglishSub={showEnglishSub}
             />
           </div>
@@ -191,6 +208,50 @@ function MyReportsPage() {
         detail={detailQuery.data ?? null}
         loadState={viewerLoadState}
       />
+    </div>
+  );
+}
+
+function MyReportsSkeleton() {
+  return (
+    <div className={childSkeletonList} aria-hidden="true">
+      {REPORT_SKELETON_ROW_KEYS.map((rowKey) => (
+        <div key={rowKey} className={childSkeletonItem}>
+          <Skeleton
+            width={76}
+            height={76}
+            borderRadius={8}
+            style={SKELETON_SURFACE_STYLE}
+          />
+          <div className={childSkeletonText}>
+            <Skeleton
+              width="72%"
+              height={16}
+              borderRadius={6}
+              style={SKELETON_SURFACE_STYLE}
+            />
+            <Skeleton
+              width="88%"
+              height={12}
+              borderRadius={6}
+              style={SKELETON_SURFACE_STYLE}
+            />
+            <Skeleton
+              width="54%"
+              height={12}
+              borderRadius={6}
+              style={SKELETON_SURFACE_STYLE}
+            />
+          </div>
+          <Skeleton
+            className={childSkeletonFavorite}
+            width={20}
+            height={20}
+            borderRadius={6}
+            style={SKELETON_SURFACE_STYLE}
+          />
+        </div>
+      ))}
     </div>
   );
 }

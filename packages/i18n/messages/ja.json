@@ -226,6 +226,8 @@
   "my_history_title": "マイ履歴",
   "my_history_empty_title": "報告履歴がありません",
   "my_history_empty": "まだ報告したロッカーがありません\nロッカーを報告してください！",
+  "my_history_empty_title_en": "No report history yet",
+  "my_history_empty_en": "Report lockers and review them here",
   "my_history_go_report": "最初の情報提供をする",
   "my_history_item_type": "種類",
   "my_history_item_floor": "位置",

@@ -226,6 +226,8 @@
   "my_history_title": "My Reports",
   "my_history_empty_title": "No report history yet",
   "my_history_empty": "You haven't reported any lockers yet.\nReport a locker!",
+  "my_history_empty_title_en": "No report history yet",
+  "my_history_empty_en": "Report lockers and review them here",
   "my_history_go_report": "Submit your first report",
   "my_history_item_type": "Type",
   "my_history_item_floor": "Location",
