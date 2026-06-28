@@ -871,13 +871,15 @@ export function IndexPage() {
   const handleExitSearchContext = resetSearchContext;
 
   const searchCoordinates = useMemo(() => {
+    const round4 = (n: number) => Math.round(n * 10000) / 10000;
+
     if (location) {
-      return { lat: location.lat, lng: location.lng };
+      return { lat: round4(location.lat), lng: round4(location.lng) };
     }
 
     if (mapInstance) {
       const center = mapInstance.getCenter();
-      return { lat: center.lat(), lng: center.lng() };
+      return { lat: round4(center.lat()), lng: round4(center.lng()) };
     }
 
     return DEFAULT_SEARCH_COORDINATES;
