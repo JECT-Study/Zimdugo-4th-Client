@@ -449,7 +449,6 @@ function LockerDetailLoadingContent() {
     <output
       className={loadingContent}
       aria-live="polite"
-      aria-busy="true"
       aria-label={m.search_result_loading_aria()}
     >
       <div className={loadingSummary}>

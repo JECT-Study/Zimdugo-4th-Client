@@ -1426,8 +1426,8 @@ export function IndexPage() {
       setSelectedMapPinOffset(null);
       if (pin) {
         setLockerDetailQueryOrigin({
-          lat: pin.latitude,
-          lng: pin.longitude,
+          lat: searchCoordinates.lat,
+          lng: searchCoordinates.lng,
         });
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
       }
@@ -1450,6 +1450,8 @@ export function IndexPage() {
       focusMapOnLockerPin,
       listKind,
       openLockerDetailById,
+      searchCoordinates.lat,
+      searchCoordinates.lng,
       searchPlaceId,
     ],
   );
@@ -1836,7 +1838,12 @@ export function IndexPage() {
       setSearchDetailBack(nextSearchDetailBack);
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
+      setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
+      setLockerDetailQueryOrigin({
+        lat: searchCoordinates.lat,
+        lng: searchCoordinates.lng,
+      });
       const shouldDelayDetailOpen =
         pin != null &&
         mapInstanceRef.current != null &&
@@ -1853,6 +1860,8 @@ export function IndexPage() {
       listKind,
       openLockerDetailAfterPinFocus,
       raiseSelectedPinFromMini,
+      searchCoordinates.lat,
+      searchCoordinates.lng,
       searchPlaceId,
       setSheetMode,
       shouldRaiseSelectedPinFromMini,
@@ -2005,6 +2014,31 @@ export function IndexPage() {
     },
     [setSheetMode],
   );
+
+  const searchBarBackAction = resolveSearchBarBackAction({
+    context,
+    listKind,
+    sheetMode,
+    searchDetailBack,
+  });
+  const searchBarBackPress =
+    searchBarBackAction === "mapPlaceList"
+      ? handleBackFromMapPlaceSheet
+      : searchBarBackAction === "searchDetail"
+        ? handleBackFromDetail
+        : searchBarBackAction === "searchFilter"
+          ? handleBackFromSearchFilter
+          : searchBarBackAction === "searchPlaceList"
+            ? handleBackToKeywordList
+            : searchBarBackAction === "searchKeywordList"
+              ? resetSearchContext
+              : undefined;
+  const listSheetDismissPress =
+    searchBarBackAction === "mapPlaceList"
+      ? handleBackFromMapPlaceSheet
+      : searchBarBackAction === "searchPlaceList"
+        ? handleBackToKeywordList
+        : resetSearchContext;
 
   useEffect(() => {
     if (!lockerDetail) {
@@ -2293,30 +2327,6 @@ export function IndexPage() {
 
     return new Map([[selectedPinId, selectedMapPinOffset]]);
   }, [selectedPinId, selectedMapPinOffset]);
-  const searchBarBackAction = resolveSearchBarBackAction({
-    context,
-    listKind,
-    sheetMode,
-    searchDetailBack,
-  });
-  const searchBarBackPress =
-    searchBarBackAction === "mapPlaceList"
-      ? handleBackFromMapPlaceSheet
-      : searchBarBackAction === "searchDetail"
-        ? handleBackFromDetail
-        : searchBarBackAction === "searchFilter"
-          ? handleBackFromSearchFilter
-          : searchBarBackAction === "searchPlaceList"
-            ? handleBackToKeywordList
-            : searchBarBackAction === "searchKeywordList"
-              ? resetSearchContext
-              : undefined;
-  const listSheetDismissPress =
-    searchBarBackAction === "mapPlaceList"
-      ? handleBackFromMapPlaceSheet
-      : searchBarBackAction === "searchPlaceList"
-        ? handleBackToKeywordList
-        : resetSearchContext;
   const searchListSheetKey =
     context === "search" && listKind === "keyword"
       ? `search-keyword-${searchQuery}`

@@ -27,6 +27,7 @@ import type {
   LockerDetailRaw,
   LockerKeywordItemRaw,
   LockerNestedRaw,
+  LockerOperatingHoursRaw,
   LockerSuggestItemRaw,
   PlaceLockersDataRaw,
 } from "./lockers";
@@ -47,6 +48,18 @@ export interface PlaceLockersViewModel {
   lockers: SearchLockerResultItem[];
 }
 
+const getOperatingHours = (raw: {
+  startTime?: string;
+  endTime?: string;
+  operatingHours?: LockerOperatingHoursRaw | null;
+}) => {
+  if (raw.startTime && raw.endTime) {
+    return { open: raw.startTime, close: raw.endTime };
+  }
+
+  return raw.operatingHours ?? null;
+};
+
 const toSearchLockerResultItem = (
   raw: LockerNestedRaw,
 ): SearchLockerResultItem => ({
@@ -63,6 +76,7 @@ const toSearchLockerResultItem = (
   updatedAt: raw.updatedAt,
   minPrice: raw.minPrice,
   isFavorite: raw.isFavorite,
+  operatingHours: getOperatingHours(raw),
 });
 
 const toSearchPlaceResultItem = (
@@ -86,6 +100,7 @@ const toSearchPlaceResultItem = (
     distanceMeters: raw.distanceMeters,
     updatedAt: raw.updatedAt,
     minPrice: raw.minPrice,
+    operatingHours: getOperatingHours(raw),
     lockers: lockers as SearchLockerResultItems,
   };
 };
@@ -111,6 +126,7 @@ const toTopLevelLockerResultItem = (
     updatedAt: raw.updatedAt,
     minPrice: raw.minPrice,
     isFavorite: raw.isFavorite,
+    operatingHours: getOperatingHours(raw),
   };
 };
 

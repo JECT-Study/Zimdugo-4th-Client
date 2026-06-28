@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const MOCK_MARKER_FILL = "#3BD569";
+const MOCK_INACTIVE_MARKER_FILL = "#CACACA";
 
 vi.mock("@repo/ui/vars", () => ({
   vars: {
@@ -235,7 +236,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('<svg width="90" height="90"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
-    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+    expect(icon).not.toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
     expect(icon).toContain('fill="white"');
   });
 
@@ -249,11 +250,22 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
-  it("renders the selected locker map pin asset", () => {
+  it("keeps the default locker asset when the locker is selected", () => {
     const icon = createLockerMarkerIcon(createLockerPin(), true);
 
     expect(icon).toContain('data-type="LOCKER"');
-    expect(icon).toContain('data-map-pin-variant="selected"');
+    expect(icon).toContain('data-map-pin-variant="default"');
+    expect(icon).not.toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+  });
+
+  it("renders inactive locker markers in gray", () => {
+    const icon = createLockerMarkerIcon(
+      createLockerPin({ markerStatus: "inactive" }),
+      true,
+    );
+
+    expect(icon).toContain('data-map-pin-variant="inactive"');
+    expect(icon).toContain(`fill="${MOCK_INACTIVE_MARKER_FILL}"`);
   });
 
   it("renders place markers with the default map pin and a count badge", () => {
@@ -270,6 +282,19 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('viewBox="0 0 121 121"');
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('width="121" height="121"');
+  });
+
+  it("renders inactive place markers in gray", () => {
+    const icon = createLockerMarkerIcon(
+      createPlacePin({ markerStatus: "inactive", lockerCount: 12 }),
+    );
+
+    expect(icon).toContain('data-type="PLACE"');
+    expect(icon).toContain('data-map-pin-variant="inactive"');
+    expect(icon).toContain(`fill="${MOCK_INACTIVE_MARKER_FILL}"`);
+    expect(icon).toContain(
+      `text-anchor="middle" fill="${MOCK_INACTIVE_MARKER_FILL}"`,
+    );
   });
 
   it("renders cluster markers for count < 10 (S size)", () => {
@@ -362,7 +387,8 @@ describe("syncLockerMarkers", () => {
       icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
     };
 
-    expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
+    expect(options.icon?.content).toContain('data-map-pin-variant="default"');
+    expect(options.icon?.content).toContain("selected-active");
     expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
     expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
   });
@@ -1079,7 +1105,7 @@ describe("syncLockerMarkers", () => {
     expect(content).toContain('data-offset-y="0"');
   });
 
-  it("keeps only the selected locker marker on the selected variant", () => {
+  it("keeps selected state in marker classes without changing icon variant", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1107,7 +1133,13 @@ describe("syncLockerMarkers", () => {
       'data-map-pin-variant="default"',
     );
     expect(getSetIconContent(FakeMarker.instances[1])).toContain(
-      'data-map-pin-variant="selected"',
+      'data-map-pin-variant="default"',
+    );
+    expect(getSetIconContent(FakeMarker.instances[0])).toContain(
+      "unselected-active",
+    );
+    expect(getSetIconContent(FakeMarker.instances[1])).toContain(
+      "selected-active",
     );
   });
 

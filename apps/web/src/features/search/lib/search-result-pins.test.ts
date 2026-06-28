@@ -58,4 +58,31 @@ describe("searchResultItemsToPins", () => {
 
     expect(pins).toEqual([]);
   });
+
+  it("marks closed lockers and places with only closed lockers inactive", () => {
+    const closedHours = { open: "10:00", close: "09:00" };
+    const pins = searchResultItemsToPins([
+      createLockerItem({ lockerId: 301, operatingHours: closedHours }),
+      createPlaceItem({
+        placeId: 401,
+        lockers: [
+          createLockerItem({ lockerId: 4011, operatingHours: closedHours }),
+          createLockerItem({ lockerId: 4012, operatingHours: closedHours }),
+        ],
+      }),
+    ]);
+
+    expect(pins).toEqual([
+      expect.objectContaining({
+        pinType: "LOCKER",
+        lockerId: 301,
+        markerStatus: "inactive",
+      }),
+      expect.objectContaining({
+        pinType: "PLACE",
+        placeId: 401,
+        markerStatus: "inactive",
+      }),
+    ]);
+  });
 });

@@ -3,6 +3,7 @@ import { httpGet } from "#/shared/lib/apiClient";
 interface LockerPinBase {
   latitude: number;
   longitude: number;
+  markerStatus?: "active" | "inactive";
 }
 
 export type LockerPinItemResponse =
@@ -151,6 +152,9 @@ export interface LockerNestedRaw {
   distanceMeters: number;
   updatedAt: string;
   isFavorite: boolean;
+  startTime?: string;
+  endTime?: string;
+  operatingHours?: LockerOperatingHoursRaw | null;
 }
 
 export interface LockerKeywordItemRaw {
@@ -167,6 +171,9 @@ export interface LockerKeywordItemRaw {
   distanceMeters: number;
   updatedAt?: string;
   isFavorite?: boolean;
+  startTime?: string;
+  endTime?: string;
+  operatingHours?: LockerOperatingHoursRaw | null;
   lockers: LockerNestedRaw[];
 }
 

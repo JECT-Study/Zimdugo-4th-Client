@@ -264,6 +264,22 @@ describe("sheet-session v2", () => {
   it("검색바 뒤로가기 액션을 검색 시트 상태별로 판정한다", () => {
     expect(
       resolveSearchBarBackAction({
+        context: "map",
+        listKind: null,
+        sheetMode: "list",
+        searchDetailBack: null,
+      }),
+    ).toBe("mapPlaceList");
+    expect(
+      resolveSearchBarBackAction({
+        context: "map",
+        listKind: null,
+        sheetMode: "detail",
+        searchDetailBack: null,
+      }),
+    ).toBe("mapPlaceList");
+    expect(
+      resolveSearchBarBackAction({
         context: "search",
         listKind: "place",
         sheetMode: "list",
