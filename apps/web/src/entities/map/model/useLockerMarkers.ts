@@ -4,6 +4,7 @@ import type { LockerBoundsRaw } from "#/shared/api/lockers";
 import {
   getLockerPins,
   type LockerPinItemResponse,
+  type LockerPinSearchParams,
 } from "#/shared/api/lockers";
 import {
   getLockerPinQueryFromViewport,
@@ -23,9 +24,23 @@ export const LOCKER_PINS_QUERY_KEY = "lockerPins";
 export { getLockerPinQueryFromViewport, isLockerPinQueryWithinCapacity };
 export type { LockerPinQueryViewport };
 
+export const getLockerPinSearchSignature = (
+  searchParams?: LockerPinSearchParams | null,
+) =>
+  JSON.stringify({
+    keyword: searchParams?.keyword ?? null,
+    sizeTypes: searchParams?.sizeTypes ?? [],
+    lockerTypes: searchParams?.lockerTypes ?? [],
+    indoorOutdoorTypes: searchParams?.indoorOutdoorTypes ?? [],
+    minPrice: searchParams?.minPrice ?? null,
+    maxPrice: searchParams?.maxPrice ?? null,
+    isFree: searchParams?.isFree ?? null,
+  });
+
 export interface UseLockerMarkersOptions {
   map: naver.maps.Map | null;
   maps: typeof naver.maps | null;
+  searchParams?: LockerPinSearchParams | null;
   selectedPinId?: string | null;
   onSelectLocker?: (
     pinType: "LOCKER" | "PLACE",
@@ -40,6 +55,7 @@ export interface UseLockerMarkersOptions {
 export const useLockerMarkers = ({
   map,
   maps,
+  searchParams,
   selectedPinId,
   onSelectLocker,
   onClusterClick,
@@ -48,6 +64,7 @@ export const useLockerMarkers = ({
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const markerRegistryRef = useRef<LockerMarkerRegistry>(new Map());
   const lastRenderedZoomRef = useRef<number | null>(null);
+  const lastSearchSignatureRef = useRef<string | null>(null);
   const onSelectLockerRef = useRef(onSelectLocker);
 
   useEffect(() => {
@@ -70,9 +87,37 @@ export const useLockerMarkers = ({
     () => (viewport ? getLockerPinQueryFromViewport(viewport) : undefined),
     [viewport],
   );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getLockerPinSearchSignature only uses filter properties
+  const searchSignature = useMemo(
+    () => getLockerPinSearchSignature(searchParams),
+    [
+      searchParams?.indoorOutdoorTypes?.join(","),
+      searchParams?.keyword,
+      searchParams?.lockerTypes?.join(","),
+      searchParams?.sizeTypes?.join(","),
+      searchParams?.minPrice,
+      searchParams?.maxPrice,
+      searchParams?.isFree,
+    ],
+  );
   const canFetchLockerPins =
     lockerPinQuery !== undefined &&
     isLockerPinQueryWithinCapacity(lockerPinQuery);
+
+  useEffect(() => {
+    if (!maps) {
+      lastSearchSignatureRef.current = searchSignature;
+      return;
+    }
+
+    if (lastSearchSignatureRef.current === searchSignature) {
+      return;
+    }
+
+    clearLockerMarkers(markerRegistryRef.current, maps);
+    lastRenderedZoomRef.current = null;
+    lastSearchSignatureRef.current = searchSignature;
+  }, [maps, searchSignature]);
 
   // 1. 지도 idle 이벤트 구독 (뷰포트 상태 업데이트만 담당)
   useEffect(() => {
@@ -102,6 +147,15 @@ export const useLockerMarkers = ({
       lockerPinQuery?.neLat,
       lockerPinQuery?.neLng,
       lockerPinQuery?.zoom,
+      searchParams?.lat,
+      searchParams?.lng,
+      searchParams?.keyword,
+      searchParams?.sizeTypes,
+      searchParams?.lockerTypes,
+      searchParams?.indoorOutdoorTypes,
+      searchParams?.minPrice,
+      searchParams?.maxPrice,
+      searchParams?.isFree,
     ],
     queryFn: ({ signal }) => {
       if (!lockerPinQuery) return Promise.resolve([]);
@@ -111,6 +165,7 @@ export const useLockerMarkers = ({
         neLat: lockerPinQuery.neLat,
         neLng: lockerPinQuery.neLng,
         zoom: lockerPinQuery.zoom,
+        ...searchParams,
         signal,
       });
     },
@@ -121,9 +176,8 @@ export const useLockerMarkers = ({
 
   // 3. 서버에서 받아온 데이터를 지도 마커와 동기화
   // viewport가 변경될 때마다(드래그 등) 화면 밖 마커 컬링 로직이 수행되도록 의존성 추가
+  // biome-ignore lint/correctness/useExhaustiveDependencies: force sync on viewport change
   useEffect(() => {
-    void viewport;
-
     if (!map || !maps) return;
 
     if (!canFetchLockerPins) {

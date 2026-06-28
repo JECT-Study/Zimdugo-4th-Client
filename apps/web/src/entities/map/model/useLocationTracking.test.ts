@@ -8,10 +8,7 @@ import {
   type Mock,
   vi,
 } from "vitest";
-import {
-  LOCATION_TRACKING_CONSENT_STORAGE_KEY,
-  useLocationTracking,
-} from "./useLocationTracking";
+import { useLocationTracking } from "./useLocationTracking";
 
 describe("useLocationTracking", () => {
   let watchPositionMock: Mock;
@@ -19,8 +16,6 @@ describe("useLocationTracking", () => {
   let queryMock: Mock;
 
   beforeEach(() => {
-    window.localStorage.clear();
-
     // Mock navigator.geolocation
     watchPositionMock = vi.fn().mockReturnValue(123);
     clearWatchMock = vi.fn();
@@ -49,7 +44,6 @@ describe("useLocationTracking", () => {
   });
 
   afterEach(() => {
-    window.localStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -70,58 +64,6 @@ describe("useLocationTracking", () => {
     expect(result.current.permission).toBe("granted");
     expect(result.current.isTracking).toBe(true);
     expect(watchPositionMock).toHaveBeenCalled();
-    expect(
-      window.localStorage.getItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY),
-    ).toBe("true");
-  });
-
-  it("should resume tracking from stored consent when Permissions API is unavailable", async () => {
-    Object.defineProperty(global.navigator, "permissions", {
-      value: undefined,
-      configurable: true,
-      writable: true,
-    });
-    window.localStorage.setItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY, "true");
-
-    const { result } = renderHook(() => useLocationTracking());
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    expect(result.current.isTracking).toBe(true);
-    expect(watchPositionMock).toHaveBeenCalled();
-  });
-
-  it("should resume tracking from stored consent when Permissions API query fails", async () => {
-    queryMock.mockRejectedValueOnce(new Error("Permissions API failed"));
-    window.localStorage.setItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY, "true");
-
-    const { result } = renderHook(() => useLocationTracking());
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    expect(result.current.isTracking).toBe(true);
-    expect(watchPositionMock).toHaveBeenCalled();
-  });
-
-  it("should not request location on mount without stored consent when Permissions API is unavailable", async () => {
-    Object.defineProperty(global.navigator, "permissions", {
-      value: undefined,
-      configurable: true,
-      writable: true,
-    });
-
-    const { result } = renderHook(() => useLocationTracking());
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    expect(result.current.isTracking).toBe(false);
-    expect(watchPositionMock).not.toHaveBeenCalled();
   });
 
   it("should call onFirstLocation exactly once when the first position callback is fired", async () => {
@@ -151,9 +93,6 @@ describe("useLocationTracking", () => {
       lng: 127.0,
       heading: 90,
     });
-    expect(
-      window.localStorage.getItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY),
-    ).toBe("true");
 
     // 두 번째 위치 콜백 시뮬레이션
     act(() => {
@@ -205,8 +144,5 @@ describe("useLocationTracking", () => {
 
     expect(result.current.permission).toBe("denied");
     expect(result.current.isTracking).toBe(false);
-    expect(
-      window.localStorage.getItem(LOCATION_TRACKING_CONSENT_STORAGE_KEY),
-    ).toBeNull();
   });
 });

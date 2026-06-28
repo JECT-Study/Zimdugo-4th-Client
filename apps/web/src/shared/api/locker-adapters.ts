@@ -25,14 +25,14 @@ import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 import type {
   LockerBoundsRaw,
   LockerDetailRaw,
-  LockerKeywordItemRaw,
+  LockerSearchItemRaw,
   LockerNestedRaw,
   LockerOperatingHoursRaw,
   LockerSuggestItemRaw,
   PlaceLockersDataRaw,
 } from "./lockers";
 
-export interface LockerKeywordViewModel {
+export interface LockerSearchViewModel {
   count: number;
   bounds: LockerBoundsRaw;
   items: SearchResultItem[];
@@ -93,7 +93,7 @@ const toSearchLockerResultItem = (
 });
 
 const toSearchPlaceResultItem = (
-  raw: LockerKeywordItemRaw,
+  raw: LockerSearchItemRaw,
 ): SearchPlaceResultItem | null => {
   if (raw.type !== "PLACE" || raw.placeId == null || !raw.placeName) {
     return null;
@@ -119,7 +119,7 @@ const toSearchPlaceResultItem = (
 };
 
 const toTopLevelLockerResultItem = (
-  raw: LockerKeywordItemRaw,
+  raw: LockerSearchItemRaw,
 ): SearchLockerResultItem | null => {
   if (raw.type !== "LOCKER" || raw.lockerId == null || !raw.lockerName) {
     return null;
@@ -144,7 +144,7 @@ const toTopLevelLockerResultItem = (
 };
 
 export const toSearchKeywordItems = (
-  items: LockerKeywordItemRaw[],
+  items: LockerSearchItemRaw[],
 ): SearchResultItem[] =>
   items
     .map((item) =>
@@ -154,11 +154,11 @@ export const toSearchKeywordItems = (
     )
     .filter((item): item is SearchResultItem => item !== null);
 
-export const toLockerKeywordViewModel = (payload: {
+export const toLockerSearchViewModel = (payload: {
   count: number;
   bounds: LockerBoundsRaw;
-  items: LockerKeywordItemRaw[];
-}): LockerKeywordViewModel => ({
+  items: LockerSearchItemRaw[];
+}): LockerSearchViewModel => ({
   count: payload.count,
   bounds: payload.bounds,
   items: toSearchKeywordItems(payload.items),
@@ -249,7 +249,6 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   updatedAt: raw.updatedAt,
   minPrice: raw.minPrice,
   isFavorite: raw.isFavorite,
-  imageUrl: raw.imageUrl?.trim() || undefined,
   operatingHoursLabel: formatOperatingHoursLabel(raw),
   floorLabel: formatLockerFloorLabel(
     raw.floor,
@@ -261,6 +260,7 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
     raw.lockerSizes && raw.lockerSizes.length > 0
       ? formatLockerSizeTypesLabel(raw.lockerSizes)
       : raw.sizeLabel,
+  imageUrl: raw.imageUrl?.trim() || undefined,
   detailHelpText: raw.detailInfo ?? raw.detailHelpText,
   accurateCount: raw.accurateVoteCount ?? raw.accurateCount,
   inaccurateCount: raw.inaccurateVoteCount ?? raw.inaccurateCount,

@@ -13,7 +13,7 @@ import { useAuthStore } from "#/shared/store/authStore";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 import {
-  LOCKER_KEYWORD_QUERY_KEY,
+  LOCKER_SEARCH_QUERY_KEY,
   PLACE_LOCKERS_QUERY_KEY,
 } from "./useSearch";
 import {
@@ -188,7 +188,7 @@ export function useFavoriteLockerSession() {
 
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: [LOCKER_KEYWORD_QUERY_KEY],
+          queryKey: [LOCKER_SEARCH_QUERY_KEY],
         }),
         queryClient.invalidateQueries({
           queryKey: [PLACE_LOCKERS_QUERY_KEY],

@@ -216,4 +216,45 @@ describe("getLockerPins", () => {
       }),
     ).resolves.toEqual([]);
   });
+
+  it("forwards keyword pin search params to the pins API", async () => {
+    vi.mocked(httpGet).mockResolvedValue(mockPinResponse([]));
+
+    await getLockerPins({
+      swLat: 37,
+      swLng: 126,
+      neLat: 38,
+      neLng: 128,
+      zoom: 13,
+      lat: 37.5,
+      lng: 127,
+      keyword: "station",
+      sizeTypes: ["SMALL"],
+      indoorOutdoorTypes: ["INDOOR"],
+      lockerTypes: ["SUBWAY_STATION"],
+      minPrice: 1000,
+      maxPrice: 3000,
+      isFree: false,
+    });
+
+    expect(httpGet).toHaveBeenCalledWith("/api/v1/lockers/pins", {
+      params: {
+        swLat: 37,
+        swLng: 126,
+        neLat: 38,
+        neLng: 128,
+        zoom: 13,
+        lat: 37.5,
+        lng: 127,
+        keyword: "station",
+        sizeTypes: ["SMALL"],
+        indoorOutdoorTypes: ["INDOOR"],
+        lockerTypes: ["SUBWAY_STATION"],
+        minPrice: 1000,
+        maxPrice: 3000,
+        isFree: false,
+      },
+      signal: undefined,
+    });
+  });
 });

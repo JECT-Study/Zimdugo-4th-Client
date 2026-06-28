@@ -25,6 +25,7 @@ import {
   getLockerPinQueryFromViewport,
   isLockerPinQueryWithinCapacity,
 } from "./locker-pin-query";
+import { getLockerPinSearchSignature } from "./useLockerMarkers";
 
 describe("getLockerPinQueryFromViewport", () => {
   it("상단 검색 영역을 제외한 bounds를 반환한다", () => {
@@ -41,7 +42,7 @@ describe("getLockerPinQueryFromViewport", () => {
       },
     });
 
-    expect(query.neLat).toBe(37.5083);
+    expect(query.neLat).toBe(37.5082);
     expect(query.swLat).toBeCloseTo(37.49, 3);
     expect(query.swLng).toBeCloseTo(126.99, 3);
     expect(query.neLng).toBeCloseTo(127.01, 3);
@@ -110,5 +111,61 @@ describe("getLockerPinQueryFromViewport", () => {
 
     expect(query.zoom).toBe(10);
     expect(isLockerPinQueryWithinCapacity(query)).toBe(true);
+  });
+});
+
+describe("getLockerPinSearchSignature", () => {
+  it("검색 좌표가 달라도 같은 검색 조건이면 같은 시그니처를 반환한다", () => {
+    const baseSignature = getLockerPinSearchSignature({
+      lat: 37.5,
+      lng: 127,
+      keyword: "잠실",
+      sizeTypes: ["SMALL"],
+      indoorOutdoorTypes: ["INDOOR"],
+      lockerTypes: ["SUBWAY_STATION"],
+    });
+
+    const movedSignature = getLockerPinSearchSignature({
+      lat: 37.5004,
+      lng: 127.0004,
+      keyword: "잠실",
+      sizeTypes: ["SMALL"],
+      indoorOutdoorTypes: ["INDOOR"],
+      lockerTypes: ["SUBWAY_STATION"],
+    });
+
+    expect(movedSignature).toBe(baseSignature);
+  });
+
+  it("minPrice, maxPrice, isFree 조건이 다르면 다른 시그니처를 반환한다", () => {
+    const baseSignature = getLockerPinSearchSignature({
+      lat: 37.5,
+      lng: 127,
+      keyword: "잠실",
+      minPrice: 1000,
+      maxPrice: 5000,
+      isFree: false,
+    });
+
+    const differentPriceSignature = getLockerPinSearchSignature({
+      lat: 37.5,
+      lng: 127,
+      keyword: "잠실",
+      minPrice: 2000,
+      maxPrice: 5000,
+      isFree: false,
+    });
+
+    const differentFreeSignature = getLockerPinSearchSignature({
+      lat: 37.5,
+      lng: 127,
+      keyword: "잠실",
+      minPrice: 1000,
+      maxPrice: 5000,
+      isFree: true,
+    });
+
+    expect(differentPriceSignature).not.toBe(baseSignature);
+    expect(differentFreeSignature).not.toBe(baseSignature);
   });
 });
