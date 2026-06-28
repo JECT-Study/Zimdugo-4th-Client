@@ -1,6 +1,7 @@
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import type {
   SearchLockerResultItem,
+  SearchLockerResultItems,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
 
@@ -36,7 +37,7 @@ export const applyFavoriteOverlayToSearchResultItems = (
       ...item,
       lockers: item.lockers.map((locker) =>
         withFavoriteOverlay(locker, resolveEffectiveFavorite),
-      ),
+      ) as SearchLockerResultItems,
     };
   });
 

@@ -8,9 +8,13 @@ describe("collectServerVoteByLockerId", () => {
   it("상세 쿼리 캐시 prefix로 서버 투표 상태를 읽는다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
+      itemType: "LOCKER",
       lockerId: 9,
       title: "테스트",
       address: "주소",
+      categoryLabel: "지하철역",
+      updatedLabel: "방금 업데이트",
+      distanceLabel: "100m",
       isAccurateVoted: true,
       isInaccurateVoted: false,
     };

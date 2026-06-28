@@ -6,12 +6,12 @@ import type {
   SearchResultItem,
 } from "#/composites/search/search-list-model";
 import type {
-  LockerKeywordViewModel,
+  LockerSearchViewModel,
   PlaceLockersViewModel,
 } from "#/shared/api/locker-adapters";
 import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
 import {
-  LOCKER_KEYWORD_QUERY_KEY,
+  LOCKER_SEARCH_QUERY_KEY,
   PLACE_LOCKERS_QUERY_KEY,
 } from "../hooks/useSearch";
 
@@ -44,8 +44,8 @@ export const patchFavoriteInQueryCaches = (
   lockerId: number,
   isFavorite: boolean,
 ): void => {
-  queryClient.setQueriesData<LockerKeywordViewModel>(
-    { queryKey: [LOCKER_KEYWORD_QUERY_KEY] },
+  queryClient.setQueriesData<LockerSearchViewModel>(
+    { queryKey: [LOCKER_SEARCH_QUERY_KEY] },
     (previous) => {
       if (!previous) {
         return previous;

@@ -418,7 +418,6 @@ export function LockerDetailBottomSheet({
     ? m.search_favorite_remove()
     : m.search_favorite_add();
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
-  const isFull = currentSnapPoint <= resolvedMinSnapPoint + 24;
   const canFavorite = typeof onFavoriteChange === "function";
 
   const handleFavoritePress = () => {

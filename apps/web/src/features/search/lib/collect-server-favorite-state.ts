@@ -5,7 +5,7 @@ import type {
 } from "#/composites/search/search-list-model";
 import { FAVORITE_LOCKER_LIST_QUERY_KEY } from "#/features/my/hooks/useFavoriteLockerList";
 import type {
-  LockerKeywordViewModel,
+  LockerSearchViewModel,
   PlaceLockersViewModel,
 } from "#/shared/api/locker-adapters";
 import type {
@@ -13,7 +13,7 @@ import type {
   PaginatedListData,
 } from "#/shared/api/my-page";
 import {
-  LOCKER_KEYWORD_QUERY_KEY,
+  LOCKER_SEARCH_QUERY_KEY,
   PLACE_LOCKERS_QUERY_KEY,
 } from "../hooks/useSearch";
 import { readLockerDetailFromQueryCache } from "./read-locker-detail-from-query-cache";
@@ -64,8 +64,8 @@ export const collectServerFavoriteByLockerId = (
     }
   }
 
-  const keywordQueries = queryClient.getQueriesData<LockerKeywordViewModel>({
-    queryKey: [LOCKER_KEYWORD_QUERY_KEY],
+  const keywordQueries = queryClient.getQueriesData<LockerSearchViewModel>({
+    queryKey: [LOCKER_SEARCH_QUERY_KEY],
   });
 
   for (const [, data] of keywordQueries) {

@@ -1,4 +1,3 @@
-import type { QueryClient } from "@tanstack/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
@@ -9,9 +8,13 @@ describe("readLockerDetailFromQueryCache", () => {
   it("lat/lng/authScope가 포함된 상세 쿼리 키에서 데이터를 읽는다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
+      itemType: "LOCKER",
       lockerId: 7,
       title: "테스트",
       address: "주소",
+      categoryLabel: "지하철역",
+      updatedLabel: "방금 업데이트",
+      distanceLabel: "100m",
       isAccurateVoted: true,
       isInaccurateVoted: false,
     };

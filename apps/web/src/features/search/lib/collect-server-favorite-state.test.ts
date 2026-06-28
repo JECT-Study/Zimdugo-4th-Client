@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import { FAVORITE_LOCKER_LIST_QUERY_KEY } from "#/features/my/hooks/useFavoriteLockerList";
 import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
-import { LOCKER_KEYWORD_QUERY_KEY } from "#/features/search/hooks/useSearch";
-import type { LockerKeywordViewModel } from "#/shared/api/locker-adapters";
+import { LOCKER_SEARCH_QUERY_KEY } from "#/features/search/hooks/useSearch";
+import type { LockerSearchViewModel } from "#/shared/api/locker-adapters";
 import type {
   FavoriteLockerListItem,
   PaginatedListData,
@@ -58,7 +58,7 @@ describe("collectServerFavoriteByLockerId", () => {
       distanceLabel: "100m",
       isFavorite: true,
     };
-    const keywordData: LockerKeywordViewModel = {
+    const keywordData: LockerSearchViewModel = {
       count: 1,
       bounds: {
         swLat: 37,
@@ -84,7 +84,7 @@ describe("collectServerFavoriteByLockerId", () => {
       [LOCKER_DETAIL_QUERY_KEY, 42, 37.5, 127.0, "user:1"],
       detail,
     );
-    queryClient.setQueryData([LOCKER_KEYWORD_QUERY_KEY, "locker"], keywordData);
+    queryClient.setQueryData([LOCKER_SEARCH_QUERY_KEY, "locker"], keywordData);
 
     expect(collectServerFavoriteByLockerId(queryClient, [42]).get(42)).toBe(
       true,
