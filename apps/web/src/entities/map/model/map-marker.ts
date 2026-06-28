@@ -13,6 +13,7 @@ export interface LockerMarkerOffset {
 
 const PLACE_BADGE_FILL = vars.color.palette.green[500];
 const INACTIVE_MARKER_FILL = vars.color.palette.gray[500];
+const INACTIVE_BADGE_TEXT_FILL = vars.color.palette.gray[700];
 const MAP_PIN_WHITE = "white";
 const COORDINATE_GROUP_PRECISION = 4;
 const MARKER_PROXIMITY_THRESHOLD_PX = 44;
@@ -171,6 +172,8 @@ const createPlaceClusterMapPinSvg = (
 ): string => {
   const badgeFontSize = badgeLabel.length > 1 ? 24 : 31;
   const badgeY = badgeLabel.length > 1 ? 43 : 45;
+  const badgeTextFill =
+    fill === INACTIVE_MARKER_FILL ? INACTIVE_BADGE_TEXT_FILL : fill;
 
   return `
     <svg width="100%" height="100%" viewBox="0 0 121 121" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: block;">
@@ -180,7 +183,7 @@ const createPlaceClusterMapPinSvg = (
       </g>
       <g filter="url(#cluster-map-pin-badge-shadow)">
         <path d="M99.3436 33.2436C99.3436 20.3786 88.9144 9.94946 76.0495 9.94946C63.1845 9.94946 52.7554 20.3786 52.7554 33.2436C52.7554 46.1085 63.1845 56.5377 76.0495 56.5377C88.9144 56.5377 99.3436 46.1085 99.3436 33.2436Z" fill="${MAP_PIN_WHITE}" stroke="${fill}" stroke-width="3"/>
-        <text x="76.05" y="${badgeY}" text-anchor="middle" fill="${fill}" font-family="Pretendard, sans-serif" font-size="${badgeFontSize}" font-weight="700">${badgeLabel}</text>
+        <text x="76.05" y="${badgeY}" text-anchor="middle" fill="${badgeTextFill}" font-family="Pretendard, sans-serif" font-size="${badgeFontSize}" font-weight="700">${badgeLabel}</text>
       </g>
       <defs>
         <filter id="cluster-map-pin-shadow" x="0" y="16.2" width="104.8" height="104.8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">

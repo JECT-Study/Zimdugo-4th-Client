@@ -54,11 +54,24 @@ const getOperatingHours = (raw: {
   operatingHours?: LockerOperatingHoursRaw | null;
 }) => {
   if (raw.startTime && raw.endTime) {
-    return { open: raw.startTime, close: raw.endTime };
+    return {
+      open: normalizeOperatingTime(raw.startTime),
+      close: normalizeOperatingTime(raw.endTime),
+    };
   }
 
-  return raw.operatingHours ?? null;
+  if (raw.operatingHours) {
+    return {
+      open: normalizeOperatingTime(raw.operatingHours.open),
+      close: normalizeOperatingTime(raw.operatingHours.close),
+    };
+  }
+
+  return null;
 };
+
+const normalizeOperatingTime = (time: string): string =>
+  time.replace(/^(\d{2}:\d{2}):\d{2}$/, "$1");
 
 const toSearchLockerResultItem = (
   raw: LockerNestedRaw,

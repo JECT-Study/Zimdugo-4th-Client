@@ -3,6 +3,7 @@ import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const MOCK_MARKER_FILL = "#3BD569";
 const MOCK_INACTIVE_MARKER_FILL = "#CACACA";
+const MOCK_INACTIVE_BADGE_TEXT_FILL = "#4B4B4B";
 
 vi.mock("@repo/ui/vars", () => ({
   vars: {
@@ -14,6 +15,7 @@ vi.mock("@repo/ui/vars", () => ({
         gray: {
           100: "#F5F5F5",
           500: "#CACACA",
+          700: "#4B4B4B",
         },
         green: {
           500: "#3BD569",
@@ -293,7 +295,10 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('data-map-pin-variant="inactive"');
     expect(icon).toContain(`fill="${MOCK_INACTIVE_MARKER_FILL}"`);
     expect(icon).toContain(
-      `text-anchor="middle" fill="${MOCK_INACTIVE_MARKER_FILL}"`,
+      `stroke="${MOCK_INACTIVE_MARKER_FILL}" stroke-width="3"`,
+    );
+    expect(icon).toContain(
+      `text-anchor="middle" fill="${MOCK_INACTIVE_BADGE_TEXT_FILL}"`,
     );
   });
 
