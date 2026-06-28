@@ -116,6 +116,10 @@ import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
 } from "#/features/search/model/map-viewport-policy";
+import {
+  mergeDisplayLockerDetailWithPreviousDistance,
+  mergeStoredLockerDetailWithPreviousDistance,
+} from "#/features/search/model/locker-detail-display";
 import type { SearchHistoryEntry } from "#/features/search/model/search-history";
 import {
   applyLockerSearchDraft,
@@ -277,28 +281,6 @@ export const Route = createFileRoute("/")({
 });
 
 const readRestoredMapSheetSession = () => readMapSheetSessionSnapshot();
-
-const mergeLockerDetailWithPreviousDistance = (
-  detail: LockerDetailItem,
-  previousDetail: LockerDetailItem | null,
-): LockerDetailItem => {
-  const detailSnapshot = { ...detail };
-  delete detailSnapshot.isFavorite;
-  delete detailSnapshot.accurateCount;
-  delete detailSnapshot.inaccurateCount;
-  delete detailSnapshot.isAccurateVoted;
-  delete detailSnapshot.isInaccurateVoted;
-
-  if (!previousDetail || previousDetail.lockerId !== detail.lockerId) {
-    return detailSnapshot;
-  }
-
-  return {
-    ...detailSnapshot,
-    distanceLabel: detail.distanceLabel || previousDetail.distanceLabel,
-    distanceMeters: detail.distanceMeters ?? previousDetail.distanceMeters,
-  };
-};
 
 export function IndexPage() {
   const navigate = useNavigate();
@@ -2055,7 +2037,7 @@ export function IndexPage() {
     }
 
     setSelectedLockerDetail((previousDetail) =>
-      mergeLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
+      mergeStoredLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
@@ -2245,7 +2227,7 @@ export function IndexPage() {
 
   const displayedLockerDetail = useMemo(() => {
     const detailBase = lockerDetail
-      ? mergeLockerDetailWithPreviousDistance(
+      ? mergeDisplayLockerDetailWithPreviousDistance(
           lockerDetail,
           selectedLockerDetail,
         )
