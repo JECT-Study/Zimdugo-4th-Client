@@ -1097,6 +1097,8 @@ export function IndexPage() {
   const resetMapContext = useCallback(() => {
     clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
+    // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
+    setIsCameraCentered(false);
     setMapPlaceId(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -1115,6 +1117,8 @@ export function IndexPage() {
   const resetSearchContext = useCallback(() => {
     clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
+    // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
+    setIsCameraCentered(false);
     setSearchQuery("");
     void navigate({
       to: ".",
@@ -1572,6 +1576,8 @@ export function IndexPage() {
   const openMapPlaceList = useCallback(
     (placeId: number) => {
       clearPendingLockerDetailOpen();
+      // 맨 컨텍스트로 전환 시 카메라 고정 해제
+      setIsCameraCentered(false);
       setContext("map");
       setMapPlaceId(placeId);
       setMapDetailBack(null);
@@ -2073,6 +2079,8 @@ export function IndexPage() {
       setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
       pinSelectedInAppRef.current = pin != null;
+      // 맵 컨텍스트로 진입 시 카메라 고정 해제 (GPS 업데이트에 의한 강제 이동 방지)
+      setIsCameraCentered(false);
       setContext("map");
       setMapDetailBack("idle");
       const detail =
@@ -2548,12 +2556,21 @@ export function IndexPage() {
     openLockerId,
   ]);
 
-  // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
+  // 카메라 고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동.
+  // 홈 idle 컨텍스트에서만 동작: 핀 선택·검색 등 비홈 컨텍스트에서는
+  // isCameraCentered가 남아있어도 강제 이동하지 않는다 (버그 방지).
   useEffect(() => {
-    if (isCameraCentered && location && mapInstance) {
+    if (
+      isCameraCentered &&
+      location &&
+      mapInstance &&
+      context === "idle" &&
+      sheetMode === "idle" &&
+      !isSearchOpen
+    ) {
       focusNaverMapOnCoordinates({ map: mapInstance, coordinates: location });
     }
-  }, [isCameraCentered, location, mapInstance]);
+  }, [isCameraCentered, location, mapInstance, context, sheetMode, isSearchOpen]);
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
