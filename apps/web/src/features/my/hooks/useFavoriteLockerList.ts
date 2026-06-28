@@ -12,6 +12,7 @@ export function useFavoriteLockerList() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = useAuthStore((state) => state.userId);
   const authScope = getAuthQueryCacheScope(isAuthenticated, userId);
+  const canFetchFavoriteLockers = location != null && authScope !== null;
 
   return useInfiniteQuery({
     queryKey: [
@@ -20,7 +21,7 @@ export function useFavoriteLockerList() {
       location?.lng,
       authScope,
     ],
-    enabled: location != null,
+    enabled: canFetchFavoriteLockers,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => {
       if (!location) {
