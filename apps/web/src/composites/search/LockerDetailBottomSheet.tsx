@@ -142,6 +142,7 @@ export interface LockerDetailBottomSheetProps {
 
 export const LOCKER_DETAIL_FULL_TOP_OFFSET = 112;
 const DETAIL_CONTENT_TOP_PADDING = 8;
+const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 const DETAIL_HALF_VISIBLE_HEIGHT = 246;
@@ -356,7 +357,11 @@ export function LockerDetailBottomSheet({
     }
 
     setFullContentHeight(
-      Math.ceil(element.scrollHeight + DETAIL_CONTENT_TOP_PADDING),
+      Math.ceil(
+        element.scrollHeight +
+          DETAIL_CONTENT_TOP_PADDING +
+          DETAIL_CONTENT_BOTTOM_PADDING,
+      ),
     );
   }, []);
   const handleFullContentMeasureRef = useCallback(
