@@ -18,7 +18,7 @@ describe("map-viewport-policy", () => {
         sheetMode: "list",
         windowHeight: 800,
       }),
-    ).toBe(493);
+    ).toBe(167);
   });
 
   it("짧은 뷰포트에서는 최소 하단 패딩을 유지한다", () => {

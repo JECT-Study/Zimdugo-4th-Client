@@ -41,7 +41,7 @@ describe("getLockerPinQueryFromViewport", () => {
       },
     });
 
-    expect(query.neLat).toBe(37.5083);
+    expect(query.neLat).toBe(37.5082);
     expect(query.swLat).toBeCloseTo(37.49, 3);
     expect(query.swLng).toBeCloseTo(126.99, 3);
     expect(query.neLng).toBeCloseTo(127.01, 3);

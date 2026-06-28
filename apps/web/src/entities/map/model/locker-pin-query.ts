@@ -1,7 +1,7 @@
 import type { MapViewport } from "./map-idle-controller";
 
 const LOCKER_PIN_COORDINATE_PRECISION = 4;
-const SEARCH_BAR_RESERVED_TOP_PX = 68;
+const SEARCH_BAR_RESERVED_TOP_PX = 72;
 
 export interface LockerPinQueryViewport {
   swLat: number;
