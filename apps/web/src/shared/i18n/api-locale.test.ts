@@ -26,12 +26,12 @@ describe("buildAcceptLanguageHeader", () => {
 
 describe("shouldAttachAcceptLanguage", () => {
   it("matches locker, place, and document read APIs", () => {
-    expect(shouldAttachAcceptLanguage("/api/v1/lockers/pin")).toBe(true);
-    expect(shouldAttachAcceptLanguage("/api/v1/lockers/keyword")).toBe(true);
+    expect(shouldAttachAcceptLanguage("/api/v1/lockers/pins")).toBe(true);
+    expect(shouldAttachAcceptLanguage("/api/v1/lockers/search")).toBe(true);
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/42")).toBe(true);
     expect(shouldAttachAcceptLanguage("/api/v1/places/99")).toBe(true);
     expect(
-      shouldAttachAcceptLanguage("https://api.zimdugo.com/api/v1/lockers/pin"),
+      shouldAttachAcceptLanguage("https://api.zimdugo.com/api/v1/lockers/pins"),
     ).toBe(true);
 
     expect(shouldAttachAcceptLanguage("/api/v1/me/profile")).toBe(false);
@@ -58,7 +58,7 @@ describe("resolveAcceptLanguageHeader", () => {
   });
 
   it("returns app locale with wildcard for locker/place APIs", () => {
-    expect(resolveAcceptLanguageHeader("/api/v1/lockers/keyword", "zh-TW")).toBe(
+    expect(resolveAcceptLanguageHeader("/api/v1/lockers/search", "zh-TW")).toBe(
       "zh-TW, *;q=0.5",
     );
   });

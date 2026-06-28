@@ -2,16 +2,16 @@ import { setLanguageTag } from "@repo/i18n";
 import { describe, expect, it } from "vitest";
 import {
   toLockerDetailItem,
-  toLockerKeywordViewModel,
+  toLockerSearchViewModel,
   toPlaceLockersViewModel,
 } from "./locker-adapters";
 import type {
   LockerDetailRaw,
-  LockerKeywordDataRaw,
+  LockerSearchDataRaw,
   PlaceLockersDataRaw,
 } from "./lockers";
 
-const GANGNAM_KEYWORD_RESPONSE: LockerKeywordDataRaw = {
+const GANGNAM_SEARCH_RESPONSE: LockerSearchDataRaw = {
   count: 4,
   bounds: {
     swLat: 37.496068,
@@ -76,7 +76,7 @@ const GANGNAM_KEYWORD_RESPONSE: LockerKeywordDataRaw = {
 
 describe("locker-adapters", () => {
   it("keyword 응답을 PLACE/LOCKER 검색 결과 모델로 변환한다", () => {
-    const viewModel = toLockerKeywordViewModel(GANGNAM_KEYWORD_RESPONSE);
+    const viewModel = toLockerSearchViewModel(GANGNAM_SEARCH_RESPONSE);
 
     expect(viewModel.count).toBe(4);
     expect(viewModel.items).toHaveLength(2);
@@ -219,7 +219,7 @@ describe("locker-adapters", () => {
   });
 
   it("normalizes Swagger HH:mm:ss operating hours for keyword results", () => {
-    const viewModel = toLockerKeywordViewModel({
+    const viewModel = toLockerSearchViewModel({
       count: 1,
       bounds: {
         swLat: 37.496068,

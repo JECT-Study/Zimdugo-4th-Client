@@ -157,7 +157,7 @@ export interface LockerNestedRaw {
   operatingHours?: LockerOperatingHoursRaw | null;
 }
 
-export interface LockerKeywordItemRaw {
+export interface LockerSearchItemRaw {
   type: LockerItemType;
   placeId?: number;
   placeName?: string;
@@ -177,10 +177,10 @@ export interface LockerKeywordItemRaw {
   lockers: LockerNestedRaw[];
 }
 
-export interface LockerKeywordDataRaw {
+export interface LockerSearchDataRaw {
   count: number;
   bounds: LockerBoundsRaw;
-  items: LockerKeywordItemRaw[];
+  items: LockerSearchItemRaw[];
 }
 
 export interface LockerSuggestItemRaw {
@@ -270,6 +270,15 @@ export interface LockerSearchFilterParams {
   isFree?: boolean;
 }
 
+export interface LockerPinSearchParams
+  extends LockerSearchLocationParams,
+    Pick<
+      LockerSearchFilterParams,
+      "sizeTypes" | "lockerTypes" | "indoorOutdoorTypes"
+    > {
+  keyword: string;
+}
+
 export interface PlaceLockersFilterParams {
   sizeTypes?: string[];
   indoorOutdoorTypes?: string[];
@@ -282,10 +291,16 @@ export interface GetLockerPinsParams {
   neLat: number;
   neLng: number;
   zoom: number;
+  lat?: number;
+  lng?: number;
+  keyword?: string;
+  sizeTypes?: string[];
+  lockerTypes?: string[];
+  indoorOutdoorTypes?: string[];
   signal?: AbortSignal;
 }
 
-export interface GetLockerKeywordParams
+export interface GetLockerSearchParams
   extends LockerSearchLocationParams,
     LockerSearchFilterParams {
   keyword: string;
@@ -349,7 +364,7 @@ export const getLockerPins = async (
 ): Promise<LockerPinItemResponse[]> => {
   const { signal, ...queryParams } = params;
   const { data: response } = await httpGet<BackendResponse<LockerPinData>>(
-    "/api/v1/lockers/pin",
+    "/api/v1/lockers/pins",
     { params: queryParams, signal },
   );
 
@@ -363,13 +378,13 @@ export const getLockerPins = async (
     .filter((item): item is LockerPinItemResponse => item !== null);
 };
 
-export const getLockerKeyword = async (
-  params: GetLockerKeywordParams,
-): Promise<LockerKeywordDataRaw> => {
+export const getLockerSearch = async (
+  params: GetLockerSearchParams,
+): Promise<LockerSearchDataRaw> => {
   const { signal, ...queryParams } = params;
   const { data: response } = await httpGet<
-    BackendResponse<LockerKeywordDataRaw>
-  >("/api/v1/lockers/keyword", { params: queryParams, signal });
+    BackendResponse<LockerSearchDataRaw>
+  >("/api/v1/lockers/search", { params: queryParams, signal });
 
   return unwrapBackendData(response);
 };

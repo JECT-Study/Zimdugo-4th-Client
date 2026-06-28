@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  toLockerKeywordViewModel,
+  toLockerSearchViewModel,
   toPlaceLockersViewModel,
   toSearchAutocompleteItems,
 } from "#/shared/api/locker-adapters";
 import {
-  type GetLockerKeywordParams,
+  type GetLockerSearchParams,
   type GetLockerSuggestParams,
   type GetPlaceLockersParams,
-  getLockerKeyword,
+  getLockerSearch,
   getLockerSuggest,
   getPlaceLockers,
 } from "#/shared/api/lockers";
@@ -22,16 +22,16 @@ function useAuthQueryCacheScope() {
   return getAuthQueryCacheScope(isAuthenticated, userId);
 }
 
-export const LOCKER_KEYWORD_QUERY_KEY = "lockerKeyword";
+export const LOCKER_SEARCH_QUERY_KEY = "lockerSearch";
 export const LOCKER_SUGGEST_QUERY_KEY = "lockerSuggest";
 export const PLACE_LOCKERS_QUERY_KEY = "placeLockers";
 
-export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
+export function useLockerSearch(params: GetLockerSearchParams | null) {
   const authScope = useAuthQueryCacheScope();
 
   return useQuery({
     queryKey: [
-      LOCKER_KEYWORD_QUERY_KEY,
+      LOCKER_SEARCH_QUERY_KEY,
       params?.keyword,
       params?.lat,
       params?.lng,
@@ -45,11 +45,11 @@ export function useLockerKeywordSearch(params: GetLockerKeywordParams | null) {
     ],
     queryFn: ({ signal }) => {
       if (!params) {
-        throw new Error("Locker keyword search params are required.");
+        throw new Error("Locker search params are required.");
       }
 
-      return getLockerKeyword({ ...params, signal }).then(
-        toLockerKeywordViewModel,
+      return getLockerSearch({ ...params, signal }).then(
+        toLockerSearchViewModel,
       );
     },
     enabled: !!params?.keyword?.trim(),

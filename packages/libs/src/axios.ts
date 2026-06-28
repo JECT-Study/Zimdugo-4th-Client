@@ -11,6 +11,9 @@ export const createApiClient = (baseURL = "/api") => {
   const client = axios.create({
     baseURL,
     timeout: 10000,
+    paramsSerializer: {
+      indexes: null,
+    },
     headers: {
       "Content-Type": "application/json",
     },
