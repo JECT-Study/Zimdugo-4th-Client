@@ -1,4 +1,4 @@
-import type { InfiniteData } from "@tanstack/react-query";
+﻿import type { InfiniteData } from "@tanstack/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
@@ -13,7 +13,7 @@ import type {
 import { collectServerFavoriteByLockerId } from "./collect-server-favorite-state";
 
 describe("collectServerFavoriteByLockerId", () => {
-  it("마이페이지 즐겨찾기 목록 캐시에서 서버 즐겨찾기 상태를 읽는다", () => {
+  it("reads favorite state from the favorite list cache", () => {
     const queryClient = new QueryClient();
     const page: PaginatedListData<FavoriteLockerListItem> = {
       count: 1,
@@ -22,8 +22,8 @@ describe("collectServerFavoriteByLockerId", () => {
       items: [
         {
           lockerId: 42,
-          lockerName: "테스트",
-          roadAddress: "주소",
+          lockerName: "locker",
+          roadAddress: "address",
           lockerType: "PUBLIC",
           latitude: 37.5,
           longitude: 127.0,
@@ -36,25 +36,25 @@ describe("collectServerFavoriteByLockerId", () => {
 
     queryClient.setQueryData<
       InfiniteData<PaginatedListData<FavoriteLockerListItem>>
-    >([FAVORITE_LOCKER_LIST_QUERY_KEY, 37.5, 127.0], {
+    >([FAVORITE_LOCKER_LIST_QUERY_KEY, 37.5, 127.0, 1], {
       pages: [page],
       pageParams: [0],
     });
 
-    expect(collectServerFavoriteByLockerId(queryClient, [42]).get(42)).toBe(
+    expect(collectServerFavoriteByLockerId(queryClient, [42], 1).get(42)).toBe(
       true,
     );
   });
 
-  it("상세 캐시 값이 있으면 목록 캐시가 같은 lockerId를 덮지 않는다", () => {
+  it("prefers scoped detail cache over list cache", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
       itemType: "LOCKER",
       lockerId: 42,
-      title: "상세 보관함",
-      address: "상세 주소",
-      categoryLabel: "지하철역",
-      updatedLabel: "방금 업데이트",
+      title: "detail locker",
+      address: "detail address",
+      categoryLabel: "category",
+      updatedLabel: "updated",
       distanceLabel: "100m",
       isFavorite: true,
     };
@@ -70,10 +70,10 @@ describe("collectServerFavoriteByLockerId", () => {
         {
           itemType: "LOCKER",
           lockerId: 42,
-          title: "목록 보관함",
-          address: "목록 주소",
-          categoryLabel: "지하철역",
-          updatedLabel: "1시간 전 업데이트",
+          title: "list locker",
+          address: "list address",
+          categoryLabel: "category",
+          updatedLabel: "updated",
           distanceLabel: "200m",
           isFavorite: false,
         },
@@ -81,13 +81,39 @@ describe("collectServerFavoriteByLockerId", () => {
     };
 
     queryClient.setQueryData(
-      [LOCKER_DETAIL_QUERY_KEY, 42, 37.5, 127.0, "user:1"],
+      [LOCKER_DETAIL_QUERY_KEY, 42, 37.5, 127.0, 1],
       detail,
     );
-    queryClient.setQueryData([LOCKER_SEARCH_QUERY_KEY, "locker"], keywordData);
+    queryClient.setQueryData(
+      [LOCKER_SEARCH_QUERY_KEY, "locker", 1],
+      keywordData,
+    );
 
-    expect(collectServerFavoriteByLockerId(queryClient, [42]).get(42)).toBe(
+    expect(collectServerFavoriteByLockerId(queryClient, [42], 1).get(42)).toBe(
       true,
     );
+  });
+
+  it("ignores caches from a different auth scope", () => {
+    const queryClient = new QueryClient();
+    const detail: LockerDetailItem = {
+      itemType: "LOCKER",
+      lockerId: 42,
+      title: "anonymous locker",
+      address: "address",
+      categoryLabel: "category",
+      updatedLabel: "updated",
+      distanceLabel: "100m",
+      isFavorite: true,
+    };
+
+    queryClient.setQueryData(
+      [LOCKER_DETAIL_QUERY_KEY, 42, 37.5, 127.0, "anonymous"],
+      detail,
+    );
+
+    expect(
+      collectServerFavoriteByLockerId(queryClient, [42], 1).get(42),
+    ).toBeUndefined();
   });
 });

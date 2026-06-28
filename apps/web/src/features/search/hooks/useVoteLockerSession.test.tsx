@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -32,10 +32,10 @@ const createLockerDetail = (
 ): LockerDetailItem => ({
   itemType: "LOCKER",
   lockerId: 9,
-  title: "테스트 보관함",
-  address: "서울시 테스트구",
-  categoryLabel: "지하철역",
-  updatedLabel: "방금 업데이트",
+  title: "test locker",
+  address: "test address",
+  categoryLabel: "category",
+  updatedLabel: "updated",
   distanceLabel: "100m",
   accurateCount: 1,
   inaccurateCount: 0,
@@ -61,11 +61,11 @@ describe("useVoteLockerSession", () => {
     });
   });
 
-  it("flush 성공 시 invalidate 없이 진행 중 상세 쿼리를 취소한 뒤 패치한다", async () => {
+  it("cancels and patches detail queries after a successful flush", async () => {
     const queryClient = createQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
     const cancelSpy = vi.spyOn(queryClient, "cancelQueries");
-    const queryKey = [LOCKER_DETAIL_QUERY_KEY, 9, 37.5, 127.0, "user:1"];
+    const queryKey = [LOCKER_DETAIL_QUERY_KEY, 9, 37.5, 127.0, 1];
 
     queryClient.setQueryData(queryKey, createLockerDetail());
 
@@ -98,7 +98,7 @@ describe("useVoteLockerSession", () => {
     expect(result.current.pending.size).toBe(0);
   });
 
-  it("상세 handler는 displayed 값이 아니라 active query server snapshot으로 diff를 계산한다", () => {
+  it("uses the active server snapshot when detail display has overlays", () => {
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useVoteLockerSession(), {
       wrapper: createWrapper(queryClient),
@@ -128,8 +128,12 @@ describe("useVoteLockerSession", () => {
     expect(result.current.pending.has(9)).toBe(false);
   });
 
-  it("비로그인 투표 클릭 시 로그인 팝업을 열고 pending을 만들지 않는다", () => {
+  it("opens the auth popup and does not create pending when unauthenticated", () => {
     const queryClient = createQueryClient();
+    useAuthPopupStore.setState({
+      isOpen: false,
+      returnPath: "/previous",
+    });
     useAuthStore.setState({
       accessToken: null,
       userId: null,

@@ -6,6 +6,7 @@ import {
   addFavoriteLocker,
   removeFavoriteLocker,
 } from "#/shared/api/favorite-lockers";
+import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
 import { collectServerFavoriteByLockerId } from "../lib/collect-server-favorite-state";
@@ -17,16 +18,19 @@ import {
   rollbackFailedFlush,
   toggleFavoritePending,
 } from "../model/favorite-locker-session";
+import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 
 export function useFavoriteLockerSession() {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userId = useAuthStore((state) => state.userId);
   const accessToken = useAuthStore((state) => state.getAccessToken());
   const openAuthPopup = useAuthPopupStore((state) => state.openPopup);
   const [pending, setPending] = useState<FavoriteLockerPending>(
     () => new Map(),
   );
   const pendingRef = useRef(pending);
+  const authScope = getAuthQueryCacheScope(isAuthenticated, userId);
   pendingRef.current = pending;
 
   const getEffectiveIsFavorite = useCallback(
@@ -60,6 +64,7 @@ export function useFavoriteLockerSession() {
     const serverByLockerId = collectServerFavoriteByLockerId(
       queryClient,
       currentPending.keys(),
+      authScope,
     );
     const operations = buildFavoriteFlushOperations(
       currentPending,
@@ -99,13 +104,26 @@ export function useFavoriteLockerSession() {
     });
 
     if (succeededLockerIds.length > 0) {
+      await Promise.all(
+        succeededLockerIds.map((lockerId) =>
+          queryClient.cancelQueries({
+            queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
+          }),
+        ),
+      );
+
       for (const lockerId of succeededLockerIds) {
         const nextFavorite = pendingSnapshot.get(lockerId);
         if (nextFavorite === undefined) {
           continue;
         }
 
-        patchFavoriteInQueryCaches(queryClient, lockerId, nextFavorite);
+        patchFavoriteInQueryCaches(
+          queryClient,
+          lockerId,
+          nextFavorite,
+          authScope,
+        );
       }
 
       setPending((latestPending) => {
@@ -126,17 +144,19 @@ export function useFavoriteLockerSession() {
     }
 
     return { hadChanges: true };
-  }, [accessToken, isAuthenticated, queryClient]);
+  }, [accessToken, authScope, isAuthenticated, queryClient]);
 
   const handleSearchFavoriteChange = useCallback(
     (item: SearchLockerResultItem, next: boolean) => {
-      const serverIsFavorite = collectServerFavoriteByLockerId(queryClient, [
-        item.lockerId,
-      ]).get(item.lockerId);
+      const serverIsFavorite = collectServerFavoriteByLockerId(
+        queryClient,
+        [item.lockerId],
+        authScope,
+      ).get(item.lockerId);
 
       toggle(item.lockerId, next, serverIsFavorite);
     },
-    [queryClient, toggle],
+    [authScope, queryClient, toggle],
   );
 
   const handleDetailFavoriteChange = useCallback(

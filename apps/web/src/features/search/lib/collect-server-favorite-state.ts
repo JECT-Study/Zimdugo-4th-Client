@@ -1,4 +1,8 @@
-import type { InfiniteData, QueryClient } from "@tanstack/react-query";
+import type {
+  InfiniteData,
+  QueryClient,
+  QueryKey,
+} from "@tanstack/react-query";
 import type {
   SearchLockerResultItem,
   SearchResultItem,
@@ -12,6 +16,7 @@ import type {
   FavoriteLockerListItem,
   PaginatedListData,
 } from "#/shared/api/my-page";
+import type { AuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import {
   LOCKER_SEARCH_QUERY_KEY,
   PLACE_LOCKERS_QUERY_KEY,
@@ -34,11 +39,22 @@ const forEachLockerInSearchData = (
   }
 };
 
+const isCurrentAuthScopeQuery = (
+  queryKey: QueryKey,
+  authScope: AuthQueryCacheScope,
+): boolean =>
+  Array.isArray(queryKey) && queryKey[queryKey.length - 1] === authScope;
+
 const readLockerDetailFavorite = (
   queryClient: QueryClient,
   lockerId: number,
+  authScope: AuthQueryCacheScope,
 ): boolean | undefined => {
-  const detail = readLockerDetailFromQueryCache(queryClient, lockerId);
+  const detail = readLockerDetailFromQueryCache(
+    queryClient,
+    lockerId,
+    authScope,
+  );
   if (!detail) {
     return undefined;
   }
@@ -49,6 +65,7 @@ const readLockerDetailFavorite = (
 export const collectServerFavoriteByLockerId = (
   queryClient: QueryClient,
   lockerIds: Iterable<number>,
+  authScope: AuthQueryCacheScope,
 ): Map<number, boolean> => {
   const targetIds = new Set(lockerIds);
   const serverByLockerId = new Map<number, boolean>();
@@ -58,7 +75,11 @@ export const collectServerFavoriteByLockerId = (
   }
 
   for (const lockerId of targetIds) {
-    const detailFavorite = readLockerDetailFavorite(queryClient, lockerId);
+    const detailFavorite = readLockerDetailFavorite(
+      queryClient,
+      lockerId,
+      authScope,
+    );
     if (detailFavorite !== undefined) {
       serverByLockerId.set(lockerId, detailFavorite);
     }
@@ -68,7 +89,11 @@ export const collectServerFavoriteByLockerId = (
     queryKey: [LOCKER_SEARCH_QUERY_KEY],
   });
 
-  for (const [, data] of keywordQueries) {
+  for (const [queryKey, data] of keywordQueries) {
+    if (!isCurrentAuthScopeQuery(queryKey, authScope)) {
+      continue;
+    }
+
     if (!data) {
       continue;
     }
@@ -87,7 +112,11 @@ export const collectServerFavoriteByLockerId = (
     queryKey: [PLACE_LOCKERS_QUERY_KEY],
   });
 
-  for (const [, data] of placeQueries) {
+  for (const [queryKey, data] of placeQueries) {
+    if (!isCurrentAuthScopeQuery(queryKey, authScope)) {
+      continue;
+    }
+
     if (!data) {
       continue;
     }
@@ -108,7 +137,11 @@ export const collectServerFavoriteByLockerId = (
     queryKey: [FAVORITE_LOCKER_LIST_QUERY_KEY],
   });
 
-  for (const [, data] of favoriteListQueries) {
+  for (const [queryKey, data] of favoriteListQueries) {
+    if (!isCurrentAuthScopeQuery(queryKey, authScope)) {
+      continue;
+    }
+
     if (!data) {
       continue;
     }

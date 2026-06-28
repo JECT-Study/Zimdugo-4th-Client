@@ -64,7 +64,6 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
-import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { MapSkeleton } from "#/entities/map/ui/map-skeleton/MapSkeleton";
@@ -107,6 +106,10 @@ import {
   toLockerSearchFilterParams,
   toPlaceLockersFilterParams,
 } from "#/features/search/lib/to-locker-search-filter-params";
+import {
+  mergeDisplayLockerDetailWithPreviousDistance,
+  mergeStoredLockerDetailWithPreviousDistance,
+} from "#/features/search/model/locker-detail-display";
 import { resolveMapMarkerLayer } from "#/features/search/model/map-marker-layer-policy";
 import {
   readMapSheetSessionSnapshot,
@@ -116,10 +119,6 @@ import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
 } from "#/features/search/model/map-viewport-policy";
-import {
-  mergeDisplayLockerDetailWithPreviousDistance,
-  mergeStoredLockerDetailWithPreviousDistance,
-} from "#/features/search/model/locker-detail-display";
 import type { SearchHistoryEntry } from "#/features/search/model/search-history";
 import {
   applyLockerSearchDraft,
@@ -146,6 +145,7 @@ import {
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
 import { toLockerDetailItem } from "#/shared/api/locker-adapters";
+import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import {
   getLockerDetail,
   type LockerBoundsRaw,
@@ -980,12 +980,7 @@ export function IndexPage() {
       lat: origin.lat ?? DEFAULT_SEARCH_COORDINATES.lat,
       lng: origin.lng ?? DEFAULT_SEARCH_COORDINATES.lng,
     };
-  }, [
-    activeLockerId,
-    lockerDetailQueryOrigin,
-    lockerIdFromQuery,
-    loaderData,
-  ]);
+  }, [activeLockerId, lockerDetailQueryOrigin, lockerIdFromQuery, loaderData]);
 
   const {
     data: lockerDetail,
@@ -1120,7 +1115,7 @@ export function IndexPage() {
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
-      void flushLockerSheetMutations();
+      await flushLockerSheetMutations();
 
       // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
       const cleanName = optimisticDetail?.title
@@ -1143,7 +1138,8 @@ export function IndexPage() {
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
-      setTimeout(() => {
+      pendingLockerDetailOpenTimerRef.current = window.setTimeout(() => {
+        pendingLockerDetailOpenTimerRef.current = undefined;
         setSelectedLockerDetail(
           optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
         );
@@ -2606,18 +2602,17 @@ export function IndexPage() {
                   )
               : undefined
           }
-          onVoteChange={
-            (item, voteType) =>
-              voteSession.handleDetailVoteChange(
-                item,
-                voteType,
-                lockerDetail
-                  ? {
-                      isAccurateVoted: lockerDetail.isAccurateVoted,
-                      isInaccurateVoted: lockerDetail.isInaccurateVoted,
-                    }
-                  : undefined,
-              )
+          onVoteChange={(item, voteType) =>
+            voteSession.handleDetailVoteChange(
+              item,
+              voteType,
+              lockerDetail
+                ? {
+                    isAccurateVoted: lockerDetail.isAccurateVoted,
+                    isInaccurateVoted: lockerDetail.isInaccurateVoted,
+                  }
+                : undefined,
+            )
           }
           onBack={handleBackFromDetail}
           onNavigate={handleOpenNavigationPopup}

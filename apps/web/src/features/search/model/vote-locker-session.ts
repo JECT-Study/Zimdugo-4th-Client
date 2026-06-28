@@ -7,7 +7,12 @@ export type LockerVoteServerState = {
   isInaccurateVoted?: boolean;
 };
 
-export type LockerVotePending = Map<number, EffectiveLockerVote>;
+export interface LockerVotePendingEntry {
+  nextVote: EffectiveLockerVote;
+  serverVote: EffectiveLockerVote;
+}
+
+export type LockerVotePending = Map<number, LockerVotePendingEntry>;
 
 export type VoteFlushOperation = {
   lockerId: number;
@@ -43,7 +48,7 @@ export function getEffectiveVote(
   server?: LockerVoteServerState,
 ): EffectiveLockerVote {
   if (pending.has(lockerId)) {
-    return pending.get(lockerId) ?? null;
+    return pending.get(lockerId)?.nextVote ?? null;
   }
 
   return server ? serverVoteStateToEffective(server) : null;
@@ -66,14 +71,21 @@ export function toggleVotePending(
   server?: LockerVoteServerState,
 ): LockerVotePending {
   const serverVote = server ? serverVoteStateToEffective(server) : null;
+  const pendingEntry = pending.get(lockerId);
   const current = getEffectiveVote(pending, lockerId, server);
   const next: EffectiveLockerVote = current === clicked ? null : clicked;
   const nextPending = new Map(pending);
+  const referenceServerVote = pendingEntry
+    ? pendingEntry.serverVote
+    : serverVote;
 
-  if (next === serverVote) {
+  if (next === referenceServerVote) {
     nextPending.delete(lockerId);
   } else {
-    nextPending.set(lockerId, next);
+    nextPending.set(lockerId, {
+      nextVote: next,
+      serverVote: referenceServerVote,
+    });
   }
 
   return nextPending;
@@ -125,7 +137,7 @@ export function getEffectiveVoteCounts(
   }
 
   const serverVote = serverVoteStateToEffective(server);
-  const effectiveVote = pending.get(lockerId) ?? null;
+  const effectiveVote = pending.get(lockerId)?.nextVote ?? null;
   const delta = countDelta(serverVote, effectiveVote);
 
   const accurateCount =
@@ -145,12 +157,12 @@ export function getEffectiveVoteCounts(
 
 export function buildVoteFlushOperations(
   pending: LockerVotePending,
-  serverByLockerId: Map<number, EffectiveLockerVote>,
 ): VoteFlushOperation[] {
   const operations: VoteFlushOperation[] = [];
 
-  for (const [lockerId, nextVote] of pending) {
-    const serverVote = serverByLockerId.get(lockerId) ?? null;
+  for (const [lockerId, pendingEntry] of pending) {
+    const nextVote = pendingEntry.nextVote;
+    const serverVote = pendingEntry.serverVote;
     if (nextVote === serverVote) {
       continue;
     }

@@ -5,7 +5,9 @@ import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import { patchFavoriteInQueryCaches } from "./patch-favorite-query-cache";
 
 const createLockerPin = (
-  overrides: Partial<Extract<LockerPinItemResponse, { pinType: "LOCKER" }>> = {},
+  overrides: Partial<
+    Extract<LockerPinItemResponse, { pinType: "LOCKER" }>
+  > = {},
 ): Extract<LockerPinItemResponse, { pinType: "LOCKER" }> => ({
   pinType: "LOCKER",
   lockerId: 9,
@@ -37,7 +39,7 @@ const createPlacePin = (): Extract<
 describe("patchFavoriteInQueryCaches", () => {
   it("지도 핀 캐시의 즐겨찾기 상태도 함께 갱신한다", () => {
     const queryClient = new QueryClient();
-    const queryKey = [LOCKER_PINS_QUERY_KEY, 37, 127, 38, 128, 15];
+    const queryKey = [LOCKER_PINS_QUERY_KEY, 37, 127, 38, 128, 15, 1];
     const previousPins = [
       createLockerPin(),
       createLockerPin({ lockerId: 10, isFavorite: true }),
@@ -46,7 +48,7 @@ describe("patchFavoriteInQueryCaches", () => {
 
     queryClient.setQueryData<LockerPinItemResponse[]>(queryKey, previousPins);
 
-    patchFavoriteInQueryCaches(queryClient, 9, false);
+    patchFavoriteInQueryCaches(queryClient, 9, false, 1);
 
     const nextPins =
       queryClient.getQueryData<LockerPinItemResponse[]>(queryKey);
@@ -57,5 +59,19 @@ describe("patchFavoriteInQueryCaches", () => {
       expect.objectContaining({ pinType: "PLACE", isFavorite: null }),
     ]);
     expect(nextPins).not.toBe(previousPins);
+  });
+
+  it("does not patch caches from a different auth scope", () => {
+    const queryClient = new QueryClient();
+    const queryKey = [LOCKER_PINS_QUERY_KEY, 37, 127, 38, 128, 15, "anonymous"];
+    const previousPins = [createLockerPin()];
+
+    queryClient.setQueryData<LockerPinItemResponse[]>(queryKey, previousPins);
+
+    patchFavoriteInQueryCaches(queryClient, 9, false, 1);
+
+    expect(queryClient.getQueryData<LockerPinItemResponse[]>(queryKey)).toEqual(
+      previousPins,
+    );
   });
 });

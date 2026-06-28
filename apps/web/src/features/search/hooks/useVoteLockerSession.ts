@@ -4,7 +4,6 @@ import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomShe
 import { type LockerVoteType, postLockerVote } from "#/shared/api/locker-votes";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
-import { collectServerVoteByLockerId } from "../lib/collect-server-vote-state";
 import {
   buildVoteFlushOperations,
   computeVoteDetailAfterFlush,
@@ -78,14 +77,7 @@ export function useVoteLockerSession() {
       return { hadChanges: false };
     }
 
-    const serverByLockerId = collectServerVoteByLockerId(
-      queryClient,
-      currentPending.keys(),
-    );
-    const operations = buildVoteFlushOperations(
-      currentPending,
-      serverByLockerId,
-    );
+    const operations = buildVoteFlushOperations(currentPending);
 
     if (operations.length === 0) {
       setPending(new Map());
@@ -127,8 +119,8 @@ export function useVoteLockerSession() {
       );
 
       for (const lockerId of succeededLockerIds) {
-        const pendingVote = pendingSnapshot.get(lockerId);
-        if (pendingVote === undefined) {
+        const pendingEntry = pendingSnapshot.get(lockerId);
+        if (pendingEntry === undefined) {
           continue;
         }
 
@@ -146,7 +138,7 @@ export function useVoteLockerSession() {
                 accurateCount: previousDetail.accurateCount,
                 inaccurateCount: previousDetail.inaccurateCount,
               },
-              pendingVote,
+              pendingEntry.nextVote,
             );
 
             return {

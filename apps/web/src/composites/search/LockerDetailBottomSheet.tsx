@@ -664,10 +664,10 @@ function FullDetailContent({
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const canVote = typeof onVoteChange === "function";
   const accurateCount = locker.accurateCount ?? 0;
   const inaccurateCount = locker.inaccurateCount ?? 0;
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const handleVotePress = (voteType: LockerVoteType) => {
     if (!canVote) {
