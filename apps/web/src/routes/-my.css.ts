@@ -169,6 +169,37 @@ export const childListItem = style({
   minWidth: 0,
 });
 
+export const childSkeletonList = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[8],
+  width: "100%",
+});
+
+export const childSkeletonItem = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.spacing[12],
+  width: "100%",
+  minHeight: "72px",
+  padding: `${vars.spacing[16]} ${vars.spacing[12]}`,
+  borderRadius: vars.radius[8],
+  backgroundColor: vars.color.bg.surface,
+  boxSizing: "border-box",
+});
+
+export const childSkeletonText = style({
+  display: "flex",
+  flex: 1,
+  minWidth: 0,
+  flexDirection: "column",
+  gap: vars.spacing[8],
+});
+
+export const childSkeletonFavorite = style({
+  flexShrink: 0,
+});
+
 export const childEmpty = style({
   display: "flex",
   flexDirection: "column",

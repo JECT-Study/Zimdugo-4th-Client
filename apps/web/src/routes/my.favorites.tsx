@@ -1,7 +1,9 @@
 import { languageTag, m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
+import { IconStarOutline24 } from "@repo/ui/tokens/icons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { FavoriteListItem } from "#/entities/favorite";
@@ -15,6 +17,7 @@ import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
+import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   childContent,
   childEmpty,
@@ -22,9 +25,21 @@ import {
   childListItem,
   childLoadMoreSlot,
   childPage,
+  childSkeletonFavorite,
+  childSkeletonItem,
+  childSkeletonList,
+  childSkeletonText,
   header,
 } from "./-my.css.ts";
 import { requireAuthenticatedMyRoute } from "./-my-auth";
+
+const FAVORITE_SKELETON_ROW_KEYS = [
+  "favorite-skeleton-1",
+  "favorite-skeleton-2",
+  "favorite-skeleton-3",
+  "favorite-skeleton-4",
+  "favorite-skeleton-5",
+] as const;
 
 export const Route = createFileRoute("/my/favorites")({
   beforeLoad: requireAuthenticatedMyRoute,
@@ -102,15 +117,18 @@ function MyFavoritesPage() {
       />
 
       <main className={childContent}>
-        {isInitialLoading ? <p>{m.my_summary_loading()}</p> : null}
+        {isInitialLoading ? <MyFavoritesSkeleton /> : null}
 
         {isError ? <MyListErrorState onRetry={handleRetry} /> : null}
 
         {isEmpty ? (
           <div className={childEmpty}>
             <NonSearch
+              icon={<IconStarOutline24 size={24} />}
               titleText={m.my_favorites_empty_title()}
               descriptionText={m.my_favorites_empty()}
+              englishTitleText={m.my_favorites_empty_title_en()}
+              englishDescriptionText={m.my_favorites_empty_en()}
               showEnglishSub={showEnglishSub}
             />
           </div>
@@ -180,6 +198,44 @@ function MyFavoritesPage() {
           onPress: handleConfirmError,
         }}
       />
+    </div>
+  );
+}
+
+function MyFavoritesSkeleton() {
+  return (
+    <div className={childSkeletonList} aria-hidden="true">
+      {FAVORITE_SKELETON_ROW_KEYS.map((rowKey) => (
+        <div key={rowKey} className={childSkeletonItem}>
+          <Skeleton
+            width={40}
+            height={40}
+            borderRadius={20}
+            style={SKELETON_SURFACE_STYLE}
+          />
+          <div className={childSkeletonText}>
+            <Skeleton
+              width="68%"
+              height={16}
+              borderRadius={6}
+              style={SKELETON_SURFACE_STYLE}
+            />
+            <Skeleton
+              width="42%"
+              height={12}
+              borderRadius={6}
+              style={SKELETON_SURFACE_STYLE}
+            />
+          </div>
+          <Skeleton
+            className={childSkeletonFavorite}
+            width={24}
+            height={24}
+            borderRadius={6}
+            style={SKELETON_SURFACE_STYLE}
+          />
+        </div>
+      ))}
     </div>
   );
 }

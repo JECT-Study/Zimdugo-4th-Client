@@ -238,6 +238,8 @@
   "my_favorites_list_aria": "收藏列表",
   "my_favorites_empty_title": "還沒有收藏",
   "my_favorites_empty": "還沒有收藏的寄存櫃\n請收藏您喜歡的寄存櫃！",
+  "my_favorites_empty_title_en": "No favorite lockers yet",
+  "my_favorites_empty_en": "Save lockers you like here",
   "my_favorite_delete": "刪除",
   "my_favorite_delete_toast": "已從收藏中移除",
   "my_favorite_delete_undo": "撤銷",

@@ -238,6 +238,8 @@
   "my_favorites_list_aria": "Favorites list",
   "my_favorites_empty_title": "No favorites yet",
   "my_favorites_empty": "You haven't added any favorite lockers yet.\nAdd a locker you like!",
+  "my_favorites_empty_title_en": "No favorite lockers yet",
+  "my_favorites_empty_en": "Save lockers you like here",
   "my_favorite_delete": "Remove",
   "my_favorite_delete_toast": "Removed from favorites",
   "my_favorite_delete_undo": "Undo",
