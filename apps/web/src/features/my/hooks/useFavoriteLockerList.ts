@@ -2,6 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { getFavoriteLockerList } from "#/shared/api/my-page";
 import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";
+import { MY_HISTORY_LIST_STALE_TIME_MS } from "../lib/my-list-query-options";
 import { getMyListPageSize } from "../lib/pagination-helpers";
 import { useMyListLocation } from "./useMyListLocation";
 
@@ -12,7 +13,8 @@ export function useFavoriteLockerList() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = useAuthStore((state) => state.userId);
   const authScope = getAuthQueryCacheScope(isAuthenticated, userId);
-  const canFetchFavoriteLockers = location != null && typeof authScope === "number";
+  const canFetchFavoriteLockers =
+    location != null && typeof authScope === "number";
 
   return useInfiniteQuery({
     queryKey: [
@@ -22,6 +24,8 @@ export function useFavoriteLockerList() {
       authScope,
     ],
     enabled: canFetchFavoriteLockers,
+    staleTime: MY_HISTORY_LIST_STALE_TIME_MS,
+    refetchOnWindowFocus: false,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => {
       if (!location) {
