@@ -27,6 +27,7 @@ import type {
   LockerDetailRaw,
   LockerKeywordItemRaw,
   LockerNestedRaw,
+  LockerOperatingHoursRaw,
   LockerSuggestItemRaw,
   PlaceLockersDataRaw,
 } from "./lockers";
@@ -47,6 +48,31 @@ export interface PlaceLockersViewModel {
   lockers: SearchLockerResultItem[];
 }
 
+const getOperatingHours = (raw: {
+  startTime?: string;
+  endTime?: string;
+  operatingHours?: LockerOperatingHoursRaw | null;
+}) => {
+  if (raw.startTime && raw.endTime) {
+    return {
+      open: normalizeOperatingTime(raw.startTime),
+      close: normalizeOperatingTime(raw.endTime),
+    };
+  }
+
+  if (raw.operatingHours) {
+    return {
+      open: normalizeOperatingTime(raw.operatingHours.open),
+      close: normalizeOperatingTime(raw.operatingHours.close),
+    };
+  }
+
+  return null;
+};
+
+const normalizeOperatingTime = (time: string): string =>
+  time.replace(/^(\d{2}:\d{2}):\d{2}$/, "$1");
+
 const toSearchLockerResultItem = (
   raw: LockerNestedRaw,
 ): SearchLockerResultItem => ({
@@ -63,6 +89,7 @@ const toSearchLockerResultItem = (
   updatedAt: raw.updatedAt,
   minPrice: raw.minPrice,
   isFavorite: raw.isFavorite,
+  operatingHours: getOperatingHours(raw),
 });
 
 const toSearchPlaceResultItem = (
@@ -86,6 +113,7 @@ const toSearchPlaceResultItem = (
     distanceMeters: raw.distanceMeters,
     updatedAt: raw.updatedAt,
     minPrice: raw.minPrice,
+    operatingHours: getOperatingHours(raw),
     lockers: lockers as SearchLockerResultItems,
   };
 };
@@ -111,6 +139,7 @@ const toTopLevelLockerResultItem = (
     updatedAt: raw.updatedAt,
     minPrice: raw.minPrice,
     isFavorite: raw.isFavorite,
+    operatingHours: getOperatingHours(raw),
   };
 };
 

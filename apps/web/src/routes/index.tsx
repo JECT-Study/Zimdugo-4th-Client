@@ -99,6 +99,7 @@ import {
 } from "#/features/search/lib/sanitize-search-query";
 import {
   searchLockerItemsToPins,
+  searchLockerItemToPin,
   searchResultItemsToPins,
 } from "#/features/search/lib/search-result-pins";
 import {
@@ -131,6 +132,7 @@ import {
   type OverlayReturnContext,
   resolveActivePlaceId,
   resolveOverlayReturnContext,
+  resolveSearchBarBackAction,
   type SearchDetailBackTarget,
   type SearchListKind,
   type SheetModeForContext,
@@ -869,13 +871,15 @@ export function IndexPage() {
   const handleExitSearchContext = resetSearchContext;
 
   const searchCoordinates = useMemo(() => {
+    const round4 = (n: number) => Math.round(n * 10000) / 10000;
+
     if (location) {
-      return { lat: location.lat, lng: location.lng };
+      return { lat: round4(location.lat), lng: round4(location.lng) };
     }
 
     if (mapInstance) {
       const center = mapInstance.getCenter();
-      return { lat: center.lat(), lng: center.lng() };
+      return { lat: round4(center.lat()), lng: round4(center.lng()) };
     }
 
     return DEFAULT_SEARCH_COORDINATES;
@@ -979,7 +983,7 @@ export function IndexPage() {
       };
     }
 
-    const origin = lockerDetailQueryOrigin ?? searchCoordinates;
+    const origin = lockerDetailQueryOrigin ?? DEFAULT_SEARCH_COORDINATES;
 
     return {
       lockerId: activeLockerId,
@@ -989,7 +993,6 @@ export function IndexPage() {
   }, [
     activeLockerId,
     lockerDetailQueryOrigin,
-    searchCoordinates,
     lockerIdFromQuery,
     loaderData,
   ]);
@@ -1119,7 +1122,11 @@ export function IndexPage() {
     (
       lockerId: number,
       optimisticDetail?: LockerDetailItem,
-      options?: { detailSnap?: LockerDetailSnap; animateOnMount?: boolean },
+      options?: {
+        detailSnap?: LockerDetailSnap;
+        animateOnMount?: boolean;
+        searchDetailBack?: SearchDetailBackTarget | null;
+      },
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
@@ -1153,6 +1160,9 @@ export function IndexPage() {
         setActiveLockerId(lockerId);
         setIsNavigationPopupOpen(false);
         setIsSearchOpen(false);
+        if (options?.searchDetailBack !== undefined) {
+          setSearchDetailBack(options.searchDetailBack);
+        }
         setLockerDetailOpensFull(options?.detailSnap === "full");
         setLockerDetailAnimatesOnMount(options?.animateOnMount ?? true);
         setSheetMode("detail");
@@ -1300,6 +1310,7 @@ export function IndexPage() {
         openLockerDetailById(
           item.lockerId,
           createLockerDetailFromAutocompleteItem(item),
+          { searchDetailBack: createKeywordDetailBackTarget() },
         );
         return;
       }
@@ -1348,6 +1359,7 @@ export function IndexPage() {
         openLockerDetailById(
           entry.lockerId,
           createLockerDetailFromHistoryEntry(entry),
+          { searchDetailBack: createKeywordDetailBackTarget() },
         );
         void queryClient.invalidateQueries({
           queryKey: [LOCKER_DETAIL_QUERY_KEY, entry.lockerId],
@@ -1377,26 +1389,6 @@ export function IndexPage() {
     ],
   );
 
-  const handleOpenLockerDetail = useCallback(
-    (item: SearchLockerResultItem) => {
-      if (context === "map") {
-        setMapDetailBack("placeList");
-      } else if (context === "search") {
-        setSearchDetailBack(
-          listKind === "place" && searchPlaceId != null
-            ? createPlaceDetailBackTarget(searchPlaceId)
-            : createKeywordDetailBackTarget(),
-        );
-      }
-
-      openLockerDetailById(
-        item.lockerId,
-        createLockerDetailFromSearchItem(item),
-      );
-    },
-    [context, listKind, openLockerDetailById, searchPlaceId],
-  );
-
   const focusMapOnLockerPin = useCallback(
     (pin?: LockerPinItemResponse, zoom?: number) => {
       if (!pin || !mapInstanceRef.current) {
@@ -1417,22 +1409,77 @@ export function IndexPage() {
     [],
   );
 
+  const handleOpenLockerDetail = useCallback(
+    (item: SearchLockerResultItem) => {
+      const pin = searchLockerItemToPin(item);
+
+      if (context === "map") {
+        setMapDetailBack("placeList");
+      } else if (context === "search") {
+        setSearchDetailBack(
+          listKind === "place" && searchPlaceId != null
+            ? createPlaceDetailBackTarget(searchPlaceId)
+            : createKeywordDetailBackTarget(),
+        );
+      }
+
+      setSelectedMapPin(pin);
+      setSelectedMapPinOffset(null);
+      if (pin) {
+        setLockerDetailQueryOrigin({
+          lat: searchCoordinates.lat,
+          lng: searchCoordinates.lng,
+        });
+        focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
+      }
+
+      openLockerDetailById(
+        item.lockerId,
+        createLockerDetailFromSearchItem(item),
+        {
+          searchDetailBack:
+            context === "search"
+              ? listKind === "place" && searchPlaceId != null
+                ? createPlaceDetailBackTarget(searchPlaceId)
+                : createKeywordDetailBackTarget()
+              : undefined,
+        },
+      );
+    },
+    [
+      context,
+      focusMapOnLockerPin,
+      listKind,
+      openLockerDetailById,
+      searchCoordinates.lat,
+      searchCoordinates.lng,
+      searchPlaceId,
+    ],
+  );
+
   const openLockerDetailAfterPinFocus = useCallback(
     (
       lockerId: number,
       detail: LockerDetailItem | undefined,
       shouldDelay: boolean,
+      options?: { searchDetailBack?: SearchDetailBackTarget | null },
     ) => {
       clearPendingLockerDetailOpen();
 
       if (!shouldDelay) {
-        openLockerDetailById(lockerId, detail, { animateOnMount: true });
+        openLockerDetailById(lockerId, detail, {
+          animateOnMount: true,
+          searchDetailBack: options?.searchDetailBack,
+        });
         return;
       }
 
       pendingLockerDetailOpenTimerRef.current = window.setTimeout(() => {
         pendingLockerDetailOpenTimerRef.current = undefined;
-        openLockerDetailById(lockerId, detail, { animateOnMount: true });
+        openLockerDetailById(lockerId, detail, {
+          animateOnMount: true,
+          searchDetailBack: options?.searchDetailBack,
+        });
       }, DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS);
     },
     [clearPendingLockerDetailOpen, openLockerDetailById],
@@ -1785,22 +1832,28 @@ export function IndexPage() {
         return;
       }
 
-      setSearchDetailBack(
-        createSearchDetailBackTarget({
-          listKind: listKind ?? "keyword",
-          placeId: listKind === "place" ? searchPlaceId : null,
-        }),
-      );
+      const nextSearchDetailBack = createSearchDetailBackTarget({
+        listKind: listKind ?? "keyword",
+        placeId: listKind === "place" ? searchPlaceId : null,
+      });
+      setSearchDetailBack(nextSearchDetailBack);
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
+      setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
+      setLockerDetailQueryOrigin({
+        lat: searchCoordinates.lat,
+        lng: searchCoordinates.lng,
+      });
       const shouldDelayDetailOpen =
         pin != null &&
         mapInstanceRef.current != null &&
         (mapInstanceRef.current.getZoom?.() ?? DETAIL_FOCUS_ZOOM) <
           DETAIL_FOCUS_ZOOM;
       focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
-      openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
+      openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen, {
+        searchDetailBack: nextSearchDetailBack,
+      });
     },
     [
       context,
@@ -1808,6 +1861,8 @@ export function IndexPage() {
       listKind,
       openLockerDetailAfterPinFocus,
       raiseSelectedPinFromMini,
+      searchCoordinates.lat,
+      searchCoordinates.lng,
       searchPlaceId,
       setSheetMode,
       shouldRaiseSelectedPinFromMini,
@@ -1941,6 +1996,10 @@ export function IndexPage() {
     setSheetMode("list");
   }, [flushLockerSheetMutations, searchDraft]);
 
+  const handleBackFromSearchFilter = useCallback(() => {
+    setSheetMode("list");
+  }, []);
+
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
   }, [setSheetMode]);
@@ -1956,6 +2015,31 @@ export function IndexPage() {
     },
     [setSheetMode],
   );
+
+  const searchBarBackAction = resolveSearchBarBackAction({
+    context,
+    listKind,
+    sheetMode,
+    searchDetailBack,
+  });
+  const searchBarBackPress =
+    searchBarBackAction === "mapPlaceList"
+      ? handleBackFromMapPlaceSheet
+      : searchBarBackAction === "searchDetail"
+        ? handleBackFromDetail
+        : searchBarBackAction === "searchFilter"
+          ? handleBackFromSearchFilter
+          : searchBarBackAction === "searchPlaceList"
+            ? handleBackToKeywordList
+            : searchBarBackAction === "searchKeywordList"
+              ? resetSearchContext
+              : undefined;
+  const listSheetDismissPress =
+    searchBarBackAction === "mapPlaceList"
+      ? handleBackFromMapPlaceSheet
+      : searchBarBackAction === "searchPlaceList"
+        ? handleBackToKeywordList
+        : resetSearchContext;
 
   useEffect(() => {
     if (!lockerDetail) {
@@ -2080,8 +2164,6 @@ export function IndexPage() {
       focusNaverMapOnCoordinates({ map: mapInstance, coordinates: location });
     }
   }, [isCameraCentered, location, mapInstance]);
-
-
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
@@ -2246,21 +2328,6 @@ export function IndexPage() {
 
     return new Map([[selectedPinId, selectedMapPinOffset]]);
   }, [selectedPinId, selectedMapPinOffset]);
-  const showPlaceSheetBack =
-    context === "map" || (context === "search" && listKind === "place");
-  const showKeywordSheetBack =
-    context === "search" && listKind === "keyword" && sheetMode === "list";
-  const listHeaderLeadingPress = showPlaceSheetBack
-    ? context === "map"
-      ? handleBackFromMapPlaceSheet
-      : handleBackToKeywordList
-    : undefined;
-  const searchBarBackPress = listHeaderLeadingPress
-    ? listHeaderLeadingPress
-    : showKeywordSheetBack
-      ? resetSearchContext
-      : undefined;
-  const listSheetDismissPress = listHeaderLeadingPress ?? resetSearchContext;
   const searchListSheetKey =
     context === "search" && listKind === "keyword"
       ? `search-keyword-${searchQuery}`
@@ -2316,6 +2383,9 @@ export function IndexPage() {
     sheetMode,
   ]);
 
+  const handleMapPressRef = useRef(handleMapPress);
+  handleMapPressRef.current = handleMapPress;
+
   // 지도 드래그 시 카메라 고정 해제 및 나침반 해제 (GPS는 유지), 바텀시트 snap 다운
   useEffect(() => {
     const maps = typeof window !== "undefined" ? window.naver?.maps : null;
@@ -2328,13 +2398,13 @@ export function IndexPage() {
       stopOrientationTracking();
       isPendingFocusRef.current = false;
       mapInstance.setCenter(mapInstance.getCenter());
-      handleMapPress();
+      handleMapPressRef.current();
     });
 
     return () => {
       maps.Event.removeListener(listener);
     };
-  }, [mapInstance, stopOrientationTracking, handleMapPress]);
+  }, [mapInstance, stopOrientationTracking]);
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
       suppressNextMapPressForMarkerInteraction();
@@ -2354,7 +2424,7 @@ export function IndexPage() {
           onBackPress={searchBarBackPress}
           onCloseSearchContext={handleExitSearchContext}
           searchQuery={searchQuery}
-          showBackButton={showPlaceSheetBack || showKeywordSheetBack}
+          showBackButton={searchBarBackPress !== undefined}
           isSearchContextActive={context === "search"}
         />
       ) : null}

@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const MOCK_MARKER_FILL = "#3BD569";
+const MOCK_INACTIVE_MARKER_FILL = "#CACACA";
+const MOCK_INACTIVE_BADGE_TEXT_FILL = "#4B4B4B";
 
 vi.mock("@repo/ui/vars", () => ({
   vars: {
@@ -13,6 +15,7 @@ vi.mock("@repo/ui/vars", () => ({
         gray: {
           100: "#F5F5F5",
           500: "#CACACA",
+          700: "#4B4B4B",
         },
         green: {
           500: "#3BD569",
@@ -211,6 +214,17 @@ const getMarkerAnchor = (marker: FakeMarker | undefined): FakePoint | null => {
   return options.icon?.anchor ?? null;
 };
 
+const expectMarkerAnchorToMatch = (
+  marker: FakeMarker | undefined,
+  expected: { x: number; y: number },
+) => {
+  const anchor = getMarkerAnchor(marker);
+
+  expect(anchor).not.toBeNull();
+  expect(anchor?.x).toBeCloseTo(expected.x, 5);
+  expect(anchor?.y).toBeCloseTo(expected.y, 5);
+};
+
 const getMarkerItemClass = (content: string): string =>
   content.match(/class="map-marker-item ([^"]+)"/)?.[1] ?? "";
 
@@ -219,11 +233,13 @@ describe("createLockerMarkerIcon", () => {
     const icon = createLockerMarkerIcon(createLockerPin());
 
     expect(icon).toContain('data-type="LOCKER"');
-    expect(icon).toContain('data-map-pin-variant="selected"');
+    expect(icon).toContain('data-map-pin-variant="default"');
     expect(icon).toContain('viewBox="0 0 90 90"');
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('<svg width="90" height="90"');
-    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+    expect(icon).toContain('fill="white"');
   });
 
   it("renders the favorite locker map pin asset only when isFavorite is true", () => {
@@ -236,11 +252,25 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
-  it("renders the selected locker map pin asset", () => {
+  it("keeps the default locker asset when the locker is selected", () => {
     const icon = createLockerMarkerIcon(createLockerPin(), true);
 
     expect(icon).toContain('data-type="LOCKER"');
-    expect(icon).toContain('data-map-pin-variant="selected"');
+    expect(icon).toContain('data-map-pin-variant="default"');
+    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+  });
+
+  it("renders inactive locker markers in gray", () => {
+    const icon = createLockerMarkerIcon(
+      createLockerPin({ markerStatus: "inactive" }),
+      true,
+    );
+
+    expect(icon).toContain('data-map-pin-variant="inactive"');
+    expect(icon).toContain(`fill="${MOCK_INACTIVE_MARKER_FILL}"`);
+    expect(icon).toContain(
+      `stroke="${MOCK_INACTIVE_MARKER_FILL}" stroke-width="3"`,
+    );
   });
 
   it("renders place markers with the default map pin and a count badge", () => {
@@ -250,11 +280,29 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain('data-map-pin-variant="cluster"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
     expect(icon).toContain('fill="white"');
+    expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
+    expect(icon).toContain(`text-anchor="middle" fill="${MOCK_MARKER_FILL}"`);
     expect(icon).toContain(">9+<");
     expect(icon).toContain("<text");
     expect(icon).toContain('viewBox="0 0 121 121"');
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('width="121" height="121"');
+  });
+
+  it("renders inactive place markers in gray", () => {
+    const icon = createLockerMarkerIcon(
+      createPlacePin({ markerStatus: "inactive", lockerCount: 12 }),
+    );
+
+    expect(icon).toContain('data-type="PLACE"');
+    expect(icon).toContain('data-map-pin-variant="inactive"');
+    expect(icon).toContain(`fill="${MOCK_INACTIVE_MARKER_FILL}"`);
+    expect(icon).toContain(
+      `stroke="${MOCK_INACTIVE_MARKER_FILL}" stroke-width="3"`,
+    );
+    expect(icon).toContain(
+      `text-anchor="middle" fill="${MOCK_INACTIVE_BADGE_TEXT_FILL}"`,
+    );
   });
 
   it("renders cluster markers for count < 10 (S size)", () => {
@@ -323,11 +371,11 @@ describe("syncLockerMarkers", () => {
 
     expect(options.icon?.content).toContain("map-marker-item");
     expect(options.icon?.content).toContain('data-type="LOCKER"');
-    expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
+    expect(options.icon?.content).toContain('data-map-pin-variant="default"');
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('<svg width="90" height="90"');
-    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(options.icon?.size).toMatchObject({ width: 40, height: 40 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20, y: 20 });
   });
 
   it("uses the selected locker map pin dimensions", () => {
@@ -347,9 +395,10 @@ describe("syncLockerMarkers", () => {
       icon?: { content?: string; anchor?: FakePoint; size?: FakeSize };
     };
 
-    expect(options.icon?.content).toContain('data-map-pin-variant="selected"');
-    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(options.icon?.content).toContain('data-map-pin-variant="default"');
+    expect(options.icon?.content).toContain("selected-active");
+    expect(options.icon?.size).toMatchObject({ width: 40, height: 40 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20, y: 20 });
   });
 
   it("uses the favorite locker map pin dimensions", () => {
@@ -369,8 +418,8 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(options.icon?.content).toContain('data-map-pin-variant="save"');
-    expect(options.icon?.size).toMatchObject({ width: 40.5, height: 40.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(options.icon?.size).toMatchObject({ width: 40, height: 40 });
+    expect(options.icon?.anchor).toMatchObject({ x: 20, y: 20 });
   });
 
   it("uses an HTML icon option for place markers", () => {
@@ -698,10 +747,10 @@ describe("syncLockerMarkers", () => {
     };
 
     expect(lockerOptions.icon?.size).toMatchObject({
-      width: 40.5,
-      height: 40.5,
+      width: 40,
+      height: 40,
     });
-    expect(lockerOptions.icon?.anchor).toMatchObject({ x: 20.3, y: 20.3 });
+    expect(lockerOptions.icon?.anchor).toMatchObject({ x: 20, y: 20 });
     expect(placeOptions.icon?.size).toMatchObject({
       width: 54.5,
       height: 54.5,
@@ -734,13 +783,13 @@ describe("syncLockerMarkers", () => {
     expect(
       new Set([getOffsetStyle(placeContent), getOffsetStyle(lockerContent)]),
     ).toEqual(new Set(["-24,0", "24,0"]));
-    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
+    expectMarkerAnchorToMatch(FakeMarker.instances[0], {
       x: 47.6,
       y: 28.4,
     });
-    expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
-      x: -3.7,
-      y: 20.3,
+    expectMarkerAnchorToMatch(FakeMarker.instances[1], {
+      x: -4,
+      y: 20,
     });
   });
 
@@ -812,16 +861,16 @@ describe("syncLockerMarkers", () => {
 
     expect(content1).toContain('data-offset-x="24"');
     expect(content1).toContain('data-offset-y="0"');
-    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
-      x: -3.7,
-      y: 20.3,
+    expectMarkerAnchorToMatch(FakeMarker.instances[0], {
+      x: -4,
+      y: 20,
     });
 
     expect(content2).toContain('data-offset-x="-24"');
     expect(content2).toContain('data-offset-y="0"');
-    expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
-      x: 44.3,
-      y: 20.3,
+    expectMarkerAnchorToMatch(FakeMarker.instances[1], {
+      x: 44,
+      y: 20,
     });
   });
 
@@ -844,9 +893,9 @@ describe("syncLockerMarkers", () => {
 
     expect(content).toContain('data-offset-x="24"');
     expect(content).toContain('data-offset-y="0"');
-    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
-      x: -3.7,
-      y: 20.3,
+    expectMarkerAnchorToMatch(FakeMarker.instances[0], {
+      x: -4,
+      y: 20,
     });
   });
 
@@ -927,11 +976,11 @@ describe("syncLockerMarkers", () => {
 
     expect(content1).toContain("data-offset-x");
     expect(content2).toContain("data-offset-x");
-    expect(getMarkerAnchor(FakeMarker.instances[0])).toMatchObject({
-      x: -3.7,
-      y: 20.3,
+    expectMarkerAnchorToMatch(FakeMarker.instances[0], {
+      x: -4,
+      y: 20,
     });
-    expect(getMarkerAnchor(FakeMarker.instances[1])).toMatchObject({
+    expectMarkerAnchorToMatch(FakeMarker.instances[1], {
       x: 47.6,
       y: 28.4,
     });
@@ -1062,6 +1111,44 @@ describe("syncLockerMarkers", () => {
     expect(content).not.toContain("--spread-y");
     expect(content).toContain('data-offset-x="24"');
     expect(content).toContain('data-offset-y="0"');
+  });
+
+  it("keeps selected state in marker classes without changing icon variant", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+    const pin1 = createLockerPin({ lockerId: 101 });
+    const pin2 = createLockerPin({ lockerId: 102 });
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      registry,
+      selectedPinId: "LOCKER-101",
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [pin1, pin2],
+      registry,
+      selectedPinId: "LOCKER-102",
+    });
+
+    expect(getSetIconContent(FakeMarker.instances[0])).toContain(
+      'data-map-pin-variant="default"',
+    );
+    expect(getSetIconContent(FakeMarker.instances[1])).toContain(
+      'data-map-pin-variant="default"',
+    );
+    expect(getSetIconContent(FakeMarker.instances[0])).toContain(
+      "unselected-active",
+    );
+    expect(getSetIconContent(FakeMarker.instances[1])).toContain(
+      "selected-active",
+    );
   });
 
   it("does not update unrelated spread markers when selection changes after map projection changes", () => {

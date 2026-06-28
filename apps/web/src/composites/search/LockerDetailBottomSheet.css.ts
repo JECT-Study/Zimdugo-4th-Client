@@ -18,6 +18,49 @@ export const contentStack = style({
   minHeight: 0,
 });
 
+export const loadingContent = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[16],
+  width: "100%",
+  padding: `${vars.spacing[8]} ${vars.spacing[4]} ${vars.spacing[24]}`,
+  boxSizing: "border-box",
+});
+
+export const loadingSummary = style({
+  display: "flex",
+  gap: vars.spacing[8],
+  width: "100%",
+});
+
+export const loadingTextStack = style({
+  display: "flex",
+  flex: 1,
+  minWidth: 0,
+  flexDirection: "column",
+  gap: vars.spacing[8],
+});
+
+export const loadingDetailList = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[12],
+  width: "100%",
+});
+
+export const loadingDetailRow = style({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: vars.spacing[12],
+  width: "100%",
+});
+
+export const loadingActionRow = style({
+  display: "flex",
+  gap: vars.spacing[8],
+  width: "100%",
+});
+
 export const detailHeader = style({
   display: "flex",
   alignItems: "center",

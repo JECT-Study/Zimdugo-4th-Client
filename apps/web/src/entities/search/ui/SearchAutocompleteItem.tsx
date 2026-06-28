@@ -1,19 +1,15 @@
-import {
-  IconSearchAutocompleteLocker14,
-  IconSearchAutocompletePlace14,
-} from "@repo/ui/tokens/icons";
 import { Button } from "react-aria-components";
 import {
   address,
   leadingContent,
   marker,
-  placeMarker,
   root,
   textColumn,
   title,
   trailingContent,
   updated,
 } from "./SearchAutocompleteItem.css.ts";
+import { SearchMarkerIcon } from "./SearchMarkerIcon";
 
 interface SearchAutocompleteItemBase {
   title: string;
@@ -67,11 +63,6 @@ export function SearchAutocompleteItem({
     onPress?.(item);
   };
 
-  const AutocompleteIcon =
-    item.itemType === "PLACE"
-      ? IconSearchAutocompletePlace14
-      : IconSearchAutocompleteLocker14;
-
   return (
     <Button
       className={[root, className].filter(Boolean).join(" ")}
@@ -79,13 +70,10 @@ export function SearchAutocompleteItem({
       aria-label={ariaLabel}
     >
       <span className={leadingContent}>
-        <span
-          className={[marker, item.itemType === "PLACE" ? placeMarker : ""]
-            .filter(Boolean)
-            .join(" ")}
-          aria-hidden="true"
-        >
-          <AutocompleteIcon />
+        <span className={marker} aria-hidden="true">
+          <SearchMarkerIcon
+            kind={item.itemType === "PLACE" ? "place" : "locker"}
+          />
         </span>
 
         <span className={textColumn}>

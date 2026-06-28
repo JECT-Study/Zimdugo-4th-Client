@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 
 const interactiveRow = {
   width: "100%",
@@ -133,18 +133,9 @@ export const markerBadge = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "24px",
-  height: "24px",
+  width: "40px",
+  height: "40px",
   flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
-});
-
-export const markerPlace = style({});
-export const markerLocker = style({});
-
-globalStyle(`${markerPlace} svg path`, {
-  fill: vars.color.brand.symbol,
 });
 
 export const arrowSlot = style({
@@ -217,23 +208,9 @@ export const recentIconSlot = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "24px",
-  height: "24px",
+  width: "40px",
+  height: "40px",
   flexShrink: 0,
-});
-
-export const recentPlaceIcon = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "24px",
-  height: "24px",
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
-});
-
-globalStyle(`${recentPlaceIcon} svg path`, {
-  fill: vars.color.brand.symbol,
 });
 
 export const recentTextCol = style({

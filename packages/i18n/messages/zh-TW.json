@@ -278,6 +278,7 @@
   "address_search_sdk_loading": "正在載入地圖服務，請稍後再試。",
   "address_search_not_found": "無法找到該地址的位置，請選擇其他地址。",
   "locker_detail_operating_hours": "{open} ~ {close}",
+  "locker_detail_operating_hours_all_day": "24小時營業",
   "locker_detail_operating_hours_not_provided": "營業時間未提供",
   "locker_detail_price_not_provided": "未提供",
   "locker_detail_price_range": "{min} ~ {max}",

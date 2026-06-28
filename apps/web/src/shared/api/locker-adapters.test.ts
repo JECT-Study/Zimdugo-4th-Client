@@ -217,4 +217,76 @@ describe("locker-adapters", () => {
 
     expect(detail.imageUrl).toBe("https://example.com/locker.jpg");
   });
+
+  it("normalizes Swagger HH:mm:ss operating hours for keyword results", () => {
+    const viewModel = toLockerKeywordViewModel({
+      count: 1,
+      bounds: {
+        swLat: 37.496068,
+        swLng: 127.027539,
+        neLat: 37.517185,
+        neLng: 127.04122,
+      },
+      items: [
+        {
+          type: "LOCKER",
+          lockerId: 515,
+          lockerName: "강남역 4번 출구 지하 1층",
+          roadAddress: "서울 강남구 강남대로 지하 396",
+          lockerType: "SUBWAY_STATION",
+          minPrice: 3000,
+          latitude: 37.496068,
+          longitude: 127.028506,
+          distanceMeters: 238,
+          updatedAt: "2026-05-31T14:59:09",
+          isFavorite: false,
+          startTime: "06:00:00",
+          endTime: "23:30:00",
+          lockers: [],
+        },
+      ],
+    });
+
+    expect(viewModel.items[0]).toMatchObject({
+      itemType: "LOCKER",
+      operatingHours: { open: "06:00", close: "23:30" },
+    });
+  });
+
+  it("normalizes Swagger HH:mm:ss operating hours for place lockers", () => {
+    const viewModel = toPlaceLockersViewModel({
+      placeId: 158,
+      placeName: "강남역 1, 12번 출구",
+      roadAddress: "서울 강남구 강남대로 지하 396",
+      latitude: 37.497958,
+      longitude: 127.027539,
+      bounds: {
+        swLat: 37.496068,
+        swLng: 127.027539,
+        neLat: 37.517185,
+        neLng: 127.04122,
+      },
+      lockers: [
+        {
+          lockerId: 167,
+          lockerName: "강남역 1번 출구 지하",
+          roadAddress: "서울 강남구 강남대로 지하 396",
+          lockerType: "SUBWAY_STATION",
+          minPrice: 2200,
+          latitude: 37.497958,
+          longitude: 127.027539,
+          distanceMeters: 16,
+          updatedAt: "2026-05-31T14:59:09.298782",
+          isFavorite: false,
+          startTime: "00:00:00",
+          endTime: "24:00:00",
+        },
+      ],
+    });
+
+    expect(viewModel.lockers[0]?.operatingHours).toEqual({
+      open: "00:00",
+      close: "24:00",
+    });
+  });
 });

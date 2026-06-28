@@ -1,8 +1,6 @@
 import { m } from "@repo/i18n";
 import {
   IconNormalArrow24,
-  IconSearchLockerRow14,
-  IconSearchPlaceRow14,
   IconStarFilled24,
   IconStarOutline24,
 } from "@repo/ui/tokens/icons";
@@ -30,8 +28,6 @@ import {
   lockerMain,
   lockerRow,
   markerBadge,
-  markerLocker,
-  markerPlace,
   metaDot,
   nestedLockerRow,
   placeMain,
@@ -41,6 +37,7 @@ import {
   titleText,
   updatedText,
 } from "./SearchList.css.ts";
+import { SearchMarkerIcon } from "./SearchMarkerIcon";
 
 export interface SearchListResultsProps {
   items: SearchResultItem[];
@@ -133,7 +130,7 @@ export function SearchListResult({
           aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
         >
           <span className={resultContent}>
-            <ResultMarker tone="place" isClosed={item.isOpen === false} />
+            <ResultMarker tone="place" />
             <span className={resultTextColumn}>
               <span className={titleText}>{item.title}</span>
               <span className={detailMetaRow}>
@@ -210,10 +207,7 @@ export function SearchLockerResult({
         aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
       >
         <span className={resultContent}>
-          <ResultMarker
-            tone={isNested ? "locker" : "standalone"}
-            isClosed={item.isOpen === false}
-          />
+          <ResultMarker tone={isNested ? "locker" : "standalone"} />
           <span className={resultTextColumn}>
             <span className={titleText}>{item.title}</span>
             <span className={detailMetaRow}>
@@ -249,25 +243,13 @@ export function SearchLockerResult({
   );
 }
 
-function ResultMarker({
-  tone,
-  isClosed,
-}: {
-  tone: "place" | "locker" | "standalone";
-  isClosed?: boolean;
-}) {
-  const Icon =
-    tone === "place" ? IconSearchPlaceRow14 : IconSearchLockerRow14;
-
+function ResultMarker({ tone }: { tone: "place" | "locker" | "standalone" }) {
   return (
-    <span
-      className={[
-        markerBadge,
-        tone === "place" && !isClosed ? markerPlace : markerLocker,
-      ].join(" ")}
-      aria-hidden="true"
-    >
-      <Icon isClosed={isClosed} />
+    <span className={markerBadge} aria-hidden="true">
+      <SearchMarkerIcon
+        kind={tone === "place" ? "place" : "locker"}
+        tone="brand"
+      />
     </span>
   );
 }

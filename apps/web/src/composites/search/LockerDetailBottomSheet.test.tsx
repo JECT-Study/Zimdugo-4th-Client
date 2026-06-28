@@ -18,8 +18,11 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
     animateOnMount?: boolean;
     children: ReactNode;
     initialSnapPoint?: number;
+    maxSnapPoint?: number;
+    miniSnapPoint?: number;
     minSnapPoint?: number;
     onSnapChange?: (nextSnap: number) => void;
+    snapPoint?: number;
     snapRequest?: { id: number; snapPoint: number } | null;
   }) => {
     draggableBottomSheetMock(props);
@@ -31,7 +34,9 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
 
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
 import {
+  LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
+  resolveLockerDetailFullSnapPoint,
   resolveLockerDetailSnapPoints,
 } from "./LockerDetailBottomSheet";
 
@@ -80,6 +85,25 @@ describe("LockerDetailBottomSheet", () => {
       minSnapPoint: 112,
       snapPoint: 754,
     });
+  });
+
+  it("uses the search bar bottom as the maximum full snap height", () => {
+    expect(
+      resolveLockerDetailFullSnapPoint({
+        contentHeight: 320,
+        maxSnapPoint: 760,
+        minSnapPoint: LOCKER_DETAIL_FULL_TOP_OFFSET,
+        windowHeight: 812,
+      }),
+    ).toBe(492);
+    expect(
+      resolveLockerDetailFullSnapPoint({
+        contentHeight: 900,
+        maxSnapPoint: 760,
+        minSnapPoint: LOCKER_DETAIL_FULL_TOP_OFFSET,
+        windowHeight: 812,
+      }),
+    ).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
   });
 
   it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
@@ -171,6 +195,18 @@ describe("LockerDetailBottomSheet", () => {
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
 
+  it("renders a loading skeleton while locker detail is loading", () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} loadState="loading" />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(
+      sheet.getByRole("status", { name: m.search_result_loading_aria() }),
+    ).toBeTruthy();
+    expect(sheet.queryByText(LOCKER_DETAIL.title)).toBeNull();
+  });
+
   it("renders detail image when imageUrl exists", () => {
     render(
       <LockerDetailBottomSheet
@@ -227,7 +263,7 @@ describe("LockerDetailBottomSheet", () => {
 
     expect(latestSheetProps?.snapRequest).toEqual({
       id: 1,
-      snapPoint: 701,
+      snapPoint: latestSheetProps?.miniSnapPoint,
     });
   });
 
@@ -243,18 +279,18 @@ describe("LockerDetailBottomSheet", () => {
     );
 
     const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
-    latestSheetProps?.onSnapChange?.(112);
+    latestSheetProps?.onSnapChange?.(latestSheetProps?.minSnapPoint ?? 112);
 
     expect(handleSnapStageChange).toHaveBeenCalledWith("full");
     expect(latestSheetProps?.snapRequest).toEqual({
       id: 1,
-      snapPoint: 112,
+      snapPoint: latestSheetProps?.minSnapPoint,
     });
   });
 
   it("enables internal content scroll only when the detail sheet opens full", () => {
     const { rerender } = render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} snapPoint={566} />,
     );
 
     expect(

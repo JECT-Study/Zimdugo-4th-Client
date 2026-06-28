@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 
 export const root = style({
   display: "flex",
@@ -35,17 +35,9 @@ export const marker = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "24px",
-  height: "24px",
+  width: "40px",
+  height: "40px",
   flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
-});
-
-export const placeMarker = style({});
-
-globalStyle(`${placeMarker} svg path`, {
-  fill: vars.color.brand.symbol,
 });
 
 export const textColumn = style({

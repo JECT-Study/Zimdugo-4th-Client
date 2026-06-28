@@ -1,5 +1,6 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import {
   IconCamera24,
   IconCaution24,
@@ -12,7 +13,14 @@ import {
   IconStarOutline24,
   IconX24,
 } from "@repo/ui/tokens/icons";
-import { type ReactNode, useEffect, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
@@ -28,6 +36,7 @@ import {
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
 } from "#/shared/ui/DraggableBottomSheet";
+import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
   actionRow,
@@ -70,6 +79,12 @@ import {
   imagePreviewOverlay,
   imageReportCard,
   imageReportText,
+  loadingActionRow,
+  loadingContent,
+  loadingDetailList,
+  loadingDetailRow,
+  loadingSummary,
+  loadingTextStack,
   lockerImage,
   lockerImageButton,
   lockerTitle,
@@ -85,6 +100,9 @@ import {
   summarySection,
   summaryTextColumn,
 } from "./LockerDetailBottomSheet.css.ts";
+
+const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
+const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
 
 export interface LockerDetailItem extends SearchLockerResultItem {
   operatingHoursLabel?: string;
@@ -123,6 +141,8 @@ export interface LockerDetailBottomSheetProps {
 }
 
 export const LOCKER_DETAIL_FULL_TOP_OFFSET = 112;
+const DETAIL_CONTENT_TOP_PADDING = 8;
+const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 const DETAIL_HALF_VISIBLE_HEIGHT = 246;
@@ -140,6 +160,7 @@ interface ResolveLockerDetailSnapPointsOptions {
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
+  fullContentHeight?: number | null;
 }
 
 export const resolveLockerDetailSnapOffset = ({
@@ -182,7 +203,29 @@ export const resolveLockerDetailSnapStage = ({
   ).stage;
 };
 
+export const resolveLockerDetailFullSnapPoint = ({
+  contentHeight,
+  maxSnapPoint,
+  minSnapPoint,
+  windowHeight,
+}: {
+  contentHeight?: number | null;
+  maxSnapPoint: number;
+  minSnapPoint: number;
+  windowHeight: number;
+}) => {
+  if (!contentHeight || contentHeight <= 0) {
+    return minSnapPoint;
+  }
+
+  return Math.min(
+    maxSnapPoint,
+    Math.max(minSnapPoint, windowHeight - contentHeight),
+  );
+};
+
 export const resolveLockerDetailSnapPoints = ({
+  fullContentHeight,
   maxSnapPoint,
   minSnapPoint,
   snapPoint,
@@ -190,7 +233,13 @@ export const resolveLockerDetailSnapPoints = ({
 }: ResolveLockerDetailSnapPointsOptions) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
-  const resolvedMinSnapPoint = minSnapPoint ?? LOCKER_DETAIL_FULL_TOP_OFFSET;
+  const resolvedFullTopOffset = minSnapPoint ?? LOCKER_DETAIL_FULL_TOP_OFFSET;
+  const resolvedMinSnapPoint = resolveLockerDetailFullSnapPoint({
+    contentHeight: fullContentHeight,
+    maxSnapPoint: resolvedMaxSnapPoint,
+    minSnapPoint: resolvedFullTopOffset,
+    windowHeight,
+  });
   const resolvedSnapPoint =
     snapPoint ??
     resolveLockerDetailSnapOffset({
@@ -295,6 +344,33 @@ export function LockerDetailBottomSheet({
   snapRequest,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
+  const [fullContentHeight, setFullContentHeight] = useState<number | null>(
+    null,
+  );
+  const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
+  const updateFullContentHeight = useCallback(() => {
+    const element = fullContentMeasureRef.current;
+
+    if (!element) {
+      setFullContentHeight(null);
+      return;
+    }
+
+    setFullContentHeight(
+      Math.ceil(
+        element.scrollHeight +
+          DETAIL_CONTENT_TOP_PADDING +
+          DETAIL_CONTENT_BOTTOM_PADDING,
+      ),
+    );
+  }, []);
+  const handleFullContentMeasureRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      fullContentMeasureRef.current = element;
+      updateFullContentHeight();
+    },
+    [updateFullContentHeight],
+  );
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -305,6 +381,7 @@ export function LockerDetailBottomSheet({
     minSnapPoint,
     snapPoint,
     windowHeight,
+    fullContentHeight,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined
@@ -378,6 +455,25 @@ export function LockerDetailBottomSheet({
   }, []);
 
   useEffect(() => {
+    if (loadState !== "ready") {
+      setFullContentHeight(null);
+      return;
+    }
+
+    updateFullContentHeight();
+    const element = fullContentMeasureRef.current;
+
+    if (!element || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(updateFullContentHeight);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [loadState, updateFullContentHeight]);
+
+  useEffect(() => {
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,
@@ -411,7 +507,9 @@ export function LockerDetailBottomSheet({
       onDismiss={handleBack}
     >
       <div className={sheetColumn}>
-        {loadState === "error" ? (
+        {loadState === "loading" ? (
+          <LockerDetailLoadingContent />
+        ) : loadState === "error" ? (
           <LockerDetailErrorContent onBack={handleBack} onRetry={onRetry} />
         ) : (
           <FullDetailContent
@@ -424,10 +522,96 @@ export function LockerDetailBottomSheet({
             onNavigate={handleNavigate}
             onVoteChange={onVoteChange}
             isScrollEnabled={currentSnapStage === "full"}
+            contentRef={handleFullContentMeasureRef}
           />
         )}
       </div>
     </DraggableBottomSheet>
+  );
+}
+
+function LockerDetailLoadingContent() {
+  return (
+    <output
+      className={loadingContent}
+      aria-live="polite"
+      aria-label={m.search_result_loading_aria()}
+    >
+      <div className={loadingSummary}>
+        <div className={loadingTextStack}>
+          <Skeleton
+            width="72%"
+            height={18}
+            borderRadius={6}
+            style={skeletonSurfaceStyle}
+          />
+          <Skeleton
+            width="54%"
+            height={14}
+            borderRadius={6}
+            style={skeletonSurfaceStyle}
+          />
+          <Skeleton
+            width="86%"
+            height={14}
+            borderRadius={6}
+            style={skeletonSurfaceStyle}
+          />
+        </div>
+        <Skeleton
+          width={32}
+          height={32}
+          borderRadius={16}
+          style={skeletonSurfaceStyle}
+        />
+      </div>
+      <div className={loadingDetailList}>
+        {LOCKER_DETAIL_SKELETON_ROWS.map((rowKey) => (
+          <div key={rowKey} className={loadingDetailRow}>
+            <Skeleton
+              width={24}
+              height={24}
+              borderRadius={6}
+              style={skeletonSurfaceStyle}
+            />
+            <div className={loadingTextStack}>
+              <Skeleton
+                width="70%"
+                height={15}
+                borderRadius={6}
+                style={skeletonSurfaceStyle}
+              />
+              <Skeleton
+                width="48%"
+                height={13}
+                borderRadius={6}
+                style={skeletonSurfaceStyle}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <Skeleton
+        width="100%"
+        height={160}
+        borderRadius={6}
+        style={skeletonSurfaceStyle}
+      />
+      <div className={loadingActionRow}>
+        <Skeleton
+          width={56}
+          height={40}
+          borderRadius={8}
+          style={skeletonSurfaceStyle}
+        />
+        <Skeleton
+          width="100%"
+          height={40}
+          borderRadius={8}
+          style={skeletonSurfaceStyle}
+        />
+      </div>
+    </output>
   );
 }
 
@@ -458,6 +642,7 @@ function FullDetailContent({
   onNavigate,
   onVoteChange,
   isScrollEnabled,
+  contentRef,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
@@ -468,6 +653,7 @@ function FullDetailContent({
   onNavigate: () => void;
   onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
   isScrollEnabled: boolean;
+  contentRef?: (element: HTMLDivElement | null) => void;
 }) {
   const hasFeedbackVotes =
     locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
@@ -515,7 +701,7 @@ function FullDetailContent({
         .join(" ")}
       data-scroll-enabled={isScrollEnabled ? "true" : "false"}
     >
-      <div className={contentStack}>
+      <div ref={contentRef} className={contentStack}>
         <SummarySection
           locker={locker}
           favoriteLabel={favoriteLabel}
