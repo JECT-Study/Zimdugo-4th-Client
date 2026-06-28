@@ -62,9 +62,16 @@ export const formatLockerOperatingHoursLabel = (
   close?: string,
 ): string => {
   if (open && close) {
+    const normalizedOpen = trimTimeSeconds(open);
+    const normalizedClose = trimTimeSeconds(close);
+
+    if (normalizedOpen === "00:00" && normalizedClose === "00:00") {
+      return m.locker_detail_operating_hours_all_day();
+    }
+
     return m.locker_detail_operating_hours({
-      open: trimTimeSeconds(open),
-      close: trimTimeSeconds(close),
+      open: normalizedOpen,
+      close: normalizedClose,
     });
   }
 

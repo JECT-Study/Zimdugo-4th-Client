@@ -13,7 +13,14 @@ import {
   IconStarOutline24,
   IconX24,
 } from "@repo/ui/tokens/icons";
-import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
 import type { SearchAutocompleteItemData } from "#/entities/search";
@@ -134,6 +141,7 @@ export interface LockerDetailBottomSheetProps {
 }
 
 export const LOCKER_DETAIL_FULL_TOP_OFFSET = 112;
+const DETAIL_CONTENT_TOP_PADDING = 8;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 const DETAIL_HALF_VISIBLE_HEIGHT = 246;
@@ -151,6 +159,7 @@ interface ResolveLockerDetailSnapPointsOptions {
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
+  fullContentHeight?: number | null;
 }
 
 export const resolveLockerDetailSnapOffset = ({
@@ -193,7 +202,29 @@ export const resolveLockerDetailSnapStage = ({
   ).stage;
 };
 
+export const resolveLockerDetailFullSnapPoint = ({
+  contentHeight,
+  maxSnapPoint,
+  minSnapPoint,
+  windowHeight,
+}: {
+  contentHeight?: number | null;
+  maxSnapPoint: number;
+  minSnapPoint: number;
+  windowHeight: number;
+}) => {
+  if (!contentHeight || contentHeight <= 0) {
+    return minSnapPoint;
+  }
+
+  return Math.min(
+    maxSnapPoint,
+    Math.max(minSnapPoint, windowHeight - contentHeight),
+  );
+};
+
 export const resolveLockerDetailSnapPoints = ({
+  fullContentHeight,
   maxSnapPoint,
   minSnapPoint,
   snapPoint,
@@ -201,7 +232,13 @@ export const resolveLockerDetailSnapPoints = ({
 }: ResolveLockerDetailSnapPointsOptions) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
-  const resolvedMinSnapPoint = minSnapPoint ?? LOCKER_DETAIL_FULL_TOP_OFFSET;
+  const resolvedFullTopOffset = minSnapPoint ?? LOCKER_DETAIL_FULL_TOP_OFFSET;
+  const resolvedMinSnapPoint = resolveLockerDetailFullSnapPoint({
+    contentHeight: fullContentHeight,
+    maxSnapPoint: resolvedMaxSnapPoint,
+    minSnapPoint: resolvedFullTopOffset,
+    windowHeight,
+  });
   const resolvedSnapPoint =
     snapPoint ??
     resolveLockerDetailSnapOffset({
@@ -306,6 +343,29 @@ export function LockerDetailBottomSheet({
   snapRequest,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
+  const [fullContentHeight, setFullContentHeight] = useState<number | null>(
+    null,
+  );
+  const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
+  const updateFullContentHeight = useCallback(() => {
+    const element = fullContentMeasureRef.current;
+
+    if (!element) {
+      setFullContentHeight(null);
+      return;
+    }
+
+    setFullContentHeight(
+      Math.ceil(element.scrollHeight + DETAIL_CONTENT_TOP_PADDING),
+    );
+  }, []);
+  const handleFullContentMeasureRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      fullContentMeasureRef.current = element;
+      updateFullContentHeight();
+    },
+    [updateFullContentHeight],
+  );
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -316,6 +376,7 @@ export function LockerDetailBottomSheet({
     minSnapPoint,
     snapPoint,
     windowHeight,
+    fullContentHeight,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined
@@ -389,6 +450,25 @@ export function LockerDetailBottomSheet({
   }, []);
 
   useEffect(() => {
+    if (loadState !== "ready") {
+      setFullContentHeight(null);
+      return;
+    }
+
+    updateFullContentHeight();
+    const element = fullContentMeasureRef.current;
+
+    if (!element || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(updateFullContentHeight);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [loadState, updateFullContentHeight]);
+
+  useEffect(() => {
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,
@@ -437,6 +517,7 @@ export function LockerDetailBottomSheet({
             onNavigate={handleNavigate}
             onVoteChange={onVoteChange}
             isScrollEnabled={currentSnapStage === "full"}
+            contentRef={handleFullContentMeasureRef}
           />
         )}
       </div>
@@ -556,6 +637,7 @@ function FullDetailContent({
   onNavigate,
   onVoteChange,
   isScrollEnabled,
+  contentRef,
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
@@ -566,6 +648,7 @@ function FullDetailContent({
   onNavigate: () => void;
   onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
   isScrollEnabled: boolean;
+  contentRef?: (element: HTMLDivElement | null) => void;
 }) {
   const hasFeedbackVotes =
     locker.accurateCount !== undefined || locker.inaccurateCount !== undefined;
@@ -613,7 +696,7 @@ function FullDetailContent({
         .join(" ")}
       data-scroll-enabled={isScrollEnabled ? "true" : "false"}
     >
-      <div className={contentStack}>
+      <div ref={contentRef} className={contentStack}>
         <SummarySection
           locker={locker}
           favoriteLabel={favoriteLabel}

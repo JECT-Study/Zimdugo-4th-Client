@@ -27,9 +27,7 @@ describe("locker-detail-labels", () => {
 
     expect(formatLockerFloorLabel(1)).toBe("1층");
     expect(formatLockerFloorLabel(2, "UNDERGROUND")).toBe("B2층");
-    expect(formatLockerSizeTypesLabel(["LARGE", "SMALL"])).toBe(
-      "소형, 대형",
-    );
+    expect(formatLockerSizeTypesLabel(["LARGE", "SMALL"])).toBe("소형, 대형");
 
     setLanguageTag("en");
     expect(formatLockerFloorLabel(1)).toBe("1F");
@@ -44,6 +42,12 @@ describe("locker-detail-labels", () => {
     );
     expect(formatLockerOperatingHoursLabel("11:00:00", "19:04:00")).toBe(
       "11:00 ~ 19:04",
+    );
+    expect(formatLockerOperatingHoursLabel("00:00", "00:00")).toBe(
+      "24시간 운영",
+    );
+    expect(formatLockerOperatingHoursLabel("00:00:00", "00:00:00")).toBe(
+      "24시간 운영",
     );
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000원 ~ 5,000원");
     expect(formatLockerPriceLabel(3000)).toBe("3,000원 ~");
