@@ -191,8 +191,8 @@ const markerScaleUp = keyframes({
 });
 
 const markerScaleDown = keyframes({
-  "0%": { transform: "scale(1)" },
-  "100%": { transform: "scale(0.667)" },
+  "0%": { transform: "scale(1.2)" },
+  "100%": { transform: "scale(1)" },
 });
 
 const markerSpreadOut = keyframes({
@@ -201,7 +201,7 @@ const markerSpreadOut = keyframes({
     opacity: 0,
   },
   "100%": {
-    transform: "translate(0px, 0px) scale(0.667)",
+    transform: "translate(0px, 0px) scale(1)",
     opacity: 1,
   },
 });
@@ -227,7 +227,7 @@ globalStyle(".map-marker-item.unselected-active", {
 });
 
 globalStyle(".map-marker-item.normal", {
-  transform: "scale(0.667)",
+  transform: "scale(1)",
   animation: "none",
 });
 
