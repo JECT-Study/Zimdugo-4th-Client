@@ -2348,6 +2348,10 @@ export function IndexPage() {
       return;
     }
 
+    if (lockerDetail.lockerId !== activeLockerId) {
+      return;
+    }
+
     setSelectedLockerDetail((previousDetail) =>
       mergeStoredLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
     );
@@ -2374,7 +2378,13 @@ export function IndexPage() {
         bottomInsetPx: getDetailFocusBottomInsetPx(),
       });
     }
-  }, [lockerDetail, mapInstance, syncLockerDetailUrl, sheetMode]);
+  }, [
+    lockerDetail,
+    mapInstance,
+    syncLockerDetailUrl,
+    sheetMode,
+    activeLockerId,
+  ]);
 
   useEffect(() => {
     if (sheetMode === "idle") {
