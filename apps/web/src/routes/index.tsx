@@ -348,6 +348,7 @@ export function IndexPage() {
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
+  const effectiveSearchQuery = searchQueryFromUrl ?? searchQuery;
   const syncSearchQueryUrl = useCallback(
     (query: string | null | undefined, options: { replace?: boolean } = {}) => {
       const nextQuery = readSearchQueryParam(query);
@@ -971,7 +972,7 @@ export function IndexPage() {
     listKind,
     sheetMode,
     searchDetailBack,
-    searchQuery,
+    searchQuery: effectiveSearchQuery,
   });
 
   const shouldFetchPlaceList = shouldFetchPlaceLockers({
@@ -988,7 +989,7 @@ export function IndexPage() {
       return null;
     }
 
-    const keyword = getValidatedSearchQuery(searchQuery);
+    const keyword = getValidatedSearchQuery(effectiveSearchQuery);
     if (!keyword) {
       return null;
     }
@@ -1003,7 +1004,7 @@ export function IndexPage() {
     searchCoordinates.lat,
     searchCoordinates.lng,
     searchFilters,
-    searchQuery,
+    effectiveSearchQuery,
     shouldFetchKeywordList,
   ]);
 
@@ -2057,6 +2058,8 @@ export function IndexPage() {
     void flushLockerSheetMutations();
     if (getSearchQueryIssue(searchDraft) === null) {
       setConfirmedSearchQuery(trimSearchQueryDraft(searchDraft));
+    } else {
+      setConfirmedSearchQuery("");
     }
     setListKind("keyword");
     setSearchPlaceId(null);
@@ -2399,7 +2402,7 @@ export function IndexPage() {
   }, [selectedPinId, selectedMapPinOffset]);
   const searchListSheetKey =
     context === "search" && listKind === "keyword"
-      ? `search-keyword-${searchQuery}`
+      ? `search-keyword-${effectiveSearchQuery}`
       : `${context}-${listKind ?? "none"}-${activePlaceId ?? "none"}`;
   useEffect(() => {
     if (sheetMode === "list") {
@@ -2492,7 +2495,7 @@ export function IndexPage() {
           onOpenSearch={handleOpenSearch}
           onBackPress={searchBarBackPress}
           onCloseSearchContext={handleExitSearchContext}
-          searchQuery={searchQuery}
+          searchQuery={effectiveSearchQuery}
           showBackButton={searchBarBackPress !== undefined}
           isSearchContextActive={context === "search"}
         />
@@ -2646,7 +2649,7 @@ export function IndexPage() {
       {!isMapLoading && sheetMode === "list" && !isSearchOpen ? (
         <SearchListBottomSheet
           key={searchListSheetKey}
-          searchQuery={searchQuery}
+          searchQuery={effectiveSearchQuery}
           items={searchBottomSheetDisplayItems}
           placeName={activePlaceName}
           appLanguage={normalizeLocale(languageTag()) ?? BASE_LOCALE}
