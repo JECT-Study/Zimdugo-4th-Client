@@ -1,3 +1,4 @@
+import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import { SearchResultsHeading } from "./SearchResultsHeading.tsx";
 
@@ -19,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: (args) => (
-    <div style={{ width: "375px" }}>
+    <div style={{ width: vars.layout.designWidth }}>
       <SearchResultsHeading {...args} />
     </div>
   ),
@@ -30,7 +31,7 @@ export const WithoutSubtitle: Story = {
     subtitleText: undefined,
   },
   render: (args) => (
-    <div style={{ width: "375px" }}>
+    <div style={{ width: vars.layout.designWidth }}>
       <SearchResultsHeading {...args} />
     </div>
   ),

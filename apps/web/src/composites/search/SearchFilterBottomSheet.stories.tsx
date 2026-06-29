@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { vars } from "@repo/ui/vars";
 import { setLanguageTag } from "@repo/i18n";
+import { vars } from "@repo/ui/vars";
+import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SearchFilterBottomSheet } from "./SearchFilterBottomSheet.tsx";
 
@@ -26,7 +26,7 @@ const meta = {
         <QueryClientProvider client={storyQueryClient}>
           <div
             style={{
-              width: vars.layout.containerWidth,
+              width: vars.layout.designWidth,
               margin: "0 auto",
               minHeight: "100dvh",
               background: "#f5f5f5",

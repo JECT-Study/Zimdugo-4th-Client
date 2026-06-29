@@ -2,8 +2,8 @@ import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { BottomTabBar, type BottomTabKey } from "./BottomTabBar.tsx";
 import { storyRelativeFrame } from "./BottomTabBar.stories.css.ts";
+import { BottomTabBar, type BottomTabKey } from "./BottomTabBar.tsx";
 
 const meta = {
   title: "Product/Navigation/Bottom Tab Bar",
@@ -15,8 +15,7 @@ const meta = {
     (Story: React.ComponentType) => (
       <div
         style={{
-          width: "fit-content",
-          minWidth: vars.layout.containerWidth,
+          width: vars.layout.designWidth,
           maxWidth: "100vw",
           padding: "20px",
           backgroundColor: vars.color.bg.default,

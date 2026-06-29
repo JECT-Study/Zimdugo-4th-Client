@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, style } from "@vanilla-extract/css";
 
@@ -11,8 +12,13 @@ export const searchBarLayer = style({
   flexDirection: "column",
   alignItems: "flex-start",
   gap: vars.spacing[8],
-  maxWidth: `calc(${vars.layout.containerWidth} - 32px)`,
+  maxWidth: `calc(${vars.layout.appMaxWidth} - 32px)`,
   margin: "0 auto",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
+    },
+  },
 });
 
 export const searchInputFrame = style({

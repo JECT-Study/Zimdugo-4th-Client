@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
@@ -18,10 +19,15 @@ export const header = style({
 
 export const content = style({
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
   padding: `32px ${vars.spacing[16]} calc(${vars.layout.bottomNav} + ${vars.spacing[24]})`,
   boxSizing: "border-box",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const introText = style({

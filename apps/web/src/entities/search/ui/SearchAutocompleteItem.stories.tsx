@@ -1,3 +1,4 @@
+import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import type { ComponentType } from "react";
 import {
@@ -33,7 +34,7 @@ const meta = {
   },
   decorators: [
     (Story: ComponentType) => (
-      <div style={{ width: "375px" }}>
+      <div style={{ width: vars.layout.designWidth }}>
         <Story />
       </div>
     ),

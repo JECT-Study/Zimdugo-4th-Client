@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
@@ -35,12 +36,24 @@ export const topControlStack = style({
 // 우측 하단 컨트롤 스택 (새로고침 + 현재 위치)
 export const locationControlStack = style({
   position: "fixed",
-  right: `max(${vars.spacing[16]}, calc((100vw - ${vars.layout.containerWidth}) / 2 + ${vars.spacing[16]}))`,
+  left: "50%",
   bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
+  transform: "translateX(-50%)",
+  width: "100%",
+  maxWidth: vars.layout.appMaxWidth,
+  paddingRight: vars.layout.safeAreaInlineEnd,
+  boxSizing: "border-box",
   display: "flex",
   flexDirection: "column",
+  alignItems: "flex-end",
   gap: vars.spacing[8],
   zIndex: vars.zIndex.ui,
+  pointerEvents: "none",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const locationButton = style({
@@ -54,6 +67,7 @@ export const locationButton = style({
   outline: "2px solid transparent",
   outlineOffset: "2px",
   padding: 0,
+  pointerEvents: "auto",
   ":focus-visible": {
     boxShadow: `0 0 0 3px ${vars.color.bg.default}, 0 0 0 5px ${vars.color.brand.primary}`,
     outlineColor: vars.color.brand.primary,
@@ -148,6 +162,7 @@ export const controlButton = style({
   boxShadow: vars.shadow[1],
   cursor: "pointer",
   outline: "none",
+  pointerEvents: "auto",
   ":active": {
     backgroundColor: vars.color.bg.surface,
   },

@@ -1,16 +1,32 @@
+import {
+  appShellMaxWidth,
+  appShellMaxWidthVar,
+  layoutScale,
+} from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 export const reportContainer = style({
+  vars: {
+    [appShellMaxWidthVar]: vars.layout.appMaxWidth,
+  },
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: appShellMaxWidth,
   margin: "0 auto",
+  height: "100dvh",
   minHeight: "100dvh",
   backgroundColor: vars.color.bg.default,
   position: "relative",
-  overflow: "visible",
+  overflow: "hidden",
   display: "flex",
   flexDirection: "column",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      vars: {
+        [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
+    },
+  },
 });
 
 export const reportHeader = style({
@@ -39,7 +55,8 @@ export const reportPageContent = style({
   position: "relative",
   display: "flex",
   flexDirection: "column",
-  minHeight: "100dvh",
+  flex: 1,
+  minHeight: 0,
 });
 
 export const contentArea = style({
@@ -47,8 +64,8 @@ export const contentArea = style({
   flex: 1,
   width: "100%",
   minHeight: 0,
-  padding: `${vars.spacing[16]} ${vars.layout.sidePadding} ${vars.spacing[28]}`,
-  overflowY: "visible",
+  padding: `${vars.spacing[16]} ${vars.layout.sidePadding} calc(${vars.layout.bottomCTA} + env(safe-area-inset-bottom, 0px) + ${vars.spacing[28]})`,
+  overflowY: "auto",
   overflowAnchor: "none",
   overscrollBehaviorY: "auto",
   touchAction: "pan-y",
@@ -75,9 +92,12 @@ export const stepWrapper = style({
 });
 
 export const bottomButtonWrapper = style({
-  position: "sticky",
+  position: "fixed",
+  left: "50%",
   bottom: 0,
+  transform: "translateX(-50%)",
   width: "100%",
+  maxWidth: appShellMaxWidth,
   padding: `${vars.spacing[16]} ${vars.layout.sidePadding} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
   borderTop: `1px solid ${vars.color.palette.gray[200]}`,
   backgroundColor: "white",
@@ -459,13 +479,13 @@ export const locationMapArea = style([
 ]);
 
 /** 제보 사진 업로드·미리보기 공통 치수 */
-export const REPORT_PHOTO_TILE_MIN_WIDTH = "343px";
+export const REPORT_PHOTO_TILE_WIDTH = "min(343px, 100%)";
 export const REPORT_PHOTO_TILE_HEIGHT = "200px";
 
 const reportPhotoTileBase = style({
   flexShrink: 0,
-  minWidth: REPORT_PHOTO_TILE_MIN_WIDTH,
-  width: REPORT_PHOTO_TILE_MIN_WIDTH,
+  minWidth: 0,
+  width: REPORT_PHOTO_TILE_WIDTH,
   height: REPORT_PHOTO_TILE_HEIGHT,
   boxSizing: "border-box",
 });
@@ -483,13 +503,13 @@ export const photoUploadArea = style([
   baseUploadArea,
   reportPhotoTileBase,
   {
-    flex: "1 0 343px",
+    flex: `1 0 ${REPORT_PHOTO_TILE_WIDTH}`,
     width: "100%",
     margin: 0,
     selectors: {
       [`${reportPhotoGallery}[data-has-images="true"] &`]: {
-        flex: "0 0 343px",
-        width: REPORT_PHOTO_TILE_MIN_WIDTH,
+        flex: `0 0 ${REPORT_PHOTO_TILE_WIDTH}`,
+        width: REPORT_PHOTO_TILE_WIDTH,
       },
       "&:disabled": {
         cursor: "not-allowed",
@@ -535,7 +555,7 @@ export const imageWrapper = style([
   reportPhotoTileBase,
   {
     position: "relative",
-    flex: "0 0 343px",
+    flex: `0 0 ${REPORT_PHOTO_TILE_WIDTH}`,
     borderRadius: vars.radius[12],
     overflow: "hidden",
     boxSizing: "border-box",

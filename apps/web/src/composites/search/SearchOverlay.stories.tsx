@@ -1,8 +1,8 @@
+import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { SearchHistoryEntry } from "#/features/search/model/search-history";
 import { SearchOverlay } from "./SearchOverlay.tsx";
-import { vars } from "@repo/ui/vars";
 
 const storyQueryClient = new QueryClient({
   defaultOptions: {
@@ -48,7 +48,7 @@ const meta = {
       <QueryClientProvider client={storyQueryClient}>
         <div
           style={{
-            width: vars.layout.containerWidth,
+            width: vars.layout.designWidth,
             margin: "0 auto",
             minHeight: "100dvh",
             background: "#ffffff",

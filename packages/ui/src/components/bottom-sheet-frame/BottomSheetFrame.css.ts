@@ -1,4 +1,5 @@
 import { style } from "@vanilla-extract/css";
+import { layoutScale } from "../../tokens/layout/layout.css.ts";
 import { vars } from "../../vars.css.ts";
 
 export const draggableWrapper = style({
@@ -8,15 +9,20 @@ export const draggableWrapper = style({
   right: 0,
   margin: "0 auto",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   zIndex: vars.zIndex.bottomSheet,
   touchAction: "none",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const sheet = style({
   position: "relative",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
   backgroundColor: vars.color.palette.gray[100],
   borderTopLeftRadius: vars.radius[16],
@@ -24,6 +30,11 @@ export const sheet = style({
   boxShadow: vars.shadow.scale[3],
   overflow: "hidden",
   boxSizing: "border-box",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 /** 기디팀 바텀시트(`1097-5907`) 전체 높이·세로 플렉스 체인 */

@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { keyframes, style } from "@vanilla-extract/css";
 
@@ -13,11 +14,16 @@ export const overlayContainer = style({
   left: "50%",
   transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   height: "100dvh",
   backgroundColor: vars.color.bg.default,
   zIndex: 200,
   overflow: "hidden",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const header = style({

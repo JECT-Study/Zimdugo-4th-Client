@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
@@ -8,13 +9,16 @@ export const overlay = style({
   alignItems: "center",
   justifyContent: "center",
   padding: vars.spacing[20],
+  paddingLeft: vars.layout.safeAreaInlineStart,
+  paddingRight: vars.layout.safeAreaInlineEnd,
   backgroundColor: "rgba(0, 0, 0, 0.4)",
   backdropFilter: "blur(2px)",
   zIndex: vars.zIndex.modal,
 });
 
 export const dialog = style({
-  width: "343px",
+  width: "100%",
+  maxWidth: `calc(${vars.layout.appMaxWidth} - 32px)`,
   minHeight: "244px",
   padding: "18px",
   boxSizing: "border-box",
@@ -25,6 +29,11 @@ export const dialog = style({
   backgroundColor: vars.color.bg.default,
   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.25)",
   outline: "none",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
+    },
+  },
 });
 
 export const title = style({

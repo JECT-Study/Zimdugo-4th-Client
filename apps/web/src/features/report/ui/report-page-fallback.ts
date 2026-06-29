@@ -1,5 +1,8 @@
 import { color } from "@repo/ui/tokens/color/color.css";
-import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
+import {
+  appShellMaxWidth,
+  layoutScale,
+} from "@repo/ui/tokens/layout/layout.css";
 import { spacing } from "@repo/ui/tokens/spacing/spacing.css";
 import type { CSSProperties } from "react";
 
@@ -7,16 +10,17 @@ import type { CSSProperties } from "react";
  * `report.css.ts` vars와 동기화 — vanilla-extract CSS 청크 도착 전·timeout 인라인 스타일에만 사용한다.
  */
 export const REPORT_PAGE_BG = color.bg.default;
-export const REPORT_CONTAINER_MAX_WIDTH = layoutScale.containerWidth;
+export const REPORT_CONTAINER_MAX_WIDTH = appShellMaxWidth;
 export const REPORT_SIDE_PADDING = layoutScale.sidePadding;
 
 export const reportPageLoadingShellStyle: CSSProperties = {
   width: "100%",
   maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   margin: "0 auto",
+  height: "100dvh",
   minHeight: "100dvh",
   position: "relative",
-  overflow: "visible",
+  overflow: "hidden",
   backgroundColor: REPORT_PAGE_BG,
   display: "flex",
   flexDirection: "column",
@@ -42,8 +46,8 @@ export const reportContentInlineFallbackStyle: CSSProperties = {
   flex: 1,
   width: "100%",
   minHeight: 0,
-  padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} ${spacing.scale[28]}`,
-  overflowY: "visible",
+  padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} calc(${layoutScale.bottomCTA} + env(safe-area-inset-bottom, 0px) + ${spacing.scale[28]})`,
+  overflowY: "auto",
   overflowAnchor: "none",
   overscrollBehaviorY: "auto",
   touchAction: "pan-y",
@@ -53,9 +57,12 @@ export const reportContentInlineFallbackStyle: CSSProperties = {
 };
 
 export const reportBottomBarInlineFallbackStyle: CSSProperties = {
-  position: "sticky",
+  position: "fixed",
+  left: "50%",
   bottom: 0,
+  transform: "translateX(-50%)",
   width: "100%",
+  maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} calc(env(safe-area-inset-bottom, 0px) + ${spacing.scale[16]})`,
   borderTop: `1px solid ${color.border.default}`,
   backgroundColor: REPORT_PAGE_BG,
@@ -103,7 +110,8 @@ const reportPageContentShellStyle: CSSProperties = {
   position: "relative",
   display: "flex",
   flexDirection: "column",
-  minHeight: "100dvh",
+  flex: 1,
+  minHeight: 0,
 };
 
 export const reportPageHiddenContentStyle: CSSProperties = {

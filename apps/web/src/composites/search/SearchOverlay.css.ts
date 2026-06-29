@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
@@ -8,13 +9,18 @@ export const overlay = style({
   left: "50%",
   transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   height: "100dvh",
   backgroundColor: vars.color.bg.default,
   zIndex: vars.zIndex.modal,
   display: "flex",
   flexDirection: "column",
   overscrollBehavior: "contain",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const header = style({

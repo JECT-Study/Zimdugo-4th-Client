@@ -14,7 +14,7 @@ export const SETTINGS_ROW_MIN_HEIGHT = layoutScale.touchTarget;
 export const SETTINGS_ROW_PADDING_X = spacing.scale[16];
 export const SETTINGS_ROW_BORDER_RADIUS = radius.scale[6];
 export const SETTINGS_HEADER_HEIGHT = layoutScale.header;
-export const SETTINGS_CONTENT_MAX_WIDTH = layoutScale.containerWidth;
+export const SETTINGS_CONTENT_MAX_WIDTH = layoutScale.appMaxWidth;
 
 const settingsContentLayoutFallbackStyle: CSSProperties = {
   width: "100%",
