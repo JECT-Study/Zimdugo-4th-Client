@@ -288,8 +288,9 @@ export function IndexPage() {
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
   const hasExplicitLockerEntry = openLockerId != null;
-  const [restoredSession] = useState(() =>
-    hasExplicitLockerEntry ? null : readRestoredSessionForTabReturn(),
+  const restoredSession = useMemo(
+    () => (hasExplicitLockerEntry ? null : readRestoredSessionForTabReturn()),
+    [hasExplicitLockerEntry],
   );
   const { detailSnap, focusLat, focusLng } = search;
   const handledOpenLockerIdRef = useRef<number | null>(null);
@@ -436,7 +437,10 @@ export function IndexPage() {
       () => restoredSession?.searchDetailBack ?? null,
     );
   const [mapDetailBack, setMapDetailBack] = useState<MapDetailBack | null>(
-    () => restoredSession?.mapDetailBack ?? null,
+    () =>
+      lockerIdFromQuery !== undefined && loaderData?.detail
+        ? "idle"
+        : (restoredSession?.mapDetailBack ?? null),
   );
   const [searchDraft, setSearchDraft] = useState("");
   const {
@@ -1582,13 +1586,14 @@ export function IndexPage() {
           ? createLockerPinAt(lockerId, options.focus.lat, options.focus.lng)
           : undefined;
 
+      setContext("map");
+      setMapDetailBack("idle");
+
       if (pin) {
         deepLinkMapCenterRef.current = {
           lat: pin.latitude,
           lng: pin.longitude,
         };
-        setContext("map");
-        setMapDetailBack("idle");
         setSelectedMapPin(pin);
         setSelectedMapPinOffset(null);
         setLockerDetailQueryOrigin({
