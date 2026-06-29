@@ -132,7 +132,10 @@ export const useLockerMarkers = ({
       map,
       maps,
       onZoomChangeStart: () => {
-        clearLockerMarkers(markerRegistryRef.current, maps);
+        // 줌 시작 시 마커를 즉시 제거하지 않는다.
+        // 새 뷰포트 데이터가 도착할 때까지 기존 마커를 유지해
+        // 줌 애니메이션 중 핀이 사라지는 공백을 방지한다.
+        // 새 데이터 도착 후 syncLockerMarkers가 stale 마커를 정리한다.
         lastRenderedZoomRef.current = null;
       },
       onSettle: (newViewport) => setViewport(newViewport),
@@ -196,7 +199,8 @@ export const useLockerMarkers = ({
       if (lastRenderedZoomRef.current === lockerPinQuery?.zoom) {
         return;
       }
-      clearLockerMarkers(markerRegistryRef.current, maps);
+      // 새 뷰포트 데이터를 불러오는 중에는 기존 마커를 그대로 유지한다.
+      // 데이터가 도착하면 syncLockerMarkers가 오래된 마커를 원자적으로 교체한다.
       return;
     }
 

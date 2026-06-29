@@ -21,34 +21,30 @@ const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
-// LOCKER / PLACE 마커 컨테이너는 모두 36px 고정.
+const MAP_PIN_DISPLAY_SCALE = 0.45;
+const scaleMapPinValue = (value: number) =>
+  Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
+// LOCKER 컨테이너: 44px — 내부 아이콘(57/90 비율)이 약 27.9px
+// PLACE 컨테이너: 54.5px — 내부 아이콘(60/121 비율)이 약 27.0px
+// → 숫자 badge를 제외한 순수 아이콘 원이 시각적으로 동일한 크기
 // 시각적 크기 변화는 CSS transform: scale()로만 제어한다.
-//   normal          → scale(1.0) = 36px, 모션 없이 렌더
+//   normal          → scale(1.0), 모션 없이 렌더
 //   selected-active  → scale(0.9→1.5) 선택 시 1.5× 바운스 (0.25s)
-//   unselected-active → scale(1.5→1.0) 해제 시 원래 크기로 복귀 (0.20s)
-const LOCKER_MARKER_DISPLAY_SIZE = { width: 36, height: 36 };
+//   unselected-active → scale(1.5→1.0) 해제 시 원래 크기 복귀 (0.20s)
+const LOCKER_MARKER_DISPLAY_SIZE = { width: 44, height: 44 };
 const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
-// PLACE 마커도 LOCKER와 동일한 컨테이너 크기를 사용한다.
-// 앵커 좌표는 소스 SVG 비율에 따라 비례 환산한다.
-const PLACE_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
+const PLACE_MARKER_DISPLAY_SIZE = {
+  width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
+  height: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.height),
+};
 const MARKER_SPREAD_RADIUS_PX = 24;
 const DEFAULT_MARKER_ANCHOR = {
   x: LOCKER_MARKER_DISPLAY_SIZE.width / 2,
   y: LOCKER_MARKER_DISPLAY_SIZE.height / 2,
 };
 const PLACE_MARKER_ANCHOR = {
-  x:
-    Math.round(
-      (PLACE_MARKER_SOURCE_ANCHOR.x / PLACE_MARKER_SOURCE_SIZE.width) *
-        LOCKER_MARKER_DISPLAY_SIZE.width *
-        10,
-    ) / 10,
-  y:
-    Math.round(
-      (PLACE_MARKER_SOURCE_ANCHOR.y / PLACE_MARKER_SOURCE_SIZE.height) *
-        LOCKER_MARKER_DISPLAY_SIZE.height *
-        10,
-    ) / 10,
+  x: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.x),
+  y: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.y),
 };
 
 const CLUSTER_S_DISPLAY_SIZE = { width: 52, height: 52 };
@@ -870,8 +866,11 @@ export const syncLockerMarkers = ({
       existingEntry.hadSpreadBefore = hasSpread;
       existingEntry.offset = offset;
 
-      if (existingEntry.marker.getVisible() !== isVisible) {
-        existingEntry.marker.setVisible(isVisible);
+      // 선택된 마커는 줌 애니메이션 중 bounds 스냅샷이 마커를 범위 밖으로
+      // 판단하더라도 숨기지 않는다 (컬링 중 영구 소멸 버그 방지).
+      const shouldBeVisible = isVisible || isSelected;
+      if (existingEntry.marker.getVisible() !== shouldBeVisible) {
+        existingEntry.marker.setVisible(shouldBeVisible);
       }
 
       if (onSelectLocker || onClusterClick) {
@@ -910,7 +909,8 @@ export const syncLockerMarkers = ({
       shouldAnimateSpread,
       zIndex,
     });
-    marker.setVisible(isVisible);
+    // 선택된 마커는 컬링 대상에서 제외한다 (existingEntry와 동일한 정책).
+    marker.setVisible(isVisible || isSelected);
 
     const entry: LockerMarkerEntry = {
       marker,
