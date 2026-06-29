@@ -130,8 +130,10 @@ import {
   type SearchSelectionState,
 } from "#/features/search/model/search-selection";
 import {
+  readSearchPlaceIdParam,
   readSearchQueryParam,
   type SearchUrlParams,
+  withSearchPlaceIdParam,
   withSearchQueryParam,
 } from "#/features/search/model/search-url-state";
 import {
@@ -204,6 +206,7 @@ export const Route = createFileRoute("/")({
     focusLat?: number;
     focusLng?: number;
     q?: string;
+    searchPlaceId?: number;
   } => {
     const safeSearch = search || {};
     const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
@@ -211,10 +214,12 @@ export const Route = createFileRoute("/")({
     const locker =
       lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
     const q = readSearchQueryParam(safeSearch.q);
+    const searchPlaceId = readSearchPlaceIdParam(safeSearch.searchPlaceId);
     return {
       ...parsed,
       locker,
       q,
+      searchPlaceId,
     };
   },
   loader: async ({ search }: any) => {
@@ -306,8 +311,12 @@ export function IndexPage() {
   const { detailSnap, focusLat, focusLng } = search;
   const searchQueryFromUrl =
     typeof search.q === "string" ? search.q : undefined;
+  const searchPlaceIdFromUrl = readSearchPlaceIdParam(search.searchPlaceId);
+  const hasSearchPlaceEntry =
+    searchPlaceIdFromUrl !== undefined && !hasExplicitLockerEntry;
   const hasSearchQueryEntry =
-    searchQueryFromUrl !== undefined && !hasExplicitLockerEntry;
+    (searchQueryFromUrl !== undefined || hasSearchPlaceEntry) &&
+    !hasExplicitLockerEntry;
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
@@ -351,27 +360,42 @@ export function IndexPage() {
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
-  const effectiveSearchQuery = searchQueryFromUrl ?? searchQuery;
+  const effectiveSearchQuery =
+    searchQueryFromUrl ?? (hasSearchPlaceEntry ? "" : searchQuery);
   const syncSearchQueryUrl = useCallback(
-    (query: string | null | undefined, options: { replace?: boolean } = {}) => {
+    (
+      query: string | null | undefined,
+      options: { replace?: boolean; searchPlaceId?: number | null } = {},
+    ) => {
       const nextQuery = readSearchQueryParam(query);
       const currentQuery = searchQueryFromUrl;
+      const nextSearchPlaceId = options.searchPlaceId ?? null;
+      const currentSearchPlaceId = searchPlaceIdFromUrl ?? null;
 
-      if (nextQuery === currentQuery) {
+      if (
+        nextQuery === currentQuery &&
+        nextSearchPlaceId === currentSearchPlaceId
+      ) {
         return;
       }
 
       void navigate({
         to: ".",
         search: (prev: SearchUrlParams) =>
-          withSearchQueryParam(prev, nextQuery),
+          withSearchPlaceIdParam(
+            withSearchQueryParam(prev, nextQuery),
+            nextSearchPlaceId,
+          ),
         replace: options.replace,
       });
     },
-    [navigate, searchQueryFromUrl],
+    [navigate, searchPlaceIdFromUrl, searchQueryFromUrl],
   );
   const setConfirmedSearchQuery = useCallback(
-    (query: string, options: { replace?: boolean } = {}) => {
+    (
+      query: string,
+      options: { replace?: boolean; searchPlaceId?: number | null } = {},
+    ) => {
       setSearchQuery(query);
       syncSearchQueryUrl(query, options);
     },
@@ -467,10 +491,16 @@ export function IndexPage() {
   const [overlayReturnContext, setOverlayReturnContext] =
     useState<OverlayReturnContext>("idle");
   const [listKind, setListKind] = useState<SearchListKind | null>(() =>
-    hasSearchQueryEntry ? "keyword" : (restoredSession?.listKind ?? null),
+    hasSearchPlaceEntry
+      ? "place"
+      : hasSearchQueryEntry
+        ? "keyword"
+        : (restoredSession?.listKind ?? null),
   );
-  const [searchPlaceId, setSearchPlaceId] = useState<number | null>(
-    () => restoredSession?.searchPlaceId ?? null,
+  const [searchPlaceId, setSearchPlaceId] = useState<number | null>(() =>
+    hasSearchPlaceEntry
+      ? (searchPlaceIdFromUrl ?? null)
+      : (restoredSession?.searchPlaceId ?? null),
   );
   const [mapPlaceId, setMapPlaceId] = useState<number | null>(
     () => restoredSession?.mapPlaceId ?? null,
@@ -501,19 +531,28 @@ export function IndexPage() {
 
     const rawSearchQueryFromUrl =
       new URLSearchParams(window.location.search).get("q") ?? undefined;
+    const rawSearchPlaceIdFromUrl =
+      new URLSearchParams(window.location.search).get("searchPlaceId") ??
+      undefined;
+    const rawSearchPlaceId = readSearchPlaceIdParam(rawSearchPlaceIdFromUrl);
 
     if (
-      rawSearchQueryFromUrl !== undefined &&
-      rawSearchQueryFromUrl !== searchQueryFromUrl
+      (rawSearchQueryFromUrl !== undefined &&
+        rawSearchQueryFromUrl !== searchQueryFromUrl) ||
+      (rawSearchPlaceIdFromUrl !== undefined &&
+        rawSearchPlaceId !== searchPlaceIdFromUrl)
     ) {
       void navigate({
         to: ".",
         search: (prev: SearchUrlParams) =>
-          withSearchQueryParam(prev, searchQueryFromUrl),
+          withSearchPlaceIdParam(
+            withSearchQueryParam(prev, searchQueryFromUrl),
+            searchPlaceIdFromUrl,
+          ),
         replace: true,
       });
     }
-  }, [navigate, searchQueryFromUrl]);
+  }, [navigate, searchPlaceIdFromUrl, searchQueryFromUrl]);
 
   useEffect(() => {
     const nextSearchQuery = searchQueryFromUrl ?? "";
@@ -904,6 +943,7 @@ export function IndexPage() {
         delete next.detailSnap;
         delete next.focusLat;
         delete next.focusLng;
+        delete next.searchPlaceId;
         return next;
       },
     });
@@ -1296,12 +1336,14 @@ export function IndexPage() {
       clearPendingLockerDetailOpen();
 
       if (options.applySelection && options.placeName) {
-        applySearchSelection(
-          createPlaceSearchSelection(
-            options.draft ?? searchDraft,
-            options.placeName,
-          ),
+        const selection = createPlaceSearchSelection(
+          options.draft ?? searchDraft,
+          options.placeName,
         );
+        setSearchDraft(selection.searchDraft);
+        setConfirmedSearchQuery(selection.searchQuery, {
+          searchPlaceId: placeId,
+        });
       }
 
       setContext("search");
@@ -1315,9 +1357,9 @@ export function IndexPage() {
       setSheetMode("list");
     },
     [
-      applySearchSelection,
       clearPendingLockerDetailOpen,
       searchDraft,
+      setConfirmedSearchQuery,
       setIsSearchOpen,
       setSheetMode,
     ],
@@ -1901,6 +1943,10 @@ export function IndexPage() {
       if (pinType === "PLACE") {
         setListKind("place");
         setSearchPlaceId(id);
+        void navigate({
+          to: ".",
+          search: (prev: SearchUrlParams) => withSearchPlaceIdParam(prev, id),
+        });
         setActiveLockerId(null);
         setSearchDetailBack(null);
         setSelectedLockerDetail(null);
@@ -1943,6 +1989,7 @@ export function IndexPage() {
       context,
       focusMapOnLockerPin,
       listKind,
+      navigate,
       openLockerDetailAfterPinFocus,
       raiseSelectedPinFromMini,
       searchCoordinates.lat,

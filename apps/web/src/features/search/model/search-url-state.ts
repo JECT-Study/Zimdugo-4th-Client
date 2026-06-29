@@ -10,6 +10,17 @@ export const readSearchQueryParam = (raw: unknown): string | undefined => {
   return getValidatedSearchQuery(raw) ?? undefined;
 };
 
+export const readSearchPlaceIdParam = (raw: unknown): number | undefined => {
+  const value =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string"
+        ? Number(raw.trim())
+        : Number.NaN;
+
+  return Number.isInteger(value) && value > 0 ? value : undefined;
+};
+
 export const withSearchQueryParam = (
   params: SearchUrlParams,
   query: string | null | undefined,
@@ -24,5 +35,20 @@ export const withSearchQueryParam = (
   }
 
   delete next.q;
+  return next;
+};
+
+export const withSearchPlaceIdParam = (
+  params: SearchUrlParams,
+  placeId: number | null | undefined,
+): SearchUrlParams => {
+  const next = { ...params };
+
+  if (typeof placeId === "number" && Number.isInteger(placeId) && placeId > 0) {
+    next.searchPlaceId = placeId;
+    return next;
+  }
+
+  delete next.searchPlaceId;
   return next;
 };
