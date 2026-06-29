@@ -1,6 +1,7 @@
 import {
   appShellMaxWidth,
   appShellMaxWidthVar,
+  compactDeviceSelector,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
@@ -20,10 +21,24 @@ export const reportContainer = style({
   overflow: "hidden",
   display: "flex",
   flexDirection: "column",
+  selectors: {
+    [compactDeviceSelector]: {
+      vars: {
+        [appShellMaxWidthVar]: "100%",
+      },
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
+      selectors: {
+        [compactDeviceSelector]: {
+          vars: {
+            [appShellMaxWidthVar]: "100%",
+          },
+        },
       },
     },
   },

@@ -3,6 +3,7 @@ import { recipe } from "@vanilla-extract/recipes";
 import {
   appShellMaxWidth,
   appShellMaxWidthVar,
+  compactDeviceSelector,
   layoutScale,
 } from "../../../tokens/layout/layout.css.ts";
 import { vars } from "../../../vars.css.ts";
@@ -25,10 +26,24 @@ export const headerRoot = style({
   padding: `${vars.spacing[12]} ${vars.layout.safeAreaInlineEnd} ${vars.spacing[12]} ${vars.layout.safeAreaInlineStart}`,
   backgroundColor: "transparent", // 지도가 보이도록 투명 설정 (필요시 수정)
   boxSizing: "border-box",
+  selectors: {
+    [compactDeviceSelector]: {
+      vars: {
+        [appShellMaxWidthVar]: "100%",
+      },
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
+      selectors: {
+        [compactDeviceSelector]: {
+          vars: {
+            [appShellMaxWidthVar]: "100%",
+          },
+        },
       },
     },
   },

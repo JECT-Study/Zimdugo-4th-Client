@@ -1,4 +1,7 @@
-import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
+import {
+  compactDeviceSelector,
+  layoutScale,
+} from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { keyframes, style } from "@vanilla-extract/css";
 
@@ -19,9 +22,19 @@ export const overlayContainer = style({
   backgroundColor: vars.color.bg.default,
   zIndex: 200,
   overflow: "hidden",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
     },
   },
 });

@@ -70,8 +70,6 @@ const searchBarLayerFallbackStyle: CSSProperties = {
   right: "16px",
   zIndex: 10,
   display: "flex",
-  maxWidth: "calc(480px - 32px)",
-  margin: "0 auto",
 };
 
 const searchBarSkeletonFallbackStyle: CSSProperties = {

@@ -5,6 +5,8 @@ import {
 } from "@vanilla-extract/css";
 
 export const appShellMaxWidthVar = createVar();
+export const compactDeviceSelector =
+  'html[data-compact-device="true"] &' as const;
 
 export const layoutScale = {
   header: "56px",

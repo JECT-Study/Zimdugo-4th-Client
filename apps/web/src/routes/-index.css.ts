@@ -1,4 +1,7 @@
-import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
+import {
+  compactDeviceSelector,
+  layoutScale,
+} from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
@@ -49,9 +52,19 @@ export const locationControlStack = style({
   gap: vars.spacing[8],
   zIndex: vars.zIndex.ui,
   pointerEvents: "none",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
     },
   },
 });

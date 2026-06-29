@@ -2,6 +2,7 @@ import { style } from "@vanilla-extract/css";
 import {
   appShellMaxWidth,
   appShellMaxWidthVar,
+  compactDeviceSelector,
   layoutScale,
 } from "../../tokens/layout/layout.css.ts";
 import { vars } from "../../vars.css.ts";
@@ -24,10 +25,24 @@ export const frame = style({
   justifyContent: "space-evenly",
   zIndex: vars.zIndex.ui,
   boxSizing: "border-box",
+  selectors: {
+    [compactDeviceSelector]: {
+      vars: {
+        [appShellMaxWidthVar]: "100%",
+      },
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
+      selectors: {
+        [compactDeviceSelector]: {
+          vars: {
+            [appShellMaxWidthVar]: "100%",
+          },
+        },
       },
     },
   },

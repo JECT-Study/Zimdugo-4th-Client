@@ -148,6 +148,21 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
 })();
 `;
 
+const COMPACT_DEVICE_LAYOUT_SCRIPT = `
+(function () {
+  try {
+    var screenWidth = window.screen && window.screen.width;
+    var screenHeight = window.screen && window.screen.height;
+    var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
+
+    if (shortSide > 0 && shortSide < 600) {
+      document.documentElement.dataset.compactDevice = "true";
+    }
+  } catch (_) {
+  }
+})();
+`;
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -268,6 +283,10 @@ function RootDocument({ children }: { children: ReactNode }) {
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script runs before hydration to normalize locale-less URLs
           dangerouslySetInnerHTML={{ __html: INITIAL_LANGUAGE_REDIRECT_SCRIPT }}
+        />
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script marks compact physical devices before first paint
+          dangerouslySetInnerHTML={{ __html: COMPACT_DEVICE_LAYOUT_SCRIPT }}
         />
         <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
