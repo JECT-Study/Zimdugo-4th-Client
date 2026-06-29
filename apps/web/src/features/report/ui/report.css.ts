@@ -1,10 +1,17 @@
-import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
+import {
+  appShellMaxWidth,
+  appShellMaxWidthVar,
+  layoutScale,
+} from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 export const reportContainer = style({
+  vars: {
+    [appShellMaxWidthVar]: vars.layout.appMaxWidth,
+  },
   width: "100%",
-  maxWidth: vars.layout.appMaxWidth,
+  maxWidth: appShellMaxWidth,
   margin: "0 auto",
   height: "100dvh",
   minHeight: "100dvh",
@@ -15,7 +22,9 @@ export const reportContainer = style({
   flexDirection: "column",
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
-      maxWidth: vars.layout.tabletAppMaxWidth,
+      vars: {
+        [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
     },
   },
 });
@@ -88,17 +97,12 @@ export const bottomButtonWrapper = style({
   bottom: 0,
   transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.appMaxWidth,
+  maxWidth: appShellMaxWidth,
   padding: `${vars.spacing[16]} ${vars.layout.sidePadding} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
   borderTop: `1px solid ${vars.color.palette.gray[200]}`,
   backgroundColor: "white",
   zIndex: 100,
   boxSizing: "border-box",
-  "@media": {
-    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
-      maxWidth: vars.layout.tabletAppMaxWidth,
-    },
-  },
 });
 
 export const section = style({
