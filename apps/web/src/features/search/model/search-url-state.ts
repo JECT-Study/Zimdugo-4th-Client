@@ -147,10 +147,12 @@ export const withSearchFilterParams = (
   const selectedSizes = filters.sizeActive
     ? readAllowedValues(filters.selectedSizes, FILTER_SIZE_VALUES)
     : [];
-  const indoorOutdoorState = readAllowedValues(
-    filters.indoorOutdoorState,
-    FILTER_INDOOR_OUTDOOR_VALUES,
-  );
+  const indoorOutdoorState = filters.regionActive
+    ? readAllowedValues(
+        filters.indoorOutdoorState,
+        FILTER_INDOOR_OUTDOOR_VALUES,
+      )
+    : [];
   const placeTypeState = filters.placeTypeActive
     ? readAllowedValues(filters.placeTypeState, FILTER_PLACE_TYPE_VALUES)
     : [];

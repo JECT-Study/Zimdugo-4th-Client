@@ -118,7 +118,7 @@ describe("search-url-state", () => {
           sizeActive: true,
           placeTypeActive: false,
           selectedSizes: ["M"],
-          indoorOutdoorState: [],
+          indoorOutdoorState: ["indoor"],
           placeTypeState: ["subway"],
         },
       ),
