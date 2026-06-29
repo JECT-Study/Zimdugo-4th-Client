@@ -1,4 +1,10 @@
-import { createGlobalTheme } from "@vanilla-extract/css";
+import {
+  createGlobalTheme,
+  createVar,
+  fallbackVar,
+} from "@vanilla-extract/css";
+
+export const appShellMaxWidthVar = createVar();
 
 export const layoutScale = {
   header: "56px",
@@ -8,6 +14,7 @@ export const layoutScale = {
   detailBottomPadding: "64px",
   designWidth: "375px",
   appMaxWidth: "430px",
+  tabletAppMaxWidth: "480px",
   tabletBreakpoint: "600px",
   minimumSupportedWidth: "360px",
   containerWidth: "375px",
@@ -20,6 +27,11 @@ export const layoutScale = {
 export const layoutTheme = createGlobalTheme(":root", {
   layout: layoutScale,
 });
+
+export const appShellMaxWidth = fallbackVar(
+  appShellMaxWidthVar,
+  layoutScale.appMaxWidth,
+);
 
 export const layout = {
   ...layoutTheme,

@@ -28,6 +28,11 @@ export const dialog = style({
   backgroundColor: vars.color.bg.default,
   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.25)",
   outline: "none",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
+    },
+  },
 });
 
 export const title = style({

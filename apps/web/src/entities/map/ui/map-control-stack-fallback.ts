@@ -1,3 +1,4 @@
+import { appShellMaxWidth } from "@repo/ui/tokens/layout/layout.css";
 import type { CSSProperties } from "react";
 
 /** `-index.css.ts` locationControlStack의 `calc(bottomNav + N)`와 동기화 */
@@ -9,6 +10,7 @@ export const MAP_CONTROL_FALLBACK_OFFSET_ABOVE_NAV_PX = 52;
 export const MAP_CONTROL_FALLBACK_SIDE_INSET_PX = 16;
 export const MAP_CONTROL_FALLBACK_SIDE_INSET =
   "max(16px, env(safe-area-inset-right, 0px))";
+export const MAP_CONTROL_FALLBACK_MAX_WIDTH = appShellMaxWidth;
 export const MAP_CONTROL_FALLBACK_GAP_PX = 8;
 export const MAP_CONTROL_FALLBACK_Z_INDEX = 20;
 
@@ -22,7 +24,7 @@ export const mapControlStackPositionFallbackStyle: CSSProperties = {
   bottom: MAP_CONTROL_FALLBACK_BOTTOM_PX,
   transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX,
+  maxWidth: MAP_CONTROL_FALLBACK_MAX_WIDTH,
   paddingRight: MAP_CONTROL_FALLBACK_SIDE_INSET,
   boxSizing: "border-box",
   display: "flex",

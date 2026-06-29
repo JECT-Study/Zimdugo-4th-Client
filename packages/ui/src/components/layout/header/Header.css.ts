@@ -1,8 +1,15 @@
 import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
+import {
+  appShellMaxWidth,
+  appShellMaxWidthVar,
+} from "../../../tokens/layout/layout.css.ts";
 import { vars } from "../../../vars.css.ts";
 
 export const headerRoot = style({
+  vars: {
+    [appShellMaxWidthVar]: vars.layout.appMaxWidth,
+  },
   position: "fixed",
   top: "env(safe-area-inset-top, 0px)",
   left: "50%",
@@ -12,11 +19,18 @@ export const headerRoot = style({
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
-  maxWidth: vars.layout.appMaxWidth,
+  maxWidth: appShellMaxWidth,
   height: vars.layout.header,
   padding: `${vars.spacing[12]} ${vars.layout.safeAreaInlineEnd} ${vars.spacing[12]} ${vars.layout.safeAreaInlineStart}`,
   backgroundColor: "transparent", // 지도가 보이도록 투명 설정 (필요시 수정)
   boxSizing: "border-box",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      vars: {
+        [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
+    },
+  },
 });
 
 export const ghostBox = style({

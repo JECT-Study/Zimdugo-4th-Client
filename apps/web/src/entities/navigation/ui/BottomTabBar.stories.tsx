@@ -15,8 +15,7 @@ const meta = {
     (Story: React.ComponentType) => (
       <div
         style={{
-          width: "fit-content",
-          minWidth: vars.layout.designWidth,
+          width: vars.layout.designWidth,
           maxWidth: "100vw",
           padding: "20px",
           backgroundColor: vars.color.bg.default,

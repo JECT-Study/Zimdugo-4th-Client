@@ -13,6 +13,11 @@ export const searchBarLayer = style({
   gap: vars.spacing[8],
   maxWidth: `calc(${vars.layout.appMaxWidth} - 32px)`,
   margin: "0 auto",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
+    },
+  },
 });
 
 export const searchInputFrame = style({

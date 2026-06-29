@@ -18,6 +18,11 @@ export const overlayContainer = style({
   backgroundColor: vars.color.bg.default,
   zIndex: 200,
   overflow: "hidden",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const header = style({

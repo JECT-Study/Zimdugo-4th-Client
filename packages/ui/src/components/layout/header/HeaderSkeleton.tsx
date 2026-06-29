@@ -1,4 +1,7 @@
-import { layoutScale } from "../../../tokens/layout/layout.css.ts";
+import {
+  appShellMaxWidth,
+  layoutScale,
+} from "../../../tokens/layout/layout.css.ts";
 import { Skeleton } from "../../feedback/skeleton/Skeleton.tsx";
 import { SKELETON_SURFACE_STYLE } from "../../feedback/skeleton/skeleton-theme.ts";
 
@@ -19,7 +22,7 @@ const headerSkeletonFallbackStyle = {
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
-  maxWidth: layoutScale.appMaxWidth,
+  maxWidth: appShellMaxWidth,
   height: layoutScale.header,
   padding: `12px ${layoutScale.safeAreaInlineEnd} 12px ${layoutScale.safeAreaInlineStart}`,
   boxSizing: "border-box",
@@ -56,9 +59,11 @@ export function HeaderSkeleton({
   titleType = "text",
 }: HeaderSkeletonProps) {
   return (
+    // biome-ignore lint/a11y/noAriaHiddenOnFocusable: HeaderSkeleton is a decorative loading placeholder and has no focusable children.
     <header
       className={[headerRoot, className].filter(Boolean).join(" ")}
       style={headerSkeletonFallbackStyle}
+      aria-hidden="true"
     >
       <div style={iconSkeletonFallbackStyle}>
         <Skeleton

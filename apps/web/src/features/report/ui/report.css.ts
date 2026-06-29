@@ -11,6 +11,11 @@ export const reportContainer = style({
   overflow: "visible",
   display: "flex",
   flexDirection: "column",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const reportHeader = style({

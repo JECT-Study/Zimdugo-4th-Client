@@ -11,6 +11,11 @@ export const draggableWrapper = style({
   maxWidth: vars.layout.appMaxWidth,
   zIndex: vars.zIndex.bottomSheet,
   touchAction: "none",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const sheet = style({
@@ -24,6 +29,11 @@ export const sheet = style({
   boxShadow: vars.shadow.scale[3],
   overflow: "hidden",
   boxSizing: "border-box",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 /** 기디팀 바텀시트(`1097-5907`) 전체 높이·세로 플렉스 체인 */

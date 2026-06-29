@@ -15,6 +15,11 @@ export const overlay = style({
   display: "flex",
   flexDirection: "column",
   overscrollBehavior: "contain",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const header = style({

@@ -18,6 +18,11 @@ export const content = style({
   margin: "0 auto",
   padding: `32px ${vars.spacing[16]} ${vars.spacing[24]}`,
   boxSizing: "border-box",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const group = style({

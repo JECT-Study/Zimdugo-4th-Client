@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX,
+  MAP_CONTROL_FALLBACK_MAX_WIDTH,
   MAP_CONTROL_FALLBACK_SIDE_INSET,
   mapControlStackInlineFallbackStyle,
   mapControlStackPositionFallbackStyle,
@@ -9,11 +10,12 @@ import {
 describe("map-control-stack-fallback", () => {
   it("uses a centered fixed frame that matches the app max width", () => {
     expect(MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX).toBe(430);
+    expect(MAP_CONTROL_FALLBACK_MAX_WIDTH).toContain("430px");
     expect(mapControlStackPositionFallbackStyle).toMatchObject({
       position: "fixed",
       left: "50%",
       width: "100%",
-      maxWidth: 430,
+      maxWidth: MAP_CONTROL_FALLBACK_MAX_WIDTH,
       transform: "translateX(-50%)",
       alignItems: "flex-end",
       boxSizing: "border-box",

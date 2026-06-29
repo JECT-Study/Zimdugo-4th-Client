@@ -1,9 +1,16 @@
 import { style } from "@vanilla-extract/css";
+import {
+  appShellMaxWidth,
+  appShellMaxWidthVar,
+} from "../../../tokens/layout/layout.css.ts";
 import { vars } from "../../../vars.css.ts";
 
 export const container = style({
+  vars: {
+    [appShellMaxWidthVar]: vars.layout.appMaxWidth,
+  },
   width: "100%",
-  maxWidth: vars.layout.appMaxWidth,
+  maxWidth: appShellMaxWidth,
   margin: "0 auto",
   height: "100svh",
   minHeight: "100svh",
@@ -11,6 +18,13 @@ export const container = style({
   boxShadow: vars.shadow[1],
   position: "relative",
   overflow: "hidden",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      vars: {
+        [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
+    },
+  },
 });
 
 export const documentContainer = style({

@@ -48,6 +48,11 @@ export const locationControlStack = style({
   gap: vars.spacing[8],
   zIndex: vars.zIndex.ui,
   pointerEvents: "none",
+  "@media": {
+    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const locationButton = style({
