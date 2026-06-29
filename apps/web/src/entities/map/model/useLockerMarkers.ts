@@ -17,6 +17,7 @@ import type { MapViewport } from "./map-idle-controller";
 import { subscribeMapIdle } from "./map-idle-controller";
 import {
   clearLockerMarkers,
+  getPinId,
   type LockerMarkerOffset,
   type LockerMarkerRegistry,
   syncLockerMarkers,
@@ -44,6 +45,8 @@ export interface UseLockerMarkersOptions {
   maps: typeof naver.maps | null;
   searchParams?: LockerPinSearchParams | null;
   selectedPinId?: string | null;
+  /** 선택된 핀의 전체 데이터. 클러스터링으로 핀이 사라졌을 때 anchor dot을 표시하는 데 사용한다. */
+  selectedPin?: LockerPinItemResponse | null;
   onSelectLocker?: (
     pinType: "LOCKER" | "PLACE",
     id: number,
@@ -59,6 +62,7 @@ export const useLockerMarkers = ({
   maps,
   searchParams,
   selectedPinId,
+  selectedPin,
   onSelectLocker,
   onClusterClick,
   spreadCenter,
@@ -70,6 +74,7 @@ export const useLockerMarkers = ({
   const lastRenderedZoomRef = useRef<number | null>(null);
   const lastSearchSignatureRef = useRef<string | null>(null);
   const onSelectLockerRef = useRef(onSelectLocker);
+  const anchorDotRef = useRef<naver.maps.Marker | null>(null);
 
   useEffect(() => {
     onSelectLockerRef.current = onSelectLocker;
@@ -228,6 +233,66 @@ export const useLockerMarkers = ({
     spreadCenter,
   ]);
 
+  // anchor dot: 선택된 핀이 클러스터링으로 화면에서 사라졌을 때 위치를 표시한다.
+  // lockers 데이터가 로드됐지만 selectedPinId가 없을 때만 dot을 표시한다.
+  useEffect(() => {
+    const removeAnchorDot = () => {
+      if (anchorDotRef.current) {
+        anchorDotRef.current.setMap(null);
+        anchorDotRef.current = null;
+      }
+    };
+
+    if (!map || !maps || !canFetchLockerPins) {
+      removeAnchorDot();
+      return;
+    }
+
+    const isSelectedPinVisible =
+      lockers != null &&
+      lockers.some((pin) => getPinId(pin) === selectedPinId);
+
+    const shouldShowDot =
+      selectedPinId != null &&
+      selectedPin != null &&
+      selectedPin.pinType !== "CLUSTER" &&
+      lockers != null &&
+      !isSelectedPinVisible;
+
+    if (!shouldShowDot) {
+      removeAnchorDot();
+      return;
+    }
+
+    const { latitude, longitude } = selectedPin;
+    const dotSize = 12;
+    const dotIcon = new maps.HtmlIcon({
+      content: `<div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:#3BD569;border:2.5px solid white;box-shadow:0 0 0 2px rgba(59,213,105,0.35),0 1px 4px rgba(0,0,0,0.2);"></div>`,
+      size: new maps.Size(dotSize, dotSize),
+      anchor: new maps.Point(dotSize / 2, dotSize / 2),
+    });
+
+    if (!anchorDotRef.current) {
+      anchorDotRef.current = new maps.Marker({
+        map,
+        position: new maps.LatLng(latitude, longitude),
+        icon: dotIcon,
+        zIndex: 15,
+      });
+    } else {
+      anchorDotRef.current.setPosition(new maps.LatLng(latitude, longitude));
+      if (
+        (
+          anchorDotRef.current as naver.maps.Marker & {
+            getMap?: () => naver.maps.Map | null;
+          }
+        ).getMap?.() !== map
+      ) {
+        anchorDotRef.current.setMap(map);
+      }
+    }
+  }, [map, maps, selectedPinId, selectedPin, lockers, canFetchLockerPins]);
+
   useEffect(() => {
     return () => {
       if (maps) {
@@ -235,6 +300,8 @@ export const useLockerMarkers = ({
       } else {
         markerRegistryRef.current.clear();
       }
+      anchorDotRef.current?.setMap(null);
+      anchorDotRef.current = null;
       lastRenderedZoomRef.current = null;
     };
   }, [maps]);

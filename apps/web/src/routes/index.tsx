@@ -2760,6 +2760,7 @@ export function IndexPage() {
           <LockerMarkersLayer
             map={mapInstance}
             selectedPinId={selectedPinId}
+            selectedPin={selectedMapPin}
             onSelectPin={handleIdlePinSelect}
             onClusterClick={handleClusterClick}
           />
@@ -2976,6 +2977,7 @@ function LockerMarkersLayer({
   map,
   searchParams,
   selectedPinId,
+  selectedPin,
   onSelectPin,
   onClusterClick,
   spreadCenter,
@@ -2983,6 +2985,7 @@ function LockerMarkersLayer({
   map: naver.maps.Map | null;
   searchParams?: LockerPinSearchParams | null;
   selectedPinId?: string | null;
+  selectedPin?: LockerPinItemResponse | null;
   onSelectPin?: (
     pinType: "LOCKER" | "PLACE",
     id: number,
@@ -3001,6 +3004,7 @@ function LockerMarkersLayer({
     maps,
     searchParams,
     selectedPinId,
+    selectedPin,
     onSelectLocker: onSelectPin,
     onClusterClick,
     spreadCenter,

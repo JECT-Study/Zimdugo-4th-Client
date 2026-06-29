@@ -75,7 +75,8 @@ declare namespace naver.maps {
     fromCoordToOffset(latlng: LatLng | LatLngLiteral): Point;
     fromOffsetToCoord(offset: Point): LatLng;
   }
-  interface HtmlIcon {
+  class HtmlIcon {
+    constructor(options: { content: string | HTMLElement; size?: Size; anchor?: Point });
     content: string | HTMLElement;
     size?: Size;
     anchor?: Point;
