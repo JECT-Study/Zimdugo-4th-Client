@@ -60,3 +60,35 @@ describe("authService.refresh", () => {
     expect(clearAuth).toHaveBeenCalledOnce();
   });
 });
+
+describe("authService.withdraw", () => {
+  beforeEach(() => {
+    post.mockReset();
+    clearAuth.mockReset();
+  });
+
+  it("회원탈퇴 엔드포인트 호출 후 인증 상태를 제거한다", async () => {
+    post.mockResolvedValue({ data: {} });
+
+    await expect(authService.withdraw()).resolves.toBeUndefined();
+
+    expect(post).toHaveBeenCalledWith("/api/auth/withdraw");
+    expect(clearAuth).toHaveBeenCalledOnce();
+  });
+
+  it("이미 탈퇴한 사용자 응답은 성공처럼 처리하고 인증 상태를 제거한다", async () => {
+    post.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          code: "USER-400-2",
+          message: "이미 탈퇴한 사용자입니다.",
+        },
+      },
+    });
+
+    await expect(authService.withdraw()).resolves.toBeUndefined();
+
+    expect(clearAuth).toHaveBeenCalledOnce();
+  });
+});
