@@ -511,8 +511,14 @@ const createMarkerIconOptions = (
     lockerIconCache.set(maps, innerMap);
   }
 
-  const cached = innerMap.get(key);
-  if (cached) return cached;
+  const isActiveAnimation =
+    animationState === "selected-active" ||
+    animationState === "unselected-active";
+
+  if (!isActiveAnimation) {
+    const cached = innerMap.get(key);
+    if (cached) return cached;
+  }
 
   const markerSize = getMarkerSize(pin, animationState);
   const markerAnchor = getMarkerAnchor(
@@ -540,7 +546,9 @@ const createMarkerIconOptions = (
     size: new maps.Size(markerSize.width, markerSize.height),
     anchor: new maps.Point(markerAnchor.x, markerAnchor.y),
   };
-  innerMap.set(key, options);
+  if (!isActiveAnimation) {
+    innerMap.set(key, options);
+  }
   return options;
 };
 
