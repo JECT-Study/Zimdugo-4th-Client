@@ -70,25 +70,12 @@ export const imagePreviewOverlay = style({
 
 export const imagePreviewDialog = style({
   position: "relative",
-  zIndex: 1,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   width: "100%",
   height: "100%",
   outline: "none",
-  pointerEvents: "none",
-});
-
-export const imagePreviewBackdropButton = style({
-  position: "absolute",
-  inset: 0,
-  width: "100%",
-  height: "100%",
-  padding: 0,
-  border: 0,
-  backgroundColor: "transparent",
-  cursor: "pointer",
 });
 
 export const imagePreviewImage = style({
@@ -96,7 +83,6 @@ export const imagePreviewImage = style({
   maxHeight: "100%",
   objectFit: "contain",
   borderRadius: vars.radius[6],
-  pointerEvents: "auto",
 });
 
 export const imagePreviewCloseButton = style({
@@ -115,7 +101,6 @@ export const imagePreviewCloseButton = style({
   backgroundColor: "rgba(255, 255, 255, 0.16)",
   color: vars.color.palette.gray[100],
   cursor: "pointer",
-  pointerEvents: "auto",
 });
 
 export const footer = style({

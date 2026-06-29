@@ -11,7 +11,6 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
 import { ReportDetailViewerModal } from "./ReportDetailViewerModal";
-import { imagePreviewBackdropButton } from "./ReportDetailViewerModal.css.ts";
 
 const REPORT_DETAIL: MyLockerReportDetail = {
   reportId: 1,
@@ -114,10 +113,12 @@ describe("ReportDetailViewerModal", () => {
     expect(screen.queryByText(m.report_status_pending())).toBeNull();
   });
   it("이미지를 누르면 원본 미리보기를 열고 닫을 수 있다", () => {
+    const handleOpenChange = vi.fn();
+
     render(
       <ReportDetailViewerModal
         isOpen
-        onOpenChange={vi.fn()}
+        onOpenChange={handleOpenChange}
         titleText={REPORT_DETAIL.lockerName}
         detail={{
           ...REPORT_DETAIL,
@@ -145,13 +146,16 @@ describe("ReportDetailViewerModal", () => {
     expect(
       screen.queryByRole("dialog", { name: m.report_section_photo() }),
     ).toBeNull();
+    expect(handleOpenChange).not.toHaveBeenCalled();
   });
 
   it("프리뷰가 열려 있을 때 Escape를 누르면 프리뷰만 닫는다", () => {
+    const handleOpenChange = vi.fn();
+
     render(
       <ReportDetailViewerModal
         isOpen
-        onOpenChange={vi.fn()}
+        onOpenChange={handleOpenChange}
         titleText={REPORT_DETAIL.lockerName}
         detail={{
           ...REPORT_DETAIL,
@@ -175,6 +179,7 @@ describe("ReportDetailViewerModal", () => {
         name: m.my_report_detail_viewer_aria(),
       }),
     ).toBeTruthy();
+    expect(handleOpenChange).not.toHaveBeenCalled();
   });
 
   it("프리뷰 배경을 누르면 프리뷰를 닫는다", () => {
@@ -195,12 +200,9 @@ describe("ReportDetailViewerModal", () => {
       screen.getByRole("button", { name: m.report_section_photo() }),
     );
 
-    const backdropButton = document.querySelector(
-      `.${imagePreviewBackdropButton}`,
+    fireEvent.click(
+      screen.getByRole("dialog", { name: m.report_section_photo() }),
     );
-    expect(backdropButton).toBeTruthy();
-
-    fireEvent.click(backdropButton as Element);
 
     expect(
       screen.queryByRole("dialog", { name: m.report_section_photo() }),
