@@ -112,7 +112,7 @@ import {
 } from "#/features/search/model/locker-detail-display";
 import { resolveMapMarkerLayer } from "#/features/search/model/map-marker-layer-policy";
 import {
-  readMapSheetSessionSnapshot,
+  readRestoredSessionForTabReturn,
   writeMapSheetSessionSnapshot,
 } from "#/features/search/model/map-sheet-session-storage";
 import {
@@ -280,8 +280,6 @@ export const Route = createFileRoute("/")({
   component: IndexPage,
 });
 
-const readRestoredMapSheetSession = () => readMapSheetSessionSnapshot();
-
 export function IndexPage() {
   const navigate = useNavigate();
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
@@ -289,6 +287,10 @@ export function IndexPage() {
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
+  const hasExplicitLockerEntry = openLockerId != null;
+  const [restoredSession] = useState(() =>
+    hasExplicitLockerEntry ? null : readRestoredSessionForTabReturn(),
+  );
   const { detailSnap, focusLat, focusLng } = search;
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
@@ -368,12 +370,12 @@ export function IndexPage() {
   );
   const [sheetMode, setSheetMode] = useState<SheetModeForContext>(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) return "detail";
-    return readRestoredMapSheetSession()?.sheetMode ?? "idle";
+    return "idle";
   });
   const [activeLockerId, setActiveLockerId] = useState<number | null>(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail)
       return lockerIdFromQuery;
-    return readRestoredMapSheetSession()?.activeLockerId ?? null;
+    return null;
   });
   const [listSheetSnapStage, setListSheetSnapStage] =
     useState<SearchListSheetSnapStage>("half");
@@ -388,7 +390,7 @@ export function IndexPage() {
       if (lockerIdFromQuery !== undefined) {
         return loaderData?.detail ?? null;
       }
-      return readRestoredMapSheetSession()?.selectedLockerDetail ?? null;
+      return null;
     });
   const [selectedMapPin, setSelectedMapPin] =
     useState<LockerPinItemResponse | null>(() => {
@@ -410,31 +412,31 @@ export function IndexPage() {
         }
         return null;
       }
-      return readRestoredMapSheetSession()?.selectedMapPin ?? null;
+      return null;
     });
   const [selectedMapPinOffset, setSelectedMapPinOffset] =
     useState<LockerMarkerOffset | null>(null);
   const [context, setContext] = useState<AppMapContext>(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) return "map";
-    return readRestoredMapSheetSession()?.context ?? "idle";
+    return "idle";
   });
   const [overlayReturnContext, setOverlayReturnContext] =
     useState<OverlayReturnContext>("idle");
   const [listKind, setListKind] = useState<SearchListKind | null>(
-    () => readRestoredMapSheetSession()?.listKind ?? null,
+    () => restoredSession?.listKind ?? null,
   );
   const [searchPlaceId, setSearchPlaceId] = useState<number | null>(
-    () => readRestoredMapSheetSession()?.searchPlaceId ?? null,
+    () => restoredSession?.searchPlaceId ?? null,
   );
   const [mapPlaceId, setMapPlaceId] = useState<number | null>(
-    () => readRestoredMapSheetSession()?.mapPlaceId ?? null,
+    () => restoredSession?.mapPlaceId ?? null,
   );
   const [searchDetailBack, setSearchDetailBack] =
     useState<SearchDetailBackTarget | null>(
-      () => readRestoredMapSheetSession()?.searchDetailBack ?? null,
+      () => restoredSession?.searchDetailBack ?? null,
     );
   const [mapDetailBack, setMapDetailBack] = useState<MapDetailBack | null>(
-    () => readRestoredMapSheetSession()?.mapDetailBack ?? null,
+    () => restoredSession?.mapDetailBack ?? null,
   );
   const [searchDraft, setSearchDraft] = useState("");
   const {
