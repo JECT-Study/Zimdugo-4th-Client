@@ -38,6 +38,10 @@ export const resolveMapMarkerLayer = ({
     return "idle";
   }
 
+  if (context === "map" && sheetMode === "idle" && hasSelectedMapPin) {
+    return "idle";
+  }
+
   if (shouldShowSearchMarkers({ context, sheetMode, searchDetailBack })) {
     return "search";
   }
