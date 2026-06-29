@@ -21,6 +21,7 @@ interface ApiErrorResponse {
   response?: {
     status?: number;
     data?: {
+      code?: string;
       message?: string;
     };
   };
@@ -66,6 +67,9 @@ const getApiErrorResponse = (error: unknown): ApiErrorResponse => {
 
   return error as ApiErrorResponse;
 };
+
+const isAlreadyWithdrawnError = (error: unknown): boolean =>
+  getApiErrorResponse(error).response?.data?.code === "USER-400-2";
 
 export const authService = {
   refresh: async () => {
@@ -125,7 +129,14 @@ export const authService = {
   },
 
   withdraw: async () => {
-    await apiClient.post("/api/auth/withdraw");
+    try {
+      await apiClient.post("/api/auth/withdraw");
+    } catch (error: unknown) {
+      if (!isAlreadyWithdrawnError(error)) {
+        throw error;
+      }
+    }
+
     useAuthStore.getState().clearAuth();
   },
 };
