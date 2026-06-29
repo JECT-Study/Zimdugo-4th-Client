@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { readSearchQueryParam, withSearchQueryParam } from "./search-url-state";
+import {
+  readSearchPlaceIdParam,
+  readSearchQueryParam,
+  withSearchPlaceIdParam,
+  withSearchQueryParam,
+} from "./search-url-state";
 
 describe("search-url-state", () => {
   it("URL q 값을 검증하고 trim된 검색어로 읽는다", () => {
@@ -46,6 +51,36 @@ describe("search-url-state", () => {
         "",
       ),
     ).toEqual({
+      locker: "1",
+    });
+  });
+
+  it("URL searchPlaceId 값을 양의 정수로 읽는다", () => {
+    expect(readSearchPlaceIdParam("123")).toBe(123);
+    expect(readSearchPlaceIdParam(456)).toBe(456);
+    expect(readSearchPlaceIdParam("0")).toBeUndefined();
+    expect(readSearchPlaceIdParam("-1")).toBeUndefined();
+    expect(readSearchPlaceIdParam("abc")).toBeUndefined();
+    expect(readSearchPlaceIdParam("123abc")).toBeUndefined();
+  });
+
+  it("searchPlaceId를 URL params에 추가하거나 제거한다", () => {
+    expect(withSearchPlaceIdParam({ q: "코엑스" }, 7)).toEqual({
+      q: "코엑스",
+      searchPlaceId: 7,
+    });
+
+    expect(
+      withSearchPlaceIdParam(
+        {
+          q: "코엑스",
+          searchPlaceId: 7,
+          locker: "1",
+        },
+        null,
+      ),
+    ).toEqual({
+      q: "코엑스",
       locker: "1",
     });
   });
