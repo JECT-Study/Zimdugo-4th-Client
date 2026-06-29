@@ -1366,6 +1366,21 @@ export function IndexPage() {
     [navigate],
   );
 
+  const clearLockerDetailUrl = useCallback(() => {
+    void navigate({
+      to: ".",
+      search: (prev: SearchUrlParams) => {
+        const next = { ...prev };
+        delete next.locker;
+        delete next.openLockerId;
+        delete next.detailSnap;
+        delete next.focusLat;
+        delete next.focusLng;
+        return next;
+      },
+    });
+  }, [navigate]);
+
   const openLockerDetailById = useCallback(
     async (
       lockerId: number,
@@ -1970,6 +1985,7 @@ export function IndexPage() {
       suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
+        clearLockerDetailUrl();
         setSelectedMapPin(null);
         setSelectedMapPinOffset(null);
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
@@ -1992,6 +2008,7 @@ export function IndexPage() {
       openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
     },
     [
+      clearLockerDetailUrl,
       context,
       focusMapOnLockerPin,
       mapDetailBack,
@@ -2016,6 +2033,7 @@ export function IndexPage() {
       suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
+        clearLockerDetailUrl();
         setSelectedMapPinOffset(null);
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
         openMapPlaceList(id);
@@ -2041,6 +2059,7 @@ export function IndexPage() {
       openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
     },
     [
+      clearLockerDetailUrl,
       context,
       focusMapOnLockerPin,
       openLockerDetailAfterPinFocus,
@@ -2170,25 +2189,32 @@ export function IndexPage() {
       url: shareUrl,
     };
 
+    const copyShareUrl = () => {
+      if (!navigator.clipboard) {
+        console.error(
+          "Failed to copy locker detail URL: Clipboard API is not supported",
+        );
+        return;
+      }
+
+      void navigator.clipboard.writeText(shareUrl).catch((error) => {
+        console.error("Failed to copy locker detail URL:", error);
+      });
+    };
+
     if (typeof navigator.share === "function") {
       void navigator.share(shareData).catch((error) => {
-        if (error?.name !== "AbortError") {
-          console.error("Failed to share locker detail:", error);
+        if (error?.name === "AbortError") {
+          return;
         }
+
+        console.error("Failed to share locker detail:", error);
+        copyShareUrl();
       });
       return;
     }
 
-    if (!navigator.clipboard) {
-      console.error(
-        "Failed to copy locker detail URL: Clipboard API is not supported",
-      );
-      return;
-    }
-
-    void navigator.clipboard.writeText(shareUrl).catch((error) => {
-      console.error("Failed to copy locker detail URL:", error);
-    });
+    copyShareUrl();
   }, []);
 
   const navigationKnownLocation = useMemo(
@@ -2770,6 +2796,7 @@ export function IndexPage() {
             map={mapInstance}
             searchParams={keywordSearchParams}
             selectedPinId={selectedPinId}
+            selectedPin={selectedMapPin}
             onSelectPin={handleSearchMarkerSelect}
             onClusterClick={handleClusterClick}
           />

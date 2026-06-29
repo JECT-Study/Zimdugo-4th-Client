@@ -894,6 +894,7 @@ export const syncLockerMarkers = ({
     }
 
     const animationState = isSelected ? "selected-active" : "normal";
+    const selectedActiveAppliedAt = isSelected ? Date.now() : undefined;
     const shouldAnimateSpread = animationState === "normal" && hasSpread;
     const marker = createLockerMarker({
       map,
@@ -920,6 +921,7 @@ export const syncLockerMarkers = ({
       zIndex,
       wasSelectedBefore: isSelected,
       hadSpreadBefore: hasSpread,
+      selectedActiveAppliedAt,
     };
 
     if (onSelectLocker || onClusterClick) {
