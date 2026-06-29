@@ -1,4 +1,5 @@
 import { style } from "@vanilla-extract/css";
+import { layoutScale } from "../../tokens/layout/layout.css.ts";
 import { vars } from "../../vars.css.ts";
 
 export const draggableWrapper = style({
@@ -12,7 +13,7 @@ export const draggableWrapper = style({
   zIndex: vars.zIndex.bottomSheet,
   touchAction: "none",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
     },
   },
@@ -30,7 +31,7 @@ export const sheet = style({
   overflow: "hidden",
   boxSizing: "border-box",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
     },
   },

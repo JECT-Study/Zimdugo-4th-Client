@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
@@ -16,7 +17,7 @@ export const overlay = style({
   flexDirection: "column",
   overscrollBehavior: "contain",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
     },
   },

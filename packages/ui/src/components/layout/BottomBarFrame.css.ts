@@ -2,6 +2,7 @@ import { style } from "@vanilla-extract/css";
 import {
   appShellMaxWidth,
   appShellMaxWidthVar,
+  layoutScale,
 } from "../../tokens/layout/layout.css.ts";
 import { vars } from "../../vars.css.ts";
 
@@ -24,7 +25,7 @@ export const frame = style({
   zIndex: vars.zIndex.ui,
   boxSizing: "border-box",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
       },

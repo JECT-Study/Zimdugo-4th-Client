@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
@@ -23,7 +24,7 @@ export const content = style({
   padding: `32px ${vars.spacing[16]} calc(${vars.layout.bottomNav} + ${vars.spacing[24]})`,
   boxSizing: "border-box",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
     },
   },

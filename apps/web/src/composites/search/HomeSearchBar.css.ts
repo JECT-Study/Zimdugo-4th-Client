@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, style } from "@vanilla-extract/css";
 
@@ -14,7 +15,7 @@ export const searchBarLayer = style({
   maxWidth: `calc(${vars.layout.appMaxWidth} - 32px)`,
   margin: "0 auto",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
     },
   },

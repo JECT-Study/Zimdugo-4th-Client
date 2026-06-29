@@ -1,6 +1,7 @@
 import {
   appShellMaxWidth,
   appShellMaxWidthVar,
+  layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
@@ -26,7 +27,7 @@ export const controlStack = style({
   zIndex: vars.zIndex.ui,
   pointerEvents: "none",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
       },

@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { keyframes, style } from "@vanilla-extract/css";
 
@@ -19,7 +20,7 @@ export const overlayContainer = style({
   zIndex: 200,
   overflow: "hidden",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
     },
   },

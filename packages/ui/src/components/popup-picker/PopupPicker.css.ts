@@ -1,4 +1,5 @@
 import { style } from "@vanilla-extract/css";
+import { layoutScale } from "../../tokens/layout/layout.css.ts";
 import { vars } from "../../vars.css.ts";
 
 export const overlay = style({
@@ -28,7 +29,7 @@ export const dialog = style({
   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.25)",
   outline: "none",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
     },
   },

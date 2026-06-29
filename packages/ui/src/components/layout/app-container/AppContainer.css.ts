@@ -2,6 +2,7 @@ import { style } from "@vanilla-extract/css";
 import {
   appShellMaxWidth,
   appShellMaxWidthVar,
+  layoutScale,
 } from "../../../tokens/layout/layout.css.ts";
 import { vars } from "../../../vars.css.ts";
 
@@ -19,7 +20,7 @@ export const container = style({
   position: "relative",
   overflow: "hidden",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
       },

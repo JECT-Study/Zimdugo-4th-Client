@@ -1,3 +1,4 @@
+import { layoutScale } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
@@ -29,7 +30,7 @@ export const dialog = style({
   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.25)",
   outline: "none",
   "@media": {
-    [`screen and (min-width: ${vars.layout.tabletBreakpoint})`]: {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
     },
   },
