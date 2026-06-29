@@ -23,6 +23,15 @@ export interface MapSheetSessionSnapshot {
   searchDetailBack: SearchDetailBackTarget | null;
 }
 
+export type MapSheetRestorableSession = Pick<
+  MapSheetSessionSnapshot,
+  | "mapPlaceId"
+  | "mapDetailBack"
+  | "listKind"
+  | "searchPlaceId"
+  | "searchDetailBack"
+>;
+
 export const readMapSheetSessionSnapshot =
   (): MapSheetSessionSnapshot | null => {
     if (typeof window === "undefined") {
@@ -40,6 +49,22 @@ export const readMapSheetSessionSnapshot =
       window.sessionStorage.removeItem(MAP_SHEET_SESSION_STORAGE_KEY);
       return null;
     }
+  };
+
+export const readRestoredSessionForTabReturn =
+  (): MapSheetRestorableSession | null => {
+    const snap = readMapSheetSessionSnapshot();
+    if (!snap) {
+      return null;
+    }
+
+    return {
+      mapPlaceId: snap.mapPlaceId,
+      mapDetailBack: snap.mapDetailBack,
+      listKind: snap.listKind,
+      searchPlaceId: snap.searchPlaceId,
+      searchDetailBack: snap.searchDetailBack,
+    };
   };
 
 export const writeMapSheetSessionSnapshot = (
