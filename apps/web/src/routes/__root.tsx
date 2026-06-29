@@ -148,6 +148,34 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
 })();
 `;
 
+const COMPACT_DEVICE_LAYOUT_SCRIPT = `
+(function () {
+  try {
+    var screenWidth = window.screen && window.screen.width;
+    var screenHeight = window.screen && window.screen.height;
+    var viewportWidth = window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 0;
+    var viewportHeight = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
+    var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
+    var viewportShortSide = Math.min(viewportWidth || 0, viewportHeight || 0);
+    var pixelRatio = window.devicePixelRatio || 1;
+    var isPhysicalScreen =
+      (viewportWidth > 0 && (screenWidth || 0) > viewportWidth * 1.5) ||
+      (viewportHeight > 0 && (screenHeight || 0) > viewportHeight * 1.5);
+    var cssShortSide =
+      isPhysicalScreen && pixelRatio > 1 ? shortSide / pixelRatio : shortSide;
+
+    if (
+      (viewportShortSide > 0 && viewportShortSide < 600) ||
+      (shortSide > 0 && shortSide < 600) ||
+      (cssShortSide > 0 && cssShortSide < 600)
+    ) {
+      document.documentElement.dataset.compactDevice = "true";
+    }
+  } catch (_) {
+  }
+})();
+`;
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -268,6 +296,10 @@ function RootDocument({ children }: { children: ReactNode }) {
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script runs before hydration to normalize locale-less URLs
           dangerouslySetInnerHTML={{ __html: INITIAL_LANGUAGE_REDIRECT_SCRIPT }}
+        />
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script marks compact physical devices before first paint
+          dangerouslySetInnerHTML={{ __html: COMPACT_DEVICE_LAYOUT_SCRIPT }}
         />
         <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />

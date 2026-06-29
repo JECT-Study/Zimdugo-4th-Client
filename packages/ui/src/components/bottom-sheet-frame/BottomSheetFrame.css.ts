@@ -1,5 +1,8 @@
 import { style } from "@vanilla-extract/css";
-import { layoutScale } from "../../tokens/layout/layout.css.ts";
+import {
+  compactDeviceSelector,
+  layoutScale,
+} from "../../tokens/layout/layout.css.ts";
 import { vars } from "../../vars.css.ts";
 
 export const draggableWrapper = style({
@@ -12,9 +15,19 @@ export const draggableWrapper = style({
   maxWidth: vars.layout.appMaxWidth,
   zIndex: vars.zIndex.bottomSheet,
   touchAction: "none",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
     },
   },
 });
@@ -30,9 +43,19 @@ export const sheet = style({
   boxShadow: vars.shadow.scale[3],
   overflow: "hidden",
   boxSizing: "border-box",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
     },
   },
 });

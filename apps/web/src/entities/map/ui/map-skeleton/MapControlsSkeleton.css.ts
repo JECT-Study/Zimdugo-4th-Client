@@ -1,6 +1,7 @@
 import {
   appShellMaxWidth,
   appShellMaxWidthVar,
+  compactDeviceSelector,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
@@ -26,10 +27,24 @@ export const controlStack = style({
   gap: vars.spacing[8],
   zIndex: vars.zIndex.ui,
   pointerEvents: "none",
+  selectors: {
+    [compactDeviceSelector]: {
+      vars: {
+        [appShellMaxWidthVar]: "100%",
+      },
+    },
+  },
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
+      },
+      selectors: {
+        [compactDeviceSelector]: {
+          vars: {
+            [appShellMaxWidthVar]: "100%",
+          },
+        },
       },
     },
   },
