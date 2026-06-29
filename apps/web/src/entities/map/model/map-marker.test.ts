@@ -444,8 +444,8 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain(">3<");
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('width="121" height="121"');
-    expect(options.icon?.size).toMatchObject({ width: 54.5, height: 54.5 });
-    expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
+    expect(options.icon?.size).toMatchObject({ width: 36, height: 36 });
+    expect(options.icon?.anchor).toMatchObject({ x: 15.6, y: 18.7 });
   });
 
   it("uses S size and anchor for cluster markers with < 10 items", () => {
@@ -752,10 +752,10 @@ describe("syncLockerMarkers", () => {
     });
     expect(lockerOptions.icon?.anchor).toMatchObject({ x: 18, y: 18 });
     expect(placeOptions.icon?.size).toMatchObject({
-      width: 54.5,
-      height: 54.5,
+      width: 36,
+      height: 36,
     });
-    expect(placeOptions.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
+    expect(placeOptions.icon?.anchor).toMatchObject({ x: 15.6, y: 18.7 });
   });
 
   it("spreads nearby locker and place markers instead of relying on z-index", () => {
@@ -784,8 +784,8 @@ describe("syncLockerMarkers", () => {
       new Set([getOffsetStyle(placeContent), getOffsetStyle(lockerContent)]),
     ).toEqual(new Set(["-24,0", "24,0"]));
     expectMarkerAnchorToMatch(FakeMarker.instances[0], {
-      x: 47.6,
-      y: 28.4,
+      x: 39.6,
+      y: 18.7,
     });
     expectMarkerAnchorToMatch(FakeMarker.instances[1], {
       x: -6,
@@ -981,8 +981,8 @@ describe("syncLockerMarkers", () => {
       y: 18,
     });
     expectMarkerAnchorToMatch(FakeMarker.instances[1], {
-      x: 47.6,
-      y: 28.4,
+      x: 39.6,
+      y: 18.7,
     });
   });
 

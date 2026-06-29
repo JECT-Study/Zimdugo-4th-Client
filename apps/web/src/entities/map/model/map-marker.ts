@@ -19,30 +19,36 @@ const COORDINATE_GROUP_PRECISION = 4;
 const MARKER_PROXIMITY_THRESHOLD_PX = 44;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const MAP_PIN_DISPLAY_SCALE = 0.45;
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
-const scaleMapPinValue = (value: number) =>
-  Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
-// LOCKER 마커 컨테이너는 항상 36px 고정.
+// LOCKER / PLACE 마커 컨테이너는 모두 36px 고정.
 // 시각적 크기 변화는 CSS transform: scale()로만 제어한다.
-//   normal       → scale(0.667) ≈ 24px (조용히 렌더)
-//   selected-active  → scale(0.667→1.0) 24px→36px 바운스 (0.25s)
-//   unselected-active → scale(1.0→0.667) 36px→24px 축소 (0.20s)
+//   normal          → scale(1.0) = 36px, 모션 없이 렌더
+//   selected-active  → scale(0.9→1.5) 선택 시 1.5× 바운스 (0.25s)
+//   unselected-active → scale(1.5→1.0) 해제 시 원래 크기로 복귀 (0.20s)
 const LOCKER_MARKER_DISPLAY_SIZE = { width: 36, height: 36 };
 const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
-const PLACE_MARKER_DISPLAY_SIZE = {
-  width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
-  height: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.height),
-};
+// PLACE 마커도 LOCKER와 동일한 컨테이너 크기를 사용한다.
+// 앵커 좌표는 소스 SVG 비율에 따라 비례 환산한다.
+const PLACE_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
 const MARKER_SPREAD_RADIUS_PX = 24;
 const DEFAULT_MARKER_ANCHOR = {
   x: LOCKER_MARKER_DISPLAY_SIZE.width / 2,
   y: LOCKER_MARKER_DISPLAY_SIZE.height / 2,
 };
 const PLACE_MARKER_ANCHOR = {
-  x: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.x),
-  y: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.y),
+  x:
+    Math.round(
+      (PLACE_MARKER_SOURCE_ANCHOR.x / PLACE_MARKER_SOURCE_SIZE.width) *
+        LOCKER_MARKER_DISPLAY_SIZE.width *
+        10,
+    ) / 10,
+  y:
+    Math.round(
+      (PLACE_MARKER_SOURCE_ANCHOR.y / PLACE_MARKER_SOURCE_SIZE.height) *
+        LOCKER_MARKER_DISPLAY_SIZE.height *
+        10,
+    ) / 10,
 };
 
 const CLUSTER_S_DISPLAY_SIZE = { width: 52, height: 52 };
