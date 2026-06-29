@@ -1,4 +1,7 @@
-import { capSearchQueryDraft } from "../lib/sanitize-search-query";
+import {
+  capSearchQueryDraft,
+  getValidatedSearchQuery,
+} from "../lib/sanitize-search-query";
 
 export const SEARCH_HISTORY_STORAGE_KEY = "search_history";
 export const SEARCH_HISTORY_MAX_ENTRIES = 20;
@@ -130,7 +133,9 @@ export const formatSearchHistoryDateLabel = (searchedAt: string): string => {
   return `${month}.${day}`;
 };
 
-export const getSearchHistoryEntryLabel = (entry: SearchHistoryEntry): string => {
+export const getSearchHistoryEntryLabel = (
+  entry: SearchHistoryEntry,
+): string => {
   switch (entry.kind) {
     case "keyword":
       return entry.query;
@@ -140,7 +145,16 @@ export const getSearchHistoryEntryLabel = (entry: SearchHistoryEntry): string =>
   }
 };
 
-export const parseSearchHistoryEntries = (raw: unknown): SearchHistoryEntry[] => {
+export const resolveSearchHistorySelectionQuery = (
+  entry: SearchHistoryLockerEntry | SearchHistoryPlaceEntry,
+): string =>
+  getValidatedSearchQuery(entry.searchDraft) ??
+  getValidatedSearchQuery(entry.title) ??
+  "";
+
+export const parseSearchHistoryEntries = (
+  raw: unknown,
+): SearchHistoryEntry[] => {
   if (!Array.isArray(raw)) {
     return [];
   }
