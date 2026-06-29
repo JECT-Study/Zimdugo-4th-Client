@@ -534,13 +534,16 @@ export function IndexPage() {
     const rawSearchPlaceIdFromUrl =
       new URLSearchParams(window.location.search).get("searchPlaceId") ??
       undefined;
-    const rawSearchPlaceId = readSearchPlaceIdParam(rawSearchPlaceIdFromUrl);
+    const normalizedSearchPlaceIdFromUrl =
+      searchPlaceIdFromUrl !== undefined
+        ? String(searchPlaceIdFromUrl)
+        : undefined;
 
     if (
       (rawSearchQueryFromUrl !== undefined &&
         rawSearchQueryFromUrl !== searchQueryFromUrl) ||
       (rawSearchPlaceIdFromUrl !== undefined &&
-        rawSearchPlaceId !== searchPlaceIdFromUrl)
+        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl)
     ) {
       void navigate({
         to: ".",
@@ -565,6 +568,31 @@ export function IndexPage() {
       previousDraft === nextSearchQuery ? previousDraft : nextSearchQuery,
     );
   }, [searchQueryFromUrl, setSearchQuery]);
+
+  useEffect(() => {
+    if (hasExplicitLockerEntry) return;
+
+    if (searchPlaceIdFromUrl !== undefined) {
+      setListKind((previousListKind) =>
+        previousListKind === "place" ? previousListKind : "place",
+      );
+      setSearchPlaceId((previousPlaceId) =>
+        previousPlaceId === searchPlaceIdFromUrl
+          ? previousPlaceId
+          : searchPlaceIdFromUrl,
+      );
+      return;
+    }
+
+    if (searchQueryFromUrl !== undefined) {
+      setListKind((previousListKind) =>
+        previousListKind === "keyword" ? previousListKind : "keyword",
+      );
+      setSearchPlaceId((previousPlaceId) =>
+        previousPlaceId === null ? previousPlaceId : null,
+      );
+    }
+  }, [hasExplicitLockerEntry, searchPlaceIdFromUrl, searchQueryFromUrl]);
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
