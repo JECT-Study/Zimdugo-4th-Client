@@ -24,26 +24,21 @@ const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
 const scaleMapPinValue = (value: number) =>
   Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
-// CSS scale(0.66)→scale(1) 애니메이션의 시작 크기(24px)는
-// 선택 컨테이너(36px) × 0.66 ≈ 24px로 결정되며,
-// scale(1.5)→scale(1) 애니메이션의 시작 크기(36px)는
-// 일반 컨테이너(24px) × 1.5 = 36px로 결정됩니다.
-const LOCKER_MARKER_NORMAL_SIZE = { width: 24, height: 24 };
-const LOCKER_MARKER_SELECTED_SIZE = { width: 36, height: 36 };
-const FAVORITE_LOCKER_MARKER_NORMAL_SIZE = LOCKER_MARKER_NORMAL_SIZE;
-const FAVORITE_LOCKER_MARKER_SELECTED_SIZE = LOCKER_MARKER_SELECTED_SIZE;
+// LOCKER 마커 컨테이너는 항상 36px 고정.
+// 시각적 크기 변화는 CSS transform: scale()로만 제어한다.
+//   normal       → scale(0.667) ≈ 24px (조용히 렌더)
+//   selected-active  → scale(0.667→1.0) 24px→36px 바운스 (0.25s)
+//   unselected-active → scale(1.0→0.667) 36px→24px 축소 (0.20s)
+const LOCKER_MARKER_DISPLAY_SIZE = { width: 36, height: 36 };
+const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
 const PLACE_MARKER_DISPLAY_SIZE = {
   width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
   height: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.height),
 };
 const MARKER_SPREAD_RADIUS_PX = 24;
-const NORMAL_MARKER_ANCHOR = {
-  x: LOCKER_MARKER_NORMAL_SIZE.width / 2,
-  y: LOCKER_MARKER_NORMAL_SIZE.height / 2,
-};
-const SELECTED_MARKER_ANCHOR = {
-  x: LOCKER_MARKER_SELECTED_SIZE.width / 2,
-  y: LOCKER_MARKER_SELECTED_SIZE.height / 2,
+const DEFAULT_MARKER_ANCHOR = {
+  x: LOCKER_MARKER_DISPLAY_SIZE.width / 2,
+  y: LOCKER_MARKER_DISPLAY_SIZE.height / 2,
 };
 const PLACE_MARKER_ANCHOR = {
   x: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.x),
@@ -459,30 +454,22 @@ type MarkerAnimationState =
   | "unselected-active"
   | "normal";
 
-const isSelectedAnimationState = (state: MarkerAnimationState): boolean =>
-  state === "selected-active" || state === "selected-static";
-
 const getMarkerSize = (
   pin: LockerPinItemResponse,
-  animationState: MarkerAnimationState,
+  _animationState: MarkerAnimationState,
 ) => {
   if (pin.pinType === "CLUSTER") {
     const pinCount = pin.pinCount ?? 0;
     return pinCount >= 10 ? CLUSTER_L_DISPLAY_SIZE : CLUSTER_S_DISPLAY_SIZE;
   }
   if (pin.pinType === "PLACE") return PLACE_MARKER_DISPLAY_SIZE;
-  const isSelected = isSelectedAnimationState(animationState);
-  if (pin.isFavorite === true) {
-    return isSelected
-      ? FAVORITE_LOCKER_MARKER_SELECTED_SIZE
-      : FAVORITE_LOCKER_MARKER_NORMAL_SIZE;
-  }
-  return isSelected ? LOCKER_MARKER_SELECTED_SIZE : LOCKER_MARKER_NORMAL_SIZE;
+  if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_DISPLAY_SIZE;
+  return LOCKER_MARKER_DISPLAY_SIZE;
 };
 
 const getMarkerAnchor = (
   pin: LockerPinItemResponse,
-  animationState: MarkerAnimationState,
+  _animationState: MarkerAnimationState,
   offsetX = 0,
   offsetY = 0,
 ) => {
@@ -494,15 +481,8 @@ const getMarkerAnchor = (
       y: anchor.y - offsetY,
     };
   }
-  if (pin.pinType === "PLACE") {
-    return {
-      x: PLACE_MARKER_ANCHOR.x - offsetX,
-      y: PLACE_MARKER_ANCHOR.y - offsetY,
-    };
-  }
-  const anchor = isSelectedAnimationState(animationState)
-    ? SELECTED_MARKER_ANCHOR
-    : NORMAL_MARKER_ANCHOR;
+  const anchor =
+    pin.pinType === "PLACE" ? PLACE_MARKER_ANCHOR : DEFAULT_MARKER_ANCHOR;
   return {
     x: anchor.x - offsetX,
     y: anchor.y - offsetY,
