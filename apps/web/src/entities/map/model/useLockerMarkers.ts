@@ -266,11 +266,11 @@ export const useLockerMarkers = ({
 
     const { latitude, longitude } = selectedPin;
     const dotSize = 12;
-    const dotIcon = new maps.HtmlIcon({
+    const dotIcon: naver.maps.HtmlIcon = {
       content: `<div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:#3BD569;border:2.5px solid white;box-shadow:0 0 0 2px rgba(59,213,105,0.35),0 1px 4px rgba(0,0,0,0.2);"></div>`,
       size: new maps.Size(dotSize, dotSize),
       anchor: new maps.Point(dotSize / 2, dotSize / 2),
-    });
+    };
 
     if (!anchorDotRef.current) {
       anchorDotRef.current = new maps.Marker({
