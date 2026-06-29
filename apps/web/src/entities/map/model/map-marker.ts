@@ -24,19 +24,26 @@ const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
 const scaleMapPinValue = (value: number) =>
   Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
-const LOCKER_MARKER_DISPLAY_SIZE = {
-  width: 40,
-  height: 40,
-};
-const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
+// CSS scale(0.66)→scale(1) 애니메이션의 시작 크기(24px)는
+// 선택 컨테이너(36px) × 0.66 ≈ 24px로 결정되며,
+// scale(1.5)→scale(1) 애니메이션의 시작 크기(36px)는
+// 일반 컨테이너(24px) × 1.5 = 36px로 결정됩니다.
+const LOCKER_MARKER_NORMAL_SIZE = { width: 24, height: 24 };
+const LOCKER_MARKER_SELECTED_SIZE = { width: 36, height: 36 };
+const FAVORITE_LOCKER_MARKER_NORMAL_SIZE = LOCKER_MARKER_NORMAL_SIZE;
+const FAVORITE_LOCKER_MARKER_SELECTED_SIZE = LOCKER_MARKER_SELECTED_SIZE;
 const PLACE_MARKER_DISPLAY_SIZE = {
   width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
   height: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.height),
 };
 const MARKER_SPREAD_RADIUS_PX = 24;
-const DEFAULT_MARKER_ANCHOR = {
-  x: LOCKER_MARKER_DISPLAY_SIZE.width / 2,
-  y: LOCKER_MARKER_DISPLAY_SIZE.height / 2,
+const NORMAL_MARKER_ANCHOR = {
+  x: LOCKER_MARKER_NORMAL_SIZE.width / 2,
+  y: LOCKER_MARKER_NORMAL_SIZE.height / 2,
+};
+const SELECTED_MARKER_ANCHOR = {
+  x: LOCKER_MARKER_SELECTED_SIZE.width / 2,
+  y: LOCKER_MARKER_SELECTED_SIZE.height / 2,
 };
 const PLACE_MARKER_ANCHOR = {
   x: scaleMapPinValue(PLACE_MARKER_SOURCE_ANCHOR.x),
@@ -279,6 +286,8 @@ interface LockerMarkerEntry {
   zIndex: number;
   wasSelectedBefore?: boolean;
   hadSpreadBefore?: boolean;
+  /** selected-active가 마지막으로 적용된 시각(ms). 이중 effect 실행 시 애니메이션 덮어쓰기 방지용. */
+  selectedActiveAppliedAt?: number;
 }
 
 export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
@@ -450,22 +459,30 @@ type MarkerAnimationState =
   | "unselected-active"
   | "normal";
 
+const isSelectedAnimationState = (state: MarkerAnimationState): boolean =>
+  state === "selected-active" || state === "selected-static";
+
 const getMarkerSize = (
   pin: LockerPinItemResponse,
-  _animationState: MarkerAnimationState,
+  animationState: MarkerAnimationState,
 ) => {
   if (pin.pinType === "CLUSTER") {
     const pinCount = pin.pinCount ?? 0;
     return pinCount >= 10 ? CLUSTER_L_DISPLAY_SIZE : CLUSTER_S_DISPLAY_SIZE;
   }
   if (pin.pinType === "PLACE") return PLACE_MARKER_DISPLAY_SIZE;
-  if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_DISPLAY_SIZE;
-  return LOCKER_MARKER_DISPLAY_SIZE;
+  const isSelected = isSelectedAnimationState(animationState);
+  if (pin.isFavorite === true) {
+    return isSelected
+      ? FAVORITE_LOCKER_MARKER_SELECTED_SIZE
+      : FAVORITE_LOCKER_MARKER_NORMAL_SIZE;
+  }
+  return isSelected ? LOCKER_MARKER_SELECTED_SIZE : LOCKER_MARKER_NORMAL_SIZE;
 };
 
 const getMarkerAnchor = (
   pin: LockerPinItemResponse,
-  _animationState: MarkerAnimationState,
+  animationState: MarkerAnimationState,
   offsetX = 0,
   offsetY = 0,
 ) => {
@@ -477,8 +494,15 @@ const getMarkerAnchor = (
       y: anchor.y - offsetY,
     };
   }
-  const anchor =
-    pin.pinType === "PLACE" ? PLACE_MARKER_ANCHOR : DEFAULT_MARKER_ANCHOR;
+  if (pin.pinType === "PLACE") {
+    return {
+      x: PLACE_MARKER_ANCHOR.x - offsetX,
+      y: PLACE_MARKER_ANCHOR.y - offsetY,
+    };
+  }
+  const anchor = isSelectedAnimationState(animationState)
+    ? SELECTED_MARKER_ANCHOR
+    : NORMAL_MARKER_ANCHOR;
   return {
     x: anchor.x - offsetX,
     y: anchor.y - offsetY,
@@ -809,15 +833,29 @@ export const syncLockerMarkers = ({
         existingEntry.zIndex = zIndex;
       }
 
+      // selected-active CSS 애니메이션 지속 시간(250ms)보다 충분히 긴 가드 시간.
+      // useEffect가 빠르게 두 번 실행되더라도 애니메이션이 중간에 selected-static으로
+      // 덮어씌워지는 것을 방지한다.
+      const SELECTED_ACTIVE_GUARD_MS = 350;
       let animationState: MarkerAnimationState = "normal";
       if (isSelected) {
-        animationState = existingEntry.wasSelectedBefore
-          ? "selected-static"
-          : "selected-active";
+        if (!existingEntry.wasSelectedBefore) {
+          animationState = "selected-active";
+          existingEntry.selectedActiveAppliedAt = Date.now();
+        } else {
+          const isAnimationStillRunning =
+            existingEntry.selectedActiveAppliedAt != null &&
+            Date.now() - existingEntry.selectedActiveAppliedAt <
+              SELECTED_ACTIVE_GUARD_MS;
+          animationState = isAnimationStillRunning
+            ? "selected-active"
+            : "selected-static";
+        }
       } else {
         animationState = existingEntry.wasSelectedBefore
           ? "unselected-active"
           : "normal";
+        existingEntry.selectedActiveAppliedAt = undefined;
       }
 
       const shouldAnimateSpread =
