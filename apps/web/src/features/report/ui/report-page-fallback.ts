@@ -14,9 +14,10 @@ export const reportPageLoadingShellStyle: CSSProperties = {
   width: "100%",
   maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   margin: "0 auto",
+  height: "100dvh",
   minHeight: "100dvh",
   position: "relative",
-  overflow: "visible",
+  overflow: "hidden",
   backgroundColor: REPORT_PAGE_BG,
   display: "flex",
   flexDirection: "column",
@@ -42,8 +43,8 @@ export const reportContentInlineFallbackStyle: CSSProperties = {
   flex: 1,
   width: "100%",
   minHeight: 0,
-  padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} ${spacing.scale[28]}`,
-  overflowY: "visible",
+  padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} calc(${layoutScale.bottomCTA} + env(safe-area-inset-bottom, 0px) + ${spacing.scale[28]})`,
+  overflowY: "auto",
   overflowAnchor: "none",
   overscrollBehaviorY: "auto",
   touchAction: "pan-y",
@@ -53,9 +54,12 @@ export const reportContentInlineFallbackStyle: CSSProperties = {
 };
 
 export const reportBottomBarInlineFallbackStyle: CSSProperties = {
-  position: "sticky",
+  position: "fixed",
+  left: "50%",
   bottom: 0,
+  transform: "translateX(-50%)",
   width: "100%",
+  maxWidth: REPORT_CONTAINER_MAX_WIDTH,
   padding: `${spacing.scale[16]} ${REPORT_SIDE_PADDING} calc(env(safe-area-inset-bottom, 0px) + ${spacing.scale[16]})`,
   borderTop: `1px solid ${color.border.default}`,
   backgroundColor: REPORT_PAGE_BG,
@@ -103,7 +107,8 @@ const reportPageContentShellStyle: CSSProperties = {
   position: "relative",
   display: "flex",
   flexDirection: "column",
-  minHeight: "100dvh",
+  flex: 1,
+  minHeight: 0,
 };
 
 export const reportPageHiddenContentStyle: CSSProperties = {

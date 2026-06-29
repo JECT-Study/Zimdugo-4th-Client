@@ -6,10 +6,11 @@ export const reportContainer = style({
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
+  height: "100dvh",
   minHeight: "100dvh",
   backgroundColor: vars.color.bg.default,
   position: "relative",
-  overflow: "visible",
+  overflow: "hidden",
   display: "flex",
   flexDirection: "column",
   "@media": {
@@ -45,7 +46,8 @@ export const reportPageContent = style({
   position: "relative",
   display: "flex",
   flexDirection: "column",
-  minHeight: "100dvh",
+  flex: 1,
+  minHeight: 0,
 });
 
 export const contentArea = style({
@@ -53,8 +55,8 @@ export const contentArea = style({
   flex: 1,
   width: "100%",
   minHeight: 0,
-  padding: `${vars.spacing[16]} ${vars.layout.sidePadding} ${vars.spacing[28]}`,
-  overflowY: "visible",
+  padding: `${vars.spacing[16]} ${vars.layout.sidePadding} calc(${vars.layout.bottomCTA} + env(safe-area-inset-bottom, 0px) + ${vars.spacing[28]})`,
+  overflowY: "auto",
   overflowAnchor: "none",
   overscrollBehaviorY: "auto",
   touchAction: "pan-y",
@@ -81,14 +83,22 @@ export const stepWrapper = style({
 });
 
 export const bottomButtonWrapper = style({
-  position: "sticky",
+  position: "fixed",
+  left: "50%",
   bottom: 0,
+  transform: "translateX(-50%)",
   width: "100%",
+  maxWidth: vars.layout.appMaxWidth,
   padding: `${vars.spacing[16]} ${vars.layout.sidePadding} calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
   borderTop: `1px solid ${vars.color.palette.gray[200]}`,
   backgroundColor: "white",
   zIndex: 100,
   boxSizing: "border-box",
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+    },
+  },
 });
 
 export const section = style({
