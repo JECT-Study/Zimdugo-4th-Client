@@ -8,7 +8,7 @@ export const draggableWrapper = style({
   right: 0,
   margin: "0 auto",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   zIndex: vars.zIndex.bottomSheet,
   touchAction: "none",
 });
@@ -16,7 +16,7 @@ export const draggableWrapper = style({
 export const sheet = style({
   position: "relative",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
   backgroundColor: vars.color.palette.gray[100],
   borderTopLeftRadius: vars.radius[16],

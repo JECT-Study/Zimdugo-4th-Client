@@ -7,13 +7,16 @@ export const overlay = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  paddingLeft: vars.layout.safeAreaInlineStart,
+  paddingRight: vars.layout.safeAreaInlineEnd,
   backgroundColor: "rgba(0, 0, 0, 0.4)",
   backdropFilter: "blur(2px)",
   zIndex: vars.zIndex.modal,
 });
 
 export const dialog = style({
-  width: "343px",
+  width: "100%",
+  maxWidth: `calc(${vars.layout.appMaxWidth} - 32px)`,
   height: "224px",
   padding: "18px",
   boxSizing: "border-box",
@@ -38,7 +41,7 @@ export const title = style({
 
 export const pickerFrame = style({
   position: "relative",
-  width: "307px",
+  width: "100%",
   height: "96px",
   marginTop: "18px",
   display: "grid",
@@ -136,6 +139,6 @@ export const dialItem = style({
 });
 
 export const action = style({
-  width: "307px",
+  width: "100%",
   marginTop: "16px",
 });

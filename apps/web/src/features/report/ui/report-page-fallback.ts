@@ -7,7 +7,7 @@ import type { CSSProperties } from "react";
  * `report.css.ts` vars와 동기화 — vanilla-extract CSS 청크 도착 전·timeout 인라인 스타일에만 사용한다.
  */
 export const REPORT_PAGE_BG = color.bg.default;
-export const REPORT_CONTAINER_MAX_WIDTH = layoutScale.containerWidth;
+export const REPORT_CONTAINER_MAX_WIDTH = layoutScale.appMaxWidth;
 export const REPORT_SIDE_PADDING = layoutScale.sidePadding;
 
 export const reportPageLoadingShellStyle: CSSProperties = {

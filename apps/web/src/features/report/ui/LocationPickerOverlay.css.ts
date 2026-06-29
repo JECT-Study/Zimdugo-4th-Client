@@ -13,7 +13,7 @@ export const overlayContainer = style({
   left: "50%",
   transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   height: "100dvh",
   backgroundColor: vars.color.bg.default,
   zIndex: 200,

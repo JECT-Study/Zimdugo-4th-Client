@@ -45,7 +45,7 @@ const meta = {
     (Story) => (
       <div
         style={{
-          width: vars.layout.containerWidth,
+          width: vars.layout.designWidth,
           height: "100dvh",
           margin: "0 auto",
           position: "relative",

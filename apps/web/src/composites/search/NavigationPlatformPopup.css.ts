@@ -8,13 +8,16 @@ export const overlay = style({
   alignItems: "center",
   justifyContent: "center",
   padding: vars.spacing[20],
+  paddingLeft: vars.layout.safeAreaInlineStart,
+  paddingRight: vars.layout.safeAreaInlineEnd,
   backgroundColor: "rgba(0, 0, 0, 0.4)",
   backdropFilter: "blur(2px)",
   zIndex: vars.zIndex.modal,
 });
 
 export const dialog = style({
-  width: "343px",
+  width: "100%",
+  maxWidth: `calc(${vars.layout.appMaxWidth} - 32px)`,
   minHeight: "244px",
   padding: "18px",
   boxSizing: "border-box",

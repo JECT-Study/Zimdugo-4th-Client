@@ -11,7 +11,7 @@ export const searchBarLayer = style({
   flexDirection: "column",
   alignItems: "flex-start",
   gap: vars.spacing[8],
-  maxWidth: `calc(${vars.layout.containerWidth} - 32px)`,
+  maxWidth: `calc(${vars.layout.appMaxWidth} - 32px)`,
   margin: "0 auto",
 });
 

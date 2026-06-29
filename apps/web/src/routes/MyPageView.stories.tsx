@@ -1,3 +1,4 @@
+import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MyPageView } from "./-MyPageView";
@@ -26,7 +27,7 @@ const meta = {
       <QueryClientProvider client={queryClient}>
         <div
           style={{
-            width: "375px",
+            width: vars.layout.designWidth,
             minHeight: "100dvh",
             margin: "0 auto",
           }}

@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { layoutScale } from "../../../tokens/layout/layout.css.ts";
 import { container, documentContainer } from "./AppContainer.css.ts";
 
 export interface AppContainerProps {
@@ -21,7 +22,7 @@ const fallbackContainerStyle: CSSProperties & Record<`--${string}`, string> = {
   "--app-header-height": "56px",
   "--app-bottom-nav-height": "60px",
   width: "100%",
-  maxWidth: "375px",
+  maxWidth: layoutScale.appMaxWidth,
   margin: "0 auto",
   boxSizing: "border-box",
   height: "100svh",

@@ -3,7 +3,7 @@ import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 export const reportContainer = style({
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
   minHeight: "100dvh",
   backgroundColor: vars.color.bg.default,
@@ -459,13 +459,13 @@ export const locationMapArea = style([
 ]);
 
 /** 제보 사진 업로드·미리보기 공통 치수 */
-export const REPORT_PHOTO_TILE_MIN_WIDTH = "343px";
+export const REPORT_PHOTO_TILE_WIDTH = "min(343px, 100%)";
 export const REPORT_PHOTO_TILE_HEIGHT = "200px";
 
 const reportPhotoTileBase = style({
   flexShrink: 0,
-  minWidth: REPORT_PHOTO_TILE_MIN_WIDTH,
-  width: REPORT_PHOTO_TILE_MIN_WIDTH,
+  minWidth: 0,
+  width: REPORT_PHOTO_TILE_WIDTH,
   height: REPORT_PHOTO_TILE_HEIGHT,
   boxSizing: "border-box",
 });
@@ -483,13 +483,13 @@ export const photoUploadArea = style([
   baseUploadArea,
   reportPhotoTileBase,
   {
-    flex: "1 0 343px",
+    flex: `1 0 ${REPORT_PHOTO_TILE_WIDTH}`,
     width: "100%",
     margin: 0,
     selectors: {
       [`${reportPhotoGallery}[data-has-images="true"] &`]: {
-        flex: "0 0 343px",
-        width: REPORT_PHOTO_TILE_MIN_WIDTH,
+        flex: `0 0 ${REPORT_PHOTO_TILE_WIDTH}`,
+        width: REPORT_PHOTO_TILE_WIDTH,
       },
       "&:disabled": {
         cursor: "not-allowed",
@@ -535,7 +535,7 @@ export const imageWrapper = style([
   reportPhotoTileBase,
   {
     position: "relative",
-    flex: "0 0 343px",
+    flex: `0 0 ${REPORT_PHOTO_TILE_WIDTH}`,
     borderRadius: vars.radius[12],
     overflow: "hidden",
     boxSizing: "border-box",

@@ -1,3 +1,4 @@
+import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import type { ComponentProps } from "react";
 import { SocialLoginStack } from "./SocialLoginStack.tsx";
@@ -23,7 +24,13 @@ type SocialLoginStackProps = ComponentProps<typeof SocialLoginStack>;
 
 export const Default: Story = {
   render: (args: SocialLoginStackProps) => (
-    <div style={{ width: "375px", padding: "20px", border: "1px solid #eee" }}>
+    <div
+      style={{
+        width: vars.layout.designWidth,
+        padding: "20px",
+        border: "1px solid #eee",
+      }}
+    >
       <SocialLoginStack {...args} />
     </div>
   ),
@@ -31,7 +38,13 @@ export const Default: Story = {
 
 export const WithEnglishLabel: Story = {
   render: (args: SocialLoginStackProps) => (
-    <div style={{ width: "375px", padding: "20px", border: "1px solid #eee" }}>
+    <div
+      style={{
+        width: vars.layout.designWidth,
+        padding: "20px",
+        border: "1px solid #eee",
+      }}
+    >
       <SocialLoginStack {...args} showEnglishLabel={true} />
     </div>
   ),

@@ -12,9 +12,9 @@ export const headerRoot = style({
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   height: vars.layout.header,
-  padding: `${vars.spacing[12]} ${vars.spacing[16]}`,
+  padding: `${vars.spacing[12]} ${vars.layout.safeAreaInlineEnd} ${vars.spacing[12]} ${vars.layout.safeAreaInlineStart}`,
   backgroundColor: "transparent", // 지도가 보이도록 투명 설정 (필요시 수정)
   boxSizing: "border-box",
 });

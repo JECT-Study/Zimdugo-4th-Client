@@ -7,7 +7,7 @@ export const frame = style({
   left: "50%",
   transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   height: vars.layout.bottomNav,
   backgroundColor: vars.color.bg.default,
   borderTop: `1px solid ${vars.color.palette.gray[200]}`,

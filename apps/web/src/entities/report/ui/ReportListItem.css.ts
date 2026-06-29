@@ -4,7 +4,7 @@ import { style } from "@vanilla-extract/css";
 export const root = style({
   display: "block",
   width: "100%",
-  maxWidth: "335px",
+  maxWidth: "none",
   minWidth: 0,
   height: "auto",
   padding: vars.spacing[12],

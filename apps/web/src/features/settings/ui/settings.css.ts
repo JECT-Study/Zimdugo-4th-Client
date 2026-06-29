@@ -14,7 +14,7 @@ export const header = style({
 
 export const content = style({
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
   padding: `32px ${vars.spacing[16]} ${vars.spacing[24]}`,
   boxSizing: "border-box",

@@ -3,7 +3,7 @@ import { vars } from "../../../vars.css.ts";
 
 export const container = style({
   width: "100%",
-  maxWidth: vars.layout.containerWidth,
+  maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
   height: "100svh",
   minHeight: "100svh",

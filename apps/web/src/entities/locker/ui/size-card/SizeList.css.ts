@@ -3,7 +3,8 @@ import { style } from "@vanilla-extract/css";
 
 export const root = style({
   display: "flex",
-  width: "343px",
+  width: "100%",
+  boxSizing: "border-box",
   height: "168px",
   padding: "16px 56px",
   justifyContent: "space-between",

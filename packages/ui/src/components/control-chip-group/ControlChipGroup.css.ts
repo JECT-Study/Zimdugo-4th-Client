@@ -5,12 +5,13 @@ export const controlChipGroupRoot = style({
   display: "flex",
   flexDirection: "column",
   width: "100%",
-  maxWidth: "343px",
+  maxWidth: "none",
   gap: vars.spacing[16],
   margin: "0 auto",
   padding: 0,
   border: 0,
   minInlineSize: 0,
+  boxSizing: "border-box",
 });
 
 export const controlChipGroupRow = style({

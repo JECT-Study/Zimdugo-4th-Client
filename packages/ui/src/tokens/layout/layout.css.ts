@@ -6,9 +6,15 @@ export const layoutScale = {
   bottomCTA: "64px",
   contentBottomPadding: "60px",
   detailBottomPadding: "64px",
+  designWidth: "375px",
+  appMaxWidth: "430px",
+  tabletBreakpoint: "600px",
+  minimumSupportedWidth: "360px",
   containerWidth: "375px",
   touchTarget: "48px",
   sidePadding: "16px",
+  safeAreaInlineStart: "max(16px, env(safe-area-inset-left, 0px))",
+  safeAreaInlineEnd: "max(16px, env(safe-area-inset-right, 0px))",
 } as const;
 
 export const layoutTheme = createGlobalTheme(":root", {

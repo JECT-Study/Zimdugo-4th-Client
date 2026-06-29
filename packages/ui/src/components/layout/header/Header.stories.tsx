@@ -1,6 +1,6 @@
+import { vars } from "@repo/ui/vars.css";
 import type { Meta, StoryObj } from "@storybook/react";
 import type { CSSProperties } from "react";
-import { vars } from "@repo/ui/vars.css";
 import { Header } from "./Header.tsx";
 
 const meta = {
@@ -9,8 +9,9 @@ const meta = {
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (
-      <div style={{ width: vars.layout.containerWidth, position: "relative" }}>
+      <div style={{ width: vars.layout.designWidth, position: "relative" }}>
         <style
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Storybook-only CSS override for fixed header framing.
           dangerouslySetInnerHTML={{
             __html: `
               header {
