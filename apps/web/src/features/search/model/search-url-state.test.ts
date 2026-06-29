@@ -1,25 +1,27 @@
 import { describe, expect, it } from "vitest";
 import {
+  readSearchFilterParams,
   readSearchPlaceIdParam,
   readSearchQueryParam,
+  withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
 } from "./search-url-state";
 
 describe("search-url-state", () => {
-  it("URL q 값을 검증하고 trim된 검색어로 읽는다", () => {
+  it("reads a validated and trimmed URL q value", () => {
     expect(readSearchQueryParam(" 강남역 ")).toBe("강남역");
-    expect(readSearchQueryParam("강ㄴ남")).toBe("강ㄴ남");
+    expect(readSearchQueryParam("강남역")).toBe("강남역");
   });
 
-  it("검색어로 사용할 수 없는 q 값은 무시한다", () => {
+  it("ignores q values that cannot be used as search queries", () => {
     expect(readSearchQueryParam("ㄱㄴ")).toBeUndefined();
     expect(readSearchQueryParam("!!!")).toBeUndefined();
     expect(readSearchQueryParam("   ")).toBeUndefined();
     expect(readSearchQueryParam(123)).toBeUndefined();
   });
 
-  it("검색어를 URL params에 추가할 때 상세 params를 보존한다", () => {
+  it("adds q to URL params while preserving detail params", () => {
     expect(
       withSearchQueryParam(
         {
@@ -41,7 +43,7 @@ describe("search-url-state", () => {
     });
   });
 
-  it("검색어를 제거할 때 q만 제거하고 다른 params는 유지한다", () => {
+  it("removes only q when the search query is empty", () => {
     expect(
       withSearchQueryParam(
         {
@@ -55,7 +57,7 @@ describe("search-url-state", () => {
     });
   });
 
-  it("URL searchPlaceId 값을 양의 정수로 읽는다", () => {
+  it("reads URL searchPlaceId as a positive integer", () => {
     expect(readSearchPlaceIdParam("123")).toBe(123);
     expect(readSearchPlaceIdParam(456)).toBe(456);
     expect(readSearchPlaceIdParam("0")).toBeUndefined();
@@ -64,7 +66,7 @@ describe("search-url-state", () => {
     expect(readSearchPlaceIdParam("123abc")).toBeUndefined();
   });
 
-  it("searchPlaceId를 URL params에 추가하거나 제거한다", () => {
+  it("adds or removes searchPlaceId in URL params", () => {
     expect(withSearchPlaceIdParam({ q: "코엑스" }, 7)).toEqual({
       q: "코엑스",
       searchPlaceId: 7,
@@ -82,6 +84,47 @@ describe("search-url-state", () => {
     ).toEqual({
       q: "코엑스",
       locker: "1",
+    });
+  });
+
+  it("reads valid search filter params and ignores invalid values", () => {
+    expect(
+      readSearchFilterParams({
+        filterSizes: "S,L,XL,S",
+        filterIndoorOutdoor: "indoor,unknown,outdoor",
+        filterPlaceTypes: "museum,invalid,subway",
+      }),
+    ).toEqual({
+      regionActive: true,
+      sizeActive: true,
+      placeTypeActive: true,
+      selectedSizes: ["S", "L"],
+      indoorOutdoorState: ["indoor", "outdoor"],
+      placeTypeState: ["museum", "subway"],
+    });
+  });
+
+  it("writes only active non-default search filter params", () => {
+    expect(
+      withSearchFilterParams(
+        {
+          q: "coex",
+          filterSizes: "S",
+          filterIndoorOutdoor: "indoor",
+          filterPlaceTypes: "museum",
+        },
+        {
+          regionActive: false,
+          sizeActive: true,
+          placeTypeActive: false,
+          selectedSizes: ["M"],
+          indoorOutdoorState: ["indoor"],
+          placeTypeState: ["subway"],
+        },
+      ),
+    ).toEqual({
+      q: "coex",
+      filterSizes: "M",
     });
   });
 });

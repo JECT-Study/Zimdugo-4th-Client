@@ -130,9 +130,11 @@ import {
   type SearchSelectionState,
 } from "#/features/search/model/search-selection";
 import {
+  readSearchFilterParams,
   readSearchPlaceIdParam,
   readSearchQueryParam,
   type SearchUrlParams,
+  withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
 } from "#/features/search/model/search-url-state";
@@ -207,6 +209,9 @@ export const Route = createFileRoute("/")({
     focusLng?: number;
     q?: string;
     searchPlaceId?: number;
+    filterSizes?: string;
+    filterIndoorOutdoor?: string;
+    filterPlaceTypes?: string;
   } => {
     const safeSearch = search || {};
     const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
@@ -215,11 +220,16 @@ export const Route = createFileRoute("/")({
       lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
     const q = readSearchQueryParam(safeSearch.q);
     const searchPlaceId = readSearchPlaceIdParam(safeSearch.searchPlaceId);
+    const filterParams = withSearchFilterParams(
+      {},
+      readSearchFilterParams(safeSearch),
+    );
     return {
       ...parsed,
       locker,
       q,
       searchPlaceId,
+      ...filterParams,
     };
   },
   loader: async ({ search }: any) => {
@@ -312,6 +322,20 @@ export function IndexPage() {
   const searchQueryFromUrl =
     typeof search.q === "string" ? search.q : undefined;
   const searchPlaceIdFromUrl = readSearchPlaceIdParam(search.searchPlaceId);
+  const {
+    filterIndoorOutdoor: filterIndoorOutdoorFromUrl,
+    filterPlaceTypes: filterPlaceTypesFromUrl,
+    filterSizes: filterSizesFromUrl,
+  } = search;
+  const searchFiltersFromUrl = useMemo(
+    () =>
+      readSearchFilterParams({
+        filterIndoorOutdoor: filterIndoorOutdoorFromUrl,
+        filterPlaceTypes: filterPlaceTypesFromUrl,
+        filterSizes: filterSizesFromUrl,
+      }),
+    [filterIndoorOutdoorFromUrl, filterPlaceTypesFromUrl, filterSizesFromUrl],
+  );
   const hasSearchPlaceEntry =
     searchPlaceIdFromUrl !== undefined && !hasExplicitLockerEntry;
   const hasSearchQueryEntry =
@@ -391,6 +415,20 @@ export function IndexPage() {
     },
     [navigate, searchPlaceIdFromUrl, searchQueryFromUrl],
   );
+  const syncSearchFilterUrl = useCallback(
+    (
+      filters: SearchFilterAppliedState,
+      options: { replace?: boolean } = {},
+    ) => {
+      void navigate({
+        to: ".",
+        search: (prev: SearchUrlParams) =>
+          withSearchFilterParams(prev, filters),
+        replace: options.replace,
+      });
+    },
+    [navigate],
+  );
   const setConfirmedSearchQuery = useCallback(
     (
       query: string,
@@ -432,7 +470,7 @@ export function IndexPage() {
   const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
     useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
-    createDefaultSearchFilters,
+    () => searchFiltersFromUrl,
   );
   const [sheetMode, setSheetMode] = useState<SheetModeForContext>(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) return "detail";
@@ -538,24 +576,45 @@ export function IndexPage() {
       searchPlaceIdFromUrl !== undefined
         ? String(searchPlaceIdFromUrl)
         : undefined;
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const rawFilterSizes = urlSearchParams.get("filterSizes") ?? undefined;
+    const rawFilterIndoorOutdoor =
+      urlSearchParams.get("filterIndoorOutdoor") ?? undefined;
+    const rawFilterPlaceTypes =
+      urlSearchParams.get("filterPlaceTypes") ?? undefined;
+    const normalizedFilterParams = withSearchFilterParams(
+      {},
+      searchFiltersFromUrl,
+    );
 
     if (
       (rawSearchQueryFromUrl !== undefined &&
         rawSearchQueryFromUrl !== searchQueryFromUrl) ||
       (rawSearchPlaceIdFromUrl !== undefined &&
-        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl)
+        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl) ||
+      rawFilterSizes !== normalizedFilterParams.filterSizes ||
+      rawFilterIndoorOutdoor !== normalizedFilterParams.filterIndoorOutdoor ||
+      rawFilterPlaceTypes !== normalizedFilterParams.filterPlaceTypes
     ) {
       void navigate({
         to: ".",
         search: (prev: SearchUrlParams) =>
-          withSearchPlaceIdParam(
-            withSearchQueryParam(prev, searchQueryFromUrl),
-            searchPlaceIdFromUrl,
+          withSearchFilterParams(
+            withSearchPlaceIdParam(
+              withSearchQueryParam(prev, searchQueryFromUrl),
+              searchPlaceIdFromUrl,
+            ),
+            searchFiltersFromUrl,
           ),
         replace: true,
       });
     }
-  }, [navigate, searchPlaceIdFromUrl, searchQueryFromUrl]);
+  }, [
+    navigate,
+    searchFiltersFromUrl,
+    searchPlaceIdFromUrl,
+    searchQueryFromUrl,
+  ]);
 
   useEffect(() => {
     const nextSearchQuery = searchQueryFromUrl ?? "";
@@ -591,8 +650,20 @@ export function IndexPage() {
       setSearchPlaceId((previousPlaceId) =>
         previousPlaceId === null ? previousPlaceId : null,
       );
+      return;
     }
+
+    setListKind((previousListKind) =>
+      previousListKind === null ? previousListKind : null,
+    );
+    setSearchPlaceId((previousPlaceId) =>
+      previousPlaceId === null ? previousPlaceId : null,
+    );
   }, [hasExplicitLockerEntry, searchPlaceIdFromUrl, searchQueryFromUrl]);
+
+  useEffect(() => {
+    setSearchFilters(searchFiltersFromUrl);
+  }, [searchFiltersFromUrl]);
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
@@ -965,7 +1036,10 @@ export function IndexPage() {
     void navigate({
       to: ".",
       search: (prev: SearchUrlParams) => {
-        const next = withSearchQueryParam(prev, null);
+        const next = withSearchFilterParams(
+          withSearchQueryParam(prev, null),
+          createDefaultSearchFilters(),
+        );
         delete next.locker;
         delete next.openLockerId;
         delete next.detailSnap;
@@ -2166,15 +2240,18 @@ export function IndexPage() {
   }, [setSheetMode]);
 
   const handleResetSearchFilter = useCallback(() => {
-    setSearchFilters(createDefaultSearchFilters());
-  }, []);
+    const defaultFilters = createDefaultSearchFilters();
+    setSearchFilters(defaultFilters);
+    syncSearchFilterUrl(defaultFilters);
+  }, [syncSearchFilterUrl]);
 
   const handleApplySearchFilter = useCallback(
     (filters: SearchFilterAppliedState) => {
       setSearchFilters(filters);
+      syncSearchFilterUrl(filters);
       setSheetMode("list");
     },
-    [setSheetMode],
+    [setSheetMode, syncSearchFilterUrl],
   );
 
   const searchBarBackAction = resolveSearchBarBackAction({
