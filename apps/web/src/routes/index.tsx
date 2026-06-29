@@ -2162,7 +2162,14 @@ export function IndexPage() {
       return;
     }
 
-    void navigator.clipboard?.writeText(shareUrl).catch((error) => {
+    if (!navigator.clipboard) {
+      console.error(
+        "Failed to copy locker detail URL: Clipboard API is not supported",
+      );
+      return;
+    }
+
+    void navigator.clipboard.writeText(shareUrl).catch((error) => {
       console.error("Failed to copy locker detail URL:", error);
     });
   }, []);
