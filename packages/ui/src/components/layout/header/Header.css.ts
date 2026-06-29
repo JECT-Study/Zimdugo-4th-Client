@@ -77,14 +77,14 @@ export const centerContainer = recipe({
 });
 
 export const logoBrand = style({
-  fontFamily: "'Metropolis:Bold', sans-serif",
+  fontFamily: "'Metropolis', sans-serif",
   fontWeight: 700,
   fontSize: "16px",
   color: vars.color.palette.gray[800],
 });
 
 export const logoHighlight = style({
-  fontFamily: "'Metropolis:Bold', sans-serif",
+  fontFamily: "'Metropolis', sans-serif",
   fontWeight: 700,
   fontSize: "16px",
   color: vars.color.palette.green[500],

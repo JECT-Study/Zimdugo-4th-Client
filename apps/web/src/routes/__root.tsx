@@ -154,8 +154,14 @@ const COMPACT_DEVICE_LAYOUT_SCRIPT = `
     var screenWidth = window.screen && window.screen.width;
     var screenHeight = window.screen && window.screen.height;
     var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
+    var pixelRatio = window.devicePixelRatio || 1;
+    var cssShortSide =
+      shortSide >= 1000 && pixelRatio > 1 ? shortSide / pixelRatio : shortSide;
 
-    if (shortSide > 0 && shortSide < 600) {
+    if (
+      (shortSide > 0 && shortSide < 600) ||
+      (cssShortSide > 0 && cssShortSide < 600)
+    ) {
       document.documentElement.dataset.compactDevice = "true";
     }
   } catch (_) {
