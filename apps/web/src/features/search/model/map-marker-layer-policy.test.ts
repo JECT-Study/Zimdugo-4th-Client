@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { resolveMapMarkerLayer } from "./map-marker-layer-policy";
 
 describe("resolveMapMarkerLayer", () => {
-  it("idle 지도에서만 idle 마커를 표시한다", () => {
+  it("shows idle markers only in the idle home state", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
@@ -11,12 +11,13 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: null,
+        hasSelectedMapPin: false,
         selectedMapDetailPinCount: 0,
       }),
     ).toBe("idle");
   });
 
-  it("검색 결과가 보일 때 검색 마커를 표시한다", () => {
+  it("shows search markers while search results are visible", () => {
     expect(
       resolveMapMarkerLayer({
         context: "search",
@@ -24,12 +25,13 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: null,
+        hasSelectedMapPin: false,
         selectedMapDetailPinCount: 0,
       }),
     ).toBe("search");
   });
 
-  it("map context 장소 리스트에서 장소 마커를 유지한다", () => {
+  it("uses place markers for map place lists", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -37,12 +39,13 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: null,
+        hasSelectedMapPin: false,
         selectedMapDetailPinCount: 0,
       }),
     ).toBe("mapPlace");
   });
 
-  it("map 상세가 장소 리스트로 돌아갈 수 있으면 장소 마커를 유지한다", () => {
+  it("keeps place markers when map detail can return to a place list", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -50,12 +53,13 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: "placeList",
+        hasSelectedMapPin: true,
         selectedMapDetailPinCount: 1,
       }),
     ).toBe("mapPlace");
   });
 
-  it("idle 핀 상세에서는 선택된 map 상세 핀을 표시한다", () => {
+  it("keeps idle markers when a home map pin is selected", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -63,12 +67,27 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: "idle",
+        hasSelectedMapPin: true,
+        selectedMapDetailPinCount: 1,
+      }),
+    ).toBe("idle");
+  });
+
+  it("falls back to the selected detail marker without a selected map pin", () => {
+    expect(
+      resolveMapMarkerLayer({
+        context: "map",
+        sheetMode: "detail",
+        isSearchOpen: false,
+        searchDetailBack: null,
+        mapDetailBack: "idle",
+        hasSelectedMapPin: false,
         selectedMapDetailPinCount: 1,
       }),
     ).toBe("selectedMapDetail");
   });
 
-  it("표시할 레이어가 없으면 null을 반환한다", () => {
+  it("returns null when no marker layer should be visible", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -76,12 +95,13 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: "idle",
+        hasSelectedMapPin: false,
         selectedMapDetailPinCount: 0,
       }),
     ).toBeNull();
   });
 
-  it("검색 오버레이가 열려 있으면 모든 마커 레이어를 숨긴다", () => {
+  it("hides marker layers while the search overlay is open", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
@@ -89,12 +109,13 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: true,
         searchDetailBack: null,
         mapDetailBack: null,
+        hasSelectedMapPin: false,
         selectedMapDetailPinCount: 0,
       }),
     ).toBeNull();
   });
 
-  it("주소 리스트 모드에서는 마커를 표시하지 않는다", () => {
+  it("does not show markers in address list mode", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
@@ -102,6 +123,7 @@ describe("resolveMapMarkerLayer", () => {
         isSearchOpen: false,
         searchDetailBack: null,
         mapDetailBack: null,
+        hasSelectedMapPin: false,
         selectedMapDetailPinCount: 0,
       }),
     ).toBeNull();

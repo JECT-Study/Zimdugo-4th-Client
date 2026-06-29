@@ -87,6 +87,7 @@ import {
 import { applyVoteOverlayToLockerDetail } from "#/features/search/lib/apply-vote-overlay";
 import type { ResolveNavigationOriginResult } from "#/features/search/lib/navigation-platform-links";
 import {
+  createLockerDeepLinkSlug,
   createLockerPinAt,
   type LockerDetailSnap,
   parseOpenLockerDeepLinkSearch,
@@ -1355,14 +1356,10 @@ export function IndexPage() {
       await flushLockerSheetMutations();
 
       // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
-      const cleanName = optimisticDetail?.title
-        ? optimisticDetail.title
-            .replace(/[^\p{L}\p{N}\s-]/gu, "")
-            .replace(/\s+/g, "-")
-        : "";
-      const lockerSlug = cleanName
-        ? `${lockerId}-${cleanName}`
-        : String(lockerId);
+      const lockerSlug = createLockerDeepLinkSlug({
+        lockerId,
+        title: optimisticDetail?.title,
+      });
 
       if (String(search.locker ?? "") !== lockerSlug) {
         navigate({
@@ -1943,7 +1940,13 @@ export function IndexPage() {
       pin?: LockerPinItemResponse,
       offset?: LockerMarkerOffset,
     ) => {
-      if (context !== "idle") {
+      const canSelectHomeMapPin =
+        context === "idle" ||
+        (context === "map" &&
+          sheetMode === "detail" &&
+          mapDetailBack === "idle");
+
+      if (!canSelectHomeMapPin) {
         return;
       }
 
@@ -1974,8 +1977,10 @@ export function IndexPage() {
     [
       context,
       focusMapOnLockerPin,
+      mapDetailBack,
       openLockerDetailAfterPinFocus,
       openMapPlaceList,
+      sheetMode,
       suppressNextMapPressForMarkerInteraction,
     ],
   );
@@ -2125,6 +2130,41 @@ export function IndexPage() {
 
   const handleOpenNavigationPopup = useCallback(() => {
     setIsNavigationPopupOpen(true);
+  }, []);
+
+  const handleShareLockerDetail = useCallback((item: LockerDetailItem) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL("/", window.location.origin);
+    url.searchParams.set(
+      "locker",
+      createLockerDeepLinkSlug({
+        lockerId: item.lockerId,
+        title: item.title,
+      }),
+    );
+
+    const shareUrl = url.toString();
+    const shareData = {
+      title: item.title,
+      text: item.address,
+      url: shareUrl,
+    };
+
+    if (typeof navigator.share === "function") {
+      void navigator.share(shareData).catch((error) => {
+        if (error?.name !== "AbortError") {
+          console.error("Failed to share locker detail:", error);
+        }
+      });
+      return;
+    }
+
+    void navigator.clipboard?.writeText(shareUrl).catch((error) => {
+      console.error("Failed to copy locker detail URL:", error);
+    });
   }, []);
 
   const navigationKnownLocation = useMemo(
@@ -2289,14 +2329,10 @@ export function IndexPage() {
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    const cleanName = lockerDetail.title
-      ? lockerDetail.title
-          .replace(/[^\p{L}\p{N}\s-]/gu, "")
-          .replace(/\s+/g, "-")
-      : "";
-    const lockerSlug = cleanName
-      ? `${lockerDetail.lockerId}-${cleanName}`
-      : String(lockerDetail.lockerId);
+    const lockerSlug = createLockerDeepLinkSlug({
+      lockerId: lockerDetail.lockerId,
+      title: lockerDetail.title,
+    });
 
     if (String(search.locker ?? "") !== lockerSlug) {
       void navigate({
@@ -2553,6 +2589,7 @@ export function IndexPage() {
     isSearchOpen,
     searchDetailBack,
     mapDetailBack,
+    hasSelectedMapPin: selectedMapPin !== null,
     selectedMapDetailPinCount: selectedMapDetailPins.length,
   });
   const searchMarkerListKind =
@@ -2867,6 +2904,7 @@ export function IndexPage() {
             )
           }
           onBack={handleBackFromDetail}
+          onShare={handleShareLockerDetail}
           onNavigate={handleOpenNavigationPopup}
           initialSnapPoint={
             lockerDetailOpensFull ? LOCKER_DETAIL_FULL_TOP_OFFSET : undefined

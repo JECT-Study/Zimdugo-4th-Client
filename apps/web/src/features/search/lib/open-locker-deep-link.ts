@@ -9,6 +9,11 @@ export interface OpenLockerDeepLinkSearch {
   focusLng?: number;
 }
 
+export interface LockerDeepLinkSlugInput {
+  lockerId: number;
+  title?: string;
+}
+
 const parsePositiveInt = (raw: unknown): number | undefined => {
   const parsed =
     typeof raw === "number"
@@ -30,7 +35,9 @@ export const parseFocusCoordinate = (raw: unknown): number | undefined => {
         ? Number(raw)
         : undefined;
 
-  return typeof parsed === "number" && Number.isFinite(parsed) ? parsed : undefined;
+  return typeof parsed === "number" && Number.isFinite(parsed)
+    ? parsed
+    : undefined;
 };
 
 export const parseOpenLockerDeepLinkSearch = (
@@ -51,6 +58,20 @@ export const parseOpenLockerDeepLinkSearch = (
     ...(detailSnap ? { detailSnap } : {}),
     ...(hasFocus ? { focusLat, focusLng } : {}),
   };
+};
+
+export const createLockerDeepLinkSlug = ({
+  lockerId,
+  title,
+}: LockerDeepLinkSlugInput): string => {
+  const cleanName = title
+    ? title
+        .replace(/[^\p{L}\p{N}\s-]/gu, "")
+        .replace(/\s+/g, "-")
+        .replace(/^-+|-+$/g, "")
+    : "";
+
+  return cleanName ? `${lockerId}-${cleanName}` : String(lockerId);
 };
 
 export const createLockerPinAt = (
