@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import { m, setLanguageTag } from "@repo/i18n";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
 import { ReportDetailViewerModal } from "./ReportDetailViewerModal";
@@ -105,5 +111,36 @@ describe("ReportDetailViewerModal", () => {
     );
 
     expect(screen.queryByText(m.report_status_pending())).toBeNull();
+  });
+  it("이미지를 누르면 원본 미리보기를 열고 닫을 수 있다", () => {
+    render(
+      <ReportDetailViewerModal
+        isOpen
+        onOpenChange={vi.fn()}
+        titleText={REPORT_DETAIL.lockerName}
+        detail={{
+          ...REPORT_DETAIL,
+          imageUrl: "https://example.com/report.jpg",
+        }}
+        loadState="ready"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: m.report_section_photo() }),
+    );
+
+    const dialog = screen.getByRole("dialog", {
+      name: m.report_section_photo(),
+    });
+    expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
+      "https://example.com/report.jpg",
+    );
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+
+    expect(
+      screen.queryByRole("dialog", { name: m.report_section_photo() }),
+    ).toBeNull();
   });
 });
