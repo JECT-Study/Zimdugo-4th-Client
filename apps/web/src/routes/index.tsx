@@ -119,7 +119,10 @@ import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
 } from "#/features/search/model/map-viewport-policy";
-import type { SearchHistoryEntry } from "#/features/search/model/search-history";
+import {
+  resolveSearchHistorySelectionQuery,
+  type SearchHistoryEntry,
+} from "#/features/search/model/search-history";
 import {
   applyLockerSearchDraft,
   createKeywordSearchSelection,
@@ -1421,16 +1424,17 @@ export function IndexPage() {
       }
 
       if (entry.kind === "locker") {
+        const sourceQuery = resolveSearchHistorySelectionQuery(entry);
         recordSearchHistory({
           kind: "locker",
           lockerId: entry.lockerId,
           title: entry.title,
-          searchDraft: entry.searchDraft,
+          searchDraft: sourceQuery,
         });
         setContext("search");
         setListKind("keyword");
         setSearchPlaceId(null);
-        const lockerSearchSelection = applyLockerSearchDraft(entry.searchDraft);
+        const lockerSearchSelection = applyLockerSearchDraft(sourceQuery);
         setSearchDraft(lockerSearchSelection.searchDraft);
         setConfirmedSearchQuery(lockerSearchSelection.searchQuery);
         setSearchDetailBack(createKeywordDetailBackTarget());
@@ -1445,15 +1449,16 @@ export function IndexPage() {
         return;
       }
 
+      const sourceQuery = resolveSearchHistorySelectionQuery(entry);
       recordSearchHistory({
         kind: "place",
         placeId: entry.placeId,
         title: entry.title,
-        searchDraft: entry.searchDraft,
+        searchDraft: sourceQuery,
       });
       openSearchPlaceList(entry.placeId, {
         applySelection: true,
-        draft: entry.searchDraft,
+        draft: sourceQuery,
         placeName: entry.title,
       });
     },
