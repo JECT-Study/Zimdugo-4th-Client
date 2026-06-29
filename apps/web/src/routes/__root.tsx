@@ -153,12 +153,19 @@ const COMPACT_DEVICE_LAYOUT_SCRIPT = `
   try {
     var screenWidth = window.screen && window.screen.width;
     var screenHeight = window.screen && window.screen.height;
+    var viewportWidth = window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 0;
+    var viewportHeight = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
     var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
+    var viewportShortSide = Math.min(viewportWidth || 0, viewportHeight || 0);
     var pixelRatio = window.devicePixelRatio || 1;
+    var isPhysicalScreen =
+      (viewportWidth > 0 && (screenWidth || 0) > viewportWidth * 1.5) ||
+      (viewportHeight > 0 && (screenHeight || 0) > viewportHeight * 1.5);
     var cssShortSide =
-      shortSide >= 1000 && pixelRatio > 1 ? shortSide / pixelRatio : shortSide;
+      isPhysicalScreen && pixelRatio > 1 ? shortSide / pixelRatio : shortSide;
 
     if (
+      (viewportShortSide > 0 && viewportShortSide < 600) ||
       (shortSide > 0 && shortSide < 600) ||
       (cssShortSide > 0 && cssShortSide < 600)
     ) {

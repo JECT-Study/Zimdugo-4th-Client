@@ -2,7 +2,13 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { IconX24 } from "@repo/ui/tokens/icons";
-import { useEffect, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { createPortal } from "react-dom";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
@@ -14,6 +20,7 @@ import { resolveReportStatusDisplay } from "../lib/resolve-report-status";
 import {
   closeButton,
   footer,
+  imagePreviewBackdropButton,
   imagePreviewCloseButton,
   imagePreviewDialog,
   imagePreviewImage,
@@ -74,6 +81,7 @@ export function ReportDetailViewerModal({
 }: ReportDetailViewerModalProps) {
   const [collapsedSnap, setCollapsedSnap] = useState(760);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const imagePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const informationGroups =
     detail != null && loadState === "ready"
       ? formatReportViewerInformationGroups(detail)
@@ -88,13 +96,19 @@ export function ReportDetailViewerModal({
     onOpenChange(false);
   };
 
-  const handleOpenImagePreview = (imageUrl: string) => {
+  const handleOpenImagePreview = (
+    imageUrl: string,
+    triggerElement: HTMLButtonElement,
+  ) => {
+    imagePreviewTriggerRef.current = triggerElement;
     setPreviewImageUrl(imageUrl);
   };
 
-  const handleCloseImagePreview = () => {
+  const handleCloseImagePreview = useCallback(() => {
     setPreviewImageUrl(null);
-  };
+    imagePreviewTriggerRef.current?.focus();
+    imagePreviewTriggerRef.current = null;
+  }, []);
 
   useEffect(() => {
     const updateCollapsedSnap = () => {
@@ -120,13 +134,13 @@ export function ReportDetailViewerModal({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setPreviewImageUrl(null);
+        handleCloseImagePreview();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [previewImageUrl]);
+  }, [previewImageUrl, handleCloseImagePreview]);
 
   return (
     <>
@@ -185,13 +199,18 @@ export function ReportDetailViewerModal({
                       <button
                         type="button"
                         className={[photoButton, informationPhoto].join(" ")}
-                        onClick={() => handleOpenImagePreview(detailImageUrl)}
+                        onClick={(event) =>
+                          handleOpenImagePreview(
+                            detailImageUrl,
+                            event.currentTarget,
+                          )
+                        }
                         aria-label={m.report_section_photo()}
                       >
                         <img
                           className={photoImage}
                           src={detailImageUrl}
-                          alt={m.report_section_photo()}
+                          alt=""
                         />
                       </button>
                     ) : (
@@ -265,17 +284,63 @@ function ImagePreviewOverlay({
   imageUrl: string;
   onClose: () => void;
 }) {
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
+
+  const handleDialogKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab") {
+      return;
+    }
+
+    const focusableElements = Array.from(
+      dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    ).filter((element) => !element.hasAttribute("disabled"));
+
+    if (focusableElements.length === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  };
+
   if (typeof document === "undefined") {
     return null;
   }
 
   return createPortal(
     <div className={imagePreviewOverlay}>
+      <button
+        type="button"
+        className={imagePreviewBackdropButton}
+        onClick={onClose}
+        aria-label={m.my_report_detail_close()}
+      />
       <div
+        ref={dialogRef}
         className={imagePreviewDialog}
         role="dialog"
         aria-modal="true"
         aria-label={m.report_section_photo()}
+        onKeyDown={handleDialogKeyDown}
       >
         <img
           className={imagePreviewImage}
@@ -283,10 +348,11 @@ function ImagePreviewOverlay({
           alt={m.report_section_photo()}
         />
         <button
+          ref={closeButtonRef}
           type="button"
           className={imagePreviewCloseButton}
           onClick={onClose}
-          aria-label={m.search_close_aria()}
+          aria-label={m.my_report_detail_close()}
         >
           <IconX24 />
         </button>

@@ -25,11 +25,6 @@ export const searchBarLayer = style({
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
-      selectors: {
-        [compactDeviceSelector]: {
-          maxWidth: "none",
-        },
-      },
     },
   },
 });

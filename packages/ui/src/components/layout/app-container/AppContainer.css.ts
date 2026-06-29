@@ -32,13 +32,6 @@ export const container = style({
       vars: {
         [appShellMaxWidthVar]: vars.layout.tabletAppMaxWidth,
       },
-      selectors: {
-        [compactDeviceSelector]: {
-          vars: {
-            [appShellMaxWidthVar]: "100%",
-          },
-        },
-      },
     },
   },
 });

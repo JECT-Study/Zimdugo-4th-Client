@@ -137,10 +137,42 @@ describe("ReportDetailViewerModal", () => {
       "https://example.com/report.jpg",
     );
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: m.my_report_detail_close() }),
+    );
 
     expect(
       screen.queryByRole("dialog", { name: m.report_section_photo() }),
     ).toBeNull();
+  });
+
+  it("프리뷰가 열려 있을 때 Escape를 누르면 프리뷰만 닫는다", () => {
+    render(
+      <ReportDetailViewerModal
+        isOpen
+        onOpenChange={vi.fn()}
+        titleText={REPORT_DETAIL.lockerName}
+        detail={{
+          ...REPORT_DETAIL,
+          imageUrl: "https://example.com/report.jpg",
+        }}
+        loadState="ready"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: m.report_section_photo() }),
+    );
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(
+      screen.queryByRole("dialog", { name: m.report_section_photo() }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("dialog", {
+        name: m.my_report_detail_viewer_aria(),
+      }),
+    ).toBeTruthy();
   });
 });

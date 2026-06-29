@@ -70,12 +70,24 @@ export const imagePreviewOverlay = style({
 
 export const imagePreviewDialog = style({
   position: "relative",
+  zIndex: 1,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   width: "100%",
   height: "100%",
   outline: "none",
+});
+
+export const imagePreviewBackdropButton = style({
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  padding: 0,
+  border: 0,
+  backgroundColor: "transparent",
+  cursor: "pointer",
 });
 
 export const imagePreviewImage = style({
