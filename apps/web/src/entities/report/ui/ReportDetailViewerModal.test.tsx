@@ -11,6 +11,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
 import { ReportDetailViewerModal } from "./ReportDetailViewerModal";
+import { imagePreviewBackdropButton } from "./ReportDetailViewerModal.css.ts";
 
 const REPORT_DETAIL: MyLockerReportDetail = {
   reportId: 1,
@@ -174,5 +175,35 @@ describe("ReportDetailViewerModal", () => {
         name: m.my_report_detail_viewer_aria(),
       }),
     ).toBeTruthy();
+  });
+
+  it("프리뷰 배경을 누르면 프리뷰를 닫는다", () => {
+    render(
+      <ReportDetailViewerModal
+        isOpen
+        onOpenChange={vi.fn()}
+        titleText={REPORT_DETAIL.lockerName}
+        detail={{
+          ...REPORT_DETAIL,
+          imageUrl: "https://example.com/report.jpg",
+        }}
+        loadState="ready"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: m.report_section_photo() }),
+    );
+
+    const backdropButton = document.querySelector(
+      `.${imagePreviewBackdropButton}`,
+    );
+    expect(backdropButton).toBeTruthy();
+
+    fireEvent.click(backdropButton as Element);
+
+    expect(
+      screen.queryByRole("dialog", { name: m.report_section_photo() }),
+    ).toBeNull();
   });
 });
