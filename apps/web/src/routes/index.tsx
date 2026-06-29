@@ -1341,6 +1341,31 @@ export function IndexPage() {
     [setConfirmedSearchQuery],
   );
 
+  const syncLockerDetailUrl = useCallback(
+    (
+      lockerId: number,
+      title?: string,
+      options?: {
+        replace?: boolean;
+      },
+    ) => {
+      const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
+
+      void navigate({
+        to: ".",
+        search: (prev: SearchUrlParams) =>
+          String(prev.locker ?? "") === lockerSlug
+            ? prev
+            : {
+                ...prev,
+                locker: lockerSlug,
+              },
+        replace: options?.replace,
+      });
+    },
+    [navigate],
+  );
+
   const openLockerDetailById = useCallback(
     async (
       lockerId: number,
@@ -1349,6 +1374,7 @@ export function IndexPage() {
         detailSnap?: LockerDetailSnap;
         animateOnMount?: boolean;
         searchDetailBack?: SearchDetailBackTarget | null;
+        syncUrl?: boolean;
       },
     ) => {
       clearPendingLockerDetailOpen();
@@ -1356,19 +1382,8 @@ export function IndexPage() {
       await flushLockerSheetMutations();
 
       // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
-      const lockerSlug = createLockerDeepLinkSlug({
-        lockerId,
-        title: optimisticDetail?.title,
-      });
-
-      if (String(search.locker ?? "") !== lockerSlug) {
-        navigate({
-          to: ".",
-          search: (prev: any) => ({
-            ...prev,
-            locker: lockerSlug,
-          }),
-        }).catch((err) => console.error("navigate ERROR:", err));
+      if (options?.syncUrl !== false) {
+        syncLockerDetailUrl(lockerId, optimisticDetail?.title);
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
@@ -1418,8 +1433,7 @@ export function IndexPage() {
       clearPendingLockerDetailOpen,
       setIsSearchOpen,
       setSheetMode,
-      search.locker,
-      navigate,
+      syncLockerDetailUrl,
     ],
   );
 
@@ -1689,11 +1703,13 @@ export function IndexPage() {
       options?: { searchDetailBack?: SearchDetailBackTarget | null },
     ) => {
       clearPendingLockerDetailOpen();
+      syncLockerDetailUrl(lockerId, detail?.title);
 
       if (!shouldDelay) {
         openLockerDetailById(lockerId, detail, {
           animateOnMount: true,
           searchDetailBack: options?.searchDetailBack,
+          syncUrl: false,
         });
         return;
       }
@@ -1703,10 +1719,11 @@ export function IndexPage() {
         openLockerDetailById(lockerId, detail, {
           animateOnMount: true,
           searchDetailBack: options?.searchDetailBack,
+          syncUrl: false,
         });
       }, DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS);
     },
-    [clearPendingLockerDetailOpen, openLockerDetailById],
+    [clearPendingLockerDetailOpen, openLockerDetailById, syncLockerDetailUrl],
   );
 
   const requestListSheetSnap = useCallback(
@@ -2336,21 +2353,9 @@ export function IndexPage() {
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    const lockerSlug = createLockerDeepLinkSlug({
-      lockerId: lockerDetail.lockerId,
-      title: lockerDetail.title,
+    syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title, {
+      replace: true,
     });
-
-    if (String(search.locker ?? "") !== lockerSlug) {
-      void navigate({
-        to: ".",
-        search: (prev: any) => ({
-          ...prev,
-          locker: lockerSlug,
-        }),
-        replace: true,
-      });
-    }
 
     if (
       isPendingFocusRef.current &&
@@ -2369,7 +2374,7 @@ export function IndexPage() {
         bottomInsetPx: getDetailFocusBottomInsetPx(),
       });
     }
-  }, [lockerDetail, mapInstance, search.locker, navigate, sheetMode]);
+  }, [lockerDetail, mapInstance, syncLockerDetailUrl, sheetMode]);
 
   useEffect(() => {
     if (sheetMode === "idle") {
