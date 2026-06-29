@@ -163,3 +163,17 @@ export const withSearchFilterParams = (
 
   return next;
 };
+
+export const withoutSearchContextParams = (
+  params: SearchUrlParams,
+): SearchUrlParams => {
+  const next = { ...params };
+
+  delete next.q;
+  delete next.searchPlaceId;
+  delete next.filterSizes;
+  delete next.filterIndoorOutdoor;
+  delete next.filterPlaceTypes;
+
+  return next;
+};

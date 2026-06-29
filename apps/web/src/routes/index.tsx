@@ -135,6 +135,7 @@ import {
   readSearchPlaceIdParam,
   readSearchQueryParam,
   type SearchUrlParams,
+  withoutSearchContextParams,
   withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
@@ -1038,7 +1039,7 @@ export function IndexPage() {
       to: ".",
       search: (prev: SearchUrlParams) => {
         const next = withSearchFilterParams(
-          withSearchQueryParam(prev, null),
+          withoutSearchContextParams(prev),
           createDefaultSearchFilters(),
         );
         delete next.locker;
@@ -1355,9 +1356,9 @@ export function IndexPage() {
         to: ".",
         search: (prev: SearchUrlParams) =>
           String(prev.locker ?? "") === lockerSlug
-            ? prev
+            ? withoutSearchContextParams(prev)
             : {
-                ...prev,
+                ...withoutSearchContextParams(prev),
                 locker: lockerSlug,
               },
         replace: options?.replace,
@@ -2088,7 +2089,8 @@ export function IndexPage() {
         setSearchPlaceId(id);
         void navigate({
           to: ".",
-          search: (prev: SearchUrlParams) => withSearchPlaceIdParam(prev, id),
+          search: (prev: SearchUrlParams) =>
+            withSearchPlaceIdParam(withSearchQueryParam(prev, null), id),
         });
         setActiveLockerId(null);
         setSearchDetailBack(null);
