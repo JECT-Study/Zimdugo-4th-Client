@@ -305,10 +305,6 @@ export function IndexPage() {
     typeof search.q === "string" ? search.q : undefined;
   const hasSearchQueryEntry =
     searchQueryFromUrl !== undefined && !hasExplicitLockerEntry;
-  const rawSearchQueryFromUrl =
-    typeof window === "undefined"
-      ? undefined
-      : (new URLSearchParams(window.location.search).get("q") ?? undefined);
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
@@ -497,6 +493,11 @@ export function IndexPage() {
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const rawSearchQueryFromUrl =
+      new URLSearchParams(window.location.search).get("q") ?? undefined;
+
     if (
       rawSearchQueryFromUrl !== undefined &&
       rawSearchQueryFromUrl !== searchQueryFromUrl
@@ -508,7 +509,7 @@ export function IndexPage() {
         replace: true,
       });
     }
-  }, [navigate, rawSearchQueryFromUrl, searchQueryFromUrl]);
+  }, [navigate, searchQueryFromUrl]);
 
   useEffect(() => {
     const nextSearchQuery = searchQueryFromUrl ?? "";
