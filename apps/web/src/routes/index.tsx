@@ -892,7 +892,18 @@ export function IndexPage() {
     clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
     setSearchQuery("");
-    syncSearchQueryUrl(null);
+    void navigate({
+      to: ".",
+      search: (prev: SearchUrlParams) => {
+        const next = withSearchQueryParam(prev, null);
+        delete next.locker;
+        delete next.openLockerId;
+        delete next.detailSnap;
+        delete next.focusLat;
+        delete next.focusLng;
+        return next;
+      },
+    });
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
     setListKind(null);
@@ -910,9 +921,9 @@ export function IndexPage() {
   }, [
     clearPendingLockerDetailOpen,
     flushLockerSheetMutations,
+    navigate,
     setIsSearchOpen,
     setSearchQuery,
-    syncSearchQueryUrl,
   ]);
 
   const handleOpenSearch = useCallback(() => {
@@ -2112,7 +2123,7 @@ export function IndexPage() {
         : resetSearchContext;
 
   useEffect(() => {
-    if (!lockerDetail) {
+    if (sheetMode !== "detail" || !lockerDetail) {
       return;
     }
 
@@ -2158,7 +2169,7 @@ export function IndexPage() {
         bottomInsetPx: getDetailFocusBottomInsetPx(),
       });
     }
-  }, [lockerDetail, mapInstance, search.locker, navigate]);
+  }, [lockerDetail, mapInstance, search.locker, navigate, sheetMode]);
 
   useEffect(() => {
     if (sheetMode === "idle") {
