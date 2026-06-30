@@ -90,6 +90,7 @@ import {
   createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
   createLockerPinAt,
+  createLockerShareText,
   type LockerDetailSnap,
   parseOpenLockerDeepLinkSearch,
 } from "#/features/search/lib/open-locker-deep-link";
@@ -2209,9 +2210,10 @@ export function IndexPage() {
       lockerId: item.lockerId,
       title: item.title,
     });
+    const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
     const shareData = {
       title: item.title,
-      text: item.address,
+      text: createLockerShareText(shareLocale),
       url: shareUrl,
     };
 
