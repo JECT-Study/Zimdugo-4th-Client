@@ -182,7 +182,9 @@ import {
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
+import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
 import { useSearchStore } from "#/shared/store/search";
+import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import {
   locationButton,
   locationControlStack,
@@ -190,9 +192,6 @@ import {
   refreshButtonDisabled,
   refreshCooldownBadge,
   refreshIconSpinning,
-  refreshLoadingBackdrop,
-  refreshLoadingOverlay,
-  refreshLoadingSpinner,
 } from "./-index.css";
 import {
   shouldShowHomeSearchBar,
@@ -397,6 +396,12 @@ export function IndexPage() {
   const navigate = useNavigate();
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
   const loaderData = Route.useLoaderData();
+  const endPageTransition = usePageTransitionStore((s) => s.endTransition);
+
+  // 홈 마운트 시 페이지 전환 오버레이 해제 (제보 → 홈 복귀 등)
+  useEffect(() => {
+    endPageTransition();
+  }, [endPageTransition]);
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
@@ -1070,6 +1075,25 @@ export function IndexPage() {
 
       // ── 홈 idle 컨텍스트 전용 로직 ──────────────────────────────
 
+      // 방향 센서가 확정적으로 없는 환경(데스크톱 등): 단순 panTo만 제공
+      // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
+      if (isOrientationSupported === false) {
+        if (location && mapInstanceRef.current) {
+          focusNaverMapOnCoordinates({
+            map: mapInstanceRef.current,
+            coordinates: location,
+          });
+        } else if (!isTracking) {
+          hasPendingLocationRequestRef.current = true;
+          window.clearTimeout(locationLoadingTimerRef.current);
+          locationLoadingTimerRef.current = window.setTimeout(() => {
+            setIsLocationDelayedLoading(true);
+          }, 300);
+          startTracking();
+        }
+        return;
+      }
+
       // 상태 2(방향 트래킹 활성) → 상태 0으로 복귀
       if (isOrientationTracking) {
         setIsCameraCentered(false);
@@ -1230,6 +1254,10 @@ export function IndexPage() {
       resetMapContext();
     }
 
+    // 검색 오버레이 진입 시 카메라 고정 해제:
+    // isSearchOpen이 false로 바뀔 때 카메라 추적 effect가 재발동해
+    // 지도가 강제로 현재 위치로 이동하는 버그를 방지한다.
+    setIsCameraCentered(false);
     setOverlayReturnContext(returnContext);
     setIsSearchOpen(true);
   }, [clearPendingLockerDetailOpen, context, resetMapContext, setIsSearchOpen]);
@@ -2909,10 +2937,7 @@ export function IndexPage() {
       ) : null}
 
       {(isRefreshVisualLoading || isLocationDelayedLoading) && (
-        <div className={refreshLoadingOverlay}>
-          <div className={refreshLoadingBackdrop} />
-          <div className={refreshLoadingSpinner} />
-        </div>
+        <LoadingOverlay label={m.home_map_refresh_aria()} />
       )}
 
       <NaverMapProvider language={languageTag()}>
@@ -2995,7 +3020,7 @@ export function IndexPage() {
             />
           )}
       </NaverMapProvider>
-      {isMapLoading && !hasMapError ? (
+      {isMapLoading && !hasMapError && !isRefreshing ? (
         <MapControlsSkeleton />
       ) : shouldRenderMapControls ? (
         <div className={locationControlStack}>

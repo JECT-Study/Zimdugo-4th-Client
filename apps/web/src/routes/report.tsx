@@ -5,7 +5,8 @@ import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
 import { FormProvider, useWatch } from "react-hook-form";
 import { REPORT_CONTENT_SCROLL_CONTAINER_ATTR } from "#/features/report/lib/scroll-to-report-section";
 import {
@@ -79,6 +80,13 @@ export const Route = createFileRoute("/report")({
 function ReportPage() {
   const navigate = useNavigate();
   const [isExitPopupOpen, setIsExitPopupOpen] = useState(false);
+  const endTransition = usePageTransitionStore((s) => s.endTransition);
+  const startTransition = usePageTransitionStore((s) => s.startTransition);
+
+  // 제보 페이지 마운트 시 전환 오버레이 해제
+  useEffect(() => {
+    endTransition();
+  }, [endTransition]);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLElement>(null);
   const bottomBarRef = useRef<HTMLDivElement>(null);
@@ -159,6 +167,7 @@ function ReportPage() {
 
   const handleLeaveReport = () => {
     setIsExitPopupOpen(false);
+    startTransition();
     navigate({ to: "/" });
   };
 
