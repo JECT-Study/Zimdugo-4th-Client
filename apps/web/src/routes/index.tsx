@@ -269,7 +269,7 @@ export const Route = createFileRoute("/")({
           : m.seo_locker_detail_price_unknown();
       const canonicalUrl = createLockerCanonicalUrl({
         lockerId: detail.lockerId,
-        title: detail.title,
+        title: detail.title ?? undefined,
       });
 
       return {
