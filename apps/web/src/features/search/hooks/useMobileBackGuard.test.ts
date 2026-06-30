@@ -73,24 +73,28 @@ describe("useMobileBackGuard", () => {
     expect(currentIndex).toBe(0);
   });
 
-  it("onBack이 없어지면 replaceState로 synthetic flag만 제거한다", () => {
+  it("onBack이 없어지면 history.back()으로 synthetic entry를 제거한다", () => {
     const onBack = vi.fn();
+
     const { rerender } = renderHook(
       ({ handler }: { handler: (() => void) | undefined }) =>
         useMobileBackGuard(handler),
       { initialProps: { handler: onBack } },
     );
 
+    expect(historyStack).toHaveLength(2);
+
     act(() => {
       rerender({ handler: undefined });
     });
 
-    expect(window.history.back).not.toHaveBeenCalled();
-    expect(historyStack).toHaveLength(2);
-    expect(historyStack[1]?.state).toEqual({ idx: 0 });
+    expect(window.history.back).toHaveBeenCalledTimes(1);
+    // cleanup popstate는 ignoreNextPopRef로 무시되어 onBack은 실행 안 됨
+    expect(onBack).not.toHaveBeenCalled();
+    expect(currentIndex).toBe(0);
   });
 
-  it("cleanup 직후 새 onBack arming이 즉시 synthetic entry를 추가한다", () => {
+  it("cleanup back 완료 후 새 onBack이 다시 synthetic entry를 추가한다", () => {
     const firstBack = vi.fn();
     const secondBack = vi.fn();
 
@@ -104,16 +108,25 @@ describe("useMobileBackGuard", () => {
       rerender({ handler: undefined });
     });
 
+    // back()이 popstate를 동기적으로 dispatch → ignoreNextPopRef 초기화 완료
+    expect(window.history.back).toHaveBeenCalledTimes(1);
+    expect(firstBack).not.toHaveBeenCalled();
+
     act(() => {
       rerender({ handler: secondBack });
     });
 
-    expect(firstBack).not.toHaveBeenCalled();
-    expect(window.history.back).not.toHaveBeenCalled();
-    expect(historyStack).toHaveLength(3);
-    expect(currentIndex).toBe(2);
-    expect(historyStack[2]?.state).toMatchObject({
+    // cleanup popstate로 돌아온 entry(0)부터 push → 새 synthetic entry
+    expect(historyStack).toHaveLength(2);
+    expect(currentIndex).toBe(1);
+    expect(historyStack[1]?.state).toMatchObject({
       [MOBILE_BACK_HISTORY_STATE_KEY]: true,
     });
+
+    act(() => {
+      window.history.back();
+    });
+
+    expect(secondBack).toHaveBeenCalledTimes(1);
   });
 });
