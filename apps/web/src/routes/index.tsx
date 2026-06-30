@@ -87,6 +87,7 @@ import {
 import { applyVoteOverlayToLockerDetail } from "#/features/search/lib/apply-vote-overlay";
 import type { ResolveNavigationOriginResult } from "#/features/search/lib/navigation-platform-links";
 import {
+  createLockerCanonicalUrl,
   createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
   createLockerPinAt,
@@ -266,6 +267,10 @@ export const Route = createFileRoute("/")({
         minPrice != null
           ? m.seo_locker_detail_price_text({ price: minPrice.toLocaleString() })
           : m.seo_locker_detail_price_unknown();
+      const canonicalUrl = createLockerCanonicalUrl({
+        lockerId: detail.lockerId,
+        title: detail.title ?? undefined,
+      });
 
       return {
         meta: [
@@ -291,6 +296,16 @@ export const Route = createFileRoute("/")({
               address,
               priceText,
             }),
+          },
+          {
+            property: "og:url",
+            content: canonicalUrl,
+          },
+        ],
+        links: [
+          {
+            rel: "canonical",
+            href: canonicalUrl,
           },
         ],
       };

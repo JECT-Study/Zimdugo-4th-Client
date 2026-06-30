@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createLockerCanonicalUrl,
   createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
   createLockerShareText,
@@ -44,6 +45,20 @@ describe("createLockerDeepLinkUrl", () => {
     expect(shareUrl).toContain("%EA%B0%95%EB%82%A8%EC%97%AD");
     expect(decodeURIComponent(new URL(shareUrl).search)).toBe(
       "?\u006C\u006F\u0063\u006B\u0065\u0072=515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C-B1\uCE35-ES-34-\uD558\uB2E8",
+    );
+  });
+});
+
+describe("createLockerCanonicalUrl", () => {
+  it("creates an absolute canonical locker URL without search context params", () => {
+    expect(
+      createLockerCanonicalUrl({
+        lockerId: 515,
+        title:
+          "\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C B1\uCE35 ES-34 \uD558\uB2E8",
+      }),
+    ).toBe(
+      "https://zimdugo.com/?locker=515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5-ES-34-%ED%95%98%EB%8B%A8",
     );
   });
 });
