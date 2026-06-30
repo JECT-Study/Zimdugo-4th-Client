@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ClientDocumentResponse } from "#/shared/api/documents";
 import type { SeoLockerItem } from "#/shared/api/lockers";
 import { SITE_ORIGIN, SITE_SITEMAP_URL } from "#/shared/lib/site-url";
 import { createSitemapXml } from "./sitemap";
@@ -16,6 +17,16 @@ const SEO_LOCKERS: SeoLockerItem[] = [
   },
 ];
 
+const NOTICES: ClientDocumentResponse[] = [
+  {
+    id: 12,
+    type: "NOTICE",
+    title: "Service notice",
+    appliedAt: "2026-01-01",
+    sections: [],
+  },
+];
+
 describe("SITE URL constants", () => {
   it("uses the production domain for sitemap discovery", () => {
     expect(SITE_ORIGIN).toBe("https://zimdugo.com");
@@ -25,10 +36,13 @@ describe("SITE URL constants", () => {
 
 describe("createSitemapXml", () => {
   it("creates sitemap locations with the production domain only", () => {
-    const xml = createSitemapXml(SEO_LOCKERS);
+    const xml = createSitemapXml(SEO_LOCKERS, NOTICES);
 
     expect(xml).toContain("<loc>https://zimdugo.com</loc>");
-    expect(xml).toContain("<loc>https://zimdugo.com/en/settings/privacy</loc>");
+    expect(xml).toContain("<loc>https://zimdugo.com/en/notices</loc>");
+    expect(xml).toContain("<loc>https://zimdugo.com/notices/12</loc>");
+    expect(xml).not.toContain("/settings/terms");
+    expect(xml).not.toContain("/settings/privacy");
     expect(xml).toContain("https://zimdugo.com/?locker=515-");
     expect(xml).toContain("https://zimdugo.com/en/?locker=515-");
     expect(xml).not.toContain("zimdugo-web.vercel.app");

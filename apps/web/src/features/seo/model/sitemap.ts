@@ -1,4 +1,5 @@
 import { createLockerDeepLinkSlug } from "#/features/search/lib/open-locker-deep-link";
+import type { ClientDocumentResponse } from "#/shared/api/documents";
 import type { SeoLockerItem } from "#/shared/api/lockers";
 import {
   SEO_LOCALE_PREFIXES,
@@ -6,12 +7,7 @@ import {
   SITE_ORIGIN,
 } from "#/shared/lib/site-url";
 
-const STATIC_SITEMAP_PATHS = [
-  "",
-  "/settings/terms",
-  "/settings/privacy",
-  "/settings/notices",
-] as const;
+const STATIC_SITEMAP_PATHS = ["", "/notices"] as const;
 
 const escapeXml = (value: string): string =>
   value
@@ -57,7 +53,13 @@ const createLockerUrl = (
 const getHrefLang = (localePrefix: SeoLocalePrefix): string =>
   localePrefix === "" ? "ko" : localePrefix.slice(1);
 
-export const createSitemapXml = (seoLockers: SeoLockerItem[]): string => {
+const createNoticeUrl = (notice: ClientDocumentResponse): string =>
+  `${SITE_ORIGIN}/notices/${notice.id}`;
+
+export const createSitemapXml = (
+  seoLockers: SeoLockerItem[],
+  notices: ClientDocumentResponse[] = [],
+): string => {
   const lines = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
@@ -108,6 +110,15 @@ export const createSitemapXml = (seoLockers: SeoLockerItem[]): string => {
 
       lines.push("  </url>");
     }
+  }
+
+  for (const notice of notices) {
+    lines.push(
+      "  <url>",
+      `    <loc>${escapeXml(createNoticeUrl(notice))}</loc>`,
+      "    <priority>0.6</priority>",
+      "  </url>",
+    );
   }
 
   lines.push("</urlset>");
