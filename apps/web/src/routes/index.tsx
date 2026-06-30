@@ -77,7 +77,6 @@ import {
   useLockerSearch,
   usePlaceLockers,
 } from "#/features/search/hooks/useSearch";
-import { useMobileBackGuard } from "#/features/search/hooks/useMobileBackGuard";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import { useVoteLockerSession } from "#/features/search/hooks/useVoteLockerSession";
 import {
@@ -156,7 +155,6 @@ import {
   type MapDetailBack,
   type OverlayReturnContext,
   resolveActivePlaceId,
-  resolveMobileBackAction,
   resolveOverlayReturnContext,
   resolveSearchBarBackAction,
   type SearchDetailBackTarget,
@@ -2345,38 +2343,12 @@ export function IndexPage() {
             : searchBarBackAction === "searchKeywordList"
               ? resetSearchContext
               : undefined;
-  const handleCloseNavigationPopupForMobileBack = useCallback(() => {
-    setIsNavigationPopupOpen(false);
-  }, []);
-  const handleCloseSearchOverlayForMobileBack = useCallback(() => {
-    handleCloseSearch();
-  }, [handleCloseSearch]);
-  const mobileBackAction = resolveMobileBackAction({
-    context,
-    hasSelectedMapPin: pinSelectedInAppRef.current,
-    isNavigationPopupOpen,
-    isSearchOpen,
-    listKind,
-    mapDetailBack,
-    sheetMode,
-    searchDetailBack,
-  });
-  const mobileBackPress =
-    mobileBackAction === null
-      ? undefined
-      : mobileBackAction === "navigationPopup"
-        ? handleCloseNavigationPopupForMobileBack
-        : mobileBackAction === "searchOverlay"
-          ? handleCloseSearchOverlayForMobileBack
-          : searchBarBackPress;
   const listSheetDismissPress =
     searchBarBackAction === "mapPlaceList"
       ? handleBackFromMapPlaceSheet
       : searchBarBackAction === "searchPlaceList"
         ? handleBackToKeywordList
         : resetSearchContext;
-
-  useMobileBackGuard(mobileBackPress);
 
   useEffect(() => {
     if (sheetMode !== "detail" || !lockerDetail) {
