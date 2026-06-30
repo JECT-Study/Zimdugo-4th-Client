@@ -38,6 +38,7 @@ import {
   reportPageLoadingShellStyle,
   reportPageVisibleContentStyle,
 } from "#/features/report/ui/report-page-fallback";
+import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useAuthStore } from "#/shared/store/authStore";
 
 const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
@@ -58,6 +59,7 @@ const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
 ];
 
 export const Route = createFileRoute("/report")({
+  head: createNoIndexNoFollowHead,
   beforeLoad: ({ location, preload }) => {
     if (!useAuthStore.getState().isAuthenticated) {
       if (typeof window !== "undefined" && !preload) {

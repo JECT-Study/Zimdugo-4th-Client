@@ -18,6 +18,7 @@ import { useReportHistoryList } from "#/features/my/hooks/useReportHistoryList";
 import { formatReportListDetailText } from "#/features/my/lib/format-report-list-labels";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { summaryText } from "#/features/my/ui/my-list.css.ts";
+import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { getMyLockerReportDetail } from "#/shared/api/my-page";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
@@ -40,6 +41,7 @@ import {
 import { requireAuthenticatedMyRoute } from "./-my-auth";
 
 export const Route = createFileRoute("/my/reports")({
+  head: createNoIndexNoFollowHead,
   beforeLoad: requireAuthenticatedMyRoute,
   component: MyReportsPage,
 });

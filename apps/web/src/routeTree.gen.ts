@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MyRouteImport } from './routes/my'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,7 @@ import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
 import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
 import { Route as SettingsLanguageRouteImport } from './routes/settings.language'
+import { Route as NoticesNoticeIdRouteImport } from './routes/notices.$noticeId'
 import { Route as MyReportsRouteImport } from './routes/my.reports'
 import { Route as MyFavoritesRouteImport } from './routes/my.favorites'
 
@@ -35,6 +37,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticesRoute = NoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyRoute = MyRouteImport.update({
@@ -72,6 +79,11 @@ const SettingsLanguageRoute = SettingsLanguageRouteImport.update({
   path: '/language',
   getParentRoute: () => SettingsRoute,
 } as any)
+const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
+  id: '/$noticeId',
+  path: '/$noticeId',
+  getParentRoute: () => NoticesRoute,
+} as any)
 const MyReportsRoute = MyReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -87,11 +99,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRouteWithChildren
+  '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/my/favorites': typeof MyFavoritesRoute
   '/my/reports': typeof MyReportsRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
@@ -101,11 +115,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRouteWithChildren
+  '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/my/favorites': typeof MyFavoritesRoute
   '/my/reports': typeof MyReportsRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
@@ -116,11 +132,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRouteWithChildren
+  '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/my/favorites': typeof MyFavoritesRoute
   '/my/reports': typeof MyReportsRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
@@ -132,11 +150,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/my'
+    | '/notices'
     | '/report'
     | '/settings'
     | '/sitemap.xml'
     | '/my/favorites'
     | '/my/reports'
+    | '/notices/$noticeId'
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
@@ -146,11 +166,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/my'
+    | '/notices'
     | '/report'
     | '/settings'
     | '/sitemap.xml'
     | '/my/favorites'
     | '/my/reports'
+    | '/notices/$noticeId'
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
@@ -160,11 +182,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/my'
+    | '/notices'
     | '/report'
     | '/settings'
     | '/sitemap.xml'
     | '/my/favorites'
     | '/my/reports'
+    | '/notices/$noticeId'
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
@@ -175,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   MyRoute: typeof MyRouteWithChildren
+  NoticesRoute: typeof NoticesRouteWithChildren
   ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -201,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notices': {
+      id: '/notices'
+      path: '/notices'
+      fullPath: '/notices'
+      preLoaderRoute: typeof NoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my': {
@@ -252,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsLanguageRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/notices/$noticeId': {
+      id: '/notices/$noticeId'
+      path: '/$noticeId'
+      fullPath: '/notices/$noticeId'
+      preLoaderRoute: typeof NoticesNoticeIdRouteImport
+      parentRoute: typeof NoticesRoute
+    }
     '/my/reports': {
       id: '/my/reports'
       path: '/reports'
@@ -281,6 +320,17 @@ const MyRouteChildren: MyRouteChildren = {
 
 const MyRouteWithChildren = MyRoute._addFileChildren(MyRouteChildren)
 
+interface NoticesRouteChildren {
+  NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
+}
+
+const NoticesRouteChildren: NoticesRouteChildren = {
+  NoticesNoticeIdRoute: NoticesNoticeIdRoute,
+}
+
+const NoticesRouteWithChildren =
+  NoticesRoute._addFileChildren(NoticesRouteChildren)
+
 interface SettingsRouteChildren {
   SettingsLanguageRoute: typeof SettingsLanguageRoute
   SettingsNoticesRoute: typeof SettingsNoticesRoute
@@ -303,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   MyRoute: MyRouteWithChildren,
+  NoticesRoute: NoticesRouteWithChildren,
   ReportRoute: ReportRoute,
   SettingsRoute: SettingsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

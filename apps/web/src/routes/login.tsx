@@ -1,25 +1,37 @@
+import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
 import { createFileRoute, redirect, useSearch } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
-import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
-import { SocialLoginStack } from "#/features/auth/sign-in/ui/social-login-stack/SocialLoginStack";
 import { LoginPageSkeleton } from "#/features/auth/sign-in/ui/LoginPageSkeleton";
 import {
   loginLogoInlineFallbackStyle,
   loginPageInlineFallbackStyle,
   loginStackInlineFallbackStyle,
 } from "#/features/auth/sign-in/ui/login-page-fallback";
+import { SocialLoginStack } from "#/features/auth/sign-in/ui/social-login-stack/SocialLoginStack";
 import { useLoginPageStyleReady } from "#/features/auth/sign-in/ui/useLoginPageStyleReady";
+import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useAuthStore } from "#/shared/store/authStore";
 import { loginStack, logo, page } from "./-login.css.ts";
 
 export const Route = createFileRoute("/login")({
+  head: createNoIndexNoFollowHead,
   beforeLoad: ({ search }) => {
     // 이미 로그인된 사용자가 명시적으로 /login에 접근하면 리다이렉트
     // SSR 환경에서는 Zustand persist(로컬스토리지/쿠키) 상태를 서버에서 즉시 읽기 어려우므로 일단 가드를 통과시킵니다.
     // TODO: 추후 2번 방식(HttpOnly 쿠키 직접 확인) 적용 시, 서버(SSR) 컨텍스트에서 헤더를 읽어 isAuthenticated를 판단하도록 개선 필요
-    if (typeof window !== "undefined" && useAuthStore.getState().isAuthenticated) {
-      let safePath = (search as Record<string, any>).returnPath as string | undefined;
-      if (!safePath || !safePath.startsWith("/") || safePath.startsWith("//") || safePath.includes("://")) {
+    if (
+      typeof window !== "undefined" &&
+      useAuthStore.getState().isAuthenticated
+    ) {
+      let safePath = (search as Record<string, any>).returnPath as
+        | string
+        | undefined;
+      if (
+        !safePath ||
+        !safePath.startsWith("/") ||
+        safePath.startsWith("//") ||
+        safePath.includes("://")
+      ) {
         safePath = "/";
       }
       throw redirect({
