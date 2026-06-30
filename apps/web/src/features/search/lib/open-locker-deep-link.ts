@@ -1,5 +1,5 @@
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
-import type { AppLocale } from "#/shared/i18n/locales";
+import { type AppLocale, BASE_LOCALE } from "#/shared/i18n/locales";
 import { SITE_ORIGIN } from "#/shared/lib/site-url";
 
 export type LockerDetailSnap = "full" | "half";
@@ -18,9 +18,12 @@ export interface LockerDeepLinkSlugInput {
 
 export interface LockerDeepLinkUrlInput extends LockerDeepLinkSlugInput {
   origin: string;
+  locale?: AppLocale;
 }
 
-export type LockerCanonicalUrlInput = LockerDeepLinkSlugInput;
+export interface LockerCanonicalUrlInput extends LockerDeepLinkSlugInput {
+  locale?: AppLocale;
+}
 
 export interface LockerShareTextInput {
   locale: AppLocale;
@@ -93,8 +96,10 @@ export const createLockerDeepLinkUrl = ({
   origin,
   lockerId,
   title,
+  locale,
 }: LockerDeepLinkUrlInput): string => {
-  const url = new URL("/", origin);
+  const pathname = locale && locale !== BASE_LOCALE ? `/${locale}` : "/";
+  const url = new URL(pathname, origin);
   url.searchParams.set("locker", createLockerDeepLinkSlug({ lockerId, title }));
 
   return url.toString();
@@ -103,11 +108,13 @@ export const createLockerDeepLinkUrl = ({
 export const createLockerCanonicalUrl = ({
   lockerId,
   title,
+  locale,
 }: LockerCanonicalUrlInput): string =>
   createLockerDeepLinkUrl({
     origin: SITE_ORIGIN,
     lockerId,
     title,
+    locale,
   });
 
 const LOCKER_SHARE_TEXT_BY_LOCALE = {
