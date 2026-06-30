@@ -133,16 +133,19 @@ import {
   type SearchSelectionState,
 } from "#/features/search/model/search-selection";
 import {
-  readSearchFilterParams,
   readSearchPlaceIdParam,
   readSearchQueryParam,
   type SearchUrlParams,
   withLockerDetailParam,
   withoutSearchContextParams,
-  withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
 } from "#/features/search/model/search-url-state";
+import {
+  clearSearchFiltersFromSession,
+  loadSearchFiltersFromSession,
+  saveSearchFiltersToSession,
+} from "#/features/search/model/search-filter-session";
 import {
   type AppMapContext,
   createKeywordDetailBackTarget,
@@ -215,9 +218,6 @@ export const Route = createFileRoute("/")({
     focusLng?: number;
     q?: string;
     searchPlaceId?: number;
-    filterSizes?: string;
-    filterIndoorOutdoor?: string;
-    filterPlaceTypes?: string;
   } => {
     const safeSearch = search || {};
     const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
@@ -226,16 +226,11 @@ export const Route = createFileRoute("/")({
       lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
     const q = readSearchQueryParam(safeSearch.q);
     const searchPlaceId = readSearchPlaceIdParam(safeSearch.searchPlaceId);
-    const filterParams = withSearchFilterParams(
-      {},
-      readSearchFilterParams(safeSearch),
-    );
     return {
       ...parsed,
       locker,
       q,
       searchPlaceId,
-      ...filterParams,
     };
   },
   loader: async ({ search }: any) => {
@@ -328,20 +323,6 @@ export function IndexPage() {
   const searchQueryFromUrl =
     typeof search.q === "string" ? search.q : undefined;
   const searchPlaceIdFromUrl = readSearchPlaceIdParam(search.searchPlaceId);
-  const {
-    filterIndoorOutdoor: filterIndoorOutdoorFromUrl,
-    filterPlaceTypes: filterPlaceTypesFromUrl,
-    filterSizes: filterSizesFromUrl,
-  } = search;
-  const searchFiltersFromUrl = useMemo(
-    () =>
-      readSearchFilterParams({
-        filterIndoorOutdoor: filterIndoorOutdoorFromUrl,
-        filterPlaceTypes: filterPlaceTypesFromUrl,
-        filterSizes: filterSizesFromUrl,
-      }),
-    [filterIndoorOutdoorFromUrl, filterPlaceTypesFromUrl, filterSizesFromUrl],
-  );
   const hasSearchPlaceEntry =
     searchPlaceIdFromUrl !== undefined && !hasExplicitLockerEntry;
   const hasSearchQueryEntry =
@@ -422,17 +403,9 @@ export function IndexPage() {
     },
     [navigate, searchPlaceIdFromUrl, searchQueryFromUrl],
   );
-  const syncSearchFilterUrl = useCallback(
-    (
-      filters: SearchFilterAppliedState,
-      options: { replace?: boolean } = {},
-    ) => {
-      void navigate({
-        to: ".",
-        search: (prev: SearchUrlParams) =>
-          withSearchFilterParams(prev, filters),
-        replace: options.replace,
-      });
+  const syncSearchFilterSession = useCallback(
+    (filters: SearchFilterAppliedState) => {
+      saveSearchFiltersToSession(filters);
     },
     [navigate],
   );
@@ -477,8 +450,14 @@ export function IndexPage() {
   const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
     useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
-    () => searchFiltersFromUrl,
+    createDefaultSearchFilters,
   );
+  useEffect(() => {
+    const stored = loadSearchFiltersFromSession();
+    if (stored.sizeActive || stored.regionActive || stored.placeTypeActive) {
+      setSearchFilters(stored);
+    }
+  }, []);
   const [sheetMode, setSheetMode] = useState<SheetModeForContext>(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) return "detail";
     if (hasSearchQueryEntry) return "list";
@@ -583,42 +562,25 @@ export function IndexPage() {
       searchPlaceIdFromUrl !== undefined
         ? String(searchPlaceIdFromUrl)
         : undefined;
-    const urlSearchParams = new URLSearchParams(window.location.search);
-    const rawFilterSizes = urlSearchParams.get("filterSizes") ?? undefined;
-    const rawFilterIndoorOutdoor =
-      urlSearchParams.get("filterIndoorOutdoor") ?? undefined;
-    const rawFilterPlaceTypes =
-      urlSearchParams.get("filterPlaceTypes") ?? undefined;
-    const normalizedFilterParams = withSearchFilterParams(
-      {},
-      searchFiltersFromUrl,
-    );
 
     if (
       (rawSearchQueryFromUrl !== undefined &&
         rawSearchQueryFromUrl !== searchQueryFromUrl) ||
       (rawSearchPlaceIdFromUrl !== undefined &&
-        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl) ||
-      rawFilterSizes !== normalizedFilterParams.filterSizes ||
-      rawFilterIndoorOutdoor !== normalizedFilterParams.filterIndoorOutdoor ||
-      rawFilterPlaceTypes !== normalizedFilterParams.filterPlaceTypes
+        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl)
     ) {
       void navigate({
         to: ".",
         search: (prev: SearchUrlParams) =>
-          withSearchFilterParams(
-            withSearchPlaceIdParam(
-              withSearchQueryParam(prev, searchQueryFromUrl),
-              searchPlaceIdFromUrl,
-            ),
-            searchFiltersFromUrl,
+          withSearchPlaceIdParam(
+            withSearchQueryParam(prev, searchQueryFromUrl),
+            searchPlaceIdFromUrl,
           ),
         replace: true,
       });
     }
   }, [
     navigate,
-    searchFiltersFromUrl,
     searchPlaceIdFromUrl,
     searchQueryFromUrl,
   ]);
@@ -698,9 +660,6 @@ export function IndexPage() {
     setIsSearchOpen,
   ]);
 
-  useEffect(() => {
-    setSearchFilters(searchFiltersFromUrl);
-  }, [searchFiltersFromUrl]);
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
@@ -1060,6 +1019,7 @@ export function IndexPage() {
     setSelectedMapPinOffset(null);
     setMapDetailBack(null);
     setSearchFilters(createDefaultSearchFilters());
+    clearSearchFiltersFromSession();
     setIsNavigationPopupOpen(false);
     setSheetMode("idle");
     setContext("idle");
@@ -1073,21 +1033,18 @@ export function IndexPage() {
     void navigate({
       to: ".",
       search: (prev: SearchUrlParams) => {
-        const next = withSearchFilterParams(
-          withoutSearchContextParams(prev),
-          createDefaultSearchFilters(),
-        );
+        const next = withoutSearchContextParams(prev);
         delete next.locker;
         delete next.openLockerId;
         delete next.detailSnap;
         delete next.focusLat;
         delete next.focusLng;
-        delete next.searchPlaceId;
         return next;
       },
     });
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
+    clearSearchFiltersFromSession();
     setListKind(null);
     setSearchPlaceId(null);
     setSearchDetailBack(null);
@@ -2348,16 +2305,16 @@ export function IndexPage() {
   const handleResetSearchFilter = useCallback(() => {
     const defaultFilters = createDefaultSearchFilters();
     setSearchFilters(defaultFilters);
-    syncSearchFilterUrl(defaultFilters);
-  }, [syncSearchFilterUrl]);
+    clearSearchFiltersFromSession();
+  }, []);
 
   const handleApplySearchFilter = useCallback(
     (filters: SearchFilterAppliedState) => {
       setSearchFilters(filters);
-      syncSearchFilterUrl(filters);
+      syncSearchFilterSession(filters);
       setSheetMode("list");
     },
-    [setSheetMode, syncSearchFilterUrl],
+    [setSheetMode, syncSearchFilterSession],
   );
 
   const searchBarBackAction = resolveSearchBarBackAction({
