@@ -177,3 +177,11 @@ export const withoutSearchContextParams = (
 
   return next;
 };
+
+export const withLockerDetailParam = (
+  params: SearchUrlParams,
+  lockerSlug: string,
+): SearchUrlParams => ({
+  ...params,
+  locker: lockerSlug,
+});

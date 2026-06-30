@@ -3,6 +3,7 @@ import {
   readSearchFilterParams,
   readSearchPlaceIdParam,
   readSearchQueryParam,
+  withLockerDetailParam,
   withoutSearchContextParams,
   withSearchFilterParams,
   withSearchPlaceIdParam,
@@ -143,6 +144,24 @@ describe("search-url-state", () => {
     ).toEqual({
       locker: "1-coex-locker",
       detailSnap: "full",
+    });
+  });
+
+  it("adds locker detail param while preserving search context params", () => {
+    expect(
+      withLockerDetailParam(
+        {
+          q: "coex",
+          searchPlaceId: 7,
+          filterSizes: "S",
+        },
+        "123-coex-locker",
+      ),
+    ).toEqual({
+      q: "coex",
+      searchPlaceId: 7,
+      filterSizes: "S",
+      locker: "123-coex-locker",
     });
   });
 });

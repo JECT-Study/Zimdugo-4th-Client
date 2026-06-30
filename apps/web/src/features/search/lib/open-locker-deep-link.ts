@@ -14,6 +14,10 @@ export interface LockerDeepLinkSlugInput {
   title?: string;
 }
 
+export interface LockerDeepLinkUrlInput extends LockerDeepLinkSlugInput {
+  origin: string;
+}
+
 const parsePositiveInt = (raw: unknown): number | undefined => {
   const parsed =
     typeof raw === "number"
@@ -72,6 +76,17 @@ export const createLockerDeepLinkSlug = ({
     : "";
 
   return cleanName ? `${lockerId}-${cleanName}` : String(lockerId);
+};
+
+export const createLockerDeepLinkUrl = ({
+  origin,
+  lockerId,
+  title,
+}: LockerDeepLinkUrlInput): string => {
+  const url = new URL("/", origin);
+  url.searchParams.set("locker", createLockerDeepLinkSlug({ lockerId, title }));
+
+  return url.toString();
 };
 
 export const createLockerPinAt = (

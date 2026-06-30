@@ -88,6 +88,7 @@ import { applyVoteOverlayToLockerDetail } from "#/features/search/lib/apply-vote
 import type { ResolveNavigationOriginResult } from "#/features/search/lib/navigation-platform-links";
 import {
   createLockerDeepLinkSlug,
+  createLockerDeepLinkUrl,
   createLockerPinAt,
   type LockerDetailSnap,
   parseOpenLockerDeepLinkSearch,
@@ -136,6 +137,7 @@ import {
   readSearchQueryParam,
   type SearchUrlParams,
   withoutSearchContextParams,
+  withLockerDetailParam,
   withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
@@ -1356,11 +1358,8 @@ export function IndexPage() {
         to: ".",
         search: (prev: SearchUrlParams) =>
           String(prev.locker ?? "") === lockerSlug
-            ? withoutSearchContextParams(prev)
-            : {
-                ...withoutSearchContextParams(prev),
-                locker: lockerSlug,
-              },
+            ? prev
+            : withLockerDetailParam(prev, lockerSlug),
         replace: options?.replace,
       });
     },
@@ -2089,8 +2088,7 @@ export function IndexPage() {
         setSearchPlaceId(id);
         void navigate({
           to: ".",
-          search: (prev: SearchUrlParams) =>
-            withSearchPlaceIdParam(withSearchQueryParam(prev, null), id),
+          search: (prev: SearchUrlParams) => withSearchPlaceIdParam(prev, id),
         });
         setActiveLockerId(null);
         setSearchDetailBack(null);
@@ -2175,16 +2173,11 @@ export function IndexPage() {
       return;
     }
 
-    const url = new URL("/", window.location.origin);
-    url.searchParams.set(
-      "locker",
-      createLockerDeepLinkSlug({
-        lockerId: item.lockerId,
-        title: item.title,
-      }),
-    );
-
-    const shareUrl = url.toString();
+    const shareUrl = createLockerDeepLinkUrl({
+      origin: window.location.origin,
+      lockerId: item.lockerId,
+      title: item.title,
+    });
     const shareData = {
       title: item.title,
       text: item.address,
