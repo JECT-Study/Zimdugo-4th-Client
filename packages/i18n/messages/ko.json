@@ -306,6 +306,7 @@
   "locker_detail_back_aria": "뒤로가기",
   "locker_detail_summary_aria": "보관함 요약 정보",
   "locker_detail_share_aria": "공유하기",
+  "locker_detail_share_copied": "보관함 정보를 복사했어요",
   "locker_detail_navigate": "길찾기",
   "locker_detail_no_image_title": "아직 이미지가 없어요.",
   "locker_detail_no_image_helper": "제보하기를 통해 등록할 수 있어요!",

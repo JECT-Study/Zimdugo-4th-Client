@@ -306,6 +306,7 @@
   "locker_detail_back_aria": "戻る",
   "locker_detail_summary_aria": "ロッカー概要",
   "locker_detail_share_aria": "共有",
+  "locker_detail_share_copied": "ロッカー情報をコピーしました",
   "locker_detail_navigate": "ルート",
   "locker_detail_no_image_title": "まだ画像がありません。",
   "locker_detail_no_image_helper": "報告から登録できます！",

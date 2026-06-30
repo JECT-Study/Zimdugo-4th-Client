@@ -239,3 +239,21 @@ globalStyle(".map-marker-offset-wrapper", {
   position: "relative",
   transformOrigin: "center center",
 });
+
+export const shareCopyToast = style({
+  position: "fixed",
+  bottom: `calc(env(safe-area-inset-bottom, 0px) + ${vars.layout.bottomNav} + ${vars.spacing[16]})`,
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 1200,
+  padding: `${vars.spacing[12]} ${vars.spacing[20]}`,
+  borderRadius: vars.radius[24],
+  backgroundColor: vars.color.palette.gray[800],
+  color: vars.color.text.white,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.4,
+  whiteSpace: "nowrap",
+  pointerEvents: "none",
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
+});

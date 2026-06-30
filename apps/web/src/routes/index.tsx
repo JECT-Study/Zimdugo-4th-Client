@@ -183,6 +183,7 @@ import {
   refreshLoadingBackdrop,
   refreshLoadingOverlay,
   refreshLoadingSpinner,
+  shareCopyToast,
 } from "./-index.css";
 import {
   shouldShowHomeSearchBar,
@@ -354,6 +355,15 @@ export function IndexPage() {
   );
   const [mapRemountKey, setMapRemountKey] = useState(0);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const shareCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (shareCopiedTimerRef.current !== null) {
+        clearTimeout(shareCopiedTimerRef.current);
+      }
+    };
+  }, []);
   const [lockerDetailAnimatesOnMount, setLockerDetailAnimatesOnMount] =
     useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
@@ -2221,7 +2231,7 @@ export function IndexPage() {
       }),
     };
 
-    const copyShareUrl = () => {
+    const copyShareText = () => {
       if (!navigator.clipboard) {
         console.error(
           "Failed to copy locker detail URL: Clipboard API is not supported",
@@ -2229,7 +2239,16 @@ export function IndexPage() {
         return;
       }
 
-      void navigator.clipboard.writeText(shareUrl).catch((error) => {
+      void navigator.clipboard.writeText(shareData.text).then(() => {
+        if (shareCopiedTimerRef.current !== null) {
+          clearTimeout(shareCopiedTimerRef.current);
+        }
+        setShareCopied(true);
+        shareCopiedTimerRef.current = setTimeout(() => {
+          setShareCopied(false);
+          shareCopiedTimerRef.current = null;
+        }, 2000);
+      }).catch((error) => {
         console.error("Failed to copy locker detail URL:", error);
       });
     };
@@ -2241,13 +2260,13 @@ export function IndexPage() {
         }
 
         console.error("Failed to share locker detail:", error);
-        copyShareUrl();
+        copyShareText();
       });
       return;
     }
 
-    copyShareUrl();
-  }, []);
+    copyShareText();
+  }, [setShareCopied]);
 
   const navigationKnownLocation = useMemo(
     () => (permission === "granted" && location ? location : null),
@@ -3027,6 +3046,12 @@ export function IndexPage() {
           onRemoveRecent={removeSearchHistory}
           onClearRecent={clearSearchHistory}
         />
+      ) : null}
+
+      {shareCopied ? (
+        <div className={shareCopyToast} role="status" aria-live="polite">
+          {m.locker_detail_share_copied()}
+        </div>
       ) : null}
     </main>
   );
