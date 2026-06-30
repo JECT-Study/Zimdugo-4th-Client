@@ -1399,7 +1399,7 @@ export function IndexPage() {
       // replace: true로 이전 URL 엔트리를 교체해 history에 locker 엔트리가 중복 쌓이지 않도록 합니다.
       // 이렇게 해야 상세 닫힌 후 back으로 상세가 재오픈되는 현상을 막습니다.
       if (options?.syncUrl !== false) {
-        syncLockerDetailUrl(lockerId, optimisticDetail?.title, { replace: true });
+        syncLockerDetailUrl(lockerId, optimisticDetail?.title);
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
@@ -1722,7 +1722,7 @@ export function IndexPage() {
       options?: { searchDetailBack?: SearchDetailBackTarget | null },
     ) => {
       clearPendingLockerDetailOpen();
-      syncLockerDetailUrl(lockerId, detail?.title, { replace: true });
+      syncLockerDetailUrl(lockerId, detail?.title);
 
       if (!shouldDelay) {
         openLockerDetailById(lockerId, detail, {
@@ -2229,7 +2229,7 @@ export function IndexPage() {
     setIsNavigationPopupOpen(isOpen);
   }, []);
 
-  const handleBackFromDetail = useCallback(() => {
+  const restoreSheetAfterDetailDismiss = useCallback(() => {
     const willResetMapContext = context === "map" && mapDetailBack === "idle";
 
     if (!willResetMapContext) {
@@ -2247,31 +2247,11 @@ export function IndexPage() {
     if (context === "map") {
       if (mapDetailBack === "idle") {
         resetMapContext();
-        if (search.locker) {
-          void navigate({
-            to: ".",
-            search: (prev: any) => {
-              const { locker, ...rest } = prev;
-              return rest as any;
-            },
-            replace: true,
-          });
-        }
-        return;
+        return "mapIdle" as const;
       }
 
       setSheetMode("list");
-      if (search.locker) {
-        void navigate({
-          to: ".",
-          search: (prev: any) => {
-            const { locker, ...rest } = prev;
-            return rest as any;
-          },
-          replace: true,
-        });
-      }
-      return;
+      return "mapPlaceList" as const;
     }
 
     if (searchDetailBack) {
@@ -2280,16 +2260,7 @@ export function IndexPage() {
     }
 
     setSheetMode("list");
-    if (search.locker) {
-      void navigate({
-        to: ".",
-        search: (prev: any) => {
-          const { locker, ...rest } = prev;
-          return rest as any;
-        },
-        replace: true,
-      });
-    }
+    return "searchList" as const;
   }, [
     context,
     flushLockerSheetMutations,
@@ -2299,9 +2270,35 @@ export function IndexPage() {
     setListKind,
     setSearchPlaceId,
     setSheetMode,
-    search.locker,
-    navigate,
   ]);
+
+  const handleBackFromDetail = useCallback(() => {
+    if (search.locker) {
+      window.history.back();
+      return;
+    }
+
+    restoreSheetAfterDetailDismiss();
+  }, [restoreSheetAfterDetailDismiss, search.locker]);
+
+  const prevLockerIdFromUrlRef = useRef(lockerIdFromQuery);
+
+  useEffect(() => {
+    const previousLockerId = prevLockerIdFromUrlRef.current;
+    prevLockerIdFromUrlRef.current = lockerIdFromQuery;
+
+    if (previousLockerId === lockerIdFromQuery) {
+      return;
+    }
+
+    if (
+      previousLockerId != null &&
+      lockerIdFromQuery == null &&
+      sheetMode === "detail"
+    ) {
+      restoreSheetAfterDetailDismiss();
+    }
+  }, [lockerIdFromQuery, restoreSheetAfterDetailDismiss, sheetMode]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
     resetMapContext();

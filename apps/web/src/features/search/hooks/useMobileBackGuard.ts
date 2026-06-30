@@ -7,6 +7,35 @@ const isSyntheticEntry = (state: unknown): boolean =>
   state !== null &&
   (state as Record<string, unknown>)[MOBILE_BACK_HISTORY_STATE_KEY] === true;
 
+const buildSyntheticHistoryState = (): Record<string, unknown> => {
+  const currentState = window.history.state;
+
+  if (typeof currentState !== "object" || currentState === null) {
+    return { [MOBILE_BACK_HISTORY_STATE_KEY]: true };
+  }
+
+  const { key: _routerKey, [MOBILE_BACK_HISTORY_STATE_KEY]: _, ...rest } =
+    currentState as Record<string, unknown>;
+
+  return {
+    ...rest,
+    [MOBILE_BACK_HISTORY_STATE_KEY]: true,
+  };
+};
+
+const stripSyntheticHistoryState = (state: unknown): unknown => {
+  if (typeof state !== "object" || state === null) {
+    return state;
+  }
+
+  const { [MOBILE_BACK_HISTORY_STATE_KEY]: _, ...rest } = state as Record<
+    string,
+    unknown
+  >;
+
+  return Object.keys(rest).length > 0 ? rest : null;
+};
+
 /**
  * 모바일 하드웨어/브라우저 back 입력을 가로채 transient UI를 먼저 닫습니다.
  *
@@ -14,8 +43,8 @@ const isSyntheticEntry = (state: unknown): boolean =>
  *   사용자가 back을 누르면 popstate가 발생하고 onBack이 실행됩니다.
  * - onBack이 없어지면 현재 entry가 synthetic인 경우 replaceState로 키를 제거합니다.
  *   history.back() 대신 replaceState를 사용해 popstate를 발생시키지 않으므로
- *   TanStack Router와의 routing loop를 방지합니다.
- * - pushState state는 Router 내부 state와 독립적으로 관리합니다.
+ *   TanStack Router routing loop와 필터 첫 클릭 레이스를 방지합니다.
+ * - pushState state는 TanStack Router key를 복제하지 않고 나머지 필드만 유지합니다.
  */
 export function useMobileBackGuard(onBack: (() => void) | undefined): void {
   const armedRef = useRef(false);
@@ -45,21 +74,24 @@ export function useMobileBackGuard(onBack: (() => void) | undefined): void {
 
     if (!onBack) {
       armedRef.current = false;
+
       if (hasEntry) {
-        // replaceState는 popstate를 발생시키지 않아 TanStack Router routing loop를 막습니다.
-        const { [MOBILE_BACK_HISTORY_STATE_KEY]: _, ...rest } =
-          currentState as Record<string, unknown>;
         window.history.replaceState(
-          Object.keys(rest).length ? rest : null,
+          stripSyntheticHistoryState(currentState),
           "",
           window.location.href,
         );
       }
+
       return;
     }
 
     if (armedRef.current) {
-      return;
+      if (!hasEntry) {
+        armedRef.current = false;
+      } else {
+        return;
+      }
     }
 
     if (hasEntry) {
@@ -68,7 +100,7 @@ export function useMobileBackGuard(onBack: (() => void) | undefined): void {
     }
 
     window.history.pushState(
-      { [MOBILE_BACK_HISTORY_STATE_KEY]: true },
+      buildSyntheticHistoryState(),
       "",
       window.location.href,
     );
