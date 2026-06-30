@@ -183,7 +183,6 @@ import {
   refreshLoadingBackdrop,
   refreshLoadingOverlay,
   refreshLoadingSpinner,
-  shareCopyToast,
 } from "./-index.css";
 import {
   shouldShowHomeSearchBar,
@@ -356,14 +355,6 @@ export function IndexPage() {
   const [mapRemountKey, setMapRemountKey] = useState(0);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const shareCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    return () => {
-      if (shareCopiedTimerRef.current !== null) {
-        clearTimeout(shareCopiedTimerRef.current);
-      }
-    };
-  }, []);
   const [lockerDetailAnimatesOnMount, setLockerDetailAnimatesOnMount] =
     useState(false);
   const [lockerDetailQueryOrigin, setLockerDetailQueryOrigin] = useState<{
@@ -2215,57 +2206,31 @@ export function IndexPage() {
       return;
     }
 
+    if (!navigator.clipboard) {
+      console.error(
+        "Failed to copy locker detail: Clipboard API is not supported",
+      );
+      return;
+    }
+
     const shareUrl = createLockerDeepLinkUrl({
       origin: window.location.origin,
       lockerId: item.lockerId,
       title: item.title,
     });
     const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
-    const shareData = {
+    const shareText = createLockerShareText({
+      locale: shareLocale,
+      url: shareUrl,
       title: item.title,
-      text: createLockerShareText({
-        locale: shareLocale,
-        url: shareUrl,
-        title: item.title,
-        address: item.address,
-      }),
-    };
+      address: item.address,
+    });
 
-    const copyShareText = () => {
-      if (!navigator.clipboard) {
-        console.error(
-          "Failed to copy locker detail URL: Clipboard API is not supported",
-        );
-        return;
-      }
-
-      void navigator.clipboard.writeText(shareData.text).then(() => {
-        if (shareCopiedTimerRef.current !== null) {
-          clearTimeout(shareCopiedTimerRef.current);
-        }
-        setShareCopied(true);
-        shareCopiedTimerRef.current = setTimeout(() => {
-          setShareCopied(false);
-          shareCopiedTimerRef.current = null;
-        }, 2000);
-      }).catch((error) => {
-        console.error("Failed to copy locker detail URL:", error);
-      });
-    };
-
-    if (typeof navigator.share === "function") {
-      void navigator.share(shareData).catch((error) => {
-        if (error?.name === "AbortError") {
-          return;
-        }
-
-        console.error("Failed to share locker detail:", error);
-        copyShareText();
-      });
-      return;
-    }
-
-    copyShareText();
+    void navigator.clipboard.writeText(shareText).then(() => {
+      setShareCopied(true);
+    }).catch((error) => {
+      console.error("Failed to copy locker detail:", error);
+    });
   }, [setShareCopied]);
 
   const navigationKnownLocation = useMemo(
@@ -3048,11 +3013,17 @@ export function IndexPage() {
         />
       ) : null}
 
-      {shareCopied ? (
-        <div className={shareCopyToast} role="status" aria-live="polite">
-          {m.locker_detail_share_copied()}
-        </div>
-      ) : null}
+      <Popup
+        isOpen={shareCopied}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setShareCopied(false);
+        }}
+        titleText={m.locker_detail_share_copied()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setShareCopied(false),
+        }}
+      />
     </main>
   );
 }
