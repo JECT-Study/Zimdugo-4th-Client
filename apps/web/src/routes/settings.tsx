@@ -11,7 +11,6 @@ import {
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { authService } from "#/features/auth/sign-in/api/authService";
-import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
   SettingsHeaderSkeleton,
@@ -41,7 +40,6 @@ import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-
 import { useAuthStore } from "#/shared/store/authStore";
 
 export const Route = createFileRoute("/settings")({
-  head: createNoIndexNoFollowHead,
   component: SettingsPage,
 });
 

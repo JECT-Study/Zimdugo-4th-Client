@@ -52,4 +52,16 @@ describe("createSitemapXml", () => {
       'href="https://zimdugo.com/?locker=515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5"',
     );
   });
+
+  it("falls back to locker id when runtime data is missing localized names", () => {
+    const xml = createSitemapXml([
+      {
+        lockerId: 77,
+        names: null,
+      } as unknown as SeoLockerItem,
+    ]);
+
+    expect(xml).toContain("https://zimdugo.com/?locker=77");
+    expect(xml).toContain("https://zimdugo.com/en/?locker=77");
+  });
 });

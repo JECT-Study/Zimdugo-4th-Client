@@ -22,9 +22,10 @@ const escapeXml = (value: string): string =>
     .replace(/'/g, "&apos;");
 
 const getLockerTitleByLocalePrefix = (
-  names: SeoLockerItem["names"],
+  names: SeoLockerItem["names"] | null | undefined,
   localePrefix: SeoLocalePrefix,
 ): string => {
+  if (!names) return "";
   if (localePrefix === "/en") return names.en || names.ko || "";
   if (localePrefix === "/ja") return names.ja || names.ko || "";
   if (localePrefix === "/zh") return names.zh || names.ko || "";
@@ -75,29 +76,33 @@ export const createSitemapXml = (seoLockers: SeoLockerItem[]): string => {
   }
 
   for (const locker of seoLockers) {
-    const localizedUrls = SEO_LOCALE_PREFIXES.map((localePrefix) => ({
-      localePrefix,
-      url: createLockerUrl(locker, localePrefix),
-    }));
+    const localizedUrls = SEO_LOCALE_PREFIXES.map((localePrefix) => {
+      const url = createLockerUrl(locker, localePrefix);
+      return {
+        localePrefix,
+        url,
+        escapedUrl: escapeXml(url),
+      };
+    });
     const defaultUrl =
-      localizedUrls.find((item) => item.localePrefix === "")?.url ?? "";
+      localizedUrls.find((item) => item.localePrefix === "")?.escapedUrl ?? "";
 
     for (const current of localizedUrls) {
       lines.push(
         "  <url>",
-        `    <loc>${escapeXml(current.url)}</loc>`,
+        `    <loc>${current.escapedUrl}</loc>`,
         "    <priority>0.8</priority>",
       );
 
       for (const item of localizedUrls) {
         lines.push(
-          `    <xhtml:link rel="alternate" hreflang="${getHrefLang(item.localePrefix)}" href="${escapeXml(item.url)}" />`,
+          `    <xhtml:link rel="alternate" hreflang="${getHrefLang(item.localePrefix)}" href="${item.escapedUrl}" />`,
         );
       }
 
       if (defaultUrl) {
         lines.push(
-          `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(defaultUrl)}" />`,
+          `    <xhtml:link rel="alternate" hreflang="x-default" href="${defaultUrl}" />`,
         );
       }
 
