@@ -124,6 +124,7 @@ export const createLockerShareText = ({
     `[${title}]`,
     address,
     formatShareUrlForDisplay(url),
+    "",
     LOCKER_SHARE_TEXT_BY_LOCALE[locale],
   ].join("\n");
 

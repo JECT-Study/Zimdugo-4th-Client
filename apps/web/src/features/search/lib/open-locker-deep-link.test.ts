@@ -58,7 +58,7 @@ describe("createLockerShareText", () => {
         address: "\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123",
       }),
     ).toBe(
-      "[\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C \uBCF4\uAD00\uD568]\n\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123\nhttps://zimdugo-web.vercel.app/?locker=515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C\n\uC9D0\uB450\uACE0\uC5D0\uC11C \uC774 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
+      "[\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C \uBCF4\uAD00\uD568]\n\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123\nhttps://zimdugo-web.vercel.app/?locker=515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C\n\n\uC9D0\uB450\uACE0\uC5D0\uC11C \uC774 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
     );
     expect(
       createLockerShareText({
@@ -68,7 +68,7 @@ describe("createLockerShareText", () => {
         address: "123 Teheran-ro, Gangnam-gu, Seoul",
       }),
     ).toBe(
-      "[Gangnam Station Locker]\n123 Teheran-ro, Gangnam-gu, Seoul\nhttps://zimdugo-web.vercel.app/?locker=515\nView this locker on Zimdugo.",
+      "[Gangnam Station Locker]\n123 Teheran-ro, Gangnam-gu, Seoul\nhttps://zimdugo-web.vercel.app/?locker=515\n\nView this locker on Zimdugo.",
     );
     expect(
       createLockerShareText({
@@ -102,16 +102,18 @@ describe("createLockerShareText", () => {
     ).toBe(true);
   });
 
-  it("keeps non-ASCII URL text readable across languages without adding blank lines", () => {
-    expect(
-      createLockerShareText({
-        locale: "en",
-        url: "https://zimdugo-web.vercel.app/?locker=77-%E6%96%B0%E5%AE%BF-%E3%83%AD%E3%83%83%E3%82%AB%E3%83%BC",
-        title: "Shinjuku Locker",
-        address: "Shinjuku Station",
-      }),
-    ).toBe(
-      "[Shinjuku Locker]\nShinjuku Station\nhttps://zimdugo-web.vercel.app/?locker=77-\u65B0\u5BBF-\u30ED\u30C3\u30AB\u30FC\nView this locker on Zimdugo.",
+  it("keeps non-ASCII URL text readable across languages without trailing blank lines", () => {
+    const shareText = createLockerShareText({
+      locale: "en",
+      url: "https://zimdugo-web.vercel.app/?locker=77-%E6%96%B0%E5%AE%BF-%E3%83%AD%E3%83%83%E3%82%AB%E3%83%BC",
+      title: "Shinjuku Locker",
+      address: "Shinjuku Station",
+    });
+
+    expect(shareText).toBe(
+      "[Shinjuku Locker]\nShinjuku Station\nhttps://zimdugo-web.vercel.app/?locker=77-\u65B0\u5BBF-\u30ED\u30C3\u30AB\u30FC\n\nView this locker on Zimdugo.",
     );
+    expect(shareText.endsWith("\n")).toBe(false);
+    expect(shareText.endsWith(" ")).toBe(false);
   });
 });
