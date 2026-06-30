@@ -98,7 +98,7 @@ export const createLockerDeepLinkUrl = ({
 };
 
 const LOCKER_SHARE_TEXT_BY_LOCALE = {
-  ko: "\uC9D0\uB450\uACE0\uC5D0\uC11C \uC774 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
+  ko: "\uC9D0\uB450\uACE0\uC5D0\uC11C \uC704 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
   en: "View this locker on Zimdugo.",
   ja: "\u3053\u306E\u30ED\u30C3\u30AB\u30FC\u60C5\u5831\u3092Zimdugo\u3067\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
   zh: "\u5728Zimdugo\u67E5\u770B\u8FD9\u4E2A\u884C\u674E\u67DC\u4FE1\u606F\u3002",
@@ -123,10 +123,13 @@ export const createLockerShareText = ({
   [
     `[${title}]`,
     address,
+    "",
     formatShareUrlForDisplay(url),
     "",
     LOCKER_SHARE_TEXT_BY_LOCALE[locale],
-  ].join("\n");
+  ]
+    .join("\n")
+    .trimEnd();
 
 export const createLockerPinAt = (
   lockerId: number,
