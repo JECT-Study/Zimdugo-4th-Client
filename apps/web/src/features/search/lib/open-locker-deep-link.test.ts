@@ -35,19 +35,56 @@ describe("createLockerDeepLinkUrl", () => {
 });
 
 describe("createLockerShareText", () => {
-  it("creates a plain localized share text without embedding the URL", () => {
-    expect(createLockerShareText("ko")).toBe(
-      "\uC9D0\uB450\uACE0\uC5D0\uC11C \uC774 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
+  it("creates a localized share template in URL, title, address, comment order", () => {
+    expect(
+      createLockerShareText({
+        locale: "ko",
+        url: "https://zimdugo-web.vercel.app/?locker=515",
+        title: "\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C \uBCF4\uAD00\uD568",
+        address: "\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123",
+      }),
+    ).toBe(
+      "https://zimdugo-web.vercel.app/?locker=515\n\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C \uBCF4\uAD00\uD568\n\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123\n\n\uC9D0\uB450\uACE0\uC5D0\uC11C \uC774 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
     );
-    expect(createLockerShareText("en")).toBe("View this locker on Zimdugo.");
-    expect(createLockerShareText("ja")).toBe(
-      "\u3053\u306E\u30ED\u30C3\u30AB\u30FC\u60C5\u5831\u3092Zimdugo\u3067\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    expect(
+      createLockerShareText({
+        locale: "en",
+        url: "https://zimdugo-web.vercel.app/?locker=515",
+        title: "Gangnam Station Locker",
+        address: "123 Teheran-ro, Gangnam-gu, Seoul",
+      }),
+    ).toBe(
+      "https://zimdugo-web.vercel.app/?locker=515\nGangnam Station Locker\n123 Teheran-ro, Gangnam-gu, Seoul\n\nView this locker on Zimdugo.",
     );
-    expect(createLockerShareText("zh")).toBe(
-      "\u5728Zimdugo\u67E5\u770B\u8FD9\u4E2A\u884C\u674E\u67DC\u4FE1\u606F\u3002",
-    );
-    expect(createLockerShareText("zh-TW")).toBe(
-      "\u5728Zimdugo\u67E5\u770B\u9019\u500B\u884C\u674E\u6AC3\u8CC7\u8A0A\u3002",
-    );
+    expect(
+      createLockerShareText({
+        locale: "ja",
+        url: "https://zimdugo-web.vercel.app/?locker=515",
+        title: "Gangnam Station Locker",
+        address: "123 Teheran-ro, Gangnam-gu, Seoul",
+      }).endsWith(
+        "\u3053\u306E\u30ED\u30C3\u30AB\u30FC\u60C5\u5831\u3092Zimdugo\u3067\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+      ),
+    ).toBe(true);
+    expect(
+      createLockerShareText({
+        locale: "zh",
+        url: "https://zimdugo-web.vercel.app/?locker=515",
+        title: "Gangnam Station Locker",
+        address: "123 Teheran-ro, Gangnam-gu, Seoul",
+      }).endsWith(
+        "\u5728Zimdugo\u67E5\u770B\u8FD9\u4E2A\u884C\u674E\u67DC\u4FE1\u606F\u3002",
+      ),
+    ).toBe(true);
+    expect(
+      createLockerShareText({
+        locale: "zh-TW",
+        url: "https://zimdugo-web.vercel.app/?locker=515",
+        title: "Gangnam Station Locker",
+        address: "123 Teheran-ro, Gangnam-gu, Seoul",
+      }).endsWith(
+        "\u5728Zimdugo\u67E5\u770B\u9019\u500B\u884C\u674E\u6AC3\u8CC7\u8A0A\u3002",
+      ),
+    ).toBe(true);
   });
 });

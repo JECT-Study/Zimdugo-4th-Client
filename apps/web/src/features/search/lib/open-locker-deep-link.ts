@@ -19,6 +19,13 @@ export interface LockerDeepLinkUrlInput extends LockerDeepLinkSlugInput {
   origin: string;
 }
 
+export interface LockerShareTextInput {
+  locale: AppLocale;
+  url: string;
+  title: string;
+  address: string;
+}
+
 const parsePositiveInt = (raw: unknown): number | undefined => {
   const parsed =
     typeof raw === "number"
@@ -99,8 +106,13 @@ const LOCKER_SHARE_TEXT_BY_LOCALE = {
     "\u5728Zimdugo\u67E5\u770B\u9019\u500B\u884C\u674E\u6AC3\u8CC7\u8A0A\u3002",
 } as const satisfies Record<AppLocale, string>;
 
-export const createLockerShareText = (locale: AppLocale): string =>
-  LOCKER_SHARE_TEXT_BY_LOCALE[locale];
+export const createLockerShareText = ({
+  locale,
+  url,
+  title,
+  address,
+}: LockerShareTextInput): string =>
+  [url, title, address, "", LOCKER_SHARE_TEXT_BY_LOCALE[locale]].join("\n");
 
 export const createLockerPinAt = (
   lockerId: number,

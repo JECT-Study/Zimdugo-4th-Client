@@ -2213,8 +2213,12 @@ export function IndexPage() {
     const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
     const shareData = {
       title: item.title,
-      text: createLockerShareText(shareLocale),
-      url: shareUrl,
+      text: createLockerShareText({
+        locale: shareLocale,
+        url: shareUrl,
+        title: item.title,
+        address: item.address,
+      }),
     };
 
     const copyShareUrl = () => {
