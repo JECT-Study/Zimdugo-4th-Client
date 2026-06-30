@@ -26,6 +26,11 @@ export type SearchBarBackAction =
   | "searchKeywordList"
   | "searchPlaceList";
 
+export type MobileBackAction =
+  | "navigationPopup"
+  | "searchOverlay"
+  | SearchBarBackAction;
+
 export const createKeywordDetailBackTarget = (): SearchDetailBackTarget => ({
   listKind: "keyword",
   placeId: null,
@@ -191,6 +196,45 @@ export const resolveSearchBarBackAction = (input: {
   }
 
   return null;
+};
+
+export const resolveMobileBackAction = (input: {
+  context: AppMapContext;
+  hasSelectedMapPin: boolean;
+  isNavigationPopupOpen: boolean;
+  isSearchOpen: boolean;
+  listKind: SearchListKind | null;
+  mapDetailBack: MapDetailBack | null;
+  sheetMode: SheetModeForContext;
+  searchDetailBack: SearchDetailBackTarget | null;
+}): MobileBackAction | null => {
+  if (input.isNavigationPopupOpen) {
+    return "navigationPopup";
+  }
+
+  if (input.isSearchOpen) {
+    return "searchOverlay";
+  }
+
+  const sheetBackAction = resolveSearchBarBackAction(input);
+
+  if (
+    sheetBackAction === "searchKeywordList" ||
+    sheetBackAction === "searchPlaceList"
+  ) {
+    return null;
+  }
+
+  if (
+    sheetBackAction === "mapPlaceList" &&
+    input.sheetMode === "detail" &&
+    input.mapDetailBack === "idle" &&
+    !input.hasSelectedMapPin
+  ) {
+    return null;
+  }
+
+  return sheetBackAction;
 };
 
 /** fetch가 비활성화된 쿼리는 isPending이 true로 남아 스켈레톤이 멈추지 않을 수 있다 */

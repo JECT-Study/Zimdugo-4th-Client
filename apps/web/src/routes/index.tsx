@@ -155,6 +155,7 @@ import {
   type MapDetailBack,
   type OverlayReturnContext,
   resolveActivePlaceId,
+  resolveMobileBackAction,
   resolveOverlayReturnContext,
   resolveSearchBarBackAction,
   type SearchDetailBackTarget,
@@ -196,6 +197,7 @@ export const DETAIL_FOCUS_ZOOM = 17;
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
   DETAIL_FOCUS_MORPH_DURATION_MS + 40;
+const MOBILE_BACK_HISTORY_STATE_KEY = "__zimdugoMobileBackEntry";
 
 const parseLockerSearchParam = (raw: unknown): number | undefined => {
   if (raw === undefined || raw === null) return undefined;
@@ -329,6 +331,9 @@ export function IndexPage() {
     (searchQueryFromUrl !== undefined || hasSearchPlaceEntry) &&
     !hasExplicitLockerEntry;
   const handledOpenLockerIdRef = useRef<number | null>(null);
+  const mobileBackEntryArmedRef = useRef(false);
+  const mobileBackPressRef = useRef<(() => void) | undefined>(undefined);
+  const shouldIgnoreNextMobileBackPopRef = useRef(false);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
     null,
@@ -2338,12 +2343,95 @@ export function IndexPage() {
             : searchBarBackAction === "searchKeywordList"
               ? resetSearchContext
               : undefined;
+  const closeNavigationPopupForMobileBack = useCallback(() => {
+    setIsNavigationPopupOpen(false);
+  }, []);
+  const closeSearchOverlayForMobileBack = useCallback(() => {
+    handleCloseSearch();
+  }, [handleCloseSearch]);
+  const mobileBackAction = resolveMobileBackAction({
+    context,
+    hasSelectedMapPin: selectedMapPin !== null,
+    isNavigationPopupOpen,
+    isSearchOpen,
+    listKind,
+    mapDetailBack,
+    sheetMode,
+    searchDetailBack,
+  });
+  const mobileBackPress =
+    mobileBackAction === "navigationPopup"
+      ? closeNavigationPopupForMobileBack
+      : mobileBackAction === "searchOverlay"
+        ? closeSearchOverlayForMobileBack
+        : searchBarBackPress;
   const listSheetDismissPress =
     searchBarBackAction === "mapPlaceList"
       ? handleBackFromMapPlaceSheet
       : searchBarBackAction === "searchPlaceList"
         ? handleBackToKeywordList
         : resetSearchContext;
+
+  useEffect(() => {
+    mobileBackPressRef.current = mobileBackPress;
+  }, [mobileBackPress]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (shouldIgnoreNextMobileBackPopRef.current) {
+        shouldIgnoreNextMobileBackPopRef.current = false;
+        return;
+      }
+
+      if (!mobileBackEntryArmedRef.current) {
+        return;
+      }
+
+      mobileBackEntryArmedRef.current = false;
+      mobileBackPressRef.current?.();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const currentState = window.history.state;
+    const hasMobileBackEntry =
+      typeof currentState === "object" &&
+      currentState !== null &&
+      currentState[MOBILE_BACK_HISTORY_STATE_KEY] === true;
+
+    if (!mobileBackPress) {
+      if (mobileBackEntryArmedRef.current && hasMobileBackEntry) {
+        mobileBackEntryArmedRef.current = false;
+        shouldIgnoreNextMobileBackPopRef.current = true;
+        window.history.back();
+      } else {
+        mobileBackEntryArmedRef.current = false;
+      }
+      return;
+    }
+
+    if (mobileBackEntryArmedRef.current) {
+      return;
+    }
+
+    if (hasMobileBackEntry) {
+      mobileBackEntryArmedRef.current = true;
+      return;
+    }
+
+    const nextState =
+      typeof currentState === "object" && currentState !== null
+        ? { ...currentState, [MOBILE_BACK_HISTORY_STATE_KEY]: true }
+        : { [MOBILE_BACK_HISTORY_STATE_KEY]: true };
+
+    window.history.pushState(nextState, "", window.location.href);
+    mobileBackEntryArmedRef.current = true;
+  }, [mobileBackPress]);
 
   useEffect(() => {
     if (sheetMode !== "detail" || !lockerDetail) {
