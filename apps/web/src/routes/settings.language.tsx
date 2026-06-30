@@ -2,6 +2,7 @@ import { languageTag, m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
 import { IconCheck24 } from "@repo/ui/tokens/icons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
   SettingsHeaderSkeleton,
@@ -37,6 +38,7 @@ import {
 } from "#/shared/store/language";
 
 export const Route = createFileRoute("/settings/language")({
+  head: createNoIndexNoFollowHead,
   component: SettingsLanguagePage,
 });
 

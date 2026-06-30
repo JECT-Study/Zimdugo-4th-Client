@@ -11,6 +11,7 @@ import { NonSearch } from "#/entities/search";
 import { useFavoriteRemoval } from "#/features/my/hooks/useFavoriteRemoval";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
+import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import type { FavoriteLockerListItem } from "#/shared/api/my-page";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
@@ -41,6 +42,7 @@ const FAVORITE_SKELETON_ROW_KEYS = [
 ] as const;
 
 export const Route = createFileRoute("/my/favorites")({
+  head: createNoIndexNoFollowHead,
   beforeLoad: requireAuthenticatedMyRoute,
   component: MyFavoritesPage,
 });

@@ -1,18 +1,17 @@
 import { m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
   Outlet,
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { authService } from "#/features/auth/sign-in/api/authService";
-import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
-import { stripLocalePathPrefix } from "#/shared/i18n/locales";
+import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import {
   SettingsHeaderSkeleton,
@@ -37,9 +36,12 @@ import {
   settingsPageInlineFallbackStyle,
   settingsSettingRowInlineFallbackStyle,
 } from "#/features/settings/ui/settings-page-fallback";
+import { stripLocalePathPrefix } from "#/shared/i18n/locales";
+import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { useAuthStore } from "#/shared/store/authStore";
 
 export const Route = createFileRoute("/settings")({
+  head: createNoIndexNoFollowHead,
   component: SettingsPage,
 });
 

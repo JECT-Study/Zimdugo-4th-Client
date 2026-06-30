@@ -12,6 +12,7 @@ import { useMyPageSummary } from "#/features/my/hooks/useMyPageSummary";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
 import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
 import { resolveMyPageNickname } from "#/features/my/lib/resolve-my-page-nickname";
+import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useAuth } from "#/shared/hooks/useAuth";
 import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
@@ -20,6 +21,7 @@ import { MyPageView } from "./-MyPageView";
 import { requireAuthenticatedMyRoute } from "./-my-auth";
 
 export const Route = createFileRoute("/my")({
+  head: createNoIndexNoFollowHead,
   beforeLoad: requireAuthenticatedMyRoute,
   component: MyPage,
 });
@@ -38,7 +40,8 @@ function MyRootPage() {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
   const email = useAuthStore((state) => state.email);
-  const { data: profile, isPending: isProfilePending } = useUser(isAuthenticated);
+  const { data: profile, isPending: isProfilePending } =
+    useUser(isAuthenticated);
   const { data: summary, isPending: isSummaryPending } = useMyPageSummary();
   const { mutate: updateProfile } = useUpdateMeProfile();
   const {
