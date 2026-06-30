@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  readSearchFilterParams,
   readSearchPlaceIdParam,
   readSearchQueryParam,
   withLockerDetailParam,
   withoutSearchContextParams,
-  withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
 } from "./search-url-state";
@@ -89,55 +87,11 @@ describe("search-url-state", () => {
     });
   });
 
-  it("reads valid search filter params and ignores invalid values", () => {
-    expect(
-      readSearchFilterParams({
-        filterSizes: "S,L,XL,S",
-        filterIndoorOutdoor: "indoor,unknown,outdoor",
-        filterPlaceTypes: "museum,invalid,subway",
-      }),
-    ).toEqual({
-      regionActive: true,
-      sizeActive: true,
-      placeTypeActive: true,
-      selectedSizes: ["S", "L"],
-      indoorOutdoorState: ["indoor", "outdoor"],
-      placeTypeState: ["museum", "subway"],
-    });
-  });
-
-  it("writes only active non-default search filter params", () => {
-    expect(
-      withSearchFilterParams(
-        {
-          q: "coex",
-          filterSizes: "S",
-          filterIndoorOutdoor: "indoor",
-          filterPlaceTypes: "museum",
-        },
-        {
-          regionActive: false,
-          sizeActive: true,
-          placeTypeActive: false,
-          selectedSizes: ["M"],
-          indoorOutdoorState: ["indoor"],
-          placeTypeState: ["subway"],
-        },
-      ),
-    ).toEqual({
-      q: "coex",
-      filterSizes: "M",
-    });
-  });
-
   it("removes search context params while preserving detail params", () => {
     expect(
       withoutSearchContextParams({
         q: "coex",
         searchPlaceId: 7,
-        filterSizes: "S",
-        filterIndoorOutdoor: "indoor",
-        filterPlaceTypes: "museum",
         locker: "1-coex-locker",
         detailSnap: "full",
       }),
@@ -153,14 +107,12 @@ describe("search-url-state", () => {
         {
           q: "coex",
           searchPlaceId: 7,
-          filterSizes: "S",
         },
         "123-coex-locker",
       ),
     ).toEqual({
       q: "coex",
       searchPlaceId: 7,
-      filterSizes: "S",
       locker: "123-coex-locker",
     });
   });
