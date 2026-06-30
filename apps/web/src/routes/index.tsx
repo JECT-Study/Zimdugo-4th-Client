@@ -2343,10 +2343,10 @@ export function IndexPage() {
             : searchBarBackAction === "searchKeywordList"
               ? resetSearchContext
               : undefined;
-  const closeNavigationPopupForMobileBack = useCallback(() => {
+  const handleCloseNavigationPopupForMobileBack = useCallback(() => {
     setIsNavigationPopupOpen(false);
   }, []);
-  const closeSearchOverlayForMobileBack = useCallback(() => {
+  const handleCloseSearchOverlayForMobileBack = useCallback(() => {
     handleCloseSearch();
   }, [handleCloseSearch]);
   const mobileBackAction = resolveMobileBackAction({
@@ -2360,11 +2360,13 @@ export function IndexPage() {
     searchDetailBack,
   });
   const mobileBackPress =
-    mobileBackAction === "navigationPopup"
-      ? closeNavigationPopupForMobileBack
-      : mobileBackAction === "searchOverlay"
-        ? closeSearchOverlayForMobileBack
-        : searchBarBackPress;
+    mobileBackAction === null
+      ? undefined
+      : mobileBackAction === "navigationPopup"
+        ? handleCloseNavigationPopupForMobileBack
+        : mobileBackAction === "searchOverlay"
+          ? handleCloseSearchOverlayForMobileBack
+          : searchBarBackPress;
   const listSheetDismissPress =
     searchBarBackAction === "mapPlaceList"
       ? handleBackFromMapPlaceSheet
@@ -2424,12 +2426,11 @@ export function IndexPage() {
       return;
     }
 
-    const nextState =
-      typeof currentState === "object" && currentState !== null
-        ? { ...currentState, [MOBILE_BACK_HISTORY_STATE_KEY]: true }
-        : { [MOBILE_BACK_HISTORY_STATE_KEY]: true };
-
-    window.history.pushState(nextState, "", window.location.href);
+    window.history.pushState(
+      { [MOBILE_BACK_HISTORY_STATE_KEY]: true },
+      "",
+      window.location.href,
+    );
     mobileBackEntryArmedRef.current = true;
   }, [mobileBackPress]);
 
