@@ -1396,8 +1396,10 @@ export function IndexPage() {
       await flushLockerSheetMutations();
 
       // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
+      // replace: true로 이전 URL 엔트리를 교체해 history에 locker 엔트리가 중복 쌓이지 않도록 합니다.
+      // 이렇게 해야 상세 닫힌 후 back으로 상세가 재오픈되는 현상을 막습니다.
       if (options?.syncUrl !== false) {
-        syncLockerDetailUrl(lockerId, optimisticDetail?.title);
+        syncLockerDetailUrl(lockerId, optimisticDetail?.title, { replace: true });
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
@@ -1720,7 +1722,7 @@ export function IndexPage() {
       options?: { searchDetailBack?: SearchDetailBackTarget | null },
     ) => {
       clearPendingLockerDetailOpen();
-      syncLockerDetailUrl(lockerId, detail?.title);
+      syncLockerDetailUrl(lockerId, detail?.title, { replace: true });
 
       if (!shouldDelay) {
         openLockerDetailById(lockerId, detail, {
