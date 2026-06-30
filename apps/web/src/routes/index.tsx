@@ -2252,6 +2252,7 @@ export function IndexPage() {
               const { locker, ...rest } = prev;
               return rest as any;
             },
+            replace: true,
           });
         }
         return;
@@ -2265,6 +2266,7 @@ export function IndexPage() {
             const { locker, ...rest } = prev;
             return rest as any;
           },
+          replace: true,
         });
       }
       return;
@@ -2283,6 +2285,7 @@ export function IndexPage() {
           const { locker, ...rest } = prev;
           return rest as any;
         },
+        replace: true,
       });
     }
   }, [
