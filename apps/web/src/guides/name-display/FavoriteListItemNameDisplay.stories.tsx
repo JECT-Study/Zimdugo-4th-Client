@@ -1,0 +1,79 @@
+import type { StoryObj } from "@storybook/react";
+import { FavoriteListItem } from "#/entities/favorite/ui/FavoriteListItem";
+import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
+import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
+import {
+  buildEllipsisBoundaryRows,
+  NAME_DISPLAY_DEFAULT_VIEWPORT,
+  NAME_DISPLAY_VIEWPORTS,
+} from "#/shared/storybook/name-display-matrix";
+
+const SHARED_META = {
+  distanceLabel: "1.3km",
+  updatedLabel: "1시간 전",
+  isFavorite: true,
+} as const;
+
+const PLACE_EXAMPLE_NOTE =
+  "예: 강남역 교보타워 5층 안내데스크 맞은편 · Gangnam Station Kyobo Tower 5F Info Desk";
+
+const meta = {
+  title: "Product/Guides/Name Display/Favorite List Item",
+  component: FavoriteListItem,
+  parameters: {
+    layout: "centered",
+  },
+  argTypes: {
+    viewport: {
+      control: "inline-radio",
+      options: NAME_DISPLAY_VIEWPORTS,
+    },
+    locale: {
+      control: "inline-radio",
+      options: ["ko", "en", "all"],
+      description: "title(보관함명) 언어 — ko / en / 둘 다",
+    },
+  },
+  args: {
+    viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
+    locale: "all",
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ padding: "16px 0", width: "100%" }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const TitleOnly: Story = {
+  render: ({ viewport, locale }) => {
+    const rows = buildEllipsisBoundaryRows({
+      slot: "favorite-title",
+      locale,
+      viewport,
+    }).map((row) => ({
+      key: `${row.locale}-${row.length}`,
+      label: row.label,
+      node: (
+        <NameDisplaySurface surface="my-favorite-list" viewport={viewport}>
+          <FavoriteListItem titleText={row.text} {...SHARED_META} />
+        </NameDisplaySurface>
+      ),
+    }));
+
+    return (
+      <NameDisplayMatrix
+        width={viewport}
+        surface="my-favorite-list"
+        note={`lockerName(title) · 한글/영문 title 각각 말줄임 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
+        rows={rows}
+      />
+    );
+  },
+};

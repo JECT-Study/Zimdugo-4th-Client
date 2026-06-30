@@ -77,6 +77,7 @@ import {
   useLockerSearch,
   usePlaceLockers,
 } from "#/features/search/hooks/useSearch";
+import { useMobileBackGuard } from "#/features/search/hooks/useMobileBackGuard";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import { useVoteLockerSession } from "#/features/search/hooks/useVoteLockerSession";
 import {
@@ -155,6 +156,7 @@ import {
   type MapDetailBack,
   type OverlayReturnContext,
   resolveActivePlaceId,
+  resolveMobileBackAction,
   resolveOverlayReturnContext,
   resolveSearchBarBackAction,
   type SearchDetailBackTarget,
@@ -329,6 +331,7 @@ export function IndexPage() {
     (searchQueryFromUrl !== undefined || hasSearchPlaceEntry) &&
     !hasExplicitLockerEntry;
   const handledOpenLockerIdRef = useRef<number | null>(null);
+  const pinSelectedInAppRef = useRef(false);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
     null,
@@ -1020,6 +1023,7 @@ export function IndexPage() {
     setSelectedLockerDetail(null);
     setSelectedMapPin(null);
     setSelectedMapPinOffset(null);
+    pinSelectedInAppRef.current = false;
     setMapDetailBack(null);
     setSearchFilters(createDefaultSearchFilters());
     clearSearchFiltersFromSession();
@@ -1845,6 +1849,7 @@ export function IndexPage() {
 
       setContext("map");
       setMapDetailBack("idle");
+      pinSelectedInAppRef.current = false;
 
       if (pin) {
         deepLinkMapCenterRef.current = {
@@ -1988,6 +1993,7 @@ export function IndexPage() {
 
       setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
+      pinSelectedInAppRef.current = pin != null;
       setContext("map");
       setMapDetailBack("idle");
       const detail =
@@ -2107,6 +2113,7 @@ export function IndexPage() {
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
+      pinSelectedInAppRef.current = pin != null;
       setLockerDetailQueryOrigin({
         lat: searchCoordinates.lat,
         lng: searchCoordinates.lng,
@@ -2338,12 +2345,38 @@ export function IndexPage() {
             : searchBarBackAction === "searchKeywordList"
               ? resetSearchContext
               : undefined;
+  const handleCloseNavigationPopupForMobileBack = useCallback(() => {
+    setIsNavigationPopupOpen(false);
+  }, []);
+  const handleCloseSearchOverlayForMobileBack = useCallback(() => {
+    handleCloseSearch();
+  }, [handleCloseSearch]);
+  const mobileBackAction = resolveMobileBackAction({
+    context,
+    hasSelectedMapPin: pinSelectedInAppRef.current,
+    isNavigationPopupOpen,
+    isSearchOpen,
+    listKind,
+    mapDetailBack,
+    sheetMode,
+    searchDetailBack,
+  });
+  const mobileBackPress =
+    mobileBackAction === null
+      ? undefined
+      : mobileBackAction === "navigationPopup"
+        ? handleCloseNavigationPopupForMobileBack
+        : mobileBackAction === "searchOverlay"
+          ? handleCloseSearchOverlayForMobileBack
+          : searchBarBackPress;
   const listSheetDismissPress =
     searchBarBackAction === "mapPlaceList"
       ? handleBackFromMapPlaceSheet
       : searchBarBackAction === "searchPlaceList"
         ? handleBackToKeywordList
         : resetSearchContext;
+
+  useMobileBackGuard(mobileBackPress);
 
   useEffect(() => {
     if (sheetMode !== "detail" || !lockerDetail) {

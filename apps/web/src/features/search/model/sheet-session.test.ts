@@ -5,6 +5,7 @@ import {
   createSearchDetailBackTarget,
   isRenderableSheetSession,
   resolveActivePlaceId,
+  resolveMobileBackAction,
   resolveOverlayReturnContext,
   resolveSearchBarBackAction,
   shouldFetchKeywordSearch,
@@ -345,5 +346,96 @@ describe("sheet-session v2", () => {
         searchPlaceIdFromUrl: undefined,
       }),
     ).toBe(false);
+  });
+
+  it("모바일 뒤로가기 액션은 오버레이를 시트보다 먼저 소비한다", () => {
+    const baseInput = {
+      context: "search" as const,
+      hasSelectedMapPin: false,
+      mapDetailBack: null,
+      listKind: "keyword" as const,
+      sheetMode: "detail" as const,
+      searchDetailBack: createKeywordDetailBackTarget(),
+    };
+
+    expect(
+      resolveMobileBackAction({
+        ...baseInput,
+        isNavigationPopupOpen: true,
+        isSearchOpen: true,
+      }),
+    ).toBe("navigationPopup");
+
+    expect(
+      resolveMobileBackAction({
+        ...baseInput,
+        isNavigationPopupOpen: false,
+        isSearchOpen: true,
+      }),
+    ).toBe("searchOverlay");
+
+    expect(
+      resolveMobileBackAction({
+        ...baseInput,
+        isNavigationPopupOpen: false,
+        isSearchOpen: false,
+      }),
+    ).toBe("searchDetail");
+  });
+
+  it("모바일 뒤로가기는 URL history로 되돌릴 검색 리스트를 소비하지 않는다", () => {
+    expect(
+      resolveMobileBackAction({
+        context: "search",
+        isNavigationPopupOpen: false,
+        isSearchOpen: false,
+        hasSelectedMapPin: false,
+        listKind: "keyword",
+        mapDetailBack: null,
+        sheetMode: "list",
+        searchDetailBack: null,
+      }),
+    ).toBeNull();
+
+    expect(
+      resolveMobileBackAction({
+        context: "search",
+        isNavigationPopupOpen: false,
+        isSearchOpen: false,
+        hasSelectedMapPin: false,
+        listKind: "place",
+        mapDetailBack: null,
+        sheetMode: "list",
+        searchDetailBack: null,
+      }),
+    ).toBeNull();
+  });
+
+  it("모바일 뒤로가기는 직접 진입한 지도 상세 대신 앱 내부 지도 상세만 소비한다", () => {
+    expect(
+      resolveMobileBackAction({
+        context: "map",
+        isNavigationPopupOpen: false,
+        isSearchOpen: false,
+        hasSelectedMapPin: false,
+        listKind: null,
+        mapDetailBack: "idle",
+        sheetMode: "detail",
+        searchDetailBack: null,
+      }),
+    ).toBeNull();
+
+    expect(
+      resolveMobileBackAction({
+        context: "map",
+        isNavigationPopupOpen: false,
+        isSearchOpen: false,
+        hasSelectedMapPin: true,
+        listKind: null,
+        mapDetailBack: "idle",
+        sheetMode: "detail",
+        searchDetailBack: null,
+      }),
+    ).toBe("mapPlaceList");
   });
 });
