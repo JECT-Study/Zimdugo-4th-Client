@@ -77,6 +77,7 @@ import {
   useLockerSearch,
   usePlaceLockers,
 } from "#/features/search/hooks/useSearch";
+import { useMobileBackGuard } from "#/features/search/hooks/useMobileBackGuard";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import { useVoteLockerSession } from "#/features/search/hooks/useVoteLockerSession";
 import {
@@ -197,7 +198,6 @@ export const DETAIL_FOCUS_ZOOM = 17;
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
   DETAIL_FOCUS_MORPH_DURATION_MS + 40;
-const MOBILE_BACK_HISTORY_STATE_KEY = "__zimdugoMobileBackEntry";
 
 const parseLockerSearchParam = (raw: unknown): number | undefined => {
   if (raw === undefined || raw === null) return undefined;
@@ -331,9 +331,7 @@ export function IndexPage() {
     (searchQueryFromUrl !== undefined || hasSearchPlaceEntry) &&
     !hasExplicitLockerEntry;
   const handledOpenLockerIdRef = useRef<number | null>(null);
-  const mobileBackEntryArmedRef = useRef(false);
-  const mobileBackPressRef = useRef<(() => void) | undefined>(undefined);
-  const shouldIgnoreNextMobileBackPopRef = useRef(false);
+  const pinSelectedInAppRef = useRef(false);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
     null,
@@ -1025,6 +1023,7 @@ export function IndexPage() {
     setSelectedLockerDetail(null);
     setSelectedMapPin(null);
     setSelectedMapPinOffset(null);
+    pinSelectedInAppRef.current = false;
     setMapDetailBack(null);
     setSearchFilters(createDefaultSearchFilters());
     clearSearchFiltersFromSession();
@@ -1850,6 +1849,7 @@ export function IndexPage() {
 
       setContext("map");
       setMapDetailBack("idle");
+      pinSelectedInAppRef.current = false;
 
       if (pin) {
         deepLinkMapCenterRef.current = {
@@ -1993,6 +1993,7 @@ export function IndexPage() {
 
       setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
+      pinSelectedInAppRef.current = pin != null;
       setContext("map");
       setMapDetailBack("idle");
       const detail =
@@ -2112,6 +2113,7 @@ export function IndexPage() {
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
+      pinSelectedInAppRef.current = pin != null;
       setLockerDetailQueryOrigin({
         lat: searchCoordinates.lat,
         lng: searchCoordinates.lng,
@@ -2351,7 +2353,7 @@ export function IndexPage() {
   }, [handleCloseSearch]);
   const mobileBackAction = resolveMobileBackAction({
     context,
-    hasSelectedMapPin: selectedMapPin !== null,
+    hasSelectedMapPin: pinSelectedInAppRef.current,
     isNavigationPopupOpen,
     isSearchOpen,
     listKind,
@@ -2374,65 +2376,7 @@ export function IndexPage() {
         ? handleBackToKeywordList
         : resetSearchContext;
 
-  useEffect(() => {
-    mobileBackPressRef.current = mobileBackPress;
-  }, [mobileBackPress]);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      if (shouldIgnoreNextMobileBackPopRef.current) {
-        shouldIgnoreNextMobileBackPopRef.current = false;
-        return;
-      }
-
-      if (!mobileBackEntryArmedRef.current) {
-        return;
-      }
-
-      mobileBackEntryArmedRef.current = false;
-      mobileBackPressRef.current?.();
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, []);
-
-  useEffect(() => {
-    const currentState = window.history.state;
-    const hasMobileBackEntry =
-      typeof currentState === "object" &&
-      currentState !== null &&
-      currentState[MOBILE_BACK_HISTORY_STATE_KEY] === true;
-
-    if (!mobileBackPress) {
-      if (mobileBackEntryArmedRef.current && hasMobileBackEntry) {
-        mobileBackEntryArmedRef.current = false;
-        shouldIgnoreNextMobileBackPopRef.current = true;
-        window.history.back();
-      } else {
-        mobileBackEntryArmedRef.current = false;
-      }
-      return;
-    }
-
-    if (mobileBackEntryArmedRef.current) {
-      return;
-    }
-
-    if (hasMobileBackEntry) {
-      mobileBackEntryArmedRef.current = true;
-      return;
-    }
-
-    window.history.pushState(
-      { [MOBILE_BACK_HISTORY_STATE_KEY]: true },
-      "",
-      window.location.href,
-    );
-    mobileBackEntryArmedRef.current = true;
-  }, [mobileBackPress]);
+  useMobileBackGuard(mobileBackPress);
 
   useEffect(() => {
     if (sheetMode !== "detail" || !lockerDetail) {
