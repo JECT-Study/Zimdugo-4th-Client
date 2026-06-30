@@ -19,7 +19,10 @@ import {
 } from "#/entities/navigation";
 import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
-import { getSeoLocaleFromPathname } from "#/features/seo/model/localized-seo-head";
+import {
+  getSeoLocale,
+  getSeoSiteName,
+} from "#/features/seo/model/localized-seo-head";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
 import {
@@ -177,12 +180,25 @@ const COMPACT_DEVICE_LAYOUT_SCRIPT = `
 })();
 `;
 
+type SeoHeadLocationContext = {
+  location?: {
+    publicHref?: string;
+  };
+};
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
-  head: ({ matches }) => {
+  head: (context) => {
+    const { matches } = context;
+    const publicHref = (context as SeoHeadLocationContext).location?.publicHref;
     const pathname = matches.at(-1)?.pathname ?? "/";
-    const locale = getSeoLocaleFromPathname(pathname);
+    const locale = getSeoLocale({
+      publicHref,
+      pathname,
+      runtimeLocale: languageTag(),
+    });
+    const siteName = getSeoSiteName(locale);
     const title = m.seo_global_title({}, { locale });
     const description = m.seo_global_description({}, { locale });
 
@@ -204,7 +220,7 @@ export const Route = createRootRouteWithContext<{
         },
         {
           property: "og:site_name",
-          content: "Zimdugo",
+          content: siteName,
         },
         {
           property: "og:type",

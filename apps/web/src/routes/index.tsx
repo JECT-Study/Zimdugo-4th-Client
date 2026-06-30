@@ -168,8 +168,9 @@ import {
 } from "#/features/search/model/sheet-session";
 import {
   createAlternateLinksForPathname,
-  createCanonicalUrlForPathname,
-  getSeoLocaleFromPathname,
+  createLocalizedUrl,
+  getSeoLocale,
+  getSeoPathname,
 } from "#/features/seo/model/localized-seo-head";
 import { toLockerDetailItem } from "#/shared/api/locker-adapters";
 import type { LockerPinSearchParams } from "#/shared/api/lockers";
@@ -212,6 +213,12 @@ const parseLockerSearchParam = (raw: unknown): number | undefined => {
 };
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
+
+type SeoHeadLocationContext = {
+  location?: {
+    publicHref?: string;
+  };
+};
 
 export const Route = createFileRoute("/")({
   validateSearch: (
@@ -261,9 +268,18 @@ export const Route = createFileRoute("/")({
     }
     return { detail: null };
   },
-  head: ({ loaderData, match }) => {
-    const pathname = match.pathname;
-    const locale = getSeoLocaleFromPathname(pathname);
+  head: (context) => {
+    const { loaderData, match } = context;
+    const publicHref = (context as SeoHeadLocationContext).location?.publicHref;
+    const pathname = getSeoPathname({
+      publicHref,
+      pathname: match.pathname,
+    });
+    const locale = getSeoLocale({
+      publicHref,
+      pathname: match.pathname,
+      runtimeLocale: languageTag(),
+    });
     const detail = loaderData?.detail;
     if (detail) {
       const name = detail.title || "물품보관함";
@@ -333,7 +349,7 @@ export const Route = createFileRoute("/")({
 
     const title = m.seo_global_title({}, { locale });
     const description = m.seo_global_description({}, { locale });
-    const canonicalUrl = createCanonicalUrlForPathname(pathname);
+    const canonicalUrl = createLocalizedUrl({ pathname, locale });
 
     return {
       meta: [

@@ -341,7 +341,7 @@
   "settings_document_retry": "다시 시도",
   "settings_document_loading_aria": "문서를 불러오는 중",
   "settings_notice_empty": "등록된 공지사항이 없습니다.",
-  "seo_locker_detail_title": "{name} | 짐두고 물품보관함",
+  "seo_locker_detail_title": "{name} | 짐두고 (Zimdugo) 물품보관함",
   "seo_locker_detail_description": "{name} 물품보관함의 위치({address}), {priceText}, 운영 시간 등 상세 정보를 짐두고에서 쉽고 빠르게 확인하세요.",
   "seo_locker_detail_price_text": "최소 요금 {price}원",
   "seo_locker_detail_price_unknown": "요금 정보 확인 가능",

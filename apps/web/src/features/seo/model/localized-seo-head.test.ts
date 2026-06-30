@@ -4,7 +4,10 @@ import {
   createCanonicalUrlForPathname,
   createLocalizedPathname,
   createLocalizedUrl,
+  getSeoLocale,
   getSeoLocaleFromPathname,
+  getSeoPathname,
+  getSeoSiteName,
 } from "./localized-seo-head";
 
 describe("localized SEO URL helpers", () => {
@@ -13,6 +16,41 @@ describe("localized SEO URL helpers", () => {
     expect(getSeoLocaleFromPathname("/en")).toBe("en");
     expect(getSeoLocaleFromPathname("/ja/notices")).toBe("ja");
     expect(getSeoLocaleFromPathname("/zh-TW/notices")).toBe("zh-TW");
+  });
+
+  it("resolves SEO locale from the public href before router-rewritten pathnames", () => {
+    expect(
+      getSeoLocale({
+        publicHref: "/en",
+        pathname: "/",
+        runtimeLocale: "ko",
+      }),
+    ).toBe("en");
+    expect(
+      getSeoLocale({
+        pathname: "/zh/notices",
+        runtimeLocale: "ko",
+      }),
+    ).toBe("zh");
+    expect(
+      getSeoLocale({
+        pathname: "/",
+        runtimeLocale: "ja",
+      }),
+    ).toBe("ja");
+  });
+
+  it("resolves SEO pathname from the public href before router-rewritten pathnames", () => {
+    expect(getSeoPathname({ publicHref: "/zh/notices", pathname: "/" })).toBe(
+      "/zh/notices",
+    );
+    expect(getSeoPathname({ pathname: "/notices" })).toBe("/notices");
+  });
+
+  it("keeps the service title English except Korean SEO metadata", () => {
+    expect(getSeoSiteName("ko")).toBe("\uC9D0\uB450\uACE0 (Zimdugo)");
+    expect(getSeoSiteName("en")).toBe("Zimdugo");
+    expect(getSeoSiteName("ja")).toBe("Zimdugo");
   });
 
   it("creates locale-prefixed pathnames while keeping Korean as the root path", () => {
