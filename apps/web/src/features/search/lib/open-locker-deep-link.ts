@@ -1,5 +1,6 @@
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import type { AppLocale } from "#/shared/i18n/locales";
+import { SITE_ORIGIN } from "#/shared/lib/site-url";
 
 export type LockerDetailSnap = "full" | "half";
 
@@ -27,8 +28,6 @@ export interface LockerShareTextInput {
   title: string;
   address: string;
 }
-
-const LOCKER_CANONICAL_ORIGIN = "https://zimdugo.com";
 
 const parsePositiveInt = (raw: unknown): number | undefined => {
   const parsed =
@@ -106,7 +105,7 @@ export const createLockerCanonicalUrl = ({
   title,
 }: LockerCanonicalUrlInput): string =>
   createLockerDeepLinkUrl({
-    origin: LOCKER_CANONICAL_ORIGIN,
+    origin: SITE_ORIGIN,
     lockerId,
     title,
   });

@@ -1,3 +1,20 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Allow: /settings/terms
+Allow: /settings/privacy
+Allow: /settings/notices
+Allow: /*/settings/terms
+Allow: /*/settings/privacy
+Allow: /*/settings/notices
+Disallow: /login
+Disallow: /my
+Disallow: /my/
+Disallow: /report
+Disallow: /settings
+Disallow: /*/login
+Disallow: /*/my
+Disallow: /*/my/
+Disallow: /*/report
+Disallow: /*/settings
+
+Sitemap: https://zimdugo.com/sitemap.xml
