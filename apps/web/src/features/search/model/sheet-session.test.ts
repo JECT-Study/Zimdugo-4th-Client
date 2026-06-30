@@ -351,7 +351,7 @@ describe("sheet-session v2", () => {
   it("모바일 뒤로가기 액션은 오버레이를 시트보다 먼저 소비한다", () => {
     const baseInput = {
       context: "search" as const,
-      hasSelectedMapPin: false,
+      isMapPinSelectedInApp: false,
       mapDetailBack: null,
       listKind: "keyword" as const,
       sheetMode: "detail" as const,
@@ -389,7 +389,7 @@ describe("sheet-session v2", () => {
         context: "search",
         isNavigationPopupOpen: false,
         isSearchOpen: false,
-        hasSelectedMapPin: false,
+        isMapPinSelectedInApp: false,
         listKind: "keyword",
         mapDetailBack: null,
         sheetMode: "list",
@@ -402,7 +402,7 @@ describe("sheet-session v2", () => {
         context: "search",
         isNavigationPopupOpen: false,
         isSearchOpen: false,
-        hasSelectedMapPin: false,
+        isMapPinSelectedInApp: false,
         listKind: "place",
         mapDetailBack: null,
         sheetMode: "list",
@@ -417,7 +417,7 @@ describe("sheet-session v2", () => {
         context: "map",
         isNavigationPopupOpen: false,
         isSearchOpen: false,
-        hasSelectedMapPin: false,
+        isMapPinSelectedInApp: false,
         listKind: null,
         mapDetailBack: "idle",
         sheetMode: "detail",
@@ -430,12 +430,25 @@ describe("sheet-session v2", () => {
         context: "map",
         isNavigationPopupOpen: false,
         isSearchOpen: false,
-        hasSelectedMapPin: true,
+        isMapPinSelectedInApp: true,
         listKind: null,
         mapDetailBack: "idle",
         sheetMode: "detail",
         searchDetailBack: null,
       }),
-    ).toBe("mapPlaceList");
+    ).toBe("mapDetail");
+
+    expect(
+      resolveMobileBackAction({
+        context: "map",
+        isNavigationPopupOpen: false,
+        isSearchOpen: false,
+        isMapPinSelectedInApp: false,
+        listKind: null,
+        mapDetailBack: "placeList",
+        sheetMode: "detail",
+        searchDetailBack: null,
+      }),
+    ).toBe("mapDetail");
   });
 });

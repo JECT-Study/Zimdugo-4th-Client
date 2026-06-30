@@ -29,6 +29,7 @@ export type SearchBarBackAction =
 export type MobileBackAction =
   | "navigationPopup"
   | "searchOverlay"
+  | "mapDetail"
   | SearchBarBackAction;
 
 export const createKeywordDetailBackTarget = (): SearchDetailBackTarget => ({
@@ -200,7 +201,7 @@ export const resolveSearchBarBackAction = (input: {
 
 export const resolveMobileBackAction = (input: {
   context: AppMapContext;
-  hasSelectedMapPin: boolean;
+  isMapPinSelectedInApp: boolean;
   isNavigationPopupOpen: boolean;
   isSearchOpen: boolean;
   listKind: SearchListKind | null;
@@ -218,18 +219,19 @@ export const resolveMobileBackAction = (input: {
 
   const sheetBackAction = resolveSearchBarBackAction(input);
 
-  if (
-    sheetBackAction === "searchKeywordList" ||
-    sheetBackAction === "searchPlaceList"
-  ) {
-    return null;
+  if (input.context === "map" && input.sheetMode === "detail") {
+    if (input.mapDetailBack === "placeList") {
+      return "mapDetail";
+    }
+
+    if (input.mapDetailBack === "idle") {
+      return input.isMapPinSelectedInApp ? "mapDetail" : null;
+    }
   }
 
   if (
-    sheetBackAction === "mapPlaceList" &&
-    input.sheetMode === "detail" &&
-    input.mapDetailBack === "idle" &&
-    !input.hasSelectedMapPin
+    sheetBackAction === "searchKeywordList" ||
+    sheetBackAction === "searchPlaceList"
   ) {
     return null;
   }
