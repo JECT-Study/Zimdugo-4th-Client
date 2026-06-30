@@ -1,7 +1,6 @@
 import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
 import { createFileRoute, redirect, useSearch } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
-import { LoginPageSkeleton } from "#/features/auth/sign-in/ui/LoginPageSkeleton";
 import {
   loginLogoInlineFallbackStyle,
   loginPageInlineFallbackStyle,
@@ -94,17 +93,16 @@ function LoginPage() {
     );
   }
 
-  if (!isStyleReady) {
-    return <LoginPageSkeleton />;
-  }
+  // VE CSS 아직 미적용: 인라인 fallback 스타일로 즉시 렌더링해 skeleton 컴포넌트 없이 레이아웃 유지
+  const applyFallbackStyle = !isStyleReady || isStyleTimedOut;
 
   return (
     <div
       className={page}
-      style={isStyleTimedOut ? loginPageInlineFallbackStyle : undefined}
+      style={applyFallbackStyle ? loginPageInlineFallbackStyle : undefined}
     >
       <LoginPageContent
-        applyFallbackStyle={isStyleTimedOut}
+        applyFallbackStyle={applyFallbackStyle}
         returnPath={returnPath}
       />
     </div>
