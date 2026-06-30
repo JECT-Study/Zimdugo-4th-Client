@@ -124,6 +124,11 @@ import {
   getSearchBoundsBottomPadding,
 } from "#/features/search/model/map-viewport-policy";
 import {
+  clearSearchFiltersFromSession,
+  loadSearchFiltersFromSession,
+  saveSearchFiltersToSession,
+} from "#/features/search/model/search-filter-session";
+import {
   resolveSearchHistorySelectionQuery,
   type SearchHistoryEntry,
 } from "#/features/search/model/search-history";
@@ -143,11 +148,6 @@ import {
   withSearchQueryParam,
 } from "#/features/search/model/search-url-state";
 import {
-  clearSearchFiltersFromSession,
-  loadSearchFiltersFromSession,
-  saveSearchFiltersToSession,
-} from "#/features/search/model/search-filter-session";
-import {
   type AppMapContext,
   createKeywordDetailBackTarget,
   createPlaceDetailBackTarget,
@@ -166,6 +166,12 @@ import {
   shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
+import {
+  createAlternateLinksForPathname,
+  createLocalizedUrl,
+  getSeoLocale,
+  getSeoPathname,
+} from "#/features/seo/model/localized-seo-head";
 import { toLockerDetailItem } from "#/shared/api/locker-adapters";
 import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import {
@@ -207,6 +213,12 @@ const parseLockerSearchParam = (raw: unknown): number | undefined => {
 };
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
+
+type SeoHeadLocationContext = {
+  location?: {
+    publicHref?: string;
+  };
+};
 
 export const Route = createFileRoute("/")({
   validateSearch: (
@@ -256,7 +268,18 @@ export const Route = createFileRoute("/")({
     }
     return { detail: null };
   },
-  head: ({ loaderData }) => {
+  head: (context) => {
+    const { loaderData, match } = context;
+    const publicHref = (context as SeoHeadLocationContext).location?.publicHref;
+    const pathname = getSeoPathname({
+      publicHref,
+      pathname: match.pathname,
+    });
+    const locale = getSeoLocale({
+      publicHref,
+      pathname: match.pathname,
+      runtimeLocale: languageTag(),
+    });
     const detail = loaderData?.detail;
     if (detail) {
       const name = detail.title || "물품보관함";
@@ -265,41 +288,54 @@ export const Route = createFileRoute("/")({
 
       const priceText =
         minPrice != null
-          ? m.seo_locker_detail_price_text({ price: minPrice.toLocaleString() })
-          : m.seo_locker_detail_price_unknown();
+          ? m.seo_locker_detail_price_text(
+              { price: minPrice.toLocaleString() },
+              { locale },
+            )
+          : m.seo_locker_detail_price_unknown({}, { locale });
+      const title = m.seo_locker_detail_title({ name }, { locale });
+      const description = m.seo_locker_detail_description(
+        {
+          name,
+          address,
+          priceText,
+        },
+        { locale },
+      );
       const canonicalUrl = createLockerCanonicalUrl({
         lockerId: detail.lockerId,
         title: detail.title ?? undefined,
+        locale,
       });
 
       return {
         meta: [
           {
-            title: m.seo_locker_detail_title({ name }),
+            title,
           },
           {
             name: "description",
-            content: m.seo_locker_detail_description({
-              name,
-              address,
-              priceText,
-            }),
+            content: description,
           },
           {
             property: "og:title",
-            content: m.seo_locker_detail_title({ name }),
+            content: title,
           },
           {
             property: "og:description",
-            content: m.seo_locker_detail_description({
-              name,
-              address,
-              priceText,
-            }),
+            content: description,
           },
           {
             property: "og:url",
             content: canonicalUrl,
+          },
+          {
+            name: "twitter:title",
+            content: title,
+          },
+          {
+            name: "twitter:description",
+            content: description,
           },
         ],
         links: [
@@ -311,11 +347,46 @@ export const Route = createFileRoute("/")({
       };
     }
 
+    const title = m.seo_global_title({}, { locale });
+    const description = m.seo_global_description({}, { locale });
+    const canonicalUrl = createLocalizedUrl({ pathname, locale });
+
     return {
       meta: [
         {
-          title: "Zimdugo",
+          title,
         },
+        {
+          name: "description",
+          content: description,
+        },
+        {
+          property: "og:title",
+          content: title,
+        },
+        {
+          property: "og:description",
+          content: description,
+        },
+        {
+          property: "og:url",
+          content: canonicalUrl,
+        },
+        {
+          name: "twitter:title",
+          content: title,
+        },
+        {
+          name: "twitter:description",
+          content: description,
+        },
+      ],
+      links: [
+        {
+          rel: "canonical",
+          href: canonicalUrl,
+        },
+        ...createAlternateLinksForPathname(pathname),
       ],
     };
   },
@@ -565,8 +636,7 @@ export function IndexPage() {
 
     const urlParams = new URLSearchParams(window.location.search);
     const rawSearchQueryFromUrl = urlParams.get("q") ?? undefined;
-    const rawSearchPlaceIdFromUrl =
-      urlParams.get("searchPlaceId") ?? undefined;
+    const rawSearchPlaceIdFromUrl = urlParams.get("searchPlaceId") ?? undefined;
     const normalizedSearchPlaceIdFromUrl =
       searchPlaceIdFromUrl !== undefined
         ? String(searchPlaceIdFromUrl)
@@ -598,11 +668,7 @@ export function IndexPage() {
         replace: true,
       });
     }
-  }, [
-    navigate,
-    searchPlaceIdFromUrl,
-    searchQueryFromUrl,
-  ]);
+  }, [navigate, searchPlaceIdFromUrl, searchQueryFromUrl]);
 
   useEffect(() => {
     const nextSearchQuery = searchQueryFromUrl ?? "";
@@ -2181,37 +2247,43 @@ export function IndexPage() {
     setIsNavigationPopupOpen(true);
   }, []);
 
-  const handleShareLockerDetail = useCallback((item: LockerDetailItem) => {
-    if (typeof window === "undefined") {
-      return;
-    }
+  const handleShareLockerDetail = useCallback(
+    (item: LockerDetailItem) => {
+      if (typeof window === "undefined") {
+        return;
+      }
 
-    if (!navigator.clipboard) {
-      console.error(
-        "Failed to copy locker detail: Clipboard API is not supported",
-      );
-      return;
-    }
+      if (!navigator.clipboard) {
+        console.error(
+          "Failed to copy locker detail: Clipboard API is not supported",
+        );
+        return;
+      }
 
-    const shareUrl = createLockerDeepLinkUrl({
-      origin: window.location.origin,
-      lockerId: item.lockerId,
-      title: item.title,
-    });
-    const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
-    const shareText = createLockerShareText({
-      locale: shareLocale,
-      url: shareUrl,
-      title: item.title,
-      address: item.address,
-    });
+      const shareUrl = createLockerDeepLinkUrl({
+        origin: window.location.origin,
+        lockerId: item.lockerId,
+        title: item.title,
+      });
+      const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
+      const shareText = createLockerShareText({
+        locale: shareLocale,
+        url: shareUrl,
+        title: item.title,
+        address: item.address,
+      });
 
-    void navigator.clipboard.writeText(shareText).then(() => {
-      setShareCopied(true);
-    }).catch((error) => {
-      console.error("Failed to copy locker detail:", error);
-    });
-  }, [setShareCopied]);
+      void navigator.clipboard
+        .writeText(shareText)
+        .then(() => {
+          setShareCopied(true);
+        })
+        .catch((error) => {
+          console.error("Failed to copy locker detail:", error);
+        });
+    },
+    [setShareCopied],
+  );
 
   const navigationKnownLocation = useMemo(
     () => (permission === "granted" && location ? location : null),

@@ -34,6 +34,17 @@ describe("createLockerDeepLinkUrl", () => {
     ).toBe("https://zimdugo-web.vercel.app/?locker=515-Gangnam-Station-Locker");
   });
 
+  it("creates a locale-prefixed locker URL when a locale is provided", () => {
+    expect(
+      createLockerDeepLinkUrl({
+        origin: "https://zimdugo.com",
+        lockerId: 515,
+        title: "Gangnam Station Locker",
+        locale: "en",
+      }),
+    ).toBe("https://zimdugo.com/en?locker=515-Gangnam-Station-Locker");
+  });
+
   it("percent-encodes Korean locker names while keeping the decoded slug readable", () => {
     const shareUrl = createLockerDeepLinkUrl({
       origin: "https://zimdugo-web.vercel.app",
@@ -60,6 +71,16 @@ describe("createLockerCanonicalUrl", () => {
     ).toBe(
       "https://zimdugo.com/?locker=515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5-ES-34-%ED%95%98%EB%8B%A8",
     );
+  });
+
+  it("creates a locale-prefixed canonical locker URL when a locale is provided", () => {
+    expect(
+      createLockerCanonicalUrl({
+        lockerId: 515,
+        title: "Gangnam Station Locker",
+        locale: "en",
+      }),
+    ).toBe("https://zimdugo.com/en?locker=515-Gangnam-Station-Locker");
   });
 });
 

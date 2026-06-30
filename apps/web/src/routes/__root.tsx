@@ -19,6 +19,10 @@ import {
 } from "#/entities/navigation";
 import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
+import {
+  getSeoLocale,
+  getSeoSiteName,
+} from "#/features/seo/model/localized-seo-head";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
 import {
@@ -176,69 +180,101 @@ const COMPACT_DEVICE_LAYOUT_SCRIPT = `
 })();
 `;
 
+type SeoHeadLocationContext = {
+  location?: {
+    publicHref?: string;
+  };
+};
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1, viewport-fit=cover",
-      },
-      {
-        title: m.seo_global_title(),
-      },
-      {
-        name: "description",
-        content: m.seo_global_description(),
-      },
-      {
-        name: "theme-color",
-        content: "#3bd569",
-      },
-      {
-        name: "google-site-verification",
-        content: "gpgSPQCFt-Gg188XTXUl8KrpB4gPuU6EH0b0i9OTlLE",
-      },
-      {
-        name: "naver-site-verification",
-        content: "afc6fa2a6561bcfafa769e5938396bb6e61fd894",
-      },
-    ],
-    links: [
-      {
-        rel: "icon",
-        href: "/favicon.svg",
-        type: "image/svg+xml",
-      },
-      {
-        rel: "icon",
-        href: "/favicon.ico",
-        sizes: "any",
-        type: "image/x-icon",
-      },
-      {
-        rel: "icon",
-        href: "/icons/favicon-16x16.png",
-        sizes: "16x16",
-        type: "image/png",
-      },
-      {
-        rel: "icon",
-        href: "/icons/favicon-32x32.png",
-        sizes: "32x32",
-        type: "image/png",
-      },
-      {
-        rel: "apple-touch-icon",
-        href: "/icons/apple-touch-icon-180x180.png",
-        sizes: "180x180",
-      },
-    ],
-  }),
+  head: (context) => {
+    const { matches } = context;
+    const publicHref = (context as SeoHeadLocationContext).location?.publicHref;
+    const pathname = matches.at(-1)?.pathname ?? "/";
+    const locale = getSeoLocale({
+      publicHref,
+      pathname,
+      runtimeLocale: languageTag(),
+    });
+    const siteName = getSeoSiteName(locale);
+    const title = m.seo_global_title({}, { locale });
+    const description = m.seo_global_description({}, { locale });
+
+    return {
+      meta: [
+        {
+          charSet: "utf-8",
+        },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1, viewport-fit=cover",
+        },
+        {
+          title,
+        },
+        {
+          name: "description",
+          content: description,
+        },
+        {
+          property: "og:site_name",
+          content: siteName,
+        },
+        {
+          property: "og:type",
+          content: "website",
+        },
+        {
+          name: "twitter:card",
+          content: "summary",
+        },
+        {
+          name: "theme-color",
+          content: "#3bd569",
+        },
+        {
+          name: "google-site-verification",
+          content: "gpgSPQCFt-Gg188XTXUl8KrpB4gPuU6EH0b0i9OTlLE",
+        },
+        {
+          name: "naver-site-verification",
+          content: "afc6fa2a6561bcfafa769e5938396bb6e61fd894",
+        },
+      ],
+      links: [
+        {
+          rel: "icon",
+          href: "/favicon.svg",
+          type: "image/svg+xml",
+        },
+        {
+          rel: "icon",
+          href: "/favicon.ico",
+          sizes: "any",
+          type: "image/x-icon",
+        },
+        {
+          rel: "icon",
+          href: "/icons/favicon-16x16.png",
+          sizes: "16x16",
+          type: "image/png",
+        },
+        {
+          rel: "icon",
+          href: "/icons/favicon-32x32.png",
+          sizes: "32x32",
+          type: "image/png",
+        },
+        {
+          rel: "apple-touch-icon",
+          href: "/icons/apple-touch-icon-180x180.png",
+          sizes: "180x180",
+        },
+      ],
+    };
+  },
   shellComponent: RootDocument,
   notFoundComponent: NotFoundComponent,
 });
@@ -258,7 +294,8 @@ function RootDocument({ children }: { children: ReactNode }) {
   const initializeLanguage = useAppLanguageStore(
     (state) => state.initializeLanguage,
   );
-  const lang = runtimeLanguage;
+  const urlLanguage = getUrlLanguage(pathname);
+  const lang = urlLanguage ?? runtimeLanguage;
   const showBottomTab = shouldShowBottomTab(pathname);
   const normalizedPath = stripLocalePathPrefix(pathname);
   const isDocumentScrollPage =
@@ -292,7 +329,6 @@ function RootDocument({ children }: { children: ReactNode }) {
       data-scroll-page={isDocumentScrollPage ? "true" : undefined}
     >
       <head>
-        <title>{m.seo_global_title()}</title>
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script runs before hydration to normalize locale-less URLs
           dangerouslySetInnerHTML={{ __html: INITIAL_LANGUAGE_REDIRECT_SCRIPT }}
