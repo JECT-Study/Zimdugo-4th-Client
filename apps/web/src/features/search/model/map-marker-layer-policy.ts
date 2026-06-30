@@ -19,6 +19,7 @@ export const resolveMapMarkerLayer = ({
   isSearchOpen,
   searchDetailBack,
   mapDetailBack,
+  hasSelectedMapPin,
   selectedMapDetailPinCount,
 }: {
   context: AppMapContext;
@@ -26,6 +27,7 @@ export const resolveMapMarkerLayer = ({
   isSearchOpen: boolean;
   searchDetailBack: SearchDetailBackTarget | null;
   mapDetailBack: MapDetailBack | null;
+  hasSelectedMapPin: boolean;
   selectedMapDetailPinCount: number;
 }): MapMarkerLayerKind | null => {
   if (isSearchOpen) {
@@ -33,6 +35,10 @@ export const resolveMapMarkerLayer = ({
   }
 
   if (shouldShowIdleMarkers({ context, sheetMode })) {
+    return "idle";
+  }
+
+  if (context === "map" && sheetMode === "idle" && hasSelectedMapPin) {
     return "idle";
   }
 
@@ -47,6 +53,15 @@ export const resolveMapMarkerLayer = ({
       (sheetMode === "detail" && mapDetailBack === "placeList"))
   ) {
     return "mapPlace";
+  }
+
+  if (
+    context === "map" &&
+    sheetMode === "detail" &&
+    mapDetailBack === "idle" &&
+    hasSelectedMapPin
+  ) {
+    return "idle";
   }
 
   if (

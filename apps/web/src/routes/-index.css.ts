@@ -186,8 +186,8 @@ export const controlButton = style({
 });
 
 const markerScaleUp = keyframes({
-  "0%": { transform: "scale(0.66)", opacity: 0.8 },
-  "100%": { transform: "scale(1)", opacity: 1 },
+  "0%": { transform: "scale(0.9)", opacity: 0.8 },
+  "100%": { transform: "scale(1.5)", opacity: 1 },
 });
 
 const markerScaleDown = keyframes({
@@ -218,7 +218,7 @@ globalStyle(".map-marker-item.selected-active", {
 });
 
 globalStyle(".map-marker-item.selected-static", {
-  transform: "scale(1)",
+  transform: "scale(1.5)",
   animation: "none",
 });
 

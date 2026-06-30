@@ -19,15 +19,19 @@ const COORDINATE_GROUP_PRECISION = 4;
 const MARKER_PROXIMITY_THRESHOLD_PX = 44;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
-const MAP_PIN_DISPLAY_SCALE = 0.45;
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
+const MAP_PIN_DISPLAY_SCALE = 0.45;
 const scaleMapPinValue = (value: number) =>
   Math.round(value * MAP_PIN_DISPLAY_SCALE * 10) / 10;
-const LOCKER_MARKER_DISPLAY_SIZE = {
-  width: 40,
-  height: 40,
-};
+// LOCKER 컨테이너: 44px — 내부 아이콘(57/90 비율)이 약 27.9px
+// PLACE 컨테이너: 54.5px — 내부 아이콘(60/121 비율)이 약 27.0px
+// → 숫자 badge를 제외한 순수 아이콘 원이 시각적으로 동일한 크기
+// 시각적 크기 변화는 CSS transform: scale()로만 제어한다.
+//   normal          → scale(1.0), 모션 없이 렌더
+//   selected-active  → scale(0.9→1.5) 선택 시 1.5× 바운스 (0.25s)
+//   unselected-active → scale(1.5→1.0) 해제 시 원래 크기 복귀 (0.20s)
+const LOCKER_MARKER_DISPLAY_SIZE = { width: 44, height: 44 };
 const FAVORITE_LOCKER_MARKER_DISPLAY_SIZE = LOCKER_MARKER_DISPLAY_SIZE;
 const PLACE_MARKER_DISPLAY_SIZE = {
   width: scaleMapPinValue(PLACE_MARKER_SOURCE_SIZE.width),
@@ -279,6 +283,8 @@ interface LockerMarkerEntry {
   zIndex: number;
   wasSelectedBefore?: boolean;
   hadSpreadBefore?: boolean;
+  /** selected-active가 마지막으로 적용된 시각(ms). 이중 effect 실행 시 애니메이션 덮어쓰기 방지용. */
+  selectedActiveAppliedAt?: number;
 }
 
 export type LockerMarkerRegistry = Map<string, LockerMarkerEntry>;
@@ -511,8 +517,14 @@ const createMarkerIconOptions = (
     lockerIconCache.set(maps, innerMap);
   }
 
-  const cached = innerMap.get(key);
-  if (cached) return cached;
+  const isActiveAnimation =
+    animationState === "selected-active" ||
+    animationState === "unselected-active";
+
+  if (!isActiveAnimation) {
+    const cached = innerMap.get(key);
+    if (cached) return cached;
+  }
 
   const markerSize = getMarkerSize(pin, animationState);
   const markerAnchor = getMarkerAnchor(
@@ -540,7 +552,9 @@ const createMarkerIconOptions = (
     size: new maps.Size(markerSize.width, markerSize.height),
     anchor: new maps.Point(markerAnchor.x, markerAnchor.y),
   };
-  innerMap.set(key, options);
+  if (!isActiveAnimation) {
+    innerMap.set(key, options);
+  }
   return options;
 };
 
@@ -801,15 +815,29 @@ export const syncLockerMarkers = ({
         existingEntry.zIndex = zIndex;
       }
 
+      // selected-active CSS 애니메이션 지속 시간(250ms)보다 충분히 긴 가드 시간.
+      // useEffect가 빠르게 두 번 실행되더라도 애니메이션이 중간에 selected-static으로
+      // 덮어씌워지는 것을 방지한다.
+      const SELECTED_ACTIVE_GUARD_MS = 350;
       let animationState: MarkerAnimationState = "normal";
       if (isSelected) {
-        animationState = existingEntry.wasSelectedBefore
-          ? "selected-static"
-          : "selected-active";
+        if (!existingEntry.wasSelectedBefore) {
+          animationState = "selected-active";
+          existingEntry.selectedActiveAppliedAt = Date.now();
+        } else {
+          const isAnimationStillRunning =
+            existingEntry.selectedActiveAppliedAt != null &&
+            Date.now() - existingEntry.selectedActiveAppliedAt <
+              SELECTED_ACTIVE_GUARD_MS;
+          animationState = isAnimationStillRunning
+            ? "selected-active"
+            : "selected-static";
+        }
       } else {
         animationState = existingEntry.wasSelectedBefore
           ? "unselected-active"
           : "normal";
+        existingEntry.selectedActiveAppliedAt = undefined;
       }
 
       const shouldAnimateSpread =
@@ -838,8 +866,11 @@ export const syncLockerMarkers = ({
       existingEntry.hadSpreadBefore = hasSpread;
       existingEntry.offset = offset;
 
-      if (existingEntry.marker.getVisible() !== isVisible) {
-        existingEntry.marker.setVisible(isVisible);
+      // 선택된 마커는 줌 애니메이션 중 bounds 스냅샷이 마커를 범위 밖으로
+      // 판단하더라도 숨기지 않는다 (컬링 중 영구 소멸 버그 방지).
+      const shouldBeVisible = isVisible || isSelected;
+      if (existingEntry.marker.getVisible() !== shouldBeVisible) {
+        existingEntry.marker.setVisible(shouldBeVisible);
       }
 
       if (onSelectLocker || onClusterClick) {
@@ -863,6 +894,7 @@ export const syncLockerMarkers = ({
     }
 
     const animationState = isSelected ? "selected-active" : "normal";
+    const selectedActiveAppliedAt = isSelected ? Date.now() : undefined;
     const shouldAnimateSpread = animationState === "normal" && hasSpread;
     const marker = createLockerMarker({
       map,
@@ -878,7 +910,8 @@ export const syncLockerMarkers = ({
       shouldAnimateSpread,
       zIndex,
     });
-    marker.setVisible(isVisible);
+    // 선택된 마커는 컬링 대상에서 제외한다 (existingEntry와 동일한 정책).
+    marker.setVisible(isVisible || isSelected);
 
     const entry: LockerMarkerEntry = {
       marker,
@@ -888,6 +921,7 @@ export const syncLockerMarkers = ({
       zIndex,
       wasSelectedBefore: isSelected,
       hadSpreadBefore: hasSpread,
+      selectedActiveAppliedAt,
     };
 
     if (onSelectLocker || onClusterClick) {

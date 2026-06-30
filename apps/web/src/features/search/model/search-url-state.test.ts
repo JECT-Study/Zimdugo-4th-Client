@@ -3,6 +3,8 @@ import {
   readSearchFilterParams,
   readSearchPlaceIdParam,
   readSearchQueryParam,
+  withLockerDetailParam,
+  withoutSearchContextParams,
   withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
@@ -125,6 +127,41 @@ describe("search-url-state", () => {
     ).toEqual({
       q: "coex",
       filterSizes: "M",
+    });
+  });
+
+  it("removes search context params while preserving detail params", () => {
+    expect(
+      withoutSearchContextParams({
+        q: "coex",
+        searchPlaceId: 7,
+        filterSizes: "S",
+        filterIndoorOutdoor: "indoor",
+        filterPlaceTypes: "museum",
+        locker: "1-coex-locker",
+        detailSnap: "full",
+      }),
+    ).toEqual({
+      locker: "1-coex-locker",
+      detailSnap: "full",
+    });
+  });
+
+  it("adds locker detail param while preserving search context params", () => {
+    expect(
+      withLockerDetailParam(
+        {
+          q: "coex",
+          searchPlaceId: 7,
+          filterSizes: "S",
+        },
+        "123-coex-locker",
+      ),
+    ).toEqual({
+      q: "coex",
+      searchPlaceId: 7,
+      filterSizes: "S",
+      locker: "123-coex-locker",
     });
   });
 });
