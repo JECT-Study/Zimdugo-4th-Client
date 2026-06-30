@@ -306,7 +306,7 @@
   "locker_detail_back_aria": "返回",
   "locker_detail_summary_aria": "寄存柜摘要",
   "locker_detail_share_aria": "分享",
-  "locker_detail_share_copied": "已复制行李柜信息",
+  "locker_detail_share_copied": "已复制到剪贴板",
   "locker_detail_navigate": "路线",
   "locker_detail_no_image_title": "还没有图片。",
   "locker_detail_no_image_helper": "可通过上报来添加！",

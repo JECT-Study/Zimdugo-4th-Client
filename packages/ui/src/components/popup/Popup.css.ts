@@ -120,6 +120,7 @@ export const title = style({
   textAlign: "center",
   width: "100%",
   wordBreak: "keep-all",
+  overflowWrap: "break-word",
   textWrap: "balance",
 });
 
