@@ -106,15 +106,26 @@ const LOCKER_SHARE_TEXT_BY_LOCALE = {
     "\u5728Zimdugo\u67E5\u770B\u9019\u500B\u884C\u674E\u6AC3\u8CC7\u8A0A\u3002",
 } as const satisfies Record<AppLocale, string>;
 
+const formatShareUrlForDisplay = (url: string): string => {
+  try {
+    return decodeURI(url);
+  } catch {
+    return url;
+  }
+};
+
 export const createLockerShareText = ({
   locale,
   url,
   title,
   address,
 }: LockerShareTextInput): string =>
-  [`[${title}]`, address, url, "", LOCKER_SHARE_TEXT_BY_LOCALE[locale]].join(
-    "\n",
-  );
+  [
+    `[${title}]`,
+    address,
+    formatShareUrlForDisplay(url),
+    LOCKER_SHARE_TEXT_BY_LOCALE[locale],
+  ].join("\n");
 
 export const createLockerPinAt = (
   lockerId: number,
