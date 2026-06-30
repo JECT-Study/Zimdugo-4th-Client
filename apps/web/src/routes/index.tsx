@@ -450,14 +450,8 @@ export function IndexPage() {
   const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
     useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
-    createDefaultSearchFilters,
+    loadSearchFiltersFromSession,
   );
-  useEffect(() => {
-    const stored = loadSearchFiltersFromSession();
-    if (stored.sizeActive || stored.regionActive || stored.placeTypeActive) {
-      setSearchFilters(stored);
-    }
-  }, []);
   const [sheetMode, setSheetMode] = useState<SheetModeForContext>(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) return "detail";
     if (hasSearchQueryEntry) return "list";
@@ -553,29 +547,38 @@ export function IndexPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const rawSearchQueryFromUrl =
-      new URLSearchParams(window.location.search).get("q") ?? undefined;
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawSearchQueryFromUrl = urlParams.get("q") ?? undefined;
     const rawSearchPlaceIdFromUrl =
-      new URLSearchParams(window.location.search).get("searchPlaceId") ??
-      undefined;
+      urlParams.get("searchPlaceId") ?? undefined;
     const normalizedSearchPlaceIdFromUrl =
       searchPlaceIdFromUrl !== undefined
         ? String(searchPlaceIdFromUrl)
         : undefined;
+    const hasLegacyFilterParams =
+      urlParams.has("filterSizes") ||
+      urlParams.has("filterIndoorOutdoor") ||
+      urlParams.has("filterPlaceTypes");
 
     if (
       (rawSearchQueryFromUrl !== undefined &&
         rawSearchQueryFromUrl !== searchQueryFromUrl) ||
       (rawSearchPlaceIdFromUrl !== undefined &&
-        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl)
+        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl) ||
+      hasLegacyFilterParams
     ) {
       void navigate({
         to: ".",
-        search: (prev: SearchUrlParams) =>
-          withSearchPlaceIdParam(
+        search: (prev: SearchUrlParams) => {
+          const next = withSearchPlaceIdParam(
             withSearchQueryParam(prev, searchQueryFromUrl),
             searchPlaceIdFromUrl,
-          ),
+          );
+          delete next.filterSizes;
+          delete next.filterIndoorOutdoor;
+          delete next.filterPlaceTypes;
+          return next;
+        },
         replace: true,
       });
     }
