@@ -2,14 +2,14 @@ export const NAME_DISPLAY_VIEWPORTS = [320, 360, 375, 390, 430, 480] as const;
 
 export type NameDisplayViewport = (typeof NAME_DISPLAY_VIEWPORTS)[number];
 
-export const NAME_DISPLAY_DEFAULT_VIEWPORT: NameDisplayViewport = 390;
+export const NAME_DISPLAY_DEFAULT_VIEWPORT: NameDisplayViewport = 375;
 
 export const NAME_DISPLAY_VIEWPORT_LABELS: Record<NameDisplayViewport, string> =
   {
     320: "권장 테스트 최소",
     360: "최소 지원",
-    375: "기존 디자인 기준",
-    390: "현재 기본 검토",
+    375: "기본 디자인 기준",
+    390: "표준 모바일 검토",
     430: "스마트폰 최대 shell",
     480: "태블릿 shell",
   };
