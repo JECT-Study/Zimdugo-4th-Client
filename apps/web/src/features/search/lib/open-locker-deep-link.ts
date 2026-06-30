@@ -112,7 +112,9 @@ export const createLockerShareText = ({
   title,
   address,
 }: LockerShareTextInput): string =>
-  [url, title, address, "", LOCKER_SHARE_TEXT_BY_LOCALE[locale]].join("\n");
+  [`[${title}]`, address, url, "", LOCKER_SHARE_TEXT_BY_LOCALE[locale]].join(
+    "\n",
+  );
 
 export const createLockerPinAt = (
   lockerId: number,
