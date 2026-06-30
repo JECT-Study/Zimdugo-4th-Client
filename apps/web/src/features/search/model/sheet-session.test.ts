@@ -9,6 +9,7 @@ import {
   resolveSearchBarBackAction,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
+  shouldRestoreSearchListFromUrl,
   shouldShowIdleMarkers,
   shouldShowSearchListLoading,
   shouldShowSearchMarkers,
@@ -318,5 +319,31 @@ describe("sheet-session v2", () => {
         searchDetailBack: null,
       }),
     ).toBeNull();
+  });
+
+  it("restores search list state when URL has search params without locker detail", () => {
+    expect(
+      shouldRestoreSearchListFromUrl({
+        hasExplicitLockerEntry: false,
+        searchQueryFromUrl: "coex",
+        searchPlaceIdFromUrl: undefined,
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldRestoreSearchListFromUrl({
+        hasExplicitLockerEntry: false,
+        searchQueryFromUrl: undefined,
+        searchPlaceIdFromUrl: 7,
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldRestoreSearchListFromUrl({
+        hasExplicitLockerEntry: true,
+        searchQueryFromUrl: "coex",
+        searchPlaceIdFromUrl: undefined,
+      }),
+    ).toBe(false);
   });
 });

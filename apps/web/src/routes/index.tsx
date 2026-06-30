@@ -136,8 +136,8 @@ import {
   readSearchPlaceIdParam,
   readSearchQueryParam,
   type SearchUrlParams,
-  withoutSearchContextParams,
   withLockerDetailParam,
+  withoutSearchContextParams,
   withSearchFilterParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
@@ -158,6 +158,7 @@ import {
   type SheetModeForContext,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
+  shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
 import { toLockerDetailItem } from "#/shared/api/locker-adapters";
@@ -664,6 +665,36 @@ export function IndexPage() {
       previousPlaceId === null ? previousPlaceId : null,
     );
   }, [hasExplicitLockerEntry, searchPlaceIdFromUrl, searchQueryFromUrl]);
+
+  useEffect(() => {
+    if (
+      !shouldRestoreSearchListFromUrl({
+        hasExplicitLockerEntry,
+        searchQueryFromUrl,
+        searchPlaceIdFromUrl,
+      })
+    ) {
+      return;
+    }
+
+    window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
+    pendingLockerDetailOpenTimerRef.current = undefined;
+    setContext("search");
+    setSheetMode("list");
+    setActiveLockerId(null);
+    setSelectedLockerDetail(null);
+    setSelectedMapPin(null);
+    setSelectedMapPinOffset(null);
+    setSearchDetailBack(null);
+    setMapDetailBack(null);
+    setIsNavigationPopupOpen(false);
+    setIsSearchOpen(false);
+  }, [
+    hasExplicitLockerEntry,
+    searchPlaceIdFromUrl,
+    searchQueryFromUrl,
+    setIsSearchOpen,
+  ]);
 
   useEffect(() => {
     setSearchFilters(searchFiltersFromUrl);

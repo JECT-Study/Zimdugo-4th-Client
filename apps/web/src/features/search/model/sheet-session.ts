@@ -70,6 +70,15 @@ export const resolveActivePlaceId = (input: {
   return null;
 };
 
+export const shouldRestoreSearchListFromUrl = (input: {
+  hasExplicitLockerEntry: boolean;
+  searchQueryFromUrl: string | undefined;
+  searchPlaceIdFromUrl: number | undefined;
+}): boolean =>
+  !input.hasExplicitLockerEntry &&
+  (input.searchQueryFromUrl !== undefined ||
+    input.searchPlaceIdFromUrl !== undefined);
+
 export const shouldFetchKeywordSearch = (input: {
   context: AppMapContext;
   listKind: SearchListKind | null;
