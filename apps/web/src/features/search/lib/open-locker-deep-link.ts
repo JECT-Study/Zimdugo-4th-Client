@@ -19,12 +19,16 @@ export interface LockerDeepLinkUrlInput extends LockerDeepLinkSlugInput {
   origin: string;
 }
 
+export type LockerCanonicalUrlInput = LockerDeepLinkSlugInput;
+
 export interface LockerShareTextInput {
   locale: AppLocale;
   url: string;
   title: string;
   address: string;
 }
+
+const LOCKER_CANONICAL_ORIGIN = "https://zimdugo.com";
 
 const parsePositiveInt = (raw: unknown): number | undefined => {
   const parsed =
@@ -96,6 +100,16 @@ export const createLockerDeepLinkUrl = ({
 
   return url.toString();
 };
+
+export const createLockerCanonicalUrl = ({
+  lockerId,
+  title,
+}: LockerCanonicalUrlInput): string =>
+  createLockerDeepLinkUrl({
+    origin: LOCKER_CANONICAL_ORIGIN,
+    lockerId,
+    title,
+  });
 
 const LOCKER_SHARE_TEXT_BY_LOCALE = {
   ko: "\uC9D0\uB450\uACE0\uC5D0\uC11C \uC704 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
