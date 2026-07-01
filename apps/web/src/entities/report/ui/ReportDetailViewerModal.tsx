@@ -14,6 +14,7 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
+import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import { formatReportViewerInformationGroups } from "../lib/format-report-viewer-sections";
 import { resolveReportStatusDisplay } from "../lib/resolve-report-status";
@@ -151,127 +152,115 @@ export function ReportDetailViewerModal({
       isDismissable
     >
       <Modal className={className}>
-        <>
-          <DraggableBottomSheet
-            snapPoint={DEFAULT_SNAP_POINT}
-            initialSnapPoint={DEFAULT_SNAP_POINT}
-            minSnapPoint={DEFAULT_SNAP_POINT}
-            maxSnapPoint={collapsedSnap}
-            dismissSnapPoint={collapsedSnap}
-            animateOnMount
-            onDismiss={handleClose}
+        <DraggableBottomSheet
+          snapPoint={DEFAULT_SNAP_POINT}
+          initialSnapPoint={DEFAULT_SNAP_POINT}
+          minSnapPoint={DEFAULT_SNAP_POINT}
+          maxSnapPoint={collapsedSnap}
+          dismissSnapPoint={collapsedSnap}
+          animateOnMount
+          onDismiss={handleClose}
+        >
+          <Dialog
+            className={panel}
+            aria-label={m.my_report_detail_viewer_aria()}
           >
-            <Dialog
-              className={panel}
-              aria-label={m.my_report_detail_viewer_aria()}
-            >
-              <div className={informationBody}>
-                <div
-                  className={informationTitleRow}
-                  data-slot="information-title"
-                >
-                  <div className={informationTitleCopy}>
-                    <span className={informationEyebrow}>
-                      {m.my_report_detail_eyebrow()}
-                    </span>
-                    <h2 className={informationLockerTitle}>{titleText}</h2>
-                  </div>
-                  {statusDisplay ? (
-                    <ReportStatusBadge
-                      status={statusDisplay.variant}
-                      label={statusDisplay.label}
-                    />
-                  ) : null}
+            <div className={informationBody}>
+              <div
+                className={informationTitleRow}
+                data-slot="information-title"
+              >
+                <div className={informationTitleCopy}>
+                  <span className={informationEyebrow}>
+                    {m.my_report_detail_eyebrow()}
+                  </span>
+                  <h2 className={informationLockerTitle}>
+                    <OverflowMarqueeText text={titleText} />
+                  </h2>
                 </div>
-
-                {loadState === "loading" ? (
-                  <ReportDetailViewerSkeleton />
-                ) : null}
-                {loadState === "error" ? (
-                  <p className={stateMessage}>{m.my_list_error_title()}</p>
-                ) : null}
-                {loadState === "ready" && detail == null ? (
-                  <p className={stateMessage}>{m.my_list_error_title()}</p>
-                ) : null}
-
-                {loadState === "ready" && detail != null ? (
-                  <>
-                    {detailImageUrl ? (
-                      <button
-                        type="button"
-                        className={[photoButton, informationPhoto].join(" ")}
-                        onClick={(event) =>
-                          handleOpenImagePreview(
-                            detailImageUrl,
-                            event.currentTarget,
-                          )
-                        }
-                        aria-label={m.report_section_photo()}
-                      >
-                        <img
-                          className={photoImage}
-                          src={detailImageUrl}
-                          alt=""
-                        />
-                      </button>
-                    ) : (
-                      <LockerImageReportFrame
-                        size="half"
-                        titleText={m.my_report_image_empty()}
-                        helperText=""
-                        className={[photoPlaceholder, informationPhoto].join(
-                          " ",
-                        )}
-                      />
-                    )}
-
-                    {informationGroups.map((group) => (
-                      <section
-                        key={group.title}
-                        className={informationGroup}
-                        aria-label={group.title}
-                      >
-                        <h3 className={informationGroupTitle}>{group.title}</h3>
-                        <dl className={informationList}>
-                          {group.fields.map((field) => (
-                            <div key={field.label} className={informationRow}>
-                              <dt className={informationLabel}>
-                                {field.label}
-                              </dt>
-                              <dd className={informationValue}>
-                                {field.value}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </section>
-                    ))}
-                  </>
+                {statusDisplay ? (
+                  <ReportStatusBadge
+                    status={statusDisplay.variant}
+                    label={statusDisplay.label}
+                  />
                 ) : null}
               </div>
 
-              {loadState === "ready" && detail != null ? (
-                <div className={footer}>
-                  <Button
-                    className={closeButton}
-                    variant="filled"
-                    intent="neutral"
-                    size="L"
-                    onPress={handleClose}
-                  >
-                    {m.my_report_detail_close()}
-                  </Button>
-                </div>
+              {loadState === "loading" ? <ReportDetailViewerSkeleton /> : null}
+              {loadState === "error" ? (
+                <p className={stateMessage}>{m.my_list_error_title()}</p>
               ) : null}
-            </Dialog>
-          </DraggableBottomSheet>
-          {previewImageUrl ? (
-            <ImagePreviewOverlay
-              imageUrl={previewImageUrl}
-              onClose={handleCloseImagePreview}
-            />
-          ) : null}
-        </>
+              {loadState === "ready" && detail == null ? (
+                <p className={stateMessage}>{m.my_list_error_title()}</p>
+              ) : null}
+
+              {loadState === "ready" && detail != null ? (
+                <>
+                  {detailImageUrl ? (
+                    <button
+                      type="button"
+                      className={[photoButton, informationPhoto].join(" ")}
+                      onClick={(event) =>
+                        handleOpenImagePreview(
+                          detailImageUrl,
+                          event.currentTarget,
+                        )
+                      }
+                      aria-label={m.report_section_photo()}
+                    >
+                      <img className={photoImage} src={detailImageUrl} alt="" />
+                    </button>
+                  ) : (
+                    <LockerImageReportFrame
+                      size="half"
+                      titleText={m.my_report_image_empty()}
+                      helperText=""
+                      className={[photoPlaceholder, informationPhoto].join(" ")}
+                    />
+                  )}
+
+                  {informationGroups.map((group) => (
+                    <section
+                      key={group.title}
+                      className={informationGroup}
+                      aria-label={group.title}
+                    >
+                      <h3 className={informationGroupTitle}>{group.title}</h3>
+                      <dl className={informationList}>
+                        {group.fields.map((field) => (
+                          <div key={field.label} className={informationRow}>
+                            <dt className={informationLabel}>{field.label}</dt>
+                            <dd className={informationValue}>{field.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  ))}
+                </>
+              ) : null}
+            </div>
+
+            {loadState === "ready" && detail != null ? (
+              <div className={footer}>
+                <Button
+                  className={closeButton}
+                  variant="filled"
+                  intent="neutral"
+                  size="L"
+                  onPress={handleClose}
+                >
+                  {m.my_report_detail_close()}
+                </Button>
+              </div>
+            ) : null}
+          </Dialog>
+        </DraggableBottomSheet>
+        {previewImageUrl ? (
+          <ImagePreviewOverlay
+            imageUrl={previewImageUrl}
+            onClose={handleCloseImagePreview}
+          />
+        ) : null}
       </Modal>
     </ModalOverlay>
   );

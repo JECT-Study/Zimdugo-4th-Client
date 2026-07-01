@@ -15,6 +15,7 @@ import {
   getNextExpandedPlaceId,
   getSearchResultKey,
 } from "#/composites/search/search-list-model";
+import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import {
   accordionChildren,
   accordionGroup,
@@ -132,7 +133,7 @@ export function SearchListResult({
           <span className={resultContent}>
             <ResultMarker tone="place" />
             <span className={resultTextColumn}>
-              <span className={titleText}>{item.title}</span>
+              <OverflowMarqueeText className={titleText} text={item.title} />
               <span className={detailMetaRow}>
                 <span>{item.distanceLabel}</span>
                 <span className={metaDot} aria-hidden="true">
@@ -209,7 +210,7 @@ export function SearchLockerResult({
         <span className={resultContent}>
           <ResultMarker tone={isNested ? "locker" : "standalone"} />
           <span className={resultTextColumn}>
-            <span className={titleText}>{item.title}</span>
+            <OverflowMarqueeText className={titleText} text={item.title} />
             <span className={detailMetaRow}>
               <span className={categoryText}>{item.categoryLabel}</span>
               <span className={metaDot} aria-hidden="true">

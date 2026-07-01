@@ -1,4 +1,5 @@
 import { Button } from "react-aria-components";
+import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import {
   address,
   leadingContent,
@@ -77,7 +78,7 @@ export function SearchAutocompleteItem({
         </span>
 
         <span className={textColumn}>
-          <span className={title}>{item.title}</span>
+          <OverflowMarqueeText className={title} text={item.title} />
           <span className={address}>{item.address}</span>
           <span className={updated}>{item.updatedLabel}</span>
         </span>

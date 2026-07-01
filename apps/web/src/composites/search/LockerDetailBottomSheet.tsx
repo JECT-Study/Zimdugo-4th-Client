@@ -36,6 +36,7 @@ import {
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
 } from "#/shared/ui/DraggableBottomSheet";
+import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
@@ -841,7 +842,9 @@ function SummarySection({
     >
       <div className={summaryRow}>
         <div className={summaryTextColumn}>
-          <h2 className={lockerTitle}>{locker.title}</h2>
+          <h2 className={lockerTitle}>
+            <OverflowMarqueeText text={locker.title} />
+          </h2>
           <InlineMeta
             left={locker.categoryLabel}
             right={

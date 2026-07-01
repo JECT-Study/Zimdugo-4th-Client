@@ -2,6 +2,7 @@
 import { Button } from "@repo/ui/components/button";
 import { MapPinMarker } from "@repo/ui/components/map-pin-marker";
 import { IconStarFilled24, IconStarOutline24 } from "@repo/ui/tokens/icons";
+import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import {
   favoriteButton,
   markerBadge,
@@ -54,7 +55,7 @@ export function FavoriteListItem({
       </span>
       <span className={textColumn}>
         <span className={titleGroup}>
-          <span className={titleLabel}>{titleText}</span>
+          <OverflowMarqueeText className={titleLabel} text={titleText} />
           {englishCaption ? (
             <span className={titleCaption}>{englishCaption}</span>
           ) : null}
