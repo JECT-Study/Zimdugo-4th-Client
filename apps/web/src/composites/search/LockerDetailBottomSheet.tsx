@@ -9,7 +9,7 @@ import {
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
   IconNavigationClock24,
-  IconNavigationMapPin24,
+  IconNavigationNavigate24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
@@ -43,7 +43,6 @@ import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
   actionRow,
-  addressText,
   backButton,
   backIcon,
   contentStack,
@@ -424,6 +423,7 @@ export function LockerDetailBottomSheet({
         snapPoint: resolvedSnapPoint,
       }),
     );
+  const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
@@ -491,6 +491,11 @@ export function LockerDetailBottomSheet({
   }, [loadState, updateFullContentHeight]);
 
   useEffect(() => {
+    if (initialSnapPointRef.current === resolvedInitialSnapPoint) {
+      return;
+    }
+
+    initialSnapPointRef.current = resolvedInitialSnapPoint;
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,
@@ -943,14 +948,10 @@ function SummarySection({
             ) : null}
           </div>
           <InlineMeta
-            left={locker.categoryLabel}
-            right={<span className={addressText}>{summaryTrailingText}</span>}
-          />
-          <InlineMeta
             className={distanceRow}
             left={
               <span className={metaIconText}>
-                <IconNavigationMapPin24 className={metaIcon} />
+                <IconNavigationNavigate24 className={metaIcon} />
                 {distanceText}
               </span>
             }
@@ -961,6 +962,7 @@ function SummarySection({
               </span>
             }
           />
+          <InlineMeta left={locker.categoryLabel} right={summaryTrailingText} />
         </div>
 
         <div className={summaryActions}>
