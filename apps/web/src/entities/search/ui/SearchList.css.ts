@@ -106,7 +106,7 @@ export const lockerRow = style({
 
 export const nestedLockerRow = style({
   position: "relative",
-  paddingLeft: vars.spacing[12],
+  paddingLeft: `calc(${vars.spacing[20]} + ${vars.spacing[8]})`,
 });
 
 export const nestedLockerBullet = style({
