@@ -3,6 +3,7 @@ import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const MOCK_MARKER_FILL = "#3BD569";
 const MOCK_INACTIVE_MARKER_FILL = "#CACACA";
+const MOCK_INACTIVE_BADGE_TEXT_FILL = "#4B4B4B";
 
 vi.mock("@repo/ui/vars", () => ({
   vars: {
@@ -272,18 +273,18 @@ describe("createLockerMarkerIcon", () => {
     );
   });
 
-  it("renders place markers with the same default map pin as lockers", () => {
+  it("renders place markers with the default map pin and a count badge", () => {
     const icon = createLockerMarkerIcon(createPlacePin({ lockerCount: 12 }));
 
     expect(icon).toContain('data-type="PLACE"');
-    expect(icon).toContain('data-map-pin-variant="default"');
+    expect(icon).toContain('data-map-pin-variant="cluster"');
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
     expect(icon).toContain('fill="white"');
     expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
-    expect(icon).not.toContain(`text-anchor="middle"`);
-    expect(icon).not.toContain(">9+<");
-    expect(icon).not.toContain("<text");
-    expect(icon).toContain('viewBox="0 0 90 90"');
+    expect(icon).toContain(`text-anchor="middle" fill="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain(">9+<");
+    expect(icon).toContain("<text");
+    expect(icon).toContain('viewBox="0 0 121 121"');
     expect(icon).toContain('width="100%" height="100%"');
     expect(icon).not.toContain('width="121" height="121"');
   });
@@ -299,7 +300,9 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(
       `stroke="${MOCK_INACTIVE_MARKER_FILL}" stroke-width="3"`,
     );
-    expect(icon).not.toContain(`text-anchor="middle"`);
+    expect(icon).toContain(
+      `text-anchor="middle" fill="${MOCK_INACTIVE_BADGE_TEXT_FILL}"`,
+    );
   });
 
   it("renders cluster markers for count < 10 (S size)", () => {
@@ -437,12 +440,12 @@ describe("syncLockerMarkers", () => {
 
     expect(options.icon?.content).toContain("map-marker-item");
     expect(options.icon?.content).toContain('data-type="PLACE"');
-    expect(options.icon?.content).toContain('data-map-pin-variant="default"');
-    expect(options.icon?.content).not.toContain(">3<");
+    expect(options.icon?.content).toContain('data-map-pin-variant="cluster"');
+    expect(options.icon?.content).toContain(">3<");
     expect(options.icon?.content).toContain('width="100%" height="100%"');
     expect(options.icon?.content).not.toContain('width="121" height="121"');
-    expect(options.icon?.size).toMatchObject({ width: 44, height: 44 });
-    expect(options.icon?.anchor).toMatchObject({ x: 22, y: 22 });
+    expect(options.icon?.size).toMatchObject({ width: 54.5, height: 54.5 });
+    expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
 
   it("uses S size and anchor for cluster markers with < 10 items", () => {
@@ -749,10 +752,10 @@ describe("syncLockerMarkers", () => {
     });
     expect(lockerOptions.icon?.anchor).toMatchObject({ x: 22, y: 22 });
     expect(placeOptions.icon?.size).toMatchObject({
-      width: 44,
-      height: 44,
+      width: 54.5,
+      height: 54.5,
     });
-    expect(placeOptions.icon?.anchor).toMatchObject({ x: 22, y: 22 });
+    expect(placeOptions.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
 
   it("spreads nearby locker and place markers instead of relying on z-index", () => {
@@ -781,8 +784,8 @@ describe("syncLockerMarkers", () => {
       new Set([getOffsetStyle(placeContent), getOffsetStyle(lockerContent)]),
     ).toEqual(new Set(["-24,0", "24,0"]));
     expectMarkerAnchorToMatch(FakeMarker.instances[0], {
-      x: 46,
-      y: 22,
+      x: 47.6,
+      y: 28.4,
     });
     expectMarkerAnchorToMatch(FakeMarker.instances[1], {
       x: -2,
@@ -978,8 +981,8 @@ describe("syncLockerMarkers", () => {
       y: 22,
     });
     expectMarkerAnchorToMatch(FakeMarker.instances[1], {
-      x: 46,
-      y: 22,
+      x: 47.6,
+      y: 28.4,
     });
   });
 
