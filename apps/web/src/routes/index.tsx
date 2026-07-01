@@ -10,7 +10,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
   createLockerDetailFromAutocompleteItem,
@@ -182,7 +182,9 @@ import {
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
+import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
 import { useSearchStore } from "#/shared/store/search";
+import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import {
   locationButton,
   locationControlStack,
@@ -190,9 +192,6 @@ import {
   refreshButtonDisabled,
   refreshCooldownBadge,
   refreshIconSpinning,
-  refreshLoadingBackdrop,
-  refreshLoadingOverlay,
-  refreshLoadingSpinner,
 } from "./-index.css";
 import {
   shouldShowHomeSearchBar,
@@ -393,10 +392,86 @@ export const Route = createFileRoute("/")({
   component: IndexPage,
 });
 
+interface RefreshButtonProps {
+  isRefreshing: boolean;
+  isMapReady: boolean;
+  isRefreshSpinning: boolean;
+  refreshCooldownRemaining: number;
+  onRefresh: () => void;
+}
+
+const RefreshButton = memo(function RefreshButton({
+  isRefreshing,
+  isMapReady,
+  isRefreshSpinning,
+  refreshCooldownRemaining,
+  onRefresh,
+}: RefreshButtonProps) {
+  const isDisabled = isRefreshing || !isMapReady;
+  return (
+    <button
+      type="button"
+      className={[locationButton, isDisabled ? refreshButtonDisabled : ""]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={onRefresh}
+      aria-label={m.home_map_refresh_aria()}
+      disabled={isDisabled}
+    >
+      <IconCircleboxRefresh48
+        state={isDisabled ? "refresh" : "refreshActive"}
+        className={isRefreshSpinning ? refreshIconSpinning : ""}
+      />
+      {isRefreshing && !isRefreshSpinning && refreshCooldownRemaining > 0 && (
+        <div className={refreshCooldownBadge}>{refreshCooldownRemaining}</div>
+      )}
+    </button>
+  );
+});
+
+interface MyLocationButtonProps {
+  permission: PermissionState;
+  isCameraCentered: boolean;
+  isOrientationTracking: boolean;
+  onMyLocation: () => void;
+}
+
+const MyLocationButton = memo(function MyLocationButton({
+  permission,
+  isCameraCentered,
+  isOrientationTracking,
+  onMyLocation,
+}: MyLocationButtonProps) {
+  return (
+    <button
+      type="button"
+      className={locationButton}
+      onClick={onMyLocation}
+      aria-label={m.home_my_location_aria()}
+    >
+      <IconCircleboxCrosshair48
+        state={
+          permission === "denied"
+            ? "denied"
+            : isCameraCentered || isOrientationTracking
+              ? "active"
+              : "default"
+        }
+      />
+    </button>
+  );
+});
+
 export function IndexPage() {
   const navigate = useNavigate();
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
   const loaderData = Route.useLoaderData();
+  const endPageTransition = usePageTransitionStore((s) => s.endTransition);
+
+  // 홈 마운트 시 페이지 전환 오버레이 해제 (제보 → 홈 복귀 등)
+  useEffect(() => {
+    endPageTransition();
+  }, [endPageTransition]);
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
@@ -511,6 +586,18 @@ export function IndexPage() {
   const didApplyInitialGpsCenterRef = useRef(false);
   const hasUserMovedMapBeforeInitialGpsRef = useRef(false);
   const lastFocusedLockerIdRef = useRef<number | null>(null);
+  const shouldIgnoreNextMapPressRef = useRef(false);
+  const mapPressSuppressionTimerRef = useRef<number | undefined>(undefined);
+
+  // 방향 트래킹 pending 처리용 refs
+  // GPS 첫 위치 수신 후 자동으로 방향 트래킹을 시작해야 할 때 사용
+  const pendingOrientationStartRef = useRef(false);
+  const requestOrientationPermissionRef = useRef<() => Promise<boolean>>(
+    async () => false,
+  );
+  const startOrientationTrackingRef = useRef<() => void>(() => {});
+  // handleFirstLocation(deps [])에서 최신값을 읽기 위한 ref
+  const isOrientationSupportedRef = useRef<boolean | null>(null);
   const isPendingFocusRef = useRef<boolean>(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -523,13 +610,10 @@ export function IndexPage() {
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
-  const shouldIgnoreNextMapPressRef = useRef(false);
-  const mapPressSuppressionTimerRef = useRef<number | undefined>(undefined);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
     spinning?: number;
-    visual?: number;
     interval?: number;
   }>({});
 
@@ -745,21 +829,34 @@ export function IndexPage() {
     setIsSearchOpen,
   ]);
 
+  // 위치 및 방향 트래킹 — handleFirstLocation이 setIsCameraCentered를 참조하므로 먼저 선언
+  const [isCameraCentered, setIsCameraCentered] = useState(false);
+
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
   //   재등록되는 무한 루프가 발생함
-  // setIsLocationDelayedLoading은 useState dispatch로 stable하므로 deps [] 안전
+  // setIsLocationDelayedLoading / setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
+  // requestOrientationPermissionRef / startOrientationTrackingRef는
+  // render마다 갱신되는 ref이므로 deps []가 안전하다.
   const handleFirstLocation = useCallback(() => {
     hasPendingLocationRequestRef.current = false;
     window.clearTimeout(locationLoadingTimerRef.current);
     locationLoadingTimerRef.current = undefined;
     // GPS 응답 시점에 오버레이 해제(애니메이션을 늦추면 사용자 경험 저하)
     setIsLocationDelayedLoading(false);
+
+    // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
+    // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
+    // 항상 최신 함수를 참조하므로 deps []가 안전하다.
+    if (pendingOrientationStartRef.current) {
+      pendingOrientationStartRef.current = false;
+      // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
+      startOrientationTrackingRef.current();
+    }
   }, []);
 
-  // 위치 및 방향 트래킹
-  const [isCameraCentered, setIsCameraCentered] = useState(false);
+  // isCameraCentered는 handleFirstLocation 위에서 선언됨
   isCameraCenteredRef.current = isCameraCentered;
 
   useEffect(() => {
@@ -888,15 +985,33 @@ export function IndexPage() {
   const {
     heading: deviceHeading,
     isTracking: isOrientationTracking,
+    isSupported: isOrientationSupported,
     requestPermission: requestOrientationPermission,
     startTracking: startOrientationTracking,
     stopTracking: stopOrientationTracking,
   } = useDeviceOrientation();
+
+  // 방향 트래킹 함수/값을 ref로 최신 참조 유지 (handleFirstLocation deps [] 유지 목적)
+  requestOrientationPermissionRef.current = requestOrientationPermission;
+  startOrientationTrackingRef.current = startOrientationTracking;
+  isOrientationSupportedRef.current = isOrientationSupported;
   const {
     isOpen: isLocationPopupOpen,
     openPopup: openLocationPopup,
     closePopup: closeLocationPopup,
   } = useLocationPermissionPopup();
+
+  const [isOrientationDeniedPopupOpen, setIsOrientationDeniedPopupOpen] =
+    useState(false);
+
+
+  // 방향 센서 미지원 확정 시 진행 중인 방향 트래킹 정리
+  // isCameraCentered는 건드리지 않아 카메라 추적(2단계)은 유지된다.
+  useEffect(() => {
+    if (isOrientationSupported !== false) return;
+    if (!isOrientationTracking) return;
+    stopOrientationTracking();
+  }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
 
   // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
   useEffect(() => {
@@ -917,8 +1032,6 @@ export function IndexPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
   const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
-  const [isRefreshVisualLoading, setIsRefreshVisualLoading] = useState(false);
-
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
 
@@ -927,15 +1040,10 @@ export function IndexPage() {
     setIsRefreshing(true);
     setRefreshCooldownRemaining(5);
     setIsRefreshSpinning(true);
-    setIsRefreshVisualLoading(true);
 
     refreshTimersRef.current.spinning = window.setTimeout(
       () => setIsRefreshSpinning(false),
       500,
-    );
-    refreshTimersRef.current.visual = window.setTimeout(
-      () => setIsRefreshVisualLoading(false),
-      900,
     );
 
     setMapRemountKey((key) => key + 1);
@@ -976,7 +1084,6 @@ export function IndexPage() {
   useEffect(() => {
     return () => {
       window.clearTimeout(refreshTimersRef.current.spinning);
-      window.clearTimeout(refreshTimersRef.current.visual);
       window.clearInterval(refreshTimersRef.current.interval);
       window.clearTimeout(locationLoadingTimerRef.current);
       window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
@@ -1013,52 +1120,123 @@ export function IndexPage() {
     });
   }, [mapInstance, saveMapViewport]);
 
-  const handleMyLocation = useCallback(async () => {
-    if (permission === "denied") {
-      hasPendingLocationRequestRef.current = false;
-      openLocationPopup();
-      return;
-    }
+  const handleMyLocation = useCallback(
+    async () => {
+      if (permission === "denied") {
+        hasPendingLocationRequestRef.current = false;
+        openLocationPopup();
+        return;
+      }
 
-    if (!isCameraCentered) {
-      // 상태 1: 카메라 중앙 고정 ON (만약 GPS가 안 켜져있다면 켜기)
+      // 홈 화면 idle 컨텍스트 여부 판단
+      // 검색 중이거나 핀/시트가 활성화된 상황에서는 단순 위치 이동만 수행한다.
+      const isHomeContext =
+        context === "idle" && sheetMode === "idle" && !isSearchOpen;
+
+      if (!isHomeContext) {
+        // 비홈 컨텍스트: isCameraCentered 변경 없이 단순 위치 이동만 수행
+        if (location && mapInstanceRef.current) {
+          focusNaverMapOnCoordinates({
+            map: mapInstanceRef.current,
+            coordinates: location,
+          });
+        } else if (!isTracking) {
+          // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
+          hasPendingLocationRequestRef.current = true;
+          window.clearTimeout(locationLoadingTimerRef.current);
+          locationLoadingTimerRef.current = window.setTimeout(() => {
+            setIsLocationDelayedLoading(true);
+          }, 300);
+          startTracking();
+        }
+        return;
+      }
+
+      // ── 홈 idle 컨텍스트 전용 로직 ──────────────────────────────
+
+      // 방향 센서가 확정적으로 없는 환경(데스크톱 등): 단순 panTo만 제공
+      // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
+      if (isOrientationSupported === false) {
+        if (location && mapInstanceRef.current) {
+          focusNaverMapOnCoordinates({
+            map: mapInstanceRef.current,
+            coordinates: location,
+          });
+        } else if (!isTracking) {
+          hasPendingLocationRequestRef.current = true;
+          window.clearTimeout(locationLoadingTimerRef.current);
+          locationLoadingTimerRef.current = window.setTimeout(() => {
+            setIsLocationDelayedLoading(true);
+          }, 300);
+          startTracking();
+        }
+        return;
+      }
+
+      // 상태 2(방향 트래킹 활성) → 상태 0으로 복귀
+      if (isOrientationTracking) {
+        setIsCameraCentered(false);
+        stopOrientationTracking();
+        return;
+      }
+
+      // isOrientationSupported === false 케이스는 위 guard에서 early return 처리됨
+      // 이 시점에서 isOrientationSupported는 true(지원) 또는 null(미확정, 시도)이므로
+      // 방향 트래킹을 항상 시도한다.
+
       if (!isTracking) {
+        // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
+        // iOS 13+는 DeviceOrientationEvent.requestPermission이 사용자 제스처 컨텍스트에서만
+        // 동작하므로 GPS 콜백(handleFirstLocation) 시점이 아닌 지금 요청해야 한다.
+        const granted = await requestOrientationPermission();
+        if (!granted) {
+          setIsOrientationDeniedPopupOpen(true);
+          return;
+        }
         hasPendingLocationRequestRef.current = true;
         window.clearTimeout(locationLoadingTimerRef.current);
         locationLoadingTimerRef.current = window.setTimeout(() => {
           setIsLocationDelayedLoading(true);
         }, 300);
         startTracking();
-      } else if (location && mapInstanceRef.current) {
-        focusNaverMapOnCoordinates({
-          map: mapInstanceRef.current,
-          coordinates: location,
-        });
+        setIsCameraCentered(true);
+        // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
+        pendingOrientationStartRef.current = true;
+      } else {
+        // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
+        // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
+        if (location && mapInstanceRef.current) {
+          focusNaverMapOnCoordinates({
+            map: mapInstanceRef.current,
+            coordinates: location,
+          });
+        }
+        setIsCameraCentered(true);
+        const granted = await requestOrientationPermission();
+        if (granted) {
+          startOrientationTracking();
+        } else {
+          setIsOrientationDeniedPopupOpen(true);
+        }
       }
-      setIsCameraCentered(true);
-    } else if (isCameraCentered && !isOrientationTracking) {
-      // 상태 2: 나침반 모드 ON
-      const granted = await requestOrientationPermission();
-      if (granted) {
-        startOrientationTracking();
-      }
-    } else {
-      // 상태 0으로 복귀: 카메라 중앙 고정 OFF, 나침반 OFF (GPS는 계속 켜둠)
-      setIsCameraCentered(false);
-      stopOrientationTracking();
-    }
-  }, [
-    permission,
-    isCameraCentered,
-    isTracking,
-    location,
-    isOrientationTracking,
-    openLocationPopup,
-    requestOrientationPermission,
-    startTracking,
-    startOrientationTracking,
-    stopOrientationTracking,
-  ]);
+    },
+    [
+      permission,
+      context,
+      sheetMode,
+      isSearchOpen,
+      location,
+      isTracking,
+      isOrientationTracking,
+      isOrientationSupported,
+      openLocationPopup,
+      startTracking,
+      requestOrientationPermission,
+      startOrientationTracking,
+      stopOrientationTracking,
+      setIsOrientationDeniedPopupOpen,
+    ],
+  );
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
@@ -1097,6 +1275,8 @@ export function IndexPage() {
   const resetMapContext = useCallback(() => {
     clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
+    // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
+    setIsCameraCentered(false);
     setMapPlaceId(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -1115,6 +1295,8 @@ export function IndexPage() {
   const resetSearchContext = useCallback(() => {
     clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
+    // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
+    setIsCameraCentered(false);
     setSearchQuery("");
     void navigate({
       to: ".",
@@ -1159,6 +1341,10 @@ export function IndexPage() {
       resetMapContext();
     }
 
+    // 검색 오버레이 진입 시 카메라 고정 해제:
+    // isSearchOpen이 false로 바뀔 때 카메라 추적 effect가 재발동해
+    // 지도가 강제로 현재 위치로 이동하는 버그를 방지한다.
+    setIsCameraCentered(false);
     setOverlayReturnContext(returnContext);
     setIsSearchOpen(true);
   }, [clearPendingLockerDetailOpen, context, resetMapContext, setIsSearchOpen]);
@@ -1572,6 +1758,8 @@ export function IndexPage() {
   const openMapPlaceList = useCallback(
     (placeId: number) => {
       clearPendingLockerDetailOpen();
+      // 맨 컨텍스트로 전환 시 카메라 고정 해제
+      setIsCameraCentered(false);
       setContext("map");
       setMapPlaceId(placeId);
       setMapDetailBack(null);
@@ -2073,6 +2261,8 @@ export function IndexPage() {
       setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
       pinSelectedInAppRef.current = pin != null;
+      // 맵 컨텍스트로 진입 시 카메라 고정 해제 (GPS 업데이트에 의한 강제 이동 방지)
+      setIsCameraCentered(false);
       setContext("map");
       setMapDetailBack("idle");
       const detail =
@@ -2548,12 +2738,22 @@ export function IndexPage() {
     openLockerId,
   ]);
 
-  // 카메라고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동
+  // 카메라 고정(트래킹) 중일 때 위치가 갱신되면 지도 중심 이동.
+  // 홈 idle 컨텍스트에서만 동작: 핀 선택·검색 등 비홈 컨텍스트에서는
+  // isCameraCentered가 남아있어도 강제 이동하지 않는다 (버그 방지).
   useEffect(() => {
-    if (isCameraCentered && location && mapInstance) {
+    if (
+      isCameraCentered &&
+      location &&
+      mapInstance &&
+      context === "idle" &&
+      sheetMode === "idle" &&
+      !isSearchOpen
+    ) {
       focusNaverMapOnCoordinates({ map: mapInstance, coordinates: location });
     }
-  }, [isCameraCentered, location, mapInstance]);
+  }, [isCameraCentered, location, mapInstance, context, sheetMode, isSearchOpen]);
+
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
@@ -2779,7 +2979,8 @@ export function IndexPage() {
   const handleMapPressRef = useRef(handleMapPress);
   handleMapPressRef.current = handleMapPress;
 
-  // 지도 드래그 시 카메라 고정 해제 및 나침반 해제 (GPS는 유지), 바텀시트 snap 다운
+  // 지도 드래그 시 카메라 고정 해제 (GPS 유지), 바텀시트 snap 다운
+  // 방향 트래킹은 드래그 후에도 유지된다 (Q1 결정 사항: 아이콘 방향 표시 유지).
   useEffect(() => {
     const maps = typeof window !== "undefined" ? window.naver?.maps : null;
 
@@ -2787,8 +2988,8 @@ export function IndexPage() {
 
     const listener = maps.Event.addListener(mapInstance, "dragstart", () => {
       hasUserMovedMapBeforeInitialGpsRef.current = true;
-      setIsCameraCentered(false);
-      stopOrientationTracking();
+      setIsCameraCentered(false); // 카메라 고정 해제 (위치 추적 중단)
+      // stopOrientationTracking()은 호출하지 않음 → 방향 트래킹 유지
       isPendingFocusRef.current = false;
       mapInstance.setCenter(mapInstance.getCenter());
       handleMapPressRef.current();
@@ -2797,7 +2998,7 @@ export function IndexPage() {
     return () => {
       maps.Event.removeListener(listener);
     };
-  }, [mapInstance, stopOrientationTracking]);
+  }, [mapInstance]);
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
       suppressNextMapPressForMarkerInteraction();
@@ -2822,11 +3023,8 @@ export function IndexPage() {
         />
       ) : null}
 
-      {(isRefreshVisualLoading || isLocationDelayedLoading) && (
-        <div className={refreshLoadingOverlay}>
-          <div className={refreshLoadingBackdrop} />
-          <div className={refreshLoadingSpinner} />
-        </div>
+      {isLocationDelayedLoading && (
+        <LoadingOverlay label={m.home_map_refresh_aria()} />
       )}
 
       <NaverMapProvider language={languageTag()}>
@@ -2909,50 +3107,23 @@ export function IndexPage() {
             />
           )}
       </NaverMapProvider>
-      {isMapLoading && !hasMapError ? (
+      {isMapLoading && !hasMapError && !isRefreshing ? (
         <MapControlsSkeleton />
-      ) : shouldRenderMapControls ? (
+      ) : shouldRenderMapControls || isRefreshing ? (
         <div className={locationControlStack}>
-          <button
-            type="button"
-            className={[
-              locationButton,
-              isRefreshing || !mapInstance ? refreshButtonDisabled : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={handleRefreshMap}
-            aria-label={m.home_map_refresh_aria()}
-            disabled={isRefreshing || !mapInstance}
-          >
-            <IconCircleboxRefresh48
-              state={isRefreshing || !mapInstance ? "refresh" : "refreshActive"}
-              className={isRefreshSpinning ? refreshIconSpinning : ""}
-            />
-            {isRefreshing &&
-              !isRefreshSpinning &&
-              refreshCooldownRemaining > 0 && (
-                <div className={refreshCooldownBadge}>
-                  {refreshCooldownRemaining}
-                </div>
-              )}
-          </button>
-          <button
-            type="button"
-            className={locationButton}
-            onClick={handleMyLocation}
-            aria-label={m.home_my_location_aria()}
-          >
-            <IconCircleboxCrosshair48
-              state={
-                permission === "denied"
-                  ? "denied"
-                  : isCameraCentered
-                    ? "active"
-                    : "default"
-              }
-            />
-          </button>
+          <RefreshButton
+            isRefreshing={isRefreshing}
+            isMapReady={!!mapInstance}
+            isRefreshSpinning={isRefreshSpinning}
+            refreshCooldownRemaining={refreshCooldownRemaining}
+            onRefresh={handleRefreshMap}
+          />
+          <MyLocationButton
+            permission={permission}
+            isCameraCentered={isCameraCentered}
+            isOrientationTracking={isOrientationTracking}
+            onMyLocation={handleMyLocation}
+          />
         </div>
       ) : null}
 
@@ -2968,6 +3139,20 @@ export function IndexPage() {
           onPress: closeLocationPopup,
         }}
       />
+
+      <Popup
+        isOpen={isOrientationDeniedPopupOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setIsOrientationDeniedPopupOpen(false);
+        }}
+        titleText={m.home_orientation_permission_title()}
+        helperText={m.home_orientation_permission_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsOrientationDeniedPopupOpen(false),
+        }}
+      />
+
 
       {!isMapLoading && sheetMode === "list" && !isSearchOpen ? (
         <SearchListBottomSheet

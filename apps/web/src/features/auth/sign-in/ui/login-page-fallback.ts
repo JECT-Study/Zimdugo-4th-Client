@@ -43,16 +43,6 @@ export const loginStackInlineFallbackStyle: CSSProperties = {
   gap: LOGIN_STACK_GAP_PX,
 };
 
-/** 스켈레톤 전용 (클릭 차단) */
-export const loginStackSkeletonInlineFallbackStyle: CSSProperties = {
-  ...loginStackInlineFallbackStyle,
-  pointerEvents: "none",
-};
-
-export const loginPageSkeletonInlineFallbackStyle: CSSProperties = {
-  ...loginPageInlineFallbackStyle,
-  pointerEvents: "none",
-};
 
 export const loginSocialButtonInlineFallbackStyle: CSSProperties = {
   display: "flex",

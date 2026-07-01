@@ -8,6 +8,7 @@ import {
 } from "@repo/ui/tokens/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
+import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import {
   addressInfo,
   addressLabel,
@@ -93,6 +94,7 @@ export function LocationPickerOverlay({
     closePopup,
   } = useLocationPermissionPopup();
   const [isCentered, setIsCentered] = useState(false);
+  const [isLocatingMyPosition, setIsLocatingMyPosition] = useState(false);
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
   const [locationPermission, setLocationPermission] = useState<
@@ -323,9 +325,12 @@ export function LocationPickerOverlay({
   const handleMyLocation = () => {
     if (!isMapInteractive || !navigator.geolocation) return;
 
+    setIsLocatingMyPosition(true);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         if (!isMountedRef.current) return;
+        setIsLocatingMyPosition(false);
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         const latLng = new window.naver.maps.LatLng(lat, lng);
@@ -335,6 +340,7 @@ export function LocationPickerOverlay({
       },
       (error) => {
         if (!isMountedRef.current) return;
+        setIsLocatingMyPosition(false);
         setIsCentered(false);
         if (error.code === error.PERMISSION_DENIED) {
           setLocationPermission("denied");
@@ -363,6 +369,9 @@ export function LocationPickerOverlay({
         <div ref={mapRef} className={map} />
 
         {!isMapInteractive && <ReportPageLoadingOverlay />}
+        {isLocatingMyPosition && (
+          <LoadingOverlay blockInteraction label={m.report_location_loading()} />
+        )}
 
         <button
           type="button"

@@ -9,6 +9,8 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { type ReactNode, useEffect, useState } from "react";
 import "@repo/ui/styles/global.css";
+import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
+import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
@@ -301,6 +303,22 @@ function RootDocument({ children }: { children: ReactNode }) {
   const isDocumentScrollPage =
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
 
+  // 페이지 전환 오버레이: store 트리거 또는 /report 라우트 pending 상태
+  const isPageTransitionStoreActive = usePageTransitionStore(
+    (s) => s.isTransitioning,
+  );
+  const isRouteTransitionPending = useRouterState({
+    select: (s) => {
+      if (s.status !== "pending") return false;
+      const destPath = s.pendingMatches?.at(-1)?.pathname ?? "";
+      const srcPath = stripLocalePathPrefix(s.location.pathname);
+      const normalizedDest = stripLocalePathPrefix(destPath);
+      return normalizedDest === "/report" || srcPath === "/report";
+    },
+  });
+  const showPageTransitionOverlay =
+    isPageTransitionStoreActive || isRouteTransitionPending;
+
   useEffect(() => {
     if (!hasLanguageHydrated) {
       return;
@@ -352,6 +370,9 @@ function RootDocument({ children }: { children: ReactNode }) {
           >
             {children}
           </AppShell>
+          {showPageTransitionOverlay && (
+            <LoadingOverlay blockInteraction label={m.map_loading_aria()} />
+          )}
         </AppContainer>
         <TanStackRouterDevtools position="bottom-right" />
         <ReactQueryDevtools buttonPosition="bottom-left" />
