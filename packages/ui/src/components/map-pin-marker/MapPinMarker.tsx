@@ -6,6 +6,7 @@ import { clusterPin, root } from "./MapPinMarker.css.ts";
 export type MapPinMarkerVariant =
   | "locker"
   | "favoriteLocker"
+  | "place"
   | "placeCluster"
   | "cluster";
 
@@ -43,7 +44,7 @@ const getSourceSize = (
   if (variant === "cluster") {
     return getClusterSize(count) === "l" ? 400 : 300;
   }
-  return variant === "placeCluster"
+  return variant === "place" || variant === "placeCluster"
     ? PLACE_CLUSTER_SOURCE_SIZE
     : LOCKER_SOURCE_SIZE;
 };
@@ -359,7 +360,7 @@ export function MapPinMarker({
     >
       {variant === "favoriteLocker" ? (
         <FavoriteLockerMarker id={reactId} />
-      ) : variant === "placeCluster" ? (
+      ) : variant === "place" || variant === "placeCluster" ? (
         <PlaceClusterMarker count={count} id={reactId} />
       ) : variant === "cluster" ? (
         <ClusterMapPin
