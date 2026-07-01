@@ -23,8 +23,7 @@ import {
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 
-const PLACE_EXAMPLE_NOTE =
-  "예: 강남역 교보타워 5층 안내데스크 맞은편 · Gangnam Station Kyobo Tower 5F Info Desk";
+const PLACE_EXAMPLE_NOTE = "worst-case 샘플: 힣 / 囍 / 曜 / W 반복";
 
 const BASE_ADDRESS = "서울특별시 강남구 도곡로 401";
 
@@ -68,8 +67,8 @@ const meta = {
     },
     locale: {
       control: "inline-radio",
-      options: ["ko", "en", "all"],
-      description: "title(보관함명) 언어 — ko / en / 둘 다",
+      options: ["ko", "zh", "ja", "en", "all"],
+      description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
     },
   },
   args: {

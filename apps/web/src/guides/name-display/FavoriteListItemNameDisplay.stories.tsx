@@ -14,8 +14,7 @@ const SHARED_META = {
   isFavorite: true,
 } as const;
 
-const PLACE_EXAMPLE_NOTE =
-  "예: 강남역 교보타워 5층 안내데스크 맞은편 · Gangnam Station Kyobo Tower 5F Info Desk";
+const PLACE_EXAMPLE_NOTE = "worst-case 샘플: 힣 / 囍 / 曜 / W 반복";
 
 const meta = {
   title: "Product/Guides/Name Display/Favorite List Item",
@@ -30,8 +29,8 @@ const meta = {
     },
     locale: {
       control: "inline-radio",
-      options: ["ko", "en", "all"],
-      description: "title(보관함명) 언어 — ko / en / 둘 다",
+      options: ["ko", "zh", "ja", "en", "all"],
+      description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
     },
   },
   args: {
@@ -71,7 +70,7 @@ export const TitleOnly: Story = {
       <NameDisplayMatrix
         width={viewport}
         surface="my-favorite-list"
-        note={`lockerName(title) · 한글/영문 title 각각 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
+        note={`lockerName(title) · 한중일영 title 각각 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
         rows={rows}
       />
     );

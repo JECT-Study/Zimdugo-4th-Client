@@ -14,8 +14,7 @@ import {
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 
-const PLACE_EXAMPLE_NOTE =
-  "예: 강남역 교보타워 5층 안내데스크 맞은편 · Gangnam Station Kyobo Tower 5F Info Desk";
+const PLACE_EXAMPLE_NOTE = "worst-case 샘플: 힣 / 囍 / 曜 / W 반복";
 
 const meta = {
   title: "Product/Guides/Name Display/Results Heading",
@@ -30,8 +29,8 @@ const meta = {
     },
     locale: {
       control: "inline-radio",
-      options: ["ko", "en", "all"],
-      description: "title(보관함명) 언어 — ko / en / 둘 다",
+      options: ["ko", "zh", "ja", "en", "all"],
+      description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
     },
   },
   args: {
@@ -100,7 +99,7 @@ export const QueryScope: Story = {
     <NameDisplayMatrix
       width={viewport}
       surface="search-results-heading"
-      note={`검색어(keyword) · 띄어쓰기 포함 경계 ±5자. 최대 2줄 기준으로 줄바꿈 확인. ${PLACE_EXAMPLE_NOTE}`}
+      note={`검색어(keyword) · 최대폭 문자 반복 경계 ±5자. 최대 2줄 기준으로 줄바꿈 확인. ${PLACE_EXAMPLE_NOTE}`}
       rows={buildHeadingRows(
         viewport,
         locale,

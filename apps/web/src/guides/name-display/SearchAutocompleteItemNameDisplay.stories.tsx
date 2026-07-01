@@ -59,8 +59,8 @@ const meta = {
     },
     locale: {
       control: "inline-radio",
-      options: ["ko", "en", "all"],
-      description: "title(보관함명) 언어 — ko / en / 둘 다",
+      options: ["ko", "zh", "ja", "en", "all"],
+      description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
     },
     distanceLabel: {
       control: "inline-radio",
@@ -119,7 +119,7 @@ function renderMatrix(
       width={viewport}
       surface="search-overlay-item"
       rows={rows}
-      note="장소형 예시(띄어쓰기 포함) · 한글/영문 title 각각 2줄 표시 경계 ±5자. 예: 강남역 교보타워 5층 안내데스크 맞은편"
+      note="언어별 최대폭 문자 반복 · 한중일영 title 각각 2줄 표시 경계 ±5자. worst-case 샘플: 힣 / 囍 / 曜 / W 반복"
     />
   );
 }

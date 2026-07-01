@@ -14,7 +14,7 @@ export const NAME_DISPLAY_VIEWPORT_LABELS: Record<NameDisplayViewport, string> =
     480: "태블릿 shell",
   };
 
-export type NameDisplayLocale = "ko" | "en";
+export type NameDisplayLocale = "ko" | "zh" | "ja" | "en";
 
 export type NameDisplayLocaleSelection = NameDisplayLocale | "all";
 
@@ -46,46 +46,68 @@ type SlotAnchorConfig = Record<NameDisplayLocale, ViewportAnchors>;
 export const TWO_LINE_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
   "search-autocomplete-120m": {
     ko: { 320: 28, 360: 30, 375: 32, 390: 34, 430: 36, 480: 40 },
+    zh: { 320: 28, 360: 30, 375: 32, 390: 34, 430: 36, 480: 40 },
+    ja: { 320: 28, 360: 30, 375: 32, 390: 34, 430: 36, 480: 40 },
     en: { 320: 46, 360: 52, 375: 54, 390: 56, 430: 62, 480: 68 },
   },
   "search-autocomplete-12km": {
     ko: { 320: 26, 360: 28, 375: 30, 390: 32, 430: 34, 480: 38 },
+    zh: { 320: 26, 360: 28, 375: 30, 390: 32, 430: 34, 480: 38 },
+    ja: { 320: 26, 360: 28, 375: 30, 390: 32, 430: 34, 480: 38 },
     en: { 320: 42, 360: 48, 375: 50, 390: 52, 430: 58, 480: 64 },
   },
   "search-list-place": {
     ko: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
+    zh: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
+    ja: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
     en: { 320: 38, 360: 46, 375: 48, 390: 50, 430: 58, 480: 66 },
   },
   "search-list-locker": {
     ko: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
+    zh: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
+    ja: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
     en: { 320: 38, 360: 46, 375: 48, 390: 50, 430: 58, 480: 66 },
   },
   "search-list-nested-locker": {
     ko: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
+    zh: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
+    ja: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
     en: { 320: 36, 360: 42, 375: 44, 390: 46, 430: 54, 480: 60 },
   },
   "search-recent": {
     ko: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
+    zh: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
+    ja: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
     en: { 320: 54, 360: 60, 375: 62, 390: 64, 430: 70, 480: 76 },
   },
   "search-results-heading-place": {
     ko: { 320: 16, 360: 18, 375: 20, 390: 22, 430: 24, 480: 28 },
+    zh: { 320: 16, 360: 18, 375: 20, 390: 22, 430: 24, 480: 28 },
+    ja: { 320: 16, 360: 18, 375: 20, 390: 22, 430: 24, 480: 28 },
     en: { 320: 28, 360: 30, 375: 32, 390: 34, 430: 36, 480: 40 },
   },
   "search-results-heading-query": {
     ko: { 320: 34, 360: 38, 375: 40, 390: 42, 430: 46, 480: 52 },
+    zh: { 320: 34, 360: 38, 375: 40, 390: 42, 430: 46, 480: 52 },
+    ja: { 320: 34, 360: 38, 375: 40, 390: 42, 430: 46, 480: 52 },
     en: { 320: 58, 360: 66, 375: 68, 390: 70, 430: 78, 480: 86 },
   },
   "favorite-title": {
     ko: { 320: 30, 360: 32, 375: 34, 390: 36, 430: 38, 480: 42 },
+    zh: { 320: 30, 360: 32, 375: 34, 390: 36, 430: 38, 480: 42 },
+    ja: { 320: 30, 360: 32, 375: 34, 390: 36, 430: 38, 480: 42 },
     en: { 320: 42, 360: 46, 375: 48, 390: 50, 430: 56, 480: 64 },
   },
   "report-list-title": {
     ko: { 320: 22, 360: 26, 375: 26, 390: 28, 430: 32, 480: 36 },
+    zh: { 320: 22, 360: 26, 375: 26, 390: 28, 430: 32, 480: 36 },
+    ja: { 320: 22, 360: 26, 375: 26, 390: 28, 430: 32, 480: 36 },
     en: { 320: 40, 360: 44, 375: 46, 390: 48, 430: 54, 480: 60 },
   },
   "report-detail-title-wrap": {
     ko: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
+    zh: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
+    ja: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
     en: { 320: 52, 360: 58, 375: 60, 390: 62, 430: 68, 480: 76 },
   },
 };
@@ -93,68 +115,12 @@ export const TWO_LINE_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
 /** 경계 앞뒤로 포함할 글자 수(총 2*radius+1개) */
 export const NAME_DISPLAY_BOUNDARY_RADIUS = 5;
 
-const KO_PLACE_SEGMENTS = [
-  "강남역",
-  "교보타워",
-  "5층",
-  "안내데스크",
-  "맞은편",
-  "물품보관함",
-] as const;
-
-const EN_PLACE_SEGMENTS = [
-  "Gangnam Station",
-  "Kyobo Tower",
-  "5F",
-  "Info Desk",
-  "Opposite Side",
-  "Locker",
-] as const;
-
-const KO_KEYWORD_SEGMENTS = [
-  "강남역",
-  "교보타워",
-  "물품보관함",
-  "안내데스크",
-  "검색어",
-] as const;
-
-const EN_KEYWORD_SEGMENTS = [
-  "Gangnam Station",
-  "Kyobo Tower",
-  "Locker",
-  "Search",
-  "Query",
-] as const;
-
-function buildPlaceStyleText(
-  segments: readonly string[],
-  targetLength: number,
-): string {
-  if (targetLength <= 0) return "";
-
-  let expanded = segments.join(" ");
-  const tail = segments[segments.length - 1] ?? segments[0] ?? "";
-  while (expanded.length < targetLength) {
-    expanded += ` ${tail}`;
-  }
-
-  let result = "";
-  let index = 0;
-  while (result.length < targetLength && index < expanded.length) {
-    const char = expanded[index] ?? "";
-    index += 1;
-
-    // 마지막 글자를 공백으로 채우면 화면에서는 이전 행과 동일해 보여 건너뛴다.
-    if (char === " " && result.length === targetLength - 1) {
-      continue;
-    }
-
-    result += char;
-  }
-
-  return result;
-}
+const WIDEST_SAMPLE_CHAR: Record<NameDisplayLocale, string> = {
+  ko: "힣",
+  zh: "囍",
+  ja: "曜",
+  en: "W",
+};
 
 /** 공백만 남아 행이 Matrix에서 중복되는 경우를 제외한다. */
 export function isMeaningfulBoundaryText(text: string): boolean {
@@ -164,22 +130,16 @@ export function isMeaningfulBoundaryText(text: string): boolean {
 export function resolveNameDisplayLocales(
   locale: NameDisplayLocaleSelection,
 ): NameDisplayLocale[] {
-  return locale === "all" ? ["ko", "en"] : [locale];
+  return locale === "all" ? ["ko", "zh", "ja", "en"] : [locale];
 }
 
 export function buildBoundaryText(
   locale: NameDisplayLocale,
   length: number,
-  kind: BoundaryTextKind = "place",
+  _kind: BoundaryTextKind = "place",
 ): string {
-  if (kind === "keyword") {
-    const segments =
-      locale === "ko" ? KO_KEYWORD_SEGMENTS : EN_KEYWORD_SEGMENTS;
-    return buildPlaceStyleText(segments, length);
-  }
-
-  const segments = locale === "ko" ? KO_PLACE_SEGMENTS : EN_PLACE_SEGMENTS;
-  return buildPlaceStyleText(segments, length);
+  const sampleChar = WIDEST_SAMPLE_CHAR[locale];
+  return sampleChar.repeat(Math.max(0, length));
 }
 
 export function buildNameDisplayBoundaryLengths(
@@ -206,7 +166,12 @@ function formatBoundaryLabel(
   anchor: number,
   extra?: string,
 ): string {
-  const localeLabel = locale === "ko" ? "한글" : "영문";
+  const localeLabel = {
+    ko: "한글",
+    zh: "중문",
+    ja: "일문",
+    en: "영문",
+  }[locale];
   const position = formatBoundaryPosition(length, anchor);
 
   const positionLabel =
