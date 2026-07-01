@@ -40,6 +40,9 @@ export function OverflowMarqueeText({
     "--overflow-marquee-distance": `${overflowDistance}px`,
     "--overflow-marquee-duration": `${duration}s`,
   };
+  const rootStyle: CSSProperties = {
+    textOverflow: "clip",
+  };
 
   useEffect(() => {
     const updateOverflow = () => {
@@ -74,6 +77,7 @@ export function OverflowMarqueeText({
       ref={rootRef}
       className={[root, className].filter(Boolean).join(" ")}
       title={title ?? value}
+      style={rootStyle}
     >
       <span
         className={[track, isOverflowing ? activeTrack : ""]

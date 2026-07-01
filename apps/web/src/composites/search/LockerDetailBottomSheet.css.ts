@@ -146,7 +146,6 @@ export const lockerTitle = style({
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: 1.2,
   whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
 });
 
 export const metaRow = style({
