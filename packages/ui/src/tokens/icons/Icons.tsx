@@ -698,7 +698,6 @@ export function IconDistanceRoute24({ className }: { className?: string }) {
       width={24}
       height={24}
       preserveAspectRatio="xMidYMid meet"
-      aria-hidden
     >
       <title>route distance</title>
       <path
