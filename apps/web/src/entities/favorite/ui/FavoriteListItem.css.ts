@@ -19,6 +19,7 @@ export const touchTarget = style({
   minWidth: 0,
   flex: 1,
   gap: vars.spacing[12],
+  minHeight: "40px",
   padding: 0,
   border: 0,
   borderRadius: vars.radius[6],
@@ -34,6 +35,7 @@ export const touchTarget = style({
 });
 
 globalStyle(`button${touchTarget}`, {
+  height: "auto",
   cursor: "pointer",
 });
 
