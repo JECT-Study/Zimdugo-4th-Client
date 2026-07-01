@@ -201,6 +201,19 @@ export const metaRow = style({
   lineHeight: "18px",
 });
 
+export const metaIconText = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: vars.spacing[4],
+  minWidth: 0,
+});
+
+export const metaIcon = style({
+  width: "14px",
+  height: "14px",
+  flexShrink: 0,
+});
+
 export const distanceRow = style({
   color: vars.color.text.surface,
 });

@@ -8,6 +8,7 @@ import {
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
+  IconNavigationClock24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
@@ -92,6 +93,8 @@ import {
   lockerTitle,
   lockerTitleExpanded,
   metaDot,
+  metaIcon,
+  metaIconText,
   metaRow,
   primaryActionButton,
   recentUpdatedText,
@@ -858,7 +861,9 @@ function SummarySection({
     snapStage === "mini"
       ? locker.address
       : locker.updatedLabel || locker.address;
-  const shouldShowTitleExpandButton = isTitleOverflowing || isTitleExpanded;
+  const isFullSnapStage = snapStage === "full";
+  const shouldShowTitleExpandButton =
+    isFullSnapStage && (isTitleOverflowing || isTitleExpanded);
 
   const handleTitleOverflowChange = useCallback(
     (nextIsOverflowing: boolean) => {
@@ -877,6 +882,12 @@ function SummarySection({
       setIsTitleOverflowing(false);
     }
   }, [titleText]);
+
+  useEffect(() => {
+    if (!isFullSnapStage) {
+      setIsTitleExpanded(false);
+    }
+  }, [isFullSnapStage]);
 
   return (
     <section
@@ -929,7 +940,11 @@ function SummarySection({
           <InlineMeta
             left={locker.categoryLabel}
             right={
-              locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
+              <span className={metaIconText}>
+                <IconNavigationClock24 className={metaIcon} />
+                {locker.operatingHoursLabel ??
+                  formatLockerOperatingHoursLabel()}
+              </span>
             }
           />
           <InlineMeta
