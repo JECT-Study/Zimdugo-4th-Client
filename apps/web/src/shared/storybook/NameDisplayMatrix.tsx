@@ -57,21 +57,16 @@ export function NameDisplayMatrix({
       const textElement = findTextElement(root, measuredText);
       if (!textElement) continue;
 
-      const style = window.getComputedStyle(textElement);
-      const lineHeight = resolveLineHeight(style);
-      const visibleLines = Math.max(
-        1,
-        Math.round(textElement.clientHeight / lineHeight),
-      );
+      const visibleLines = countVisibleTextLines(textElement);
       const naturalLines = Math.max(
         visibleLines,
-        Math.round(textElement.scrollHeight / lineHeight),
+        countNaturalTextLines(textElement),
       );
 
       nextMeasurements[row.key] = {
         visibleLines,
         naturalLines,
-        isClipped: textElement.scrollHeight > textElement.clientHeight + 1,
+        isClipped: naturalLines > visibleLines,
         measuredLength: Array.from(measuredText).length,
       };
     }
@@ -221,12 +216,63 @@ function findTextElement(root: HTMLElement, text: string): HTMLElement | null {
   return null;
 }
 
-function resolveLineHeight(style: CSSStyleDeclaration): number {
-  const parsedLineHeight = Number.parseFloat(style.lineHeight);
-  if (Number.isFinite(parsedLineHeight)) return parsedLineHeight;
+function countVisibleTextLines(element: HTMLElement): number {
+  const bounds = element.getBoundingClientRect();
+  const rects = getTextLineRects(element);
+  const visibleRects = rects.filter(
+    (rect) =>
+      rect.height > 0 &&
+      rect.bottom > bounds.top + 1 &&
+      rect.top < bounds.bottom - 1,
+  );
 
-  const parsedFontSize = Number.parseFloat(style.fontSize);
-  return Number.isFinite(parsedFontSize) ? parsedFontSize * 1.2 : 16;
+  return Math.max(1, countUniqueLineTops(visibleRects));
+}
+
+function countNaturalTextLines(element: HTMLElement): number {
+  const bounds = element.getBoundingClientRect();
+  const clone = element.cloneNode(true) as HTMLElement;
+
+  clone.style.position = "absolute";
+  clone.style.left = "-10000px";
+  clone.style.top = "0";
+  clone.style.width = `${bounds.width}px`;
+  clone.style.height = "auto";
+  clone.style.maxHeight = "none";
+  clone.style.overflow = "visible";
+  clone.style.visibility = "hidden";
+  clone.style.pointerEvents = "none";
+
+  document.body.appendChild(clone);
+
+  try {
+    return Math.max(1, countUniqueLineTops(getTextLineRects(clone)));
+  } finally {
+    clone.remove();
+  }
+}
+
+function getTextLineRects(element: HTMLElement): DOMRect[] {
+  const range = document.createRange();
+  range.selectNodeContents(element);
+
+  try {
+    return Array.from(range.getClientRects());
+  } finally {
+    range.detach();
+  }
+}
+
+function countUniqueLineTops(rects: DOMRect[]): number {
+  const lineTops = new Set<number>();
+
+  for (const rect of rects) {
+    if (rect.width <= 0 || rect.height <= 0) continue;
+
+    lineTops.add(Math.round(rect.top));
+  }
+
+  return lineTops.size;
 }
 
 function areMeasurementsEqual(
