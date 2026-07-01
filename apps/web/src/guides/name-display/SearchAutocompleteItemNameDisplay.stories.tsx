@@ -99,13 +99,13 @@ interface NameDisplayStoryArgs {
 
 type Story = StoryObj<NameDisplayStoryArgs>;
 
-function renderMatrix(
-  itemType: "PLACE" | "LOCKER",
-  viewport: NameDisplayViewport,
-  locale: NameDisplayLocale,
-  distanceLabel: string,
-  length: number,
-) {
+const renderMatrix = ({
+  itemType,
+  viewport,
+  locale,
+  distanceLabel,
+  length,
+}: NameDisplayStoryArgs) => {
   const sample = buildNameDisplayControlSample({
     locale,
     length,
@@ -140,9 +140,8 @@ function renderMatrix(
       note={`title · itemType/distanceLabel/언어/글자수를 controls에서 직접 조절. ${NAME_DISPLAY_SAMPLE_NOTE}`}
     />
   );
-}
+};
 
 export const Interactive: Story = {
-  render: ({ viewport, itemType, locale, distanceLabel, length }) =>
-    renderMatrix(itemType, viewport, locale, distanceLabel, length),
+  render: (args) => renderMatrix(args),
 };
