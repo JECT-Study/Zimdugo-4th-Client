@@ -546,7 +546,6 @@ export function IndexPage() {
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
     spinning?: number;
-    visual?: number;
     interval?: number;
   }>({});
 
@@ -1009,8 +1008,6 @@ export function IndexPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
   const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
-  const [isRefreshVisualLoading, setIsRefreshVisualLoading] = useState(false);
-
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
 
@@ -1019,15 +1016,10 @@ export function IndexPage() {
     setIsRefreshing(true);
     setRefreshCooldownRemaining(5);
     setIsRefreshSpinning(true);
-    setIsRefreshVisualLoading(true);
 
     refreshTimersRef.current.spinning = window.setTimeout(
       () => setIsRefreshSpinning(false),
       500,
-    );
-    refreshTimersRef.current.visual = window.setTimeout(
-      () => setIsRefreshVisualLoading(false),
-      900,
     );
 
     setMapRemountKey((key) => key + 1);
@@ -1068,7 +1060,6 @@ export function IndexPage() {
   useEffect(() => {
     return () => {
       window.clearTimeout(refreshTimersRef.current.spinning);
-      window.clearTimeout(refreshTimersRef.current.visual);
       window.clearInterval(refreshTimersRef.current.interval);
       window.clearTimeout(locationLoadingTimerRef.current);
       window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
@@ -2996,7 +2987,7 @@ export function IndexPage() {
         />
       ) : null}
 
-      {(isRefreshVisualLoading || isLocationDelayedLoading) && (
+      {isLocationDelayedLoading && (
         <LoadingOverlay label={m.home_map_refresh_aria()} />
       )}
 
