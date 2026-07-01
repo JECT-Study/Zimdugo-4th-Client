@@ -14,13 +14,13 @@ export const NAME_DISPLAY_VIEWPORT_LABELS: Record<NameDisplayViewport, string> =
     480: "태블릿 shell",
   };
 
-export type EllipsisLocale = "ko" | "en";
+export type NameDisplayLocale = "ko" | "en";
 
-export type EllipsisLocaleSelection = EllipsisLocale | "all";
+export type NameDisplayLocaleSelection = NameDisplayLocale | "all";
 
 export type BoundaryTextKind = "place" | "keyword";
 
-/** 화면별 말줄임 또는 줄바꿈 경계 추정치를 Storybook에서 ±radius로 확인 */
+/** 화면별 2줄 표시 경계 추정치를 Storybook에서 ±radius로 확인 */
 export type NameDisplaySlotId =
   | "search-autocomplete-120m"
   | "search-autocomplete-12km"
@@ -36,62 +36,62 @@ export type NameDisplaySlotId =
 
 type ViewportAnchors = Record<NameDisplayViewport, number>;
 
-type SlotAnchorConfig = Record<EllipsisLocale, ViewportAnchors>;
+type SlotAnchorConfig = Record<NameDisplayLocale, ViewportAnchors>;
 
 /**
- * viewport·locale별 예상 말줄임 경계(글자 수).
+ * viewport·locale별 예상 2줄 표시 경계(글자 수).
  * 실제 CSS의 padding, marker, trailing action, card chrome을 기준으로 320/375 값을
  * 보정하고 현재 shell 폭 정책(360/390/430/480)으로 확장한 초기값이다.
  */
-export const ELLIPSIS_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
+export const TWO_LINE_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
   "search-autocomplete-120m": {
-    ko: { 320: 14, 360: 15, 375: 16, 390: 17, 430: 18, 480: 20 },
-    en: { 320: 23, 360: 26, 375: 27, 390: 28, 430: 31, 480: 34 },
+    ko: { 320: 28, 360: 30, 375: 32, 390: 34, 430: 36, 480: 40 },
+    en: { 320: 46, 360: 52, 375: 54, 390: 56, 430: 62, 480: 68 },
   },
   "search-autocomplete-12km": {
-    ko: { 320: 13, 360: 14, 375: 15, 390: 16, 430: 17, 480: 19 },
-    en: { 320: 21, 360: 24, 375: 25, 390: 26, 430: 29, 480: 32 },
+    ko: { 320: 26, 360: 28, 375: 30, 390: 32, 430: 34, 480: 38 },
+    en: { 320: 42, 360: 48, 375: 50, 390: 52, 430: 58, 480: 64 },
   },
   "search-list-place": {
-    ko: { 320: 11, 360: 13, 375: 14, 390: 15, 430: 17, 480: 20 },
-    en: { 320: 19, 360: 23, 375: 24, 390: 25, 430: 29, 480: 33 },
+    ko: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
+    en: { 320: 38, 360: 46, 375: 48, 390: 50, 430: 58, 480: 66 },
   },
   "search-list-locker": {
-    ko: { 320: 11, 360: 13, 375: 14, 390: 15, 430: 17, 480: 20 },
-    en: { 320: 19, 360: 23, 375: 24, 390: 25, 430: 29, 480: 33 },
+    ko: { 320: 22, 360: 26, 375: 28, 390: 30, 430: 34, 480: 40 },
+    en: { 320: 38, 360: 46, 375: 48, 390: 50, 430: 58, 480: 66 },
   },
   "search-list-nested-locker": {
-    ko: { 320: 12, 360: 14, 375: 15, 390: 16, 430: 18, 480: 21 },
-    en: { 320: 18, 360: 21, 375: 22, 390: 23, 430: 27, 480: 30 },
+    ko: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
+    en: { 320: 36, 360: 42, 375: 44, 390: 46, 430: 54, 480: 60 },
   },
   "search-recent": {
-    ko: { 320: 16, 360: 17, 375: 18, 390: 19, 430: 20, 480: 22 },
-    en: { 320: 27, 360: 30, 375: 31, 390: 32, 430: 35, 480: 38 },
+    ko: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
+    en: { 320: 54, 360: 60, 375: 62, 390: 64, 430: 70, 480: 76 },
   },
   "search-results-heading-place": {
-    ko: { 320: 8, 360: 9, 375: 10, 390: 11, 430: 12, 480: 14 },
-    en: { 320: 14, 360: 15, 375: 16, 390: 17, 430: 18, 480: 20 },
+    ko: { 320: 16, 360: 18, 375: 20, 390: 22, 430: 24, 480: 28 },
+    en: { 320: 28, 360: 30, 375: 32, 390: 34, 430: 36, 480: 40 },
   },
   "search-results-heading-query": {
-    ko: { 320: 17, 360: 19, 375: 20, 390: 21, 430: 23, 480: 26 },
-    en: { 320: 29, 360: 33, 375: 34, 390: 35, 430: 39, 480: 43 },
+    ko: { 320: 34, 360: 38, 375: 40, 390: 42, 430: 46, 480: 52 },
+    en: { 320: 58, 360: 66, 375: 68, 390: 70, 430: 78, 480: 86 },
   },
   "favorite-title": {
-    ko: { 320: 15, 360: 16, 375: 17, 390: 18, 430: 19, 480: 21 },
-    en: { 320: 21, 360: 23, 375: 24, 390: 25, 430: 28, 480: 32 },
+    ko: { 320: 30, 360: 32, 375: 34, 390: 36, 430: 38, 480: 42 },
+    en: { 320: 42, 360: 46, 375: 48, 390: 50, 430: 56, 480: 64 },
   },
   "report-list-title": {
-    ko: { 320: 11, 360: 13, 375: 13, 390: 14, 430: 16, 480: 18 },
-    en: { 320: 20, 360: 22, 375: 23, 390: 24, 430: 27, 480: 30 },
+    ko: { 320: 22, 360: 26, 375: 26, 390: 28, 430: 32, 480: 36 },
+    en: { 320: 40, 360: 44, 375: 46, 390: 48, 430: 54, 480: 60 },
   },
   "report-detail-title-wrap": {
-    ko: { 320: 16, 360: 17, 375: 18, 390: 19, 430: 20, 480: 22 },
-    en: { 320: 26, 360: 29, 375: 30, 390: 31, 430: 34, 480: 38 },
+    ko: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
+    en: { 320: 52, 360: 58, 375: 60, 390: 62, 430: 68, 480: 76 },
   },
 };
 
 /** 경계 앞뒤로 포함할 글자 수(총 2*radius+1개) */
-export const ELLIPSIS_BOUNDARY_RADIUS = 5;
+export const NAME_DISPLAY_BOUNDARY_RADIUS = 5;
 
 const KO_PLACE_SEGMENTS = [
   "강남역",
@@ -161,14 +161,14 @@ export function isMeaningfulBoundaryText(text: string): boolean {
   return text.length > 0 && !text.endsWith(" ");
 }
 
-export function resolveEllipsisLocales(
-  locale: EllipsisLocaleSelection,
-): EllipsisLocale[] {
+export function resolveNameDisplayLocales(
+  locale: NameDisplayLocaleSelection,
+): NameDisplayLocale[] {
   return locale === "all" ? ["ko", "en"] : [locale];
 }
 
 export function buildBoundaryText(
-  locale: EllipsisLocale,
+  locale: NameDisplayLocale,
   length: number,
   kind: BoundaryTextKind = "place",
 ): string {
@@ -182,9 +182,9 @@ export function buildBoundaryText(
   return buildPlaceStyleText(segments, length);
 }
 
-export function buildEllipsisBoundaryLengths(
+export function buildNameDisplayBoundaryLengths(
   anchor: number,
-  radius = ELLIPSIS_BOUNDARY_RADIUS,
+  radius = NAME_DISPLAY_BOUNDARY_RADIUS,
 ): number[] {
   const start = Math.max(1, anchor - radius);
   const end = anchor + radius;
@@ -201,7 +201,7 @@ function formatBoundaryPosition(
 }
 
 function formatBoundaryLabel(
-  locale: EllipsisLocale,
+  locale: NameDisplayLocale,
   length: number,
   anchor: number,
   extra?: string,
@@ -220,22 +220,22 @@ function formatBoundaryLabel(
   return `${localeLabel} ${length}자 · ${positionLabel}${suffix}`;
 }
 
-export interface EllipsisBoundaryRow {
+export interface NameDisplayBoundaryRow {
   text: string;
   length: number;
   label: string;
-  locale: EllipsisLocale;
+  locale: NameDisplayLocale;
   anchor: number;
 }
 
-export function buildEllipsisBoundaryRows(options: {
+export function buildNameDisplayBoundaryRows(options: {
   slot: NameDisplaySlotId;
-  locale: EllipsisLocaleSelection;
+  locale: NameDisplayLocaleSelection;
   viewport: NameDisplayViewport;
   radius?: number;
   labelExtra?: string;
   textKind?: BoundaryTextKind;
-}): EllipsisBoundaryRow[] {
+}): NameDisplayBoundaryRow[] {
   const {
     slot,
     locale,
@@ -245,9 +245,9 @@ export function buildEllipsisBoundaryRows(options: {
     textKind = "place",
   } = options;
 
-  return resolveEllipsisLocales(locale).flatMap((entry) => {
-    const anchor = ELLIPSIS_ANCHORS[slot][entry][viewport];
-    return buildEllipsisBoundaryLengths(anchor, radius)
+  return resolveNameDisplayLocales(locale).flatMap((entry) => {
+    const anchor = TWO_LINE_ANCHORS[slot][entry][viewport];
+    return buildNameDisplayBoundaryLengths(anchor, radius)
       .map((length) => {
         const text = buildBoundaryText(entry, length, textKind);
         return {

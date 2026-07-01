@@ -6,10 +6,10 @@ import {
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildEllipsisBoundaryRows,
-  type EllipsisLocaleSelection,
+  buildNameDisplayBoundaryRows,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayLocaleSelection,
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 
@@ -89,7 +89,7 @@ type Story = StoryObj<typeof meta>;
 function renderMatrix(
   itemType: "PLACE" | "LOCKER",
   viewport: NameDisplayViewport,
-  locale: EllipsisLocaleSelection,
+  locale: NameDisplayLocaleSelection,
   distanceLabel: string,
 ) {
   const slot =
@@ -97,7 +97,7 @@ function renderMatrix(
       ? "search-autocomplete-12km"
       : "search-autocomplete-120m";
 
-  const rows = buildEllipsisBoundaryRows({
+  const rows = buildNameDisplayBoundaryRows({
     slot,
     locale,
     viewport,
@@ -119,12 +119,12 @@ function renderMatrix(
       width={viewport}
       surface="search-overlay-item"
       rows={rows}
-      note="장소형 예시(띄어쓰기 포함) · 한글/영문 title 각각 말줄임 경계 ±5자. 예: 강남역 교보타워 5층 안내데스크 맞은편"
+      note="장소형 예시(띄어쓰기 포함) · 한글/영문 title 각각 2줄 표시 경계 ±5자. 예: 강남역 교보타워 5층 안내데스크 맞은편"
     />
   );
 }
 
-export const EllipsisBoundary: Story = {
+export const TwoLineBoundary: Story = {
   render: ({ viewport, itemType, locale, distanceLabel }) =>
     renderMatrix(itemType, viewport, locale, distanceLabel),
 };

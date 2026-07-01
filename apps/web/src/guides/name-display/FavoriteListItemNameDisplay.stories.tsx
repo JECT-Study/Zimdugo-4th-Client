@@ -3,7 +3,7 @@ import { FavoriteListItem } from "#/entities/favorite/ui/FavoriteListItem";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildEllipsisBoundaryRows,
+  buildNameDisplayBoundaryRows,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
 } from "#/shared/storybook/name-display-matrix";
@@ -53,7 +53,7 @@ type Story = StoryObj<typeof meta>;
 
 export const TitleOnly: Story = {
   render: ({ viewport, locale }) => {
-    const rows = buildEllipsisBoundaryRows({
+    const rows = buildNameDisplayBoundaryRows({
       slot: "favorite-title",
       locale,
       viewport,
@@ -71,7 +71,7 @@ export const TitleOnly: Story = {
       <NameDisplayMatrix
         width={viewport}
         surface="my-favorite-list"
-        note={`lockerName(title) · 한글/영문 title 각각 말줄임 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
+        note={`lockerName(title) · 한글/영문 title 각각 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
         rows={rows}
       />
     );

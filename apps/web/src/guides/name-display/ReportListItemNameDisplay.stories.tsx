@@ -3,7 +3,7 @@ import { ReportListItem } from "#/entities/report/ui/ReportListItem";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildEllipsisBoundaryRows,
+  buildNameDisplayBoundaryRows,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
 } from "#/shared/storybook/name-display-matrix";
@@ -53,9 +53,9 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const EllipsisBoundary: Story = {
+export const TwoLineBoundary: Story = {
   render: ({ viewport, locale }) => {
-    const rows = buildEllipsisBoundaryRows({
+    const rows = buildNameDisplayBoundaryRows({
       slot: "report-list-title",
       locale,
       viewport,

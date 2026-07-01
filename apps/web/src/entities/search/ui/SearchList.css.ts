@@ -86,14 +86,17 @@ export const resultTextColumn = style({
 });
 
 export const titleText = style({
+  display: "block",
   width: "100%",
+  maxHeight: "2.4em",
   overflow: "hidden",
   color: vars.color.text.title,
   fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: 1.2,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
+  whiteSpace: "normal",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
 });
 
 export const detailMetaRow = style({
@@ -220,13 +223,16 @@ export const recentTextCol = style({
 });
 
 export const recentLabel = style({
+  display: "block",
+  maxHeight: "2.4em",
   overflow: "hidden",
   color: vars.color.text.title,
   fontSize: vars.typography.fontSize[14],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: 1.2,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
+  whiteSpace: "normal",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
 });
 
 export const recentRight = style({

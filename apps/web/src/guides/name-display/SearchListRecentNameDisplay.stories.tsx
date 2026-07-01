@@ -4,10 +4,10 @@ import { SearchListRecent } from "#/entities/search/ui/SearchListRecent";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildEllipsisBoundaryRows,
-  type EllipsisLocaleSelection,
+  buildNameDisplayBoundaryRows,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayLocaleSelection,
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 
@@ -61,10 +61,10 @@ type Story = StoryObj<typeof meta>;
 function renderRecentMatrix(
   viewport: NameDisplayViewport,
   historyKind: SearchListRecentKind,
-  locale: EllipsisLocaleSelection,
+  locale: NameDisplayLocaleSelection,
   dateLabel: string,
 ) {
-  const rows = buildEllipsisBoundaryRows({
+  const rows = buildNameDisplayBoundaryRows({
     slot: "search-recent",
     locale,
     viewport,
@@ -91,12 +91,12 @@ function renderRecentMatrix(
       width={viewport}
       surface="search-overlay-item"
       rows={rows}
-      note={`최근검색(${historyKind}) · 14px title · 말줄임 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
+      note={`최근검색(${historyKind}) · 14px title · 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
     />
   );
 }
 
-export const EllipsisBoundary: Story = {
+export const TwoLineBoundary: Story = {
   render: ({ viewport, historyKind, locale, dateLabel }) =>
     renderRecentMatrix(viewport, historyKind, locale, dateLabel),
 };

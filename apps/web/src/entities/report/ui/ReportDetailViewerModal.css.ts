@@ -158,6 +158,8 @@ export const informationEyebrow = style({
 
 export const informationLockerTitle = style({
   margin: 0,
+  maxHeight: "2.7em",
+  overflow: "hidden",
   color: vars.color.text.title,
   fontSize: vars.typography.fontSize[20],
   fontWeight: vars.typography.fontWeight.SemiBold,

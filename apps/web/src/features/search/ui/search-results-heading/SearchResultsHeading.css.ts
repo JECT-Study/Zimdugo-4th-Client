@@ -33,5 +33,11 @@ export const subtitle = style({
 });
 
 export const queryEmphasis = style({
+  display: "block",
+  maxHeight: "2.4em",
+  overflow: "hidden",
   fontWeight: vars.typography.fontWeight.SemiBold,
+  whiteSpace: "normal",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
 });

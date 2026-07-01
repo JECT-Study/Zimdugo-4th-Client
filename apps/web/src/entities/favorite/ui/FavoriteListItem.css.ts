@@ -66,12 +66,15 @@ export const titleGroup = style({
 });
 
 export const titleLabel = style({
+  display: "block",
   maxWidth: "100%",
+  maxHeight: "2.4em",
   overflow: "hidden",
   fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.SemiBold,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
+  whiteSpace: "normal",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
 });
 
 export const titleCaption = style({

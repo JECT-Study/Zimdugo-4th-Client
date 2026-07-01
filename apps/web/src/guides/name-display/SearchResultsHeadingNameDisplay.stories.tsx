@@ -6,10 +6,10 @@ import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
   type BoundaryTextKind,
-  buildEllipsisBoundaryRows,
-  type EllipsisLocaleSelection,
+  buildNameDisplayBoundaryRows,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayLocaleSelection,
   type NameDisplaySlotId,
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
@@ -53,12 +53,12 @@ type Story = StoryObj<typeof meta>;
 
 function buildHeadingRows(
   viewport: NameDisplayViewport,
-  locale: EllipsisLocaleSelection,
+  locale: NameDisplayLocaleSelection,
   slot: NameDisplaySlotId,
   renderHeading: (text: string) => ReactNode,
   textKind?: BoundaryTextKind,
 ) {
-  return buildEllipsisBoundaryRows({
+  return buildNameDisplayBoundaryRows({
     slot,
     locale,
     viewport,
@@ -79,7 +79,7 @@ export const PlaceScope: Story = {
     <NameDisplayMatrix
       width={viewport}
       surface="search-results-heading"
-      note={`placeName이 문장에 삽입됨. ellipsis 없음 — ≈경계에서 줄바꿈·가독성 확인. ${PLACE_EXAMPLE_NOTE}`}
+      note={`placeName이 문장에 삽입됨. 최대 2줄 기준으로 줄바꿈·가독성 확인. ${PLACE_EXAMPLE_NOTE}`}
       rows={buildHeadingRows(
         viewport,
         locale,
@@ -100,7 +100,7 @@ export const QueryScope: Story = {
     <NameDisplayMatrix
       width={viewport}
       surface="search-results-heading"
-      note={`검색어(keyword) · 띄어쓰기 포함 경계 ±5자. ellipsis 없음 — 줄바꿈 확인. ${PLACE_EXAMPLE_NOTE}`}
+      note={`검색어(keyword) · 띄어쓰기 포함 경계 ±5자. 최대 2줄 기준으로 줄바꿈 확인. ${PLACE_EXAMPLE_NOTE}`}
       rows={buildHeadingRows(
         viewport,
         locale,

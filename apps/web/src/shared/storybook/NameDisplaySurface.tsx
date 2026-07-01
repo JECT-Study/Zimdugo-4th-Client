@@ -9,7 +9,7 @@ import { inSheetHeader } from "#/features/search/ui/search-results-heading/Searc
 import { childContent } from "#/routes/-my.css.ts";
 import type { NameDisplayViewport } from "./name-display-matrix";
 
-/** 검색 리스트 행 종류별 title 말줄임에 영향을 주는 chrome 차이 */
+/** 검색 리스트 행 종류별 title 2줄 표시 폭에 영향을 주는 chrome 차이 */
 export type SearchListRowVariant = "place" | "locker" | "nested-locker";
 
 export type NameDisplaySurfaceId =

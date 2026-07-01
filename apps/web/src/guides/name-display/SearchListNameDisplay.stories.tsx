@@ -15,10 +15,10 @@ import {
   type SearchListRowVariant,
 } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildEllipsisBoundaryRows,
-  type EllipsisLocaleSelection,
+  buildNameDisplayBoundaryRows,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayLocaleSelection,
   type NameDisplaySlotId,
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
@@ -91,27 +91,29 @@ type Story = StoryObj<typeof meta>;
 
 function buildRows(
   viewport: NameDisplayViewport,
-  locale: EllipsisLocaleSelection,
+  locale: NameDisplayLocaleSelection,
   slot: NameDisplaySlotId,
   renderItem: (title: string) => ReactNode,
 ) {
-  return buildEllipsisBoundaryRows({ slot, locale, viewport }).map((row) => ({
-    key: `${row.locale}-${row.length}`,
-    label: row.label,
-    node: (
-      <NameDisplaySurface
-        surface="search-list-bottom-sheet"
-        viewport={viewport}
-      >
-        {renderItem(row.text)}
-      </NameDisplaySurface>
-    ),
-  }));
+  return buildNameDisplayBoundaryRows({ slot, locale, viewport }).map(
+    (row) => ({
+      key: `${row.locale}-${row.length}`,
+      label: row.label,
+      node: (
+        <NameDisplaySurface
+          surface="search-list-bottom-sheet"
+          viewport={viewport}
+        >
+          {renderItem(row.text)}
+        </NameDisplaySurface>
+      ),
+    }),
+  );
 }
 
 function renderSearchListMatrix(
   viewport: NameDisplayViewport,
-  locale: EllipsisLocaleSelection,
+  locale: NameDisplayLocaleSelection,
   slot: NameDisplaySlotId,
   searchListRowVariant: SearchListRowVariant,
   note: string,
@@ -135,7 +137,7 @@ export const PlaceRow: Story = {
       locale,
       "search-list-place",
       "place",
-      `placeName · SearchListBottomSheet listStack과 동일 래퍼 · 말줄임 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`,
+      `placeName · SearchListBottomSheet listStack과 동일 래퍼 · 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`,
       (title) => (
         <SearchListResult
           item={createPlace(title)}

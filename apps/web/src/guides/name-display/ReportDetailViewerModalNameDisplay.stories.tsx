@@ -2,7 +2,7 @@ import type { StoryObj } from "@storybook/react";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildEllipsisBoundaryRows,
+  buildNameDisplayBoundaryRows,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
 } from "#/shared/storybook/name-display-matrix";
@@ -46,7 +46,7 @@ type Story = StoryObj<typeof meta>;
 
 export const WrapBoundary: Story = {
   render: ({ viewport, locale }) => {
-    const rows = buildEllipsisBoundaryRows({
+    const rows = buildNameDisplayBoundaryRows({
       slot: "report-detail-title-wrap",
       locale,
       viewport,
@@ -64,7 +64,7 @@ export const WrapBoundary: Story = {
       <NameDisplayMatrix
         width={viewport}
         surface="report-detail-title"
-        note={`20px 제목 · ellipsis 없음 · 줄바꿈 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
+        note={`20px 제목 · 최대 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
         rows={rows}
       />
     );

@@ -61,7 +61,7 @@ export function NameDisplayMatrix({
         {contentWidth != null ? (
           <span>콘텐츠 폭 약 {contentWidth}px</span>
         ) : null}
-        <span>말줄임(…) 발생 여부를 눈으로 확인</span>
+        <span>2줄 안에 노출되는지 눈으로 확인</span>
       </div>
       {note ? (
         <p
