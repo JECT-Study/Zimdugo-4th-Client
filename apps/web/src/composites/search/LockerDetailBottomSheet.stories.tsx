@@ -232,11 +232,11 @@ function LockerDetailBottomSheetStory({
   const [innerHeight, setInnerHeight] = useState(
     typeof window !== "undefined" ? window.innerHeight : 812,
   );
-  const locker = LOCKER_DETAIL_VARIANTS[namePattern];
   const snapPoints = useMemo(
     () => resolveLockerDetailSnapPoints({ windowHeight: innerHeight }),
     [innerHeight],
   );
+  const locker = LOCKER_DETAIL_VARIANTS[namePattern];
   const initialSnapPoint =
     snapStage === "mini" ? snapPoints.miniSnapPoint : snapPoints.snapPoint;
 

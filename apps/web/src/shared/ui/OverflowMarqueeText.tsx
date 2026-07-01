@@ -31,12 +31,22 @@ export function OverflowMarqueeText({
   const textRef = useRef<HTMLSpanElement | null>(null);
   const [overflowDistance, setOverflowDistance] = useState(0);
 
+  const isOverflowing = overflowDistance > 0;
+  const duration = Math.max(
+    MARQUEE_MIN_DURATION_SECONDS,
+    overflowDistance / MARQUEE_SPEED_PX_PER_SECOND,
+  );
+  const marqueeStyle: MarqueeStyle = {
+    "--overflow-marquee-distance": `${overflowDistance}px`,
+    "--overflow-marquee-duration": `${duration}s`,
+  };
+
   useEffect(() => {
     const updateOverflow = () => {
       const rootElement = rootRef.current;
       const textElement = textRef.current;
 
-      if (!rootElement || !textElement) {
+      if (!rootElement || !textElement || textElement.textContent !== value) {
         setOverflowDistance(0);
         return;
       }
@@ -57,17 +67,7 @@ export function OverflowMarqueeText({
     const observer = new ResizeObserver(updateOverflow);
     observer.observe(rootElement);
     return () => observer.disconnect();
-  });
-
-  const isOverflowing = overflowDistance > 0;
-  const duration = Math.max(
-    MARQUEE_MIN_DURATION_SECONDS,
-    overflowDistance / MARQUEE_SPEED_PX_PER_SECOND,
-  );
-  const marqueeStyle: MarqueeStyle = {
-    "--overflow-marquee-distance": `${overflowDistance}px`,
-    "--overflow-marquee-duration": `${duration}s`,
-  };
+  }, [value]);
 
   return (
     <span

@@ -22,10 +22,10 @@ export const track = style({
   display: "inline-flex",
   maxWidth: "none",
   alignItems: "center",
-  willChange: "transform",
 });
 
 export const activeTrack = style({
+  willChange: "transform",
   animationName: marquee,
   animationDuration: "var(--overflow-marquee-duration)",
   animationTimingFunction: "linear",
