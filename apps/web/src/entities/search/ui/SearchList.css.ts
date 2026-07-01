@@ -32,6 +32,7 @@ export const accordionChildren = style({
 
 export const placeRow = style({
   display: "flex",
+  alignItems: "center",
   width: "100%",
   minHeight: "55px",
   padding: `${vars.spacing[8]} 0`,
@@ -41,9 +42,55 @@ export const placeRow = style({
 export const placeMain = style({
   ...interactiveRow,
   display: "flex",
-  alignItems: "flex-start",
+  alignItems: "center",
   justifyContent: "space-between",
   gap: vars.spacing[12],
+});
+
+export const placeSummary = style({
+  display: "flex",
+  alignItems: "flex-start",
+  width: "100%",
+});
+
+export const placeBulletList = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[8],
+  margin: `${vars.spacing[4]} 0 0`,
+  padding: 0,
+  listStyle: "none",
+});
+
+export const placeBulletItem = style({
+  display: "grid",
+  gridTemplateColumns: "10px minmax(0, 1fr)",
+  minWidth: 0,
+  columnGap: vars.spacing[8],
+});
+
+export const placeBulletDot = style({
+  width: "5px",
+  height: "5px",
+  marginTop: "7px",
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.palette.green[500],
+});
+
+export const placeBulletButton = style({
+  ...interactiveRow,
+  minWidth: 0,
+});
+
+export const placeBulletTitle = style({
+  width: "100%",
+  overflow: "hidden",
+  color: vars.color.text.title,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: 1.25,
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
 });
 
 export const lockerRow = style({
@@ -58,13 +105,27 @@ export const lockerRow = style({
 });
 
 export const nestedLockerRow = style({
-  paddingLeft: vars.spacing[12],
+  position: "relative",
+  paddingLeft: `calc(${vars.spacing[20]} + ${vars.spacing[8]})`,
+});
+
+export const nestedLockerBullet = style({
+  position: "absolute",
+  top: "25px",
+  left: "-4px",
+  width: "7px",
+  height: "7px",
+  border: `1px solid ${vars.color.palette.green[500]}`,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  boxSizing: "border-box",
 });
 
 export const lockerMain = style({
   ...interactiveRow,
   minWidth: 0,
   flex: 1,
+  overflow: "hidden",
 });
 
 export const resultContent = style({
@@ -73,6 +134,10 @@ export const resultContent = style({
   gap: vars.spacing[8],
   minWidth: 0,
   flex: 1,
+});
+
+export const placeResultContent = style({
+  alignItems: "center",
 });
 
 export const resultTextColumn = style({
@@ -96,10 +161,22 @@ export const titleText = style({
   textOverflow: "ellipsis",
 });
 
+export const placeTitleText = style({
+  width: "100%",
+  minWidth: 0,
+  overflowWrap: "anywhere",
+  color: vars.color.text.title,
+  fontSize: vars.typography.fontSize[16],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: 1.25,
+  whiteSpace: "normal",
+});
+
 export const detailMetaRow = style({
   display: "flex",
   alignItems: "center",
   gap: vars.spacing[8],
+  width: "100%",
   minWidth: 0,
   color: vars.color.text.content,
   fontSize: vars.typography.fontSize[12],
@@ -113,12 +190,14 @@ export const categoryText = style({
 });
 
 export const updatedText = style({
+  minWidth: 0,
   overflow: "hidden",
   color: vars.color.text.disable,
   textOverflow: "ellipsis",
 });
 
 export const addressText = style({
+  minWidth: 0,
   overflow: "hidden",
   color: vars.color.text.surface,
   textOverflow: "ellipsis",

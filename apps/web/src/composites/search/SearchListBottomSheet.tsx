@@ -42,6 +42,7 @@ import {
 } from "./SearchListBottomSheet.css.ts";
 import type {
   SearchLockerResultItem,
+  SearchPlaceResultItem,
   SearchResultItem,
   SearchSortDirection,
   SearchSortKey,
@@ -69,6 +70,7 @@ export interface SearchListBottomSheetProps {
   isFilterOpen?: boolean;
   placeName?: string | null;
   onLockerPress?: (item: SearchLockerResultItem) => void;
+  onPlacePress?: (item: SearchPlaceResultItem) => void;
   onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
   isLoading?: boolean;
   isError?: boolean;
@@ -254,6 +256,7 @@ export function SearchListBottomSheet({
   isFilterOpen = false,
   placeName = null,
   onLockerPress,
+  onPlacePress,
   onFavoriteChange,
   isLoading = false,
   isError = false,
@@ -483,6 +486,7 @@ export function SearchListBottomSheet({
                 <SearchListResults
                   items={visibleItems}
                   onLockerPress={onLockerPress}
+                  onPlacePress={onPlacePress}
                   onFavoriteChange={onFavoriteChange}
                   favoriteAddLabel={m.search_favorite_add()}
                   favoriteRemoveLabel={m.search_favorite_remove()}

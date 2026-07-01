@@ -30,9 +30,12 @@ import {
   lockerRow,
   markerBadge,
   metaDot,
+  nestedLockerBullet,
   nestedLockerRow,
   placeMain,
+  placeResultContent,
   placeRow,
+  placeTitleText,
   resultContent,
   resultTextColumn,
   titleText,
@@ -40,9 +43,12 @@ import {
 } from "./SearchList.css.ts";
 import { SearchMarkerIcon } from "./SearchMarkerIcon";
 
+const USE_ACCORDION_PLACE_RESULTS = false;
+
 export interface SearchListResultsProps {
   items: SearchResultItem[];
   onLockerPress?: (item: SearchLockerResultItem) => void;
+  onPlacePress?: (item: SearchPlaceResultItem) => void;
   onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
   favoriteAddLabel?: string;
   favoriteRemoveLabel?: string;
@@ -53,6 +59,7 @@ export interface SearchListResultProps {
   isExpanded: boolean;
   onToggle: () => void;
   onLockerPress?: (item: SearchLockerResultItem) => void;
+  onPlacePress?: (item: SearchPlaceResultItem) => void;
   onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
   favoriteAddLabel?: string;
   favoriteRemoveLabel?: string;
@@ -70,6 +77,7 @@ interface SearchLockerResultProps {
 export function SearchListResults({
   items,
   onLockerPress,
+  onPlacePress,
   onFavoriteChange,
   favoriteAddLabel,
   favoriteRemoveLabel,
@@ -88,6 +96,7 @@ export function SearchListResults({
           )
         }
         onLockerPress={onLockerPress}
+        onPlacePress={onPlacePress}
         onFavoriteChange={onFavoriteChange}
         favoriteAddLabel={favoriteAddLabel}
         favoriteRemoveLabel={favoriteRemoveLabel}
@@ -110,11 +119,58 @@ export function SearchListResult({
   isExpanded,
   onToggle,
   onLockerPress,
+  onPlacePress,
   onFavoriteChange,
   favoriteAddLabel,
   favoriteRemoveLabel,
 }: SearchListResultProps) {
   const childrenId = `search-place-lockers-${item.placeId}`;
+  const placeLockerListLabel = m.search_place_locker_list_aria({
+    place: item.title,
+  });
+
+  if (!USE_ACCORDION_PLACE_RESULTS) {
+    return (
+      <div className={accordionGroup}>
+        <div
+          className={[placeRow, item.isOpen === false ? closedOpacity : ""]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <Button
+            className={placeMain}
+            onPress={() => onPlacePress?.(item)}
+            aria-label={item.title}
+          >
+            <span className={[resultContent, placeResultContent].join(" ")}>
+              <ResultMarker tone="place" />
+              <span className={resultTextColumn}>
+                <span className={placeTitleText}>{item.title}</span>
+              </span>
+            </span>
+          </Button>
+        </div>
+
+        <section
+          id={childrenId}
+          className={accordionChildren}
+          aria-label={placeLockerListLabel}
+        >
+          {item.lockers.map((locker) => (
+            <SearchLockerResult
+              key={getSearchResultKey(locker)}
+              item={locker}
+              isNested
+              onPress={onLockerPress}
+              onFavoriteChange={onFavoriteChange}
+              favoriteAddLabel={favoriteAddLabel}
+              favoriteRemoveLabel={favoriteRemoveLabel}
+            />
+          ))}
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className={accordionGroup}>
@@ -157,7 +213,7 @@ export function SearchListResult({
         <section
           id={childrenId}
           className={accordionChildren}
-          aria-label={`${item.title} 보관함 목록`}
+          aria-label={placeLockerListLabel}
         >
           {item.lockers.map((locker) => (
             <SearchLockerResult
@@ -184,6 +240,7 @@ export function SearchLockerResult({
   favoriteAddLabel,
   favoriteRemoveLabel,
 }: SearchLockerResultProps) {
+  const canShowMarker = !isNested;
   const favoriteLabel = item.isFavorite
     ? (favoriteRemoveLabel ?? m.search_favorite_remove())
     : (favoriteAddLabel ?? m.search_favorite_add());
@@ -202,13 +259,16 @@ export function SearchLockerResult({
         .filter(Boolean)
         .join(" ")}
     >
+      {isNested ? (
+        <span className={nestedLockerBullet} aria-hidden="true" />
+      ) : null}
       <Button
         className={lockerMain}
         onPress={() => onPress?.(item)}
         aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
       >
         <span className={resultContent}>
-          <ResultMarker tone={isNested ? "locker" : "standalone"} />
+          {canShowMarker ? <ResultMarker tone="standalone" /> : null}
           <span className={resultTextColumn}>
             <OverflowMarqueeText className={titleText} text={item.title} />
             <span className={detailMetaRow}>

@@ -76,6 +76,7 @@
   "search_filter_error_price_range": "請輸入有效的價格範圍。",
   "search_result_title": "{query} 的搜索結果",
   "search_place_lockers_title": "位於“{place}”的寄存櫃。",
+  "search_place_locker_list_aria": "“{place}”的寄存櫃列表",
   "non_search_title_ko": "검색 결과가 없어요",
   "non_search_title": "沒有搜索結果",
   "non_search_for": "未找到與 {query} 相關的結果",

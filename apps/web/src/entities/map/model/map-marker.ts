@@ -13,12 +13,12 @@ export interface LockerMarkerOffset {
 
 const PLACE_BADGE_FILL = vars.color.palette.green[500];
 const INACTIVE_MARKER_FILL = vars.color.palette.gray[500];
-const INACTIVE_BADGE_TEXT_FILL = vars.color.palette.gray[700];
 const MAP_PIN_WHITE = "white";
 const COORDINATE_GROUP_PRECISION = 4;
 const MARKER_PROXIMITY_THRESHOLD_PX = 44;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
+const USE_PLACE_BADGE_MARKER = true;
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
 const MAP_PIN_DISPLAY_SCALE = 0.45;
@@ -172,18 +172,17 @@ const createPlaceClusterMapPinSvg = (
 ): string => {
   const badgeFontSize = badgeLabel.length > 1 ? 24 : 31;
   const badgeY = badgeLabel.length > 1 ? 43 : 45;
-  const badgeTextFill =
-    fill === INACTIVE_MARKER_FILL ? INACTIVE_BADGE_TEXT_FILL : fill;
 
   return `
     <svg width="100%" height="100%" viewBox="0 0 121 121" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: block;">
       <g filter="url(#cluster-map-pin-shadow)">
-        <path d="M22.4 63C22.4 46.4315 35.8315 33 52.4 33C68.9686 33 82.4 46.4315 82.4 63C82.4 79.5685 68.9686 93 52.4 93C35.8315 93 22.4 79.5685 22.4 63Z" fill="${fill}" shape-rendering="crispEdges"/>
-        <path d="M55.2398 44.8611C58.7428 44.3465 61.8768 47.1442 61.8768 50.7865V51.3677H64.7846C67.9962 51.3677 70.5998 54.0476 70.6 57.3533V73.8141C70.5998 77.12 67.9962 79.7999 64.7846 79.7999H38.6153C35.4037 79.7999 32.8001 77.12 32.8 73.8141V57.3533C32.8001 54.0476 35.4037 51.3677 38.6153 51.3677H41.5231V50.7865C41.5232 47.1442 44.6571 44.3465 48.1599 44.8611L51.6927 45.3805L51.7 45.3814L51.7071 45.3803L55.2398 44.8611ZM38.6153 54.3605C37.0095 54.3606 35.7078 55.7005 35.7077 57.3533V73.8141C35.7077 75.467 37.0095 76.807 38.6153 76.807H41.5231V69.492L50.8502 65.0083C51.4491 66.185 52.6163 66.9806 53.9523 66.9806C55.9027 66.9806 57.4999 65.2735 57.4999 63.152H57.5152C57.5152 61.0469 55.9181 59.3231 53.9679 59.3231C52.0174 59.3231 50.42 61.0305 50.42 63.152C50.42 63.152 50.4356 63.5498 50.4663 63.7487L41.5231 65.7507V54.3605H38.6153ZM61.8768 76.807H64.7846C66.3905 76.807 67.6921 75.467 67.6921 73.8141V57.3533C67.6921 55.7005 66.3903 54.3605 64.7846 54.3605H61.8768V76.807ZM58.9693 50.7865C58.9691 48.9939 57.4508 47.6105 55.7326 47.8132L55.6509 47.8239L52.1112 48.3442L52.1046 48.3451L51.8987 48.3744L51.7 48.4026L51.5013 48.3744L51.2954 48.3451L51.2921 48.3447L51.2885 48.3442L47.7492 47.8239C45.9977 47.5666 44.4308 48.9655 44.4307 50.7865V51.3677H44.4539C44.4387 51.4466 44.4308 51.5263 44.4307 51.6068C44.4308 53.2597 47.6854 54.5998 51.7 54.5998C55.7146 54.5998 58.9688 53.2597 58.9691 51.6068C58.9691 51.5263 58.9611 51.4466 58.9459 51.3677H58.9693V50.7865Z" fill="${MAP_PIN_WHITE}"/>
+        <path d="M22.4 63C22.4 46.4315 35.8315 33 52.4 33C68.9686 33 82.4 46.4315 82.4 63C82.4 79.5685 68.9686 93 52.4 93C35.8315 93 22.4 79.5685 22.4 63Z" fill="${MAP_PIN_WHITE}" shape-rendering="crispEdges"/>
+        <path d="M52.4 34.5C68.1401 34.5 80.9 47.2599 80.9 63C80.9 78.7401 68.1401 91.5 52.4 91.5C36.6599 91.5 23.9 78.7401 23.9 63C23.9 47.2599 36.6599 34.5 52.4 34.5Z" stroke="${fill}" stroke-width="3" shape-rendering="crispEdges"/>
+        <path d="M55.2398 44.8611C58.7428 44.3465 61.8768 47.1442 61.8768 50.7865V51.3677H64.7846C67.9962 51.3677 70.5998 54.0476 70.6 57.3533V73.8141C70.5998 77.12 67.9962 79.7999 64.7846 79.7999H38.6153C35.4037 79.7999 32.8001 77.12 32.8 73.8141V57.3533C32.8001 54.0476 35.4037 51.3677 38.6153 51.3677H41.5231V50.7865C41.5232 47.1442 44.6571 44.3465 48.1599 44.8611L51.6927 45.3805L51.7 45.3814L51.7071 45.3803L55.2398 44.8611ZM38.6153 54.3605C37.0095 54.3606 35.7078 55.7005 35.7077 57.3533V73.8141C35.7077 75.467 37.0095 76.807 38.6153 76.807H41.5231V69.492L50.8502 65.0083C51.4491 66.185 52.6163 66.9806 53.9523 66.9806C55.9027 66.9806 57.4999 65.2735 57.4999 63.152H57.5152C57.5152 61.0469 55.9181 59.3231 53.9679 59.3231C52.0174 59.3231 50.42 61.0305 50.42 63.152C50.42 63.152 50.4356 63.5498 50.4663 63.7487L41.5231 65.7507V54.3605H38.6153ZM61.8768 76.807H64.7846C66.3905 76.807 67.6921 75.467 67.6921 73.8141V57.3533C67.6921 55.7005 66.3903 54.3605 64.7846 54.3605H61.8768V76.807ZM58.9693 50.7865C58.9691 48.9939 57.4508 47.6105 55.7326 47.8132L55.6509 47.8239L52.1112 48.3442L52.1046 48.3451L51.8987 48.3744L51.7 48.4026L51.5013 48.3744L51.2954 48.3451L51.2921 48.3447L51.2885 48.3442L47.7492 47.8239C45.9977 47.5666 44.4308 48.9655 44.4307 50.7865V51.3677H44.4539C44.4387 51.4466 44.4308 51.5263 44.4307 51.6068C44.4308 53.2597 47.6854 54.5998 51.7 54.5998C55.7146 54.5998 58.9688 53.2597 58.9691 51.6068C58.9691 51.5263 58.9611 51.4466 58.9459 51.3677H58.9693V50.7865Z" fill="${fill}"/>
       </g>
       <g filter="url(#cluster-map-pin-badge-shadow)">
-        <path d="M99.3436 33.2436C99.3436 20.3786 88.9144 9.94946 76.0495 9.94946C63.1845 9.94946 52.7554 20.3786 52.7554 33.2436C52.7554 46.1085 63.1845 56.5377 76.0495 56.5377C88.9144 56.5377 99.3436 46.1085 99.3436 33.2436Z" fill="${MAP_PIN_WHITE}" stroke="${fill}" stroke-width="3"/>
-        <text x="76.05" y="${badgeY}" text-anchor="middle" fill="${badgeTextFill}" font-family="Pretendard, sans-serif" font-size="${badgeFontSize}" font-weight="700">${badgeLabel}</text>
+        <path d="M99.3436 33.2436C99.3436 20.3786 88.9144 9.94946 76.0495 9.94946C63.1845 9.94946 52.7554 20.3786 52.7554 33.2436C52.7554 46.1085 63.1845 56.5377 76.0495 56.5377C88.9144 56.5377 99.3436 46.1085 99.3436 33.2436Z" fill="${fill}"/>
+        <text x="76.05" y="${badgeY}" text-anchor="middle" fill="${MAP_PIN_WHITE}" font-family="Pretendard, sans-serif" font-size="${badgeFontSize}" font-weight="700">${badgeLabel}</text>
       </g>
       <defs>
         <filter id="cluster-map-pin-shadow" x="0" y="16.2" width="104.8" height="104.8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
@@ -225,8 +224,8 @@ export const createMapPinIcon = (
   const lockerCount = pin.lockerCount ?? 0;
   const badgeLabel = lockerCount > 9 ? "9+" : String(lockerCount);
 
-  if (!isPlace) {
-    const isFavorite = pin.isFavorite === true;
+  if (!isPlace || !USE_PLACE_BADGE_MARKER) {
+    const isFavorite = pin.pinType === "LOCKER" && pin.isFavorite === true;
     const isInactive = pin.markerStatus === "inactive";
     const icon = isInactive
       ? createDefaultLockerMapPinSvg(getMarkerFill(pin))
@@ -464,7 +463,11 @@ const getMarkerSize = (
     const pinCount = pin.pinCount ?? 0;
     return pinCount >= 10 ? CLUSTER_L_DISPLAY_SIZE : CLUSTER_S_DISPLAY_SIZE;
   }
-  if (pin.pinType === "PLACE") return PLACE_MARKER_DISPLAY_SIZE;
+  if (pin.pinType === "PLACE") {
+    return USE_PLACE_BADGE_MARKER
+      ? PLACE_MARKER_DISPLAY_SIZE
+      : LOCKER_MARKER_DISPLAY_SIZE;
+  }
   if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_DISPLAY_SIZE;
   return LOCKER_MARKER_DISPLAY_SIZE;
 };
@@ -484,7 +487,9 @@ const getMarkerAnchor = (
     };
   }
   const anchor =
-    pin.pinType === "PLACE" ? PLACE_MARKER_ANCHOR : DEFAULT_MARKER_ANCHOR;
+    pin.pinType === "PLACE" && USE_PLACE_BADGE_MARKER
+      ? PLACE_MARKER_ANCHOR
+      : DEFAULT_MARKER_ANCHOR;
   return {
     x: anchor.x - offsetX,
     y: anchor.y - offsetY,
@@ -571,7 +576,11 @@ const getPinIconSignature = (
     pin.pinType === "LOCKER" && pin.isFavorite === true ? ":favorite" : "";
   const statusSignature = pin.markerStatus ?? "active";
   const countPart =
-    pin.pinType === "CLUSTER" ? (pin.pinCount ?? "") : (pin.lockerCount ?? "");
+    pin.pinType === "CLUSTER"
+      ? (pin.pinCount ?? "")
+      : pin.pinType === "PLACE" && !USE_PLACE_BADGE_MARKER
+        ? ""
+        : (pin.lockerCount ?? "");
   return `${pin.pinType}:${countPart}:${statusSignature}:${isSelected ? "selected" : "default"}${favoriteSignature}${
     isStateful && zoomLevel != null ? `:${zoomLevel}` : ""
   }`;

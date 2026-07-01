@@ -76,6 +76,7 @@
   "search_filter_error_price_range": "有効な料金範囲を入力してください。",
   "search_result_title": "{query} の検索結果",
   "search_place_lockers_title": "「{place}」にあるロッカーです。",
+  "search_place_locker_list_aria": "「{place}」のロッカー一覧",
   "non_search_title_ko": "검색 결과가 없어요",
   "non_search_title": "検索結果がありません",
   "non_search_for": "{query} の検索結果がありません",

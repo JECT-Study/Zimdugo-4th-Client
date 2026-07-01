@@ -3,7 +3,6 @@ import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const MOCK_MARKER_FILL = "#3BD569";
 const MOCK_INACTIVE_MARKER_FILL = "#CACACA";
-const MOCK_INACTIVE_BADGE_TEXT_FILL = "#4B4B4B";
 
 vi.mock("@repo/ui/vars", () => ({
   vars: {
@@ -281,7 +280,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
     expect(icon).toContain('fill="white"');
     expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
-    expect(icon).toContain(`text-anchor="middle" fill="${MOCK_MARKER_FILL}"`);
+    expect(icon).toContain(`text-anchor="middle" fill="white"`);
     expect(icon).toContain(">9+<");
     expect(icon).toContain("<text");
     expect(icon).toContain('viewBox="0 0 121 121"');
@@ -300,9 +299,7 @@ describe("createLockerMarkerIcon", () => {
     expect(icon).toContain(
       `stroke="${MOCK_INACTIVE_MARKER_FILL}" stroke-width="3"`,
     );
-    expect(icon).toContain(
-      `text-anchor="middle" fill="${MOCK_INACTIVE_BADGE_TEXT_FILL}"`,
-    );
+    expect(icon).toContain(`text-anchor="middle" fill="white"`);
   });
 
   it("renders cluster markers for count < 10 (S size)", () => {

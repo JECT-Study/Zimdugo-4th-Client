@@ -745,7 +745,7 @@ function FullDetailContent({
             icon={<IconLockerDetailMapPin24 />}
             title={locker.address}
             description={locker.floorLabel}
-            titleClassName={isScrollEnabled ? detailTitleMultiline : undefined}
+            titleClassName={detailTitleMultiline}
           />
           <DetailInfoRow
             icon={<IconLockerDetailWallet24 />}

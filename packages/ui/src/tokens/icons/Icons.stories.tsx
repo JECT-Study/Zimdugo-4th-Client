@@ -16,6 +16,8 @@ import {
   IconCircleboxChevron32,
   IconCircleboxClock32,
   IconCircleboxCrosshair48,
+  IconCircleboxCrosshairActive48,
+  IconCircleboxFilter28,
   IconCircleboxFilter32,
   IconCircleboxHappy32,
   IconCircleboxMike32,
@@ -24,9 +26,14 @@ import {
   IconCircleboxThumbUp32,
   IconCircleboxUnhappy32,
   IconDistanceRoute24,
+  IconFilter14,
   IconFilter20,
   IconGoogle24,
   IconKakao24,
+  IconLockerDetailCapacity24,
+  IconLockerDetailHeader24,
+  IconLockerDetailMapPin24,
+  IconLockerDetailWallet24,
   IconMarker22,
   IconMinusBox18,
   IconNaver19,
@@ -38,7 +45,9 @@ import {
   IconNavigationMapPin24,
   IconNavigationMapPin24Fill,
   IconNavigationNavigate24,
+  IconNavigationPin40,
   IconNavigationPushPin24,
+  IconNavigationRefresh20,
   IconNavigationRefresh24,
   IconNavigationSearch24,
   IconNormalArrow24,
@@ -49,6 +58,11 @@ import {
   IconNormalSearch24,
   IconNormalWallet24,
   IconPencil24,
+  IconSearchAutocompleteLocker14,
+  IconSearchAutocompletePlace14,
+  IconSearchLockerRow14,
+  IconSearchPlaceRow14,
+  IconSearchRecentItem24,
   IconShare24,
   IconSizeL,
   IconSizeM,
@@ -59,6 +73,7 @@ import {
   IconThumbnail24,
   IconThumbUp24,
   IconX16,
+  IconX24,
 } from "./Icons.tsx";
 
 const meta = {
@@ -581,6 +596,9 @@ export const Navigation: Story = {
       <Cell name="distanceRoute">
         <IconDistanceRoute24 />
       </Cell>
+      <Cell name="pin40">
+        <IconNavigationPin40 />
+      </Cell>
       <Cell name="clock">
         <IconNavigationClock24 state="default" />
       </Cell>
@@ -601,6 +619,12 @@ export const Navigation: Story = {
       </Cell>
       <Cell name="crosshairDenied">
         <IconNavigationCrosshair24 state="denied" />
+      </Cell>
+      <Cell name="refresh20">
+        <IconNavigationRefresh20 state="default" />
+      </Cell>
+      <Cell name="refresh20Active">
+        <IconNavigationRefresh20 state="active" />
       </Cell>
       <Cell name="refresh">
         <IconNavigationRefresh24 state="refresh" />
@@ -636,6 +660,12 @@ export const Normal: Story = {
       </Cell>
       <Cell name="x">
         <IconX16 />
+      </Cell>
+      <Cell name="x24">
+        <IconX24 />
+      </Cell>
+      <Cell name="filter14">
+        <IconFilter14 />
       </Cell>
       <Cell name="marker">
         <IconMarker22 />
@@ -696,6 +726,55 @@ export const Normal: Story = {
       </Cell>
       <Cell name="minusBox">
         <IconMinusBox18 />
+      </Cell>
+    </div>
+  ),
+};
+
+export const Search: Story = {
+  name: "icon.search",
+  render: () => (
+    <div style={grid}>
+      <Cell name="search.place.row">
+        <IconSearchPlaceRow14 />
+      </Cell>
+      <Cell name="search.place.row.closed">
+        <IconSearchPlaceRow14 isClosed />
+      </Cell>
+      <Cell name="search.locker.row">
+        <IconSearchLockerRow14 />
+      </Cell>
+      <Cell name="search.locker.row.closed">
+        <IconSearchLockerRow14 isClosed />
+      </Cell>
+      <Cell name="autocomplete.place">
+        <IconSearchAutocompletePlace14 />
+      </Cell>
+      <Cell name="autocomplete.locker">
+        <IconSearchAutocompleteLocker14 />
+      </Cell>
+      <Cell name="recent.item">
+        <IconSearchRecentItem24 />
+      </Cell>
+    </div>
+  ),
+};
+
+export const LockerDetail: Story = {
+  name: "icon.locker-detail",
+  render: () => (
+    <div style={grid}>
+      <Cell name="header" probeTarget="root">
+        <IconLockerDetailHeader24 />
+      </Cell>
+      <Cell name="mapPin">
+        <IconLockerDetailMapPin24 />
+      </Cell>
+      <Cell name="wallet">
+        <IconLockerDetailWallet24 />
+      </Cell>
+      <Cell name="capacity">
+        <IconLockerDetailCapacity24 />
       </Cell>
     </div>
   ),
@@ -793,6 +872,9 @@ export const Circlebox: Story = {
       >
         <IconCircleboxHappy32 />
       </Cell>
+      <Cell name="filter28" ingredients={["IconFilter14"]} probeTarget="root">
+        <IconCircleboxFilter28 />
+      </Cell>
       <Cell name="filter" ingredients={["IconFilter20"]} probeTarget="root">
         <IconCircleboxFilter32 />
       </Cell>
@@ -819,6 +901,13 @@ export const Circlebox: Story = {
         probeTarget="root"
       >
         <IconCircleboxCrosshair48 state="active" />
+      </Cell>
+      <Cell
+        name="crosshairActiveDeprecated"
+        ingredients={["IconCircleboxCrosshair48(active)"]}
+        probeTarget="root"
+      >
+        <IconCircleboxCrosshairActive48 />
       </Cell>
       <Cell name="refresh" probeTarget="root">
         <IconCircleboxRefresh48 state="refresh" />
@@ -925,6 +1014,9 @@ export const Gallery: Story = {
         <Cell name="distanceRoute">
           <IconDistanceRoute24 />
         </Cell>
+        <Cell name="pin40">
+          <IconNavigationPin40 />
+        </Cell>
         <Cell name="clock">
           <IconNavigationClock24 state="default" />
         </Cell>
@@ -945,6 +1037,12 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="crosshairDenied">
           <IconNavigationCrosshair24 state="denied" />
+        </Cell>
+        <Cell name="refresh20">
+          <IconNavigationRefresh20 state="default" />
+        </Cell>
+        <Cell name="refresh20Active">
+          <IconNavigationRefresh20 state="active" />
         </Cell>
         <Cell name="refresh">
           <IconNavigationRefresh24 state="refresh" />
@@ -975,6 +1073,12 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="x">
           <IconX16 />
+        </Cell>
+        <Cell name="x24">
+          <IconX24 />
+        </Cell>
+        <Cell name="filter14">
+          <IconFilter14 />
         </Cell>
         <Cell name="marker">
           <IconMarker22 />
@@ -1035,6 +1139,45 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="minusBox">
           <IconMinusBox18 />
+        </Cell>
+      </RowSection>
+
+      <RowSection title="icon.search">
+        <Cell name="search.place.row">
+          <IconSearchPlaceRow14 />
+        </Cell>
+        <Cell name="search.place.row.closed">
+          <IconSearchPlaceRow14 isClosed />
+        </Cell>
+        <Cell name="search.locker.row">
+          <IconSearchLockerRow14 />
+        </Cell>
+        <Cell name="search.locker.row.closed">
+          <IconSearchLockerRow14 isClosed />
+        </Cell>
+        <Cell name="autocomplete.place">
+          <IconSearchAutocompletePlace14 />
+        </Cell>
+        <Cell name="autocomplete.locker">
+          <IconSearchAutocompleteLocker14 />
+        </Cell>
+        <Cell name="recent.item">
+          <IconSearchRecentItem24 />
+        </Cell>
+      </RowSection>
+
+      <RowSection title="icon.locker-detail">
+        <Cell name="header" probeTarget="root">
+          <IconLockerDetailHeader24 />
+        </Cell>
+        <Cell name="mapPin">
+          <IconLockerDetailMapPin24 />
+        </Cell>
+        <Cell name="wallet">
+          <IconLockerDetailWallet24 />
+        </Cell>
+        <Cell name="capacity">
+          <IconLockerDetailCapacity24 />
         </Cell>
       </RowSection>
 
@@ -1118,6 +1261,9 @@ export const Gallery: Story = {
         >
           <IconCircleboxHappy32 />
         </Cell>
+        <Cell name="filter28" ingredients={["IconFilter14"]} probeTarget="root">
+          <IconCircleboxFilter28 />
+        </Cell>
         <Cell name="filter" ingredients={["IconFilter20"]} probeTarget="root">
           <IconCircleboxFilter32 />
         </Cell>
@@ -1144,6 +1290,13 @@ export const Gallery: Story = {
           probeTarget="root"
         >
           <IconCircleboxCrosshair48 state="active" />
+        </Cell>
+        <Cell
+          name="crosshairActiveDeprecated"
+          ingredients={["IconCircleboxCrosshair48(active)"]}
+          probeTarget="root"
+        >
+          <IconCircleboxCrosshairActive48 />
         </Cell>
         <Cell
           name="crosshairDenied"
