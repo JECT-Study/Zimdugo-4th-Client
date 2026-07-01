@@ -878,7 +878,7 @@ function SummarySection({
     locker.distanceLabel.trim() || m.locker_detail_distance_not_provided();
   const operatingHoursText =
     locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel();
-  const shouldShowTitleExpandButton =
+  const canShowTitleExpandButton =
     canExpandTitle && (isTitleOverflowing || isTitleExpanded);
 
   const handleTitleOverflowChange = useCallback(
@@ -926,11 +926,12 @@ function SummarySection({
               ) : (
                 <OverflowMarqueeText
                   text={titleText}
+                  title={titleText}
                   onOverflowChange={handleTitleOverflowChange}
                 />
               )}
             </h2>
-            {shouldShowTitleExpandButton ? (
+            {canShowTitleExpandButton ? (
               <button
                 type="button"
                 className={titleExpandButton}
