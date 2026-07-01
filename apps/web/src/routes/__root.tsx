@@ -9,8 +9,6 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { type ReactNode, useEffect, useState } from "react";
 import "@repo/ui/styles/global.css";
-import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
-import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
@@ -39,6 +37,8 @@ import {
   resolveLanguageSyncAction,
   useAppLanguageStore,
 } from "#/shared/store/language";
+import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
+import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
 
 const CRITICAL_LAYOUT_CSS = `
@@ -157,26 +157,50 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
 const COMPACT_DEVICE_LAYOUT_SCRIPT = `
 (function () {
   try {
-    var screenWidth = window.screen && window.screen.width;
-    var screenHeight = window.screen && window.screen.height;
-    var viewportWidth = window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 0;
-    var viewportHeight = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
-    var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
-    var viewportShortSide = Math.min(viewportWidth || 0, viewportHeight || 0);
-    var pixelRatio = window.devicePixelRatio || 1;
-    var isPhysicalScreen =
-      (viewportWidth > 0 && (screenWidth || 0) > viewportWidth * 1.5) ||
-      (viewportHeight > 0 && (screenHeight || 0) > viewportHeight * 1.5);
-    var cssShortSide =
-      isPhysicalScreen && pixelRatio > 1 ? shortSide / pixelRatio : shortSide;
+    function isCompactDevice() {
+      var screenWidth = window.screen && window.screen.width;
+      var screenHeight = window.screen && window.screen.height;
+      var viewportWidth = window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 0;
+      var viewportHeight = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
+      var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
+      var pixelRatio = window.devicePixelRatio || 1;
+      var hasCoarsePointer =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(pointer: coarse)").matches;
+      var maxTouchPoints =
+        window.navigator && typeof window.navigator.maxTouchPoints === "number"
+          ? window.navigator.maxTouchPoints
+          : 0;
+      var hasTouch = maxTouchPoints > 0 || "ontouchstart" in window;
+      var isTouchLike = hasCoarsePointer || hasTouch;
+      var isPhysicalScreen =
+        (viewportWidth > 0 && (screenWidth || 0) > viewportWidth * 1.5) ||
+        (viewportHeight > 0 && (screenHeight || 0) > viewportHeight * 1.5);
+      var cssShortSide =
+        isPhysicalScreen && pixelRatio > 1 ? shortSide / pixelRatio : shortSide;
 
-    if (
-      (viewportShortSide > 0 && viewportShortSide < 600) ||
-      (shortSide > 0 && shortSide < 600) ||
-      (cssShortSide > 0 && cssShortSide < 600)
-    ) {
-      document.documentElement.dataset.compactDevice = "true";
+      return (
+        isTouchLike &&
+        ((shortSide > 0 && shortSide < 600) ||
+          (cssShortSide > 0 && cssShortSide < 600))
+      );
     }
+
+    function syncCompactDeviceLayout() {
+      if (isCompactDevice()) {
+        document.documentElement.dataset.compactDevice = "true";
+      } else {
+        delete document.documentElement.dataset.compactDevice;
+      }
+    }
+
+    syncCompactDeviceLayout();
+    window.addEventListener("resize", syncCompactDeviceLayout, {
+      passive: true,
+    });
+    window.addEventListener("orientationchange", syncCompactDeviceLayout, {
+      passive: true,
+    });
   } catch (_) {
   }
 })();
