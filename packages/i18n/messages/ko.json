@@ -289,6 +289,7 @@
   "locker_detail_operating_hours": "{open} ~ {close}",
   "locker_detail_operating_hours_all_day": "24시간 운영",
   "locker_detail_operating_hours_not_provided": "운영시간 미제공",
+  "locker_detail_distance_not_provided": "거리정보 없음",
   "locker_detail_price_not_provided": "미제공",
   "locker_detail_price_range": "{min} ~ {max}",
   "locker_detail_price_from": "{min} ~",

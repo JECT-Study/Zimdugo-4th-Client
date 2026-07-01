@@ -9,6 +9,7 @@ import {
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
   IconNavigationClock24,
+  IconNavigationMapPin24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
@@ -731,15 +732,14 @@ function FullDetailContent({
           onFavoritePress={onFavoritePress}
           onClose={onClose}
           snapStage={snapStage}
+          canExpandTitle={isScrollEnabled}
         />
         <div className={fullDetailList}>
           <DetailInfoRow
             icon={<IconLockerDetailMapPin24 />}
             title={locker.address}
             description={locker.floorLabel}
-            titleClassName={
-              snapStage === "full" ? detailTitleMultiline : undefined
-            }
+            titleClassName={isScrollEnabled ? detailTitleMultiline : undefined}
           />
           <DetailInfoRow
             icon={<IconLockerDetailWallet24 />}
@@ -845,6 +845,7 @@ function SummarySection({
   onFavoritePress,
   onClose,
   snapStage,
+  canExpandTitle,
 }: {
   locker: LockerDetailItem;
   favoriteLabel: string;
@@ -852,6 +853,7 @@ function SummarySection({
   onFavoritePress: () => void;
   onClose: () => void;
   snapStage: LockerDetailSheetSnapStage;
+  canExpandTitle: boolean;
 }) {
   const [isTitleExpanded, setIsTitleExpanded] = useState(false);
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
@@ -861,9 +863,12 @@ function SummarySection({
     snapStage === "mini"
       ? locker.address
       : locker.updatedLabel || locker.address;
-  const isFullSnapStage = snapStage === "full";
+  const distanceText =
+    locker.distanceLabel.trim() || m.locker_detail_distance_not_provided();
+  const operatingHoursText =
+    locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel();
   const shouldShowTitleExpandButton =
-    isFullSnapStage && (isTitleOverflowing || isTitleExpanded);
+    canExpandTitle && (isTitleOverflowing || isTitleExpanded);
 
   const handleTitleOverflowChange = useCallback(
     (nextIsOverflowing: boolean) => {
@@ -884,10 +889,10 @@ function SummarySection({
   }, [titleText]);
 
   useEffect(() => {
-    if (!isFullSnapStage) {
+    if (!canExpandTitle) {
       setIsTitleExpanded(false);
     }
-  }, [isFullSnapStage]);
+  }, [canExpandTitle]);
 
   return (
     <section
@@ -939,18 +944,22 @@ function SummarySection({
           </div>
           <InlineMeta
             left={locker.categoryLabel}
-            right={
-              <span className={metaIconText}>
-                <IconNavigationClock24 className={metaIcon} />
-                {locker.operatingHoursLabel ??
-                  formatLockerOperatingHoursLabel()}
-              </span>
-            }
+            right={<span className={addressText}>{summaryTrailingText}</span>}
           />
           <InlineMeta
             className={distanceRow}
-            left={locker.distanceLabel}
-            right={<span className={addressText}>{summaryTrailingText}</span>}
+            left={
+              <span className={metaIconText}>
+                <IconNavigationMapPin24 className={metaIcon} />
+                {distanceText}
+              </span>
+            }
+            right={
+              <span className={metaIconText}>
+                <IconNavigationClock24 className={metaIcon} />
+                {operatingHoursText}
+              </span>
+            }
           />
         </div>
 

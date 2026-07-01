@@ -289,6 +289,7 @@
   "locker_detail_operating_hours": "{open} ~ {close}",
   "locker_detail_operating_hours_all_day": "24小時營業",
   "locker_detail_operating_hours_not_provided": "營業時間未提供",
+  "locker_detail_distance_not_provided": "無距離資訊",
   "locker_detail_price_not_provided": "未提供",
   "locker_detail_price_range": "{min} ~ {max}",
   "locker_detail_price_from": "{min} ~",

@@ -6,6 +6,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -31,6 +32,30 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
     );
   },
 }));
+
+vi.mock("#/shared/ui/OverflowMarqueeText", async () => {
+  const { useEffect } = await import("react");
+
+  return {
+    OverflowMarqueeText: ({
+      text,
+      onOverflowChange,
+    }: {
+      text: string;
+      onOverflowChange?: (isOverflowing: boolean) => void;
+    }) => {
+      useEffect(() => {
+        const timerId = window.setTimeout(() => {
+          onOverflowChange?.(true);
+        }, 0);
+
+        return () => window.clearTimeout(timerId);
+      }, [onOverflowChange]);
+
+      return <span>{text}</span>;
+    },
+  };
+});
 
 import type { LockerDetailItem } from "./LockerDetailBottomSheet";
 import {
@@ -246,6 +271,43 @@ describe("LockerDetailBottomSheet", () => {
       sheet.getByRole("status", { name: m.search_result_loading_aria() }),
     ).toBeTruthy();
     expect(sheet.queryByText(LOCKER_DETAIL.title)).toBeNull();
+  });
+
+  it("거리 정보가 비어 있어도 미제공 문구를 노출한다", () => {
+    setLanguageTag("en");
+
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, distanceLabel: "" }}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.getByText("Distance unavailable")).toBeTruthy();
+  });
+
+  it("이름 펼치기 버튼은 풀 바텀시트에서만 노출한다", async () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", {
+          name: m.locker_detail_title_expand_aria(),
+        }),
+      ).toBeNull();
+    });
+
+    rerender(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={112} />,
+    );
+
+    expect(
+      await screen.findByRole("button", {
+        name: m.locker_detail_title_expand_aria(),
+      }),
+    ).toBeTruthy();
   });
 
   it("renders detail image when imageUrl exists", () => {
