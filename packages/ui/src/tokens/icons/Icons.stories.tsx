@@ -24,7 +24,8 @@ import {
   IconCircleboxThumbUp32,
   IconCircleboxUnhappy32,
   IconDistanceRoute24,
-  IconDistanceRuler24,
+  IconDistanceRouteArc24,
+  IconDistanceRouteStep24,
   IconFilter20,
   IconGoogle24,
   IconKakao24,
@@ -582,8 +583,11 @@ export const Navigation: Story = {
       <Cell name="distanceRoute">
         <IconDistanceRoute24 />
       </Cell>
-      <Cell name="distanceRuler">
-        <IconDistanceRuler24 />
+      <Cell name="distanceRouteArc">
+        <IconDistanceRouteArc24 />
+      </Cell>
+      <Cell name="distanceRouteStep">
+        <IconDistanceRouteStep24 />
       </Cell>
       <Cell name="clock">
         <IconNavigationClock24 state="default" />
@@ -929,8 +933,11 @@ export const Gallery: Story = {
         <Cell name="distanceRoute">
           <IconDistanceRoute24 />
         </Cell>
-        <Cell name="distanceRuler">
-          <IconDistanceRuler24 />
+        <Cell name="distanceRouteArc">
+          <IconDistanceRouteArc24 />
+        </Cell>
+        <Cell name="distanceRouteStep">
+          <IconDistanceRouteStep24 />
         </Cell>
         <Cell name="clock">
           <IconNavigationClock24 state="default" />

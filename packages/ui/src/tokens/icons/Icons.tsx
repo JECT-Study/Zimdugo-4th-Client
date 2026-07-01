@@ -702,20 +702,20 @@ export function IconDistanceRoute24({ className }: { className?: string }) {
     >
       <title>route distance</title>
       <path
-        d="M6 7H7.5C9.70914 7 11.5 8.79086 11.5 11C11.5 13.2091 13.2909 15 15.5 15H18"
+        d="M5.5 7.5H7C9.20914 7.5 11 9.29086 11 11.5C11 13.7091 12.7909 15.5 15 15.5H18.5"
         stroke={stroke}
-        strokeWidth="2"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray="1 3"
+        strokeDasharray="1.5 3"
       />
-      <circle cx="5" cy="7" r="2.5" fill={stroke} />
-      <circle cx="19" cy="15" r="2.5" fill={stroke} />
+      <circle cx="5" cy="7.5" r="2" stroke={stroke} strokeWidth="1.5" />
+      <circle cx="19" cy="15.5" r="2" stroke={stroke} strokeWidth="1.5" />
     </svg>
   );
 }
 
-export function IconDistanceRuler24({ className }: { className?: string }) {
+export function IconDistanceRouteArc24({ className }: { className?: string }) {
   const stroke = color.palette.gray[800];
   return (
     <svg
@@ -728,19 +728,44 @@ export function IconDistanceRuler24({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMid meet"
       aria-hidden
     >
-      <title>distance ruler</title>
+      <title>route distance arc</title>
       <path
-        d="M4.5 15.5L15.5 4.5L19.5 8.5L8.5 19.5L4.5 15.5Z"
+        d="M6 16.5C8 8 15 16 18 7.5"
         stroke={stroke}
-        strokeWidth="2"
+        strokeWidth="1.5"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx="5" cy="17" r="2" stroke={stroke} strokeWidth="1.5" />
+      <circle cx="19" cy="7" r="2" stroke={stroke} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function IconDistanceRouteStep24({ className }: { className?: string }) {
+  const stroke = color.palette.gray[800];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>route distance step</title>
       <path
-        d="M8 12L10 14M11 9L12.5 10.5M14 6L16 8"
+        d="M6.5 7.5H10.5V12H14V16.5H17.5"
         stroke={stroke}
-        strokeWidth="1.6"
+        strokeWidth="1.5"
         strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="2 2.5"
       />
+      <circle cx="5" cy="7.5" r="2" stroke={stroke} strokeWidth="1.5" />
+      <circle cx="19" cy="16.5" r="2" stroke={stroke} strokeWidth="1.5" />
     </svg>
   );
 }
