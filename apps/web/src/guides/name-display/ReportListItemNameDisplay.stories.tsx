@@ -1,16 +1,18 @@
 import type { StoryObj } from "@storybook/react";
+import type { ComponentType } from "react";
 import { ReportListItem } from "#/entities/report/ui/ReportListItem";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildNameDisplayBoundaryRows,
-  NAME_DISPLAY_BOUNDARY_RADIUS,
-  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+  buildNameDisplayControlSample,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
+  NAME_DISPLAY_LENGTH_ARG_TYPE,
+  NAME_DISPLAY_LOCALE_ARG_TYPE,
+  NAME_DISPLAY_SAMPLE_NOTE,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayLocale,
+  type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
-
-const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
 
 const SHARED_ARGS = {
   locationLabel: "서울 서대문구 신촌로 83",
@@ -32,19 +34,18 @@ const meta = {
       options: NAME_DISPLAY_VIEWPORTS,
     },
     locale: {
-      control: "inline-radio",
-      options: ["en", "ko", "zh", "ja", "all"],
-      description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
+      ...NAME_DISPLAY_LOCALE_ARG_TYPE,
+      description: "title 언어 — en / ko / zh / ja",
     },
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+    length: NAME_DISPLAY_LENGTH_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
-    locale: "all",
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
+    locale: "en",
+    length: 26,
   },
   decorators: [
-    (Story) => (
+    (Story: ComponentType) => (
       <div style={{ padding: "16px 0", width: "100%" }}>
         <Story />
       </div>
@@ -54,33 +55,39 @@ const meta = {
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+interface NameDisplayStoryArgs {
+  viewport: NameDisplayViewport;
+  locale: NameDisplayLocale;
+  length: number;
+}
 
-export const TwoLineBoundary: Story = {
-  render: ({ viewport, locale, radius }) => {
-    const rows = buildNameDisplayBoundaryRows({
-      slot: "report-list-title",
+type Story = StoryObj<NameDisplayStoryArgs>;
+
+export const Interactive: Story = {
+  render: ({ viewport, locale, length }) => {
+    const sample = buildNameDisplayControlSample({
       locale,
-      viewport,
-      radius,
-    }).map((row) => ({
-      key: `${row.locale}-${row.length}`,
-      label: row.label,
-      text: row.text,
-      length: row.length,
-      node: (
-        <NameDisplaySurface surface="my-report-list" viewport={viewport}>
-          <ReportListItem titleText={row.text} {...SHARED_ARGS} />
-        </NameDisplaySurface>
-      ),
-    }));
+      length,
+    });
 
     return (
       <NameDisplayMatrix
         width={viewport}
         surface="my-report-list"
-        note={`lockerName · 썸네일·chevron 차감 후 좁은 text column · 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
-        rows={rows}
+        note={`lockerName · 썸네일·chevron 차감 후 좁은 text column. ${NAME_DISPLAY_SAMPLE_NOTE}`}
+        rows={[
+          {
+            key: `${sample.locale}-${sample.length}`,
+            label: sample.label,
+            text: sample.text,
+            length: sample.length,
+            node: (
+              <NameDisplaySurface surface="my-report-list" viewport={viewport}>
+                <ReportListItem titleText={sample.text} {...SHARED_ARGS} />
+              </NameDisplaySurface>
+            ),
+          },
+        ]}
       />
     );
   },

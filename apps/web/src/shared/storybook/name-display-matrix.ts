@@ -20,6 +20,22 @@ export type NameDisplayLocaleSelection = NameDisplayLocale | "all";
 
 export type BoundaryTextKind = "place" | "keyword";
 
+export const NAME_DISPLAY_LOCALE_OPTIONS = ["en", "ko", "zh", "ja"] as const;
+
+export const NAME_DISPLAY_LOCALE_ARG_TYPE = {
+  control: "inline-radio",
+  options: NAME_DISPLAY_LOCALE_OPTIONS,
+  description: "샘플 언어 — en / ko / zh / ja",
+} as const;
+
+export const NAME_DISPLAY_LENGTH_ARG_TYPE = {
+  control: { type: "range", min: 1, max: 80, step: 1 },
+  description: "선택 언어의 최대폭 문자 반복 글자수",
+} as const;
+
+export const NAME_DISPLAY_SAMPLE_NOTE =
+  "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
+
 /** 화면별 2줄 표시 경계 추정치를 Storybook에서 ±radius로 확인 */
 export type NameDisplaySlotId =
   | "search-autocomplete-120m"
@@ -145,6 +161,12 @@ export function resolveNameDisplayLocales(
   return locale === "all" ? ["en", "ko", "zh", "ja"] : [locale];
 }
 
+export function resolveNameDisplayControlLocale(
+  locale: NameDisplayLocaleSelection,
+): NameDisplayLocale {
+  return locale === "all" ? "en" : locale;
+}
+
 export function buildBoundaryText(
   locale: NameDisplayLocale,
   length: number,
@@ -152,6 +174,28 @@ export function buildBoundaryText(
 ): string {
   const sampleChar = WIDEST_SAMPLE_CHAR[locale];
   return sampleChar.repeat(Math.max(0, length));
+}
+
+export function buildNameDisplayControlSample(options: {
+  locale: NameDisplayLocaleSelection;
+  length: number;
+  textKind?: BoundaryTextKind;
+}): {
+  locale: NameDisplayLocale;
+  text: string;
+  length: number;
+  label: string;
+} {
+  const { locale, length, textKind = "place" } = options;
+  const selectedLocale = resolveNameDisplayControlLocale(locale);
+  const text = buildBoundaryText(selectedLocale, length, textKind);
+
+  return {
+    locale: selectedLocale,
+    text,
+    length,
+    label: `${selectedLocale} ${length}자`,
+  };
 }
 
 export function buildNameDisplayBoundaryLengths(

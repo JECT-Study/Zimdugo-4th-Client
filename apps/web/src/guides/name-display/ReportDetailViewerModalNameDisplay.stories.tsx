@@ -1,16 +1,18 @@
 import type { StoryObj } from "@storybook/react";
+import type { ComponentType } from "react";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildNameDisplayBoundaryRows,
-  NAME_DISPLAY_BOUNDARY_RADIUS,
-  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+  buildNameDisplayControlSample,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
+  NAME_DISPLAY_LENGTH_ARG_TYPE,
+  NAME_DISPLAY_LOCALE_ARG_TYPE,
+  NAME_DISPLAY_SAMPLE_NOTE,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayLocale,
+  type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 import { ReportDetailTitlePreview } from "#/shared/storybook/ReportDetailTitlePreview";
-
-const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
 
 const meta = {
   title: "Product/Guides/Name Display/Report Detail Modal",
@@ -23,19 +25,18 @@ const meta = {
       options: NAME_DISPLAY_VIEWPORTS,
     },
     locale: {
-      control: "inline-radio",
-      options: ["en", "ko", "zh", "ja", "all"],
-      description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
+      ...NAME_DISPLAY_LOCALE_ARG_TYPE,
+      description: "title 언어 — en / ko / zh / ja",
     },
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+    length: NAME_DISPLAY_LENGTH_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
-    locale: "all",
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
+    locale: "en",
+    length: 36,
   },
   decorators: [
-    (Story) => (
+    (Story: ComponentType) => (
       <div style={{ padding: "16px 0", width: "100%" }}>
         <Story />
       </div>
@@ -45,33 +46,42 @@ const meta = {
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+interface NameDisplayStoryArgs {
+  viewport: NameDisplayViewport;
+  locale: NameDisplayLocale;
+  length: number;
+}
 
-export const WrapBoundary: Story = {
-  render: ({ viewport, locale, radius }) => {
-    const rows = buildNameDisplayBoundaryRows({
-      slot: "report-detail-title-wrap",
+type Story = StoryObj<NameDisplayStoryArgs>;
+
+export const Interactive: Story = {
+  render: ({ viewport, locale, length }) => {
+    const sample = buildNameDisplayControlSample({
       locale,
-      viewport,
-      radius,
-    }).map((row) => ({
-      key: `${row.locale}-${row.length}`,
-      label: row.label,
-      text: row.text,
-      length: row.length,
-      node: (
-        <NameDisplaySurface surface="report-detail-title" viewport={viewport}>
-          <ReportDetailTitlePreview titleText={row.text} />
-        </NameDisplaySurface>
-      ),
-    }));
+      length,
+    });
 
     return (
       <NameDisplayMatrix
         width={viewport}
         surface="report-detail-title"
-        note={`20px 제목 · 최대 2줄 표시 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
-        rows={rows}
+        note={`20px 제목 · 언어와 글자수를 controls에서 직접 조절. ${NAME_DISPLAY_SAMPLE_NOTE}`}
+        rows={[
+          {
+            key: `${sample.locale}-${sample.length}`,
+            label: sample.label,
+            text: sample.text,
+            length: sample.length,
+            node: (
+              <NameDisplaySurface
+                surface="report-detail-title"
+                viewport={viewport}
+              >
+                <ReportDetailTitlePreview titleText={sample.text} />
+              </NameDisplaySurface>
+            ),
+          },
+        ]}
       />
     );
   },

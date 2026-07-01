@@ -1,4 +1,5 @@
 import type { StoryObj } from "@storybook/react";
+import type { ComponentType } from "react";
 import {
   SearchAutocompleteItem,
   type SearchAutocompleteItemData,
@@ -6,12 +7,13 @@ import {
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildNameDisplayBoundaryRows,
-  NAME_DISPLAY_BOUNDARY_RADIUS,
-  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+  buildNameDisplayControlSample,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
+  NAME_DISPLAY_LENGTH_ARG_TYPE,
+  NAME_DISPLAY_LOCALE_ARG_TYPE,
+  NAME_DISPLAY_SAMPLE_NOTE,
   NAME_DISPLAY_VIEWPORTS,
-  type NameDisplayLocaleSelection,
+  type NameDisplayLocale,
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 
@@ -60,25 +62,24 @@ const meta = {
       options: ["PLACE", "LOCKER"],
     },
     locale: {
-      control: "inline-radio",
-      options: ["en", "ko", "zh", "ja", "all"],
-      description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
+      ...NAME_DISPLAY_LOCALE_ARG_TYPE,
+      description: "title 언어 — en / ko / zh / ja",
     },
     distanceLabel: {
       control: "inline-radio",
       options: ["120m", "12.3km"],
     },
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+    length: NAME_DISPLAY_LENGTH_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
     itemType: "LOCKER",
-    locale: "all",
+    locale: "en",
     distanceLabel: "120m",
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
+    length: 32,
   },
   decorators: [
-    (Story) => (
+    (Story: ComponentType) => (
       <div style={{ padding: "16px 0", width: "100%" }}>
         <Story />
       </div>
@@ -88,59 +89,60 @@ const meta = {
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+interface NameDisplayStoryArgs {
+  viewport: NameDisplayViewport;
+  itemType: "PLACE" | "LOCKER";
+  locale: NameDisplayLocale;
+  distanceLabel: string;
+  length: number;
+}
+
+type Story = StoryObj<NameDisplayStoryArgs>;
 
 function renderMatrix(
   itemType: "PLACE" | "LOCKER",
   viewport: NameDisplayViewport,
-  locale: NameDisplayLocaleSelection,
+  locale: NameDisplayLocale,
   distanceLabel: string,
-  radius: number,
+  length: number,
 ) {
-  const slot =
-    distanceLabel === "12.3km"
-      ? "search-autocomplete-12km"
-      : "search-autocomplete-120m";
-
-  const rows = buildNameDisplayBoundaryRows({
-    slot,
+  const sample = buildNameDisplayControlSample({
     locale,
-    viewport,
-    radius,
-    labelExtra: itemType === "PLACE" ? "place" : "locker",
-  }).map((row) => ({
-    key: `${row.locale}-${row.length}`,
-    label: row.label,
-    text: row.text,
-    length: row.length,
-    node: (
-      <NameDisplaySurface surface="search-overlay-item" viewport={viewport}>
-        <SearchAutocompleteItem
-          item={createAutocompleteItem(itemType, row.text, distanceLabel)}
-        />
-      </NameDisplaySurface>
-    ),
-  }));
+    length,
+  });
 
   return (
     <NameDisplayMatrix
       width={viewport}
       surface="search-overlay-item"
-      rows={rows}
-      note={`언어별 최대폭 문자 반복 · 한중일영 title 각각 2줄 표시 경계 ±${radius}자. worst-case 샘플: W / 힣 / 囍 / 曜 반복`}
+      rows={[
+        {
+          key: `${sample.locale}-${itemType}-${distanceLabel}-${sample.length}`,
+          label: `${sample.label} · ${itemType} · ${distanceLabel}`,
+          text: sample.text,
+          length: sample.length,
+          node: (
+            <NameDisplaySurface
+              surface="search-overlay-item"
+              viewport={viewport}
+            >
+              <SearchAutocompleteItem
+                item={createAutocompleteItem(
+                  itemType,
+                  sample.text,
+                  distanceLabel,
+                )}
+              />
+            </NameDisplaySurface>
+          ),
+        },
+      ]}
+      note={`title · itemType/distanceLabel/언어/글자수를 controls에서 직접 조절. ${NAME_DISPLAY_SAMPLE_NOTE}`}
     />
   );
 }
 
-export const TwoLineBoundary: Story = {
-  render: ({ viewport, itemType, locale, distanceLabel, radius }) =>
-    renderMatrix(itemType, viewport, locale, distanceLabel, radius),
-};
-
-export const LongDistanceLabel: Story = {
-  args: {
-    distanceLabel: "12.3km",
-  },
-  render: ({ viewport, itemType, locale, radius }) =>
-    renderMatrix(itemType, viewport, locale, "12.3km", radius),
+export const Interactive: Story = {
+  render: ({ viewport, itemType, locale, distanceLabel, length }) =>
+    renderMatrix(itemType, viewport, locale, distanceLabel, length),
 };

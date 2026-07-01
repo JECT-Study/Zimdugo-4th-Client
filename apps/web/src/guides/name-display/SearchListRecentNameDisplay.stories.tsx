@@ -1,19 +1,19 @@
 import type { StoryObj } from "@storybook/react";
+import type { ComponentType } from "react";
 import type { SearchListRecentKind } from "#/entities/search/ui/SearchListRecent";
 import { SearchListRecent } from "#/entities/search/ui/SearchListRecent";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
-  buildNameDisplayBoundaryRows,
-  NAME_DISPLAY_BOUNDARY_RADIUS,
-  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+  buildNameDisplayControlSample,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
+  NAME_DISPLAY_LENGTH_ARG_TYPE,
+  NAME_DISPLAY_LOCALE_ARG_TYPE,
+  NAME_DISPLAY_SAMPLE_NOTE,
   NAME_DISPLAY_VIEWPORTS,
-  type NameDisplayLocaleSelection,
+  type NameDisplayLocale,
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
-
-const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
 
 const meta = {
   title: "Product/Guides/Name Display/Recent Search",
@@ -31,25 +31,24 @@ const meta = {
       options: ["keyword", "place", "locker"],
     },
     locale: {
-      control: "inline-radio",
-      options: ["en", "ko", "zh", "ja", "all"],
-      description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
+      ...NAME_DISPLAY_LOCALE_ARG_TYPE,
+      description: "title 언어 — en / ko / zh / ja",
     },
     dateLabel: {
       control: "inline-radio",
       options: ["방금", "2일 전"],
     },
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+    length: NAME_DISPLAY_LENGTH_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
     historyKind: "place",
-    locale: "all",
+    locale: "en",
     dateLabel: "2일 전",
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
+    length: 36,
   },
   decorators: [
-    (Story) => (
+    (Story: ComponentType) => (
       <div style={{ padding: "16px 0", width: "100%" }}>
         <Story />
       </div>
@@ -59,69 +58,61 @@ const meta = {
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+interface NameDisplayStoryArgs {
+  viewport: NameDisplayViewport;
+  historyKind: SearchListRecentKind;
+  locale: NameDisplayLocale;
+  dateLabel: string;
+  length: number;
+}
+
+type Story = StoryObj<NameDisplayStoryArgs>;
 
 function renderRecentMatrix(
   viewport: NameDisplayViewport,
   historyKind: SearchListRecentKind,
-  locale: NameDisplayLocaleSelection,
+  locale: NameDisplayLocale,
   dateLabel: string,
-  radius: number,
+  length: number,
 ) {
-  const rows = buildNameDisplayBoundaryRows({
-    slot: "search-recent",
+  const sample = buildNameDisplayControlSample({
     locale,
-    viewport,
-    radius,
-    labelExtra: historyKind,
-  }).map((row) => ({
-    key: `${row.locale}-${row.length}`,
-    label: row.label,
-    text: row.text,
-    length: row.length,
-    node: (
-      <NameDisplaySurface surface="search-overlay-item" viewport={viewport}>
-        <SearchListRecent
-          historyKind={historyKind}
-          dateLabel={dateLabel}
-          onPress={() => undefined}
-          onRemove={() => undefined}
-        >
-          {row.text}
-        </SearchListRecent>
-      </NameDisplaySurface>
-    ),
-  }));
+    length,
+  });
 
   return (
     <NameDisplayMatrix
       width={viewport}
       surface="search-overlay-item"
-      rows={rows}
-      note={`최근검색(${historyKind}) · 14px title · 2줄 표시 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
+      rows={[
+        {
+          key: `${sample.locale}-${historyKind}-${dateLabel}-${sample.length}`,
+          label: `${sample.label} · ${historyKind} · ${dateLabel}`,
+          text: sample.text,
+          length: sample.length,
+          node: (
+            <NameDisplaySurface
+              surface="search-overlay-item"
+              viewport={viewport}
+            >
+              <SearchListRecent
+                historyKind={historyKind}
+                dateLabel={dateLabel}
+                onPress={() => undefined}
+                onRemove={() => undefined}
+              >
+                {sample.text}
+              </SearchListRecent>
+            </NameDisplaySurface>
+          ),
+        },
+      ]}
+      note={`최근검색(${historyKind}) · historyKind/dateLabel/언어/글자수를 controls에서 직접 조절. ${NAME_DISPLAY_SAMPLE_NOTE}`}
     />
   );
 }
 
-export const TwoLineBoundary: Story = {
-  render: ({ viewport, historyKind, locale, dateLabel, radius }) =>
-    renderRecentMatrix(viewport, historyKind, locale, dateLabel, radius),
-};
-
-export const PlaceHistory: Story = {
-  args: { historyKind: "place" },
-  render: ({ viewport, locale, dateLabel, radius }) =>
-    renderRecentMatrix(viewport, "place", locale, dateLabel, radius),
-};
-
-export const LockerHistory: Story = {
-  args: { historyKind: "locker" },
-  render: ({ viewport, locale, dateLabel, radius }) =>
-    renderRecentMatrix(viewport, "locker", locale, dateLabel, radius),
-};
-
-export const KeywordHistory: Story = {
-  args: { historyKind: "keyword" },
-  render: ({ viewport, locale, dateLabel, radius }) =>
-    renderRecentMatrix(viewport, "keyword", locale, dateLabel, radius),
+export const Interactive: Story = {
+  render: ({ viewport, historyKind, locale, dateLabel, length }) =>
+    renderRecentMatrix(viewport, historyKind, locale, dateLabel, length),
 };

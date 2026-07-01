@@ -1,22 +1,20 @@
 import { m } from "@repo/i18n";
 import type { StoryObj } from "@storybook/react";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
   type BoundaryTextKind,
-  buildNameDisplayBoundaryRows,
-  NAME_DISPLAY_BOUNDARY_RADIUS,
-  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+  buildNameDisplayControlSample,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
+  NAME_DISPLAY_LENGTH_ARG_TYPE,
+  NAME_DISPLAY_LOCALE_ARG_TYPE,
+  NAME_DISPLAY_SAMPLE_NOTE,
   NAME_DISPLAY_VIEWPORTS,
-  type NameDisplayLocaleSelection,
-  type NameDisplaySlotId,
+  type NameDisplayLocale,
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
-
-const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
 
 const meta = {
   title: "Product/Guides/Name Display/Results Heading",
@@ -29,20 +27,24 @@ const meta = {
       control: "inline-radio",
       options: NAME_DISPLAY_VIEWPORTS,
     },
-    locale: {
+    scope: {
       control: "inline-radio",
-      options: ["en", "ko", "zh", "ja", "all"],
-      description: "placeName/검색어 언어 — en / ko / zh / ja / 전체",
+      options: ["place", "query"],
     },
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+    locale: {
+      ...NAME_DISPLAY_LOCALE_ARG_TYPE,
+      description: "placeName/검색어 언어 — en / ko / zh / ja",
+    },
+    length: NAME_DISPLAY_LENGTH_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
-    locale: "all",
-    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
+    scope: "place",
+    locale: "en",
+    length: 20,
   },
   decorators: [
-    (Story) => (
+    (Story: ComponentType) => (
       <div style={{ padding: "16px 0", width: "100%" }}>
         <Story />
       </div>
@@ -52,76 +54,90 @@ const meta = {
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+interface NameDisplayStoryArgs {
+  viewport: NameDisplayViewport;
+  scope: "place" | "query";
+  locale: NameDisplayLocale;
+  length: number;
+}
+
+type Story = StoryObj<NameDisplayStoryArgs>;
+
+interface HeadingScopeConfig {
+  note: string;
+  textKind: BoundaryTextKind;
+  renderHeading: (text: string) => ReactNode;
+}
 
 function buildHeadingRows(
   viewport: NameDisplayViewport,
-  locale: NameDisplayLocaleSelection,
-  slot: NameDisplaySlotId,
-  radius: number,
+  locale: NameDisplayLocale,
+  length: number,
   renderHeading: (text: string) => ReactNode,
   textKind?: BoundaryTextKind,
 ) {
-  return buildNameDisplayBoundaryRows({
-    slot,
+  const sample = buildNameDisplayControlSample({
     locale,
-    viewport,
-    radius,
     textKind: textKind ?? "place",
-  }).map((row) => ({
-    key: `${row.locale}-${row.length}`,
-    label: row.label,
-    text: row.text,
-    length: row.length,
-    node: (
-      <NameDisplaySurface surface="search-results-heading" viewport={viewport}>
-        {renderHeading(row.text)}
-      </NameDisplaySurface>
-    ),
-  }));
+    length,
+  });
+
+  return [
+    {
+      key: `${sample.locale}-${textKind ?? "place"}-${sample.length}`,
+      label: `${sample.label} · ${textKind ?? "place"}`,
+      text: sample.text,
+      length: sample.length,
+      node: (
+        <NameDisplaySurface
+          surface="search-results-heading"
+          viewport={viewport}
+        >
+          {renderHeading(sample.text)}
+        </NameDisplaySurface>
+      ),
+    },
+  ];
 }
 
-export const PlaceScope: Story = {
-  render: ({ viewport, locale, radius }) => (
-    <NameDisplayMatrix
-      width={viewport}
-      surface="search-results-heading"
-      note={`placeName이 문장에 삽입됨. 최대 2줄 기준으로 줄바꿈·가독성 확인 · 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
-      rows={buildHeadingRows(
-        viewport,
-        locale,
-        "search-results-heading-place",
-        radius,
-        (place) => (
-          <SearchResultsHeading
-            queryText="강남"
-            titleText={m.search_place_lockers_title({ place })}
-          />
-        ),
-      )}
-    />
-  ),
-};
+export const Interactive: Story = {
+  render: ({ viewport, scope, locale, length }) => {
+    const heading: HeadingScopeConfig =
+      scope === "place"
+        ? {
+            note: `placeName이 문장에 삽입됨. 언어와 글자수를 controls에서 직접 조절. ${NAME_DISPLAY_SAMPLE_NOTE}`,
+            textKind: "place",
+            renderHeading: (place: string) => (
+              <SearchResultsHeading
+                queryText="강남"
+                titleText={m.search_place_lockers_title({ place })}
+              />
+            ),
+          }
+        : {
+            note: `검색어(keyword) · 언어와 글자수를 controls에서 직접 조절. ${NAME_DISPLAY_SAMPLE_NOTE}`,
+            textKind: "keyword",
+            renderHeading: (query: string) => (
+              <SearchResultsHeading
+                queryText={query}
+                subtitleText="강남구 삼성동"
+              />
+            ),
+          };
 
-export const QueryScope: Story = {
-  render: ({ viewport, locale, radius }) => (
-    <NameDisplayMatrix
-      width={viewport}
-      surface="search-results-heading"
-      note={`검색어(keyword) · 최대폭 문자 반복 경계 ±${radius}자. 최대 2줄 기준으로 줄바꿈 확인. ${PLACE_EXAMPLE_NOTE}`}
-      rows={buildHeadingRows(
-        viewport,
-        locale,
-        "search-results-heading-query",
-        radius,
-        (query) => (
-          <SearchResultsHeading
-            queryText={query}
-            subtitleText="강남구 삼성동"
-          />
-        ),
-        "keyword",
-      )}
-    />
-  ),
+    return (
+      <NameDisplayMatrix
+        width={viewport}
+        surface="search-results-heading"
+        note={heading.note}
+        rows={buildHeadingRows(
+          viewport,
+          locale,
+          length,
+          heading.renderHeading,
+          heading.textKind,
+        )}
+      />
+    );
+  },
 };
