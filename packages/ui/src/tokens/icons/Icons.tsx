@@ -687,6 +687,64 @@ export function IconNavigationRefresh20({
   );
 }
 
+export function IconDistanceRoute24({ className }: { className?: string }) {
+  const stroke = color.palette.gray[800];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>route distance</title>
+      <path
+        d="M6 7H7.5C9.70914 7 11.5 8.79086 11.5 11C11.5 13.2091 13.2909 15 15.5 15H18"
+        stroke={stroke}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="1 3"
+      />
+      <circle cx="5" cy="7" r="2.5" fill={stroke} />
+      <circle cx="19" cy="15" r="2.5" fill={stroke} />
+    </svg>
+  );
+}
+
+export function IconDistanceRuler24({ className }: { className?: string }) {
+  const stroke = color.palette.gray[800];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>distance ruler</title>
+      <path
+        d="M4.5 15.5L15.5 4.5L19.5 8.5L8.5 19.5L4.5 15.5Z"
+        stroke={stroke}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 12L10 14M11 9L12.5 10.5M14 6L16 8"
+        stroke={stroke}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function IconNavigationClock24({
   className,
   state = "default",
