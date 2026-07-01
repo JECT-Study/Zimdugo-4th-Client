@@ -76,6 +76,7 @@
   "search_filter_error_price_range": "Enter a valid price range.",
   "search_result_title": "Results for \"{query}\"",
   "search_place_lockers_title": "Lockers at \"{place}\"",
+  "search_place_locker_list_aria": "Locker list at \"{place}\"",
   "non_search_title_ko": "검색 결과가 없어요",
   "non_search_title": "No search results",
   "non_search_for": "No results found for {query}",

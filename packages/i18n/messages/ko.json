@@ -76,6 +76,7 @@
   "search_filter_error_price_range": "올바른 가격 범위를 입력해주세요.",
   "search_result_title": "{query}에 대한 검색 결과입니다.",
   "search_place_lockers_title": "\"{place}\"에 위치한 보관함입니다.",
+  "search_place_locker_list_aria": "\"{place}\" 보관함 목록",
   "non_search_title_ko": "검색 결과가 없어요",
   "non_search_title": "검색 결과가 없어요",
   "non_search_for": "{query}에 대한 검색 결과가 없어요",

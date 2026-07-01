@@ -125,6 +125,9 @@ export function SearchListResult({
   favoriteRemoveLabel,
 }: SearchListResultProps) {
   const childrenId = `search-place-lockers-${item.placeId}`;
+  const placeLockerListLabel = m.search_place_locker_list_aria({
+    place: item.title,
+  });
 
   if (!USE_ACCORDION_PLACE_RESULTS) {
     return (
@@ -151,7 +154,7 @@ export function SearchListResult({
         <section
           id={childrenId}
           className={accordionChildren}
-          aria-label={`${item.title} locker list`}
+          aria-label={placeLockerListLabel}
         >
           {item.lockers.map((locker) => (
             <SearchLockerResult
@@ -210,7 +213,7 @@ export function SearchListResult({
         <section
           id={childrenId}
           className={accordionChildren}
-          aria-label={`${item.title} 보관함 목록`}
+          aria-label={placeLockerListLabel}
         >
           {item.lockers.map((locker) => (
             <SearchLockerResult
