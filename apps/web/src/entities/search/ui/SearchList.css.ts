@@ -32,6 +32,7 @@ export const accordionChildren = style({
 
 export const placeRow = style({
   display: "flex",
+  alignItems: "center",
   width: "100%",
   minHeight: "55px",
   padding: `${vars.spacing[8]} 0`,
@@ -41,7 +42,7 @@ export const placeRow = style({
 export const placeMain = style({
   ...interactiveRow,
   display: "flex",
-  alignItems: "flex-start",
+  alignItems: "center",
   justifyContent: "space-between",
   gap: vars.spacing[12],
 });
@@ -111,6 +112,7 @@ export const lockerMain = style({
   ...interactiveRow,
   minWidth: 0,
   flex: 1,
+  overflow: "hidden",
 });
 
 export const resultContent = style({
@@ -119,6 +121,10 @@ export const resultContent = style({
   gap: vars.spacing[8],
   minWidth: 0,
   flex: 1,
+});
+
+export const placeResultContent = style({
+  alignItems: "center",
 });
 
 export const resultTextColumn = style({
@@ -146,6 +152,7 @@ export const detailMetaRow = style({
   display: "flex",
   alignItems: "center",
   gap: vars.spacing[8],
+  width: "100%",
   minWidth: 0,
   color: vars.color.text.content,
   fontSize: vars.typography.fontSize[12],
@@ -159,12 +166,14 @@ export const categoryText = style({
 });
 
 export const updatedText = style({
+  minWidth: 0,
   overflow: "hidden",
   color: vars.color.text.disable,
   textOverflow: "ellipsis",
 });
 
 export const addressText = style({
+  minWidth: 0,
   overflow: "hidden",
   color: vars.color.text.surface,
   textOverflow: "ellipsis",

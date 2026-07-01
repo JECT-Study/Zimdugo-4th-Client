@@ -32,6 +32,7 @@ import {
   metaDot,
   nestedLockerRow,
   placeMain,
+  placeResultContent,
   placeRow,
   resultContent,
   resultTextColumn,
@@ -136,7 +137,7 @@ export function SearchListResult({
             onPress={() => onPlacePress?.(item)}
             aria-label={item.title}
           >
-            <span className={resultContent}>
+            <span className={[resultContent, placeResultContent].join(" ")}>
               <ResultMarker tone="place" />
               <span className={resultTextColumn}>
                 <OverflowMarqueeText className={titleText} text={item.title} />
@@ -234,6 +235,7 @@ export function SearchLockerResult({
   favoriteAddLabel,
   favoriteRemoveLabel,
 }: SearchLockerResultProps) {
+  const canShowMarker = !isNested;
   const favoriteLabel = item.isFavorite
     ? (favoriteRemoveLabel ?? m.search_favorite_remove())
     : (favoriteAddLabel ?? m.search_favorite_add());
@@ -258,7 +260,7 @@ export function SearchLockerResult({
         aria-label={`${item.title} ${item.distanceLabel} · ${item.address}`}
       >
         <span className={resultContent}>
-          <ResultMarker tone={isNested ? "locker" : "standalone"} />
+          {canShowMarker ? <ResultMarker tone="standalone" /> : null}
           <span className={resultTextColumn}>
             <OverflowMarqueeText className={titleText} text={item.title} />
             <span className={detailMetaRow}>
