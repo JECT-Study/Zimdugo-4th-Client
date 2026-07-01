@@ -5,11 +5,11 @@ import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
+  IconDistanceRoute24,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
   IconNavigationClock24,
-  IconNavigationNavigate24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
@@ -957,7 +957,7 @@ function SummarySection({
             className={distanceRow}
             left={
               <span className={metaIconText}>
-                <IconNavigationNavigate24 className={metaIcon} />
+                <IconDistanceRoute24 className={metaIcon} />
                 {distanceText}
               </span>
             }
