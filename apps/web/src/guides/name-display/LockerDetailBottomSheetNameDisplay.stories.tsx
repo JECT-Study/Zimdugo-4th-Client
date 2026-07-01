@@ -13,7 +13,6 @@ import {
 } from "#/shared/storybook/name-display-matrix";
 
 const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
-const ENGLISH_FONT_SIZE_VARIATIONS = [14, 15, 16, 17, 18, 20] as const;
 
 const meta = {
   title: "Product/Guides/Name Display/Locker Detail Bottom Sheet",
@@ -31,11 +30,21 @@ const meta = {
       description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
     },
     radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
+    fontSize: {
+      control: { type: "range", min: 10, max: 28, step: 1 },
+      description: "EnglishFontSizeVariation에서 title font-size를 직접 조절",
+    },
+    length: {
+      control: { type: "range", min: 1, max: 80, step: 1 },
+      description: "EnglishFontSizeVariation에서 W 반복 글자수",
+    },
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
     locale: "all",
     radius: NAME_DISPLAY_BOUNDARY_RADIUS,
+    fontSize: 16,
+    length: 30,
   },
   decorators: [
     (Story) => (
@@ -85,42 +94,37 @@ export const SummaryTitle: Story = {
 
 export const EnglishFontSizeVariation: Story = {
   args: {
+    fontSize: 16,
+    length: 30,
     locale: "en",
   },
-  render: ({ viewport, radius }) => {
-    const rows = ENGLISH_FONT_SIZE_VARIATIONS.flatMap((fontSize) =>
-      buildNameDisplayBoundaryRows({
-        slot: "locker-detail-title",
-        locale: "en",
-        viewport,
-        radius,
-        labelExtra: `${fontSize}px`,
-      }).map((row) => ({
-        key: `en-${fontSize}-${row.length}`,
-        label: row.label,
-        text: row.text,
-        length: row.length,
+  render: ({ viewport, fontSize, length }) => {
+    const text = "W".repeat(length);
+    const rows = [
+      {
+        key: `en-${fontSize}-${length}`,
+        label: `영문 ${length}자 · ${fontSize}px`,
+        text,
+        length,
         node: (
           <NameDisplaySurface
             surface="locker-detail-bottom-sheet"
             viewport={viewport}
           >
             <NameDisplayLockerDetailSummaryPreview
-              title={row.text}
+              title={text}
               titleFontSize={fontSize}
             />
           </NameDisplaySurface>
         ),
-      })),
-    );
+      },
+    ];
 
     return (
       <NameDisplayMatrix
         width={viewport}
         surface="locker-detail-bottom-sheet"
-        note={`lockerName · English only · font-size ${ENGLISH_FONT_SIZE_VARIATIONS.join(
-          "/",
-        )}px · boundary ±${radius} chars. ${PLACE_EXAMPLE_NOTE}`}
+        note={`lockerName · English only · font-size와 글자수를 controls에서 직접 조절. ${PLACE_EXAMPLE_NOTE}`}
         rows={rows}
       />
     );
