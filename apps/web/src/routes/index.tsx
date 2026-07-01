@@ -522,10 +522,14 @@ export function IndexPage() {
   // 방향 트래킹 pending 처리용 refs
   // GPS 첫 위치 수신 후 자동으로 방향 트래킹을 시작해야 할 때 사용
   const pendingOrientationStartRef = useRef(false);
+  // 첫 진입 자동 GPS 수집 후 카메라 추적 + 방향 추적을 활성화해야 함을 나타내는 플래그
+  const pendingFirstEntryActivationRef = useRef(false);
   const requestOrientationPermissionRef = useRef<() => Promise<boolean>>(
     async () => false,
   );
   const startOrientationTrackingRef = useRef<() => void>(() => {});
+  // handleFirstLocation(deps [])에서 최신값을 읽기 위한 ref
+  const isOrientationSupportedRef = useRef<boolean | null>(null);
   const isPendingFocusRef = useRef<boolean>(false);
   const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
   // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
@@ -758,17 +762,32 @@ export function IndexPage() {
     setIsSearchOpen,
   ]);
 
+  // 위치 및 방향 트래킹 — handleFirstLocation이 setIsCameraCentered를 참조하므로 먼저 선언
+  const [isCameraCentered, setIsCameraCentered] = useState(false);
+
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
   //   재등록되는 무한 루프가 발생함
-  // setIsLocationDelayedLoading은 useState dispatch로 stable하므로 deps [] 안전
+  // setIsLocationDelayedLoading / setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
+  // isOrientationSupportedRef / requestOrientationPermissionRef / startOrientationTrackingRef는
+  // render마다 갱신되는 ref이므로 deps []가 안전하다.
   const handleFirstLocation = useCallback(() => {
     hasPendingLocationRequestRef.current = false;
     window.clearTimeout(locationLoadingTimerRef.current);
     locationLoadingTimerRef.current = undefined;
     // GPS 응답 시점에 오버레이 해제(애니메이션을 늦추면 사용자 경험 저하)
     setIsLocationDelayedLoading(false);
+
+    // 첫 진입 자동 GPS 수집 성공 → 방향 센서 지원 환경에서 즉시 카메라 추적 + 방향 추적 활성화
+    // (isOrientationSupported === false = 데스크톱: 1회 panTo만 하고 추적 진입 생략)
+    if (pendingFirstEntryActivationRef.current) {
+      pendingFirstEntryActivationRef.current = false;
+      if (isOrientationSupportedRef.current !== false) {
+        setIsCameraCentered(true);
+        pendingOrientationStartRef.current = true;
+      }
+    }
 
     // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
     // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
@@ -781,8 +800,7 @@ export function IndexPage() {
     }
   }, []);
 
-  // 위치 및 방향 트래킹
-  const [isCameraCentered, setIsCameraCentered] = useState(false);
+  // isCameraCentered는 handleFirstLocation 위에서 선언됨
   isCameraCenteredRef.current = isCameraCentered;
 
   useEffect(() => {
@@ -821,6 +839,8 @@ export function IndexPage() {
     }
 
     hasPendingLocationRequestRef.current = true;
+    // 첫 진입 GPS 수집 성공 시 카메라 추적 + 방향 추적을 활성화해야 함을 예약
+    pendingFirstEntryActivationRef.current = true;
     startTracking();
   }, [
     error,
@@ -917,9 +937,10 @@ export function IndexPage() {
     stopTracking: stopOrientationTracking,
   } = useDeviceOrientation();
 
-  // 방향 트래킹 함수들을 ref로 최신 참조 유지 (handleFirstLocation deps [] 유지 목적)
+  // 방향 트래킹 함수/값을 ref로 최신 참조 유지 (handleFirstLocation deps [] 유지 목적)
   requestOrientationPermissionRef.current = requestOrientationPermission;
   startOrientationTrackingRef.current = startOrientationTracking;
+  isOrientationSupportedRef.current = isOrientationSupported;
   const {
     isOpen: isLocationPopupOpen,
     openPopup: openLocationPopup,
@@ -1101,9 +1122,9 @@ export function IndexPage() {
         return;
       }
 
-      // 방향 트래킹 지원 여부 확인
-      // isOrientationSupported: null = 아직 미확정(시도), false = 미지원, true = 지원
-      const canUseOrientation = isOrientationSupported !== false;
+      // isOrientationSupported === false 케이스는 위 guard에서 early return 처리됨
+      // 이 시점에서 isOrientationSupported는 true(지원) 또는 null(미확정, 시도)이므로
+      // 방향 트래킹을 항상 시도한다.
 
       if (!isTracking) {
         // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
@@ -1115,9 +1136,7 @@ export function IndexPage() {
         startTracking();
         setIsCameraCentered(true);
         // GPS 첫 위치 수신 후 handleFirstLocation에서 이어받아 처리
-        if (canUseOrientation) {
-          pendingOrientationStartRef.current = true;
-        }
+        pendingOrientationStartRef.current = true;
       } else {
         // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
         // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
@@ -1128,10 +1147,8 @@ export function IndexPage() {
           });
         }
         setIsCameraCentered(true);
-        if (canUseOrientation) {
-          const granted = await requestOrientationPermission();
-          if (granted) startOrientationTracking();
-        }
+        const granted = await requestOrientationPermission();
+        if (granted) startOrientationTracking();
       }
     },
     [
