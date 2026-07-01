@@ -1,5 +1,19 @@
 import type { ReactNode } from "react";
 import {
+  addressText,
+  distanceRow,
+  favoriteButton,
+  sheetColumn as lockerDetailSheetColumn,
+  lockerTitle,
+  metaDot,
+  metaRow,
+  summaryActions,
+  summaryCloseButton,
+  summaryRow,
+  summarySection,
+  summaryTextColumn,
+} from "#/composites/search/LockerDetailBottomSheet.css.ts";
+import {
   listScrollArea,
   listStack,
   sheetColumn,
@@ -18,7 +32,8 @@ export type NameDisplaySurfaceId =
   | "search-results-heading"
   | "my-favorite-list"
   | "my-report-list"
-  | "report-detail-title";
+  | "report-detail-title"
+  | "locker-detail-bottom-sheet";
 
 const SIDE_PADDING = {
   sheet: 20,
@@ -40,6 +55,10 @@ const FAVORITE_MARKER_GAP = 12;
 const REPORT_IMAGE_WIDTH = 76;
 const REPORT_GRID_GAP = 12;
 const REPORT_CHEVRON_WIDTH = 20;
+const LOCKER_DETAIL_SHEET_PADDING = 16;
+const LOCKER_DETAIL_SUMMARY_ROW_PADDING = 4;
+const LOCKER_DETAIL_SUMMARY_GAP = 8;
+const LOCKER_DETAIL_ACTIONS_WIDTH = 64;
 
 function getSearchListTitleWidth(
   viewport: NameDisplayViewport,
@@ -72,6 +91,14 @@ export function getNameDisplayContentWidth(
     case "search-results-heading":
     case "report-detail-title":
       return viewport - SIDE_PADDING.sheet * 2;
+    case "locker-detail-bottom-sheet":
+      return (
+        viewport -
+        LOCKER_DETAIL_SHEET_PADDING * 2 -
+        LOCKER_DETAIL_SUMMARY_ROW_PADDING * 2 -
+        LOCKER_DETAIL_SUMMARY_GAP -
+        LOCKER_DETAIL_ACTIONS_WIDTH
+      );
     case "search-overlay-item":
       return (
         viewport -
@@ -175,7 +202,56 @@ export function NameDisplaySurface({
       );
     case "report-detail-title":
       return <div style={frameStyle}>{children}</div>;
+    case "locker-detail-bottom-sheet":
+      return (
+        <div style={frameStyle}>
+          <div
+            className={lockerDetailSheetColumn}
+            style={{ paddingTop: 0, paddingBottom: 0 }}
+          >
+            {children}
+          </div>
+        </div>
+      );
   }
+}
+
+export function NameDisplayLockerDetailSummaryPreview({
+  title,
+}: {
+  title: string;
+}) {
+  return (
+    <section className={summarySection} aria-label="locker detail summary">
+      <div className={summaryRow}>
+        <div className={summaryTextColumn}>
+          <h2 className={lockerTitle}>{title}</h2>
+          <div className={metaRow}>
+            지하철역
+            <span className={metaDot} aria-hidden="true" />
+            24시간 운영
+          </div>
+          <div className={[metaRow, distanceRow].join(" ")}>
+            120m
+            <span className={metaDot} aria-hidden="true" />
+            <span className={addressText}>서울 강남구 영동대로 513</span>
+          </div>
+        </div>
+        <div className={summaryActions}>
+          <button
+            type="button"
+            className={favoriteButton}
+            aria-label="favorite"
+          />
+          <button
+            type="button"
+            className={summaryCloseButton}
+            aria-label="close"
+          />
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function NameDisplayNestedLockerShell({

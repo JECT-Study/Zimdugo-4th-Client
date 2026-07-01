@@ -25,7 +25,7 @@ import {
   type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 
-const PLACE_EXAMPLE_NOTE = "worst-case 샘플: 힣 / 囍 / 曜 / W 반복";
+const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
 
 const BASE_ADDRESS = "서울특별시 강남구 도곡로 401";
 
@@ -69,8 +69,8 @@ const meta = {
     },
     locale: {
       control: "inline-radio",
-      options: ["ko", "zh", "ja", "en", "all"],
-      description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
+      options: ["en", "ko", "zh", "ja", "all"],
+      description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
     },
     radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   },

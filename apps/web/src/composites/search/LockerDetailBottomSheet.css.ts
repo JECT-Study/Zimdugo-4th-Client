@@ -141,12 +141,14 @@ export const summaryTextColumn = style({
 export const lockerTitle = style({
   overflow: "hidden",
   margin: 0,
+  maxHeight: "2.4em",
   color: vars.color.text.title,
   fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: 1.2,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
+  whiteSpace: "normal",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
 });
 
 export const metaRow = style({

@@ -32,7 +32,8 @@ export type NameDisplaySlotId =
   | "search-results-heading-query"
   | "favorite-title"
   | "report-list-title"
-  | "report-detail-title-wrap";
+  | "report-detail-title-wrap"
+  | "locker-detail-title";
 
 type ViewportAnchors = Record<NameDisplayViewport, number>;
 
@@ -110,6 +111,12 @@ export const TWO_LINE_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
     ja: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
     en: { 320: 32, 360: 34, 375: 36, 390: 38, 430: 40, 480: 44 },
   },
+  "locker-detail-title": {
+    en: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
+    ko: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
+    zh: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
+    ja: { 320: 24, 360: 28, 375: 30, 390: 32, 430: 36, 480: 42 },
+  },
 };
 
 /** 경계 앞뒤로 포함할 글자 수(총 2*radius+1개) */
@@ -135,7 +142,7 @@ export function isMeaningfulBoundaryText(text: string): boolean {
 export function resolveNameDisplayLocales(
   locale: NameDisplayLocaleSelection,
 ): NameDisplayLocale[] {
-  return locale === "all" ? ["ko", "zh", "ja", "en"] : [locale];
+  return locale === "all" ? ["en", "ko", "zh", "ja"] : [locale];
 }
 
 export function buildBoundaryText(

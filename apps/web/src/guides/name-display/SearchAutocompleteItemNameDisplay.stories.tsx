@@ -61,8 +61,8 @@ const meta = {
     },
     locale: {
       control: "inline-radio",
-      options: ["ko", "zh", "ja", "en", "all"],
-      description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
+      options: ["en", "ko", "zh", "ja", "all"],
+      description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
     },
     distanceLabel: {
       control: "inline-radio",
@@ -127,7 +127,7 @@ function renderMatrix(
       width={viewport}
       surface="search-overlay-item"
       rows={rows}
-      note={`언어별 최대폭 문자 반복 · 한중일영 title 각각 2줄 표시 경계 ±${radius}자. worst-case 샘플: 힣 / 囍 / 曜 / W 반복`}
+      note={`언어별 최대폭 문자 반복 · 한중일영 title 각각 2줄 표시 경계 ±${radius}자. worst-case 샘플: W / 힣 / 囍 / 曜 반복`}
     />
   );
 }

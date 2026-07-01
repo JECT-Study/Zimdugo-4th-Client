@@ -1,7 +1,9 @@
 import type { StoryObj } from "@storybook/react";
-import { ReportListItem } from "#/entities/report/ui/ReportListItem";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
-import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
+import {
+  NameDisplayLockerDetailSummaryPreview,
+  NameDisplaySurface,
+} from "#/shared/storybook/NameDisplaySurface";
 import {
   buildNameDisplayBoundaryRows,
   NAME_DISPLAY_BOUNDARY_RADIUS,
@@ -12,17 +14,8 @@ import {
 
 const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
 
-const SHARED_ARGS = {
-  locationLabel: "서울 서대문구 신촌로 83",
-  detailText: "무인 보관함",
-  updatedLabel: "1시간 전",
-  imageTitleText: "이미지 없음",
-  imageHelperText: "",
-} as const;
-
 const meta = {
-  title: "Product/Guides/Name Display/Report List Item",
-  component: ReportListItem,
+  title: "Product/Guides/Name Display/Locker Detail Bottom Sheet",
   parameters: {
     layout: "centered",
   },
@@ -56,10 +49,10 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const TwoLineBoundary: Story = {
+export const SummaryTitle: Story = {
   render: ({ viewport, locale, radius }) => {
     const rows = buildNameDisplayBoundaryRows({
-      slot: "report-list-title",
+      slot: "locker-detail-title",
       locale,
       viewport,
       radius,
@@ -69,8 +62,11 @@ export const TwoLineBoundary: Story = {
       text: row.text,
       length: row.length,
       node: (
-        <NameDisplaySurface surface="my-report-list" viewport={viewport}>
-          <ReportListItem titleText={row.text} {...SHARED_ARGS} />
+        <NameDisplaySurface
+          surface="locker-detail-bottom-sheet"
+          viewport={viewport}
+        >
+          <NameDisplayLockerDetailSummaryPreview title={row.text} />
         </NameDisplaySurface>
       ),
     }));
@@ -78,8 +74,8 @@ export const TwoLineBoundary: Story = {
     return (
       <NameDisplayMatrix
         width={viewport}
-        surface="my-report-list"
-        note={`lockerName · 썸네일·chevron 차감 후 좁은 text column · 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
+        surface="locker-detail-bottom-sheet"
+        note={`lockerName · LockerDetailBottomSheet summary title · 2줄 표시 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
         rows={rows}
       />
     );
