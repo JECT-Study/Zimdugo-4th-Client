@@ -3143,7 +3143,7 @@ export function IndexPage() {
       </NaverMapProvider>
       {isMapLoading && !hasMapError && !isRefreshing ? (
         <MapControlsSkeleton />
-      ) : shouldRenderMapControls ? (
+      ) : shouldRenderMapControls || isRefreshing ? (
         <div className={locationControlStack}>
           <RefreshButton
             isRefreshing={isRefreshing}

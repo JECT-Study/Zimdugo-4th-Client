@@ -50,7 +50,7 @@ export const locationControlStack = style({
   flexDirection: "column",
   alignItems: "flex-end",
   gap: vars.spacing[8],
-  zIndex: vars.zIndex.ui,
+  zIndex: 350,
   pointerEvents: "none",
   selectors: {
     [compactDeviceSelector]: {
