@@ -702,15 +702,14 @@ export function IconDistanceRoute24({ className }: { className?: string }) {
     >
       <title>route distance</title>
       <path
-        d="M5.5 7.5H7C9.20914 7.5 11 9.29086 11 11.5C11 13.7091 12.7909 15.5 15 15.5H18.5"
+        d="M7 6.5H10C10.8284 6.5 11.5 7.17157 11.5 8V11.5C11.5 12.3284 12.1716 13 13 13H17"
         stroke={stroke}
-        strokeWidth="1.5"
+        strokeWidth="1.35"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray="1.5 3"
       />
-      <circle cx="5" cy="7.5" r="2" stroke={stroke} strokeWidth="1.5" />
-      <circle cx="19" cy="15.5" r="2" stroke={stroke} strokeWidth="1.5" />
+      <circle cx="5.5" cy="6.5" r="1.7" stroke={stroke} strokeWidth="1.35" />
+      <circle cx="18.5" cy="13" r="1.7" stroke={stroke} strokeWidth="1.35" />
     </svg>
   );
 }
