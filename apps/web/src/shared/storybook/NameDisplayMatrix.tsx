@@ -232,6 +232,7 @@ function countVisibleTextLines(element: HTMLElement): number {
 function countNaturalTextLines(element: HTMLElement): number {
   const bounds = element.getBoundingClientRect();
   const clone = element.cloneNode(true) as HTMLElement;
+  const computed = window.getComputedStyle(element);
 
   clone.style.position = "absolute";
   clone.style.left = "-10000px";
@@ -242,6 +243,14 @@ function countNaturalTextLines(element: HTMLElement): number {
   clone.style.overflow = "visible";
   clone.style.visibility = "hidden";
   clone.style.pointerEvents = "none";
+  clone.style.fontFamily = computed.fontFamily;
+  clone.style.fontSize = computed.fontSize;
+  clone.style.fontWeight = computed.fontWeight;
+  clone.style.lineHeight = computed.lineHeight;
+  clone.style.letterSpacing = computed.letterSpacing;
+  clone.style.whiteSpace = computed.whiteSpace;
+  clone.style.wordBreak = computed.wordBreak;
+  clone.style.overflowWrap = computed.overflowWrap;
 
   document.body.appendChild(clone);
 

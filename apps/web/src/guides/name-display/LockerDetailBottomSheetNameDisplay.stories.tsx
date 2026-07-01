@@ -5,11 +5,13 @@ import {
   NameDisplaySurface,
 } from "#/shared/storybook/NameDisplaySurface";
 import {
+  buildBoundaryText,
   buildNameDisplayBoundaryRows,
   NAME_DISPLAY_BOUNDARY_RADIUS,
   NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayLocale,
 } from "#/shared/storybook/name-display-matrix";
 
 const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
@@ -32,11 +34,11 @@ const meta = {
     radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
     fontSize: {
       control: { type: "range", min: 10, max: 28, step: 1 },
-      description: "EnglishFontSizeVariation에서 title font-size를 직접 조절",
+      description: "FontSizeVariation에서 title font-size를 직접 조절",
     },
     length: {
       control: { type: "range", min: 1, max: 80, step: 1 },
-      description: "EnglishFontSizeVariation에서 W 반복 글자수",
+      description: "FontSizeVariation에서 선택 언어의 최대폭 문자 반복 글자수",
     },
   },
   args: {
@@ -92,18 +94,28 @@ export const SummaryTitle: Story = {
   },
 };
 
-export const EnglishFontSizeVariation: Story = {
+export const FontSizeVariation: Story = {
+  argTypes: {
+    locale: {
+      control: "inline-radio",
+      options: ["en", "ko", "zh", "ja"],
+      description: "title 언어 — en / ko / zh / ja",
+    },
+  },
   args: {
     fontSize: 16,
     length: 30,
     locale: "en",
   },
-  render: ({ viewport, fontSize, length }) => {
-    const text = "W".repeat(length);
+  render: ({ viewport, fontSize, length, locale }) => {
+    const selectedLocale = (
+      locale === "all" ? "en" : locale
+    ) as NameDisplayLocale;
+    const text = buildBoundaryText(selectedLocale, length);
     const rows = [
       {
-        key: `en-${fontSize}-${length}`,
-        label: `영문 ${length}자 · ${fontSize}px`,
+        key: `${selectedLocale}-${fontSize}-${length}`,
+        label: `${selectedLocale} ${length}자 · ${fontSize}px`,
         text,
         length,
         node: (
@@ -124,7 +136,7 @@ export const EnglishFontSizeVariation: Story = {
       <NameDisplayMatrix
         width={viewport}
         surface="locker-detail-bottom-sheet"
-        note={`lockerName · English only · font-size와 글자수를 controls에서 직접 조절. ${PLACE_EXAMPLE_NOTE}`}
+        note={`lockerName · 언어, font-size, 글자수를 controls에서 직접 조절. ${PLACE_EXAMPLE_NOTE}`}
         rows={rows}
       />
     );

@@ -32,7 +32,7 @@ const meta = {
     locale: {
       control: "inline-radio",
       options: ["en", "ko", "zh", "ja", "all"],
-      description: "title(보관함명) 언어 — en / ko / zh / ja / 전체",
+      description: "placeName/검색어 언어 — en / ko / zh / ja / 전체",
     },
     radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   },
