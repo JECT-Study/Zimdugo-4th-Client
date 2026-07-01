@@ -10,7 +10,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
   createLockerDetailFromAutocompleteItem,
@@ -390,6 +390,76 @@ export const Route = createFileRoute("/")({
     };
   },
   component: IndexPage,
+});
+
+interface RefreshButtonProps {
+  isRefreshing: boolean;
+  isMapReady: boolean;
+  isRefreshSpinning: boolean;
+  refreshCooldownRemaining: number;
+  onRefresh: () => void;
+}
+
+const RefreshButton = memo(function RefreshButton({
+  isRefreshing,
+  isMapReady,
+  isRefreshSpinning,
+  refreshCooldownRemaining,
+  onRefresh,
+}: RefreshButtonProps) {
+  const isDisabled = isRefreshing || !isMapReady;
+  return (
+    <button
+      type="button"
+      className={[locationButton, isDisabled ? refreshButtonDisabled : ""]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={onRefresh}
+      aria-label={m.home_map_refresh_aria()}
+      disabled={isDisabled}
+    >
+      <IconCircleboxRefresh48
+        state={isDisabled ? "refresh" : "refreshActive"}
+        className={isRefreshSpinning ? refreshIconSpinning : ""}
+      />
+      {isRefreshing && !isRefreshSpinning && refreshCooldownRemaining > 0 && (
+        <div className={refreshCooldownBadge}>{refreshCooldownRemaining}</div>
+      )}
+    </button>
+  );
+});
+
+interface MyLocationButtonProps {
+  permission: PermissionState;
+  isCameraCentered: boolean;
+  isOrientationTracking: boolean;
+  onMyLocation: () => void;
+}
+
+const MyLocationButton = memo(function MyLocationButton({
+  permission,
+  isCameraCentered,
+  isOrientationTracking,
+  onMyLocation,
+}: MyLocationButtonProps) {
+  return (
+    <button
+      type="button"
+      className={locationButton}
+      onClick={onMyLocation}
+      aria-label={m.home_my_location_aria()}
+    >
+      <IconCircleboxCrosshair48
+        state={
+          permission === "denied"
+            ? "denied"
+            : isCameraCentered || isOrientationTracking
+              ? "active"
+              : "default"
+        }
+      />
+    </button>
+  );
 });
 
 export function IndexPage() {
@@ -3075,46 +3145,19 @@ export function IndexPage() {
         <MapControlsSkeleton />
       ) : shouldRenderMapControls ? (
         <div className={locationControlStack}>
-          <button
-            type="button"
-            className={[
-              locationButton,
-              isRefreshing || !mapInstance ? refreshButtonDisabled : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={handleRefreshMap}
-            aria-label={m.home_map_refresh_aria()}
-            disabled={isRefreshing || !mapInstance}
-          >
-            <IconCircleboxRefresh48
-              state={isRefreshing || !mapInstance ? "refresh" : "refreshActive"}
-              className={isRefreshSpinning ? refreshIconSpinning : ""}
-            />
-            {isRefreshing &&
-              !isRefreshSpinning &&
-              refreshCooldownRemaining > 0 && (
-                <div className={refreshCooldownBadge}>
-                  {refreshCooldownRemaining}
-                </div>
-              )}
-          </button>
-          <button
-            type="button"
-            className={locationButton}
-            onClick={handleMyLocation}
-            aria-label={m.home_my_location_aria()}
-          >
-            <IconCircleboxCrosshair48
-              state={
-                permission === "denied"
-                  ? "denied"
-                  : isCameraCentered || isOrientationTracking
-                    ? "active"
-                    : "default"
-              }
-            />
-          </button>
+          <RefreshButton
+            isRefreshing={isRefreshing}
+            isMapReady={!!mapInstance}
+            isRefreshSpinning={isRefreshSpinning}
+            refreshCooldownRemaining={refreshCooldownRemaining}
+            onRefresh={handleRefreshMap}
+          />
+          <MyLocationButton
+            permission={permission}
+            isCameraCentered={isCameraCentered}
+            isOrientationTracking={isOrientationTracking}
+            onMyLocation={handleMyLocation}
+          />
         </div>
       ) : null}
 
