@@ -105,7 +105,20 @@ export const lockerRow = style({
 });
 
 export const nestedLockerRow = style({
+  position: "relative",
   paddingLeft: vars.spacing[12],
+});
+
+export const nestedLockerBullet = style({
+  position: "absolute",
+  top: "25px",
+  left: "-4px",
+  width: "7px",
+  height: "7px",
+  border: `1px solid ${vars.color.palette.green[500]}`,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  boxSizing: "border-box",
 });
 
 export const lockerMain = style({
@@ -146,6 +159,17 @@ export const titleText = style({
   lineHeight: 1.2,
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
+});
+
+export const placeTitleText = style({
+  width: "100%",
+  minWidth: 0,
+  overflowWrap: "anywhere",
+  color: vars.color.text.title,
+  fontSize: vars.typography.fontSize[16],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: 1.25,
+  whiteSpace: "normal",
 });
 
 export const detailMetaRow = style({

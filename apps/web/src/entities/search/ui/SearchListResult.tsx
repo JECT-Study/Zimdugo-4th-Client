@@ -30,10 +30,12 @@ import {
   lockerRow,
   markerBadge,
   metaDot,
+  nestedLockerBullet,
   nestedLockerRow,
   placeMain,
   placeResultContent,
   placeRow,
+  placeTitleText,
   resultContent,
   resultTextColumn,
   titleText,
@@ -140,7 +142,7 @@ export function SearchListResult({
             <span className={[resultContent, placeResultContent].join(" ")}>
               <ResultMarker tone="place" />
               <span className={resultTextColumn}>
-                <OverflowMarqueeText className={titleText} text={item.title} />
+                <span className={placeTitleText}>{item.title}</span>
               </span>
             </span>
           </Button>
@@ -254,6 +256,9 @@ export function SearchLockerResult({
         .filter(Boolean)
         .join(" ")}
     >
+      {isNested ? (
+        <span className={nestedLockerBullet} aria-hidden="true" />
+      ) : null}
       <Button
         className={lockerMain}
         onPress={() => onPress?.(item)}
