@@ -138,14 +138,55 @@ export const summaryTextColumn = style({
   paddingRight: 0,
 });
 
+export const titleControlRow = style({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: vars.spacing[4],
+  width: "100%",
+  minWidth: 0,
+});
+
 export const lockerTitle = style({
   overflow: "hidden",
+  flex: 1,
+  minWidth: 0,
   margin: 0,
   color: vars.color.text.title,
   fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: 1.2,
   whiteSpace: "nowrap",
+});
+
+export const lockerTitleExpanded = style({
+  overflow: "visible",
+  whiteSpace: "normal",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
+});
+
+export const titleExpandButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  padding: 0,
+  flexShrink: 0,
+  border: 0,
+  borderRadius: vars.radius[4],
+  background: "transparent",
+  color: vars.color.text.disable,
+  cursor: "pointer",
+});
+
+export const titleExpandIcon = style({
+  transform: "rotate(-90deg) scale(0.72)",
+  transition: "transform 160ms ease",
+});
+
+export const titleExpandIconExpanded = style({
+  transform: "rotate(90deg) scale(0.72)",
 });
 
 export const metaRow = style({

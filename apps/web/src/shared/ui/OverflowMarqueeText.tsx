@@ -12,6 +12,8 @@ interface OverflowMarqueeTextProps {
   text: string;
   className?: string;
   title?: string;
+  isAnimationDisabled?: boolean;
+  onOverflowChange?: (isOverflowing: boolean) => void;
 }
 
 type MarqueeStyle = CSSProperties & {
@@ -26,6 +28,8 @@ export function OverflowMarqueeText({
   text: value,
   className,
   title,
+  isAnimationDisabled = false,
+  onOverflowChange,
 }: OverflowMarqueeTextProps) {
   const rootRef = useRef<HTMLSpanElement | null>(null);
   const textRef = useRef<HTMLSpanElement | null>(null);
@@ -43,6 +47,10 @@ export function OverflowMarqueeText({
   const rootStyle: CSSProperties = {
     textOverflow: "clip",
   };
+
+  useEffect(() => {
+    onOverflowChange?.(isOverflowing);
+  }, [isOverflowing, onOverflowChange]);
 
   useEffect(() => {
     const updateOverflow = () => {
@@ -80,7 +88,10 @@ export function OverflowMarqueeText({
       style={rootStyle}
     >
       <span
-        className={[track, isOverflowing ? activeTrack : ""]
+        className={[
+          track,
+          isOverflowing && !isAnimationDisabled ? activeTrack : "",
+        ]
           .filter(Boolean)
           .join(" ")}
         style={marqueeStyle}

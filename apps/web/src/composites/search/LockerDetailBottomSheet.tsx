@@ -89,6 +89,7 @@ import {
   lockerImage,
   lockerImageButton,
   lockerTitle,
+  lockerTitleExpanded,
   metaDot,
   metaRow,
   primaryActionButton,
@@ -100,6 +101,10 @@ import {
   summaryRow,
   summarySection,
   summaryTextColumn,
+  titleControlRow,
+  titleExpandButton,
+  titleExpandIcon,
+  titleExpandIconExpanded,
 } from "./LockerDetailBottomSheet.css.ts";
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
@@ -835,6 +840,30 @@ function SummarySection({
   onFavoritePress: () => void;
   onClose: () => void;
 }) {
+  const [isTitleExpanded, setIsTitleExpanded] = useState(false);
+  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
+
+  const titleText = locker.title;
+  const shouldShowTitleExpandButton = isTitleOverflowing || isTitleExpanded;
+
+  const handleTitleOverflowChange = useCallback(
+    (nextIsOverflowing: boolean) => {
+      setIsTitleOverflowing(nextIsOverflowing);
+    },
+    [],
+  );
+
+  const handleTitleExpandToggle = () => {
+    setIsTitleExpanded((current) => !current);
+  };
+
+  useEffect(() => {
+    if (titleText.length > 0) {
+      setIsTitleExpanded(false);
+      setIsTitleOverflowing(false);
+    }
+  }, [titleText]);
+
   return (
     <section
       className={summarySection}
@@ -842,9 +871,47 @@ function SummarySection({
     >
       <div className={summaryRow}>
         <div className={summaryTextColumn}>
-          <h2 className={lockerTitle}>
-            <OverflowMarqueeText text={locker.title} />
-          </h2>
+          <div className={titleControlRow}>
+            <h2
+              className={[
+                lockerTitle,
+                isTitleExpanded ? lockerTitleExpanded : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {isTitleExpanded ? (
+                titleText
+              ) : (
+                <OverflowMarqueeText
+                  text={titleText}
+                  onOverflowChange={handleTitleOverflowChange}
+                />
+              )}
+            </h2>
+            {shouldShowTitleExpandButton ? (
+              <button
+                type="button"
+                className={titleExpandButton}
+                onClick={handleTitleExpandToggle}
+                aria-expanded={isTitleExpanded}
+                aria-label={
+                  isTitleExpanded
+                    ? m.locker_detail_title_collapse_aria()
+                    : m.locker_detail_title_expand_aria()
+                }
+              >
+                <IconChevronLeft13
+                  className={[
+                    titleExpandIcon,
+                    isTitleExpanded ? titleExpandIconExpanded : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+              </button>
+            ) : null}
+          </div>
           <InlineMeta
             left={locker.categoryLabel}
             right={

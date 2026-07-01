@@ -307,6 +307,8 @@
   "locker_detail_feedback_inaccurate": "信息不准确 {count}",
   "locker_detail_back_aria": "返回",
   "locker_detail_summary_aria": "寄存柜摘要",
+  "locker_detail_title_expand_aria": "展开完整寄存柜名称",
+  "locker_detail_title_collapse_aria": "收起完整寄存柜名称",
   "locker_detail_share_aria": "分享",
   "locker_detail_share_copied": "已复制到剪贴板",
   "locker_detail_navigate": "路线",

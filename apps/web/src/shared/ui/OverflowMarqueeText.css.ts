@@ -1,10 +1,10 @@
 import { keyframes, style } from "@vanilla-extract/css";
 
 const marquee = keyframes({
-  "0%, 12%": {
+  "0%, 16%": {
     transform: "translateX(0)",
   },
-  "88%, 100%": {
+  "84%, 100%": {
     transform: "translateX(calc(-1 * var(--overflow-marquee-distance)))",
   },
 });
@@ -30,7 +30,6 @@ export const activeTrack = style({
   animationDuration: "var(--overflow-marquee-duration)",
   animationTimingFunction: "linear",
   animationIterationCount: "infinite",
-  animationDirection: "alternate",
   "@media": {
     "(prefers-reduced-motion: reduce)": {
       animation: "none",
