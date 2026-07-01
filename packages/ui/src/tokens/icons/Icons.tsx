@@ -687,6 +687,33 @@ export function IconNavigationRefresh20({
   );
 }
 
+export function IconDistanceRoute24({ className }: { className?: string }) {
+  const stroke = color.palette.gray[800];
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <title>route distance</title>
+      <path
+        d="M7 6.5H10C10.8284 6.5 11.5 7.17157 11.5 8V11.5C11.5 12.3284 12.1716 13 13 13H17"
+        stroke={stroke}
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="0.8 2"
+      />
+      <circle cx="5.5" cy="6.5" r="1.7" stroke={stroke} strokeWidth="1.2" />
+      <circle cx="18.5" cy="13" r="1.7" stroke={stroke} strokeWidth="1.2" />
+    </svg>
+  );
+}
+
 export function IconNavigationClock24({
   className,
   state = "default",

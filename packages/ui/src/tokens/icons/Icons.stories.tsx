@@ -23,6 +23,7 @@ import {
   IconCircleboxThumbDown32,
   IconCircleboxThumbUp32,
   IconCircleboxUnhappy32,
+  IconDistanceRoute24,
   IconFilter20,
   IconGoogle24,
   IconKakao24,
@@ -577,6 +578,9 @@ export const Navigation: Story = {
       <Cell name="navigateFill">
         <IconNavigationNavigate24 state="active" />
       </Cell>
+      <Cell name="distanceRoute">
+        <IconDistanceRoute24 />
+      </Cell>
       <Cell name="clock">
         <IconNavigationClock24 state="default" />
       </Cell>
@@ -917,6 +921,9 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="navigateFill">
           <IconNavigationNavigate24 state="active" />
+        </Cell>
+        <Cell name="distanceRoute">
+          <IconDistanceRoute24 />
         </Cell>
         <Cell name="clock">
           <IconNavigationClock24 state="default" />

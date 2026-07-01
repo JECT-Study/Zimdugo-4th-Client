@@ -5,9 +5,11 @@ import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
+  IconDistanceRoute24,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
+  IconNavigationClock24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
@@ -36,11 +38,11 @@ import {
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
 } from "#/shared/ui/DraggableBottomSheet";
+import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
   actionRow,
-  addressText,
   backButton,
   backIcon,
   contentStack,
@@ -54,6 +56,7 @@ import {
   detailLeading,
   detailTextColumn,
   detailTitle,
+  detailTitleMultiline,
   detailTrailing,
   distanceRow,
   divider,
@@ -88,8 +91,12 @@ import {
   lockerImage,
   lockerImageButton,
   lockerTitle,
+  lockerTitleExpanded,
   metaDot,
+  metaIcon,
+  metaIconText,
   metaRow,
+  metaTruncatedText,
   primaryActionButton,
   recentUpdatedText,
   sheetColumn,
@@ -99,6 +106,10 @@ import {
   summaryRow,
   summarySection,
   summaryTextColumn,
+  titleControlRow,
+  titleExpandButton,
+  titleExpandIcon,
+  titleExpandIconExpanded,
 } from "./LockerDetailBottomSheet.css.ts";
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
@@ -413,6 +424,7 @@ export function LockerDetailBottomSheet({
         snapPoint: resolvedSnapPoint,
       }),
     );
+  const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
 
   const favoriteLabel = locker.isFavorite
     ? m.search_favorite_remove()
@@ -480,6 +492,11 @@ export function LockerDetailBottomSheet({
   }, [loadState, updateFullContentHeight]);
 
   useEffect(() => {
+    if (initialSnapPointRef.current === resolvedInitialSnapPoint) {
+      return;
+    }
+
+    initialSnapPointRef.current = resolvedInitialSnapPoint;
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,
@@ -528,6 +545,7 @@ export function LockerDetailBottomSheet({
             onShare={handleShare}
             onNavigate={handleNavigate}
             onVoteChange={onVoteChange}
+            snapStage={currentSnapStage}
             isScrollEnabled={currentSnapStage === "full"}
             contentRef={handleFullContentMeasureRef}
           />
@@ -649,6 +667,7 @@ function FullDetailContent({
   onShare,
   onNavigate,
   onVoteChange,
+  snapStage,
   isScrollEnabled,
   contentRef,
 }: {
@@ -661,6 +680,7 @@ function FullDetailContent({
   onShare: () => void;
   onNavigate: () => void;
   onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
+  snapStage: LockerDetailSheetSnapStage;
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
@@ -717,12 +737,15 @@ function FullDetailContent({
           canFavorite={canFavorite}
           onFavoritePress={onFavoritePress}
           onClose={onClose}
+          snapStage={snapStage}
+          canExpandTitle={isScrollEnabled}
         />
         <div className={fullDetailList}>
           <DetailInfoRow
             icon={<IconLockerDetailMapPin24 />}
             title={locker.address}
             description={locker.floorLabel}
+            titleClassName={isScrollEnabled ? detailTitleMultiline : undefined}
           />
           <DetailInfoRow
             icon={<IconLockerDetailWallet24 />}
@@ -827,13 +850,61 @@ function SummarySection({
   canFavorite,
   onFavoritePress,
   onClose,
+  snapStage,
+  canExpandTitle,
 }: {
   locker: LockerDetailItem;
   favoriteLabel: string;
   canFavorite: boolean;
   onFavoritePress: () => void;
   onClose: () => void;
+  snapStage: LockerDetailSheetSnapStage;
+  canExpandTitle: boolean;
 }) {
+  const [isTitleExpanded, setIsTitleExpanded] = useState(false);
+  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
+
+  const titleText = locker.title;
+  const isMiniSnapStage = snapStage === "mini";
+  const summaryTrailingText = isMiniSnapStage
+    ? locker.address
+    : locker.updatedLabel || locker.address;
+  const summaryTrailingNode = isMiniSnapStage ? (
+    <span className={metaTruncatedText}>{summaryTrailingText}</span>
+  ) : (
+    summaryTrailingText
+  );
+  const distanceText =
+    locker.distanceLabel.trim() || m.locker_detail_distance_not_provided();
+  const operatingHoursText =
+    locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel();
+  const canShowTitleExpandButton =
+    canExpandTitle && (isTitleOverflowing || isTitleExpanded);
+
+  const handleTitleOverflowChange = useCallback(
+    (nextIsOverflowing: boolean) => {
+      setIsTitleOverflowing(nextIsOverflowing);
+    },
+    [],
+  );
+
+  const handleTitleExpandToggle = () => {
+    setIsTitleExpanded((current) => !current);
+  };
+
+  useEffect(() => {
+    if (titleText.length > 0) {
+      setIsTitleExpanded(false);
+      setIsTitleOverflowing(false);
+    }
+  }, [titleText]);
+
+  useEffect(() => {
+    if (!canExpandTitle) {
+      setIsTitleExpanded(false);
+    }
+  }, [canExpandTitle]);
+
   return (
     <section
       className={summarySection}
@@ -841,18 +912,64 @@ function SummarySection({
     >
       <div className={summaryRow}>
         <div className={summaryTextColumn}>
-          <h2 className={lockerTitle}>{locker.title}</h2>
-          <InlineMeta
-            left={locker.categoryLabel}
-            right={
-              locker.operatingHoursLabel ?? formatLockerOperatingHoursLabel()
-            }
-          />
+          <div className={titleControlRow}>
+            <h2
+              className={[
+                lockerTitle,
+                isTitleExpanded ? lockerTitleExpanded : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {isTitleExpanded ? (
+                titleText
+              ) : (
+                <OverflowMarqueeText
+                  text={titleText}
+                  title={titleText}
+                  onOverflowChange={handleTitleOverflowChange}
+                />
+              )}
+            </h2>
+            {canShowTitleExpandButton ? (
+              <button
+                type="button"
+                className={titleExpandButton}
+                onClick={handleTitleExpandToggle}
+                aria-expanded={isTitleExpanded}
+                aria-label={
+                  isTitleExpanded
+                    ? m.locker_detail_title_collapse_aria()
+                    : m.locker_detail_title_expand_aria()
+                }
+              >
+                <IconChevronLeft13
+                  className={[
+                    titleExpandIcon,
+                    isTitleExpanded ? titleExpandIconExpanded : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+              </button>
+            ) : null}
+          </div>
           <InlineMeta
             className={distanceRow}
-            left={locker.distanceLabel}
-            right={<span className={addressText}>{locker.address}</span>}
+            left={
+              <span className={metaIconText}>
+                <IconDistanceRoute24 className={metaIcon} />
+                {distanceText}
+              </span>
+            }
+            right={
+              <span className={metaIconText}>
+                <IconNavigationClock24 className={metaIcon} />
+                {operatingHoursText}
+              </span>
+            }
           />
+          <InlineMeta left={locker.categoryLabel} right={summaryTrailingNode} />
         </div>
 
         <div className={summaryActions}>
@@ -891,6 +1008,7 @@ function DetailInfoRow({
   description,
   trailing,
   iconTone = "brand",
+  titleClassName,
   descriptionClassName,
 }: {
   icon: ReactNode;
@@ -898,6 +1016,7 @@ function DetailInfoRow({
   description?: string;
   trailing?: [string, string];
   iconTone?: "brand" | "neutral";
+  titleClassName?: string;
   descriptionClassName?: string;
 }) {
   const iconClassName = [
@@ -915,7 +1034,13 @@ function DetailInfoRow({
             {icon}
           </span>
           <div className={detailTextColumn}>
-            <span className={detailTitle}>{title}</span>
+            <span
+              className={[detailTitle, titleClassName]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {title}
+            </span>
             {description ? (
               <span
                 className={[detailDescription, descriptionClassName]

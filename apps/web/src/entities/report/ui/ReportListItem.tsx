@@ -2,6 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
+import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import type { ReportStatusVariant } from "../model/report-status";
 import {
   address,
@@ -72,9 +73,7 @@ export function ReportListItem({
           />
         )}
         <span className={textColumn}>
-          <span className={titleLabel} title={titleText}>
-            {titleText}
-          </span>
+          <OverflowMarqueeText className={titleLabel} text={titleText} />
           <span className={address} title={locationLabel}>
             {locationLabel}
           </span>
