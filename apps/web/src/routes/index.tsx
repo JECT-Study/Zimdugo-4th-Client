@@ -937,6 +937,9 @@ export function IndexPage() {
     closePopup: closeLocationPopup,
   } = useLocationPermissionPopup();
 
+  const [isOrientationPermissionPromptOpen, setIsOrientationPermissionPromptOpen] =
+    useState(false);
+
   // 첫 진입 자동 GPS 수집 성공 → 방향 센서 지원 환경에서 즉시 카메라 추적 + 방향 추적 활성화
   //
   // GPS 콜백(handleFirstLocation) 대신 useEffect를 쓰는 이유:
@@ -944,27 +947,42 @@ export function IndexPage() {
   //   이 컨텍스트에서 ref를 통한 startOrientationTracking() 호출이 신뢰할 수 없어
   //   startOrientationTracking을 deps 클로저로 직접 참조하는 useEffect로 대체한다.
   //
-  // requestPermission 없이 startOrientationTracking을 직접 호출하는 이유:
-  //   iOS: 사용자 제스처 없이 requestPermission() 호출 시 NotAllowedError → 3단계 미진입.
-  //        직접 startTracking 시도 후 2초간 이벤트 미수신 시 isSupported=false 확정
-  //        → 방향 센서 미지원 cleanup effect에서 stopOrientationTracking(2단계 유지).
-  //   Android: requestPermission 불필요, 직접 호출로 충분.
+  // iOS (DeviceOrientationEvent.requestPermission 존재) 분기:
+  //   사용자 제스처 없이 requestPermission() 호출 시 NotAllowedError.
+  //   → 팝업을 먼저 띄워 사용자 제스처(버튼 탭)를 확보한 뒤 requestPermission 호출.
+  // Android / 기타:
+  //   requestPermission 불필요 → startOrientationTracking() 직접 호출.
   useEffect(() => {
     if (!location) return;
     if (!pendingFirstEntryActivationRef.current) return;
     pendingFirstEntryActivationRef.current = false;
 
-    // isOrientationSupportedRef.current: 렌더마다 갱신되는 ref로 최신값을 안전하게 읽는다.
-    // 이 시점에서는 orientation 추적을 시작하기 전이므로 null(모바일) 또는 false(데스크톱).
-    if (isOrientationSupportedRef.current !== false) {
-      setIsCameraCentered(true);
+    if (isOrientationSupportedRef.current === false) return;
+
+    setIsCameraCentered(true);
+
+    const needsPermissionGesture =
+      typeof window !== "undefined" &&
+      typeof (
+        window.DeviceOrientationEvent as unknown as {
+          requestPermission?: () => Promise<"granted" | "denied">;
+        }
+      )?.requestPermission === "function";
+
+    if (needsPermissionGesture) {
+      setIsOrientationPermissionPromptOpen(true);
+    } else {
       startOrientationTracking();
     }
   }, [location, startOrientationTracking]);
 
+  const handleOrientationPermissionConfirm = useCallback(async () => {
+    setIsOrientationPermissionPromptOpen(false);
+    const granted = await requestOrientationPermission();
+    if (granted) startOrientationTracking();
+  }, [requestOrientationPermission, startOrientationTracking]);
+
   // 방향 센서 미지원 확정 시 진행 중인 방향 트래킹 정리
-  // 첫 진입 시 requestPermission 없이 startOrientationTracking을 시도한 경우,
-  // iOS 등에서 2초간 이벤트 미수신 → isOrientationSupported=false 확정 → 여기서 정리.
   // isCameraCentered는 건드리지 않아 카메라 추적(2단계)은 유지된다.
   useEffect(() => {
     if (isOrientationSupported !== false) return;
@@ -3119,6 +3137,21 @@ export function IndexPage() {
         primaryAction={{
           label: m.common_confirm(),
           onPress: closeLocationPopup,
+        }}
+      />
+
+      <Popup
+        isOpen={isOrientationPermissionPromptOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setIsOrientationPermissionPromptOpen(false);
+        }}
+        titleText={m.home_orientation_permission_title()}
+        helperText={m.home_orientation_permission_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => {
+            void handleOrientationPermissionConfirm();
+          },
         }}
       />
 
