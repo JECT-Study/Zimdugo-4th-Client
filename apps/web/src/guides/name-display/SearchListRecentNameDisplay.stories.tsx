@@ -5,6 +5,8 @@ import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
   buildNameDisplayBoundaryRows,
+  NAME_DISPLAY_BOUNDARY_RADIUS,
+  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
   type NameDisplayLocaleSelection,
@@ -37,12 +39,14 @@ const meta = {
       control: "inline-radio",
       options: ["방금", "2일 전"],
     },
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
     historyKind: "place",
     locale: "all",
     dateLabel: "2일 전",
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
   },
   decorators: [
     (Story) => (
@@ -62,15 +66,19 @@ function renderRecentMatrix(
   historyKind: SearchListRecentKind,
   locale: NameDisplayLocaleSelection,
   dateLabel: string,
+  radius: number,
 ) {
   const rows = buildNameDisplayBoundaryRows({
     slot: "search-recent",
     locale,
     viewport,
+    radius,
     labelExtra: historyKind,
   }).map((row) => ({
     key: `${row.locale}-${row.length}`,
     label: row.label,
+    text: row.text,
+    length: row.length,
     node: (
       <NameDisplaySurface surface="search-overlay-item" viewport={viewport}>
         <SearchListRecent
@@ -90,30 +98,30 @@ function renderRecentMatrix(
       width={viewport}
       surface="search-overlay-item"
       rows={rows}
-      note={`최근검색(${historyKind}) · 14px title · 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`}
+      note={`최근검색(${historyKind}) · 14px title · 2줄 표시 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
     />
   );
 }
 
 export const TwoLineBoundary: Story = {
-  render: ({ viewport, historyKind, locale, dateLabel }) =>
-    renderRecentMatrix(viewport, historyKind, locale, dateLabel),
+  render: ({ viewport, historyKind, locale, dateLabel, radius }) =>
+    renderRecentMatrix(viewport, historyKind, locale, dateLabel, radius),
 };
 
 export const PlaceHistory: Story = {
   args: { historyKind: "place" },
-  render: ({ viewport, locale, dateLabel }) =>
-    renderRecentMatrix(viewport, "place", locale, dateLabel),
+  render: ({ viewport, locale, dateLabel, radius }) =>
+    renderRecentMatrix(viewport, "place", locale, dateLabel, radius),
 };
 
 export const LockerHistory: Story = {
   args: { historyKind: "locker" },
-  render: ({ viewport, locale, dateLabel }) =>
-    renderRecentMatrix(viewport, "locker", locale, dateLabel),
+  render: ({ viewport, locale, dateLabel, radius }) =>
+    renderRecentMatrix(viewport, "locker", locale, dateLabel, radius),
 };
 
 export const KeywordHistory: Story = {
   args: { historyKind: "keyword" },
-  render: ({ viewport, locale, dateLabel }) =>
-    renderRecentMatrix(viewport, "keyword", locale, dateLabel),
+  render: ({ viewport, locale, dateLabel, radius }) =>
+    renderRecentMatrix(viewport, "keyword", locale, dateLabel, radius),
 };

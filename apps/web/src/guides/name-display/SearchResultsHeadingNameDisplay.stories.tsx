@@ -7,6 +7,8 @@ import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
   type BoundaryTextKind,
   buildNameDisplayBoundaryRows,
+  NAME_DISPLAY_BOUNDARY_RADIUS,
+  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
   type NameDisplayLocaleSelection,
@@ -32,10 +34,12 @@ const meta = {
       options: ["ko", "zh", "ja", "en", "all"],
       description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
     },
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
     locale: "all",
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
   },
   decorators: [
     (Story) => (
@@ -54,6 +58,7 @@ function buildHeadingRows(
   viewport: NameDisplayViewport,
   locale: NameDisplayLocaleSelection,
   slot: NameDisplaySlotId,
+  radius: number,
   renderHeading: (text: string) => ReactNode,
   textKind?: BoundaryTextKind,
 ) {
@@ -61,10 +66,13 @@ function buildHeadingRows(
     slot,
     locale,
     viewport,
+    radius,
     textKind: textKind ?? "place",
   }).map((row) => ({
     key: `${row.locale}-${row.length}`,
     label: row.label,
+    text: row.text,
+    length: row.length,
     node: (
       <NameDisplaySurface surface="search-results-heading" viewport={viewport}>
         {renderHeading(row.text)}
@@ -74,15 +82,16 @@ function buildHeadingRows(
 }
 
 export const PlaceScope: Story = {
-  render: ({ viewport, locale }) => (
+  render: ({ viewport, locale, radius }) => (
     <NameDisplayMatrix
       width={viewport}
       surface="search-results-heading"
-      note={`placeName이 문장에 삽입됨. 최대 2줄 기준으로 줄바꿈·가독성 확인. ${PLACE_EXAMPLE_NOTE}`}
+      note={`placeName이 문장에 삽입됨. 최대 2줄 기준으로 줄바꿈·가독성 확인 · 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
       rows={buildHeadingRows(
         viewport,
         locale,
         "search-results-heading-place",
+        radius,
         (place) => (
           <SearchResultsHeading
             queryText="강남"
@@ -95,15 +104,16 @@ export const PlaceScope: Story = {
 };
 
 export const QueryScope: Story = {
-  render: ({ viewport, locale }) => (
+  render: ({ viewport, locale, radius }) => (
     <NameDisplayMatrix
       width={viewport}
       surface="search-results-heading"
-      note={`검색어(keyword) · 최대폭 문자 반복 경계 ±5자. 최대 2줄 기준으로 줄바꿈 확인. ${PLACE_EXAMPLE_NOTE}`}
+      note={`검색어(keyword) · 최대폭 문자 반복 경계 ±${radius}자. 최대 2줄 기준으로 줄바꿈 확인. ${PLACE_EXAMPLE_NOTE}`}
       rows={buildHeadingRows(
         viewport,
         locale,
         "search-results-heading-query",
+        radius,
         (query) => (
           <SearchResultsHeading
             queryText={query}

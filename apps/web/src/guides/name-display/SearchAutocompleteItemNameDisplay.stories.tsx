@@ -7,6 +7,8 @@ import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
   buildNameDisplayBoundaryRows,
+  NAME_DISPLAY_BOUNDARY_RADIUS,
+  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
   type NameDisplayLocaleSelection,
@@ -66,12 +68,14 @@ const meta = {
       control: "inline-radio",
       options: ["120m", "12.3km"],
     },
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
     itemType: "LOCKER",
     locale: "all",
     distanceLabel: "120m",
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
   },
   decorators: [
     (Story) => (
@@ -91,6 +95,7 @@ function renderMatrix(
   viewport: NameDisplayViewport,
   locale: NameDisplayLocaleSelection,
   distanceLabel: string,
+  radius: number,
 ) {
   const slot =
     distanceLabel === "12.3km"
@@ -101,10 +106,13 @@ function renderMatrix(
     slot,
     locale,
     viewport,
+    radius,
     labelExtra: itemType === "PLACE" ? "place" : "locker",
   }).map((row) => ({
     key: `${row.locale}-${row.length}`,
     label: row.label,
+    text: row.text,
+    length: row.length,
     node: (
       <NameDisplaySurface surface="search-overlay-item" viewport={viewport}>
         <SearchAutocompleteItem
@@ -119,20 +127,20 @@ function renderMatrix(
       width={viewport}
       surface="search-overlay-item"
       rows={rows}
-      note="언어별 최대폭 문자 반복 · 한중일영 title 각각 2줄 표시 경계 ±5자. worst-case 샘플: 힣 / 囍 / 曜 / W 반복"
+      note={`언어별 최대폭 문자 반복 · 한중일영 title 각각 2줄 표시 경계 ±${radius}자. worst-case 샘플: 힣 / 囍 / 曜 / W 반복`}
     />
   );
 }
 
 export const TwoLineBoundary: Story = {
-  render: ({ viewport, itemType, locale, distanceLabel }) =>
-    renderMatrix(itemType, viewport, locale, distanceLabel),
+  render: ({ viewport, itemType, locale, distanceLabel, radius }) =>
+    renderMatrix(itemType, viewport, locale, distanceLabel, radius),
 };
 
 export const LongDistanceLabel: Story = {
   args: {
     distanceLabel: "12.3km",
   },
-  render: ({ viewport, itemType, locale }) =>
-    renderMatrix(itemType, viewport, locale, "12.3km"),
+  render: ({ viewport, itemType, locale, radius }) =>
+    renderMatrix(itemType, viewport, locale, "12.3km", radius),
 };

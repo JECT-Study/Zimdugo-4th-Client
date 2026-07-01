@@ -113,7 +113,12 @@ export const TWO_LINE_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
 };
 
 /** 경계 앞뒤로 포함할 글자 수(총 2*radius+1개) */
-export const NAME_DISPLAY_BOUNDARY_RADIUS = 5;
+export const NAME_DISPLAY_BOUNDARY_RADIUS = 12;
+
+export const NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE = {
+  control: { type: "range", min: 1, max: 40, step: 1 },
+  description: "예상 경계 앞뒤로 렌더링할 글자 수",
+} as const;
 
 const WIDEST_SAMPLE_CHAR: Record<NameDisplayLocale, string> = {
   ko: "힣",

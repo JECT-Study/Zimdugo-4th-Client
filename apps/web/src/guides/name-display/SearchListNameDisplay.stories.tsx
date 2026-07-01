@@ -16,6 +16,8 @@ import {
 } from "#/shared/storybook/NameDisplaySurface";
 import {
   buildNameDisplayBoundaryRows,
+  NAME_DISPLAY_BOUNDARY_RADIUS,
+  NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
   type NameDisplayLocaleSelection,
@@ -70,10 +72,12 @@ const meta = {
       options: ["ko", "zh", "ja", "en", "all"],
       description: "title(보관함명) 언어 — ko / zh / ja / en / 전체",
     },
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS_ARG_TYPE,
   },
   args: {
     viewport: NAME_DISPLAY_DEFAULT_VIEWPORT,
     locale: "all",
+    radius: NAME_DISPLAY_BOUNDARY_RADIUS,
   },
   decorators: [
     (Story) => (
@@ -92,12 +96,15 @@ function buildRows(
   viewport: NameDisplayViewport,
   locale: NameDisplayLocaleSelection,
   slot: NameDisplaySlotId,
+  radius: number,
   renderItem: (title: string) => ReactNode,
 ) {
-  return buildNameDisplayBoundaryRows({ slot, locale, viewport }).map(
+  return buildNameDisplayBoundaryRows({ slot, locale, viewport, radius }).map(
     (row) => ({
       key: `${row.locale}-${row.length}`,
       label: row.label,
+      text: row.text,
+      length: row.length,
       node: (
         <NameDisplaySurface
           surface="search-list-bottom-sheet"
@@ -115,6 +122,7 @@ function renderSearchListMatrix(
   locale: NameDisplayLocaleSelection,
   slot: NameDisplaySlotId,
   searchListRowVariant: SearchListRowVariant,
+  radius: number,
   note: string,
   renderItem: (title: string) => ReactNode,
 ) {
@@ -124,19 +132,20 @@ function renderSearchListMatrix(
       surface="search-list-bottom-sheet"
       searchListRowVariant={searchListRowVariant}
       note={note}
-      rows={buildRows(viewport, locale, slot, renderItem)}
+      rows={buildRows(viewport, locale, slot, radius, renderItem)}
     />
   );
 }
 
 export const PlaceRow: Story = {
-  render: ({ viewport, locale }) =>
+  render: ({ viewport, locale, radius }) =>
     renderSearchListMatrix(
       viewport,
       locale,
       "search-list-place",
       "place",
-      `placeName · SearchListBottomSheet listStack과 동일 래퍼 · 2줄 표시 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`,
+      radius,
+      `placeName · SearchListBottomSheet listStack과 동일 래퍼 · 2줄 표시 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`,
       (title) => (
         <SearchListResult
           item={createPlace(title)}
@@ -148,13 +157,14 @@ export const PlaceRow: Story = {
 };
 
 export const LockerRow: Story = {
-  render: ({ viewport, locale }) =>
+  render: ({ viewport, locale, radius }) =>
     renderSearchListMatrix(
       viewport,
       locale,
       "search-list-locker",
       "locker",
-      `lockerName · marker·즐겨찾기 chrome 반영 title 폭 · 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`,
+      radius,
+      `lockerName · marker·즐겨찾기 chrome 반영 title 폭 · 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`,
       (title) => (
         <SearchLockerResult
           item={createLocker(title, 99)}
@@ -165,13 +175,14 @@ export const LockerRow: Story = {
 };
 
 export const NestedLockerRow: Story = {
-  render: ({ viewport, locale }) =>
+  render: ({ viewport, locale, radius }) =>
     renderSearchListMatrix(
       viewport,
       locale,
       "search-list-nested-locker",
       "nested-locker",
-      `nested lockerName · accordion 들여쓰기(32px) 반영 · 경계 ±5자. ${PLACE_EXAMPLE_NOTE}`,
+      radius,
+      `nested lockerName · accordion 들여쓰기(32px) 반영 · 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`,
       (title) => (
         <NameDisplayNestedLockerShell>
           <SearchLockerResult
