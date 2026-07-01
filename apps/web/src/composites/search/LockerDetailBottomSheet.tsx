@@ -96,6 +96,7 @@ import {
   metaIcon,
   metaIconText,
   metaRow,
+  metaTruncatedText,
   primaryActionButton,
   recentUpdatedText,
   sheetColumn,
@@ -864,10 +865,15 @@ function SummarySection({
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
 
   const titleText = locker.title;
-  const summaryTrailingText =
-    snapStage === "mini"
-      ? locker.address
-      : locker.updatedLabel || locker.address;
+  const isMiniSnapStage = snapStage === "mini";
+  const summaryTrailingText = isMiniSnapStage
+    ? locker.address
+    : locker.updatedLabel || locker.address;
+  const summaryTrailingNode = isMiniSnapStage ? (
+    <span className={metaTruncatedText}>{summaryTrailingText}</span>
+  ) : (
+    summaryTrailingText
+  );
   const distanceText =
     locker.distanceLabel.trim() || m.locker_detail_distance_not_provided();
   const operatingHoursText =
@@ -962,7 +968,7 @@ function SummarySection({
               </span>
             }
           />
-          <InlineMeta left={locker.categoryLabel} right={summaryTrailingText} />
+          <InlineMeta left={locker.categoryLabel} right={summaryTrailingNode} />
         </div>
 
         <div className={summaryActions}>

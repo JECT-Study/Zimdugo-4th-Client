@@ -214,6 +214,14 @@ export const metaIcon = style({
   flexShrink: 0,
 });
 
+export const metaTruncatedText = style({
+  minWidth: 0,
+  flex: "1 1 auto",
+  overflow: "hidden",
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+});
+
 export const distanceRow = style({
   color: vars.color.text.surface,
 });
