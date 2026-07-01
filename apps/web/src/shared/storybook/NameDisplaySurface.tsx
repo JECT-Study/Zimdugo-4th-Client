@@ -218,14 +218,21 @@ export function NameDisplaySurface({
 
 export function NameDisplayLockerDetailSummaryPreview({
   title,
+  titleFontSize,
 }: {
   title: string;
+  titleFontSize?: number;
 }) {
   return (
     <section className={summarySection} aria-label="locker detail summary">
       <div className={summaryRow}>
         <div className={summaryTextColumn}>
-          <h2 className={lockerTitle}>{title}</h2>
+          <h2
+            className={lockerTitle}
+            style={titleFontSize ? { fontSize: titleFontSize } : undefined}
+          >
+            {title}
+          </h2>
           <div className={metaRow}>
             지하철역
             <span className={metaDot} aria-hidden="true" />

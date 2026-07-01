@@ -13,6 +13,7 @@ import {
 } from "#/shared/storybook/name-display-matrix";
 
 const PLACE_EXAMPLE_NOTE = "worst-case 샘플: W / 힣 / 囍 / 曜 반복";
+const ENGLISH_FONT_SIZE_VARIATIONS = [14, 15, 16, 17, 18, 20] as const;
 
 const meta = {
   title: "Product/Guides/Name Display/Locker Detail Bottom Sheet",
@@ -76,6 +77,50 @@ export const SummaryTitle: Story = {
         width={viewport}
         surface="locker-detail-bottom-sheet"
         note={`lockerName · LockerDetailBottomSheet summary title · 2줄 표시 경계 ±${radius}자. ${PLACE_EXAMPLE_NOTE}`}
+        rows={rows}
+      />
+    );
+  },
+};
+
+export const EnglishFontSizeVariation: Story = {
+  args: {
+    locale: "en",
+  },
+  render: ({ viewport, radius }) => {
+    const rows = ENGLISH_FONT_SIZE_VARIATIONS.flatMap((fontSize) =>
+      buildNameDisplayBoundaryRows({
+        slot: "locker-detail-title",
+        locale: "en",
+        viewport,
+        radius,
+        labelExtra: `${fontSize}px`,
+      }).map((row) => ({
+        key: `en-${fontSize}-${row.length}`,
+        label: row.label,
+        text: row.text,
+        length: row.length,
+        node: (
+          <NameDisplaySurface
+            surface="locker-detail-bottom-sheet"
+            viewport={viewport}
+          >
+            <NameDisplayLockerDetailSummaryPreview
+              title={row.text}
+              titleFontSize={fontSize}
+            />
+          </NameDisplaySurface>
+        ),
+      })),
+    );
+
+    return (
+      <NameDisplayMatrix
+        width={viewport}
+        surface="locker-detail-bottom-sheet"
+        note={`lockerName · English only · font-size ${ENGLISH_FONT_SIZE_VARIATIONS.join(
+          "/",
+        )}px · boundary ±${radius} chars. ${PLACE_EXAMPLE_NOTE}`}
         rows={rows}
       />
     );
