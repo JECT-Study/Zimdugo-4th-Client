@@ -55,6 +55,7 @@ import {
   detailLeading,
   detailTextColumn,
   detailTitle,
+  detailTitleMultiline,
   detailTrailing,
   distanceRow,
   divider,
@@ -534,6 +535,7 @@ export function LockerDetailBottomSheet({
             onShare={handleShare}
             onNavigate={handleNavigate}
             onVoteChange={onVoteChange}
+            snapStage={currentSnapStage}
             isScrollEnabled={currentSnapStage === "full"}
             contentRef={handleFullContentMeasureRef}
           />
@@ -655,6 +657,7 @@ function FullDetailContent({
   onShare,
   onNavigate,
   onVoteChange,
+  snapStage,
   isScrollEnabled,
   contentRef,
 }: {
@@ -667,6 +670,7 @@ function FullDetailContent({
   onShare: () => void;
   onNavigate: () => void;
   onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
+  snapStage: LockerDetailSheetSnapStage;
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
@@ -723,12 +727,16 @@ function FullDetailContent({
           canFavorite={canFavorite}
           onFavoritePress={onFavoritePress}
           onClose={onClose}
+          snapStage={snapStage}
         />
         <div className={fullDetailList}>
           <DetailInfoRow
             icon={<IconLockerDetailMapPin24 />}
             title={locker.address}
             description={locker.floorLabel}
+            titleClassName={
+              snapStage === "full" ? detailTitleMultiline : undefined
+            }
           />
           <DetailInfoRow
             icon={<IconLockerDetailWallet24 />}
@@ -833,17 +841,23 @@ function SummarySection({
   canFavorite,
   onFavoritePress,
   onClose,
+  snapStage,
 }: {
   locker: LockerDetailItem;
   favoriteLabel: string;
   canFavorite: boolean;
   onFavoritePress: () => void;
   onClose: () => void;
+  snapStage: LockerDetailSheetSnapStage;
 }) {
   const [isTitleExpanded, setIsTitleExpanded] = useState(false);
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
 
   const titleText = locker.title;
+  const summaryTrailingText =
+    snapStage === "mini"
+      ? locker.address
+      : locker.updatedLabel || locker.address;
   const shouldShowTitleExpandButton = isTitleOverflowing || isTitleExpanded;
 
   const handleTitleOverflowChange = useCallback(
@@ -921,7 +935,7 @@ function SummarySection({
           <InlineMeta
             className={distanceRow}
             left={locker.distanceLabel}
-            right={<span className={addressText}>{locker.address}</span>}
+            right={<span className={addressText}>{summaryTrailingText}</span>}
           />
         </div>
 
@@ -961,6 +975,7 @@ function DetailInfoRow({
   description,
   trailing,
   iconTone = "brand",
+  titleClassName,
   descriptionClassName,
 }: {
   icon: ReactNode;
@@ -968,6 +983,7 @@ function DetailInfoRow({
   description?: string;
   trailing?: [string, string];
   iconTone?: "brand" | "neutral";
+  titleClassName?: string;
   descriptionClassName?: string;
 }) {
   const iconClassName = [
@@ -985,7 +1001,13 @@ function DetailInfoRow({
             {icon}
           </span>
           <div className={detailTextColumn}>
-            <span className={detailTitle}>{title}</span>
+            <span
+              className={[detailTitle, titleClassName]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {title}
+            </span>
             {description ? (
               <span
                 className={[detailDescription, descriptionClassName]

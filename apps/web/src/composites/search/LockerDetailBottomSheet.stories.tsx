@@ -24,7 +24,7 @@ const FIELD_STACK_DETAIL = {
   areaName: "Lotte Dept. Store · B5 Parking",
   locationHint: "Next to payment machine",
   categoryLabel: "Department store",
-  operatingHoursLabel: "24 hours",
+  operatingHoursLabel: "Open 24 hours",
   distanceLabel: "240m",
   address: "Lotte Dept. Store · B5 Parking",
 } as const;
@@ -39,7 +39,7 @@ const LOCKER_DETAIL_VARIANTS: Record<DetailNamePattern, LockerDetailItem> = {
     distanceLabel: "240m",
     address: "Cheongnyangni Station Lotte Department Store",
     floorLabel: "B5 parking lot · Next to the automatic payment machine",
-    operatingHoursLabel: "24 hours",
+    operatingHoursLabel: "Open 24 hours",
     priceLabel: "From KRW 2,000",
     sizeLabel: "S / M / L",
     detailHelpText:
@@ -58,7 +58,7 @@ const LOCKER_DETAIL_VARIANTS: Record<DetailNamePattern, LockerDetailItem> = {
     distanceLabel: "240m",
     address: "Lotte Dept. Store · B5 Parking",
     floorLabel: "Next to payment machine",
-    operatingHoursLabel: "24 hours",
+    operatingHoursLabel: "Open 24 hours",
     priceLabel: "From KRW 2,000",
     sizeLabel: "S / M / L",
     detailHelpText:

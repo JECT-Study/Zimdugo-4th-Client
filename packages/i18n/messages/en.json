@@ -288,7 +288,7 @@
   "address_search_not_found": "Could not find the location for the address. Please select a different address.",
   "locker_detail_operating_hours": "{open} – {close}",
   "locker_detail_operating_hours_all_day": "Open 24 hours",
-  "locker_detail_operating_hours_not_provided": "Hours not provided",
+  "locker_detail_operating_hours_not_provided": "Hours unavailable",
   "locker_detail_price_not_provided": "Not provided",
   "locker_detail_price_range": "{min} – {max}",
   "locker_detail_price_from": "From {min}",

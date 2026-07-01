@@ -496,6 +496,14 @@ export const detailTitle = style({
   textOverflow: "ellipsis",
 });
 
+export const detailTitleMultiline = style({
+  overflow: "visible",
+  whiteSpace: "normal",
+  textOverflow: "clip",
+  wordBreak: "keep-all",
+  overflowWrap: "anywhere",
+});
+
 export const detailDescription = style({
   overflow: "hidden",
   color: vars.color.text.content,

@@ -18,7 +18,7 @@ describe("locker-detail-labels", () => {
   it("영어 미제공 문구를 반환한다", () => {
     setLanguageTag("en");
 
-    expect(formatLockerOperatingHoursLabel()).toBe("Hours not provided");
+    expect(formatLockerOperatingHoursLabel()).toBe("Hours unavailable");
     expect(formatLockerPriceLabel()).toBe("Not provided");
   });
 
