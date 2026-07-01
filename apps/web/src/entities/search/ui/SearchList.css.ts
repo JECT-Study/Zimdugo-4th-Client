@@ -46,6 +46,52 @@ export const placeMain = style({
   gap: vars.spacing[12],
 });
 
+export const placeSummary = style({
+  display: "flex",
+  alignItems: "flex-start",
+  width: "100%",
+});
+
+export const placeBulletList = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.spacing[8],
+  margin: `${vars.spacing[4]} 0 0`,
+  padding: 0,
+  listStyle: "none",
+});
+
+export const placeBulletItem = style({
+  display: "grid",
+  gridTemplateColumns: "10px minmax(0, 1fr)",
+  minWidth: 0,
+  columnGap: vars.spacing[8],
+});
+
+export const placeBulletDot = style({
+  width: "5px",
+  height: "5px",
+  marginTop: "7px",
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.palette.green[500],
+});
+
+export const placeBulletButton = style({
+  ...interactiveRow,
+  minWidth: 0,
+});
+
+export const placeBulletTitle = style({
+  width: "100%",
+  overflow: "hidden",
+  color: vars.color.text.title,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: 1.25,
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+});
+
 export const lockerRow = style({
   display: "flex",
   alignItems: "flex-start",

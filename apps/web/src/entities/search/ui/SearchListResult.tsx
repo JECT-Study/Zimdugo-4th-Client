@@ -31,14 +31,22 @@ import {
   markerBadge,
   metaDot,
   nestedLockerRow,
+  placeBulletButton,
+  placeBulletDot,
+  placeBulletItem,
+  placeBulletList,
+  placeBulletTitle,
   placeMain,
   placeRow,
+  placeSummary,
   resultContent,
   resultTextColumn,
   titleText,
   updatedText,
 } from "./SearchList.css.ts";
 import { SearchMarkerIcon } from "./SearchMarkerIcon";
+
+const USE_ACCORDION_PLACE_RESULTS = false;
 
 export interface SearchListResultsProps {
   items: SearchResultItem[];
@@ -115,6 +123,80 @@ export function SearchListResult({
   favoriteRemoveLabel,
 }: SearchListResultProps) {
   const childrenId = `search-place-lockers-${item.placeId}`;
+
+  if (!USE_ACCORDION_PLACE_RESULTS) {
+    return (
+      <div className={accordionGroup}>
+        <div
+          className={[placeRow, item.isOpen === false ? closedOpacity : ""]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className={placeSummary}>
+            <span className={resultContent}>
+              <ResultMarker tone="place" />
+              <span className={resultTextColumn}>
+                <OverflowMarqueeText className={titleText} text={item.title} />
+                <span className={detailMetaRow}>
+                  <span>{item.distanceLabel}</span>
+                  <span className={metaDot} aria-hidden="true">
+                    ·
+                  </span>
+                  <span className={addressText}>{item.address}</span>
+                </span>
+                <ul
+                  id={childrenId}
+                  className={placeBulletList}
+                  aria-label={`${item.title} locker list`}
+                >
+                  {item.lockers.map((locker) => (
+                    <li
+                      key={getSearchResultKey(locker)}
+                      className={[
+                        placeBulletItem,
+                        locker.isOpen === false ? closedOpacity : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <span className={placeBulletDot} aria-hidden="true" />
+                      <Button
+                        className={placeBulletButton}
+                        onPress={() => onLockerPress?.(locker)}
+                        aria-label={`${locker.title} ${locker.distanceLabel} · ${locker.address}`}
+                      >
+                        <span className={resultTextColumn}>
+                          <OverflowMarqueeText
+                            className={placeBulletTitle}
+                            text={locker.title}
+                          />
+                          <span className={detailMetaRow}>
+                            <span className={categoryText}>
+                              {locker.categoryLabel}
+                            </span>
+                            <span className={metaDot} aria-hidden="true">
+                              ·
+                            </span>
+                            <span>{locker.distanceLabel}</span>
+                            <span className={metaDot} aria-hidden="true">
+                              ·
+                            </span>
+                            <span className={updatedText}>
+                              {locker.updatedLabel}
+                            </span>
+                          </span>
+                        </span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={accordionGroup}>

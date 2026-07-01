@@ -19,6 +19,7 @@ const COORDINATE_GROUP_PRECISION = 4;
 const MARKER_PROXIMITY_THRESHOLD_PX = 44;
 const MARKER_Z_INDEX = 10;
 const SELECTED_MARKER_Z_INDEX = 20;
+const USE_PLACE_BADGE_MARKER = false;
 const PLACE_MARKER_SOURCE_SIZE = { width: 121, height: 121 };
 const PLACE_MARKER_SOURCE_ANCHOR = { x: 52.4, y: 63 };
 const MAP_PIN_DISPLAY_SCALE = 0.45;
@@ -225,8 +226,8 @@ export const createMapPinIcon = (
   const lockerCount = pin.lockerCount ?? 0;
   const badgeLabel = lockerCount > 9 ? "9+" : String(lockerCount);
 
-  if (!isPlace) {
-    const isFavorite = pin.isFavorite === true;
+  if (!isPlace || !USE_PLACE_BADGE_MARKER) {
+    const isFavorite = pin.pinType === "LOCKER" && pin.isFavorite === true;
     const isInactive = pin.markerStatus === "inactive";
     const icon = isInactive
       ? createDefaultLockerMapPinSvg(getMarkerFill(pin))
@@ -464,7 +465,11 @@ const getMarkerSize = (
     const pinCount = pin.pinCount ?? 0;
     return pinCount >= 10 ? CLUSTER_L_DISPLAY_SIZE : CLUSTER_S_DISPLAY_SIZE;
   }
-  if (pin.pinType === "PLACE") return PLACE_MARKER_DISPLAY_SIZE;
+  if (pin.pinType === "PLACE") {
+    return USE_PLACE_BADGE_MARKER
+      ? PLACE_MARKER_DISPLAY_SIZE
+      : LOCKER_MARKER_DISPLAY_SIZE;
+  }
   if (pin.isFavorite === true) return FAVORITE_LOCKER_MARKER_DISPLAY_SIZE;
   return LOCKER_MARKER_DISPLAY_SIZE;
 };
@@ -484,7 +489,9 @@ const getMarkerAnchor = (
     };
   }
   const anchor =
-    pin.pinType === "PLACE" ? PLACE_MARKER_ANCHOR : DEFAULT_MARKER_ANCHOR;
+    pin.pinType === "PLACE" && USE_PLACE_BADGE_MARKER
+      ? PLACE_MARKER_ANCHOR
+      : DEFAULT_MARKER_ANCHOR;
   return {
     x: anchor.x - offsetX,
     y: anchor.y - offsetY,
@@ -571,7 +578,11 @@ const getPinIconSignature = (
     pin.pinType === "LOCKER" && pin.isFavorite === true ? ":favorite" : "";
   const statusSignature = pin.markerStatus ?? "active";
   const countPart =
-    pin.pinType === "CLUSTER" ? (pin.pinCount ?? "") : (pin.lockerCount ?? "");
+    pin.pinType === "CLUSTER"
+      ? (pin.pinCount ?? "")
+      : pin.pinType === "PLACE" && !USE_PLACE_BADGE_MARKER
+        ? ""
+        : (pin.lockerCount ?? "");
   return `${pin.pinType}:${countPart}:${statusSignature}:${isSelected ? "selected" : "default"}${favoriteSignature}${
     isStateful && zoomLevel != null ? `:${zoomLevel}` : ""
   }`;
