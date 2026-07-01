@@ -31,14 +31,8 @@ import {
   markerBadge,
   metaDot,
   nestedLockerRow,
-  placeBulletButton,
-  placeBulletDot,
-  placeBulletItem,
-  placeBulletList,
-  placeBulletTitle,
   placeMain,
   placeRow,
-  placeSummary,
   resultContent,
   resultTextColumn,
   titleText,
@@ -51,6 +45,7 @@ const USE_ACCORDION_PLACE_RESULTS = false;
 export interface SearchListResultsProps {
   items: SearchResultItem[];
   onLockerPress?: (item: SearchLockerResultItem) => void;
+  onPlacePress?: (item: SearchPlaceResultItem) => void;
   onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
   favoriteAddLabel?: string;
   favoriteRemoveLabel?: string;
@@ -61,6 +56,7 @@ export interface SearchListResultProps {
   isExpanded: boolean;
   onToggle: () => void;
   onLockerPress?: (item: SearchLockerResultItem) => void;
+  onPlacePress?: (item: SearchPlaceResultItem) => void;
   onFavoriteChange?: (item: SearchLockerResultItem, next: boolean) => void;
   favoriteAddLabel?: string;
   favoriteRemoveLabel?: string;
@@ -78,6 +74,7 @@ interface SearchLockerResultProps {
 export function SearchListResults({
   items,
   onLockerPress,
+  onPlacePress,
   onFavoriteChange,
   favoriteAddLabel,
   favoriteRemoveLabel,
@@ -96,6 +93,7 @@ export function SearchListResults({
           )
         }
         onLockerPress={onLockerPress}
+        onPlacePress={onPlacePress}
         onFavoriteChange={onFavoriteChange}
         favoriteAddLabel={favoriteAddLabel}
         favoriteRemoveLabel={favoriteRemoveLabel}
@@ -118,6 +116,7 @@ export function SearchListResult({
   isExpanded,
   onToggle,
   onLockerPress,
+  onPlacePress,
   onFavoriteChange,
   favoriteAddLabel,
   favoriteRemoveLabel,
@@ -132,68 +131,37 @@ export function SearchListResult({
             .filter(Boolean)
             .join(" ")}
         >
-          <div className={placeSummary}>
+          <Button
+            className={placeMain}
+            onPress={() => onPlacePress?.(item)}
+            aria-label={item.title}
+          >
             <span className={resultContent}>
               <ResultMarker tone="place" />
               <span className={resultTextColumn}>
                 <OverflowMarqueeText className={titleText} text={item.title} />
-                <span className={detailMetaRow}>
-                  <span>{item.distanceLabel}</span>
-                  <span className={metaDot} aria-hidden="true">
-                    ·
-                  </span>
-                  <span className={addressText}>{item.address}</span>
-                </span>
-                <ul
-                  id={childrenId}
-                  className={placeBulletList}
-                  aria-label={`${item.title} locker list`}
-                >
-                  {item.lockers.map((locker) => (
-                    <li
-                      key={getSearchResultKey(locker)}
-                      className={[
-                        placeBulletItem,
-                        locker.isOpen === false ? closedOpacity : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      <span className={placeBulletDot} aria-hidden="true" />
-                      <Button
-                        className={placeBulletButton}
-                        onPress={() => onLockerPress?.(locker)}
-                        aria-label={`${locker.title} ${locker.distanceLabel} · ${locker.address}`}
-                      >
-                        <span className={resultTextColumn}>
-                          <OverflowMarqueeText
-                            className={placeBulletTitle}
-                            text={locker.title}
-                          />
-                          <span className={detailMetaRow}>
-                            <span className={categoryText}>
-                              {locker.categoryLabel}
-                            </span>
-                            <span className={metaDot} aria-hidden="true">
-                              ·
-                            </span>
-                            <span>{locker.distanceLabel}</span>
-                            <span className={metaDot} aria-hidden="true">
-                              ·
-                            </span>
-                            <span className={updatedText}>
-                              {locker.updatedLabel}
-                            </span>
-                          </span>
-                        </span>
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
               </span>
             </span>
-          </div>
+          </Button>
         </div>
+
+        <section
+          id={childrenId}
+          className={accordionChildren}
+          aria-label={`${item.title} locker list`}
+        >
+          {item.lockers.map((locker) => (
+            <SearchLockerResult
+              key={getSearchResultKey(locker)}
+              item={locker}
+              isNested
+              onPress={onLockerPress}
+              onFavoriteChange={onFavoriteChange}
+              favoriteAddLabel={favoriteAddLabel}
+              favoriteRemoveLabel={favoriteRemoveLabel}
+            />
+          ))}
+        </section>
       </div>
     );
   }

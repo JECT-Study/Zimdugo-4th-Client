@@ -39,6 +39,7 @@ import {
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
 import type {
   SearchLockerResultItem,
+  SearchPlaceResultItem,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
 import {
@@ -2413,6 +2414,20 @@ export function IndexPage() {
     ],
   );
 
+  const handleOpenPlaceResult = useCallback(
+    (item: SearchPlaceResultItem) => {
+      const pin = searchResultItemsToPins([item])[0];
+
+      if (context === "map") {
+        handleMapPlaceMarkerSelect("PLACE", item.placeId, pin);
+        return;
+      }
+
+      handleSearchMarkerSelect("PLACE", item.placeId, pin);
+    },
+    [context, handleMapPlaceMarkerSelect, handleSearchMarkerSelect],
+  );
+
   const handleSelectedMapDetailMarkerSelect = useCallback(
     (
       pinType: "LOCKER" | "PLACE",
@@ -3168,6 +3183,7 @@ export function IndexPage() {
           onOpenFilter={handleOpenSearchFilter}
           onResetFilter={handleResetSearchFilter}
           onLockerPress={handleOpenLockerDetail}
+          onPlacePress={handleOpenPlaceResult}
           onFavoriteChange={favoriteSession.handleSearchFavoriteChange}
           animateOnMount
           onDismiss={listSheetDismissPress}

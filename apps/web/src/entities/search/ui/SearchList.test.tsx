@@ -75,24 +75,32 @@ describe("search list rows", () => {
     expect(handleRemove).toHaveBeenCalledOnce();
   });
 
-  it("renders place lockers as a bullet list without accordion controls", () => {
+  it("renders place lockers as nested locker rows without accordion controls", () => {
     const handleToggle = vi.fn();
+    const handlePlacePress = vi.fn();
 
     render(
       <SearchListResult
         item={PLACE}
         isExpanded={false}
         onToggle={handleToggle}
+        onPlacePress={handlePlacePress}
       />,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "COEX" }));
+
     expect(screen.getByText("COEX Mall Mega Box locker")).toBeTruthy();
     expect(screen.getByText("COEX East Gate locker")).toBeTruthy();
+    expect(
+      screen.getAllByText("513 Yeongdong-daero, Gangnam-gu, Seoul").length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { expanded: false })).toBeNull();
     expect(handleToggle).not.toHaveBeenCalled();
+    expect(handlePlacePress).toHaveBeenCalledWith(PLACE);
   });
 
-  it("opens locker detail from a place bullet item", () => {
+  it("opens locker detail and favorite action from a nested locker row", () => {
     const handleLockerPress = vi.fn();
     const handleFavoriteChange = vi.fn();
 
@@ -114,7 +122,10 @@ describe("search list rows", () => {
     );
 
     expect(handleLockerPress).toHaveBeenCalledWith(PLACE.lockers[0]);
-    expect(handleFavoriteChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Add favorite" })[0]);
+
+    expect(handleFavoriteChange).toHaveBeenCalledWith(PLACE.lockers[0], true);
   });
 
   it("renders standalone lockers as top-level results without accordion", () => {
