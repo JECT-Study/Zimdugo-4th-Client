@@ -781,12 +781,21 @@ export function IndexPage() {
 
     // 첫 진입 자동 GPS 수집 성공 → 방향 센서 지원 환경에서 즉시 카메라 추적 + 방향 추적 활성화
     // (isOrientationSupported === false = 데스크톱: 1회 panTo만 하고 추적 진입 생략)
+    //
+    // requestPermission()을 거치지 않고 startOrientationTracking()을 동기 호출하는 이유:
+    //   1. iOS: 사용자 제스처 없이 requestPermission() 호출 시 NotAllowedError → granted=false
+    //           → 3단계 미진입. 직접 startTracking 시도 후 2초간 이벤트 미수신 시
+    //           isSupported=false로 확정 → useEffect에서 stopOrientationTracking 호출(2단계 유지).
+    //   2. Android: requestPermission이 필요 없으므로 동기 호출이 더 효율적이며,
+    //              React 18 batching으로 setIsCameraCentered + setIsTracking이 단일 렌더로
+    //              묶여 2단계 flash 없이 바로 3단계 진입.
     if (pendingFirstEntryActivationRef.current) {
       pendingFirstEntryActivationRef.current = false;
       if (isOrientationSupportedRef.current !== false) {
         setIsCameraCentered(true);
-        pendingOrientationStartRef.current = true;
+        startOrientationTrackingRef.current();
       }
+      return;
     }
 
     // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
@@ -946,6 +955,16 @@ export function IndexPage() {
     openPopup: openLocationPopup,
     closePopup: closeLocationPopup,
   } = useLocationPermissionPopup();
+
+  // 방향 센서 미지원 확정 시 진행 중인 방향 트래킹 정리
+  // 첫 진입 시 requestPermission 없이 startOrientationTracking을 시도한 경우,
+  // iOS 등에서 2초간 이벤트 미수신 → isOrientationSupported=false 확정 → 여기서 정리.
+  // isCameraCentered는 건드리지 않아 카메라 추적(2단계)은 유지된다.
+  useEffect(() => {
+    if (isOrientationSupported !== false) return;
+    if (!isOrientationTracking) return;
+    stopOrientationTracking();
+  }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
 
   // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
   useEffect(() => {
