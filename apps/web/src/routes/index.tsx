@@ -851,9 +851,8 @@ export function IndexPage() {
     // 항상 최신 함수를 참조하므로 deps []가 안전하다.
     if (pendingOrientationStartRef.current) {
       pendingOrientationStartRef.current = false;
-      void requestOrientationPermissionRef.current().then((granted) => {
-        if (granted) startOrientationTrackingRef.current();
-      });
+      // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
+      startOrientationTrackingRef.current();
     }
   }, []);
 
@@ -1001,6 +1000,9 @@ export function IndexPage() {
     openPopup: openLocationPopup,
     closePopup: closeLocationPopup,
   } = useLocationPermissionPopup();
+
+  const [isOrientationDeniedPopupOpen, setIsOrientationDeniedPopupOpen] =
+    useState(false);
 
 
   // 방향 센서 미지원 확정 시 진행 중인 방향 트래킹 정리
@@ -1184,6 +1186,13 @@ export function IndexPage() {
 
       if (!isTracking) {
         // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
+        // iOS 13+는 DeviceOrientationEvent.requestPermission이 사용자 제스처 컨텍스트에서만
+        // 동작하므로 GPS 콜백(handleFirstLocation) 시점이 아닌 지금 요청해야 한다.
+        const granted = await requestOrientationPermission();
+        if (!granted) {
+          setIsOrientationDeniedPopupOpen(true);
+          return;
+        }
         hasPendingLocationRequestRef.current = true;
         window.clearTimeout(locationLoadingTimerRef.current);
         locationLoadingTimerRef.current = window.setTimeout(() => {
@@ -1191,7 +1200,7 @@ export function IndexPage() {
         }, 300);
         startTracking();
         setIsCameraCentered(true);
-        // GPS 첫 위치 수신 후 handleFirstLocation에서 이어받아 처리
+        // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
         pendingOrientationStartRef.current = true;
       } else {
         // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
@@ -1204,7 +1213,11 @@ export function IndexPage() {
         }
         setIsCameraCentered(true);
         const granted = await requestOrientationPermission();
-        if (granted) startOrientationTracking();
+        if (granted) {
+          startOrientationTracking();
+        } else {
+          setIsOrientationDeniedPopupOpen(true);
+        }
       }
     },
     [
@@ -1221,6 +1234,7 @@ export function IndexPage() {
       requestOrientationPermission,
       startOrientationTracking,
       stopOrientationTracking,
+      setIsOrientationDeniedPopupOpen,
     ],
   );
 
@@ -3123,6 +3137,19 @@ export function IndexPage() {
         primaryAction={{
           label: m.common_confirm(),
           onPress: closeLocationPopup,
+        }}
+      />
+
+      <Popup
+        isOpen={isOrientationDeniedPopupOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setIsOrientationDeniedPopupOpen(false);
+        }}
+        titleText={m.home_orientation_permission_title()}
+        helperText={m.home_orientation_permission_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsOrientationDeniedPopupOpen(false),
         }}
       />
 
