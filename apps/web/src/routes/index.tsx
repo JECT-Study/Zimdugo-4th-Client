@@ -1006,12 +1006,14 @@ export function IndexPage() {
     useState(false);
 
 
-  // 방향 센서 미지원 확정 시 진행 중인 방향 트래킹 정리
-  // isCameraCentered는 건드리지 않아 카메라 추적(2단계)은 유지된다.
+  // 방향 센서 미지원 확정 시 방향 트래킹을 정리하고,
+  // 지원 unknown 상태에서 켜진 카메라 고정도 해제한다.
   useEffect(() => {
     if (isOrientationSupported !== false) return;
-    if (!isOrientationTracking) return;
-    stopOrientationTracking();
+    if (isOrientationTracking) {
+      stopOrientationTracking();
+    }
+    setIsCameraCentered(false);
   }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
 
   // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
@@ -1158,6 +1160,11 @@ export function IndexPage() {
       // 방향 센서가 확정적으로 없는 환경(데스크톱 등): 단순 panTo만 제공
       // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
       if (isOrientationSupported === false) {
+        if (isCameraCentered) {
+          setIsCameraCentered(false);
+          return;
+        }
+
         if (location && mapInstanceRef.current) {
           focusNaverMapOnCoordinates({
             map: mapInstanceRef.current,
@@ -1228,6 +1235,7 @@ export function IndexPage() {
       isSearchOpen,
       location,
       isTracking,
+      isCameraCentered,
       isOrientationTracking,
       isOrientationSupported,
       openLocationPopup,
