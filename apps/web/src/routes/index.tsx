@@ -1023,8 +1023,7 @@ export function IndexPage() {
       return;
     }
 
-    const map = mapInstanceRef.current;
-    if (!location || !map) return;
+    if (!location || !mapInstance) return;
 
     const isHomeContext =
       context === "idle" && sheetMode === "idle" && !isSearchOpen;
@@ -1034,7 +1033,7 @@ export function IndexPage() {
       return;
     }
 
-    const center = map.getCenter();
+    const center = mapInstance.getCenter();
     if (
       isMapCenterNearCoordinates(
         { lat: center.lat(), lng: center.lng() },
@@ -1046,7 +1045,7 @@ export function IndexPage() {
     }
 
     const didFocus = focusNaverMapOnCoordinates({
-      map,
+      map: mapInstance,
       coordinates: location,
     });
     setIsViewportAlignedWithUser(didFocus);
@@ -1055,6 +1054,7 @@ export function IndexPage() {
     isOrientationSupported,
     isSearchOpen,
     location,
+    mapInstance,
     permission,
     sheetMode,
   ]);
@@ -1066,10 +1066,32 @@ export function IndexPage() {
     if (isOrientationTracking) {
       stopOrientationTracking();
     }
+    const shouldPreserveViewportAlignment =
+      isCameraCentered ||
+      isViewportAlignedWithUser ||
+      pendingViewportAlignWithUserRef.current;
     pendingViewportAlignWithUserRef.current = false;
     setIsCameraCentered(false);
+    if (shouldPreserveViewportAlignment && location && mapInstance) {
+      const center = mapInstance.getCenter();
+      setIsViewportAlignedWithUser(
+        isMapCenterNearCoordinates(
+          { lat: center.lat(), lng: center.lng() },
+          location,
+        ),
+      );
+      return;
+    }
     setIsViewportAlignedWithUser(false);
-  }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
+  }, [
+    isOrientationSupported,
+    isOrientationTracking,
+    isCameraCentered,
+    isViewportAlignedWithUser,
+    location,
+    mapInstance,
+    stopOrientationTracking,
+  ]);
 
   // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
   useEffect(() => {
@@ -1323,6 +1345,8 @@ export function IndexPage() {
       setMapInstance(map);
 
       if (map && lockerIdFromQuery !== undefined && loaderData?.detail) {
+        pendingViewportAlignWithUserRef.current = false;
+        setIsViewportAlignedWithUser(false);
         focusNaverMapOnCoordinates({
           map,
           coordinates: {
@@ -1340,6 +1364,8 @@ export function IndexPage() {
         return;
       }
 
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
       focusNaverMapOnCoordinates({
         map,
         coordinates: { lat: pin.latitude, lng: pin.longitude },
@@ -1777,6 +1803,8 @@ export function IndexPage() {
             mapInstanceRef.current
           ) {
             lastFocusedLockerIdRef.current = lockerId;
+            pendingViewportAlignWithUserRef.current = false;
+            setIsViewportAlignedWithUser(false);
             focusNaverMapOnCoordinates({
               map: mapInstanceRef.current,
               coordinates: {
@@ -1996,6 +2024,9 @@ export function IndexPage() {
       if (!pin || !mapInstanceRef.current) {
         return;
       }
+
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
 
       if (pin.pinType === "LOCKER") {
         lastFocusedLockerIdRef.current = pin.lockerId;
@@ -2772,6 +2803,8 @@ export function IndexPage() {
     ) {
       isPendingFocusRef.current = false;
       lastFocusedLockerIdRef.current = lockerDetail.lockerId;
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
       focusNaverMapOnCoordinates({
         map: mapInstance,
         coordinates: {
@@ -3131,6 +3164,8 @@ export function IndexPage() {
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
       suppressNextMapPressForMarkerInteraction();
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
       focusNaverMapOnClusterBounds({
         map: mapInstance,
         bounds,
