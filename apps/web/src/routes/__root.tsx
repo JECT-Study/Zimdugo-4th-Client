@@ -157,6 +157,16 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
 const COMPACT_DEVICE_LAYOUT_SCRIPT = `
 (function () {
   try {
+    var hasCoarsePointer =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches;
+    var maxTouchPoints =
+      window.navigator && typeof window.navigator.maxTouchPoints === "number"
+        ? window.navigator.maxTouchPoints
+        : 0;
+    var hasTouch = maxTouchPoints > 0 || "ontouchstart" in window;
+    var isTouchLike = hasCoarsePointer || hasTouch;
+
     function isCompactDevice() {
       var screenWidth = window.screen && window.screen.width;
       var screenHeight = window.screen && window.screen.height;
@@ -164,15 +174,6 @@ const COMPACT_DEVICE_LAYOUT_SCRIPT = `
       var viewportHeight = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
       var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
       var pixelRatio = window.devicePixelRatio || 1;
-      var hasCoarsePointer =
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(pointer: coarse)").matches;
-      var maxTouchPoints =
-        window.navigator && typeof window.navigator.maxTouchPoints === "number"
-          ? window.navigator.maxTouchPoints
-          : 0;
-      var hasTouch = maxTouchPoints > 0 || "ontouchstart" in window;
-      var isTouchLike = hasCoarsePointer || hasTouch;
       var isPhysicalScreen =
         (viewportWidth > 0 && (screenWidth || 0) > viewportWidth * 1.5) ||
         (viewportHeight > 0 && (screenHeight || 0) > viewportHeight * 1.5);
@@ -195,12 +196,15 @@ const COMPACT_DEVICE_LAYOUT_SCRIPT = `
     }
 
     syncCompactDeviceLayout();
-    window.addEventListener("resize", syncCompactDeviceLayout, {
-      passive: true,
-    });
-    window.addEventListener("orientationchange", syncCompactDeviceLayout, {
-      passive: true,
-    });
+
+    if (isTouchLike) {
+      window.addEventListener("resize", syncCompactDeviceLayout, {
+        passive: true,
+      });
+      window.addEventListener("orientationchange", syncCompactDeviceLayout, {
+        passive: true,
+      });
+    }
   } catch (_) {
   }
 })();
