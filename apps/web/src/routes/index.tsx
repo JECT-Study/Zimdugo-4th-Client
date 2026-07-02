@@ -2497,11 +2497,11 @@ export function IndexPage() {
             url: shareUrl,
           })
           .catch((error) => {
-            if (error instanceof DOMException && error.name === "AbortError") {
+            if (error instanceof Error && error.name === "AbortError") {
               return;
             }
 
-            copyShareUrlToClipboard();
+            console.error("Failed to share locker detail:", error);
           });
         return;
       }
