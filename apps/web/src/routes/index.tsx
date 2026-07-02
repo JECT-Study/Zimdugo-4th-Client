@@ -60,6 +60,7 @@ import {
   getPinId,
   type LockerMarkerOffset,
 } from "#/entities/map/model/map-marker";
+import { isMapCenterNearCoordinates } from "#/entities/map/model/map-viewport-alignment";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import {
   LOCKER_PINS_QUERY_KEY,
@@ -434,6 +435,7 @@ interface MyLocationButtonProps {
   permission: PermissionState;
   isCameraCentered: boolean;
   isOrientationTracking: boolean;
+  isViewportAlignedWithUser: boolean;
   onMyLocation: () => void;
 }
 
@@ -441,6 +443,7 @@ const MyLocationButton = memo(function MyLocationButton({
   permission,
   isCameraCentered,
   isOrientationTracking,
+  isViewportAlignedWithUser,
   onMyLocation,
 }: MyLocationButtonProps) {
   return (
@@ -454,7 +457,9 @@ const MyLocationButton = memo(function MyLocationButton({
         state={
           permission === "denied"
             ? "denied"
-            : isCameraCentered || isOrientationTracking
+            : isViewportAlignedWithUser ||
+                isCameraCentered ||
+                isOrientationTracking
               ? "active"
               : "default"
         }
@@ -611,6 +616,7 @@ export function IndexPage() {
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
+  const pendingViewportAlignWithUserRef = useRef(false);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -832,6 +838,8 @@ export function IndexPage() {
 
   // 위치 및 방향 트래킹 — handleFirstLocation이 setIsCameraCentered를 참조하므로 먼저 선언
   const [isCameraCentered, setIsCameraCentered] = useState(false);
+  const [isViewportAlignedWithUser, setIsViewportAlignedWithUser] =
+    useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
@@ -875,6 +883,7 @@ export function IndexPage() {
 
   const { permission, isTracking, isLocating, location, error, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
+
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
   const shouldDeferHomeMapForLocation =
@@ -1005,22 +1014,94 @@ export function IndexPage() {
   const [isOrientationDeniedPopupOpen, setIsOrientationDeniedPopupOpen] =
     useState(false);
 
+  useEffect(() => {
+    if (!pendingViewportAlignWithUserRef.current) return;
 
-  // 방향 센서 미지원 확정 시 진행 중인 방향 트래킹 정리
-  // isCameraCentered는 건드리지 않아 카메라 추적(2단계)은 유지된다.
+    if (permission === "denied") {
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
+      return;
+    }
+
+    if (!location || !mapInstance) return;
+
+    const isHomeContext =
+      context === "idle" && sheetMode === "idle" && !isSearchOpen;
+
+    pendingViewportAlignWithUserRef.current = false;
+    if (isHomeContext && isOrientationSupported !== false) {
+      return;
+    }
+
+    const center = mapInstance.getCenter();
+    if (
+      isMapCenterNearCoordinates(
+        { lat: center.lat(), lng: center.lng() },
+        location,
+      )
+    ) {
+      setIsViewportAlignedWithUser(true);
+      return;
+    }
+
+    const didFocus = focusNaverMapOnCoordinates({
+      map: mapInstance,
+      coordinates: location,
+    });
+    setIsViewportAlignedWithUser(didFocus);
+  }, [
+    context,
+    isOrientationSupported,
+    isSearchOpen,
+    location,
+    mapInstance,
+    permission,
+    sheetMode,
+  ]);
+
+  // 방향 센서 미지원 확정 시 방향 트래킹을 정리하고,
+  // 지원 unknown 상태에서 켜진 카메라 고정도 해제한다.
   useEffect(() => {
     if (isOrientationSupported !== false) return;
-    if (!isOrientationTracking) return;
-    stopOrientationTracking();
-  }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
+    if (isOrientationTracking) {
+      stopOrientationTracking();
+    }
+    const shouldPreserveViewportAlignment =
+      isCameraCentered ||
+      isViewportAlignedWithUser ||
+      pendingViewportAlignWithUserRef.current;
+    pendingViewportAlignWithUserRef.current = false;
+    setIsCameraCentered(false);
+    if (shouldPreserveViewportAlignment && location && mapInstance) {
+      const center = mapInstance.getCenter();
+      setIsViewportAlignedWithUser(
+        isMapCenterNearCoordinates(
+          { lat: center.lat(), lng: center.lng() },
+          location,
+        ),
+      );
+      return;
+    }
+    setIsViewportAlignedWithUser(false);
+  }, [
+    isOrientationSupported,
+    isOrientationTracking,
+    isCameraCentered,
+    isViewportAlignedWithUser,
+    location,
+    mapInstance,
+    stopOrientationTracking,
+  ]);
 
   // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
   useEffect(() => {
     if (permission === "denied") {
+      pendingViewportAlignWithUserRef.current = false;
       window.clearTimeout(locationLoadingTimerRef.current);
       locationLoadingTimerRef.current = undefined;
       setIsLocationDelayedLoading(false);
       setIsCameraCentered(false);
+      setIsViewportAlignedWithUser(false);
 
       if (hasPendingLocationRequestRef.current) {
         hasPendingLocationRequestRef.current = false;
@@ -1121,123 +1202,143 @@ export function IndexPage() {
     });
   }, [mapInstance, saveMapViewport]);
 
-  const handleMyLocation = useCallback(
-    async () => {
-      if (permission === "denied") {
-        hasPendingLocationRequestRef.current = false;
-        openLocationPopup();
-        return;
-      }
+  const handleMyLocation = useCallback(async () => {
+    if (permission === "denied") {
+      hasPendingLocationRequestRef.current = false;
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
+      openLocationPopup();
+      return;
+    }
 
-      // 홈 화면 idle 컨텍스트 여부 판단
-      // 검색 중이거나 핀/시트가 활성화된 상황에서는 단순 위치 이동만 수행한다.
-      const isHomeContext =
-        context === "idle" && sheetMode === "idle" && !isSearchOpen;
+    // 홈 화면 idle 컨텍스트 여부 판단
+    // 검색 중이거나 핀/시트가 활성화된 상황에서는 단순 위치 이동만 수행한다.
+    const isHomeContext =
+      context === "idle" && sheetMode === "idle" && !isSearchOpen;
 
-      if (!isHomeContext) {
-        // 비홈 컨텍스트: isCameraCentered 변경 없이 단순 위치 이동만 수행
-        if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
-        } else if (!isTracking) {
-          // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
-          hasPendingLocationRequestRef.current = true;
-          window.clearTimeout(locationLoadingTimerRef.current);
-          locationLoadingTimerRef.current = window.setTimeout(() => {
-            setIsLocationDelayedLoading(true);
-          }, 300);
-          startTracking();
-        }
-        return;
-      }
-
-      // ── 홈 idle 컨텍스트 전용 로직 ──────────────────────────────
-
-      // 방향 센서가 확정적으로 없는 환경(데스크톱 등): 단순 panTo만 제공
-      // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
-      if (isOrientationSupported === false) {
-        if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
-        } else if (!isTracking) {
-          hasPendingLocationRequestRef.current = true;
-          window.clearTimeout(locationLoadingTimerRef.current);
-          locationLoadingTimerRef.current = window.setTimeout(() => {
-            setIsLocationDelayedLoading(true);
-          }, 300);
-          startTracking();
-        }
-        return;
-      }
-
-      // 상태 2(방향 트래킹 활성) → 상태 0으로 복귀
-      if (isOrientationTracking) {
-        setIsCameraCentered(false);
-        stopOrientationTracking();
-        return;
-      }
-
-      // isOrientationSupported === false 케이스는 위 guard에서 early return 처리됨
-      // 이 시점에서 isOrientationSupported는 true(지원) 또는 null(미확정, 시도)이므로
-      // 방향 트래킹을 항상 시도한다.
-
-      if (!isTracking) {
-        // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
-        // iOS 13+는 DeviceOrientationEvent.requestPermission이 사용자 제스처 컨텍스트에서만
-        // 동작하므로 GPS 콜백(handleFirstLocation) 시점이 아닌 지금 요청해야 한다.
-        const granted = await requestOrientationPermission();
-        if (!granted) {
-          setIsOrientationDeniedPopupOpen(true);
-          return;
-        }
+    if (!isHomeContext) {
+      // 비홈 컨텍스트: isCameraCentered 변경 없이 단순 위치 이동만 수행
+      if (location && mapInstanceRef.current) {
+        const didFocus = focusNaverMapOnCoordinates({
+          map: mapInstanceRef.current,
+          coordinates: location,
+        });
+        setIsViewportAlignedWithUser(didFocus);
+      } else if (!isTracking) {
+        // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
         hasPendingLocationRequestRef.current = true;
+        pendingViewportAlignWithUserRef.current = true;
         window.clearTimeout(locationLoadingTimerRef.current);
         locationLoadingTimerRef.current = window.setTimeout(() => {
           setIsLocationDelayedLoading(true);
         }, 300);
         startTracking();
-        setIsCameraCentered(true);
-        // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
-        pendingOrientationStartRef.current = true;
       } else {
-        // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
-        // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
-        if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
-        }
-        setIsCameraCentered(true);
-        const granted = await requestOrientationPermission();
-        if (granted) {
-          startOrientationTracking();
-        } else {
-          setIsOrientationDeniedPopupOpen(true);
-        }
+        pendingViewportAlignWithUserRef.current = true;
       }
-    },
-    [
-      permission,
-      context,
-      sheetMode,
-      isSearchOpen,
-      location,
-      isTracking,
-      isOrientationTracking,
-      isOrientationSupported,
-      openLocationPopup,
-      startTracking,
-      requestOrientationPermission,
-      startOrientationTracking,
-      stopOrientationTracking,
-      setIsOrientationDeniedPopupOpen,
-    ],
-  );
+      return;
+    }
+
+    // ── 홈 idle 컨텍스트 전용 로직 ──────────────────────────────
+
+    // 방향 센서가 확정적으로 없는 환경(데스크톱 등): 단순 panTo만 제공
+    // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
+    if (isOrientationSupported === false) {
+      if (isCameraCentered) {
+        pendingViewportAlignWithUserRef.current = false;
+        setIsCameraCentered(false);
+        setIsViewportAlignedWithUser(false);
+        return;
+      }
+
+      if (location && mapInstanceRef.current) {
+        const didFocus = focusNaverMapOnCoordinates({
+          map: mapInstanceRef.current,
+          coordinates: location,
+        });
+        setIsViewportAlignedWithUser(didFocus);
+      } else if (!isTracking) {
+        hasPendingLocationRequestRef.current = true;
+        pendingViewportAlignWithUserRef.current = true;
+        window.clearTimeout(locationLoadingTimerRef.current);
+        locationLoadingTimerRef.current = window.setTimeout(() => {
+          setIsLocationDelayedLoading(true);
+        }, 300);
+        startTracking();
+      } else {
+        pendingViewportAlignWithUserRef.current = true;
+      }
+      return;
+    }
+
+    // 상태 2(방향 트래킹 활성) → 상태 0으로 복귀
+    if (isOrientationTracking) {
+      pendingViewportAlignWithUserRef.current = false;
+      setIsCameraCentered(false);
+      setIsViewportAlignedWithUser(false);
+      stopOrientationTracking();
+      return;
+    }
+
+    // isOrientationSupported === false 케이스는 위 guard에서 early return 처리됨
+    // 이 시점에서 isOrientationSupported는 true(지원) 또는 null(미확정, 시도)이므로
+    // 방향 트래킹을 항상 시도한다.
+
+    if (!isTracking) {
+      // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
+      // iOS 13+는 DeviceOrientationEvent.requestPermission이 사용자 제스처 컨텍스트에서만
+      // 동작하므로 GPS 콜백(handleFirstLocation) 시점이 아닌 지금 요청해야 한다.
+      const granted = await requestOrientationPermission();
+      if (!granted) {
+        setIsOrientationDeniedPopupOpen(true);
+      }
+      hasPendingLocationRequestRef.current = true;
+      window.clearTimeout(locationLoadingTimerRef.current);
+      locationLoadingTimerRef.current = window.setTimeout(() => {
+        setIsLocationDelayedLoading(true);
+      }, 300);
+      startTracking();
+      setIsCameraCentered(true);
+      setIsViewportAlignedWithUser(false);
+      // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
+      if (granted) {
+        pendingOrientationStartRef.current = true;
+      }
+    } else {
+      // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
+      // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
+      if (location && mapInstanceRef.current) {
+        focusNaverMapOnCoordinates({
+          map: mapInstanceRef.current,
+          coordinates: location,
+        });
+      }
+      setIsCameraCentered(true);
+      setIsViewportAlignedWithUser(false);
+      const granted = await requestOrientationPermission();
+      if (granted) {
+        startOrientationTracking();
+      } else {
+        setIsOrientationDeniedPopupOpen(true);
+      }
+    }
+  }, [
+    permission,
+    context,
+    sheetMode,
+    isSearchOpen,
+    location,
+    isTracking,
+    isCameraCentered,
+    isOrientationTracking,
+    isOrientationSupported,
+    openLocationPopup,
+    startTracking,
+    requestOrientationPermission,
+    startOrientationTracking,
+    stopOrientationTracking,
+    setIsOrientationDeniedPopupOpen,
+  ]);
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
@@ -1245,6 +1346,8 @@ export function IndexPage() {
       setMapInstance(map);
 
       if (map && lockerIdFromQuery !== undefined && loaderData?.detail) {
+        pendingViewportAlignWithUserRef.current = false;
+        setIsViewportAlignedWithUser(false);
         focusNaverMapOnCoordinates({
           map,
           coordinates: {
@@ -1262,6 +1365,8 @@ export function IndexPage() {
         return;
       }
 
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
       focusNaverMapOnCoordinates({
         map,
         coordinates: { lat: pin.latitude, lng: pin.longitude },
@@ -1277,7 +1382,9 @@ export function IndexPage() {
     clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
     // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
+    pendingViewportAlignWithUserRef.current = false;
     setIsCameraCentered(false);
+    setIsViewportAlignedWithUser(false);
     setMapPlaceId(null);
     setActiveLockerId(null);
     setSelectedLockerDetail(null);
@@ -1297,7 +1404,9 @@ export function IndexPage() {
     clearPendingLockerDetailOpen();
     void flushLockerSheetMutations();
     // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
+    pendingViewportAlignWithUserRef.current = false;
     setIsCameraCentered(false);
+    setIsViewportAlignedWithUser(false);
     setSearchQuery("");
     void navigate({
       to: ".",
@@ -1345,7 +1454,9 @@ export function IndexPage() {
     // 검색 오버레이 진입 시 카메라 고정 해제:
     // isSearchOpen이 false로 바뀔 때 카메라 추적 effect가 재발동해
     // 지도가 강제로 현재 위치로 이동하는 버그를 방지한다.
+    pendingViewportAlignWithUserRef.current = false;
     setIsCameraCentered(false);
+    setIsViewportAlignedWithUser(false);
     setOverlayReturnContext(returnContext);
     setIsSearchOpen(true);
   }, [clearPendingLockerDetailOpen, context, resetMapContext, setIsSearchOpen]);
@@ -1693,6 +1804,8 @@ export function IndexPage() {
             mapInstanceRef.current
           ) {
             lastFocusedLockerIdRef.current = lockerId;
+            pendingViewportAlignWithUserRef.current = false;
+            setIsViewportAlignedWithUser(false);
             focusNaverMapOnCoordinates({
               map: mapInstanceRef.current,
               coordinates: {
@@ -1912,6 +2025,9 @@ export function IndexPage() {
       if (!pin || !mapInstanceRef.current) {
         return;
       }
+
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
 
       if (pin.pinType === "LOCKER") {
         lastFocusedLockerIdRef.current = pin.lockerId;
@@ -2688,6 +2804,8 @@ export function IndexPage() {
     ) {
       isPendingFocusRef.current = false;
       lastFocusedLockerIdRef.current = lockerDetail.lockerId;
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
       focusNaverMapOnCoordinates({
         map: mapInstance,
         coordinates: {
@@ -2787,8 +2905,14 @@ export function IndexPage() {
     ) {
       focusNaverMapOnCoordinates({ map: mapInstance, coordinates: location });
     }
-  }, [isCameraCentered, location, mapInstance, context, sheetMode, isSearchOpen]);
-
+  }, [
+    isCameraCentered,
+    location,
+    mapInstance,
+    context,
+    sheetMode,
+    isSearchOpen,
+  ]);
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
@@ -2812,6 +2936,8 @@ export function IndexPage() {
       windowHeight,
     });
 
+    pendingViewportAlignWithUserRef.current = false;
+    setIsViewportAlignedWithUser(false);
     fitNaverMapToBounds({
       map: mapInstance,
       bounds,
@@ -3023,6 +3149,8 @@ export function IndexPage() {
 
     const listener = maps.Event.addListener(mapInstance, "dragstart", () => {
       hasUserMovedMapBeforeInitialGpsRef.current = true;
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
       setIsCameraCentered(false); // 카메라 고정 해제 (위치 추적 중단)
       // stopOrientationTracking()은 호출하지 않음 → 방향 트래킹 유지
       isPendingFocusRef.current = false;
@@ -3037,6 +3165,8 @@ export function IndexPage() {
   const handleClusterClick = useCallback(
     (bounds: LockerBoundsRaw) => {
       suppressNextMapPressForMarkerInteraction();
+      pendingViewportAlignWithUserRef.current = false;
+      setIsViewportAlignedWithUser(false);
       focusNaverMapOnClusterBounds({
         map: mapInstance,
         bounds,
@@ -3157,6 +3287,7 @@ export function IndexPage() {
             permission={permission}
             isCameraCentered={isCameraCentered}
             isOrientationTracking={isOrientationTracking}
+            isViewportAlignedWithUser={isViewportAlignedWithUser}
             onMyLocation={handleMyLocation}
           />
         </div>
@@ -3187,7 +3318,6 @@ export function IndexPage() {
           onPress: () => setIsOrientationDeniedPopupOpen(false),
         }}
       />
-
 
       {!isMapLoading && sheetMode === "list" && !isSearchOpen ? (
         <SearchListBottomSheet
