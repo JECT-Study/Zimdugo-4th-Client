@@ -1291,7 +1291,6 @@ export function IndexPage() {
       const granted = await requestOrientationPermission();
       if (!granted) {
         setIsOrientationDeniedPopupOpen(true);
-        return;
       }
       hasPendingLocationRequestRef.current = true;
       window.clearTimeout(locationLoadingTimerRef.current);
@@ -1302,7 +1301,9 @@ export function IndexPage() {
       setIsCameraCentered(true);
       setIsViewportAlignedWithUser(false);
       // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
-      pendingOrientationStartRef.current = true;
+      if (granted) {
+        pendingOrientationStartRef.current = true;
+      }
     } else {
       // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
       // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
