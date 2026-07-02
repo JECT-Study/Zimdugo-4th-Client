@@ -2458,13 +2458,6 @@ export function IndexPage() {
         return;
       }
 
-      if (!navigator.clipboard) {
-        console.error(
-          "Failed to copy locker detail: Clipboard API is not supported",
-        );
-        return;
-      }
-
       const shareUrl = createLockerDeepLinkUrl({
         origin: window.location.origin,
         lockerId: item.lockerId,
@@ -2478,14 +2471,42 @@ export function IndexPage() {
         address: item.address,
       });
 
-      void navigator.clipboard
-        .writeText(shareText)
-        .then(() => {
-          setShareCopied(true);
-        })
-        .catch((error) => {
-          console.error("Failed to copy locker detail:", error);
-        });
+      const copyShareUrlToClipboard = () => {
+        if (!navigator.clipboard) {
+          console.error(
+            "Failed to copy locker detail: Clipboard API is not supported",
+          );
+          return;
+        }
+
+        void navigator.clipboard
+          .writeText(shareUrl)
+          .then(() => {
+            setShareCopied(true);
+          })
+          .catch((error) => {
+            console.error("Failed to copy locker detail:", error);
+          });
+      };
+
+      if (navigator.share) {
+        void navigator
+          .share({
+            title: item.title,
+            text: shareText,
+            url: shareUrl,
+          })
+          .catch((error) => {
+            if (error instanceof DOMException && error.name === "AbortError") {
+              return;
+            }
+
+            copyShareUrlToClipboard();
+          });
+        return;
+      }
+
+      copyShareUrlToClipboard();
     },
     [setShareCopied],
   );
