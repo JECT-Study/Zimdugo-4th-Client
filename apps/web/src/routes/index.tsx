@@ -92,6 +92,7 @@ import {
   createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
   createLockerPinAt,
+  createLockerShareText,
   type LockerDetailSnap,
   parseOpenLockerDeepLinkSearch,
 } from "#/features/search/lib/open-locker-deep-link";
@@ -2462,6 +2463,13 @@ export function IndexPage() {
         lockerId: item.lockerId,
         title: item.title,
       });
+      const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
+      const shareText = createLockerShareText({
+        locale: shareLocale,
+        url: shareUrl,
+        title: item.title,
+        address: item.address,
+      });
 
       const copyShareUrlToClipboard = () => {
         if (!navigator.clipboard) {
@@ -2485,7 +2493,7 @@ export function IndexPage() {
         void navigator
           .share({
             title: item.title,
-            url: shareUrl,
+            text: shareText,
           })
           .catch((error) => {
             if (error instanceof Error && error.name === "AbortError") {
