@@ -7,6 +7,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { Analytics } from "@vercel/analytics/react";
 import { type ReactNode, useEffect, useState } from "react";
 import "@repo/ui/styles/global.css";
 import { languageTag, m } from "@repo/i18n";
@@ -407,6 +408,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <Scripts />
         <AuthRequirePopup />
         <LoginResultModal />
+        <Analytics />
       </body>
     </html>
   );
