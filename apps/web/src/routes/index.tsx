@@ -53,6 +53,10 @@ import {
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
+  hasRequestedHomeLocationInSession,
+  markHomeLocationRequestedInSession,
+} from "#/entities/map/model/home-location-request-session";
+import {
   fitNaverMapToBounds,
   focusNaverMapOnClusterBounds,
 } from "#/entities/map/model/map-bounds";
@@ -875,10 +879,15 @@ export function IndexPage() {
 
   const { permission, isTracking, isLocating, location, error, startTracking } =
     useLocationTracking({ onFirstLocation: handleFirstLocation });
+  const [hasRequestedHomeLocation] = useState(
+    hasRequestedHomeLocationInSession,
+  );
+  const didRequestHomeLocationRef = useRef(false);
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
   const shouldDeferHomeMapForLocation =
     shouldPreferHomeLocation &&
+    !hasRequestedHomeLocation &&
     permission !== "denied" &&
     location == null &&
     error == null;
@@ -890,15 +899,21 @@ export function IndexPage() {
       permission === "denied" ||
       isTracking ||
       isLocating ||
-      error != null
+      error != null ||
+      hasRequestedHomeLocation ||
+      didRequestHomeLocationRef.current ||
+      hasRequestedHomeLocationInSession()
     ) {
       return;
     }
 
+    didRequestHomeLocationRef.current = true;
+    markHomeLocationRequestedInSession();
     hasPendingLocationRequestRef.current = true;
     startTracking();
   }, [
     error,
+    hasRequestedHomeLocation,
     isLocating,
     isTracking,
     location,
