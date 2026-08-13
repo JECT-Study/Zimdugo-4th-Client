@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { MAX_REPORT_PHOTO_SIZE_BYTES } from "#/features/report/model/report-types";
 import {
   isAcceptedProfilePhotoFile,
   resolveProfilePhotoContentType,
   validateProfilePhotoFile,
 } from "#/features/my/lib/validate-profile-photo-file";
+import { MAX_UPLOAD_IMAGE_SIZE_BYTES } from "#/shared/model/upload-types";
 
 describe("validateProfilePhotoFile", () => {
   it("JPG 파일을 허용한다", () => {
@@ -39,7 +39,7 @@ describe("validateProfilePhotoFile", () => {
   it("5MB를 초과하면 max_size 오류를 반환한다", () => {
     const file = new File(["x"], "profile.jpg", { type: "image/jpeg" });
     Object.defineProperty(file, "size", {
-      value: MAX_REPORT_PHOTO_SIZE_BYTES + 1,
+      value: MAX_UPLOAD_IMAGE_SIZE_BYTES + 1,
     });
 
     expect(validateProfilePhotoFile(file)).toEqual({

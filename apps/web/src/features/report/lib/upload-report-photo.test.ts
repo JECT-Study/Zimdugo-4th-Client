@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { postUploadUrl } from "#/features/report/api/create-upload-url";
-import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import {
   type ReportPhotoUploadValidationError,
   uploadReportPhoto,
 } from "#/features/report/lib/upload-report-photo";
-import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/features/report/model/report-types";
+import { postUploadUrl } from "#/shared/api/uploads";
+import { uploadFileToUploadUrl } from "#/shared/lib/upload-file-to-upload-url";
+import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/shared/model/upload-types";
 
-vi.mock("#/features/report/api/create-upload-url", () => ({
+vi.mock("#/shared/api/uploads", () => ({
   postUploadUrl: vi.fn(),
 }));
 
-vi.mock("#/features/report/lib/upload-file-to-presigned-url", () => ({
-  uploadFileToPresignedUrl: vi.fn(),
+vi.mock("#/shared/lib/upload-file-to-upload-url", () => ({
+  uploadFileToUploadUrl: vi.fn(),
 }));
 
 describe("uploadReportPhoto", () => {
@@ -20,20 +20,22 @@ describe("uploadReportPhoto", () => {
 
   beforeEach(() => {
     vi.mocked(postUploadUrl).mockReset();
-    vi.mocked(uploadFileToPresignedUrl).mockReset();
+    vi.mocked(uploadFileToUploadUrl).mockReset();
   });
 
-  it("LOCKER_REPORT presigned URL 발급 후 S3 업로드하고 fileUrl을 반환한다", async () => {
+  it("LOCKER_REPORT 업로드 URL을 발급받아 파일을 업로드한다", async () => {
     vi.mocked(postUploadUrl).mockResolvedValue({
-      uploadUrl: "https://bucket.s3.amazonaws.com/key?X-Amz-Signature=abc",
-      fileUrl: "https://cdn.example.com/locker-report/key.jpg",
-      key: "locker-report/uuid/locker-photo.jpg",
+      uploadUrl:
+        "https://objectstorage.ap-osaka-1.oraclecloud.com/p/token/n/axuj36gr8lmm/b/zimdugo-bucket/o/reports/photo.jpg",
+      fileUrl:
+        "https://objectstorage.ap-osaka-1.oraclecloud.com/n/axuj36gr8lmm/b/zimdugo-bucket/o/reports%2Fphoto.jpg",
+      key: "reports/photo.jpg",
       expiresAt: "2026-06-07T14:16:38.948Z",
     });
-    vi.mocked(uploadFileToPresignedUrl).mockResolvedValue(undefined);
+    vi.mocked(uploadFileToUploadUrl).mockResolvedValue(undefined);
 
     await expect(uploadReportPhoto(file)).resolves.toBe(
-      "https://cdn.example.com/locker-report/key.jpg",
+      "https://objectstorage.ap-osaka-1.oraclecloud.com/n/axuj36gr8lmm/b/zimdugo-bucket/o/reports%2Fphoto.jpg",
     );
 
     expect(postUploadUrl).toHaveBeenCalledWith({
@@ -42,8 +44,9 @@ describe("uploadReportPhoto", () => {
       contentType: "image/jpeg",
       contentLength: file.size,
     });
-    expect(uploadFileToPresignedUrl).toHaveBeenCalledWith({
-      uploadUrl: "https://bucket.s3.amazonaws.com/key?X-Amz-Signature=abc",
+    expect(uploadFileToUploadUrl).toHaveBeenCalledWith({
+      upload: expect.objectContaining({ key: "reports/photo.jpg" }),
+      category: UPLOAD_CATEGORY_LOCKER_REPORT,
       file,
       contentType: "image/jpeg",
     });
@@ -60,6 +63,6 @@ describe("uploadReportPhoto", () => {
     } satisfies Partial<ReportPhotoUploadValidationError>);
 
     expect(postUploadUrl).not.toHaveBeenCalled();
-    expect(uploadFileToPresignedUrl).not.toHaveBeenCalled();
+    expect(uploadFileToUploadUrl).not.toHaveBeenCalled();
   });
 });
