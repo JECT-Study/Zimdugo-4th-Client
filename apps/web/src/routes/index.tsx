@@ -250,6 +250,7 @@ export const Route = createFileRoute("/")({
     focusLng?: number;
     q?: string;
     searchPlaceId?: number;
+    locationDebug?: "1";
   } => {
     const safeSearch = search || {};
     const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
@@ -258,11 +259,13 @@ export const Route = createFileRoute("/")({
       lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
     const q = readSearchQueryParam(safeSearch.q);
     const searchPlaceId = readSearchPlaceIdParam(safeSearch.searchPlaceId);
+    const locationDebug = safeSearch.locationDebug === "1" ? "1" : undefined;
     return {
       ...parsed,
       locker,
       q,
       searchPlaceId,
+      locationDebug,
     };
   },
   loader: async ({ search }: any) => {
