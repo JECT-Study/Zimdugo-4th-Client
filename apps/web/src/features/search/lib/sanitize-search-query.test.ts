@@ -3,12 +3,12 @@ import {
   capSearchQueryDraft,
   getSearchQueryIssue,
   getValidatedSearchQuery,
-  trimSearchQueryDraft,
   isSearchQueryDraftValid,
   isSearchQueryDraftWellFormed,
   isSearchQuerySubmittable,
   resolveSearchQuerySubmitAttempt,
   SEARCH_QUERY_MAX_LENGTH,
+  trimSearchQueryDraft,
 } from "./sanitize-search-query";
 
 describe("sanitize-search-query", () => {
@@ -54,6 +54,15 @@ describe("sanitize-search-query", () => {
     expect(isSearchQueryDraftWellFormed("!!!")).toBe(false);
   });
 
+  it("장소명에 쓰이는 일부 특수문자를 허용한다", () => {
+    expect(isSearchQueryDraftWellFormed("스타필드(코엑스몰)")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("L'atelier")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("‘강남역’")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("A-B.C & D")).toBe(true);
+    expect(isSearchQueryDraftWellFormed('강남 "역"')).toBe(false);
+    expect(isSearchQueryDraftWellFormed("강남/역")).toBe(false);
+  });
+
   it("1글자 완성형 검색어와 초성검색·형식 오류를 구분한다", () => {
     expect(getSearchQueryIssue("")).toBeNull();
     expect(getSearchQueryIssue("가")).toBeNull();
@@ -93,7 +102,9 @@ describe("sanitize-search-query", () => {
 
   it("최대 30자까지만 유지한다", () => {
     const longQuery = "가".repeat(SEARCH_QUERY_MAX_LENGTH + 5);
-    expect(capSearchQueryDraft(longQuery)).toHaveLength(SEARCH_QUERY_MAX_LENGTH);
+    expect(capSearchQueryDraft(longQuery)).toHaveLength(
+      SEARCH_QUERY_MAX_LENGTH,
+    );
   });
 
   it("제출 시도는 유효한 검색어만 통과시키고 화면 입력값은 바꾸지 않는다", () => {
