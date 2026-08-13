@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
+  useRouterState,
   useSearch,
 } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -492,6 +493,9 @@ const MyLocationButton = memo(function MyLocationButton({
 export function IndexPage() {
   const navigate = useNavigate();
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
+  const rawSearch = useRouterState({
+    select: (state) => state.location.searchStr,
+  });
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -503,7 +507,9 @@ export function IndexPage() {
     [hasExplicitLockerEntry],
   );
   const { detailSnap, focusLat, focusLng } = search;
-  const isLocationDiagnosticsEnabled = search.locationDebug === "1";
+  const isLocationDiagnosticsEnabled =
+    search.locationDebug === "1" ||
+    new URLSearchParams(rawSearch).get("locationDebug") === "1";
   const searchQueryFromUrl =
     typeof search.q === "string" ? search.q : undefined;
   const searchPlaceIdFromUrl = readSearchPlaceIdParam(search.searchPlaceId);
