@@ -28,12 +28,11 @@ const UPLOAD_OBJECT_PREFIXES = {
   LOCKER_REPORT: "reports/",
 } as const satisfies Record<UploadCategory, string>;
 
-export class UploadConfigurationError extends Error {
-  constructor(name: string) {
-    super(`Missing upload configuration: ${name}`);
-    this.name = "UploadConfigurationError";
-  }
-}
+const DEFAULT_UPLOAD_TARGET = {
+  hostname: "objectstorage.ap-osaka-1.oraclecloud.com",
+  namespace: "axuj36gr8lmm",
+  bucket: "zimdugo-bucket",
+} as const satisfies TrustedUploadTarget;
 
 export class UntrustedUploadDestinationError extends Error {
   constructor() {
@@ -52,26 +51,21 @@ export class ObjectStorageUploadError extends Error {
   }
 }
 
-const getRequiredConfig = (name: string, value: string | undefined): string => {
-  const normalized = value?.trim();
-  if (!normalized) {
-    throw new UploadConfigurationError(name);
-  }
-  return normalized;
-};
+const getUploadConfig = (value: string | undefined, fallback: string): string =>
+  value?.trim() || fallback;
 
 const getTrustedUploadTarget = (): TrustedUploadTarget => ({
-  hostname: getRequiredConfig(
-    "VITE_UPLOAD_HOST",
+  hostname: getUploadConfig(
     import.meta.env.VITE_UPLOAD_HOST,
+    DEFAULT_UPLOAD_TARGET.hostname,
   ).toLowerCase(),
-  namespace: getRequiredConfig(
-    "VITE_UPLOAD_NAMESPACE",
+  namespace: getUploadConfig(
     import.meta.env.VITE_UPLOAD_NAMESPACE,
+    DEFAULT_UPLOAD_TARGET.namespace,
   ),
-  bucket: getRequiredConfig(
-    "VITE_UPLOAD_BUCKET",
+  bucket: getUploadConfig(
     import.meta.env.VITE_UPLOAD_BUCKET,
+    DEFAULT_UPLOAD_TARGET.bucket,
   ),
 });
 

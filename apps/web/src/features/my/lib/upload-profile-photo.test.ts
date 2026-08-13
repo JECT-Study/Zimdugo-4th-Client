@@ -21,6 +21,8 @@ vi.mock("#/features/my/lib/prepare-profile-image-file", () => ({
 }));
 
 describe("uploadProfilePhoto", () => {
+  const uploadUrl =
+    "https://objectstorage.ap-osaka-1.oraclecloud.com/p/token/n/axuj36gr8lmm/b/zimdugo-bucket/o/profiles/7/photo.jpg";
   const file = new File(["photo"], "profile-photo.jpg", { type: "image/jpeg" });
 
   beforeEach(() => {
@@ -32,8 +34,7 @@ describe("uploadProfilePhoto", () => {
 
   it("PROFILE presigned URL 발급 후 오브젝트 스토리지에 업로드한다", async () => {
     vi.mocked(postUploadUrl).mockResolvedValue({
-      uploadUrl:
-        "https://objectstorage.ap-osaka-1.oraclecloud.com/p/token/n/axuj36gr8lmm/b/zimdugo-bucket/o/profiles/7/photo.jpg",
+      uploadUrl,
       fileUrl:
         "https://objectstorage.ap-osaka-1.oraclecloud.com/n/axuj36gr8lmm/b/zimdugo-bucket/o/profiles%2F7%2Fphoto.jpg",
       key: "profiles/7/photo.jpg",
@@ -53,7 +54,10 @@ describe("uploadProfilePhoto", () => {
       contentLength: file.size,
     });
     expect(uploadFileToObjectStorage).toHaveBeenCalledWith({
-      upload: expect.objectContaining({ key: "profiles/7/photo.jpg" }),
+      upload: expect.objectContaining({
+        uploadUrl,
+        key: "profiles/7/photo.jpg",
+      }),
       category: UPLOAD_CATEGORY_PROFILE,
       file,
       contentType: "image/jpeg",

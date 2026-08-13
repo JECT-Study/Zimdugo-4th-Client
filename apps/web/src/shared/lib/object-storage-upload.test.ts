@@ -47,6 +47,23 @@ describe("object storage upload", () => {
     ).not.toThrow();
   });
 
+  it("환경변수가 없어도 현재 OCI 목적지로 PUT한다", async () => {
+    vi.stubEnv("VITE_UPLOAD_HOST", "");
+    vi.stubEnv("VITE_UPLOAD_NAMESPACE", "");
+    vi.stubEnv("VITE_UPLOAD_BUCKET", "");
+    const upload = createUpload("profiles/7/profile.jpg");
+    const file = new File(["photo"], "profile.jpg", { type: "image/jpeg" });
+
+    await uploadFileToObjectStorage({
+      upload,
+      category: UPLOAD_CATEGORY_PROFILE,
+      file,
+      contentType: "image/jpeg",
+    });
+
+    expect(fetch).toHaveBeenCalledWith(upload.uploadUrl, expect.any(Object));
+  });
+
   it.each([
     ["hostname", { uploadUrl: "https://evil.example.com/key" }],
     [
