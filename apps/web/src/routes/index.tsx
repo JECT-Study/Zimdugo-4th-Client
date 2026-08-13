@@ -53,6 +53,13 @@ import {
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
+  hasRequestedHomeLocationInSession,
+  markHomeLocationRequestedInSession,
+} from "#/entities/map/model/home-location-request-session";
+import {
+  useHasRequestedHomeLocationInSession,
+} from "#/entities/map/model/useHomeLocationRequestSession";
+import {
   fitNaverMapToBounds,
   focusNaverMapOnClusterBounds,
 } from "#/entities/map/model/map-bounds";
@@ -611,6 +618,8 @@ export function IndexPage() {
   const locationLoadingTimerRef = useRef<number | undefined>(undefined);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
+  const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
+  const didRequestHomeLocationRef = useRef(false);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -879,6 +888,7 @@ export function IndexPage() {
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
   const shouldDeferHomeMapForLocation =
     shouldPreferHomeLocation &&
+    !hasRequestedHomeLocation &&
     permission !== "denied" &&
     location == null &&
     error == null;
@@ -890,15 +900,21 @@ export function IndexPage() {
       permission === "denied" ||
       isTracking ||
       isLocating ||
-      error != null
+      error != null ||
+      hasRequestedHomeLocation ||
+      didRequestHomeLocationRef.current ||
+      hasRequestedHomeLocationInSession()
     ) {
       return;
     }
 
+    didRequestHomeLocationRef.current = true;
+    markHomeLocationRequestedInSession();
     hasPendingLocationRequestRef.current = true;
     startTracking();
   }, [
     error,
+    hasRequestedHomeLocation,
     isLocating,
     isTracking,
     location,
