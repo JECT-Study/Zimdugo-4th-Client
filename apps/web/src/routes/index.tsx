@@ -87,6 +87,7 @@ import {
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
+import { LocationDiagnosticsPanel } from "#/entities/map/ui/LocationDiagnosticsPanel";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import type { SearchAutocompleteItemData } from "#/entities/search";
@@ -499,6 +500,7 @@ export function IndexPage() {
     [hasExplicitLockerEntry],
   );
   const { detailSnap, focusLat, focusLng } = search;
+  const isLocationDiagnosticsEnabled = search.locationDebug === "1";
   const searchQueryFromUrl =
     typeof search.q === "string" ? search.q : undefined;
   const searchPlaceIdFromUrl = readSearchPlaceIdParam(search.searchPlaceId);
@@ -834,7 +836,10 @@ export function IndexPage() {
     300,
   );
   const shouldPreferHomeLocation =
-    lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
+    !isLocationDiagnosticsEnabled &&
+    lockerIdFromQuery === undefined &&
+    focusLat == null &&
+    focusLng == null;
   const shouldDeferHomeMapForLocation =
     shouldPreferHomeLocation &&
     !hasRequestedHomeLocation &&
@@ -3417,6 +3422,10 @@ export function IndexPage() {
           label: m.common_confirm(),
           onPress: () => setShareCopied(false),
         }}
+      />
+
+      <LocationDiagnosticsPanel
+        isEnabled={isLocationDiagnosticsEnabled}
       />
     </main>
   );
