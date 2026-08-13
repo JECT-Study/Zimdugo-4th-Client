@@ -31,6 +31,12 @@ describe("LocationDiagnosticsPanel", () => {
         watchPosition: vi.fn().mockReturnValue(1),
       },
     });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    });
   });
 
   afterEach(() => {
@@ -66,7 +72,10 @@ describe("LocationDiagnosticsPanel", () => {
     await waitFor(() => {
       expect(screen.getByText(/get-current-position-success/)).toBeDefined();
     });
-    expect(screen.queryByText(/37\.5|127/)).toBeNull();
+    const log =
+      screen.getByText(/get-current-position-success/).textContent ?? "";
+    expect(log).not.toMatch(/latitude|longitude|coords/);
+    expect(log).not.toContain("37.5");
   });
 
   it("records location success even when the permission query does not resolve", async () => {
@@ -94,6 +103,20 @@ describe("LocationDiagnosticsPanel", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/get-current-position-success/)).toBeDefined();
+    });
+  });
+
+  it("records clipboard failures without an unhandled rejection", async () => {
+    vi.mocked(navigator.clipboard.writeText).mockRejectedValue(
+      new Error("clipboard denied"),
+    );
+    render(<LocationDiagnosticsPanel isEnabled />);
+
+    fireEvent.click(screen.getByRole("button", { name: "결과 복사" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/result-copy-error/)).toBeDefined();
+      expect(screen.getByText(/clipboard denied/)).toBeDefined();
     });
   });
 });

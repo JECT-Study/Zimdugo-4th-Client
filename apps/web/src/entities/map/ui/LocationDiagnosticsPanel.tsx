@@ -139,7 +139,7 @@ export function LocationDiagnosticsPanel({
     );
 
     void permissionBeforePromise.then((permission) => {
-      appendEvent({ event: "permission-before-request", permission });
+      appendEvent({ event: "permission-at-request-time", permission });
     });
   }, [appendEvent]);
 
@@ -179,7 +179,7 @@ export function LocationDiagnosticsPanel({
     );
 
     void permissionBeforePromise.then((permission) => {
-      appendEvent({ event: "permission-before-watch", permission });
+      appendEvent({ event: "permission-at-watch-time", permission });
     });
   }, [appendEvent, stopWatch]);
 
@@ -194,8 +194,15 @@ export function LocationDiagnosticsPanel({
       null,
       2,
     );
-    await navigator.clipboard.writeText(output);
-    appendEvent({ event: "result-copied" });
+    try {
+      await navigator.clipboard.writeText(output);
+      appendEvent({ event: "result-copied" });
+    } catch (error) {
+      appendEvent({
+        event: "result-copy-error",
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+    }
   }, [appendEvent, events]);
 
   const handleClear = useCallback(() => {
