@@ -57,6 +57,7 @@ describe("sanitize-search-query", () => {
   it("장소명에 쓰이는 일부 특수문자를 허용한다", () => {
     expect(isSearchQueryDraftWellFormed("스타필드(코엑스몰)")).toBe(true);
     expect(isSearchQueryDraftWellFormed("L'atelier")).toBe(true);
+    expect(isSearchQueryDraftWellFormed("‘강남역’")).toBe(true);
     expect(isSearchQueryDraftWellFormed("A-B.C & D")).toBe(true);
     expect(isSearchQueryDraftWellFormed('강남 "역"')).toBe(false);
     expect(isSearchQueryDraftWellFormed("강남/역")).toBe(false);

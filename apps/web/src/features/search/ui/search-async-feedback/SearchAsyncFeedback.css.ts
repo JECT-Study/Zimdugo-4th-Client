@@ -42,6 +42,7 @@ export const hint = style({
   fontWeight: vars.typography.fontWeight.Regular,
   color: vars.color.text.surface,
   lineHeight: 1.5,
+  whiteSpace: "pre-line",
 });
 
 export const errorActions = style({
