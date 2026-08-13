@@ -1,10 +1,13 @@
 import { z } from "zod";
+import { apiClient } from "#/shared/lib/apiClient";
 import type {
-  RestResponse,
   UploadCreateData,
   UploadCreateRequest,
-} from "#/features/report/model/report-types";
-import { apiClient } from "#/shared/lib/apiClient";
+} from "#/shared/model/upload-types";
+
+interface RestResponse<T> {
+  data: T;
+}
 
 const uploadCreateDataSchema = z.object({
   uploadUrl: z.string().url(),

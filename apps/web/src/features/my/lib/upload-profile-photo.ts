@@ -4,12 +4,12 @@ import {
   resolveProfilePhotoContentType,
   validateProfilePhotoFile,
 } from "#/features/my/lib/validate-profile-photo-file";
-import { postUploadUrl } from "#/features/report/api/create-upload-url";
-import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
+import { postUploadUrl } from "#/shared/api/uploads";
+import { uploadFileToObjectStorage } from "#/shared/lib/object-storage-upload";
 import {
-  MAX_REPORT_PHOTO_SIZE_BYTES,
+  MAX_UPLOAD_IMAGE_SIZE_BYTES,
   UPLOAD_CATEGORY_PROFILE,
-} from "#/features/report/model/report-types";
+} from "#/shared/model/upload-types";
 
 export class ProfilePhotoUploadValidationError extends Error {
   readonly code: ProfilePhotoValidationError;
@@ -29,23 +29,24 @@ export async function uploadProfilePhoto(file: File): Promise<string> {
 
   const preparedFile = await prepareProfileImageFile(file);
 
-  if (preparedFile.size > MAX_REPORT_PHOTO_SIZE_BYTES) {
+  if (preparedFile.size > MAX_UPLOAD_IMAGE_SIZE_BYTES) {
     throw new ProfilePhotoUploadValidationError("max_size");
   }
 
   const contentType = resolveProfilePhotoContentType(preparedFile);
-  const { uploadUrl, fileUrl } = await postUploadUrl({
+  const upload = await postUploadUrl({
     category: UPLOAD_CATEGORY_PROFILE,
     fileName: preparedFile.name,
     contentType,
     contentLength: preparedFile.size,
   });
 
-  await uploadFileToPresignedUrl({
-    uploadUrl,
+  await uploadFileToObjectStorage({
+    upload,
+    category: UPLOAD_CATEGORY_PROFILE,
     file: preparedFile,
     contentType,
   });
 
-  return fileUrl;
+  return upload.fileUrl;
 }

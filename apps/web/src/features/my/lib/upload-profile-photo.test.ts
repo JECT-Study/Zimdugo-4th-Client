@@ -4,16 +4,16 @@ import {
   type ProfilePhotoUploadValidationError,
   uploadProfilePhoto,
 } from "#/features/my/lib/upload-profile-photo";
-import { postUploadUrl } from "#/features/report/api/create-upload-url";
-import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
-import { UPLOAD_CATEGORY_PROFILE } from "#/features/report/model/report-types";
+import { postUploadUrl } from "#/shared/api/uploads";
+import { uploadFileToObjectStorage } from "#/shared/lib/object-storage-upload";
+import { UPLOAD_CATEGORY_PROFILE } from "#/shared/model/upload-types";
 
-vi.mock("#/features/report/api/create-upload-url", () => ({
+vi.mock("#/shared/api/uploads", () => ({
   postUploadUrl: vi.fn(),
 }));
 
-vi.mock("#/features/report/lib/upload-file-to-presigned-url", () => ({
-  uploadFileToPresignedUrl: vi.fn(),
+vi.mock("#/shared/lib/object-storage-upload", () => ({
+  uploadFileToObjectStorage: vi.fn(),
 }));
 
 vi.mock("#/features/my/lib/prepare-profile-image-file", () => ({
@@ -25,22 +25,24 @@ describe("uploadProfilePhoto", () => {
 
   beforeEach(() => {
     vi.mocked(postUploadUrl).mockReset();
-    vi.mocked(uploadFileToPresignedUrl).mockReset();
+    vi.mocked(uploadFileToObjectStorage).mockReset();
     vi.mocked(prepareProfileImageFile).mockReset();
     vi.mocked(prepareProfileImageFile).mockResolvedValue(file);
   });
 
-  it("PROFILE presigned URL 발급 후 S3 업로드하고 fileUrl을 반환한다", async () => {
+  it("PROFILE presigned URL 발급 후 오브젝트 스토리지에 업로드한다", async () => {
     vi.mocked(postUploadUrl).mockResolvedValue({
-      uploadUrl: "https://bucket.s3.amazonaws.com/key?X-Amz-Signature=abc",
-      fileUrl: "https://cdn.example.com/profile/key.jpg",
-      key: "profile/uuid/profile-photo.jpg",
+      uploadUrl:
+        "https://objectstorage.ap-osaka-1.oraclecloud.com/p/token/n/axuj36gr8lmm/b/zimdugo-bucket/o/profiles/7/photo.jpg",
+      fileUrl:
+        "https://objectstorage.ap-osaka-1.oraclecloud.com/n/axuj36gr8lmm/b/zimdugo-bucket/o/profiles%2F7%2Fphoto.jpg",
+      key: "profiles/7/photo.jpg",
       expiresAt: "2026-06-07T14:16:38.948Z",
     });
-    vi.mocked(uploadFileToPresignedUrl).mockResolvedValue(undefined);
+    vi.mocked(uploadFileToObjectStorage).mockResolvedValue(undefined);
 
     await expect(uploadProfilePhoto(file)).resolves.toBe(
-      "https://cdn.example.com/profile/key.jpg",
+      "https://objectstorage.ap-osaka-1.oraclecloud.com/n/axuj36gr8lmm/b/zimdugo-bucket/o/profiles%2F7%2Fphoto.jpg",
     );
 
     expect(prepareProfileImageFile).toHaveBeenCalledWith(file);
@@ -50,8 +52,9 @@ describe("uploadProfilePhoto", () => {
       contentType: "image/jpeg",
       contentLength: file.size,
     });
-    expect(uploadFileToPresignedUrl).toHaveBeenCalledWith({
-      uploadUrl: "https://bucket.s3.amazonaws.com/key?X-Amz-Signature=abc",
+    expect(uploadFileToObjectStorage).toHaveBeenCalledWith({
+      upload: expect.objectContaining({ key: "profiles/7/photo.jpg" }),
+      category: UPLOAD_CATEGORY_PROFILE,
       file,
       contentType: "image/jpeg",
     });
@@ -69,7 +72,7 @@ describe("uploadProfilePhoto", () => {
 
     expect(prepareProfileImageFile).not.toHaveBeenCalled();
     expect(postUploadUrl).not.toHaveBeenCalled();
-    expect(uploadFileToPresignedUrl).not.toHaveBeenCalled();
+    expect(uploadFileToObjectStorage).not.toHaveBeenCalled();
   });
 
   it("GIF, WebP 등 대표 포맷이 아닌 이미지는 거부한다", async () => {
@@ -82,7 +85,7 @@ describe("uploadProfilePhoto", () => {
 
     expect(prepareProfileImageFile).not.toHaveBeenCalled();
     expect(postUploadUrl).not.toHaveBeenCalled();
-    expect(uploadFileToPresignedUrl).not.toHaveBeenCalled();
+    expect(uploadFileToObjectStorage).not.toHaveBeenCalled();
   });
 
   it("리사이즈 후에도 5MB를 초과하면 ProfilePhotoUploadValidationError를 던진다", async () => {
@@ -100,6 +103,6 @@ describe("uploadProfilePhoto", () => {
     } satisfies Partial<ProfilePhotoUploadValidationError>);
 
     expect(postUploadUrl).not.toHaveBeenCalled();
-    expect(uploadFileToPresignedUrl).not.toHaveBeenCalled();
+    expect(uploadFileToObjectStorage).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,5 @@
 import { resolveProfilePhotoContentType } from "#/features/my/lib/validate-profile-photo-file";
-import { MAX_REPORT_PHOTO_SIZE_BYTES } from "#/features/report/model/report-types";
+import { MAX_UPLOAD_IMAGE_SIZE_BYTES } from "#/shared/model/upload-types";
 
 const MAX_PROFILE_IMAGE_DIMENSION = 512;
 const PROFILE_IMAGE_JPEG_QUALITY = 0.85;
@@ -72,7 +72,7 @@ const toResizedProfileImageFile = async (file: File): Promise<File> => {
 
   if (
     maxDimension <= MAX_PROFILE_IMAGE_DIMENSION &&
-    file.size <= MAX_REPORT_PHOTO_SIZE_BYTES
+    file.size <= MAX_UPLOAD_IMAGE_SIZE_BYTES
   ) {
     return file;
   }

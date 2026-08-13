@@ -99,7 +99,6 @@ export type ReportStep1Field = (typeof STEP_1_FIELDS)[number];
 export type ReportStep2Field = (typeof STEP_2_FIELDS)[number];
 
 export const MAX_REPORT_PHOTOS = 1;
-export const MAX_REPORT_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_REPORT_ADDITIONAL_INFO_LENGTH = 255;
 
 export const REPORT_PRICE_MIN = 0;
@@ -132,28 +131,6 @@ export const AGGREGATE_VALIDATION_FIELDS = [
 
 export type AggregateValidationField =
   (typeof AGGREGATE_VALIDATION_FIELDS)[number];
-
-export type UploadCategory = "PROFILE" | "LOCKER_REPORT";
-
-export const UPLOAD_CATEGORY_LOCKER_REPORT =
-  "LOCKER_REPORT" as const satisfies UploadCategory;
-
-export const UPLOAD_CATEGORY_PROFILE =
-  "PROFILE" as const satisfies UploadCategory;
-
-export type UploadCreateRequest = {
-  category: UploadCategory;
-  fileName: string;
-  contentType: string;
-  contentLength: number;
-};
-
-export type UploadCreateData = {
-  uploadUrl: string;
-  fileUrl: string;
-  key: string;
-  expiresAt: string;
-};
 
 export type RestResponse<T> = {
   code: string;

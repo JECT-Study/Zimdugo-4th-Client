@@ -1,11 +1,11 @@
-import { postUploadUrl } from "#/features/report/api/create-upload-url";
-import { uploadFileToPresignedUrl } from "#/features/report/lib/upload-file-to-presigned-url";
 import {
   type ReportPhotoValidationError,
   resolveReportPhotoContentType,
   validateReportPhotoFile,
 } from "#/features/report/lib/validate-report-photo-file";
-import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/features/report/model/report-types";
+import { postUploadUrl } from "#/shared/api/uploads";
+import { uploadFileToObjectStorage } from "#/shared/lib/object-storage-upload";
+import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/shared/model/upload-types";
 
 export class ReportPhotoUploadValidationError extends Error {
   readonly code: ReportPhotoValidationError;
@@ -24,13 +24,18 @@ export async function uploadReportPhoto(file: File): Promise<string> {
   }
 
   const contentType = resolveReportPhotoContentType(file);
-  const { uploadUrl, fileUrl } = await postUploadUrl({
+  const upload = await postUploadUrl({
     category: UPLOAD_CATEGORY_LOCKER_REPORT,
     fileName: file.name,
     contentType,
     contentLength: file.size,
   });
 
-  await uploadFileToPresignedUrl({ uploadUrl, file, contentType });
-  return fileUrl;
+  await uploadFileToObjectStorage({
+    upload,
+    category: UPLOAD_CATEGORY_LOCKER_REPORT,
+    file,
+    contentType,
+  });
+  return upload.fileUrl;
 }

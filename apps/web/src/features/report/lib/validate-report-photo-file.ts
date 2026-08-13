@@ -1,4 +1,4 @@
-import { MAX_REPORT_PHOTO_SIZE_BYTES } from "#/features/report/model/report-types";
+import { MAX_UPLOAD_IMAGE_SIZE_BYTES } from "#/shared/model/upload-types";
 
 const ALLOWED_IMAGE_EXTENSIONS = new Set([
   "jpg",
@@ -76,7 +76,7 @@ export const validateReportPhotoFile = (
     return { ok: false, error: "invalid_type" };
   }
 
-  if (file.size > MAX_REPORT_PHOTO_SIZE_BYTES) {
+  if (file.size > MAX_UPLOAD_IMAGE_SIZE_BYTES) {
     return { ok: false, error: "max_size" };
   }
 

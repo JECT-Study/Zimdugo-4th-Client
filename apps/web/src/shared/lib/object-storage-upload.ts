@@ -1,0 +1,216 @@
+import type {
+  UploadCategory,
+  UploadCreateData,
+} from "#/shared/model/upload-types";
+
+interface UploadFileToObjectStorageParams {
+  upload: UploadCreateData;
+  category: UploadCategory;
+  file: File;
+  contentType: string;
+}
+
+interface TrustedUploadTarget {
+  hostname: string;
+  namespace: string;
+  bucket: string;
+}
+
+interface ParsedObjectStorageTarget {
+  url: URL;
+  namespace: string;
+  bucket: string;
+  objectKey: string;
+}
+
+const UPLOAD_OBJECT_PREFIXES = {
+  PROFILE: "profiles/",
+  LOCKER_REPORT: "reports/",
+} as const satisfies Record<UploadCategory, string>;
+
+export class UploadConfigurationError extends Error {
+  constructor(name: string) {
+    super(`Missing upload configuration: ${name}`);
+    this.name = "UploadConfigurationError";
+  }
+}
+
+export class UntrustedUploadDestinationError extends Error {
+  constructor() {
+    super("Untrusted upload destination");
+    this.name = "UntrustedUploadDestinationError";
+  }
+}
+
+export class ObjectStorageUploadError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`Object storage upload failed with status ${status}`);
+    this.name = "ObjectStorageUploadError";
+    this.status = status;
+  }
+}
+
+const getRequiredConfig = (name: string, value: string | undefined): string => {
+  const normalized = value?.trim();
+  if (!normalized) {
+    throw new UploadConfigurationError(name);
+  }
+  return normalized;
+};
+
+const getTrustedUploadTarget = (): TrustedUploadTarget => ({
+  hostname: getRequiredConfig(
+    "VITE_UPLOAD_HOST",
+    import.meta.env.VITE_UPLOAD_HOST,
+  ).toLowerCase(),
+  namespace: getRequiredConfig(
+    "VITE_UPLOAD_NAMESPACE",
+    import.meta.env.VITE_UPLOAD_NAMESPACE,
+  ),
+  bucket: getRequiredConfig(
+    "VITE_UPLOAD_BUCKET",
+    import.meta.env.VITE_UPLOAD_BUCKET,
+  ),
+});
+
+const parseUrl = (value: string): URL => {
+  try {
+    return new URL(value);
+  } catch {
+    throw new UntrustedUploadDestinationError();
+  }
+};
+
+const decodePathSegment = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    throw new UntrustedUploadDestinationError();
+  }
+};
+
+const parseUploadUrl = (value: string): ParsedObjectStorageTarget => {
+  const url = parseUrl(value);
+  const [
+    parMarker,
+    parToken,
+    namespaceMarker,
+    namespace,
+    bucketMarker,
+    bucket,
+    objectMarker,
+    ...objectKeySegments
+  ] = url.pathname.split("/").filter(Boolean);
+
+  if (
+    parMarker !== "p" ||
+    !parToken ||
+    namespaceMarker !== "n" ||
+    !namespace ||
+    bucketMarker !== "b" ||
+    !bucket ||
+    objectMarker !== "o" ||
+    objectKeySegments.length === 0
+  ) {
+    throw new UntrustedUploadDestinationError();
+  }
+
+  return {
+    url,
+    namespace: decodePathSegment(namespace),
+    bucket: decodePathSegment(bucket),
+    objectKey: objectKeySegments.map(decodePathSegment).join("/"),
+  };
+};
+
+const parseFileUrl = (value: string): ParsedObjectStorageTarget => {
+  const url = parseUrl(value);
+  const [
+    namespaceMarker,
+    namespace,
+    bucketMarker,
+    bucket,
+    objectMarker,
+    ...encodedObjectKeySegments
+  ] = url.pathname.split("/").filter(Boolean);
+
+  if (
+    namespaceMarker !== "n" ||
+    !namespace ||
+    bucketMarker !== "b" ||
+    !bucket ||
+    objectMarker !== "o" ||
+    encodedObjectKeySegments.length === 0
+  ) {
+    throw new UntrustedUploadDestinationError();
+  }
+
+  return {
+    url,
+    namespace: decodePathSegment(namespace),
+    bucket: decodePathSegment(bucket),
+    objectKey: decodePathSegment(encodedObjectKeySegments.join("/")),
+  };
+};
+
+const isSecureTargetUrl = (url: URL, hostname: string): boolean =>
+  url.protocol === "https:" &&
+  url.hostname.toLowerCase() === hostname &&
+  url.port === "" &&
+  url.username === "" &&
+  url.password === "" &&
+  url.search === "" &&
+  url.hash === "";
+
+export const assertTrustedUploadDestination = ({
+  upload,
+  category,
+}: {
+  upload: UploadCreateData;
+  category: UploadCategory;
+}): void => {
+  const trusted = getTrustedUploadTarget();
+  const uploadTarget = parseUploadUrl(upload.uploadUrl);
+  const fileTarget = parseFileUrl(upload.fileUrl);
+  const expectedPrefix = UPLOAD_OBJECT_PREFIXES[category];
+
+  const isTrusted =
+    isSecureTargetUrl(uploadTarget.url, trusted.hostname) &&
+    isSecureTargetUrl(fileTarget.url, trusted.hostname) &&
+    uploadTarget.namespace === trusted.namespace &&
+    fileTarget.namespace === trusted.namespace &&
+    uploadTarget.bucket === trusted.bucket &&
+    fileTarget.bucket === trusted.bucket &&
+    uploadTarget.objectKey.startsWith(expectedPrefix) &&
+    uploadTarget.objectKey.length > expectedPrefix.length &&
+    uploadTarget.objectKey === fileTarget.objectKey &&
+    uploadTarget.objectKey === upload.key;
+
+  if (!isTrusted) {
+    throw new UntrustedUploadDestinationError();
+  }
+};
+
+export async function uploadFileToObjectStorage({
+  upload,
+  category,
+  file,
+  contentType,
+}: UploadFileToObjectStorageParams): Promise<void> {
+  assertTrustedUploadDestination({ upload, category });
+
+  const response = await fetch(upload.uploadUrl, {
+    method: "PUT",
+    body: file,
+    credentials: "omit",
+    mode: "cors",
+    redirect: "error",
+    headers: { "Content-Type": contentType },
+  });
+
+  if (!response.ok) {
+    throw new ObjectStorageUploadError(response.status);
+  }
+}
