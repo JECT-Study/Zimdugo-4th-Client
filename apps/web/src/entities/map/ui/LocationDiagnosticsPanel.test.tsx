@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LocationDiagnosticsPanel } from "./LocationDiagnosticsPanel";
 
 describe("LocationDiagnosticsPanel", () => {
@@ -25,6 +31,10 @@ describe("LocationDiagnosticsPanel", () => {
         watchPosition: vi.fn().mockReturnValue(1),
       },
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("does not render when diagnostics are disabled", () => {
@@ -57,5 +67,33 @@ describe("LocationDiagnosticsPanel", () => {
       expect(screen.getByText(/get-current-position-success/)).toBeDefined();
     });
     expect(screen.queryByText(/37\.5|127/)).toBeNull();
+  });
+
+  it("records location success even when the permission query does not resolve", async () => {
+    vi.mocked(navigator.permissions.query).mockReturnValue(
+      new Promise(() => {}),
+    );
+    getCurrentPosition.mockImplementation((onSuccess: PositionCallback) => {
+      onSuccess({
+        coords: {
+          accuracy: 10,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          latitude: 37.5,
+          longitude: 127,
+          speed: null,
+        },
+        timestamp: Date.now(),
+        toJSON: () => ({}),
+      });
+    });
+    render(<LocationDiagnosticsPanel isEnabled />);
+
+    fireEvent.click(screen.getByRole("button", { name: "1회 위치 요청" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/get-current-position-success/)).toBeDefined();
+    });
   });
 });

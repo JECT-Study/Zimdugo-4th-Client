@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type PermissionStateResult = PermissionState | "unsupported" | "query-error";
+type PermissionStateResult =
+  | PermissionState
+  | "unsupported"
+  | "query-error"
+  | "query-timeout";
+
+const PERMISSION_QUERY_TIMEOUT_MS = 2000;
 
 interface DiagnosticEvent {
   id: number;
@@ -45,10 +51,17 @@ const getPermissionState = async (): Promise<PermissionStateResult> => {
   if (!navigator.permissions?.query) return "unsupported";
 
   try {
-    const status = await navigator.permissions.query({
-      name: "geolocation",
-    });
-    return status.state;
+    return await Promise.race<PermissionStateResult>([
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((status) => status.state),
+      new Promise<"query-timeout">((resolve) => {
+        window.setTimeout(
+          () => resolve("query-timeout"),
+          PERMISSION_QUERY_TIMEOUT_MS,
+        );
+      }),
+    ]);
   } catch {
     return "query-error";
   }
@@ -96,18 +109,26 @@ export function LocationDiagnosticsPanel({
     appendEvent({ event: "get-current-position-start" });
 
     navigator.geolocation.getCurrentPosition(
-      async () => {
-        appendEvent({
-          event: "get-current-position-success",
-          permission: await getPermissionState(),
+      () => {
+        appendEvent({ event: "get-current-position-success" });
+        void getPermissionState().then((permission) => {
+          appendEvent({
+            event: "permission-after-get-current-position-success",
+            permission,
+          });
         });
       },
-      async (error) => {
+      (error) => {
         appendEvent({
           event: "get-current-position-error",
-          permission: await getPermissionState(),
           errorCode: error.code,
           errorMessage: error.message,
+        });
+        void getPermissionState().then((permission) => {
+          appendEvent({
+            event: "permission-after-get-current-position-error",
+            permission,
+          });
         });
       },
       {
@@ -128,18 +149,26 @@ export function LocationDiagnosticsPanel({
     appendEvent({ event: "watch-start" });
 
     watchIdRef.current = navigator.geolocation.watchPosition(
-      async () => {
-        appendEvent({
-          event: "watch-success",
-          permission: await getPermissionState(),
+      () => {
+        appendEvent({ event: "watch-success" });
+        void getPermissionState().then((permission) => {
+          appendEvent({
+            event: "permission-after-watch-success",
+            permission,
+          });
         });
       },
-      async (error) => {
+      (error) => {
         appendEvent({
           event: "watch-error",
-          permission: await getPermissionState(),
           errorCode: error.code,
           errorMessage: error.message,
+        });
+        void getPermissionState().then((permission) => {
+          appendEvent({
+            event: "permission-after-watch-error",
+            permission,
+          });
         });
       },
       {
