@@ -4,7 +4,7 @@ import {
   validateReportPhotoFile,
 } from "#/features/report/lib/validate-report-photo-file";
 import { postUploadUrl } from "#/shared/api/uploads";
-import { uploadFileToObjectStorage } from "#/shared/lib/object-storage-upload";
+import { uploadFileToUploadUrl } from "#/shared/lib/upload-file-to-upload-url";
 import { UPLOAD_CATEGORY_LOCKER_REPORT } from "#/shared/model/upload-types";
 
 export class ReportPhotoUploadValidationError extends Error {
@@ -31,7 +31,7 @@ export async function uploadReportPhoto(file: File): Promise<string> {
     contentLength: file.size,
   });
 
-  await uploadFileToObjectStorage({
+  await uploadFileToUploadUrl({
     upload,
     category: UPLOAD_CATEGORY_LOCKER_REPORT,
     file,

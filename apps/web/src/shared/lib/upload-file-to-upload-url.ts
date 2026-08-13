@@ -3,7 +3,7 @@ import type {
   UploadCreateData,
 } from "#/shared/model/upload-types";
 
-interface UploadFileToObjectStorageParams {
+interface UploadFileToUploadUrlParams {
   upload: UploadCreateData;
   category: UploadCategory;
   file: File;
@@ -16,7 +16,7 @@ interface TrustedUploadTarget {
   bucket: string;
 }
 
-interface ParsedObjectStorageTarget {
+interface ParsedOciUploadTarget {
   url: URL;
   namespace: string;
   bucket: string;
@@ -41,12 +41,12 @@ export class UntrustedUploadDestinationError extends Error {
   }
 }
 
-export class ObjectStorageUploadError extends Error {
+export class UploadUrlRequestError extends Error {
   readonly status: number;
 
   constructor(status: number) {
-    super(`Object storage upload failed with status ${status}`);
-    this.name = "ObjectStorageUploadError";
+    super(`Upload URL request failed with status ${status}`);
+    this.name = "UploadUrlRequestError";
     this.status = status;
   }
 }
@@ -85,7 +85,7 @@ const decodePathSegment = (value: string): string => {
   }
 };
 
-const parseUploadUrl = (value: string): ParsedObjectStorageTarget => {
+const parseOciUploadUrl = (value: string): ParsedOciUploadTarget => {
   const url = parseUrl(value);
   const [
     parMarker,
@@ -119,7 +119,7 @@ const parseUploadUrl = (value: string): ParsedObjectStorageTarget => {
   };
 };
 
-const parseFileUrl = (value: string): ParsedObjectStorageTarget => {
+const parseOciFileUrl = (value: string): ParsedOciUploadTarget => {
   const url = parseUrl(value);
   const [
     namespaceMarker,
@@ -166,8 +166,8 @@ export const assertTrustedUploadDestination = ({
   category: UploadCategory;
 }): void => {
   const trusted = getTrustedUploadTarget();
-  const uploadTarget = parseUploadUrl(upload.uploadUrl);
-  const fileTarget = parseFileUrl(upload.fileUrl);
+  const uploadTarget = parseOciUploadUrl(upload.uploadUrl);
+  const fileTarget = parseOciFileUrl(upload.fileUrl);
   const expectedPrefix = UPLOAD_OBJECT_PREFIXES[category];
 
   const isTrusted =
@@ -187,12 +187,12 @@ export const assertTrustedUploadDestination = ({
   }
 };
 
-export async function uploadFileToObjectStorage({
+export async function uploadFileToUploadUrl({
   upload,
   category,
   file,
   contentType,
-}: UploadFileToObjectStorageParams): Promise<void> {
+}: UploadFileToUploadUrlParams): Promise<void> {
   assertTrustedUploadDestination({ upload, category });
 
   const response = await fetch(upload.uploadUrl, {
@@ -205,6 +205,6 @@ export async function uploadFileToObjectStorage({
   });
 
   if (!response.ok) {
-    throw new ObjectStorageUploadError(response.status);
+    throw new UploadUrlRequestError(response.status);
   }
 }

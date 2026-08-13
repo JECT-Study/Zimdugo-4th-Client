@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   assertTrustedUploadDestination,
-  type ObjectStorageUploadError,
   UntrustedUploadDestinationError,
-  uploadFileToObjectStorage,
-} from "#/shared/lib/object-storage-upload";
+  type UploadUrlRequestError,
+  uploadFileToUploadUrl,
+} from "#/shared/lib/upload-file-to-upload-url";
 import {
   UPLOAD_CATEGORY_LOCKER_REPORT,
   UPLOAD_CATEGORY_PROFILE,
@@ -22,7 +22,7 @@ const createUpload = (key: string): UploadCreateData => ({
   expiresAt: "2026-08-13T10:31:10.571Z",
 });
 
-describe("object storage upload", () => {
+describe("uploadFileToUploadUrl", () => {
   beforeEach(() => {
     vi.stubEnv("VITE_UPLOAD_HOST", HOST);
     vi.stubEnv("VITE_UPLOAD_NAMESPACE", NAMESPACE);
@@ -54,7 +54,7 @@ describe("object storage upload", () => {
     const upload = createUpload("profiles/7/profile.jpg");
     const file = new File(["photo"], "profile.jpg", { type: "image/jpeg" });
 
-    await uploadFileToObjectStorage({
+    await uploadFileToUploadUrl({
       upload,
       category: UPLOAD_CATEGORY_PROFILE,
       file,
@@ -107,7 +107,7 @@ describe("object storage upload", () => {
     const upload = createUpload("reports/report.jpg");
     const file = new File(["photo"], "report.jpg", { type: "image/jpeg" });
 
-    await uploadFileToObjectStorage({
+    await uploadFileToUploadUrl({
       upload,
       category: UPLOAD_CATEGORY_LOCKER_REPORT,
       file,
@@ -128,15 +128,15 @@ describe("object storage upload", () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response);
 
     await expect(
-      uploadFileToObjectStorage({
+      uploadFileToUploadUrl({
         upload: createUpload("reports/report.jpg"),
         category: UPLOAD_CATEGORY_LOCKER_REPORT,
         file: new File(["photo"], "report.jpg"),
         contentType: "image/jpeg",
       }),
     ).rejects.toMatchObject({
-      name: "ObjectStorageUploadError",
+      name: "UploadUrlRequestError",
       status: 403,
-    } satisfies Partial<ObjectStorageUploadError>);
+    } satisfies Partial<UploadUrlRequestError>);
   });
 });

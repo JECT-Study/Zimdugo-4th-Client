@@ -5,7 +5,7 @@ import {
   validateProfilePhotoFile,
 } from "#/features/my/lib/validate-profile-photo-file";
 import { postUploadUrl } from "#/shared/api/uploads";
-import { uploadFileToObjectStorage } from "#/shared/lib/object-storage-upload";
+import { uploadFileToUploadUrl } from "#/shared/lib/upload-file-to-upload-url";
 import {
   MAX_UPLOAD_IMAGE_SIZE_BYTES,
   UPLOAD_CATEGORY_PROFILE,
@@ -41,7 +41,7 @@ export async function uploadProfilePhoto(file: File): Promise<string> {
     contentLength: preparedFile.size,
   });
 
-  await uploadFileToObjectStorage({
+  await uploadFileToUploadUrl({
     upload,
     category: UPLOAD_CATEGORY_PROFILE,
     file: preparedFile,
