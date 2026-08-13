@@ -1,8 +1,8 @@
 export const SEARCH_QUERY_MAX_LENGTH = 30;
 
-/** 한글 완성형, 영문, 숫자, CJK, 히라가나·가타카나, 공백 */
+/** 한글 완성형, 영문, 숫자, CJK, 히라가나·가타카나, 공백, 장소명용 특수문자 */
 const ALLOWED_SEARCH_QUERY_CHAR =
-  /[0-9A-Za-z\uAC00-\uD7A3\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF ]/;
+  /[0-9A-Za-z\uAC00-\uD7A3\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF &'().-]/;
 
 /** IME·초성검색용 한글 자모 */
 const HANGUL_JAMO_CHAR =

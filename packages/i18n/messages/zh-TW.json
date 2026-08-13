@@ -91,7 +91,6 @@
   "search_sort_price": "按價格",
   "search_favorite_add": "加入收藏",
   "search_favorite_remove": "取消收藏",
-  "search_suggest_min_length": "請輸入至少2個字符。",
   "search_query_invalid_chars": "包含不支持的字符。請按正確格式重新輸入。",
   "search_suggest_empty": "沒有匹配的場所或儲物櫃。",
   "search_suggest_error_title": "無法載入搜索建議",
