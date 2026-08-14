@@ -79,6 +79,13 @@ const LOCKER_DETAIL: LockerDetailItem = {
   accurateCount: 78,
   inaccurateCount: 5,
   lastUpdatedLabel: "최근 업데이트 2026-05-16 16:25",
+  realtimeAvailability: {
+    isAvailable: true,
+    smallAvailableCount: 12,
+    mediumAvailableCount: 2,
+    largeAvailableCount: 0,
+    fetchedAt: "2026-08-14T14:19:47.013473",
+  },
 };
 
 const getSheetRoot = () =>
@@ -99,7 +106,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 760,
       miniSnapPoint: 701,
       minSnapPoint: 112,
-      snapPoint: 566,
+      snapPoint: 621,
     });
   });
 
@@ -108,7 +115,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 948,
       miniSnapPoint: 889,
       minSnapPoint: 112,
-      snapPoint: 754,
+      snapPoint: 809,
     });
   });
 
@@ -132,19 +139,66 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
     const sheet = getSheetRoot();
 
     expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
     expect(sheet.getByText("제보하기를 통해 등록할 수 있어요!")).toBeTruthy();
+    expect(sheet.queryByText("최근 업데이트 2026-05-16 16:25")).toBeNull();
     expect(sheet.getByText(LOCKER_DETAIL.title)).toBeTruthy();
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
+    expect(sheet.getByText("실시간 보관함 잔여석")).toBeTruthy();
+    expect(sheet.getByText("S 12 · M 2 · L 0")).toBeTruthy();
+    const realtimeAvailabilityCard = sheet
+      .getByText("실시간 보관함 잔여석")
+      .closest("section");
+    const realtimeAvailabilityDivider = sheet.getByRole("separator");
+    expect(realtimeAvailabilityCard?.nextElementSibling).toBe(
+      realtimeAvailabilityDivider,
+    );
     expect(
       sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
     ).toBeTruthy();
     expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
+  });
+
+  it("실시간 정보가 없으면 사이즈별 잔여석을 대시로 표시한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, realtimeAvailability: null }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
+    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
+  });
+
+  it("실시간 이용 불가 상태이면 사이즈별 잔여석을 대시로 표시한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          realtimeAvailability: {
+            isAvailable: false,
+            smallAvailableCount: 12,
+            mediumAvailableCount: 2,
+            largeAvailableCount: 0,
+            fetchedAt: "2026-08-14T14:19:47.013473",
+          },
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
+    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
   });
 
   it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {
@@ -190,7 +244,10 @@ describe("LockerDetailBottomSheet", () => {
   it("즐겨찾기 handler가 없으면 더보기 메뉴에서 즐겨찾기를 숨긴다", () => {
     const handleReport = vi.fn();
     render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={handleReport} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        onReport={handleReport}
+      />,
     );
     const sheet = getSheetRoot();
 
@@ -226,7 +283,9 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
     const sheet = getSheetRoot();
 
     expect(sheet.queryByRole("button", { name: /정확한 정보에요/ })).toBeNull();

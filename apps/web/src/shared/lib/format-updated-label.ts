@@ -1,4 +1,6 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
+import type { AppLocale } from "#/shared/i18n/locales";
+import { normalizeLocale } from "#/shared/i18n/locales";
 
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -6,6 +8,14 @@ const DAY_MS = 24 * HOUR_MS;
 const JUST_NOW_THRESHOLD_MS = 5 * MINUTE_MS;
 const DAYS_PER_MONTH = 30;
 const DAYS_PER_YEAR = 365;
+const EN_REALTIME_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
 
 const normalizeUpdatedAtForParsing = (updatedAt: string): string =>
   updatedAt.replace(
@@ -33,6 +43,26 @@ const formatAbsoluteDateTime = (timestamp: number): string => {
   const minute = String(date.getMinutes()).padStart(2, "0");
 
   return `${year}-${month}-${day} ${hour}:${minute}`;
+};
+
+const formatRealtimeDateTime = (
+  timestamp: number,
+  locale: AppLocale,
+): string => {
+  const date = new Date(timestamp);
+
+  if (locale === "en") {
+    return EN_REALTIME_DATE_TIME_FORMATTER.format(date);
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const dateSeparator = locale === "ko" ? "." : "/";
+
+  return `${year}${dateSeparator}${month}${dateSeparator}${day} ${hour}:${minute}`;
 };
 
 export const formatUpdatedLabel = (
@@ -81,5 +111,18 @@ export const formatLastUpdatedLabel = (
 
   return m.locker_detail_last_updated({
     datetime: formatAbsoluteDateTime(timestamp),
+  });
+};
+
+export const formatRealtimeAvailabilityAsOfLabel = (
+  fetchedAt: string | undefined,
+): string => {
+  const timestamp = parseUpdatedTimestamp(fetchedAt);
+  if (timestamp === null) return "";
+
+  const locale = normalizeLocale(languageTag()) ?? "ko";
+
+  return m.locker_detail_realtime_as_of({
+    datetime: formatRealtimeDateTime(timestamp, locale),
   });
 };

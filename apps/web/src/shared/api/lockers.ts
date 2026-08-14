@@ -219,6 +219,14 @@ export interface LockerOperatingHoursRaw {
   close: string;
 }
 
+export interface LockerRealtimeAvailabilityRaw {
+  isAvailable: boolean;
+  smallAvailableCount: number;
+  mediumAvailableCount: number;
+  largeAvailableCount: number;
+  fetchedAt: string;
+}
+
 export interface LockerDetailRaw {
   lockerId: number;
   lockerName: string;
@@ -246,6 +254,7 @@ export interface LockerDetailRaw {
   createdAt?: string;
   isAccurateVoted?: boolean;
   isInaccurateVoted?: boolean;
+  realtimeAvailability: LockerRealtimeAvailabilityRaw | null;
   /** @deprecated Swagger는 operatingHours 대신 startTime/endTime */
   operatingHours?: LockerOperatingHoursRaw | null;
   /** @deprecated Swagger는 floor 사용 */

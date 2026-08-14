@@ -28,6 +28,7 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
+import { LockerRealtimeAvailabilityCard } from "#/entities/locker/ui/realtime-availability";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import {
   formatLockerOperatingHoursLabel,
@@ -88,10 +89,9 @@ import {
   metaRow,
   metaTruncatedText,
   primaryActionButton,
-  recentUpdatedText,
+  realtimeAvailabilityDivider,
   sheetColumn,
   summaryActions,
-  summaryDivider,
   summaryIconButton,
   summaryRow,
   summarySection,
@@ -132,7 +132,7 @@ const DETAIL_CONTENT_TOP_PADDING = 8;
 const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
-const DETAIL_HALF_VISIBLE_HEIGHT = 246;
+const DETAIL_HALF_VISIBLE_HEIGHT = 191;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
@@ -523,6 +523,12 @@ function LockerDetailLoadingContent() {
           style={skeletonSurfaceStyle}
         />
       </div>
+      <Skeleton
+        width="100%"
+        height={64}
+        borderRadius={12}
+        style={skeletonSurfaceStyle}
+      />
       <div className={loadingDetailList}>
         {LOCKER_DETAIL_SKELETON_ROWS.map((rowKey) => (
           <div key={rowKey} className={loadingDetailRow}>
@@ -654,6 +660,10 @@ function FullDetailContent({
           snapStage={snapStage}
           canExpandTitle={isScrollEnabled}
         />
+        <LockerRealtimeAvailabilityCard
+          availability={locker.realtimeAvailability}
+        />
+        <hr className={realtimeAvailabilityDivider} />
         <div className={fullDetailList}>
           <DetailInfoRow
             icon={<IconLockerDetailMapPin24 />}
@@ -688,9 +698,6 @@ function FullDetailContent({
           imageUrl={locker.imageUrl}
           onOpenPreview={handleOpenImagePreview}
         />
-        {locker.lastUpdatedLabel ? (
-          <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
-        ) : null}
         {/*
           @deprecated 정확성 vote UI는 상세 화면 개편에서 노출을 중단했다.
           롤백 시 features/vote의 훅·모델·API를 다시 연결하고,
@@ -872,7 +879,6 @@ function SummarySection({
           </button>
         </div>
       </div>
-      <div className={summaryDivider} />
     </section>
   );
 }

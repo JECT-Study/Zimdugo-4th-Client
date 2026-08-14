@@ -154,6 +154,13 @@ describe("locker-adapters", () => {
       isInaccurateVoted: false,
       updatedAt: "2026-05-31T14:59:09",
       isFavorite: false,
+      realtimeAvailability: {
+        isAvailable: true,
+        smallAvailableCount: 12,
+        mediumAvailableCount: 2,
+        largeAvailableCount: 0,
+        fetchedAt: "2026-08-14T14:19:47.013473",
+      },
     };
 
     const detail = toLockerDetailItem(raw);
@@ -169,6 +176,13 @@ describe("locker-adapters", () => {
     expect(detail.isAccurateVoted).toBe(true);
     expect(detail.isInaccurateVoted).toBe(false);
     expect(detail.lastUpdatedLabel).toBe("최근 업데이트 2026-05-31 14:59");
+    expect(detail.realtimeAvailability).toEqual({
+      isAvailable: true,
+      smallAvailableCount: 12,
+      mediumAvailableCount: 2,
+      largeAvailableCount: 0,
+      fetchedAt: "2026-08-14T14:19:47.013473",
+    });
   });
 
   it("투표 플래그가 없으면 false로 변환한다", () => {
@@ -181,6 +195,7 @@ describe("locker-adapters", () => {
       longitude: 127.0,
       accurateVoteCount: 2,
       inaccurateVoteCount: 0,
+      realtimeAvailability: null,
     });
 
     expect(detail.isAccurateVoted).toBe(false);
@@ -198,6 +213,7 @@ describe("locker-adapters", () => {
       latitude: 37.5,
       longitude: 127.0,
       isFavorite: false,
+      realtimeAvailability: null,
     });
 
     expect(detail.operatingHoursLabel).toBe("운영시간 미제공");
@@ -213,9 +229,11 @@ describe("locker-adapters", () => {
       latitude: 37.5,
       longitude: 127.0,
       imageUrl: " https://example.com/locker.jpg ",
+      realtimeAvailability: null,
     });
 
     expect(detail.imageUrl).toBe("https://example.com/locker.jpg");
+    expect(detail.realtimeAvailability).toBeNull();
   });
 
   it("normalizes Swagger HH:mm:ss operating hours for keyword results", () => {

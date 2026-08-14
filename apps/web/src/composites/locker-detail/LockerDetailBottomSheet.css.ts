@@ -121,10 +121,12 @@ export const summaryRow = style({
   boxSizing: "border-box",
 });
 
-export const summaryDivider = style({
+export const realtimeAvailabilityDivider = style({
   width: `calc(100% + (${vars.spacing[16]} * 2))`,
   height: "1px",
   margin: `0 -${vars.spacing[16]}`,
+  border: 0,
+  padding: 0,
   flexShrink: 0,
   backgroundColor: vars.color.border.default,
 });
@@ -407,6 +409,7 @@ export const primaryActionButton = style({
 export const fullDetailList = style({
   display: "flex",
   flexDirection: "column",
+  gap: vars.spacing[12],
   width: "100%",
 });
 
@@ -428,7 +431,7 @@ export const detailItemContent = style({
 export const detailLeading = style({
   display: "flex",
   alignItems: "flex-start",
-  gap: vars.spacing[12],
+  gap: vars.spacing[16],
   minWidth: 0,
   flex: 1,
 });
@@ -505,15 +508,6 @@ export const detailTrailing = style({
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: 1.2,
   whiteSpace: "nowrap",
-});
-
-export const recentUpdatedText = style({
-  margin: `${vars.spacing[4]} 0 ${vars.spacing[8]}`,
-  color: vars.color.text.disable,
-  fontSize: "10px",
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
-  textAlign: "center",
 });
 
 export const actionSection = style({

@@ -63,4 +63,5 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   isAccurateVoted: raw.isAccurateVoted ?? false,
   isInaccurateVoted: raw.isInaccurateVoted ?? false,
   lastUpdatedLabel: formatLastUpdatedLabel(raw.updatedAt) || undefined,
+  realtimeAvailability: raw.realtimeAvailability,
 });
