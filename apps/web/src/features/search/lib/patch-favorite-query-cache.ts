@@ -1,5 +1,5 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
-import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import type {
   SearchLockerResultItem,
   SearchLockerResultItems,

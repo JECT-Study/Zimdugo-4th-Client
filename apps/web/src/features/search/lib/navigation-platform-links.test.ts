@@ -2,7 +2,7 @@
 
 import { setLanguageTag } from "@repo/i18n";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   DEFAULT_NAVIGATION_ORIGIN,
   encodeNaverCoordinate,

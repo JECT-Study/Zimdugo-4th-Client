@@ -24,11 +24,11 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
-import type { SearchAutocompleteItemData } from "#/entities/search";
-import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
+import type {
+  LockerDetailItem,
+  LockerDetailLoadState,
+} from "#/entities/locker/model/locker-detail";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
-import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
@@ -106,26 +106,6 @@ import { LockerDetailMoreActionsModal } from "./LockerDetailMoreActionsModal";
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
-
-export interface LockerDetailItem extends SearchLockerResultItem {
-  operatingHoursLabel?: string;
-  floorLabel?: string;
-  priceLabel?: string;
-  sizeLabel?: string;
-  detailHelpText?: string;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  accurateCount?: number;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  inaccurateCount?: number;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  isAccurateVoted?: boolean;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  isInaccurateVoted?: boolean;
-  lastUpdatedLabel?: string;
-  imageUrl?: string;
-}
-
-export type LockerDetailLoadState = "ready" | "loading" | "error";
 
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
@@ -270,68 +250,6 @@ export const resolveLockerDetailSnapPoints = ({
     snapPoint: resolvedSnapPoint,
   };
 };
-
-export const createLockerDetailFromSearchItem = (
-  item: SearchLockerResultItem,
-): LockerDetailItem => ({
-  ...item,
-  operatingHoursLabel: item.operatingHours
-    ? formatLockerOperatingHoursLabel(
-        item.operatingHours.open,
-        item.operatingHours.close,
-      )
-    : formatLockerOperatingHoursLabel(),
-  priceLabel: formatLockerPriceLabel(item.minPrice),
-});
-
-/** 지도 핀 선택 직후 API 응답 전에 쓰는 낙관적 상세 */
-export const createLockerDetailFromPin = (
-  pin: Extract<LockerPinItemResponse, { pinType: "LOCKER" }>,
-): LockerDetailItem => ({
-  ...createLockerDetailPlaceholder(pin.lockerId),
-  latitude: pin.latitude,
-  longitude: pin.longitude,
-});
-
-/** API 응답 전 마커 등 lockerId만 알 때 쓰는 플레이스홀더 */
-export const createLockerDetailPlaceholder = (
-  lockerId: number,
-): LockerDetailItem => ({
-  itemType: "LOCKER",
-  lockerId,
-  title: "...",
-  address: "",
-  categoryLabel: "",
-  updatedLabel: "",
-  distanceLabel: "",
-  operatingHoursLabel: formatLockerOperatingHoursLabel(),
-  floorLabel: "",
-  priceLabel: formatLockerPriceLabel(),
-  sizeLabel: "",
-  detailHelpText: "",
-});
-
-export const createLockerDetailFromHistoryEntry = (
-  entry: Pick<SearchHistoryLockerEntry, "lockerId" | "title">,
-): LockerDetailItem => ({
-  ...createLockerDetailPlaceholder(entry.lockerId),
-  title: entry.title,
-});
-
-export const createLockerDetailFromAutocompleteItem = (
-  item: Extract<SearchAutocompleteItemData, { itemType: "LOCKER" }>,
-): LockerDetailItem => ({
-  itemType: "LOCKER",
-  lockerId: item.lockerId,
-  title: item.title,
-  address: item.address,
-  categoryLabel: item.categoryLabel,
-  updatedLabel: item.updatedLabel,
-  distanceLabel: item.distanceLabel,
-  distanceMeters: item.distanceMeters,
-  operatingHoursLabel: formatLockerOperatingHoursLabel(),
-  priceLabel: formatLockerPriceLabel(),
-});
 
 export function LockerDetailBottomSheet({
   locker,

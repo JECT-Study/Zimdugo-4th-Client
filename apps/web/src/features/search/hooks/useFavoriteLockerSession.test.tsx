@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useFavoriteLockerSession } from "./useFavoriteLockerSession";
 

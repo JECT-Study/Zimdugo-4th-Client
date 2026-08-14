@@ -57,7 +57,7 @@ vi.mock("#/shared/ui/OverflowMarqueeText", async () => {
   };
 });
 
-import type { LockerDetailItem } from "./LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,

@@ -13,18 +13,23 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
+  LOCKER_DETAIL_FULL_TOP_OFFSET,
+  LockerDetailBottomSheet,
+  type LockerDetailSheetSnapRequest,
+  type LockerDetailSheetSnapStage,
+} from "#/composites/locker-detail/LockerDetailBottomSheet";
+import {
   createLockerDetailFromAutocompleteItem,
   createLockerDetailFromHistoryEntry,
   createLockerDetailFromPin,
   createLockerDetailFromSearchItem,
   createLockerDetailPlaceholder,
-  LOCKER_DETAIL_FULL_TOP_OFFSET,
-  LockerDetailBottomSheet,
-  type LockerDetailItem,
-  type LockerDetailLoadState,
-  type LockerDetailSheetSnapRequest,
-  type LockerDetailSheetSnapStage,
-} from "#/composites/locker-detail/LockerDetailBottomSheet";
+} from "#/entities/locker/lib/create-locker-detail";
+import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
+import type {
+  LockerDetailItem,
+  LockerDetailLoadState,
+} from "#/entities/locker/model/locker-detail";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
   createDefaultSearchFilters,
@@ -178,7 +183,6 @@ import {
   getSeoLocale,
   getSeoPathname,
 } from "#/features/seo/model/localized-seo-head";
-import { toLockerDetailItem } from "#/shared/api/locker-adapters";
 import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import {
   getLockerDetail,

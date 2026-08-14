@@ -2,9 +2,9 @@ import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   LockerDetailBottomSheet,
-  type LockerDetailItem,
   type LockerDetailSheetSnapStage,
   resolveLockerDetailSnapPoints,
 } from "./LockerDetailBottomSheet";

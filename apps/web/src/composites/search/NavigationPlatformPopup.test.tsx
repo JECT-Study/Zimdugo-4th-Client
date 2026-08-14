@@ -4,7 +4,7 @@ import { setLanguageTag } from "@repo/i18n";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as navigationPlatformLinks from "#/features/search/lib/navigation-platform-links";
-import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   getNavigationPlatformUrl,
   NavigationPlatformPopup,
