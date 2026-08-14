@@ -2468,10 +2468,6 @@ export function IndexPage() {
     setIsNavigationPopupOpen(true);
   }, []);
 
-  const handleReportLockerDetail = useCallback(() => {
-    void navigate({ to: "/report" });
-  }, [navigate]);
-
   const handleShareLockerDetail = useCallback(
     (item: LockerDetailItem) => {
       if (typeof window === "undefined") {
@@ -3246,7 +3242,6 @@ export function IndexPage() {
           }
           onBack={handleBackFromDetail}
           onShare={handleShareLockerDetail}
-          onReport={handleReportLockerDetail}
           onNavigate={handleOpenNavigationPopup}
           showFavoriteAction={isAuthenticated}
           initialSnapPoint={

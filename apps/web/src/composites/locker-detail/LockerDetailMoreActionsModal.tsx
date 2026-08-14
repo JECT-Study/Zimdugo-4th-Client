@@ -36,7 +36,6 @@ import {
 
 const MODAL_EDGE_GAP = 8;
 const MODAL_VIEWPORT_PADDING = 16;
-const MODAL_RIGHT_OFFSET = 8;
 
 interface ModalPosition {
   top: number;
@@ -66,7 +65,7 @@ export function LockerDetailMoreActionsModal({
 }: LockerDetailMoreActionsModalProps) {
   const [position, setPosition] = useState<ModalPosition>({
     top: MODAL_VIEWPORT_PADDING,
-    right: MODAL_VIEWPORT_PADDING,
+    right: 0,
   });
   const modalRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,10 +83,7 @@ export function LockerDetailMoreActionsModal({
       window.innerHeight - modalHeight - MODAL_VIEWPORT_PADDING;
     setPosition({
       top: Math.max(MODAL_VIEWPORT_PADDING, Math.min(preferredTop, maximumTop)),
-      right: Math.max(
-        MODAL_RIGHT_OFFSET,
-        window.innerWidth - rect.right - MODAL_RIGHT_OFFSET,
-      ),
+      right: 0,
     });
   }, [anchorRef]);
 
