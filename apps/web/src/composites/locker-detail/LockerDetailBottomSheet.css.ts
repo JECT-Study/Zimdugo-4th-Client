@@ -409,6 +409,7 @@ export const primaryActionButton = style({
 export const fullDetailList = style({
   display: "flex",
   flexDirection: "column",
+  gap: vars.spacing[12],
   width: "100%",
 });
 
@@ -430,7 +431,7 @@ export const detailItemContent = style({
 export const detailLeading = style({
   display: "flex",
   alignItems: "flex-start",
-  gap: vars.spacing[12],
+  gap: vars.spacing[16],
   minWidth: 0,
   flex: 1,
 });
