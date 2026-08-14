@@ -90,7 +90,6 @@ import {
   metaTruncatedText,
   primaryActionButton,
   realtimeAvailabilityDivider,
-  recentUpdatedText,
   sheetColumn,
   summaryActions,
   summaryIconButton,
@@ -699,9 +698,6 @@ function FullDetailContent({
           imageUrl={locker.imageUrl}
           onOpenPreview={handleOpenImagePreview}
         />
-        {locker.lastUpdatedLabel ? (
-          <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
-        ) : null}
         {/*
           @deprecated 정확성 vote UI는 상세 화면 개편에서 노출을 중단했다.
           롤백 시 features/vote의 훅·모델·API를 다시 연결하고,

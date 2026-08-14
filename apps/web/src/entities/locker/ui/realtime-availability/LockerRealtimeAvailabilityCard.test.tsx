@@ -1,11 +1,15 @@
-import { m } from "@repo/i18n";
+import { m, setLanguageTag } from "@repo/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { LockerRealtimeAvailabilityCard } from "./LockerRealtimeAvailabilityCard";
 
 afterEach(cleanup);
 
 describe("LockerRealtimeAvailabilityCard", () => {
+  beforeEach(() => {
+    setLanguageTag("ko");
+  });
+
   it("0을 포함한 실시간 잔여 수량과 갱신 시각을 표시한다", () => {
     render(
       <LockerRealtimeAvailabilityCard
@@ -23,7 +27,7 @@ describe("LockerRealtimeAvailabilityCard", () => {
       screen.getByText(m.locker_detail_realtime_availability()),
     ).toBeTruthy();
     expect(screen.getByText("S 12 · M 2 · L 0")).toBeTruthy();
-    expect(screen.getByText("최근 업데이트 2026-08-14 14:19")).toBeTruthy();
+    expect(screen.getByText("2026.08.14 14:19 기준")).toBeTruthy();
   });
 
   it("매핑 정보가 없으면 모든 사이즈를 대시로 표시한다", () => {
@@ -31,7 +35,7 @@ describe("LockerRealtimeAvailabilityCard", () => {
 
     expect(screen.getByText("실시간 이용 정보 미제공")).toBeTruthy();
     expect(screen.getByText("S - · M - · L -")).toBeTruthy();
-    expect(screen.queryByText(/최근 업데이트/)).toBeNull();
+    expect(screen.queryByText(/기준/)).toBeNull();
   });
 
   it("제공처가 이용 불가 상태이면 응답 수량 대신 대시를 표시한다", () => {

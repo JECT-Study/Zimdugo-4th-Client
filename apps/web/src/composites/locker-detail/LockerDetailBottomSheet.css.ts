@@ -509,15 +509,6 @@ export const detailTrailing = style({
   whiteSpace: "nowrap",
 });
 
-export const recentUpdatedText = style({
-  margin: `${vars.spacing[4]} 0 ${vars.spacing[8]}`,
-  color: vars.color.text.disable,
-  fontSize: "10px",
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.2,
-  textAlign: "center",
-});
-
 export const actionSection = style({
   display: "flex",
   flexDirection: "column",

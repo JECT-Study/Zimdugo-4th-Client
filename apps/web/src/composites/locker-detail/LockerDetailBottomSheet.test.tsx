@@ -146,6 +146,7 @@ describe("LockerDetailBottomSheet", () => {
 
     expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
     expect(sheet.getByText("제보하기를 통해 등록할 수 있어요!")).toBeTruthy();
+    expect(sheet.queryByText("최근 업데이트 2026-05-16 16:25")).toBeNull();
     expect(sheet.getByText(LOCKER_DETAIL.title)).toBeTruthy();
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();

@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
 import { useId } from "react";
 import type { LockerRealtimeAvailability } from "#/entities/locker/model/locker-detail";
-import { formatLastUpdatedLabel } from "#/shared/lib/format-updated-label";
+import { formatRealtimeAvailabilityAsOfLabel } from "#/shared/lib/format-updated-label";
 import {
   card,
   cardState,
@@ -29,7 +29,7 @@ export function LockerRealtimeAvailabilityCard({
     ? `S ${availability.smallAvailableCount} · M ${availability.mediumAvailableCount} · L ${availability.largeAvailableCount}`
     : "S - · M - · L -";
   const updatedLabel = isAvailable
-    ? formatLastUpdatedLabel(availability.fetchedAt)
+    ? formatRealtimeAvailabilityAsOfLabel(availability.fetchedAt)
     : "";
 
   return (
