@@ -1,4 +1,4 @@
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
 
 const mergeLockerDetailDistance = (
   detail: LockerDetailItem,

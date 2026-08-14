@@ -16,7 +16,7 @@ import {
   type ResolveNavigationOriginResult,
   resolveNavigationOriginForDirections,
 } from "#/features/search/lib/navigation-platform-links";
-import type { LockerDetailItem } from "./LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import {
   cancelButton,
   dialog,

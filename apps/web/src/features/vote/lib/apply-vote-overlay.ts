@@ -1,4 +1,4 @@
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import type { LockerVoteType } from "../api/post-locker-vote";
 import type { LockerVoteServerState } from "../model/vote-locker-session";
 

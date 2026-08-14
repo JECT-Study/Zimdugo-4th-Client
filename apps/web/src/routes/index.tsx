@@ -24,7 +24,7 @@ import {
   type LockerDetailLoadState,
   type LockerDetailSheetSnapRequest,
   type LockerDetailSheetSnapStage,
-} from "#/composites/search/LockerDetailBottomSheet";
+} from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
   createDefaultSearchFilters,

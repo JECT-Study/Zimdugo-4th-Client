@@ -1,5 +1,5 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import type { AuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
 

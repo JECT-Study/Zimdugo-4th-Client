@@ -1,4 +1,4 @@
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { languageTag, m } from "@repo/i18n";
 import {
   type AppLocale,

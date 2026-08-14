@@ -1,6 +1,6 @@
 ﻿import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
 import { collectServerVoteByLockerId } from "./collect-server-vote-state";
 
