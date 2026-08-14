@@ -3,6 +3,14 @@ export interface LockerOperatingHours {
   close: string;
 }
 
+export interface LockerRealtimeAvailability {
+  isAvailable: boolean;
+  smallAvailableCount: number;
+  mediumAvailableCount: number;
+  largeAvailableCount: number;
+  fetchedAt: string;
+}
+
 export interface LockerSummaryItem {
   itemType: "LOCKER";
   lockerId: number;
@@ -38,6 +46,7 @@ export interface LockerDetailItem extends LockerSummaryItem {
   isInaccurateVoted?: boolean;
   lastUpdatedLabel?: string;
   imageUrl?: string;
+  realtimeAvailability?: LockerRealtimeAvailability | null;
 }
 
 export type LockerDetailLoadState = "ready" | "loading" | "error";
