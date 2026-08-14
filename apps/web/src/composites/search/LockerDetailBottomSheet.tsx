@@ -760,7 +760,7 @@ function FullDetailContent({
         ) : null}
         {/*
           @deprecated 정확성 vote UI는 상세 화면 개편에서 노출을 중단했다.
-          롤백 시 features/search/legacy/vote의 훅·모델·API를 다시 연결하고,
+          롤백 시 features/vote의 훅·모델·API를 다시 연결하고,
           이 위치에 기존 액션 영역을 복원한다.
         */}
         <div className={actionSection}>
