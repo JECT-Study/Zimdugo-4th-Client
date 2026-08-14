@@ -79,6 +79,13 @@ const LOCKER_DETAIL: LockerDetailItem = {
   accurateCount: 78,
   inaccurateCount: 5,
   lastUpdatedLabel: "최근 업데이트 2026-05-16 16:25",
+  realtimeAvailability: {
+    isAvailable: true,
+    smallAvailableCount: 12,
+    mediumAvailableCount: 2,
+    largeAvailableCount: 0,
+    fetchedAt: "2026-08-14T14:19:47.013473",
+  },
 };
 
 const getSheetRoot = () =>
@@ -141,10 +148,28 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
+    expect(sheet.getByText("실시간 보관함 잔여석")).toBeTruthy();
+    expect(sheet.getByLabelText("S 12")).toBeTruthy();
+    expect(sheet.getByLabelText("M 2")).toBeTruthy();
+    expect(sheet.getByLabelText("L 0")).toBeTruthy();
     expect(
       sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
     ).toBeTruthy();
     expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
+  });
+
+  it("실시간 정보가 없으면 사이즈별 잔여석을 대시로 표시한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, realtimeAvailability: null }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.getByLabelText("S -")).toBeTruthy();
+    expect(sheet.getByLabelText("M -")).toBeTruthy();
+    expect(sheet.getByLabelText("L -")).toBeTruthy();
   });
 
   it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {

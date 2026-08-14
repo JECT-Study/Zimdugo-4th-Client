@@ -10,10 +10,12 @@ import {
 } from "./LockerDetailBottomSheet";
 
 type DetailNamePattern = "full-name" | "structured";
+type RealtimeAvailabilityMode = "available" | "unavailable";
 
 interface LockerDetailBottomSheetStoryArgs {
   namePattern: DetailNamePattern;
   snapStage: Extract<LockerDetailSheetSnapStage, "half" | "mini">;
+  realtimeAvailabilityMode: RealtimeAvailabilityMode;
 }
 
 const LONG_FULL_NAME =
@@ -228,6 +230,7 @@ const previewDetailDescriptionStyle: CSSProperties = {
 function LockerDetailBottomSheetStory({
   namePattern,
   snapStage,
+  realtimeAvailabilityMode,
 }: LockerDetailBottomSheetStoryArgs) {
   const [innerHeight, setInnerHeight] = useState(
     typeof window !== "undefined" ? window.innerHeight : 812,
@@ -236,7 +239,22 @@ function LockerDetailBottomSheetStory({
     () => resolveLockerDetailSnapPoints({ windowHeight: innerHeight }),
     [innerHeight],
   );
-  const locker = LOCKER_DETAIL_VARIANTS[namePattern];
+  const locker = useMemo<LockerDetailItem>(
+    () => ({
+      ...LOCKER_DETAIL_VARIANTS[namePattern],
+      realtimeAvailability:
+        realtimeAvailabilityMode === "available"
+          ? {
+              isAvailable: true,
+              smallAvailableCount: 12,
+              mediumAvailableCount: 2,
+              largeAvailableCount: 0,
+              fetchedAt: "2026-08-14T14:19:47.013473",
+            }
+          : null,
+    }),
+    [namePattern, realtimeAvailabilityMode],
+  );
   const initialSnapPoint =
     snapStage === "mini" ? snapPoints.miniSnapPoint : snapPoints.snapPoint;
 
@@ -331,10 +349,15 @@ const meta = {
       control: "inline-radio",
       options: ["half", "mini"],
     },
+    realtimeAvailabilityMode: {
+      control: "inline-radio",
+      options: ["available", "unavailable"],
+    },
   },
   args: {
     namePattern: "structured",
     snapStage: "half",
+    realtimeAvailabilityMode: "available",
   },
   decorators: [
     (Story) => (
@@ -366,6 +389,13 @@ export const Half: Story = {
 export const Mini: Story = {
   args: {
     snapStage: "mini",
+  },
+};
+
+export const RealtimeUnavailable: Story = {
+  args: {
+    snapStage: "half",
+    realtimeAvailabilityMode: "unavailable",
   },
 };
 

@@ -28,6 +28,7 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
+import { LockerRealtimeAvailabilityCard } from "#/entities/locker/ui/realtime-availability";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import {
   formatLockerOperatingHoursLabel,
@@ -523,6 +524,12 @@ function LockerDetailLoadingContent() {
           style={skeletonSurfaceStyle}
         />
       </div>
+      <Skeleton
+        width="100%"
+        height={96}
+        borderRadius={8}
+        style={skeletonSurfaceStyle}
+      />
       <div className={loadingDetailList}>
         {LOCKER_DETAIL_SKELETON_ROWS.map((rowKey) => (
           <div key={rowKey} className={loadingDetailRow}>
@@ -653,6 +660,9 @@ function FullDetailContent({
           moreActionsButtonRef={moreActionsButtonRef}
           snapStage={snapStage}
           canExpandTitle={isScrollEnabled}
+        />
+        <LockerRealtimeAvailabilityCard
+          availability={locker.realtimeAvailability}
         />
         <div className={fullDetailList}>
           <DetailInfoRow
