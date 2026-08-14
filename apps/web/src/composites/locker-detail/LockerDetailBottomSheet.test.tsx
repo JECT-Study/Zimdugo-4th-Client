@@ -179,6 +179,28 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
   });
 
+  it("실시간 이용 불가 상태이면 사이즈별 잔여석을 대시로 표시한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          realtimeAvailability: {
+            isAvailable: false,
+            smallAvailableCount: 12,
+            mediumAvailableCount: 2,
+            largeAvailableCount: 0,
+            fetchedAt: "2026-08-14T14:19:47.013473",
+          },
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
+    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
+  });
+
   it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {
     const handleRetry = vi.fn();
 

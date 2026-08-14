@@ -10,7 +10,7 @@ import {
 } from "./LockerDetailBottomSheet";
 
 type DetailNamePattern = "full-name" | "structured";
-type RealtimeAvailabilityMode = "available" | "unavailable";
+type RealtimeAvailabilityMode = "available" | "full" | "unavailable";
 
 interface LockerDetailBottomSheetStoryArgs {
   namePattern: DetailNamePattern;
@@ -70,6 +70,27 @@ const LOCKER_DETAIL_VARIANTS: Record<DetailNamePattern, LockerDetailItem> = {
     lastUpdatedLabel: "Updated 2026-07-01 10:20",
     isFavorite: true,
   },
+};
+
+const REALTIME_AVAILABILITY_FIXTURES: Record<
+  RealtimeAvailabilityMode,
+  LockerDetailItem["realtimeAvailability"]
+> = {
+  available: {
+    isAvailable: true,
+    smallAvailableCount: 12,
+    mediumAvailableCount: 2,
+    largeAvailableCount: 0,
+    fetchedAt: "2026-08-14T14:19:47.013473",
+  },
+  full: {
+    isAvailable: true,
+    smallAvailableCount: 0,
+    mediumAvailableCount: 0,
+    largeAvailableCount: 0,
+    fetchedAt: "2026-08-14T14:19:47.013473",
+  },
+  unavailable: null,
 };
 
 const previewSheetStyle: CSSProperties = {
@@ -243,15 +264,7 @@ function LockerDetailBottomSheetStory({
     () => ({
       ...LOCKER_DETAIL_VARIANTS[namePattern],
       realtimeAvailability:
-        realtimeAvailabilityMode === "available"
-          ? {
-              isAvailable: true,
-              smallAvailableCount: 12,
-              mediumAvailableCount: 2,
-              largeAvailableCount: 0,
-              fetchedAt: "2026-08-14T14:19:47.013473",
-            }
-          : null,
+        REALTIME_AVAILABILITY_FIXTURES[realtimeAvailabilityMode],
     }),
     [namePattern, realtimeAvailabilityMode],
   );
@@ -351,7 +364,7 @@ const meta = {
     },
     realtimeAvailabilityMode: {
       control: "inline-radio",
-      options: ["available", "unavailable"],
+      options: ["available", "full", "unavailable"],
     },
   },
   args: {
@@ -396,6 +409,13 @@ export const RealtimeUnavailable: Story = {
   args: {
     snapStage: "half",
     realtimeAvailabilityMode: "unavailable",
+  },
+};
+
+export const RealtimeFull: Story = {
+  args: {
+    snapStage: "half",
+    realtimeAvailabilityMode: "full",
   },
 };
 
