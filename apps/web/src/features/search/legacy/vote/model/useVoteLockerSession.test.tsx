@@ -3,13 +3,13 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
-import { postLockerVote } from "#/shared/api/locker-votes";
+import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
-import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
+import { postLockerVote } from "../api/post-locker-vote";
 import { useVoteLockerSession } from "./useVoteLockerSession";
 
-vi.mock("#/shared/api/locker-votes", () => ({
+vi.mock("../api/post-locker-vote", () => ({
   postLockerVote: vi.fn(),
 }));
 

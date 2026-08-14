@@ -1,5 +1,5 @@
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
-import type { LockerVoteType } from "#/shared/api/locker-votes";
+import type { LockerVoteType } from "../api/post-locker-vote";
 import type { LockerVoteServerState } from "../model/vote-locker-session";
 
 export type ResolveEffectiveVoteFlags = (
