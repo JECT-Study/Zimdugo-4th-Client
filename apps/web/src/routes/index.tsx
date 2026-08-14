@@ -1129,8 +1129,8 @@ export function IndexPage() {
   const handleMyLocation = useCallback(
     async () => {
       if (permission === "denied") {
-        hasPendingLocationRequestRef.current = false;
-        openLocationPopup();
+        hasPendingLocationRequestRef.current = true;
+        startTracking();
         return;
       }
 

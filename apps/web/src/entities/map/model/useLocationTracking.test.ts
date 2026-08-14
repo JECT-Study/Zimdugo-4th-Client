@@ -145,4 +145,65 @@ describe("useLocationTracking", () => {
     expect(result.current.permission).toBe("denied");
     expect(result.current.isTracking).toBe(false);
   });
+
+  it("should ignore a permission query result while a location request is active", async () => {
+    let resolvePermission: ((status: PermissionStatus) => void) | undefined;
+    queryMock.mockReturnValueOnce(
+      new Promise<PermissionStatus>((resolve) => {
+        resolvePermission = resolve;
+      }),
+    );
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+
+    await act(async () => {
+      resolvePermission?.({
+        state: "denied",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as unknown as PermissionStatus);
+    });
+
+    expect(result.current.permission).toBe("prompt");
+    expect(result.current.isTracking).toBe(true);
+  });
+
+  it("should allow a manual retry after a permission-denied request error", () => {
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const firstErrorCallback = watchPositionMock.mock.calls[0][1];
+    act(() => {
+      firstErrorCallback({ code: 1, message: "User denied Geolocation" });
+    });
+
+    act(() => {
+      result.current.startTracking();
+    });
+
+    expect(result.current.permission).toBe("prompt");
+    expect(result.current.isTracking).toBe(true);
+    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("should not treat a location timeout as a permission denial", () => {
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const errorCallback = watchPositionMock.mock.calls[0][1];
+    act(() => {
+      errorCallback({ code: 3, message: "Location request timed out" });
+    });
+
+    expect(result.current.permission).toBe("prompt");
+    expect(result.current.error?.code).toBe(3);
+    expect(result.current.isTracking).toBe(false);
+  });
 });

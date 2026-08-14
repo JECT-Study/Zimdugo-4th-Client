@@ -24,6 +24,8 @@ export function useLocationTracking({
   // watchPosition의 첫 번째 콜백인지 판단하는 플래그
   // startTracking() 호출 시 true로 리셋, 첫 콜백 시 false로 플립
   const isFirstLocationRef = useRef(true);
+  // 진행 중인 위치 요청은 늦게 도착한 Permissions API 결과로 중단하지 않는다.
+  const isTrackingRef = useRef(false);
 
   // 권한 상태 초기화 및 감지
   useEffect(() => {
@@ -33,7 +35,7 @@ export function useLocationTracking({
     let permissionStatus: PermissionStatus | null = null;
 
     const handlePermissionChange = () => {
-      if (permissionStatus) {
+      if (permissionStatus && !isTrackingRef.current) {
         const state = permissionStatus.state;
         if (state === "granted" || state === "denied" || state === "prompt") {
           setPermission(state);
@@ -51,7 +53,10 @@ export function useLocationTracking({
         if (isCancelled) return;
         permissionStatus = status;
         const state = status.state;
-        if (state === "granted" || state === "denied" || state === "prompt") {
+        if (
+          !isTrackingRef.current &&
+          (state === "granted" || state === "denied" || state === "prompt")
+        ) {
           setPermission(state);
         }
         status.addEventListener("change", handlePermissionChange);
@@ -71,6 +76,7 @@ export function useLocationTracking({
   // 권한이 이미 허용되어 있다면 자동으로 백그라운드 추적 시작
   useEffect(() => {
     if (permission === "granted") {
+      isTrackingRef.current = true;
       setIsTracking(true);
     }
   }, [permission]);
@@ -96,6 +102,7 @@ export function useLocationTracking({
         setIsLocating(false);
       },
       (err) => {
+        isTrackingRef.current = false;
         setError(err);
         setIsTracking(false);
         setIsLocating(false);
@@ -124,10 +131,14 @@ export function useLocationTracking({
     }
     setIsTracking(true);
     setIsLocating(true);
+    setError(null);
+    setPermission("prompt");
+    isTrackingRef.current = true;
     isFirstLocationRef.current = true;
   }, []);
 
   const stopTracking = useCallback(() => {
+    isTrackingRef.current = false;
     setIsTracking(false);
     setIsLocating(false);
   }, []);
