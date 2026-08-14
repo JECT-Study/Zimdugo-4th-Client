@@ -121,10 +121,12 @@ export const summaryRow = style({
   boxSizing: "border-box",
 });
 
-export const summaryDivider = style({
+export const realtimeAvailabilityDivider = style({
   width: `calc(100% + (${vars.spacing[16]} * 2))`,
   height: "1px",
   margin: `0 -${vars.spacing[16]}`,
+  border: 0,
+  padding: 0,
   flexShrink: 0,
   backgroundColor: vars.color.border.default,
 });

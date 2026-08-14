@@ -106,7 +106,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 760,
       miniSnapPoint: 701,
       minSnapPoint: 112,
-      snapPoint: 566,
+      snapPoint: 621,
     });
   });
 
@@ -115,7 +115,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 948,
       miniSnapPoint: 889,
       minSnapPoint: 112,
-      snapPoint: 754,
+      snapPoint: 809,
     });
   });
 
@@ -139,7 +139,9 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
     const sheet = getSheetRoot();
 
     expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
@@ -150,6 +152,13 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
     expect(sheet.getByText("실시간 보관함 잔여석")).toBeTruthy();
     expect(sheet.getByText("S 12 · M 2 · L 0")).toBeTruthy();
+    const realtimeAvailabilityCard = sheet
+      .getByText("실시간 보관함 잔여석")
+      .closest("section");
+    const realtimeAvailabilityDivider = sheet.getByRole("separator");
+    expect(realtimeAvailabilityCard?.nextElementSibling).toBe(
+      realtimeAvailabilityDivider,
+    );
     expect(
       sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
     ).toBeTruthy();
@@ -212,7 +221,10 @@ describe("LockerDetailBottomSheet", () => {
   it("즐겨찾기 handler가 없으면 더보기 메뉴에서 즐겨찾기를 숨긴다", () => {
     const handleReport = vi.fn();
     render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={handleReport} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        onReport={handleReport}
+      />,
     );
     const sheet = getSheetRoot();
 
@@ -248,7 +260,9 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
     const sheet = getSheetRoot();
 
     expect(sheet.queryByRole("button", { name: /정확한 정보에요/ })).toBeNull();

@@ -89,10 +89,10 @@ import {
   metaRow,
   metaTruncatedText,
   primaryActionButton,
+  realtimeAvailabilityDivider,
   recentUpdatedText,
   sheetColumn,
   summaryActions,
-  summaryDivider,
   summaryIconButton,
   summaryRow,
   summarySection,
@@ -133,7 +133,7 @@ const DETAIL_CONTENT_TOP_PADDING = 8;
 const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
-const DETAIL_HALF_VISIBLE_HEIGHT = 246;
+const DETAIL_HALF_VISIBLE_HEIGHT = 191;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
@@ -664,6 +664,7 @@ function FullDetailContent({
         <LockerRealtimeAvailabilityCard
           availability={locker.realtimeAvailability}
         />
+        <hr className={realtimeAvailabilityDivider} />
         <div className={fullDetailList}>
           <DetailInfoRow
             icon={<IconLockerDetailMapPin24 />}
@@ -882,7 +883,6 @@ function SummarySection({
           </button>
         </div>
       </div>
-      <div className={summaryDivider} />
     </section>
   );
 }
