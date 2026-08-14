@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { toLockerDetailItem } from "#/shared/api/locker-adapters";
+import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
 import {
   getLockerDetail,
   type GetLockerDetailParams,

@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   type LockerVoteType,
   postLockerVote,

@@ -57,7 +57,7 @@ vi.mock("#/shared/ui/OverflowMarqueeText", async () => {
   };
 });
 
-import type { LockerDetailItem } from "./LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
@@ -132,7 +132,7 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
     const sheet = getSheetRoot();
 
     expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
@@ -141,7 +141,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
-    expect(sheet.getByRole("button", { name: "공유하기" })).toBeTruthy();
+    expect(
+      sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
+    ).toBeTruthy();
     expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
   });
 
@@ -153,6 +155,7 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         loadState="error"
         onRetry={handleRetry}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -171,35 +174,62 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         onShare={handleShare}
         onNavigate={handleNavigate}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
 
-    fireEvent.click(sheet.getByRole("button", { name: "공유하기" }));
+    fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
+    fireEvent.click(screen.getByRole("button", { name: "공유하기" }));
     fireEvent.click(sheet.getByRole("button", { name: "길찾기" }));
 
     expect(handleShare).toHaveBeenCalledWith(LOCKER_DETAIL);
     expect(handleNavigate).toHaveBeenCalledWith(LOCKER_DETAIL);
   });
 
-  it("즐겨찾기 handler가 없으면 하트 버튼을 비활성화한다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+  it("즐겨찾기 handler가 없으면 더보기 메뉴에서 즐겨찾기를 숨긴다", () => {
+    const handleReport = vi.fn();
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={handleReport} />,
+    );
     const sheet = getSheetRoot();
 
-    expect(
-      sheet
-        .getByRole("button", { name: "즐겨찾기 추가" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+    fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
+    expect(screen.queryByRole("button", { name: "즐겨찾기 추가" })).toBeNull();
+    expect(screen.getByRole("button", { name: "신고하기" })).toBeTruthy();
+  });
+
+  it("더보기 메뉴에서 즐겨찾기와 신고 동작을 실행하고 메뉴를 닫는다", () => {
+    const handleFavoriteChange = vi.fn();
+    const handleReport = vi.fn();
+
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        onFavoriteChange={handleFavoriteChange}
+        onReport={handleReport}
+      />,
+    );
+    const sheet = getSheetRoot();
+    const openMoreActions = () =>
+      fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
+
+    openMoreActions();
+    fireEvent.click(screen.getByRole("button", { name: "즐겨찾기 추가" }));
+    expect(handleFavoriteChange).toHaveBeenCalledWith(LOCKER_DETAIL, true);
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    openMoreActions();
+    fireEvent.click(screen.getByRole("button", { name: "신고하기" }));
+    expect(handleReport).toHaveBeenCalledWith(LOCKER_DETAIL);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
     const sheet = getSheetRoot();
 
-    expect(
-      sheet.queryByRole("button", { name: /정확한 정보에요/ }),
-    ).toBeNull();
+    expect(sheet.queryByRole("button", { name: /정확한 정보에요/ })).toBeNull();
     expect(
       sheet.queryByRole("button", { name: /부정확한 정보에요/ }),
     ).toBeNull();
@@ -213,6 +243,7 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         loadState="error"
         onBack={handleBack}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -224,7 +255,11 @@ describe("LockerDetailBottomSheet", () => {
 
   it("renders a loading skeleton while locker detail is loading", () => {
     render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} loadState="loading" />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        loadState="loading"
+        onReport={vi.fn()}
+      />,
     );
     const sheet = getSheetRoot();
 
@@ -240,6 +275,7 @@ describe("LockerDetailBottomSheet", () => {
     render(
       <LockerDetailBottomSheet
         locker={{ ...LOCKER_DETAIL, distanceLabel: "" }}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -249,7 +285,7 @@ describe("LockerDetailBottomSheet", () => {
 
   it("이름 펼치기 버튼은 풀 바텀시트에서만 노출한다", async () => {
     const { rerender } = render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
 
     await waitFor(() => {
@@ -261,7 +297,11 @@ describe("LockerDetailBottomSheet", () => {
     });
 
     rerender(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={112} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={112}
+        onReport={vi.fn()}
+      />,
     );
 
     expect(
@@ -278,6 +318,7 @@ describe("LockerDetailBottomSheet", () => {
           ...LOCKER_DETAIL,
           imageUrl: "https://example.com/locker.jpg",
         }}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -294,6 +335,7 @@ describe("LockerDetailBottomSheet", () => {
           ...LOCKER_DETAIL,
           imageUrl: "https://example.com/locker.jpg",
         }}
+        onReport={vi.fn()}
       />,
     );
 
@@ -320,6 +362,7 @@ describe("LockerDetailBottomSheet", () => {
       <LockerDetailBottomSheet
         locker={LOCKER_DETAIL}
         snapRequest={{ id: 1, stage: "mini" }}
+        onReport={vi.fn()}
       />,
     );
 
@@ -339,6 +382,7 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         snapRequest={{ id: 1, stage: "full" }}
         onSnapStageChange={handleSnapStageChange}
+        onReport={vi.fn()}
       />,
     );
 
@@ -354,7 +398,11 @@ describe("LockerDetailBottomSheet", () => {
 
   it("enables internal content scroll only when the detail sheet opens full", () => {
     const { rerender } = render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} snapPoint={566} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        snapPoint={566}
+        onReport={vi.fn()}
+      />,
     );
 
     expect(
@@ -364,7 +412,11 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe("false");
 
     rerender(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={112} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={112}
+        onReport={vi.fn()}
+      />,
     );
 
     expect(

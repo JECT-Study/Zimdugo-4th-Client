@@ -5,30 +5,30 @@ import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
+  IconCircleboxClose32,
+  IconCircleboxMore32,
   IconDistanceRoute24,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
   IconNavigationClock24,
-  IconShare24,
-  IconStarFilled24,
-  IconStarOutline24,
   IconX24,
 } from "@repo/ui/tokens/icons";
 import {
   type CSSProperties,
   type ReactNode,
+  type RefObject,
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
-import type { SearchAutocompleteItemData } from "#/entities/search";
-import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
+import type {
+  LockerDetailItem,
+  LockerDetailLoadState,
+} from "#/entities/locker/model/locker-detail";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
-import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
@@ -59,17 +59,13 @@ import {
   detailTitleMultiline,
   detailTrailing,
   distanceRow,
-  divider,
-  favoriteButton,
   fullActionRow,
   fullContentScroll,
   fullContentScrollEnabled,
   fullDetailList,
-  fullIconActionButton,
   fullImageReportCard,
   fullLockerImage,
   fullPrimaryActionButton,
-  iconActionButton,
   imagePreviewCloseButton,
   imagePreviewDialog,
   imagePreviewImage,
@@ -95,8 +91,8 @@ import {
   recentUpdatedText,
   sheetColumn,
   summaryActions,
-  summaryCloseButton,
   summaryDivider,
+  summaryIconButton,
   summaryRow,
   summarySection,
   summaryTextColumn,
@@ -105,29 +101,10 @@ import {
   titleExpandIcon,
   titleExpandIconExpanded,
 } from "./LockerDetailBottomSheet.css.ts";
+import { LockerDetailMoreActionsModal } from "./LockerDetailMoreActionsModal";
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
-
-export interface LockerDetailItem extends SearchLockerResultItem {
-  operatingHoursLabel?: string;
-  floorLabel?: string;
-  priceLabel?: string;
-  sizeLabel?: string;
-  detailHelpText?: string;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  accurateCount?: number;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  inaccurateCount?: number;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  isAccurateVoted?: boolean;
-  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
-  isInaccurateVoted?: boolean;
-  lastUpdatedLabel?: string;
-  imageUrl?: string;
-}
-
-export type LockerDetailLoadState = "ready" | "loading" | "error";
 
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
@@ -136,7 +113,9 @@ export interface LockerDetailBottomSheetProps {
   onFavoriteChange?: (item: LockerDetailItem, next: boolean) => void;
   onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
+  onReport?: (item: LockerDetailItem) => void;
   onNavigate?: (item: LockerDetailItem) => void;
+  isFavoriteActionVisible?: boolean;
   minSnapPoint?: number;
   snapPoint?: number;
   /** 풀 스냅으로 열 때만 지정. 하프 스냅은 snapPoint에 유지 */
@@ -271,68 +250,6 @@ export const resolveLockerDetailSnapPoints = ({
   };
 };
 
-export const createLockerDetailFromSearchItem = (
-  item: SearchLockerResultItem,
-): LockerDetailItem => ({
-  ...item,
-  operatingHoursLabel: item.operatingHours
-    ? formatLockerOperatingHoursLabel(
-        item.operatingHours.open,
-        item.operatingHours.close,
-      )
-    : formatLockerOperatingHoursLabel(),
-  priceLabel: formatLockerPriceLabel(item.minPrice),
-});
-
-/** 지도 핀 선택 직후 API 응답 전에 쓰는 낙관적 상세 */
-export const createLockerDetailFromPin = (
-  pin: Extract<LockerPinItemResponse, { pinType: "LOCKER" }>,
-): LockerDetailItem => ({
-  ...createLockerDetailPlaceholder(pin.lockerId),
-  latitude: pin.latitude,
-  longitude: pin.longitude,
-});
-
-/** API 응답 전 마커 등 lockerId만 알 때 쓰는 플레이스홀더 */
-export const createLockerDetailPlaceholder = (
-  lockerId: number,
-): LockerDetailItem => ({
-  itemType: "LOCKER",
-  lockerId,
-  title: "...",
-  address: "",
-  categoryLabel: "",
-  updatedLabel: "",
-  distanceLabel: "",
-  operatingHoursLabel: formatLockerOperatingHoursLabel(),
-  floorLabel: "",
-  priceLabel: formatLockerPriceLabel(),
-  sizeLabel: "",
-  detailHelpText: "",
-});
-
-export const createLockerDetailFromHistoryEntry = (
-  entry: Pick<SearchHistoryLockerEntry, "lockerId" | "title">,
-): LockerDetailItem => ({
-  ...createLockerDetailPlaceholder(entry.lockerId),
-  title: entry.title,
-});
-
-export const createLockerDetailFromAutocompleteItem = (
-  item: Extract<SearchAutocompleteItemData, { itemType: "LOCKER" }>,
-): LockerDetailItem => ({
-  itemType: "LOCKER",
-  lockerId: item.lockerId,
-  title: item.title,
-  address: item.address,
-  categoryLabel: item.categoryLabel,
-  updatedLabel: item.updatedLabel,
-  distanceLabel: item.distanceLabel,
-  distanceMeters: item.distanceMeters,
-  operatingHoursLabel: formatLockerOperatingHoursLabel(),
-  priceLabel: formatLockerPriceLabel(),
-});
-
 export function LockerDetailBottomSheet({
   locker,
   loadState = "ready",
@@ -340,7 +257,9 @@ export function LockerDetailBottomSheet({
   onFavoriteChange,
   onBack,
   onShare,
+  onReport,
   onNavigate,
+  isFavoriteActionVisible = true,
   minSnapPoint,
   snapPoint,
   initialSnapPoint,
@@ -351,10 +270,12 @@ export function LockerDetailBottomSheet({
   snapRequest,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
+  const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
   const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
+  const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
   const updateFullContentHeight = useCallback(() => {
     const element = fullContentMeasureRef.current;
 
@@ -422,11 +343,9 @@ export function LockerDetailBottomSheet({
     );
   const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
 
-  const favoriteLabel = locker.isFavorite
-    ? m.search_favorite_remove()
-    : m.search_favorite_add();
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
-  const canFavorite = typeof onFavoriteChange === "function";
+  const canFavorite =
+    isFavoriteActionVisible && typeof onFavoriteChange === "function";
 
   const handleFavoritePress = () => {
     if (!canFavorite) {
@@ -444,9 +363,18 @@ export function LockerDetailBottomSheet({
     onShare?.(locker);
   };
 
+  const handleReport = () => {
+    onReport?.(locker);
+  };
+
   const handleNavigate = () => {
     onNavigate?.(locker);
   };
+
+  const handleOpenMoreActions = () => {
+    setIsMoreActionsOpen(true);
+  };
+
   const handleSnapChange = (nextSnap: number) => {
     const nextStage = resolveLockerDetailSnapStage({
       maxSnapPoint: resolvedMaxSnapPoint,
@@ -511,42 +439,52 @@ export function LockerDetailBottomSheet({
   ]);
 
   return (
-    <DraggableBottomSheet
-      key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
-      snapPoint={resolvedSnapPoint}
-      initialSnapPoint={resolvedInitialSnapPoint}
-      minSnapPoint={resolvedMinSnapPoint}
-      miniSnapPoint={resolvedMiniSnapPoint}
-      maxSnapPoint={resolvedMaxSnapPoint}
-      dragSensitivity={DETAIL_DRAG_SENSITIVITY}
-      animateOnMount={animateOnMount}
-      showHomeIndicator={false}
-      snapRequest={resolvedSnapRequest}
-      onSnapChange={handleSnapChange}
-      onDismiss={handleBack}
-    >
-      <div className={sheetColumn}>
-        {loadState === "loading" ? (
-          <LockerDetailLoadingContent />
-        ) : loadState === "error" ? (
-          <LockerDetailErrorContent onBack={handleBack} onRetry={onRetry} />
-        ) : (
-          <FullDetailContent
-            locker={locker}
-            detailHelpText={detailHelpText}
-            favoriteLabel={favoriteLabel}
-            canFavorite={canFavorite}
-            onFavoritePress={handleFavoritePress}
-            onClose={handleBack}
-            onShare={handleShare}
-            onNavigate={handleNavigate}
-            snapStage={currentSnapStage}
-            isScrollEnabled={currentSnapStage === "full"}
-            contentRef={handleFullContentMeasureRef}
-          />
-        )}
-      </div>
-    </DraggableBottomSheet>
+    <>
+      <DraggableBottomSheet
+        key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
+        snapPoint={resolvedSnapPoint}
+        initialSnapPoint={resolvedInitialSnapPoint}
+        minSnapPoint={resolvedMinSnapPoint}
+        miniSnapPoint={resolvedMiniSnapPoint}
+        maxSnapPoint={resolvedMaxSnapPoint}
+        dragSensitivity={DETAIL_DRAG_SENSITIVITY}
+        animateOnMount={animateOnMount}
+        showHomeIndicator={false}
+        snapRequest={resolvedSnapRequest}
+        onSnapChange={handleSnapChange}
+        onDismiss={handleBack}
+      >
+        <div className={sheetColumn}>
+          {loadState === "loading" ? (
+            <LockerDetailLoadingContent />
+          ) : loadState === "error" ? (
+            <LockerDetailErrorContent onBack={handleBack} onRetry={onRetry} />
+          ) : (
+            <FullDetailContent
+              locker={locker}
+              detailHelpText={detailHelpText}
+              onClose={handleBack}
+              onMoreActionsOpen={handleOpenMoreActions}
+              moreActionsButtonRef={moreActionsButtonRef}
+              onNavigate={handleNavigate}
+              snapStage={currentSnapStage}
+              isScrollEnabled={currentSnapStage === "full"}
+              contentRef={handleFullContentMeasureRef}
+            />
+          )}
+        </div>
+      </DraggableBottomSheet>
+      <LockerDetailMoreActionsModal
+        isOpen={isMoreActionsOpen}
+        onOpenChange={setIsMoreActionsOpen}
+        anchorRef={moreActionsButtonRef}
+        isFavorite={locker.isFavorite === true}
+        canFavorite={canFavorite}
+        onShare={handleShare}
+        onFavoriteChange={handleFavoritePress}
+        onReport={handleReport}
+      />
+    </>
   );
 }
 
@@ -655,11 +593,9 @@ function LockerDetailErrorContent({
 function FullDetailContent({
   locker,
   detailHelpText,
-  favoriteLabel,
-  canFavorite,
-  onFavoritePress,
   onClose,
-  onShare,
+  onMoreActionsOpen,
+  moreActionsButtonRef,
   onNavigate,
   snapStage,
   isScrollEnabled,
@@ -667,11 +603,9 @@ function FullDetailContent({
 }: {
   locker: LockerDetailItem;
   detailHelpText: string;
-  favoriteLabel: string;
-  canFavorite: boolean;
-  onFavoritePress: () => void;
   onClose: () => void;
-  onShare: () => void;
+  onMoreActionsOpen: () => void;
+  moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   onNavigate: () => void;
   snapStage: LockerDetailSheetSnapStage;
   isScrollEnabled: boolean;
@@ -714,10 +648,9 @@ function FullDetailContent({
       <div ref={contentRef} className={contentStack}>
         <SummarySection
           locker={locker}
-          favoriteLabel={favoriteLabel}
-          canFavorite={canFavorite}
-          onFavoritePress={onFavoritePress}
           onClose={onClose}
+          onMoreActionsOpen={onMoreActionsOpen}
+          moreActionsButtonRef={moreActionsButtonRef}
           snapStage={snapStage}
           canExpandTitle={isScrollEnabled}
         />
@@ -765,7 +698,7 @@ function FullDetailContent({
         */}
         <div className={actionSection}>
           <div className={actionDivider} />
-          <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
+          <ActionRow isFull onNavigate={onNavigate} />
         </div>
       </div>
       {previewImageUrl ? (
@@ -795,18 +728,16 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
 
 function SummarySection({
   locker,
-  favoriteLabel,
-  canFavorite,
-  onFavoritePress,
   onClose,
+  onMoreActionsOpen,
+  moreActionsButtonRef,
   snapStage,
   canExpandTitle,
 }: {
   locker: LockerDetailItem;
-  favoriteLabel: string;
-  canFavorite: boolean;
-  onFavoritePress: () => void;
   onClose: () => void;
+  onMoreActionsOpen: () => void;
+  moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   snapStage: LockerDetailSheetSnapStage;
   canExpandTitle: boolean;
 }) {
@@ -923,26 +854,21 @@ function SummarySection({
 
         <div className={summaryActions}>
           <button
+            ref={moreActionsButtonRef}
             type="button"
-            className={favoriteButton}
-            onClick={onFavoritePress}
-            aria-label={favoriteLabel}
-            disabled={!canFavorite}
-            aria-disabled={!canFavorite}
+            className={summaryIconButton}
+            onClick={onMoreActionsOpen}
+            aria-label={m.locker_detail_more_actions_open_aria()}
           >
-            {locker.isFavorite ? (
-              <IconStarFilled24 size={24} />
-            ) : (
-              <IconStarOutline24 size={24} />
-            )}
+            <IconCircleboxMore32 />
           </button>
           <button
             type="button"
-            className={summaryCloseButton}
+            className={summaryIconButton}
             onClick={onClose}
             aria-label={m.search_close_aria()}
           >
-            <IconX24 />
+            <IconCircleboxClose32 />
           </button>
         </div>
       </div>
@@ -1008,34 +934,19 @@ function DetailInfoRow({
           </div>
         ) : null}
       </div>
-      <div className={divider} />
     </div>
   );
 }
 
 function ActionRow({
   isFull = false,
-  onShare,
   onNavigate,
 }: {
   isFull?: boolean;
-  onShare: () => void;
   onNavigate: () => void;
 }) {
   return (
     <div className={isFull ? fullActionRow : actionRow}>
-      <Button
-        variant="filled"
-        intent="neutral"
-        size={isFull ? "L" : "S"}
-        className={[iconActionButton, isFull ? fullIconActionButton : ""].join(
-          " ",
-        )}
-        onPress={onShare}
-        aria-label={m.locker_detail_share_aria()}
-      >
-        <IconShare24 />
-      </Button>
       <Button
         variant="filled"
         intent="primary"

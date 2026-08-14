@@ -1,7 +1,7 @@
 import { setLanguageTag } from "@repo/i18n";
 import { describe, expect, it } from "vitest";
+import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
 import {
-  toLockerDetailItem,
   toLockerSearchViewModel,
   toPlaceLockersViewModel,
 } from "./locker-adapters";

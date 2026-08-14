@@ -1,7 +1,7 @@
 ﻿import type { InfiniteData } from "@tanstack/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import { FAVORITE_LOCKER_LIST_QUERY_KEY } from "#/features/my/hooks/useFavoriteLockerList";
 import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
 import { LOCKER_SEARCH_QUERY_KEY } from "#/features/search/hooks/useSearch";

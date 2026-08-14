@@ -1,4 +1,3 @@
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
 import type {
   SearchLockerResultItem,
   SearchLockerResultItems,
@@ -11,23 +10,13 @@ import type {
   SearchAutocompletePlaceItem,
 } from "#/entities/search";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
-import {
-  formatLastUpdatedLabel,
-  formatUpdatedLabel,
-} from "#/shared/lib/format-updated-label";
-import {
-  formatLockerFloorLabel,
-  formatLockerOperatingHoursLabel,
-  formatLockerPriceLabel,
-  formatLockerSizeTypesLabel,
-} from "#/shared/lib/locker-detail-labels";
+import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
 import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 import type {
   LockerBoundsRaw,
-  LockerDetailRaw,
-  LockerSearchItemRaw,
   LockerNestedRaw,
   LockerOperatingHoursRaw,
+  LockerSearchItemRaw,
   LockerSuggestItemRaw,
   PlaceLockersDataRaw,
 } from "./lockers";
@@ -216,55 +205,3 @@ export const toSearchAutocompleteItems = (
   items
     .map(toSearchAutocompleteItem)
     .filter((item): item is SearchAutocompleteItemData => item !== null);
-
-const formatOperatingHoursLabel = (raw: LockerDetailRaw): string => {
-  if (raw.startTime && raw.endTime) {
-    return formatLockerOperatingHoursLabel(raw.startTime, raw.endTime);
-  }
-
-  if (raw.operatingHours) {
-    return formatLockerOperatingHoursLabel(
-      raw.operatingHours.open,
-      raw.operatingHours.close,
-    );
-  }
-
-  return formatLockerOperatingHoursLabel();
-};
-
-export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
-  itemType: "LOCKER",
-  lockerId: raw.lockerId,
-  title: raw.lockerName,
-  address: raw.roadAddress,
-  latitude: raw.latitude,
-  longitude: raw.longitude,
-  categoryLabel: getLockerTypeLabel(raw.lockerType),
-  updatedLabel: formatUpdatedLabel(raw.updatedAt),
-  distanceLabel:
-    raw.distanceMeters !== undefined
-      ? formatDistanceMeters(raw.distanceMeters)
-      : "",
-  distanceMeters: raw.distanceMeters,
-  updatedAt: raw.updatedAt,
-  minPrice: raw.minPrice,
-  isFavorite: raw.isFavorite,
-  operatingHoursLabel: formatOperatingHoursLabel(raw),
-  floorLabel: formatLockerFloorLabel(
-    raw.floor,
-    raw.groundLevelType,
-    raw.floorLabel,
-  ),
-  priceLabel: formatLockerPriceLabel(raw.minPrice, raw.maxPrice),
-  sizeLabel:
-    raw.lockerSizes && raw.lockerSizes.length > 0
-      ? formatLockerSizeTypesLabel(raw.lockerSizes)
-      : raw.sizeLabel,
-  imageUrl: raw.imageUrl?.trim() || undefined,
-  detailHelpText: raw.detailInfo ?? raw.detailHelpText,
-  accurateCount: raw.accurateVoteCount ?? raw.accurateCount,
-  inaccurateCount: raw.inaccurateVoteCount ?? raw.inaccurateCount,
-  isAccurateVoted: raw.isAccurateVoted ?? false,
-  isInaccurateVoted: raw.isInaccurateVoted ?? false,
-  lastUpdatedLabel: formatLastUpdatedLabel(raw.updatedAt) || undefined,
-});

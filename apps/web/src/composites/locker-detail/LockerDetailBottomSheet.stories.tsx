@@ -2,9 +2,9 @@ import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   LockerDetailBottomSheet,
-  type LockerDetailItem,
   type LockerDetailSheetSnapStage,
   resolveLockerDetailSnapPoints,
 } from "./LockerDetailBottomSheet";
@@ -256,6 +256,7 @@ function LockerDetailBottomSheetStory({
       onBack={() => undefined}
       onFavoriteChange={() => undefined}
       onShare={() => undefined}
+      onReport={() => undefined}
       onNavigate={() => undefined}
     />
   );
@@ -316,7 +317,7 @@ function FieldStackHalfPreview() {
 }
 
 const meta = {
-  title: "Product/Search/Locker Detail Bottom Sheet",
+  title: "Product/Locker Detail/Bottom Sheet",
   component: LockerDetailBottomSheetStory,
   parameters: {
     layout: "fullscreen",

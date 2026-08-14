@@ -1,4 +1,4 @@
-import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import type {
   AppMapContext,

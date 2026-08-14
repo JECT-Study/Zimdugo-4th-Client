@@ -15,12 +15,14 @@ import {
   IconCircleboxCheck32,
   IconCircleboxChevron32,
   IconCircleboxClock32,
+  IconCircleboxClose32,
   IconCircleboxCrosshair48,
   IconCircleboxCrosshairActive48,
   IconCircleboxFilter28,
   IconCircleboxFilter32,
   IconCircleboxHappy32,
   IconCircleboxMike32,
+  IconCircleboxMore32,
   IconCircleboxRefresh48,
   IconCircleboxThumbDown32,
   IconCircleboxThumbUp32,
@@ -36,6 +38,7 @@ import {
   IconLockerDetailWallet24,
   IconMarker22,
   IconMinusBox18,
+  IconMore24,
   IconNaver19,
   IconNavigateLocation,
   IconNavigateMarker,
@@ -58,6 +61,7 @@ import {
   IconNormalSearch24,
   IconNormalWallet24,
   IconPencil24,
+  IconReport24,
   IconSearchAutocompleteLocker14,
   IconSearchAutocompletePlace14,
   IconSearchLockerRow14,
@@ -664,6 +668,12 @@ export const Normal: Story = {
       <Cell name="x24">
         <IconX24 />
       </Cell>
+      <Cell name="more">
+        <IconMore24 />
+      </Cell>
+      <Cell name="report">
+        <IconReport24 />
+      </Cell>
       <Cell name="filter14">
         <IconFilter14 />
       </Cell>
@@ -840,6 +850,12 @@ export const Circlebox: Story = {
         probeTarget="root"
       >
         <IconCircleboxClock32 />
+      </Cell>
+      <Cell name="more" ingredients={["IconMore24"]} probeTarget="root">
+        <IconCircleboxMore32 />
+      </Cell>
+      <Cell name="close" ingredients={["IconX24"]} probeTarget="root">
+        <IconCircleboxClose32 />
       </Cell>
       <Cell
         name="mike"

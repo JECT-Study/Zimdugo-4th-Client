@@ -13,18 +13,23 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import {
+  LOCKER_DETAIL_FULL_TOP_OFFSET,
+  LockerDetailBottomSheet,
+  type LockerDetailSheetSnapRequest,
+  type LockerDetailSheetSnapStage,
+} from "#/composites/locker-detail/LockerDetailBottomSheet";
+import {
   createLockerDetailFromAutocompleteItem,
   createLockerDetailFromHistoryEntry,
   createLockerDetailFromPin,
   createLockerDetailFromSearchItem,
   createLockerDetailPlaceholder,
-  LOCKER_DETAIL_FULL_TOP_OFFSET,
-  LockerDetailBottomSheet,
-  type LockerDetailItem,
-  type LockerDetailLoadState,
-  type LockerDetailSheetSnapRequest,
-  type LockerDetailSheetSnapStage,
-} from "#/composites/search/LockerDetailBottomSheet";
+} from "#/entities/locker/lib/create-locker-detail";
+import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
+import type {
+  LockerDetailItem,
+  LockerDetailLoadState,
+} from "#/entities/locker/model/locker-detail";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
   createDefaultSearchFilters,
@@ -178,7 +183,6 @@ import {
   getSeoLocale,
   getSeoPathname,
 } from "#/features/seo/model/localized-seo-head";
-import { toLockerDetailItem } from "#/shared/api/locker-adapters";
 import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import {
   getLockerDetail,
@@ -188,6 +192,7 @@ import {
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
+import { useAuthStore } from "#/shared/store/authStore";
 import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
 import { useSearchStore } from "#/shared/store/search";
 import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
@@ -473,6 +478,7 @@ export function IndexPage() {
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
   const loaderData = Route.useLoaderData();
   const endPageTransition = usePageTransitionStore((s) => s.endTransition);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   // 홈 마운트 시 페이지 전환 오버레이 해제 (제보 → 홈 복귀 등)
   useEffect(() => {
@@ -3237,6 +3243,7 @@ export function IndexPage() {
           onBack={handleBackFromDetail}
           onShare={handleShareLockerDetail}
           onNavigate={handleOpenNavigationPopup}
+          isFavoriteActionVisible={isAuthenticated}
           initialSnapPoint={
             lockerDetailOpensFull ? LOCKER_DETAIL_FULL_TOP_OFFSET : undefined
           }
