@@ -3,69 +3,77 @@ import { style, styleVariants } from "@vanilla-extract/css";
 
 export const card = style({
   display: "flex",
-  flexDirection: "column",
-  gap: vars.spacing[8],
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: vars.spacing[12],
   width: "100%",
-  minHeight: "96px",
-  padding: `${vars.spacing[12]} ${vars.spacing[16]}`,
+  height: "64px",
+  padding: "10px 14px",
   boxSizing: "border-box",
   border: "1px solid",
-  borderRadius: vars.radius[8],
+  borderRadius: vars.radius[12],
 });
 
 export const cardState = styleVariants({
   available: {
-    borderColor: vars.color.palette.green[200],
-    backgroundColor: vars.color.palette.green[100],
+    borderColor: "#A7D9B4",
+    backgroundColor: "#F0FAF2",
   },
   unavailable: {
-    borderColor: vars.color.border.default,
+    borderColor: vars.color.border.hover,
     backgroundColor: vars.color.bg.surface,
   },
 });
 
+export const labelColumn = style({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  gap: "2px",
+  minWidth: 0,
+  flexShrink: 0,
+});
+
 export const title = style({
   margin: 0,
-  color: vars.color.text.title,
+  fontSize: "13px",
+  fontWeight: vars.typography.fontWeight.Bold,
+  lineHeight: "16px",
+});
+
+export const titleState = styleVariants({
+  available: {
+    color: "#0D7D30",
+  },
+  unavailable: {
+    color: vars.color.palette.gray[600],
+  },
+});
+
+export const countText = style({
+  flexShrink: 0,
   fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.SemiBold,
-  lineHeight: 1.4,
-});
-
-export const countList = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.spacing[8],
-  margin: 0,
-  padding: 0,
-  listStyle: "none",
-});
-
-export const countItem = style({
-  display: "inline-flex",
-  alignItems: "baseline",
-  gap: vars.spacing[4],
-  color: vars.color.text.content,
-  fontSize: vars.typography.fontSize[14],
-  lineHeight: 1.4,
-});
-
-export const sizeLabel = style({
-  fontWeight: vars.typography.fontWeight.SemiBold,
-});
-
-export const count = style({
-  minWidth: "1ch",
-  fontWeight: vars.typography.fontWeight.SemiBold,
+  fontWeight: vars.typography.fontWeight.Bold,
+  lineHeight: "17px",
   fontVariantNumeric: "tabular-nums",
+  whiteSpace: "nowrap",
 });
 
-export const separator = style({
-  color: vars.color.text.disable,
+export const countTextState = styleVariants({
+  available: {
+    color: "#0D7D30",
+  },
+  unavailable: {
+    color: vars.color.palette.gray[600],
+  },
 });
 
 export const updatedAt = style({
-  color: vars.color.text.surface,
-  fontSize: vars.typography.fontSize[12],
-  lineHeight: 1.4,
+  overflow: "hidden",
+  maxWidth: "100%",
+  color: "#A3A8AD",
+  fontSize: "10px",
+  lineHeight: "12px",
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
 });

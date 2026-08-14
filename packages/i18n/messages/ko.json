@@ -301,6 +301,7 @@
   "time_updated_years_ago": "{years}년 전 업데이트",
   "locker_detail_last_updated": "최근 업데이트 {datetime}",
   "locker_detail_realtime_availability": "실시간 보관함 잔여석",
+  "locker_detail_realtime_unavailable": "실시간 이용 정보 미제공",
   "locker_detail_price_section": "가격",
   "locker_detail_size_section": "사이즈",
   "locker_detail_info_section": "보관함 상세 정보",

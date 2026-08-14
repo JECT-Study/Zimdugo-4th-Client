@@ -149,9 +149,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
     expect(sheet.getByText("실시간 보관함 잔여석")).toBeTruthy();
-    expect(sheet.getByLabelText("S 12")).toBeTruthy();
-    expect(sheet.getByLabelText("M 2")).toBeTruthy();
-    expect(sheet.getByLabelText("L 0")).toBeTruthy();
+    expect(sheet.getByText("S 12 · M 2 · L 0")).toBeTruthy();
     expect(
       sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
     ).toBeTruthy();
@@ -167,9 +165,8 @@ describe("LockerDetailBottomSheet", () => {
     );
     const sheet = getSheetRoot();
 
-    expect(sheet.getByLabelText("S -")).toBeTruthy();
-    expect(sheet.getByLabelText("M -")).toBeTruthy();
-    expect(sheet.getByLabelText("L -")).toBeTruthy();
+    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
+    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
   });
 
   it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {

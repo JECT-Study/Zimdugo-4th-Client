@@ -22,18 +22,15 @@ describe("LockerRealtimeAvailabilityCard", () => {
     expect(
       screen.getByText(m.locker_detail_realtime_availability()),
     ).toBeTruthy();
-    expect(screen.getByLabelText("S 12")).toBeTruthy();
-    expect(screen.getByLabelText("M 2")).toBeTruthy();
-    expect(screen.getByLabelText("L 0")).toBeTruthy();
+    expect(screen.getByText("S 12 · M 2 · L 0")).toBeTruthy();
     expect(screen.getByText("최근 업데이트 2026-08-14 14:19")).toBeTruthy();
   });
 
   it("매핑 정보가 없으면 모든 사이즈를 대시로 표시한다", () => {
     render(<LockerRealtimeAvailabilityCard availability={null} />);
 
-    expect(screen.getByLabelText("S -")).toBeTruthy();
-    expect(screen.getByLabelText("M -")).toBeTruthy();
-    expect(screen.getByLabelText("L -")).toBeTruthy();
+    expect(screen.getByText("실시간 이용 정보 미제공")).toBeTruthy();
+    expect(screen.getByText("S - · M - · L -")).toBeTruthy();
     expect(screen.queryByText(/최근 업데이트/)).toBeNull();
   });
 
@@ -50,8 +47,7 @@ describe("LockerRealtimeAvailabilityCard", () => {
       />,
     );
 
-    expect(screen.getByLabelText("S -")).toBeTruthy();
-    expect(screen.getByLabelText("M -")).toBeTruthy();
-    expect(screen.getByLabelText("L -")).toBeTruthy();
+    expect(screen.getByText("실시간 이용 정보 미제공")).toBeTruthy();
+    expect(screen.getByText("S - · M - · L -")).toBeTruthy();
   });
 });

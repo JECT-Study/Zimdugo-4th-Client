@@ -526,8 +526,8 @@ function LockerDetailLoadingContent() {
       </div>
       <Skeleton
         width="100%"
-        height={96}
-        borderRadius={8}
+        height={64}
+        borderRadius={12}
         style={skeletonSurfaceStyle}
       />
       <div className={loadingDetailList}>
