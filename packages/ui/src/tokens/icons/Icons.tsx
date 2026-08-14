@@ -472,17 +472,9 @@ export function IconReport24({ className }: { className?: string }) {
     >
       <title>신고</title>
       <path
-        d="M8 8.5V7a4 4 0 0 1 8 0v1.5M6.5 10.5h11l1 8h-13l1-8Z"
+        d="M12 6.5C16.1422 6.5 19.5 9.85786 19.5 14V20.5H20.5V21.5H3.5V20.5H4.5V14C4.5 9.85786 7.85787 6.5 12 6.5ZM12 7.5C8.41016 7.5 5.5 10.4102 5.5 14V20.5H18.5V14C18.5 10.4102 15.5898 7.5 12 7.5ZM11.5 10.5352C9.9672 10.7544 8.75543 11.9672 8.53613 13.5H7.52832C7.75893 11.4143 9.41427 9.75893 11.5 9.52832V10.5352ZM5.63574 6.92871L4.92871 7.63574L3.51465 6.22168L4.22168 5.51465L5.63574 6.92871ZM20.4854 6.22168L19.0713 7.63574L18.3643 6.92871L19.7783 5.51465L20.4854 6.22168ZM12.5 2.5V4.5H11.5V2.5H12.5Z"
+        fill={color.palette.red[300]}
         stroke={color.palette.red[300]}
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4 13H2.5M21.5 13H20M5 7.5 3.75 6.25M19 7.5l1.25-1.25"
-        stroke={color.palette.red[300]}
-        strokeWidth="1.7"
-        strokeLinecap="round"
       />
     </svg>
   );

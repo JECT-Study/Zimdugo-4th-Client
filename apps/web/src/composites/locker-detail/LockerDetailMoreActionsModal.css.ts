@@ -65,7 +65,15 @@ export const actionButton = style({
   fontSize: vars.typography.fontSize[16],
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: "24px",
+  textAlign: "left",
   cursor: "pointer",
+});
+
+export const actionLabel = style({
+  minWidth: 0,
+  flex: 1,
+  textAlign: "left",
+  overflowWrap: "anywhere",
 });
 
 export const reportActionButton = style({

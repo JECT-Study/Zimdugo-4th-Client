@@ -24,6 +24,7 @@ import {
 import {
   actionButton,
   actionIcon,
+  actionLabel,
   actionList,
   closeButton,
   dialog,
@@ -35,6 +36,7 @@ import {
 
 const MODAL_EDGE_GAP = 8;
 const MODAL_VIEWPORT_PADDING = 16;
+const MODAL_RIGHT_OFFSET = 8;
 
 interface ModalPosition {
   top: number;
@@ -82,7 +84,10 @@ export function LockerDetailMoreActionsModal({
       window.innerHeight - modalHeight - MODAL_VIEWPORT_PADDING;
     setPosition({
       top: Math.max(MODAL_VIEWPORT_PADDING, Math.min(preferredTop, maximumTop)),
-      right: Math.max(MODAL_VIEWPORT_PADDING, window.innerWidth - rect.right),
+      right: Math.max(
+        MODAL_RIGHT_OFFSET,
+        window.innerWidth - rect.right - MODAL_RIGHT_OFFSET,
+      ),
     });
   }, [anchorRef]);
 
@@ -193,7 +198,7 @@ function MoreActionItem({
       <span className={actionIcon} aria-hidden="true">
         {icon}
       </span>
-      <span>{label}</span>
+      <span className={actionLabel}>{label}</span>
     </AriaButton>
   );
 }

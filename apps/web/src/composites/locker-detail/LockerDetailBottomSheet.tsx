@@ -59,7 +59,6 @@ import {
   detailTitleMultiline,
   detailTrailing,
   distanceRow,
-  divider,
   fullActionRow,
   fullContentScroll,
   fullContentScrollEnabled,
@@ -930,7 +929,6 @@ function DetailInfoRow({
           </div>
         ) : null}
       </div>
-      <div className={divider} />
     </div>
   );
 }
