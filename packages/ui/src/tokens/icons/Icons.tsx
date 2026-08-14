@@ -438,6 +438,56 @@ export function IconX24({ className }: { className?: string }) {
   );
 }
 
+export function IconMore24({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>더보기</title>
+      <circle cx="5" cy="12" r="1.5" fill={color.palette.gray[600]} />
+      <circle cx="12" cy="12" r="1.5" fill={color.palette.gray[600]} />
+      <circle cx="19" cy="12" r="1.5" fill={color.palette.gray[600]} />
+    </svg>
+  );
+}
+
+export function IconReport24({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    >
+      <title>신고</title>
+      <path
+        d="M8 8.5V7a4 4 0 0 1 8 0v1.5M6.5 10.5h11l1 8h-13l1-8Z"
+        stroke={color.palette.red[300]}
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4 13H2.5M21.5 13H20M5 7.5 3.75 6.25M19 7.5l1.25-1.25"
+        stroke={color.palette.red[300]}
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 // 1차 검수 완료 (26.04.21)
 export function IconFilter14({ className }: { className?: string }) {
   return (
@@ -1569,6 +1619,22 @@ export function IconCircleboxClock32({ className }: { className?: string }) {
           />
         </svg>
       </CircleBoxGlyph>
+    </CircleBox>
+  );
+}
+
+export function IconCircleboxMore32({ className }: { className?: string }) {
+  return (
+    <CircleBox size={32} className={className}>
+      <IconMore24 />
+    </CircleBox>
+  );
+}
+
+export function IconCircleboxClose32({ className }: { className?: string }) {
+  return (
+    <CircleBox size={32} className={className}>
+      <IconX24 />
     </CircleBox>
   );
 }

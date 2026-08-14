@@ -188,6 +188,7 @@ import {
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
+import { useAuthStore } from "#/shared/store/authStore";
 import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
 import { useSearchStore } from "#/shared/store/search";
 import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
@@ -473,6 +474,7 @@ export function IndexPage() {
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
   const loaderData = Route.useLoaderData();
   const endPageTransition = usePageTransitionStore((s) => s.endTransition);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   // 홈 마운트 시 페이지 전환 오버레이 해제 (제보 → 홈 복귀 등)
   useEffect(() => {
@@ -2462,6 +2464,10 @@ export function IndexPage() {
     setIsNavigationPopupOpen(true);
   }, []);
 
+  const handleReportLockerDetail = useCallback(() => {
+    void navigate({ to: "/report" });
+  }, [navigate]);
+
   const handleShareLockerDetail = useCallback(
     (item: LockerDetailItem) => {
       if (typeof window === "undefined") {
@@ -3236,7 +3242,9 @@ export function IndexPage() {
           }
           onBack={handleBackFromDetail}
           onShare={handleShareLockerDetail}
+          onReport={handleReportLockerDetail}
           onNavigate={handleOpenNavigationPopup}
+          showFavoriteAction={isAuthenticated}
           initialSnapPoint={
             lockerDetailOpensFull ? LOCKER_DETAIL_FULL_TOP_OFFSET : undefined
           }

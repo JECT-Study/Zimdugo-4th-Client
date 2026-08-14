@@ -242,7 +242,7 @@ export const metaDot = style({
   backgroundColor: vars.color.text.disable,
 });
 
-export const favoriteButton = style({
+export const summaryIconButton = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -252,7 +252,7 @@ export const favoriteButton = style({
   alignSelf: "start",
   flexShrink: 0,
   border: 0,
-  borderRadius: vars.radius[6],
+  borderRadius: vars.radius.max,
   background: "transparent",
   color: vars.color.text.disable,
   cursor: "pointer",
@@ -263,21 +263,6 @@ export const summaryActions = style({
   alignItems: "center",
   gap: vars.spacing[8],
   flexShrink: 0,
-});
-
-export const summaryCloseButton = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "24px",
-  height: "24px",
-  padding: 0,
-  flexShrink: 0,
-  border: 0,
-  borderRadius: vars.radius[4],
-  background: "transparent",
-  color: vars.color.text.disable,
-  cursor: "pointer",
 });
 
 export const divider = style({
@@ -421,20 +406,6 @@ export const actionRow = style({
   justifyContent: "center",
   gap: vars.spacing[8],
   width: "100%",
-});
-
-export const iconActionButton = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "52px",
-  height: "32px",
-  padding: 0,
-  flexShrink: 0,
-  border: 0,
-  borderRadius: vars.radius[8],
-  backgroundColor: vars.color.palette.gray[200],
-  cursor: "pointer",
 });
 
 export const primaryActionButton = style({
@@ -599,13 +570,6 @@ export const fullActionRow = style({
   alignItems: "center",
   gap: vars.spacing[8],
   width: "100%",
-});
-
-export const fullIconActionButton = style({
-  width: "56px",
-  height: "40px",
-  padding: 0,
-  flexShrink: 0,
 });
 
 export const fullPrimaryActionButton = style({

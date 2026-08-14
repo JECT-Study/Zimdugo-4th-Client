@@ -256,6 +256,7 @@ function LockerDetailBottomSheetStory({
       onBack={() => undefined}
       onFavoriteChange={() => undefined}
       onShare={() => undefined}
+      onReport={() => undefined}
       onNavigate={() => undefined}
     />
   );
@@ -316,7 +317,7 @@ function FieldStackHalfPreview() {
 }
 
 const meta = {
-  title: "Product/Search/Locker Detail Bottom Sheet",
+  title: "Product/Locker Detail/Bottom Sheet",
   component: LockerDetailBottomSheetStory,
   parameters: {
     layout: "fullscreen",

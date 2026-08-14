@@ -141,7 +141,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
-    expect(sheet.getByRole("button", { name: "공유하기" })).toBeTruthy();
+    expect(
+      sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
+    ).toBeTruthy();
     expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
   });
 
@@ -175,31 +177,54 @@ describe("LockerDetailBottomSheet", () => {
     );
     const sheet = getSheetRoot();
 
-    fireEvent.click(sheet.getByRole("button", { name: "공유하기" }));
+    fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
+    fireEvent.click(screen.getByRole("button", { name: "공유하기" }));
     fireEvent.click(sheet.getByRole("button", { name: "길찾기" }));
 
     expect(handleShare).toHaveBeenCalledWith(LOCKER_DETAIL);
     expect(handleNavigate).toHaveBeenCalledWith(LOCKER_DETAIL);
   });
 
-  it("즐겨찾기 handler가 없으면 하트 버튼을 비활성화한다", () => {
+  it("즐겨찾기 handler가 없으면 더보기 메뉴에서 즐겨찾기를 숨긴다", () => {
     render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
     const sheet = getSheetRoot();
 
-    expect(
-      sheet
-        .getByRole("button", { name: "즐겨찾기 추가" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+    fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
+    expect(screen.queryByRole("button", { name: "즐겨찾기 추가" })).toBeNull();
+    expect(screen.getByRole("button", { name: "신고하기" })).toBeTruthy();
+  });
+
+  it("더보기 메뉴에서 즐겨찾기와 신고 동작을 실행하고 메뉴를 닫는다", () => {
+    const handleFavoriteChange = vi.fn();
+    const handleReport = vi.fn();
+
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        onFavoriteChange={handleFavoriteChange}
+        onReport={handleReport}
+      />,
+    );
+    const sheet = getSheetRoot();
+    const openMoreActions = () =>
+      fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
+
+    openMoreActions();
+    fireEvent.click(screen.getByRole("button", { name: "즐겨찾기 추가" }));
+    expect(handleFavoriteChange).toHaveBeenCalledWith(LOCKER_DETAIL, true);
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    openMoreActions();
+    fireEvent.click(screen.getByRole("button", { name: "신고하기" }));
+    expect(handleReport).toHaveBeenCalledWith(LOCKER_DETAIL);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {
     render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
     const sheet = getSheetRoot();
 
-    expect(
-      sheet.queryByRole("button", { name: /정확한 정보에요/ }),
-    ).toBeNull();
+    expect(sheet.queryByRole("button", { name: /정확한 정보에요/ })).toBeNull();
     expect(
       sheet.queryByRole("button", { name: /부정확한 정보에요/ }),
     ).toBeNull();
