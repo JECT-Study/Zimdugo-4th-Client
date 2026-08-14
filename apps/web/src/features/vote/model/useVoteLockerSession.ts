@@ -1,7 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { LockerDetailItem } from "#/composites/search/LockerDetailBottomSheet";
-import { type LockerVoteType, postLockerVote } from "#/shared/api/locker-votes";
+import {
+  type LockerVoteType,
+  postLockerVote,
+} from "../api/post-locker-vote";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
 import {
@@ -13,9 +16,13 @@ import {
   type LockerVoteServerState,
   rollbackFailedVoteFlush,
   toggleVotePending,
-} from "../model/vote-locker-session";
-import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
+} from "./vote-locker-session";
+import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
 
+/**
+ * @deprecated 보관함 상세 개편에서 vote 런타임 연결을 해제했다.
+ * 롤백 시 홈 라우트에서 이 훅과 applyVoteOverlayToLockerDetail을 함께 복원한다.
+ */
 export function useVoteLockerSession() {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
