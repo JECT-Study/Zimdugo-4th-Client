@@ -132,7 +132,7 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
     const sheet = getSheetRoot();
 
     expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
@@ -155,6 +155,7 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         loadState="error"
         onRetry={handleRetry}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -173,6 +174,7 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         onShare={handleShare}
         onNavigate={handleNavigate}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -186,7 +188,10 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("즐겨찾기 handler가 없으면 더보기 메뉴에서 즐겨찾기를 숨긴다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    const handleReport = vi.fn();
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={handleReport} />,
+    );
     const sheet = getSheetRoot();
 
     fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
@@ -221,7 +226,7 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {
-    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />);
     const sheet = getSheetRoot();
 
     expect(sheet.queryByRole("button", { name: /정확한 정보에요/ })).toBeNull();
@@ -238,6 +243,7 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         loadState="error"
         onBack={handleBack}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -249,7 +255,11 @@ describe("LockerDetailBottomSheet", () => {
 
   it("renders a loading skeleton while locker detail is loading", () => {
     render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} loadState="loading" />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        loadState="loading"
+        onReport={vi.fn()}
+      />,
     );
     const sheet = getSheetRoot();
 
@@ -265,6 +275,7 @@ describe("LockerDetailBottomSheet", () => {
     render(
       <LockerDetailBottomSheet
         locker={{ ...LOCKER_DETAIL, distanceLabel: "" }}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -274,7 +285,7 @@ describe("LockerDetailBottomSheet", () => {
 
   it("이름 펼치기 버튼은 풀 바텀시트에서만 노출한다", async () => {
     const { rerender } = render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
 
     await waitFor(() => {
@@ -286,7 +297,11 @@ describe("LockerDetailBottomSheet", () => {
     });
 
     rerender(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={112} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={112}
+        onReport={vi.fn()}
+      />,
     );
 
     expect(
@@ -303,6 +318,7 @@ describe("LockerDetailBottomSheet", () => {
           ...LOCKER_DETAIL,
           imageUrl: "https://example.com/locker.jpg",
         }}
+        onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
@@ -319,6 +335,7 @@ describe("LockerDetailBottomSheet", () => {
           ...LOCKER_DETAIL,
           imageUrl: "https://example.com/locker.jpg",
         }}
+        onReport={vi.fn()}
       />,
     );
 
@@ -345,6 +362,7 @@ describe("LockerDetailBottomSheet", () => {
       <LockerDetailBottomSheet
         locker={LOCKER_DETAIL}
         snapRequest={{ id: 1, stage: "mini" }}
+        onReport={vi.fn()}
       />,
     );
 
@@ -364,6 +382,7 @@ describe("LockerDetailBottomSheet", () => {
         locker={LOCKER_DETAIL}
         snapRequest={{ id: 1, stage: "full" }}
         onSnapStageChange={handleSnapStageChange}
+        onReport={vi.fn()}
       />,
     );
 
@@ -379,7 +398,11 @@ describe("LockerDetailBottomSheet", () => {
 
   it("enables internal content scroll only when the detail sheet opens full", () => {
     const { rerender } = render(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} snapPoint={566} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        snapPoint={566}
+        onReport={vi.fn()}
+      />,
     );
 
     expect(
@@ -389,7 +412,11 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe("false");
 
     rerender(
-      <LockerDetailBottomSheet locker={LOCKER_DETAIL} initialSnapPoint={112} />,
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={112}
+        onReport={vi.fn()}
+      />,
     );
 
     expect(

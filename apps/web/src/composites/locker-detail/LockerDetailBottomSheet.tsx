@@ -113,7 +113,7 @@ export interface LockerDetailBottomSheetProps {
   onFavoriteChange?: (item: LockerDetailItem, next: boolean) => void;
   onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
-  onReport?: (item: LockerDetailItem) => void;
+  onReport: (item: LockerDetailItem) => void;
   onNavigate?: (item: LockerDetailItem) => void;
   showFavoriteAction?: boolean;
   minSnapPoint?: number;
@@ -364,7 +364,7 @@ export function LockerDetailBottomSheet({
   };
 
   const handleReport = () => {
-    onReport?.(locker);
+    onReport(locker);
   };
 
   const handleNavigate = () => {
