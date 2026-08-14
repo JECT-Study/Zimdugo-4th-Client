@@ -13,6 +13,10 @@ function LockerDetailMoreActionsModalStory({
   const [isOpen, setIsOpen] = useState(true);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
+  const handleOpenMoreActions = () => {
+    setIsOpen(true);
+  };
+
   return (
     <div
       style={{
@@ -29,7 +33,7 @@ function LockerDetailMoreActionsModalStory({
         ref={triggerRef}
         type="button"
         aria-label="더보기 메뉴 열기"
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpenMoreActions}
         style={{ width: 32, height: 32, padding: 0, border: 0 }}
       >
         <IconCircleboxMore32 />

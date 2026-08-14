@@ -69,6 +69,11 @@ export function LockerDetailMoreActionsModal({
   });
   const modalRef = useRef<HTMLDivElement | null>(null);
 
+  const modalStyle: CSSProperties = {
+    top: position.top,
+    right: position.right,
+  };
+
   const updatePosition = useCallback(() => {
     const anchor = anchorRef.current;
 
@@ -109,11 +114,6 @@ export function LockerDetailMoreActionsModal({
     window.addEventListener("resize", updatePosition);
     return () => window.removeEventListener("resize", updatePosition);
   }, [isOpen, updatePosition]);
-
-  const modalStyle: CSSProperties = {
-    top: position.top,
-    right: position.right,
-  };
 
   return (
     <ModalOverlay

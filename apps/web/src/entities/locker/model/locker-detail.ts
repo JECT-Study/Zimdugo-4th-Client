@@ -1,3 +1,8 @@
+export interface LockerOperatingHours {
+  open: string;
+  close: string;
+}
+
 export interface LockerSummaryItem {
   itemType: "LOCKER";
   lockerId: number;
@@ -11,10 +16,7 @@ export interface LockerSummaryItem {
   distanceMeters?: number;
   updatedAt?: string;
   minPrice?: number;
-  operatingHours?: {
-    open: string;
-    close: string;
-  } | null;
+  operatingHours?: LockerOperatingHours | null;
   searchKeywords?: string[];
   isOpen?: boolean;
   isFavorite?: boolean;

@@ -113,9 +113,9 @@ export interface LockerDetailBottomSheetProps {
   onFavoriteChange?: (item: LockerDetailItem, next: boolean) => void;
   onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
-  onReport: (item: LockerDetailItem) => void;
+  onReport?: (item: LockerDetailItem) => void;
   onNavigate?: (item: LockerDetailItem) => void;
-  showFavoriteAction?: boolean;
+  isFavoriteActionVisible?: boolean;
   minSnapPoint?: number;
   snapPoint?: number;
   /** 풀 스냅으로 열 때만 지정. 하프 스냅은 snapPoint에 유지 */
@@ -259,7 +259,7 @@ export function LockerDetailBottomSheet({
   onShare,
   onReport,
   onNavigate,
-  showFavoriteAction = true,
+  isFavoriteActionVisible = true,
   minSnapPoint,
   snapPoint,
   initialSnapPoint,
@@ -345,7 +345,7 @@ export function LockerDetailBottomSheet({
 
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
-    showFavoriteAction && typeof onFavoriteChange === "function";
+    isFavoriteActionVisible && typeof onFavoriteChange === "function";
 
   const handleFavoritePress = () => {
     if (!canFavorite) {
@@ -364,12 +364,17 @@ export function LockerDetailBottomSheet({
   };
 
   const handleReport = () => {
-    onReport(locker);
+    onReport?.(locker);
   };
 
   const handleNavigate = () => {
     onNavigate?.(locker);
   };
+
+  const handleOpenMoreActions = () => {
+    setIsMoreActionsOpen(true);
+  };
+
   const handleSnapChange = (nextSnap: number) => {
     const nextStage = resolveLockerDetailSnapStage({
       maxSnapPoint: resolvedMaxSnapPoint,
@@ -459,7 +464,7 @@ export function LockerDetailBottomSheet({
               locker={locker}
               detailHelpText={detailHelpText}
               onClose={handleBack}
-              onMoreActionsOpen={() => setIsMoreActionsOpen(true)}
+              onMoreActionsOpen={handleOpenMoreActions}
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
               snapStage={currentSnapStage}

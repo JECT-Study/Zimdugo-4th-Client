@@ -3243,7 +3243,7 @@ export function IndexPage() {
           onBack={handleBackFromDetail}
           onShare={handleShareLockerDetail}
           onNavigate={handleOpenNavigationPopup}
-          showFavoriteAction={isAuthenticated}
+          isFavoriteActionVisible={isAuthenticated}
           initialSnapPoint={
             lockerDetailOpensFull ? LOCKER_DETAIL_FULL_TOP_OFFSET : undefined
           }
