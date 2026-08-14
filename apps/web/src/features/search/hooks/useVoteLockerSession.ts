@@ -16,6 +16,10 @@ import {
 } from "../model/vote-locker-session";
 import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 
+/**
+ * @deprecated 보관함 상세 개편에서 vote 런타임 연결을 해제했다.
+ * 롤백 시 홈 라우트에서 이 훅과 applyVoteOverlayToLockerDetail을 함께 복원한다.
+ */
 export function useVoteLockerSession() {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);

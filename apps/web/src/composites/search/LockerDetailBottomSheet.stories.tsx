@@ -257,7 +257,6 @@ function LockerDetailBottomSheetStory({
       onFavoriteChange={() => undefined}
       onShare={() => undefined}
       onNavigate={() => undefined}
-      onVoteChange={() => undefined}
     />
   );
 }

@@ -18,6 +18,7 @@ export type ResolveEffectiveVoteCounts = (
   >,
 ) => Pick<LockerDetailItem, "accurateCount" | "inaccurateCount"> | null;
 
+/** @deprecated vote 기능 롤백 호환용으로 보존한다. */
 export const applyVoteOverlayToLockerDetail = (
   locker: LockerDetailItem,
   resolveEffectiveVoteFlags: ResolveEffectiveVoteFlags,

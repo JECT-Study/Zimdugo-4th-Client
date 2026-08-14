@@ -28,7 +28,6 @@ import type { SearchLockerResultItem } from "#/composites/search/search-list-mod
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import type { SearchHistoryLockerEntry } from "#/features/search/model/search-history";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
-import type { LockerVoteType } from "#/shared/api/locker-votes";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import {
   formatLockerOperatingHoursLabel,
@@ -43,6 +42,7 @@ import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
   actionRow,
+  actionSection,
   backButton,
   backIcon,
   contentStack,
@@ -61,12 +61,6 @@ import {
   distanceRow,
   divider,
   favoriteButton,
-  feedbackActionSection,
-  feedbackButton,
-  feedbackButtonNegative,
-  feedbackButtonNegativeSelected,
-  feedbackButtonSelected,
-  feedbackRow,
   fullActionRow,
   fullContentScroll,
   fullContentScrollEnabled,
@@ -121,9 +115,13 @@ export interface LockerDetailItem extends SearchLockerResultItem {
   priceLabel?: string;
   sizeLabel?: string;
   detailHelpText?: string;
+  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
   accurateCount?: number;
+  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
   inaccurateCount?: number;
+  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
   isAccurateVoted?: boolean;
+  /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
   isInaccurateVoted?: boolean;
   lastUpdatedLabel?: string;
   imageUrl?: string;
@@ -136,7 +134,6 @@ export interface LockerDetailBottomSheetProps {
   loadState?: LockerDetailLoadState;
   onRetry?: () => void;
   onFavoriteChange?: (item: LockerDetailItem, next: boolean) => void;
-  onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
   onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
   onNavigate?: (item: LockerDetailItem) => void;
@@ -341,7 +338,6 @@ export function LockerDetailBottomSheet({
   loadState = "ready",
   onRetry,
   onFavoriteChange,
-  onVoteChange,
   onBack,
   onShare,
   onNavigate,
@@ -544,7 +540,6 @@ export function LockerDetailBottomSheet({
             onClose={handleBack}
             onShare={handleShare}
             onNavigate={handleNavigate}
-            onVoteChange={onVoteChange}
             snapStage={currentSnapStage}
             isScrollEnabled={currentSnapStage === "full"}
             contentRef={handleFullContentMeasureRef}
@@ -666,7 +661,6 @@ function FullDetailContent({
   onClose,
   onShare,
   onNavigate,
-  onVoteChange,
   snapStage,
   isScrollEnabled,
   contentRef,
@@ -679,24 +673,11 @@ function FullDetailContent({
   onClose: () => void;
   onShare: () => void;
   onNavigate: () => void;
-  onVoteChange?: (item: LockerDetailItem, voteType: LockerVoteType) => void;
   snapStage: LockerDetailSheetSnapStage;
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const canVote = typeof onVoteChange === "function";
-  const accurateCount = locker.accurateCount ?? 0;
-  const inaccurateCount = locker.inaccurateCount ?? 0;
-
-  const handleVotePress = (voteType: LockerVoteType) => {
-    if (!canVote) {
-      return;
-    }
-
-    onVoteChange(locker, voteType);
-  };
-
   const handleOpenImagePreview = (imageUrl: string) => {
     setPreviewImageUrl(imageUrl);
   };
@@ -777,44 +758,12 @@ function FullDetailContent({
         {locker.lastUpdatedLabel ? (
           <p className={recentUpdatedText}>{locker.lastUpdatedLabel}</p>
         ) : null}
-        <div className={feedbackActionSection}>
-          <div className={feedbackRow}>
-            <button
-              type="button"
-              disabled={!canVote}
-              aria-disabled={!canVote}
-              className={[
-                feedbackButton,
-                locker.isAccurateVoted ? feedbackButtonSelected : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              aria-pressed={locker.isAccurateVoted === true}
-              onClick={() => handleVotePress("CORRECT")}
-            >
-              {m.locker_detail_feedback_accurate({
-                count: String(accurateCount),
-              })}
-            </button>
-            <button
-              type="button"
-              disabled={!canVote}
-              aria-disabled={!canVote}
-              className={[
-                feedbackButton,
-                feedbackButtonNegative,
-                locker.isInaccurateVoted ? feedbackButtonNegativeSelected : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              aria-pressed={locker.isInaccurateVoted === true}
-              onClick={() => handleVotePress("INCORRECT")}
-            >
-              {m.locker_detail_feedback_inaccurate({
-                count: String(inaccurateCount),
-              })}
-            </button>
-          </div>
+        {/*
+          @deprecated 정확성 vote UI는 상세 화면 개편에서 노출을 중단했다.
+          롤백 시 features/search의 vote 전용 훅·모델과 shared/api/locker-votes를
+          다시 연결하고, 이 위치에 기존 액션 영역을 복원한다.
+        */}
+        <div className={actionSection}>
           <div className={actionDivider} />
           <ActionRow isFull onShare={onShare} onNavigate={onNavigate} />
         </div>

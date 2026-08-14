@@ -86,13 +86,11 @@ import {
   usePlaceLockers,
 } from "#/features/search/hooks/useSearch";
 import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
-import { useVoteLockerSession } from "#/features/search/hooks/useVoteLockerSession";
 import {
   applyFavoriteOverlayToLockerDetail,
   applyFavoriteOverlayToLockerItems,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
-import { applyVoteOverlayToLockerDetail } from "#/features/search/lib/apply-vote-overlay";
 import type { ResolveNavigationOriginResult } from "#/features/search/lib/navigation-platform-links";
 import {
   createLockerCanonicalUrl,
@@ -514,11 +512,8 @@ export function IndexPage() {
   } | null>(null);
   const queryClient = useQueryClient();
   const favoriteSession = useFavoriteLockerSession();
-  const voteSession = useVoteLockerSession();
   const flushFavoriteChangesRef = useRef(favoriteSession.flush);
   flushFavoriteChangesRef.current = favoriteSession.flush;
-  const flushVoteChangesRef = useRef(voteSession.flush);
-  flushVoteChangesRef.current = voteSession.flush;
 
   const flushInFlightRef = useRef<Promise<void> | null>(null);
 
@@ -529,7 +524,6 @@ export function IndexPage() {
 
     const flushPromise = Promise.allSettled([
       flushFavoriteChangesRef.current(),
-      flushVoteChangesRef.current(),
     ]).then(() => undefined);
 
     flushInFlightRef.current = flushPromise.finally(() => {
@@ -2893,17 +2887,11 @@ export function IndexPage() {
       favoriteSession.getEffectiveIsFavorite,
     );
 
-    return applyVoteOverlayToLockerDetail(
-      withFavorite,
-      voteSession.getEffectiveVoteFlagOverlay,
-      voteSession.getEffectiveVoteCountOverlay,
-    );
+    return withFavorite;
   }, [
     favoriteSession.getEffectiveIsFavorite,
     lockerDetail,
     selectedLockerDetail,
-    voteSession.getEffectiveVoteFlagOverlay,
-    voteSession.getEffectiveVoteCountOverlay,
   ]);
 
   const isSearchListLoading = shouldShowSearchListLoading({
@@ -3245,18 +3233,6 @@ export function IndexPage() {
                     lockerDetail.isFavorite,
                   )
               : undefined
-          }
-          onVoteChange={(item, voteType) =>
-            voteSession.handleDetailVoteChange(
-              item,
-              voteType,
-              lockerDetail
-                ? {
-                    isAccurateVoted: lockerDetail.isAccurateVoted,
-                    isInaccurateVoted: lockerDetail.isInaccurateVoted,
-                  }
-                : undefined,
-            )
           }
           onBack={handleBackFromDetail}
           onShare={handleShareLockerDetail}

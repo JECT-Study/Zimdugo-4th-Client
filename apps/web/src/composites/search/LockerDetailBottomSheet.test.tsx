@@ -193,55 +193,16 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe(true);
   });
 
-  it("정확성 투표 버튼 클릭 시 onVoteChange를 호출한다", () => {
-    const handleVoteChange = vi.fn();
-    const lockerWithVote = {
-      ...LOCKER_DETAIL,
-      isAccurateVoted: true,
-      isInaccurateVoted: false,
-    };
-
-    render(
-      <LockerDetailBottomSheet
-        locker={lockerWithVote}
-        onVoteChange={handleVoteChange}
-      />,
-    );
+  it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {
+    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
     const sheet = getSheetRoot();
 
-    fireEvent.click(sheet.getByRole("button", { name: "정확한 정보에요 78" }));
-
-    expect(handleVoteChange).toHaveBeenCalledWith(lockerWithVote, "CORRECT");
-  });
-
-  it("투표 카운트가 없어도 투표 버튼을 표시한다", () => {
-    const handleVoteChange = vi.fn();
-    const lockerWithoutVoteCounts: LockerDetailItem = { ...LOCKER_DETAIL };
-    delete lockerWithoutVoteCounts.accurateCount;
-    delete lockerWithoutVoteCounts.inaccurateCount;
-
-    render(
-      <LockerDetailBottomSheet
-        locker={lockerWithoutVoteCounts}
-        onVoteChange={handleVoteChange}
-      />,
-    );
-    const sheet = getSheetRoot();
-
-    const accurateButton = sheet.getByRole("button", {
-      name: m.locker_detail_feedback_accurate({ count: "0" }),
-    });
-    const inaccurateButton = sheet.getByRole("button", {
-      name: m.locker_detail_feedback_inaccurate({ count: "0" }),
-    });
-
-    fireEvent.click(accurateButton);
-
-    expect(inaccurateButton).toBeTruthy();
-    expect(handleVoteChange).toHaveBeenCalledWith(
-      lockerWithoutVoteCounts,
-      "CORRECT",
-    );
+    expect(
+      sheet.queryByRole("button", { name: /정확한 정보에요/ }),
+    ).toBeNull();
+    expect(
+      sheet.queryByRole("button", { name: /부정확한 정보에요/ }),
+    ).toBeNull();
   });
 
   it("닫힘 단계의 뒤로가기는 에러 화면에서 유지한다", () => {

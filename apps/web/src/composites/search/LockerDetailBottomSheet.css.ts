@@ -566,14 +566,7 @@ export const recentUpdatedText = style({
   textAlign: "center",
 });
 
-export const feedbackRow = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.spacing[8],
-  width: "100%",
-});
-
-export const feedbackActionSection = style({
+export const actionSection = style({
   display: "flex",
   flexDirection: "column",
   gap: "20px",
@@ -599,38 +592,6 @@ export const actionDivider = style({
       transformOrigin: "top",
     },
   },
-});
-
-export const feedbackButton = style({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "32px",
-  minWidth: 0,
-  flex: 1,
-  padding: `0 ${vars.spacing[16]}`,
-  border: `1px solid ${vars.color.palette.green[500]}`,
-  borderRadius: vars.radius[8],
-  backgroundColor: vars.color.bg.default,
-  color: vars.color.palette.green[500],
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  cursor: "pointer",
-});
-
-export const feedbackButtonNegative = style({
-  borderColor: vars.color.danger.default,
-  color: vars.color.danger.default,
-});
-
-export const feedbackButtonSelected = style({
-  backgroundColor: vars.color.palette.green[500],
-  color: vars.color.text.white,
-});
-
-export const feedbackButtonNegativeSelected = style({
-  backgroundColor: vars.color.danger.default,
-  color: vars.color.text.white,
 });
 
 export const fullActionRow = style({
