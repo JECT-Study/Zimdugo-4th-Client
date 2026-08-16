@@ -61,9 +61,7 @@ import {
   hasRequestedHomeLocationInSession,
   markHomeLocationRequestedInSession,
 } from "#/entities/map/model/home-location-request-session";
-import {
-  useHasRequestedHomeLocationInSession,
-} from "#/entities/map/model/useHomeLocationRequestSession";
+import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import {
   fitNaverMapToBounds,
   focusNaverMapOnClusterBounds,
@@ -72,6 +70,9 @@ import {
   getPinId,
   type LockerMarkerOffset,
 } from "#/entities/map/model/map-marker";
+import {
+  useHasRequestedHomeLocationInSession,
+} from "#/entities/map/model/useHomeLocationRequestSession";
 import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
 import {
   LOCKER_PINS_QUERY_KEY,
@@ -616,6 +617,7 @@ export function IndexPage() {
   const hasPendingLocationRequestRef = useRef(false);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
+  const didLogHomeLocationSessionSkipRef = useRef(false);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -887,6 +889,9 @@ export function IndexPage() {
   );
 
   useEffect(() => {
+    const hasRequestedHomeLocationInCurrentSession =
+      hasRequestedHomeLocationInSession();
+
     if (
       !shouldPreferHomeLocation ||
       location != null ||
@@ -896,12 +901,34 @@ export function IndexPage() {
       error != null ||
       hasRequestedHomeLocation ||
       didRequestHomeLocationRef.current ||
-      hasRequestedHomeLocationInSession()
+      hasRequestedHomeLocationInCurrentSession
     ) {
+      if (
+        shouldPreferHomeLocation &&
+        location == null &&
+        permission === "prompt" &&
+        (hasRequestedHomeLocation ||
+          hasRequestedHomeLocationInCurrentSession) &&
+        !didLogHomeLocationSessionSkipRef.current
+      ) {
+        didLogHomeLocationSessionSkipRef.current = true;
+        postLocationDiagnostic("home_auto_request_skipped_session", {
+          hasSessionRequestMarker: true,
+          isLocating,
+          isTracking,
+          permission,
+        });
+      }
       return;
     }
 
     didRequestHomeLocationRef.current = true;
+    postLocationDiagnostic("home_auto_request_started", {
+      hasSessionRequestMarker: false,
+      isLocating: true,
+      isTracking: true,
+      permission,
+    });
     markHomeLocationRequestedInSession();
     hasPendingLocationRequestRef.current = true;
     startTracking();

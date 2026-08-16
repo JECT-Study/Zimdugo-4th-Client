@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { postLocationDiagnostic } from "./location-diagnostics";
 
 export type LocationPermissionState = "prompt" | "granted" | "denied";
 
@@ -26,6 +27,7 @@ export function useLocationTracking({
   const isFirstLocationRef = useRef(true);
   // 진행 중인 위치 요청은 늦게 도착한 Permissions API 결과로 중단하지 않는다.
   const isTrackingRef = useRef(false);
+  const requestStartedAtRef = useRef<number | null>(null);
 
   // 권한 상태 초기화 및 감지
   useEffect(() => {
@@ -47,12 +49,21 @@ export function useLocationTracking({
       }
     };
 
+    postLocationDiagnostic("permission_query_started", {
+      permission: "prompt",
+      isTracking: isTrackingRef.current,
+    });
+
     navigator.permissions
       .query({ name: "geolocation" })
       .then((status) => {
         if (isCancelled) return;
         permissionStatus = status;
         const state = status.state;
+        postLocationDiagnostic("permission_query_resolved", {
+          permission: state,
+          isTracking: isTrackingRef.current,
+        });
         if (
           !isTrackingRef.current &&
           (state === "granted" || state === "denied" || state === "prompt")
@@ -62,6 +73,9 @@ export function useLocationTracking({
         status.addEventListener("change", handlePermissionChange);
       })
       .catch((err) => {
+        postLocationDiagnostic("permission_query_error", {
+          isTracking: isTrackingRef.current,
+        });
         console.warn("Permissions API not supported for geolocation:", err);
       });
 
@@ -85,11 +99,24 @@ export function useLocationTracking({
   useEffect(() => {
     if (!isTracking || !navigator.geolocation) return;
 
+    const requestStartedAt = requestStartedAtRef.current ?? Date.now();
+    requestStartedAtRef.current = requestStartedAt;
+    postLocationDiagnostic("tracking_watch_started", {
+      isLocating: true,
+      isTracking: true,
+    });
+
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         // 첫 번째 콜백에서만 onFirstLocation 호출
         if (isFirstLocationRef.current) {
           isFirstLocationRef.current = false;
+          postLocationDiagnostic("tracking_first_position", {
+            elapsedMs: Date.now() - requestStartedAt,
+            isLocating: false,
+            isTracking: true,
+            permission: "granted",
+          });
           onFirstLocation?.();
         }
         setLocation({
@@ -102,6 +129,13 @@ export function useLocationTracking({
         setIsLocating(false);
       },
       (err) => {
+        postLocationDiagnostic("tracking_watch_error", {
+          elapsedMs: Date.now() - requestStartedAt,
+          errorCode: err.code,
+          isLocating: false,
+          isTracking: false,
+          permission: err.code === 1 ? "denied" : undefined,
+        });
         isTrackingRef.current = false;
         setError(err);
         setIsTracking(false);
@@ -124,11 +158,22 @@ export function useLocationTracking({
 
   const startTracking = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
+      postLocationDiagnostic("tracking_unsupported", {
+        isLocating: false,
+        isTracking: false,
+        permission: "denied",
+      });
       setIsLocating(false);
       setIsTracking(false);
       setPermission("denied");
       return;
     }
+    requestStartedAtRef.current = Date.now();
+    postLocationDiagnostic("tracking_request_started", {
+      isLocating: true,
+      isTracking: true,
+      permission: "prompt",
+    });
     setIsTracking(true);
     setIsLocating(true);
     setError(null);
