@@ -79,7 +79,7 @@ import {
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
-import { MapSkeleton } from "#/entities/map/ui/map-skeleton/MapSkeleton";
+import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
@@ -190,12 +190,11 @@ import {
   type LockerPinItemResponse,
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
+import { useDelayedVisibility } from "#/shared/hooks/useDelayedVisibility";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
-import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
 import { useSearchStore } from "#/shared/store/search";
-import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import {
   locationButton,
   locationControlStack,
@@ -443,6 +442,7 @@ const RefreshButton = memo(function RefreshButton({
 interface MyLocationButtonProps {
   permission: PermissionState;
   isCameraCentered: boolean;
+  isLocating: boolean;
   isOrientationTracking: boolean;
   onMyLocation: () => void;
 }
@@ -450,6 +450,7 @@ interface MyLocationButtonProps {
 const MyLocationButton = memo(function MyLocationButton({
   permission,
   isCameraCentered,
+  isLocating,
   isOrientationTracking,
   onMyLocation,
 }: MyLocationButtonProps) {
@@ -458,6 +459,8 @@ const MyLocationButton = memo(function MyLocationButton({
       type="button"
       className={locationButton}
       onClick={onMyLocation}
+      disabled={isLocating}
+      aria-busy={isLocating}
       aria-label={m.home_my_location_aria()}
     >
       <IconCircleboxCrosshair48
@@ -477,13 +480,7 @@ export function IndexPage() {
   const navigate = useNavigate();
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
   const loaderData = Route.useLoaderData();
-  const endPageTransition = usePageTransitionStore((s) => s.endTransition);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  // 홈 마운트 시 페이지 전환 오버레이 해제 (제보 → 홈 복귀 등)
-  useEffect(() => {
-    endPageTransition();
-  }, [endPageTransition]);
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
@@ -615,7 +612,6 @@ export function IndexPage() {
   const [windowHeight, setWindowHeight] = useState(
     typeof window !== "undefined" ? window.innerHeight : 800,
   );
-  const locationLoadingTimerRef = useRef<number | undefined>(undefined);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasPendingLocationRequestRef = useRef(false);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
@@ -627,9 +623,6 @@ export function IndexPage() {
     interval?: number;
   }>({});
 
-  // 내 위치 버튼 지연 로딩 상태 (Hoisting)
-  const [isLocationDelayedLoading, setIsLocationDelayedLoading] =
-    useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
     loadSearchFiltersFromSession,
   );
@@ -846,15 +839,11 @@ export function IndexPage() {
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
   //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
   //   재등록되는 무한 루프가 발생함
-  // setIsLocationDelayedLoading / setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
+  // setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
   // requestOrientationPermissionRef / startOrientationTrackingRef는
   // render마다 갱신되는 ref이므로 deps []가 안전하다.
   const handleFirstLocation = useCallback(() => {
     hasPendingLocationRequestRef.current = false;
-    window.clearTimeout(locationLoadingTimerRef.current);
-    locationLoadingTimerRef.current = undefined;
-    // GPS 응답 시점에 오버레이 해제(애니메이션을 늦추면 사용자 경험 저하)
-    setIsLocationDelayedLoading(false);
 
     // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
     // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
@@ -892,6 +881,10 @@ export function IndexPage() {
     permission !== "denied" &&
     location == null &&
     error == null;
+  const isLocationDelayedLoading = useDelayedVisibility(
+    isLocating && !shouldDeferHomeMapForLocation,
+    300,
+  );
 
   useEffect(() => {
     if (
@@ -1033,9 +1026,6 @@ export function IndexPage() {
   // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
   useEffect(() => {
     if (permission === "denied") {
-      window.clearTimeout(locationLoadingTimerRef.current);
-      locationLoadingTimerRef.current = undefined;
-      setIsLocationDelayedLoading(false);
       setIsCameraCentered(false);
 
       if (hasPendingLocationRequestRef.current) {
@@ -1102,7 +1092,6 @@ export function IndexPage() {
     return () => {
       window.clearTimeout(refreshTimersRef.current.spinning);
       window.clearInterval(refreshTimersRef.current.interval);
-      window.clearTimeout(locationLoadingTimerRef.current);
       window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
     };
   }, []);
@@ -1160,10 +1149,6 @@ export function IndexPage() {
         } else if (!isTracking) {
           // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
           hasPendingLocationRequestRef.current = true;
-          window.clearTimeout(locationLoadingTimerRef.current);
-          locationLoadingTimerRef.current = window.setTimeout(() => {
-            setIsLocationDelayedLoading(true);
-          }, 300);
           startTracking();
         }
         return;
@@ -1181,10 +1166,6 @@ export function IndexPage() {
           });
         } else if (!isTracking) {
           hasPendingLocationRequestRef.current = true;
-          window.clearTimeout(locationLoadingTimerRef.current);
-          locationLoadingTimerRef.current = window.setTimeout(() => {
-            setIsLocationDelayedLoading(true);
-          }, 300);
           startTracking();
         }
         return;
@@ -1211,10 +1192,6 @@ export function IndexPage() {
           return;
         }
         hasPendingLocationRequestRef.current = true;
-        window.clearTimeout(locationLoadingTimerRef.current);
-        locationLoadingTimerRef.current = window.setTimeout(() => {
-          setIsLocationDelayedLoading(true);
-        }, 300);
         startTracking();
         setIsCameraCentered(true);
         // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
@@ -3069,12 +3046,18 @@ export function IndexPage() {
       ) : null}
 
       {isLocationDelayedLoading && (
-        <LoadingOverlay label={m.home_map_refresh_aria()} />
+        <MapLoadingOverlay
+          label={m.location_loading_aria()}
+          message={m.location_loading_message()}
+        />
       )}
 
       <NaverMapProvider language={languageTag()}>
         {shouldDeferHomeMapForLocation ? (
-          <MapSkeleton />
+          <MapLoadingOverlay
+            label={m.location_loading_aria()}
+            message={m.location_loading_message()}
+          />
         ) : (
           <NaverMapCanvas
             key={mapRemountKey}
@@ -3166,6 +3149,7 @@ export function IndexPage() {
           <MyLocationButton
             permission={permission}
             isCameraCentered={isCameraCentered}
+            isLocating={isLocating}
             isOrientationTracking={isOrientationTracking}
             onMyLocation={handleMyLocation}
           />

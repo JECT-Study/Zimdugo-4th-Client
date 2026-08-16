@@ -10,15 +10,14 @@ export function ReportPageLoadingOverlay() {
   return (
     <>
       <style>{reportPageSpinnerKeyframes}</style>
-      <div
+      <output
         style={reportPageLoadingOverlayStyle}
-        role="status"
         aria-live="polite"
         aria-label={m.report_page_loading_aria()}
       >
         <div style={reportPageLoadingBackdropStyle} />
-        <div style={reportPageLoadingSpinnerStyle} />
-      </div>
+        <div data-report-page-spinner style={reportPageLoadingSpinnerStyle} />
+      </output>
     </>
   );
 }

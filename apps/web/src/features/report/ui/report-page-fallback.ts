@@ -93,6 +93,9 @@ export const reportPageSpinnerKeyframes = `
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+@media (prefers-reduced-motion: reduce) {
+  [data-report-page-spinner] { animation: none; }
+}
 `;
 
 export const reportPageLoadingSpinnerStyle: CSSProperties = {

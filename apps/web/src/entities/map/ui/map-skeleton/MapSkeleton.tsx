@@ -1,34 +1,5 @@
 import { m } from "@repo/i18n";
-import type { CSSProperties } from "react";
-import {
-  loadingContent,
-  loadingLabel,
-  loadingSpinner,
-  mapArea,
-  skeletonContainer,
-} from "./MapSkeleton.css";
-
-const skeletonContainerFallbackStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  width: "100%",
-  height: "100%",
-  zIndex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "#eef0f3",
-  pointerEvents: "none",
-};
-
-const mapAreaFallbackStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  width: "100%",
-  height: "100%",
-  zIndex: 1,
-  background: "#eef0f3",
-};
+import { MapLoadingOverlay } from "./MapLoadingOverlay";
 
 /**
  * 지도 SDK·인스턴스 부트스트랩 중 표시되는 플레이스홀더.
@@ -40,18 +11,9 @@ const mapAreaFallbackStyle: CSSProperties = {
  */
 export function MapSkeleton() {
   return (
-    <div
-      className={skeletonContainer}
-      style={skeletonContainerFallbackStyle}
-      role="status"
-      aria-live="polite"
-      aria-label={m.map_loading_aria()}
-    >
-      <div className={mapArea} style={mapAreaFallbackStyle} aria-hidden="true" />
-      <div className={loadingContent}>
-        <div className={loadingSpinner} aria-hidden="true" />
-        <p className={loadingLabel}>{m.map_loading_message()}</p>
-      </div>
-    </div>
+    <MapLoadingOverlay
+      label={m.map_loading_aria()}
+      message={m.map_loading_message()}
+    />
   );
 }
