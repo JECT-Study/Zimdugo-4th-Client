@@ -180,6 +180,7 @@ function ReportPage() {
 
         <div
           className={reportPageContent}
+          inert={isSubmitting || undefined}
           style={reportPageVisibleContentStyle}
         >
           <div

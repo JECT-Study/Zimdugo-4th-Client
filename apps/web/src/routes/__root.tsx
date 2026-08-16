@@ -26,13 +26,13 @@ import {
 } from "#/features/seo/model/localized-seo-head";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
-import { isPathnameTransitionPending } from "#/shared/model/page-transition";
 import {
   BASE_LOCALE,
   LOCALE_NORMALIZATION_GROUPS,
   LOCALE_PATH_PREFIX,
   stripLocalePathPrefix,
 } from "#/shared/i18n/locales";
+import { isPathnameTransitionPending } from "#/shared/model/page-transition";
 import {
   getRuntimeLanguage,
   getUrlLanguage,
@@ -40,7 +40,10 @@ import {
   useAppLanguageStore,
 } from "#/shared/store/language";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
-import { PageTransitionOverlay } from "#/shared/ui/PageTransitionOverlay";
+import {
+  PageTransitionContentBoundary,
+  PageTransitionOverlay,
+} from "#/shared/ui/PageTransitionOverlay";
 
 const CRITICAL_LAYOUT_CSS = `
   *, ::before, ::after {
@@ -318,6 +321,15 @@ function RootDocument({ children }: { children: ReactNode }) {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const isPageTransitionPending = useRouterState({
+    select: (state) =>
+      isPathnameTransitionPending({
+        status: state.status,
+        currentPathname: state.location.pathname,
+        resolvedPathname:
+          state.resolvedLocation?.pathname ?? state.matches.at(-1)?.pathname,
+      }),
+  });
   const [runtimeLanguage, setRuntimeLanguage] = useState(() =>
     getRuntimeLanguage(),
   );
@@ -331,16 +343,6 @@ function RootDocument({ children }: { children: ReactNode }) {
   const normalizedPath = stripLocalePathPrefix(pathname);
   const isDocumentScrollPage =
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
-
-  const isPageTransitionPending = useRouterState({
-    select: (state) =>
-      isPathnameTransitionPending({
-        status: state.status,
-        currentPathname: state.location.pathname,
-        resolvedPathname:
-          state.resolvedLocation?.pathname ?? state.matches.at(-1)?.pathname,
-      }),
-  });
 
   useEffect(() => {
     if (!hasLanguageHydrated) {
@@ -383,16 +385,18 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         <AppContainer mode={isDocumentScrollPage ? "document" : "app"}>
-          <AppShell
-            mode={isDocumentScrollPage ? "document" : "app"}
-            bottomTabBar={
-              showBottomTab ? (
-                <BottomTabBar links={BOTTOM_TAB_LINKS} />
-              ) : undefined
-            }
-          >
-            {children}
-          </AppShell>
+          <PageTransitionContentBoundary isBlocked={isPageTransitionPending}>
+            <AppShell
+              mode={isDocumentScrollPage ? "document" : "app"}
+              bottomTabBar={
+                showBottomTab ? (
+                  <BottomTabBar links={BOTTOM_TAB_LINKS} />
+                ) : undefined
+              }
+            >
+              {children}
+            </AppShell>
+          </PageTransitionContentBoundary>
           <PageTransitionOverlay isActive={isPageTransitionPending} />
         </AppContainer>
         <TanStackRouterDevtools position="bottom-right" />

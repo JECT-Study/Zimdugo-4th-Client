@@ -94,7 +94,7 @@ export const reportPageSpinnerKeyframes = `
   to { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  [data-report-page-spinner] { animation: none; }
+  [data-report-page-spinner] { animation: none !important; }
 }
 `;
 
@@ -115,12 +115,6 @@ const reportPageContentShellStyle: CSSProperties = {
   flexDirection: "column",
   flex: 1,
   minHeight: 0,
-};
-
-export const reportPageHiddenContentStyle: CSSProperties = {
-  visibility: "hidden",
-  pointerEvents: "none",
-  ...reportPageContentShellStyle,
 };
 
 export const reportPageVisibleContentStyle: CSSProperties = {
