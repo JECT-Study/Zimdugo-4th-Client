@@ -32,15 +32,18 @@ import {
   LOCALE_PATH_PREFIX,
   stripLocalePathPrefix,
 } from "#/shared/i18n/locales";
+import { isPathnameTransitionPending } from "#/shared/model/page-transition";
 import {
   getRuntimeLanguage,
   getUrlLanguage,
   resolveLanguageSyncAction,
   useAppLanguageStore,
 } from "#/shared/store/language";
-import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
-import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
+import {
+  PageTransitionContentBoundary,
+  PageTransitionOverlay,
+} from "#/shared/ui/PageTransitionOverlay";
 
 const CRITICAL_LAYOUT_CSS = `
   *, ::before, ::after {
@@ -318,6 +321,15 @@ function RootDocument({ children }: { children: ReactNode }) {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const isPageTransitionPending = useRouterState({
+    select: (state) =>
+      isPathnameTransitionPending({
+        status: state.status,
+        currentPathname: state.location.pathname,
+        resolvedPathname:
+          state.resolvedLocation?.pathname ?? state.matches.at(-1)?.pathname,
+      }),
+  });
   const [runtimeLanguage, setRuntimeLanguage] = useState(() =>
     getRuntimeLanguage(),
   );
@@ -331,22 +343,6 @@ function RootDocument({ children }: { children: ReactNode }) {
   const normalizedPath = stripLocalePathPrefix(pathname);
   const isDocumentScrollPage =
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
-
-  // 페이지 전환 오버레이: store 트리거 또는 /report 라우트 pending 상태
-  const isPageTransitionStoreActive = usePageTransitionStore(
-    (s) => s.isTransitioning,
-  );
-  const isRouteTransitionPending = useRouterState({
-    select: (s) => {
-      if (s.status !== "pending") return false;
-      const destPath = s.pendingMatches?.at(-1)?.pathname ?? "";
-      const srcPath = stripLocalePathPrefix(s.location.pathname);
-      const normalizedDest = stripLocalePathPrefix(destPath);
-      return normalizedDest === "/report" || srcPath === "/report";
-    },
-  });
-  const showPageTransitionOverlay =
-    isPageTransitionStoreActive || isRouteTransitionPending;
 
   useEffect(() => {
     if (!hasLanguageHydrated) {
@@ -389,19 +385,19 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         <AppContainer mode={isDocumentScrollPage ? "document" : "app"}>
-          <AppShell
-            mode={isDocumentScrollPage ? "document" : "app"}
-            bottomTabBar={
-              showBottomTab ? (
-                <BottomTabBar links={BOTTOM_TAB_LINKS} />
-              ) : undefined
-            }
-          >
-            {children}
-          </AppShell>
-          {showPageTransitionOverlay && (
-            <LoadingOverlay blockInteraction label={m.map_loading_aria()} />
-          )}
+          <PageTransitionContentBoundary isBlocked={isPageTransitionPending}>
+            <AppShell
+              mode={isDocumentScrollPage ? "document" : "app"}
+              bottomTabBar={
+                showBottomTab ? (
+                  <BottomTabBar links={BOTTOM_TAB_LINKS} />
+                ) : undefined
+              }
+            >
+              {children}
+            </AppShell>
+          </PageTransitionContentBoundary>
+          <PageTransitionOverlay isActive={isPageTransitionPending} />
         </AppContainer>
         <TanStackRouterDevtools position="bottom-right" />
         <ReactQueryDevtools buttonPosition="bottom-left" />

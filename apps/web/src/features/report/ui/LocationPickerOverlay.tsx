@@ -7,8 +7,8 @@ import {
   IconNavigationPin40,
 } from "@repo/ui/tokens/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
-import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import {
   addressInfo,
   addressLabel,
@@ -24,7 +24,6 @@ import {
   myLocationButton,
   overlayContainer,
 } from "./LocationPickerOverlay.css.ts";
-import { ReportPageLoadingOverlay } from "./ReportPageLoadingOverlay";
 
 export interface LocationPickerOverlayProps {
   onClose: () => void;
@@ -94,7 +93,9 @@ export function LocationPickerOverlay({
     closePopup,
   } = useLocationPermissionPopup();
   const [isCentered, setIsCentered] = useState(false);
-  const [isLocatingMyPosition, setIsLocatingMyPosition] = useState(false);
+  const [locationRequestStatus, setLocationRequestStatus] = useState<
+    "idle" | "pending"
+  >("idle");
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
   const [locationPermission, setLocationPermission] = useState<
@@ -102,6 +103,7 @@ export function LocationPickerOverlay({
   >("prompt");
 
   const isMapInteractive = isSdkLoaded && isInitialSetupComplete;
+  const isLocatingMyPosition = locationRequestStatus === "pending";
 
   const completeInitialSetup = useCallback(() => {
     if (hasCompletedInitialSetupRef.current) return;
@@ -325,12 +327,12 @@ export function LocationPickerOverlay({
   const handleMyLocation = () => {
     if (!isMapInteractive || !navigator.geolocation) return;
 
-    setIsLocatingMyPosition(true);
+    setLocationRequestStatus("pending");
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         if (!isMountedRef.current) return;
-        setIsLocatingMyPosition(false);
+        setLocationRequestStatus("idle");
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         const latLng = new window.naver.maps.LatLng(lat, lng);
@@ -340,7 +342,7 @@ export function LocationPickerOverlay({
       },
       (error) => {
         if (!isMountedRef.current) return;
-        setIsLocatingMyPosition(false);
+        setLocationRequestStatus("idle");
         setIsCentered(false);
         if (error.code === error.PERMISSION_DENIED) {
           setLocationPermission("denied");
@@ -368,9 +370,23 @@ export function LocationPickerOverlay({
       <div className={mapWrapper}>
         <div ref={mapRef} className={map} />
 
-        {!isMapInteractive && <ReportPageLoadingOverlay />}
+        {!isMapInteractive && (
+          <MapLoadingOverlay
+            label={
+              isSdkLoaded ? m.report_location_loading() : m.map_loading_aria()
+            }
+            message={
+              isSdkLoaded
+                ? m.report_location_loading()
+                : m.map_loading_message()
+            }
+          />
+        )}
         {isLocatingMyPosition && (
-          <LoadingOverlay blockInteraction label={m.report_location_loading()} />
+          <MapLoadingOverlay
+            label={m.location_loading_aria()}
+            message={m.location_loading_message()}
+          />
         )}
 
         <button
@@ -397,7 +413,9 @@ export function LocationPickerOverlay({
           type="button"
           className={myLocationButton}
           onClick={handleMyLocation}
-          disabled={!isMapInteractive}
+          disabled={!isMapInteractive || isLocatingMyPosition}
+          aria-busy={isLocatingMyPosition}
+          aria-label={m.home_my_location_aria()}
         >
           <IconCircleboxCrosshair48
             state={
