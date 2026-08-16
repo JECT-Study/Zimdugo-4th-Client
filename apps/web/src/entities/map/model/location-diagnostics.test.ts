@@ -46,7 +46,7 @@ describe("location diagnostics client", () => {
     expect(url).toBe(LOCATION_DIAGNOSTICS_ENDPOINT);
     expect(options).toMatchObject({
       method: "POST",
-      credentials: "omit",
+      credentials: "same-origin",
       keepalive: true,
     });
 
