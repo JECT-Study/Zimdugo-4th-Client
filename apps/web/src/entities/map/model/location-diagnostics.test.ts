@@ -10,6 +10,7 @@ describe("location diagnostics client", () => {
     .mockResolvedValue(new Response(null, { status: 204 }));
 
   beforeEach(() => {
+    fetchMock.mockClear();
     window.history.replaceState({}, "", "/");
     window.sessionStorage.clear();
     vi.stubGlobal("fetch", fetchMock);

@@ -10,12 +10,23 @@ import {
 } from "vitest";
 import { useLocationTracking } from "./useLocationTracking";
 
+const postLocationDiagnosticMock = vi.hoisted(() => vi.fn());
+
+vi.mock("./location-diagnostics", () => ({
+  postLocationDiagnostic: postLocationDiagnosticMock,
+}));
+
 describe("useLocationTracking", () => {
+  const originalVisibilityStateDescriptor = Object.getOwnPropertyDescriptor(
+    document,
+    "visibilityState",
+  );
   let watchPositionMock: Mock;
   let clearWatchMock: Mock;
   let queryMock: Mock;
 
   beforeEach(() => {
+    postLocationDiagnosticMock.mockClear();
     // Mock navigator.geolocation
     watchPositionMock = vi.fn().mockReturnValue(123);
     clearWatchMock = vi.fn();
@@ -45,6 +56,15 @@ describe("useLocationTracking", () => {
 
   afterEach(() => {
     cleanup();
+    if (originalVisibilityStateDescriptor) {
+      Object.defineProperty(
+        document,
+        "visibilityState",
+        originalVisibilityStateDescriptor,
+      );
+    } else {
+      Reflect.deleteProperty(document, "visibilityState");
+    }
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -152,6 +172,10 @@ describe("useLocationTracking", () => {
     expect(result.current.permission).toBe("denied");
     expect(result.current.isTracking).toBe(false);
     expect(onRequestSettled).toHaveBeenCalledWith("permission-denied");
+    expect(onRequestSettled).toHaveBeenCalledOnce();
+    expect(
+      postLocationDiagnosticMock.mock.calls.map(([event]) => event),
+    ).not.toContain("tracking_cancelled");
   });
 
   it("should ignore a permission query result while a location request is active", async () => {
@@ -217,6 +241,10 @@ describe("useLocationTracking", () => {
     expect(result.current.error?.code).toBe(3);
     expect(result.current.isTracking).toBe(false);
     expect(onRequestSettled).toHaveBeenCalledWith("timeout");
+    expect(onRequestSettled).toHaveBeenCalledOnce();
+    expect(
+      postLocationDiagnosticMock.mock.calls.map(([event]) => event),
+    ).not.toContain("tracking_cancelled");
   });
 
   it("should stop locating when the application watchdog expires", () => {
@@ -238,6 +266,10 @@ describe("useLocationTracking", () => {
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
     expect(onRequestSettled).toHaveBeenCalledWith("timeout");
+    expect(onRequestSettled).toHaveBeenCalledOnce();
+    expect(
+      postLocationDiagnosticMock.mock.calls.map(([event]) => event),
+    ).not.toContain("tracking_cancelled");
   });
 
   it("should cancel the application watchdog after the first position", () => {

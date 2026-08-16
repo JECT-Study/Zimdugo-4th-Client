@@ -868,6 +868,8 @@ export function IndexPage() {
         return;
       }
 
+      if (outcome === "cancelled") return;
+
       clearHomeLocationRequestedInSession();
     },
     [],
@@ -1271,7 +1273,6 @@ export function IndexPage() {
       isTracking,
       isOrientationTracking,
       isOrientationSupported,
-      openLocationPopup,
       startTracking,
       requestOrientationPermission,
       startOrientationTracking,

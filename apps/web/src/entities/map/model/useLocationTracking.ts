@@ -260,7 +260,7 @@ export function useLocationTracking({
       isCleanedUp = true;
       clearWatchdog();
       navigator.geolocation.clearWatch(watchId);
-      if (isFirstLocationRef.current) {
+      if (isFirstLocationRef.current && !didSettleInitialRequest) {
         postLocationDiagnostic("tracking_cancelled", {
           elapsedMs: Date.now() - requestStartedAt,
           isLocating: false,

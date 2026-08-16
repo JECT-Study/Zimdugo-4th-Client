@@ -71,7 +71,10 @@ describe("location diagnostics server", () => {
     );
 
     expect(response?.status).toBe(204);
-    expect(consoleInfo).toHaveBeenCalledOnce();
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "[location-diagnostic]",
+      expect.stringContaining('"event":"tracking_first_position"'),
+    );
   });
 
   it("production에서는 환경 변수가 없으면 엔드포인트를 숨긴다", async () => {
@@ -101,5 +104,34 @@ describe("location diagnostics server", () => {
     });
 
     expect(response?.status).toBe(403);
+  });
+
+  it("Content-Length가 없는 큰 요청 본문을 스트리밍 중 거부한다", async () => {
+    let isCancelled = false;
+    const oversizedChunk = new TextEncoder().encode("가".repeat(2_000));
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(oversizedChunk);
+      },
+      cancel() {
+        isCancelled = true;
+      },
+    });
+    const request = new Request(DIAGNOSTIC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://feature-branch.vercel.app",
+      },
+      body,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    const response = await handleLocationDiagnosticRequest(request, {
+      VERCEL_ENV: "preview",
+    });
+
+    expect(response?.status).toBe(413);
+    expect(isCancelled).toBe(true);
   });
 });

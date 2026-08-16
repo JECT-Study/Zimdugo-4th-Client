@@ -77,9 +77,24 @@ export const handleLocationDiagnosticRequest = async (
     return new Response(null, { status: 413 });
   }
 
-  const body = await request.text();
-  if (body.length > MAX_LOCATION_DIAGNOSTIC_BODY_LENGTH) {
-    return new Response(null, { status: 413 });
+  const reader = request.body?.getReader();
+  const decoder = new TextDecoder();
+  let body = "";
+  let bodyLength = 0;
+
+  if (reader) {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      bodyLength += value.byteLength;
+      if (bodyLength > MAX_LOCATION_DIAGNOSTIC_BODY_LENGTH) {
+        await reader.cancel();
+        return new Response(null, { status: 413 });
+      }
+      body += decoder.decode(value, { stream: true });
+    }
+    body += decoder.decode();
   }
 
   let payload: unknown;
