@@ -197,6 +197,7 @@
   "report_button_submit_uploading": "사진 업로드 중…",
   "report_submit_with_current_info": "현재 정보로 제보하기",
   "report_page_loading_aria": "페이지를 불러오는 중입니다",
+  "report_submit_loading_aria": "제보를 제출하는 중입니다",
   "report_alert_image_only": "이미지 파일만 업로드 가능합니다.",
   "report_photo_max_count_exceeded": "사진은 1장만 업로드 가능합니다.",
   "report_photo_max_size_exceeded": "사진은 5MB 이하만 업로드 가능합니다.",

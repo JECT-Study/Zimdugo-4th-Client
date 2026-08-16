@@ -33,7 +33,6 @@ import {
   reportBottomBarInlineFallbackStyle,
   reportContentInlineFallbackStyle,
   reportHeaderInlineFallbackStyle,
-  reportPageHiddenContentStyle,
   reportPageInlineFallbackStyle,
   reportPageLoadingShellStyle,
   reportPageVisibleContentStyle,
@@ -175,16 +174,13 @@ function ReportPage() {
               : undefined
         }
       >
-        {!isPageReady && <ReportPageLoadingOverlay />}
+        {isSubmitting && (
+          <ReportPageLoadingOverlay label={m.report_submit_loading_aria()} />
+        )}
 
         <div
-          aria-hidden={!isPageReady}
           className={reportPageContent}
-          style={
-            isPageReady
-              ? reportPageVisibleContentStyle
-              : reportPageHiddenContentStyle
-          }
+          style={reportPageVisibleContentStyle}
         >
           <div
             style={

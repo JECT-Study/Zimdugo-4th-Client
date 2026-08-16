@@ -197,6 +197,7 @@
   "report_button_submit_uploading": "Uploading photo…",
   "report_submit_with_current_info": "Submit with current information",
   "report_page_loading_aria": "Loading page",
+  "report_submit_loading_aria": "Submitting report",
   "report_alert_image_only": "Only image files can be uploaded.",
   "report_photo_max_count_exceeded": "You can upload only one photo.",
   "report_photo_max_size_exceeded": "Photos must be 5MB or smaller.",

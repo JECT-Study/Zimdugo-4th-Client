@@ -197,6 +197,7 @@
   "report_button_submit_uploading": "写真をアップロード中…",
   "report_submit_with_current_info": "現在の情報で提供する",
   "report_page_loading_aria": "ページを読み込んでいます",
+  "report_submit_loading_aria": "通報を送信しています",
   "report_alert_image_only": "画像ファイルのみアップロード可能です。",
   "report_photo_max_count_exceeded": "写真は1枚のみアップロードできます。",
   "report_photo_max_size_exceeded": "写真は5MB以下のみアップロードできます。",

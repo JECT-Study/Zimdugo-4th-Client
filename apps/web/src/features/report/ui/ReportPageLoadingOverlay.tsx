@@ -6,14 +6,20 @@ import {
   reportPageSpinnerKeyframes,
 } from "./report-page-fallback";
 
-export function ReportPageLoadingOverlay() {
+interface ReportPageLoadingOverlayProps {
+  label?: string;
+}
+
+export function ReportPageLoadingOverlay({
+  label = m.report_page_loading_aria(),
+}: ReportPageLoadingOverlayProps) {
   return (
     <>
       <style>{reportPageSpinnerKeyframes}</style>
       <output
         style={reportPageLoadingOverlayStyle}
         aria-live="polite"
-        aria-label={m.report_page_loading_aria()}
+        aria-label={label}
       >
         <div style={reportPageLoadingBackdropStyle} />
         <div data-report-page-spinner style={reportPageLoadingSpinnerStyle} />
