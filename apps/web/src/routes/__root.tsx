@@ -26,6 +26,7 @@ import {
 } from "#/features/seo/model/localized-seo-head";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
+import { isPathnameTransitionPending } from "#/shared/model/page-transition";
 import {
   BASE_LOCALE,
   LOCALE_NORMALIZATION_GROUPS,
@@ -38,9 +39,8 @@ import {
   resolveLanguageSyncAction,
   useAppLanguageStore,
 } from "#/shared/store/language";
-import { usePageTransitionStore } from "#/shared/store/pageTransitionStore";
-import { LoadingOverlay } from "#/shared/ui/LoadingOverlay";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
+import { PageTransitionOverlay } from "#/shared/ui/PageTransitionOverlay";
 
 const CRITICAL_LAYOUT_CSS = `
   *, ::before, ::after {
@@ -332,21 +332,15 @@ function RootDocument({ children }: { children: ReactNode }) {
   const isDocumentScrollPage =
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
 
-  // 페이지 전환 오버레이: store 트리거 또는 /report 라우트 pending 상태
-  const isPageTransitionStoreActive = usePageTransitionStore(
-    (s) => s.isTransitioning,
-  );
-  const isRouteTransitionPending = useRouterState({
-    select: (s) => {
-      if (s.status !== "pending") return false;
-      const destPath = s.pendingMatches?.at(-1)?.pathname ?? "";
-      const srcPath = stripLocalePathPrefix(s.location.pathname);
-      const normalizedDest = stripLocalePathPrefix(destPath);
-      return normalizedDest === "/report" || srcPath === "/report";
-    },
+  const isPageTransitionPending = useRouterState({
+    select: (state) =>
+      isPathnameTransitionPending({
+        status: state.status,
+        currentPathname: state.location.pathname,
+        resolvedPathname:
+          state.resolvedLocation?.pathname ?? state.matches.at(-1)?.pathname,
+      }),
   });
-  const showPageTransitionOverlay =
-    isPageTransitionStoreActive || isRouteTransitionPending;
 
   useEffect(() => {
     if (!hasLanguageHydrated) {
@@ -399,9 +393,7 @@ function RootDocument({ children }: { children: ReactNode }) {
           >
             {children}
           </AppShell>
-          {showPageTransitionOverlay && (
-            <LoadingOverlay blockInteraction label={m.map_loading_aria()} />
-          )}
+          <PageTransitionOverlay isActive={isPageTransitionPending} />
         </AppContainer>
         <TanStackRouterDevtools position="bottom-right" />
         <ReactQueryDevtools buttonPosition="bottom-left" />
