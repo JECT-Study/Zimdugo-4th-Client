@@ -58,6 +58,7 @@ import {
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
+  clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
   markHomeLocationRequestedInSession,
 } from "#/entities/map/model/home-location-request-session";
@@ -73,7 +74,10 @@ import {
 import {
   useHasRequestedHomeLocationInSession,
 } from "#/entities/map/model/useHomeLocationRequestSession";
-import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
+import {
+  type LocationRequestOutcome,
+  useLocationTracking,
+} from "#/entities/map/model/useLocationTracking";
 import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
@@ -857,6 +861,18 @@ export function IndexPage() {
     }
   }, []);
 
+  const handleLocationRequestSettled = useCallback(
+    (outcome: LocationRequestOutcome) => {
+      if (outcome === "permission-denied" || outcome === "unsupported") {
+        markHomeLocationRequestedInSession();
+        return;
+      }
+
+      clearHomeLocationRequestedInSession();
+    },
+    [],
+  );
+
   // isCameraCentered는 handleFirstLocation 위에서 선언됨
   isCameraCenteredRef.current = isCameraCentered;
 
@@ -874,7 +890,10 @@ export function IndexPage() {
   }, []);
 
   const { permission, isTracking, isLocating, location, error, startTracking } =
-    useLocationTracking({ onFirstLocation: handleFirstLocation });
+    useLocationTracking({
+      onFirstLocation: handleFirstLocation,
+      onRequestSettled: handleLocationRequestSettled,
+    });
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
   const shouldDeferHomeMapForLocation =
@@ -909,6 +928,8 @@ export function IndexPage() {
         permission === "prompt" &&
         (hasRequestedHomeLocation ||
           hasRequestedHomeLocationInCurrentSession) &&
+        !isLocating &&
+        !isTracking &&
         !didLogHomeLocationSessionSkipRef.current
       ) {
         didLogHomeLocationSessionSkipRef.current = true;

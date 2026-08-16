@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook } from "@testing-library/react";
 import {
   afterEach,
   beforeEach,
@@ -44,10 +44,12 @@ describe("useLocationTracking", () => {
   });
 
   afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it("should start tracking automatically if permission is initially granted", async () => {
+  it("should treat the Permissions API result as advisory", async () => {
     queryMock.mockResolvedValueOnce({
       state: "granted",
       addEventListener: vi.fn(),
@@ -62,14 +64,15 @@ describe("useLocationTracking", () => {
     });
 
     expect(result.current.permission).toBe("granted");
-    expect(result.current.isTracking).toBe(true);
-    expect(watchPositionMock).toHaveBeenCalled();
+    expect(result.current.isTracking).toBe(false);
+    expect(watchPositionMock).not.toHaveBeenCalled();
   });
 
   it("should call onFirstLocation exactly once when the first position callback is fired", async () => {
     const onFirstLocation = vi.fn();
+    const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
-      useLocationTracking({ onFirstLocation }),
+      useLocationTracking({ onFirstLocation, onRequestSettled }),
     );
 
     // 수동으로 추적 시작
@@ -88,6 +91,7 @@ describe("useLocationTracking", () => {
     });
 
     expect(onFirstLocation).toHaveBeenCalledTimes(1);
+    expect(onRequestSettled).toHaveBeenCalledWith("success");
     expect(result.current.location).toEqual({
       lat: 37.0,
       lng: 127.0,
@@ -126,7 +130,10 @@ describe("useLocationTracking", () => {
   });
 
   it("should set tracking to false when permission is denied", async () => {
-    const { result } = renderHook(() => useLocationTracking());
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
 
     // 권한 요청 후 거부 처리 시뮬레이션
     // navigator.geolocation.getCurrentPosition mock이 없으면 테스트가 복잡해지므로
@@ -144,6 +151,7 @@ describe("useLocationTracking", () => {
 
     expect(result.current.permission).toBe("denied");
     expect(result.current.isTracking).toBe(false);
+    expect(onRequestSettled).toHaveBeenCalledWith("permission-denied");
   });
 
   it("should ignore a permission query result while a location request is active", async () => {
@@ -192,7 +200,10 @@ describe("useLocationTracking", () => {
   });
 
   it("should not treat a location timeout as a permission denial", () => {
-    const { result } = renderHook(() => useLocationTracking());
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
 
     act(() => {
       result.current.startTracking();
@@ -205,5 +216,121 @@ describe("useLocationTracking", () => {
     expect(result.current.permission).toBe("prompt");
     expect(result.current.error?.code).toBe(3);
     expect(result.current.isTracking).toBe(false);
+    expect(onRequestSettled).toHaveBeenCalledWith("timeout");
+  });
+
+  it("should stop locating when the application watchdog expires", () => {
+    vi.useFakeTimers();
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+    act(() => {
+      vi.advanceTimersByTime(12_000);
+    });
+
+    expect(result.current.error?.code).toBe(3);
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(clearWatchMock).toHaveBeenCalledWith(123);
+    expect(onRequestSettled).toHaveBeenCalledWith("timeout");
+  });
+
+  it("should cancel the application watchdog after the first position", () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const successCallback = watchPositionMock.mock.calls[0][0];
+    act(() => {
+      successCallback({
+        coords: { latitude: 37.0, longitude: 127.0, heading: null },
+      });
+      vi.advanceTimersByTime(12_000);
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.isTracking).toBe(true);
+    expect(result.current.isLocating).toBe(false);
+  });
+
+  it("should suspend a pending request while hidden and retry when visible", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(clearWatchMock).toHaveBeenCalledWith(123);
+    expect(onRequestSettled).toHaveBeenCalledWith("cancelled");
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(result.current.isLocating).toBe(true);
+    expect(result.current.isTracking).toBe(true);
+    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("should ignore a late error from a suspended watch", () => {
+    watchPositionMock.mockReturnValueOnce(123).mockReturnValueOnce(456);
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const staleErrorCallback = watchPositionMock.mock.calls[0][1];
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    act(() => {
+      staleErrorCallback({ code: 3, message: "Late timeout" });
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.isTracking).toBe(true);
+    expect(clearWatchMock).not.toHaveBeenCalledWith(456);
   });
 });

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
   markHomeLocationRequestedInSession,
 } from "./home-location-request-session";
@@ -17,5 +18,13 @@ describe("home location request session", () => {
     markHomeLocationRequestedInSession();
 
     expect(hasRequestedHomeLocationInSession()).toBe(true);
+  });
+
+  it("forgets a settled request", () => {
+    markHomeLocationRequestedInSession();
+
+    clearHomeLocationRequestedInSession();
+
+    expect(hasRequestedHomeLocationInSession()).toBe(false);
   });
 });

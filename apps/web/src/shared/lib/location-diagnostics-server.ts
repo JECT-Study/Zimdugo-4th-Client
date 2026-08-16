@@ -2,6 +2,11 @@ import { z } from "zod";
 
 const LOCATION_DIAGNOSTICS_PATH = "/_internal/location-diagnostics";
 const MAX_LOCATION_DIAGNOSTIC_BODY_LENGTH = 4_096;
+const LOCATION_DIAGNOSTIC_WARNING_EVENTS = new Set([
+  "tracking_unsupported",
+  "tracking_watch_error",
+  "tracking_watchdog_timeout",
+]);
 
 const locationDiagnosticSchema = z
   .object({
@@ -13,10 +18,14 @@ const locationDiagnosticSchema = z
       "permission_query_error",
       "permission_query_resolved",
       "permission_query_started",
+      "tracking_cancelled",
       "tracking_first_position",
       "tracking_request_started",
+      "tracking_resumed",
+      "tracking_suspended",
       "tracking_unsupported",
       "tracking_watch_error",
+      "tracking_watchdog_timeout",
       "tracking_watch_started",
     ]),
     timestamp: z.number().int().nonnegative(),
@@ -33,7 +42,6 @@ const locationDiagnosticSchema = z
 type RuntimeEnvironment = Record<string, string | undefined>;
 
 export const isLocationDiagnosticsServerEnabled = (env: RuntimeEnvironment) => {
-  if (env.VERCEL_ENV === "production") return false;
   return (
     env.VERCEL_ENV === "preview" || env.LOCATION_DIAGNOSTICS_ENABLED === "true"
   );
@@ -86,6 +94,11 @@ export const handleLocationDiagnosticRequest = async (
     return new Response(null, { status: 400 });
   }
 
-  console.info("[location-diagnostic]", JSON.stringify(result.data));
+  const serializedDiagnostic = JSON.stringify(result.data);
+  if (LOCATION_DIAGNOSTIC_WARNING_EVENTS.has(result.data.event)) {
+    console.warn("[location-diagnostic]", serializedDiagnostic);
+  } else {
+    console.info("[location-diagnostic]", serializedDiagnostic);
+  }
   return new Response(null, { status: 204 });
 };

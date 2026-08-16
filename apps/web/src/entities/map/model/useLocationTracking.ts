@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { postLocationDiagnostic } from "./location-diagnostics";
 
+const GEOLOCATION_TIMEOUT_MS = 10_000;
+const GEOLOCATION_WATCHDOG_TIMEOUT_MS = 12_000;
+
 export type LocationPermissionState = "prompt" | "granted" | "denied";
+
+export type LocationRequestOutcome =
+  | "success"
+  | "permission-denied"
+  | "unavailable"
+  | "timeout"
+  | "cancelled"
+  | "unsupported";
 
 interface LocationData {
   lat: number;
@@ -11,25 +22,81 @@ interface LocationData {
 
 interface UseLocationTrackingOptions {
   onFirstLocation?: () => void;
+  onRequestSettled?: (outcome: LocationRequestOutcome) => void;
 }
+
+const createLocationTimeoutError = (): GeolocationPositionError =>
+  ({
+    code: 3,
+    message: "Location request timed out",
+    PERMISSION_DENIED: 1,
+    POSITION_UNAVAILABLE: 2,
+    TIMEOUT: 3,
+  }) as GeolocationPositionError;
 
 export function useLocationTracking({
   onFirstLocation,
+  onRequestSettled,
 }: UseLocationTrackingOptions = {}) {
   const [permission, setPermission] =
     useState<LocationPermissionState>("prompt");
   const [isTracking, setIsTracking] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [trackingAttemptId, setTrackingAttemptId] = useState(0);
   const [location, setLocation] = useState<LocationData | null>(null);
   const [error, setError] = useState<GeolocationPositionError | null>(null);
-  // watchPosition의 첫 번째 콜백인지 판단하는 플래그
-  // startTracking() 호출 시 true로 리셋, 첫 콜백 시 false로 플립
   const isFirstLocationRef = useRef(true);
-  // 진행 중인 위치 요청은 늦게 도착한 Permissions API 결과로 중단하지 않는다.
   const isTrackingRef = useRef(false);
+  const isLocatingRef = useRef(false);
   const requestStartedAtRef = useRef<number | null>(null);
+  const shouldResumeTrackingRef = useRef(false);
+  const watchCleanupRef = useRef<() => void>(() => {});
+  const onFirstLocationRef = useRef(onFirstLocation);
+  const onRequestSettledRef = useRef(onRequestSettled);
 
-  // 권한 상태 초기화 및 감지
+  onFirstLocationRef.current = onFirstLocation;
+  onRequestSettledRef.current = onRequestSettled;
+
+  const startTracking = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      postLocationDiagnostic("tracking_unsupported", {
+        isLocating: false,
+        isTracking: false,
+        permission: "denied",
+      });
+      isLocatingRef.current = false;
+      isTrackingRef.current = false;
+      setIsLocating(false);
+      setIsTracking(false);
+      setPermission("denied");
+      onRequestSettledRef.current?.("unsupported");
+      return;
+    }
+
+    requestStartedAtRef.current = Date.now();
+    isLocatingRef.current = true;
+    isTrackingRef.current = true;
+    isFirstLocationRef.current = true;
+    postLocationDiagnostic("tracking_request_started", {
+      isLocating: true,
+      isTracking: true,
+      permission: "prompt",
+    });
+    setTrackingAttemptId((attemptId) => attemptId + 1);
+    setIsTracking(true);
+    setIsLocating(true);
+    setError(null);
+    setPermission("prompt");
+  }, []);
+
+  const stopTracking = useCallback(() => {
+    watchCleanupRef.current();
+    isLocatingRef.current = false;
+    isTrackingRef.current = false;
+    setIsTracking(false);
+    setIsLocating(false);
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.permissions) return;
 
@@ -41,10 +108,6 @@ export function useLocationTracking({
         const state = permissionStatus.state;
         if (state === "granted" || state === "denied" || state === "prompt") {
           setPermission(state);
-        }
-        if (state === "denied") {
-          setIsTracking(false);
-          setIsLocating(false);
         }
       }
     };
@@ -81,26 +144,32 @@ export function useLocationTracking({
 
     return () => {
       isCancelled = true;
-      if (permissionStatus) {
-        permissionStatus.removeEventListener("change", handlePermissionChange);
-      }
+      permissionStatus?.removeEventListener("change", handlePermissionChange);
     };
   }, []);
 
-  // 권한이 이미 허용되어 있다면 자동으로 백그라운드 추적 시작
   useEffect(() => {
-    if (permission === "granted") {
-      isTrackingRef.current = true;
-      setIsTracking(true);
+    if (trackingAttemptId === 0 || !navigator.geolocation) {
+      return;
     }
-  }, [permission]);
-
-  // 실시간 위치 추적
-  useEffect(() => {
-    if (!isTracking || !navigator.geolocation) return;
 
     const requestStartedAt = requestStartedAtRef.current ?? Date.now();
-    requestStartedAtRef.current = requestStartedAt;
+    let didSettleInitialRequest = false;
+    let isCleanedUp = false;
+    let watchdogId: number | undefined;
+    let cleanupWatch = () => {};
+
+    const clearWatchdog = () => {
+      window.clearTimeout(watchdogId);
+      watchdogId = undefined;
+    };
+
+    const settleInitialRequest = (outcome: LocationRequestOutcome) => {
+      if (didSettleInitialRequest) return;
+      didSettleInitialRequest = true;
+      onRequestSettledRef.current?.(outcome);
+    };
+
     postLocationDiagnostic("tracking_watch_started", {
       isLocating: true,
       isTracking: true,
@@ -108,16 +177,20 @@ export function useLocationTracking({
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        // 첫 번째 콜백에서만 onFirstLocation 호출
+        if (isCleanedUp) return;
+
         if (isFirstLocationRef.current) {
           isFirstLocationRef.current = false;
+          isLocatingRef.current = false;
+          clearWatchdog();
           postLocationDiagnostic("tracking_first_position", {
             elapsedMs: Date.now() - requestStartedAt,
             isLocating: false,
             isTracking: true,
             permission: "granted",
           });
-          onFirstLocation?.();
+          settleInitialRequest("success");
+          onFirstLocationRef.current?.();
         }
         setLocation({
           lat: position.coords.latitude,
@@ -128,65 +201,113 @@ export function useLocationTracking({
         setPermission("granted");
         setIsLocating(false);
       },
-      (err) => {
+      (nextError) => {
+        if (isCleanedUp) return;
+
+        clearWatchdog();
         postLocationDiagnostic("tracking_watch_error", {
           elapsedMs: Date.now() - requestStartedAt,
-          errorCode: err.code,
+          errorCode: nextError.code,
           isLocating: false,
           isTracking: false,
-          permission: err.code === 1 ? "denied" : undefined,
+          permission: nextError.code === 1 ? "denied" : undefined,
         });
+        isLocatingRef.current = false;
         isTrackingRef.current = false;
-        setError(err);
+        settleInitialRequest(
+          nextError.code === 1
+            ? "permission-denied"
+            : nextError.code === 3
+              ? "timeout"
+              : "unavailable",
+        );
+        setError(nextError);
         setIsTracking(false);
         setIsLocating(false);
-        if (err.code === 1) {
+        if (nextError.code === 1) {
           setPermission("denied");
         }
+        cleanupWatch();
       },
       {
         enableHighAccuracy: true,
         maximumAge: 0,
-        timeout: 10000,
+        timeout: GEOLOCATION_TIMEOUT_MS,
       },
     );
 
-    return () => {
-      navigator.geolocation.clearWatch(watchId);
-    };
-  }, [isTracking, onFirstLocation]);
+    watchdogId = window.setTimeout(() => {
+      if (!isFirstLocationRef.current) return;
 
-  const startTracking = useCallback(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      postLocationDiagnostic("tracking_unsupported", {
+      const timeoutError = createLocationTimeoutError();
+      postLocationDiagnostic("tracking_watchdog_timeout", {
+        elapsedMs: Date.now() - requestStartedAt,
+        errorCode: timeoutError.code,
         isLocating: false,
         isTracking: false,
-        permission: "denied",
       });
-      setIsLocating(false);
+      isLocatingRef.current = false;
+      isTrackingRef.current = false;
+      settleInitialRequest("timeout");
+      setError(timeoutError);
       setIsTracking(false);
-      setPermission("denied");
-      return;
-    }
-    requestStartedAtRef.current = Date.now();
-    postLocationDiagnostic("tracking_request_started", {
-      isLocating: true,
-      isTracking: true,
-      permission: "prompt",
-    });
-    setIsTracking(true);
-    setIsLocating(true);
-    setError(null);
-    setPermission("prompt");
-    isTrackingRef.current = true;
-    isFirstLocationRef.current = true;
-  }, []);
+      setIsLocating(false);
+      cleanupWatch();
+    }, GEOLOCATION_WATCHDOG_TIMEOUT_MS);
 
-  const stopTracking = useCallback(() => {
-    isTrackingRef.current = false;
-    setIsTracking(false);
-    setIsLocating(false);
-  }, []);
+    cleanupWatch = () => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      clearWatchdog();
+      navigator.geolocation.clearWatch(watchId);
+      if (isFirstLocationRef.current) {
+        postLocationDiagnostic("tracking_cancelled", {
+          elapsedMs: Date.now() - requestStartedAt,
+          isLocating: false,
+          isTracking: false,
+        });
+        settleInitialRequest("cancelled");
+      }
+      watchCleanupRef.current = () => {};
+    };
+    watchCleanupRef.current = cleanupWatch;
+
+    return cleanupWatch;
+  }, [trackingAttemptId]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        if (!isLocatingRef.current) return;
+
+        shouldResumeTrackingRef.current = true;
+        postLocationDiagnostic("tracking_suspended", {
+          elapsedMs:
+            requestStartedAtRef.current == null
+              ? undefined
+              : Date.now() - requestStartedAtRef.current,
+          isLocating: false,
+          isTracking: false,
+        });
+        stopTracking();
+        return;
+      }
+
+      if (!shouldResumeTrackingRef.current) return;
+
+      shouldResumeTrackingRef.current = false;
+      postLocationDiagnostic("tracking_resumed", {
+        isLocating: true,
+        isTracking: true,
+      });
+      startTracking();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [startTracking, stopTracking]);
 
   return {
     permission,

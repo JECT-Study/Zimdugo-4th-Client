@@ -10,9 +10,13 @@ export type LocationDiagnosticEventName =
   | "permission_query_resolved"
   | "permission_query_started"
   | "tracking_first_position"
+  | "tracking_cancelled"
   | "tracking_request_started"
+  | "tracking_resumed"
+  | "tracking_suspended"
   | "tracking_unsupported"
   | "tracking_watch_error"
+  | "tracking_watchdog_timeout"
   | "tracking_watch_started";
 
 export interface LocationDiagnosticData {

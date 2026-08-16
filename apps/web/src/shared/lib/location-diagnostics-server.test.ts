@@ -35,7 +35,7 @@ describe("location diagnostics server", () => {
   });
 
   it("preview에서는 검증된 진단 이벤트를 구조화 로그로 남긴다", async () => {
-    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const response = await handleLocationDiagnosticRequest(
       createRequest(createPayload()),
@@ -43,19 +43,41 @@ describe("location diagnostics server", () => {
     );
 
     expect(response?.status).toBe(204);
-    expect(consoleInfo).toHaveBeenCalledWith(
+    expect(consoleWarn).toHaveBeenCalledWith(
       "[location-diagnostic]",
       expect.stringContaining('"event":"tracking_watch_error"'),
     );
   });
 
-  it("production에서는 환경 변수가 켜져도 엔드포인트를 숨긴다", async () => {
+  it("production에서는 명시적인 환경 변수로만 엔드포인트를 연다", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const response = await handleLocationDiagnosticRequest(
       createRequest(createPayload()),
       {
         VERCEL_ENV: "production",
         LOCATION_DIAGNOSTICS_ENABLED: "true",
       },
+    );
+
+    expect(response?.status).toBe(204);
+    expect(consoleWarn).toHaveBeenCalledOnce();
+  });
+
+  it("성공 이벤트는 info 레벨로 남긴다", async () => {
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+    const response = await handleLocationDiagnosticRequest(
+      createRequest(createPayload({ event: "tracking_first_position" })),
+      { VERCEL_ENV: "preview" },
+    );
+
+    expect(response?.status).toBe(204);
+    expect(consoleInfo).toHaveBeenCalledOnce();
+  });
+
+  it("production에서는 환경 변수가 없으면 엔드포인트를 숨긴다", async () => {
+    const response = await handleLocationDiagnosticRequest(
+      createRequest(createPayload()),
+      { VERCEL_ENV: "production" },
     );
 
     expect(response?.status).toBe(404);
