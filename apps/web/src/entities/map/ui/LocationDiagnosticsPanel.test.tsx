@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -10,9 +11,16 @@ import { LocationDiagnosticsPanel } from "./LocationDiagnosticsPanel";
 
 describe("LocationDiagnosticsPanel", () => {
   const getCurrentPosition = vi.fn();
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response(null, { status: 204 }));
 
   beforeEach(() => {
     getCurrentPosition.mockReset();
+    fetchMock.mockClear();
+    window.history.replaceState({}, "", "/location-diagnostics");
+    window.sessionStorage.clear();
+    vi.stubGlobal("fetch", fetchMock);
     Object.defineProperty(navigator, "permissions", {
       configurable: true,
       value: {
@@ -41,6 +49,8 @@ describe("LocationDiagnosticsPanel", () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("does not render when diagnostics are disabled", () => {
@@ -67,15 +77,68 @@ describe("LocationDiagnosticsPanel", () => {
     });
     render(<LocationDiagnosticsPanel isEnabled />);
 
-    fireEvent.click(screen.getByRole("button", { name: "1회 위치 요청" }));
+    fireEvent.click(screen.getByRole("button", { name: "기본 1회 요청" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/get-current-position-success/)).toBeDefined();
+      expect(screen.getByText(/request-success/)).toBeDefined();
     });
-    const log =
-      screen.getByText(/get-current-position-success/).textContent ?? "";
+    const log = screen.getByText(/request-success/).textContent ?? "";
     expect(log).not.toMatch(/latitude|longitude|coords/);
     expect(log).not.toContain("37.5");
+    expect(getCurrentPosition).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Function),
+    );
+
+    const sentPayloads = fetchMock.mock.calls.map(([, options]) =>
+      JSON.parse(String(options.body)),
+    );
+    expect(sentPayloads).toContainEqual(
+      expect.objectContaining({
+        event: "diagnostic_request_succeeded",
+        requestMode: "default-current",
+      }),
+    );
+    expect(JSON.stringify(sentPayloads)).not.toMatch(
+      /latitude|longitude|coords/,
+    );
+  });
+
+  it("고정밀 1회 요청에만 위치 옵션을 전달한다", () => {
+    render(<LocationDiagnosticsPanel isEnabled />);
+
+    fireEvent.click(screen.getByRole("button", { name: "고정밀 1회 요청" }));
+
+    expect(getCurrentPosition).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Function),
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10_000,
+      },
+    );
+  });
+
+  it("브라우저가 콜백을 주지 않으면 무응답으로 구분한다", () => {
+    vi.useFakeTimers();
+    render(<LocationDiagnosticsPanel isEnabled />);
+
+    fireEvent.click(screen.getByRole("button", { name: "기본 1회 요청" }));
+    act(() => {
+      vi.advanceTimersByTime(12_000);
+    });
+
+    expect(screen.getByText(/request-unresponsive/)).toBeDefined();
+    const sentPayloads = fetchMock.mock.calls.map(([, options]) =>
+      JSON.parse(String(options.body)),
+    );
+    expect(sentPayloads).toContainEqual(
+      expect.objectContaining({
+        event: "diagnostic_request_unresponsive",
+        requestMode: "default-current",
+      }),
+    );
   });
 
   it("records location success even when the permission query does not resolve", async () => {
@@ -99,10 +162,10 @@ describe("LocationDiagnosticsPanel", () => {
     });
     render(<LocationDiagnosticsPanel isEnabled />);
 
-    fireEvent.click(screen.getByRole("button", { name: "1회 위치 요청" }));
+    fireEvent.click(screen.getByRole("button", { name: "기본 1회 요청" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/get-current-position-success/)).toBeDefined();
+      expect(screen.getByText(/request-success/)).toBeDefined();
     });
   });
 
