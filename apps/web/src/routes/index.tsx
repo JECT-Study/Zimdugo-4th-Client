@@ -64,6 +64,9 @@ import {
 } from "#/entities/map/model/home-location-request-session";
 import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import {
+  resolveLocationRequestSettlement,
+} from "#/entities/map/model/location-request-settlement";
+import {
   fitNaverMapToBounds,
   focusNaverMapOnClusterBounds,
 } from "#/entities/map/model/map-bounds";
@@ -602,6 +605,7 @@ export function IndexPage() {
   // 방향 트래킹 pending 처리용 refs
   // GPS 첫 위치 수신 후 자동으로 방향 트래킹을 시작해야 할 때 사용
   const pendingOrientationStartRef = useRef(false);
+  const hasPendingMyLocationRequestRef = useRef(false);
   const requestOrientationPermissionRef = useRef<() => Promise<boolean>>(
     async () => false,
   );
@@ -725,6 +729,8 @@ export function IndexPage() {
 
   // 위치 및 방향 트래킹 — 위치 관련 훅과 콜백은 side effect보다 먼저 선언한다.
   const [isCameraCentered, setIsCameraCentered] = useState(false);
+  const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
+    useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
@@ -739,6 +745,7 @@ export function IndexPage() {
     // 항상 최신 함수를 참조하므로 deps []가 안전하다.
     if (pendingOrientationStartRef.current) {
       pendingOrientationStartRef.current = false;
+      setIsCameraCentered(true);
       // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
       startOrientationTrackingRef.current();
     }
@@ -746,6 +753,28 @@ export function IndexPage() {
 
   const handleLocationRequestSettled = useCallback(
     (outcome: LocationRequestOutcome) => {
+      const settlement = resolveLocationRequestSettlement({
+        outcome,
+        isUserInitiated: hasPendingMyLocationRequestRef.current,
+      });
+
+      if (outcome === "success") {
+        hasPendingMyLocationRequestRef.current = false;
+      }
+
+      if (settlement.shouldClearPendingIntent) {
+        hasPendingMyLocationRequestRef.current = false;
+        pendingOrientationStartRef.current = false;
+      }
+
+      if (settlement.shouldResetCameraCentered) {
+        setIsCameraCentered(false);
+      }
+
+      if (settlement.shouldOpenErrorPopup) {
+        setIsLocationErrorPopupOpen(true);
+      }
+
       if (outcome === "permission-denied" || outcome === "unsupported") {
         markHomeLocationRequestedInSession();
         return;
@@ -1199,7 +1228,12 @@ export function IndexPage() {
 
   const handleMyLocation = useCallback(
     async () => {
+      setIsLocationErrorPopupOpen(false);
+      hasPendingMyLocationRequestRef.current = false;
+      pendingOrientationStartRef.current = false;
+
       if (permission === "denied") {
+        hasPendingMyLocationRequestRef.current = true;
         startTracking();
         return;
       }
@@ -1218,6 +1252,7 @@ export function IndexPage() {
           });
         } else if (!isTracking) {
           // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
+          hasPendingMyLocationRequestRef.current = true;
           startTracking();
         }
         return;
@@ -1234,6 +1269,7 @@ export function IndexPage() {
             coordinates: location,
           });
         } else if (!isTracking) {
+          hasPendingMyLocationRequestRef.current = true;
           startTracking();
         }
         return;
@@ -1259,11 +1295,22 @@ export function IndexPage() {
           setIsOrientationDeniedPopupOpen(true);
           return;
         }
-        startTracking();
-        setIsCameraCentered(true);
-        // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
+        hasPendingMyLocationRequestRef.current = true;
         pendingOrientationStartRef.current = true;
+        startTracking();
+        // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
       } else {
+        if (!location) {
+          const granted = await requestOrientationPermission();
+          if (!granted) {
+            setIsOrientationDeniedPopupOpen(true);
+            return;
+          }
+          hasPendingMyLocationRequestRef.current = true;
+          pendingOrientationStartRef.current = true;
+          return;
+        }
+
         // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
         // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
         if (location && mapInstanceRef.current) {
@@ -3227,6 +3274,17 @@ export function IndexPage() {
         primaryAction={{
           label: m.common_confirm(),
           onPress: closeLocationPopup,
+        }}
+      />
+
+      <Popup
+        isOpen={isLocationErrorPopupOpen}
+        onOpenChange={setIsLocationErrorPopupOpen}
+        titleText={m.home_location_error_title()}
+        helperText={m.home_location_error_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsLocationErrorPopupOpen(false),
         }}
       />
 
