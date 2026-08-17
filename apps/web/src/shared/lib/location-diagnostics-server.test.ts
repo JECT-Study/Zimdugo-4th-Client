@@ -97,6 +97,30 @@ describe("location diagnostics server", () => {
     );
   });
 
+  it("분리 진단 요청의 실행 방식과 생명주기 상태를 검증해 남긴다", async () => {
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+    const response = await handleLocationDiagnosticRequest(
+      createRequest(
+        createPayload({
+          event: "diagnostic_request_started",
+          requestMode: "default-current",
+          lifecycleEvent: "mount",
+          hasFocus: true,
+          hasUserActivation: true,
+          isSecureContext: true,
+          errorCode: undefined,
+        }),
+      ),
+      { VERCEL_ENV: "preview" },
+    );
+
+    expect(response?.status).toBe(204);
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "[location-diagnostic]",
+      expect.stringContaining('"requestMode":"default-current"'),
+    );
+  });
+
   it("production에서는 환경 변수가 없으면 엔드포인트를 숨긴다", async () => {
     const response = await handleLocationDiagnosticRequest(
       createRequest(createPayload()),

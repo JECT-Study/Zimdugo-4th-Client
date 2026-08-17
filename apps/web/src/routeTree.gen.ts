@@ -15,6 +15,7 @@ import { Route as ReportRouteImport } from './routes/report'
 import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MyRouteImport } from './routes/my'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LocationDiagnosticsRouteImport } from './routes/location-diagnostics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
@@ -52,6 +53,11 @@ const MyRoute = MyRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocationDiagnosticsRoute = LocationDiagnosticsRouteImport.update({
+  id: '/location-diagnostics',
+  path: '/location-diagnostics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -97,6 +103,7 @@ const MyFavoritesRoute = MyFavoritesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/location-diagnostics': typeof LocationDiagnosticsRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRouteWithChildren
   '/notices': typeof NoticesRouteWithChildren
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/location-diagnostics': typeof LocationDiagnosticsRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRouteWithChildren
   '/notices': typeof NoticesRouteWithChildren
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/location-diagnostics': typeof LocationDiagnosticsRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRouteWithChildren
   '/notices': typeof NoticesRouteWithChildren
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/location-diagnostics'
     | '/login'
     | '/my'
     | '/notices'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/location-diagnostics'
     | '/login'
     | '/my'
     | '/notices'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/location-diagnostics'
     | '/login'
     | '/my'
     | '/notices'
@@ -197,6 +209,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LocationDiagnosticsRoute: typeof LocationDiagnosticsRoute
   LoginRoute: typeof LoginRoute
   MyRoute: typeof MyRouteWithChildren
   NoticesRoute: typeof NoticesRouteWithChildren
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/location-diagnostics': {
+      id: '/location-diagnostics'
+      path: '/location-diagnostics'
+      fullPath: '/location-diagnostics'
+      preLoaderRoute: typeof LocationDiagnosticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -351,6 +371,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LocationDiagnosticsRoute: LocationDiagnosticsRoute,
   LoginRoute: LoginRoute,
   MyRoute: MyRouteWithChildren,
   NoticesRoute: NoticesRouteWithChildren,

@@ -1,4 +1,12 @@
 export const LOCATION_DIAGNOSTIC_EVENTS = [
+  "diagnostic_lifecycle_changed",
+  "diagnostic_panel_opened",
+  "diagnostic_permission_checked",
+  "diagnostic_request_failed",
+  "diagnostic_request_started",
+  "diagnostic_request_succeeded",
+  "diagnostic_request_unresponsive",
+  "diagnostic_watch_stopped",
   "home_auto_request_started",
   "home_auto_request_skipped_session",
   "permission_query_error",
@@ -17,3 +25,24 @@ export const LOCATION_DIAGNOSTIC_EVENTS = [
 
 export type LocationDiagnosticEventName =
   (typeof LOCATION_DIAGNOSTIC_EVENTS)[number];
+
+export const LOCATION_DIAGNOSTIC_REQUEST_MODES = [
+  "default-current",
+  "high-accuracy-current",
+  "high-accuracy-watch",
+] as const;
+
+export type LocationDiagnosticRequestMode =
+  (typeof LOCATION_DIAGNOSTIC_REQUEST_MODES)[number];
+
+export const LOCATION_DIAGNOSTIC_LIFECYCLE_EVENTS = [
+  "mount",
+  "visibilitychange",
+  "focus",
+  "blur",
+  "pageshow",
+  "pagehide",
+] as const;
+
+export type LocationDiagnosticLifecycleEvent =
+  (typeof LOCATION_DIAGNOSTIC_LIFECYCLE_EVENTS)[number];

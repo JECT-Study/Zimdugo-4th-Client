@@ -1,10 +1,16 @@
 import { z } from "zod";
-import { LOCATION_DIAGNOSTIC_EVENTS } from "./location-diagnostic-events";
+import {
+  LOCATION_DIAGNOSTIC_EVENTS,
+  LOCATION_DIAGNOSTIC_LIFECYCLE_EVENTS,
+  LOCATION_DIAGNOSTIC_REQUEST_MODES,
+} from "./location-diagnostic-events";
 
 const LOCATION_DIAGNOSTICS_PATH = "/_internal/location-diagnostics";
 const MAX_LOCATION_DIAGNOSTIC_BODY_LENGTH = 4_096;
 const LOCATION_DIAGNOSTIC_PRODUCTION_SAMPLE_MODULO = 2;
 const LOCATION_DIAGNOSTIC_WARNING_EVENTS = new Set([
+  "diagnostic_request_failed",
+  "diagnostic_request_unresponsive",
   "tracking_unsupported",
   "tracking_watch_error",
   "tracking_watchdog_timeout",
@@ -19,10 +25,15 @@ const locationDiagnosticSchema = z
     visibilityState: z.enum(["hidden", "visible"]),
     elapsedMs: z.number().int().min(0).max(120_000).optional(),
     errorCode: z.number().int().min(1).max(3).optional(),
+    hasFocus: z.boolean().optional(),
     hasSessionRequestMarker: z.boolean().optional(),
+    hasUserActivation: z.boolean().optional(),
+    isSecureContext: z.boolean().optional(),
     isLocating: z.boolean().optional(),
     isTracking: z.boolean().optional(),
+    lifecycleEvent: z.enum(LOCATION_DIAGNOSTIC_LIFECYCLE_EVENTS).optional(),
     permission: z.enum(["prompt", "granted", "denied"]).optional(),
+    requestMode: z.enum(LOCATION_DIAGNOSTIC_REQUEST_MODES).optional(),
   })
   .strict();
 
