@@ -20,10 +20,8 @@ const locationDiagnosticSchema = z
     elapsedMs: z.number().int().min(0).max(120_000).optional(),
     errorCode: z.number().int().min(1).max(3).optional(),
     hasSessionRequestMarker: z.boolean().optional(),
-    hasUserActivation: z.boolean().optional(),
     isLocating: z.boolean().optional(),
     isTracking: z.boolean().optional(),
-    isUserInitiated: z.boolean().optional(),
     permission: z.enum(["prompt", "granted", "denied"]).optional(),
   })
   .strict();
