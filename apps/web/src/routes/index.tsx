@@ -58,12 +58,11 @@ import {
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
+  clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
   markHomeLocationRequestedInSession,
 } from "#/entities/map/model/home-location-request-session";
-import {
-  useHasRequestedHomeLocationInSession,
-} from "#/entities/map/model/useHomeLocationRequestSession";
+import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import {
   fitNaverMapToBounds,
   focusNaverMapOnClusterBounds,
@@ -72,7 +71,13 @@ import {
   getPinId,
   type LockerMarkerOffset,
 } from "#/entities/map/model/map-marker";
-import { useLocationTracking } from "#/entities/map/model/useLocationTracking";
+import {
+  useHasRequestedHomeLocationInSession,
+} from "#/entities/map/model/useHomeLocationRequestSession";
+import {
+  type LocationRequestOutcome,
+  useLocationTracking,
+} from "#/entities/map/model/useLocationTracking";
 import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
@@ -616,6 +621,7 @@ export function IndexPage() {
   const hasPendingLocationRequestRef = useRef(false);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
+  const didLogHomeLocationSessionSkipRef = useRef(false);
 
   // 리프레시 버튼 타이머 클린업 레퍼런스
   const refreshTimersRef = useRef<{
@@ -855,6 +861,24 @@ export function IndexPage() {
     }
   }, []);
 
+  const handleLocationRequestSettled = useCallback(
+    (outcome: LocationRequestOutcome) => {
+      if (outcome !== "success") {
+        hasPendingLocationRequestRef.current = false;
+      }
+
+      if (outcome === "permission-denied" || outcome === "unsupported") {
+        markHomeLocationRequestedInSession();
+        return;
+      }
+
+      if (outcome === "cancelled") return;
+
+      clearHomeLocationRequestedInSession();
+    },
+    [],
+  );
+
   // isCameraCentered는 handleFirstLocation 위에서 선언됨
   isCameraCenteredRef.current = isCameraCentered;
 
@@ -872,7 +896,10 @@ export function IndexPage() {
   }, []);
 
   const { permission, isTracking, isLocating, location, error, startTracking } =
-    useLocationTracking({ onFirstLocation: handleFirstLocation });
+    useLocationTracking({
+      onFirstLocation: handleFirstLocation,
+      onRequestSettled: handleLocationRequestSettled,
+    });
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
   const shouldDeferHomeMapForLocation =
@@ -887,21 +914,48 @@ export function IndexPage() {
   );
 
   useEffect(() => {
-    if (
-      !shouldPreferHomeLocation ||
-      location != null ||
-      permission === "denied" ||
-      isTracking ||
-      isLocating ||
-      error != null ||
-      hasRequestedHomeLocation ||
-      didRequestHomeLocationRef.current ||
-      hasRequestedHomeLocationInSession()
-    ) {
+    const hasRequestedHomeLocationInCurrentSession =
+      hasRequestedHomeLocationInSession();
+    const canStartAutoLocationRequest =
+      shouldPreferHomeLocation &&
+      location == null &&
+      permission !== "denied" &&
+      !isTracking &&
+      !isLocating &&
+      error == null &&
+      !hasRequestedHomeLocation &&
+      !didRequestHomeLocationRef.current &&
+      !hasRequestedHomeLocationInCurrentSession;
+    const shouldLogHomeLocationSessionSkip =
+      shouldPreferHomeLocation &&
+      location == null &&
+      permission === "prompt" &&
+      (hasRequestedHomeLocation ||
+        hasRequestedHomeLocationInCurrentSession) &&
+      !isLocating &&
+      !isTracking &&
+      !didLogHomeLocationSessionSkipRef.current;
+
+    if (!canStartAutoLocationRequest) {
+      if (shouldLogHomeLocationSessionSkip) {
+        didLogHomeLocationSessionSkipRef.current = true;
+        postLocationDiagnostic("home_auto_request_skipped_session", {
+          hasSessionRequestMarker: true,
+          isLocating,
+          isTracking,
+          permission,
+        });
+      }
       return;
     }
 
     didRequestHomeLocationRef.current = true;
+    postLocationDiagnostic("home_auto_request_started", {
+      hasSessionRequestMarker: false,
+      isLocating: true,
+      isTracking: true,
+      permission,
+    });
     markHomeLocationRequestedInSession();
     hasPendingLocationRequestRef.current = true;
     startTracking();
@@ -1129,8 +1183,8 @@ export function IndexPage() {
   const handleMyLocation = useCallback(
     async () => {
       if (permission === "denied") {
-        hasPendingLocationRequestRef.current = false;
-        openLocationPopup();
+        hasPendingLocationRequestRef.current = true;
+        startTracking();
         return;
       }
 
@@ -1223,7 +1277,6 @@ export function IndexPage() {
       isTracking,
       isOrientationTracking,
       isOrientationSupported,
-      openLocationPopup,
       startTracking,
       requestOrientationPermission,
       startOrientationTracking,
