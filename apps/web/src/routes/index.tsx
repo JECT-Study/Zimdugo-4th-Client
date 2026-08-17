@@ -618,7 +618,6 @@ export function IndexPage() {
     typeof window !== "undefined" ? window.innerHeight : 800,
   );
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
-  const hasPendingLocationRequestRef = useRef(false);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
   const didLogHomeLocationSessionSkipRef = useRef(false);
@@ -849,8 +848,6 @@ export function IndexPage() {
   // requestOrientationPermissionRef / startOrientationTrackingRef는
   // render마다 갱신되는 ref이므로 deps []가 안전하다.
   const handleFirstLocation = useCallback(() => {
-    hasPendingLocationRequestRef.current = false;
-
     // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
     // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
     // 항상 최신 함수를 참조하므로 deps []가 안전하다.
@@ -863,10 +860,6 @@ export function IndexPage() {
 
   const handleLocationRequestSettled = useCallback(
     (outcome: LocationRequestOutcome) => {
-      if (outcome !== "success") {
-        hasPendingLocationRequestRef.current = false;
-      }
-
       if (outcome === "permission-denied" || outcome === "unsupported") {
         markHomeLocationRequestedInSession();
         return;
@@ -895,8 +888,15 @@ export function IndexPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const { permission, isTracking, isLocating, location, error, startTracking } =
-    useLocationTracking({
+  const {
+    permission,
+    isTracking,
+    isLocating,
+    location,
+    error,
+    locationRequestStatus,
+    startTracking,
+  } = useLocationTracking({
       onFirstLocation: handleFirstLocation,
       onRequestSettled: handleLocationRequestSettled,
     });
@@ -957,7 +957,6 @@ export function IndexPage() {
       permission,
     });
     markHomeLocationRequestedInSession();
-    hasPendingLocationRequestRef.current = true;
     startTracking();
   }, [
     error,
@@ -1082,12 +1081,14 @@ export function IndexPage() {
     if (permission === "denied") {
       setIsCameraCentered(false);
 
-      if (hasPendingLocationRequestRef.current) {
-        hasPendingLocationRequestRef.current = false;
+      if (
+        locationRequestStatus === "permission-denied" ||
+        locationRequestStatus === "unsupported"
+      ) {
         openLocationPopup();
       }
     }
-  }, [permission, openLocationPopup]);
+  }, [locationRequestStatus, permission, openLocationPopup]);
 
   // 리프레시 버튼 관련 상태
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -1183,7 +1184,6 @@ export function IndexPage() {
   const handleMyLocation = useCallback(
     async () => {
       if (permission === "denied") {
-        hasPendingLocationRequestRef.current = true;
         startTracking();
         return;
       }
@@ -1202,7 +1202,6 @@ export function IndexPage() {
           });
         } else if (!isTracking) {
           // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
-          hasPendingLocationRequestRef.current = true;
           startTracking();
         }
         return;
@@ -1219,7 +1218,6 @@ export function IndexPage() {
             coordinates: location,
           });
         } else if (!isTracking) {
-          hasPendingLocationRequestRef.current = true;
           startTracking();
         }
         return;
@@ -1245,7 +1243,6 @@ export function IndexPage() {
           setIsOrientationDeniedPopupOpen(true);
           return;
         }
-        hasPendingLocationRequestRef.current = true;
         startTracking();
         setIsCameraCentered(true);
         // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출

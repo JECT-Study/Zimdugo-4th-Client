@@ -112,6 +112,7 @@ describe("useLocationTracking", () => {
 
     expect(onFirstLocation).toHaveBeenCalledTimes(1);
     expect(onRequestSettled).toHaveBeenCalledWith("success");
+    expect(result.current.locationRequestStatus).toBe("success");
     expect(result.current.location).toEqual({
       lat: 37.0,
       lng: 127.0,
@@ -170,6 +171,7 @@ describe("useLocationTracking", () => {
     });
 
     expect(result.current.permission).toBe("denied");
+    expect(result.current.locationRequestStatus).toBe("permission-denied");
     expect(result.current.isTracking).toBe(false);
     expect(onRequestSettled).toHaveBeenCalledWith("permission-denied");
     expect(onRequestSettled).toHaveBeenCalledOnce();
@@ -239,6 +241,7 @@ describe("useLocationTracking", () => {
 
     expect(result.current.permission).toBe("prompt");
     expect(result.current.error?.code).toBe(3);
+    expect(result.current.locationRequestStatus).toBe("timeout");
     expect(result.current.isTracking).toBe(false);
     expect(onRequestSettled).toHaveBeenCalledWith("timeout");
     expect(onRequestSettled).toHaveBeenCalledOnce();
@@ -262,6 +265,7 @@ describe("useLocationTracking", () => {
     });
 
     expect(result.current.error?.code).toBe(3);
+    expect(result.current.locationRequestStatus).toBe("timeout");
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
@@ -314,6 +318,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
     expect(onRequestSettled).toHaveBeenCalledWith("cancelled");
+    expect(result.current.locationRequestStatus).toBe("cancelled");
 
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
@@ -325,6 +330,7 @@ describe("useLocationTracking", () => {
 
     expect(result.current.isLocating).toBe(true);
     expect(result.current.isTracking).toBe(true);
+    expect(result.current.locationRequestStatus).toBe("requesting");
     expect(watchPositionMock).toHaveBeenCalledTimes(2);
 
     act(() => {
