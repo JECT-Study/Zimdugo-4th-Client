@@ -21,6 +21,7 @@ describe("useLocationTracking", () => {
     document,
     "visibilityState",
   );
+  let getCurrentPositionMock: Mock;
   let watchPositionMock: Mock;
   let clearWatchMock: Mock;
   let queryMock: Mock;
@@ -28,10 +29,12 @@ describe("useLocationTracking", () => {
   beforeEach(() => {
     postLocationDiagnosticMock.mockClear();
     // Mock navigator.geolocation
+    getCurrentPositionMock = vi.fn();
     watchPositionMock = vi.fn().mockReturnValue(123);
     clearWatchMock = vi.fn();
     Object.defineProperty(global.navigator, "geolocation", {
       value: {
+        getCurrentPosition: getCurrentPositionMock,
         watchPosition: watchPositionMock,
         clearWatch: clearWatchMock,
       },
@@ -100,12 +103,21 @@ describe("useLocationTracking", () => {
       result.current.startTracking();
     });
 
-    expect(watchPositionMock).toHaveBeenCalled();
-    const successCallback = watchPositionMock.mock.calls[0][0];
+    expect(getCurrentPositionMock).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Function),
+      {
+        enableHighAccuracy: false,
+        maximumAge: 60_000,
+        timeout: 10_000,
+      },
+    );
+    expect(watchPositionMock).not.toHaveBeenCalled();
+    const initialSuccessCallback = getCurrentPositionMock.mock.calls[0][0];
 
     // 첫 번째 위치 콜백 시뮬레이션
     act(() => {
-      successCallback({
+      initialSuccessCallback({
         coords: { latitude: 37.0, longitude: 127.0, heading: 90 },
       });
     });
@@ -123,10 +135,20 @@ describe("useLocationTracking", () => {
       lng: 127.0,
       heading: 90,
     });
+    expect(watchPositionMock).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.any(Function),
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 45_000,
+      },
+    );
+    const watchSuccessCallback = watchPositionMock.mock.calls[0][0];
 
     // 두 번째 위치 콜백 시뮬레이션
     act(() => {
-      successCallback({
+      watchSuccessCallback({
         coords: { latitude: 37.1, longitude: 127.1, heading: 100 },
       });
     });
@@ -147,6 +169,12 @@ describe("useLocationTracking", () => {
       result.current.startTracking();
     });
 
+    const initialSuccessCallback = getCurrentPositionMock.mock.calls[0][0];
+    act(() => {
+      initialSuccessCallback({
+        coords: { latitude: 37.0, longitude: 127.0, heading: null },
+      });
+    });
     expect(watchPositionMock).toHaveBeenCalled();
 
     unmount();
@@ -162,14 +190,11 @@ describe("useLocationTracking", () => {
     );
 
     // 권한 요청 후 거부 처리 시뮬레이션
-    // navigator.geolocation.getCurrentPosition mock이 없으면 테스트가 복잡해지므로
-    // 직접 에러 콜백을 트리거
     act(() => {
       result.current.startTracking();
     });
 
-    expect(watchPositionMock).toHaveBeenCalled();
-    const errorCallback = watchPositionMock.mock.calls[0][1];
+    const errorCallback = getCurrentPositionMock.mock.calls[0][1];
 
     act(() => {
       errorCallback({ code: 1, message: "User denied Geolocation" });
@@ -194,7 +219,7 @@ describe("useLocationTracking", () => {
     act(() => {
       result.current.startTracking();
     });
-    const errorCallback = watchPositionMock.mock.calls[0][1];
+    const errorCallback = getCurrentPositionMock.mock.calls[0][1];
 
     act(() => {
       errorCallback({ code: 2, message: "Position unavailable" });
@@ -258,7 +283,7 @@ describe("useLocationTracking", () => {
     act(() => {
       result.current.startTracking();
     });
-    const firstErrorCallback = watchPositionMock.mock.calls[0][1];
+    const firstErrorCallback = getCurrentPositionMock.mock.calls[0][1];
     act(() => {
       firstErrorCallback({ code: 1, message: "User denied Geolocation" });
     });
@@ -269,7 +294,8 @@ describe("useLocationTracking", () => {
 
     expect(result.current.permission).toBe("prompt");
     expect(result.current.isTracking).toBe(true);
-    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+    expect(getCurrentPositionMock).toHaveBeenCalledTimes(2);
+    expect(watchPositionMock).not.toHaveBeenCalled();
   });
 
   it("should not treat a location timeout as a permission denial", () => {
@@ -281,7 +307,7 @@ describe("useLocationTracking", () => {
     act(() => {
       result.current.startTracking();
     });
-    const errorCallback = watchPositionMock.mock.calls[0][1];
+    const errorCallback = getCurrentPositionMock.mock.calls[0][1];
     act(() => {
       errorCallback({ code: 3, message: "Location request timed out" });
     });
@@ -316,6 +342,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(true);
     expect(clearWatchMock).not.toHaveBeenCalled();
+    expect(watchPositionMock).not.toHaveBeenCalled();
     expect(onRequestSettled).not.toHaveBeenCalled();
     expect(
       postLocationDiagnosticMock.mock.calls.map(([event]) => event),
@@ -340,7 +367,7 @@ describe("useLocationTracking", () => {
     expect(result.current.locationRequestStatus).toBe("timeout");
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
-    expect(clearWatchMock).toHaveBeenCalledWith(123);
+    expect(clearWatchMock).not.toHaveBeenCalled();
     expect(onRequestSettled).toHaveBeenCalledWith("timeout");
     expect(onRequestSettled).toHaveBeenCalledOnce();
     expect(
@@ -356,7 +383,7 @@ describe("useLocationTracking", () => {
       result.current.startTracking();
       vi.advanceTimersByTime(12_000);
     });
-    const successCallback = watchPositionMock.mock.calls[0][0];
+    const successCallback = getCurrentPositionMock.mock.calls[0][0];
     act(() => {
       successCallback({
         coords: { latitude: 37.5, longitude: 127.1, heading: null },
@@ -372,12 +399,12 @@ describe("useLocationTracking", () => {
     });
     expect(result.current.error).toBeNull();
     expect(result.current.isTracking).toBe(true);
+    expect(watchPositionMock).toHaveBeenCalledOnce();
     expect(clearWatchMock).not.toHaveBeenCalled();
   });
 
-  it("should replace a delayed watch with a fresh manual request", () => {
+  it("should replace a delayed initial request with a fresh manual request", () => {
     vi.useFakeTimers();
-    watchPositionMock.mockReturnValueOnce(123).mockReturnValueOnce(456);
     const { result } = renderHook(() => useLocationTracking());
 
     act(() => {
@@ -389,8 +416,9 @@ describe("useLocationTracking", () => {
       result.current.startTracking();
     });
 
-    expect(clearWatchMock).toHaveBeenCalledWith(123);
-    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+    expect(clearWatchMock).not.toHaveBeenCalled();
+    expect(getCurrentPositionMock).toHaveBeenCalledTimes(2);
+    expect(watchPositionMock).not.toHaveBeenCalled();
     expect(result.current.locationRequestStatus).toBe("requesting");
     expect(result.current.isLocating).toBe(true);
     expect(result.current.isTracking).toBe(true);
@@ -403,7 +431,7 @@ describe("useLocationTracking", () => {
     act(() => {
       result.current.startTracking();
     });
-    const successCallback = watchPositionMock.mock.calls[0][0];
+    const successCallback = getCurrentPositionMock.mock.calls[0][0];
     act(() => {
       successCallback({
         coords: { latitude: 37.0, longitude: 127.0, heading: null },
@@ -436,7 +464,7 @@ describe("useLocationTracking", () => {
 
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
-    expect(clearWatchMock).toHaveBeenCalledWith(123);
+    expect(clearWatchMock).not.toHaveBeenCalled();
     expect(onRequestSettled).toHaveBeenCalledWith("cancelled");
     expect(result.current.locationRequestStatus).toBe("interrupted");
 
@@ -451,22 +479,23 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
     expect(result.current.locationRequestStatus).toBe("interrupted");
-    expect(watchPositionMock).toHaveBeenCalledOnce();
+    expect(getCurrentPositionMock).toHaveBeenCalledOnce();
+    expect(watchPositionMock).not.toHaveBeenCalled();
 
     act(() => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
-    expect(watchPositionMock).toHaveBeenCalledOnce();
+    expect(getCurrentPositionMock).toHaveBeenCalledOnce();
+    expect(watchPositionMock).not.toHaveBeenCalled();
   });
 
-  it("should ignore a late error from a suspended watch", () => {
-    watchPositionMock.mockReturnValueOnce(123);
+  it("should ignore a late error from a suspended initial request", () => {
     const { result } = renderHook(() => useLocationTracking());
 
     act(() => {
       result.current.startTracking();
     });
-    const staleErrorCallback = watchPositionMock.mock.calls[0][1];
+    const staleErrorCallback = getCurrentPositionMock.mock.calls[0][1];
 
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
@@ -517,7 +546,8 @@ describe("useLocationTracking", () => {
       });
     }
 
-    expect(watchPositionMock).toHaveBeenCalledOnce();
+    expect(getCurrentPositionMock).toHaveBeenCalledOnce();
+    expect(watchPositionMock).not.toHaveBeenCalled();
     expect(result.current.locationRequestStatus).toBe("interrupted");
   });
 });
