@@ -112,6 +112,7 @@ describe("useLocationTracking", () => {
 
     expect(onFirstLocation).toHaveBeenCalledTimes(1);
     expect(onRequestSettled).toHaveBeenCalledWith("success");
+    expect(result.current.locationRequestStatus).toBe("success");
     expect(result.current.location).toEqual({
       lat: 37.0,
       lng: 127.0,
@@ -170,12 +171,55 @@ describe("useLocationTracking", () => {
     });
 
     expect(result.current.permission).toBe("denied");
+    expect(result.current.locationRequestStatus).toBe("permission-denied");
     expect(result.current.isTracking).toBe(false);
     expect(onRequestSettled).toHaveBeenCalledWith("permission-denied");
     expect(onRequestSettled).toHaveBeenCalledOnce();
     expect(
       postLocationDiagnosticMock.mock.calls.map(([event]) => event),
     ).not.toContain("tracking_cancelled");
+  });
+
+  it("should expose an unavailable outcome as a terminal request state", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const errorCallback = watchPositionMock.mock.calls[0][1];
+
+    act(() => {
+      errorCallback({ code: 2, message: "Position unavailable" });
+    });
+
+    expect(result.current.locationRequestStatus).toBe("unavailable");
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(onRequestSettled).toHaveBeenCalledWith("unavailable");
+  });
+
+  it("should settle as unsupported when geolocation is unavailable", () => {
+    const onRequestSettled = vi.fn();
+    Object.defineProperty(global.navigator, "geolocation", {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+
+    expect(result.current.locationRequestStatus).toBe("unsupported");
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(onRequestSettled).toHaveBeenCalledWith("unsupported");
   });
 
   it("should ignore a permission query result while a location request is active", async () => {
@@ -239,6 +283,7 @@ describe("useLocationTracking", () => {
 
     expect(result.current.permission).toBe("prompt");
     expect(result.current.error?.code).toBe(3);
+    expect(result.current.locationRequestStatus).toBe("timeout");
     expect(result.current.isTracking).toBe(false);
     expect(onRequestSettled).toHaveBeenCalledWith("timeout");
     expect(onRequestSettled).toHaveBeenCalledOnce();
@@ -262,6 +307,7 @@ describe("useLocationTracking", () => {
     });
 
     expect(result.current.error?.code).toBe(3);
+    expect(result.current.locationRequestStatus).toBe("timeout");
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
@@ -314,6 +360,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
     expect(onRequestSettled).toHaveBeenCalledWith("cancelled");
+    expect(result.current.locationRequestStatus).toBe("cancelled");
 
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
@@ -325,6 +372,7 @@ describe("useLocationTracking", () => {
 
     expect(result.current.isLocating).toBe(true);
     expect(result.current.isTracking).toBe(true);
+    expect(result.current.locationRequestStatus).toBe("requesting");
     expect(watchPositionMock).toHaveBeenCalledTimes(2);
 
     act(() => {

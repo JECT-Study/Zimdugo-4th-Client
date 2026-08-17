@@ -15,6 +15,11 @@ export type LocationRequestOutcome =
   | "cancelled"
   | "unsupported";
 
+export type LocationRequestStatus =
+  | "idle"
+  | "requesting"
+  | LocationRequestOutcome;
+
 interface LocationData {
   lat: number;
   lng: number;
@@ -47,6 +52,8 @@ export function useLocationTracking({
     useState<LocationPermissionState>("prompt");
   const [isTracking, setIsTracking] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [locationRequestStatus, setLocationRequestStatus] =
+    useState<LocationRequestStatus>("idle");
   const [trackingAttemptId, setTrackingAttemptId] = useState(0);
   const [location, setLocation] = useState<LocationData | null>(null);
   const [error, setError] = useState<GeolocationPositionError | null>(null);
@@ -77,6 +84,7 @@ export function useLocationTracking({
         });
         isLocatingRef.current = false;
         isTrackingRef.current = false;
+        setLocationRequestStatus("unsupported");
         setIsLocating(false);
         setIsTracking(false);
         setPermission("denied");
@@ -88,6 +96,7 @@ export function useLocationTracking({
       isLocatingRef.current = true;
       isTrackingRef.current = true;
       isFirstLocationRef.current = true;
+      setLocationRequestStatus("requesting");
       postLocationDiagnostic("tracking_request_started", {
         isLocating: true,
         isTracking: true,
@@ -180,6 +189,7 @@ export function useLocationTracking({
     const settleInitialRequest = (outcome: LocationRequestOutcome) => {
       if (hasSettledInitialRequest) return;
       hasSettledInitialRequest = true;
+      setLocationRequestStatus(outcome);
       onRequestSettledRef.current?.(outcome);
     };
 
@@ -333,6 +343,7 @@ export function useLocationTracking({
 
   return {
     permission,
+    locationRequestStatus,
     isTracking,
     isLocating,
     location,
