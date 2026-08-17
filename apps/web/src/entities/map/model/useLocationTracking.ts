@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { postLocationDiagnostic } from "./location-diagnostics";
 
-const GEOLOCATION_TIMEOUT_MS = 10_000;
-const GEOLOCATION_WATCHDOG_TIMEOUT_MS = 12_000;
-const MAX_VISIBILITY_RESUME_ATTEMPTS = 3;
+const GEOLOCATION_RESPONSE_DELAY_MS = 12_000;
+const GEOLOCATION_FINAL_TIMEOUT_MS = 45_000;
 
 export type LocationPermissionState = "prompt" | "granted" | "denied";
 
@@ -18,6 +17,8 @@ export type LocationRequestOutcome =
 export type LocationRequestStatus =
   | "idle"
   | "requesting"
+  | "delayed"
+  | "interrupted"
   | LocationRequestOutcome;
 
 export interface LocationData {
@@ -29,10 +30,6 @@ export interface LocationData {
 interface UseLocationTrackingOptions {
   onFirstLocation?: (location: LocationData) => void;
   onRequestSettled?: (outcome: LocationRequestOutcome) => void;
-}
-
-interface StartTrackingOptions {
-  isVisibilityResume?: boolean;
 }
 
 const createLocationTimeoutError = (): GeolocationPositionError =>
@@ -61,8 +58,6 @@ export function useLocationTracking({
   const isTrackingRef = useRef(false);
   const isLocatingRef = useRef(false);
   const requestStartedAtRef = useRef<number | null>(null);
-  const shouldResumeTrackingRef = useRef(false);
-  const visibilityResumeAttemptCountRef = useRef(0);
   const watchCleanupRef = useRef<() => void>(() => {});
   const onFirstLocationRef = useRef(onFirstLocation);
   const onRequestSettledRef = useRef(onRequestSettled);
@@ -70,46 +65,39 @@ export function useLocationTracking({
   onFirstLocationRef.current = onFirstLocation;
   onRequestSettledRef.current = onRequestSettled;
 
-  const startTracking = useCallback(
-    ({ isVisibilityResume = false }: StartTrackingOptions = {}) => {
-      if (!isVisibilityResume) {
-        visibilityResumeAttemptCountRef.current = 0;
-      }
-
-      if (typeof navigator === "undefined" || !navigator.geolocation) {
-        postLocationDiagnostic("tracking_unsupported", {
-          isLocating: false,
-          isTracking: false,
-          permission: "denied",
-        });
-        isLocatingRef.current = false;
-        isTrackingRef.current = false;
-        setLocationRequestStatus("unsupported");
-        setIsLocating(false);
-        setIsTracking(false);
-        setPermission("denied");
-        onRequestSettledRef.current?.("unsupported");
-        return;
-      }
-
-      requestStartedAtRef.current = Date.now();
-      isLocatingRef.current = true;
-      isTrackingRef.current = true;
-      isFirstLocationRef.current = true;
-      setLocationRequestStatus("requesting");
-      postLocationDiagnostic("tracking_request_started", {
-        isLocating: true,
-        isTracking: true,
-        permission: "prompt",
+  const startTracking = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      postLocationDiagnostic("tracking_unsupported", {
+        isLocating: false,
+        isTracking: false,
+        permission: "denied",
       });
-      setTrackingAttemptId((attemptId) => attemptId + 1);
-      setIsTracking(true);
-      setIsLocating(true);
-      setError(null);
-      setPermission("prompt");
-    },
-    [],
-  );
+      isLocatingRef.current = false;
+      isTrackingRef.current = false;
+      setLocationRequestStatus("unsupported");
+      setIsLocating(false);
+      setIsTracking(false);
+      setPermission("denied");
+      onRequestSettledRef.current?.("unsupported");
+      return;
+    }
+
+    requestStartedAtRef.current = Date.now();
+    isLocatingRef.current = true;
+    isTrackingRef.current = true;
+    isFirstLocationRef.current = true;
+    setLocationRequestStatus("requesting");
+    postLocationDiagnostic("tracking_request_started", {
+      isLocating: true,
+      isTracking: true,
+      permission: "prompt",
+    });
+    setTrackingAttemptId((attemptId) => attemptId + 1);
+    setIsTracking(true);
+    setIsLocating(true);
+    setError(null);
+    setPermission("prompt");
+  }, []);
 
   const stopTracking = useCallback(() => {
     watchCleanupRef.current();
@@ -178,12 +166,15 @@ export function useLocationTracking({
     const requestStartedAt = requestStartedAtRef.current ?? Date.now();
     let hasSettledInitialRequest = false;
     let isCleanedUp = false;
-    let watchdogId: number | undefined;
+    let responseDelayId: number | undefined;
+    let finalTimeoutId: number | undefined;
     let cleanupWatch = () => {};
 
-    const clearWatchdog = () => {
-      window.clearTimeout(watchdogId);
-      watchdogId = undefined;
+    const clearInitialRequestTimers = () => {
+      window.clearTimeout(responseDelayId);
+      window.clearTimeout(finalTimeoutId);
+      responseDelayId = undefined;
+      finalTimeoutId = undefined;
     };
 
     const settleInitialRequest = (outcome: LocationRequestOutcome) => {
@@ -211,7 +202,7 @@ export function useLocationTracking({
         if (isFirstLocationRef.current) {
           isFirstLocationRef.current = false;
           isLocatingRef.current = false;
-          clearWatchdog();
+          clearInitialRequestTimers();
           postLocationDiagnostic("tracking_first_position", {
             elapsedMs: Date.now() - requestStartedAt,
             isLocating: false,
@@ -229,7 +220,7 @@ export function useLocationTracking({
       (nextError) => {
         if (isCleanedUp) return;
 
-        clearWatchdog();
+        clearInitialRequestTimers();
         postLocationDiagnostic("tracking_watch_error", {
           elapsedMs: Date.now() - requestStartedAt,
           errorCode: nextError.code,
@@ -257,11 +248,24 @@ export function useLocationTracking({
       {
         enableHighAccuracy: true,
         maximumAge: 0,
-        timeout: GEOLOCATION_TIMEOUT_MS,
+        timeout: GEOLOCATION_FINAL_TIMEOUT_MS,
       },
     );
 
-    watchdogId = window.setTimeout(() => {
+    responseDelayId = window.setTimeout(() => {
+      if (!isFirstLocationRef.current || isCleanedUp) return;
+
+      postLocationDiagnostic("tracking_response_delayed", {
+        elapsedMs: Date.now() - requestStartedAt,
+        isLocating: false,
+        isTracking: true,
+      });
+      isLocatingRef.current = false;
+      setLocationRequestStatus("delayed");
+      setIsLocating(false);
+    }, GEOLOCATION_RESPONSE_DELAY_MS);
+
+    finalTimeoutId = window.setTimeout(() => {
       if (!isFirstLocationRef.current) return;
 
       const timeoutError = createLocationTimeoutError();
@@ -278,12 +282,12 @@ export function useLocationTracking({
       setIsTracking(false);
       setIsLocating(false);
       cleanupWatch();
-    }, GEOLOCATION_WATCHDOG_TIMEOUT_MS);
+    }, GEOLOCATION_FINAL_TIMEOUT_MS);
 
     cleanupWatch = () => {
       if (isCleanedUp) return;
       isCleanedUp = true;
-      clearWatchdog();
+      clearInitialRequestTimers();
       navigator.geolocation.clearWatch(watchId);
       if (isFirstLocationRef.current && !hasSettledInitialRequest) {
         postLocationDiagnostic("tracking_cancelled", {
@@ -302,46 +306,26 @@ export function useLocationTracking({
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        if (!isLocatingRef.current) return;
+      if (document.visibilityState !== "hidden") return;
+      if (!isTrackingRef.current || !isFirstLocationRef.current) return;
 
-        shouldResumeTrackingRef.current = true;
-        postLocationDiagnostic("tracking_suspended", {
-          elapsedMs:
-            requestStartedAtRef.current == null
-              ? undefined
-              : Date.now() - requestStartedAtRef.current,
-          isLocating: false,
-          isTracking: false,
-        });
-        stopTracking();
-        return;
-      }
-
-      if (!shouldResumeTrackingRef.current) return;
-
-      if (
-        visibilityResumeAttemptCountRef.current >=
-        MAX_VISIBILITY_RESUME_ATTEMPTS
-      ) {
-        shouldResumeTrackingRef.current = false;
-        return;
-      }
-
-      shouldResumeTrackingRef.current = false;
-      visibilityResumeAttemptCountRef.current += 1;
-      postLocationDiagnostic("tracking_resumed", {
-        isLocating: true,
-        isTracking: true,
+      postLocationDiagnostic("tracking_suspended", {
+        elapsedMs:
+          requestStartedAtRef.current == null
+            ? undefined
+            : Date.now() - requestStartedAtRef.current,
+        isLocating: false,
+        isTracking: false,
       });
-      startTracking({ isVisibilityResume: true });
+      stopTracking();
+      setLocationRequestStatus("interrupted");
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [startTracking, stopTracking]);
+  }, [stopTracking]);
 
   return {
     permission,

@@ -7,6 +7,7 @@ export const LOCATION_DIAGNOSTIC_EVENTS = [
   "tracking_cancelled",
   "tracking_first_position",
   "tracking_request_started",
+  "tracking_response_delayed",
   "tracking_resumed",
   "tracking_suspended",
   "tracking_unsupported",
