@@ -6,6 +6,7 @@ export const LOCATION_DIAGNOSTIC_EVENTS = [
   "permission_query_started",
   "tracking_cancelled",
   "tracking_first_position",
+  "tracking_permission_granted_retry",
   "tracking_request_started",
   "tracking_response_delayed",
   "tracking_resumed",

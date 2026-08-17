@@ -140,6 +140,63 @@ describe("useLocationTracking", () => {
     });
   });
 
+  it("should retry the watch once when prompt permission becomes granted", async () => {
+    vi.useFakeTimers();
+    let permissionState: PermissionState = "prompt";
+    queryMock.mockImplementation(() =>
+      Promise.resolve({
+        state: permissionState,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }),
+    );
+    watchPositionMock.mockReturnValueOnce(123).mockReturnValueOnce(456);
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    permissionState = "granted";
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+
+    expect(clearWatchMock).toHaveBeenCalledWith(123);
+    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+    expect(
+      postLocationDiagnosticMock.mock.calls.map(([event]) => event),
+    ).toContain("tracking_permission_granted_retry");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("should not retry a watch when permission was already granted", async () => {
+    vi.useFakeTimers();
+    queryMock.mockResolvedValue({
+      state: "granted",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+
+    expect(watchPositionMock).toHaveBeenCalledOnce();
+    expect(clearWatchMock).not.toHaveBeenCalled();
+  });
+
   it("should clear tracking on unmount", async () => {
     const { result, unmount } = renderHook(() => useLocationTracking());
 
