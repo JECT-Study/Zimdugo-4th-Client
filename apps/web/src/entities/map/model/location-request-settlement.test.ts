@@ -9,9 +9,9 @@ describe("resolveLocationRequestSettlement", () => {
       expect(
         resolveLocationRequestSettlement({ outcome, isUserInitiated: true }),
       ).toEqual({
-        shouldClearPendingIntent: false,
-        shouldResetCameraCentered: false,
-        shouldOpenErrorPopup: false,
+        isPendingIntentClearRequired: false,
+        isCameraCenterResetRequired: false,
+        isErrorPopupRequired: false,
       });
     },
   );
@@ -27,8 +27,8 @@ describe("resolveLocationRequestSettlement", () => {
       isUserInitiated: false,
     });
 
-    expect(settlement.shouldClearPendingIntent).toBe(true);
-    expect(settlement.shouldResetCameraCentered).toBe(true);
+    expect(settlement.isPendingIntentClearRequired).toBe(true);
+    expect(settlement.isCameraCenterResetRequired).toBe(true);
   });
 
   it.each<LocationRequestOutcome>(["timeout", "unavailable"])(
@@ -36,7 +36,7 @@ describe("resolveLocationRequestSettlement", () => {
     (outcome) => {
       expect(
         resolveLocationRequestSettlement({ outcome, isUserInitiated: true })
-          .shouldOpenErrorPopup,
+          .isErrorPopupRequired,
       ).toBe(true);
     },
   );
@@ -46,7 +46,7 @@ describe("resolveLocationRequestSettlement", () => {
     (outcome) => {
       expect(
         resolveLocationRequestSettlement({ outcome, isUserInitiated: false })
-          .shouldOpenErrorPopup,
+          .isErrorPopupRequired,
       ).toBe(false);
     },
   );

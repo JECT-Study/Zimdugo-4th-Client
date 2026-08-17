@@ -78,6 +78,7 @@ import {
   useHasRequestedHomeLocationInSession,
 } from "#/entities/map/model/useHomeLocationRequestSession";
 import {
+  type LocationData,
   type LocationRequestOutcome,
   useLocationTracking,
 } from "#/entities/map/model/useLocationTracking";
@@ -605,6 +606,7 @@ export function IndexPage() {
   // 방향 트래킹 pending 처리용 refs
   // GPS 첫 위치 수신 후 자동으로 방향 트래킹을 시작해야 할 때 사용
   const pendingOrientationStartRef = useRef(false);
+  const hasPendingOneTimeLocationCenterRef = useRef(false);
   const hasPendingMyLocationRequestRef = useRef(false);
   const requestOrientationPermissionRef = useRef<() => Promise<boolean>>(
     async () => false,
@@ -739,7 +741,7 @@ export function IndexPage() {
   // setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
   // requestOrientationPermissionRef / startOrientationTrackingRef는
   // render마다 갱신되는 ref이므로 deps []가 안전하다.
-  const handleFirstLocation = useCallback(() => {
+  const handleFirstLocation = useCallback((firstLocation: LocationData) => {
     // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
     // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
     // 항상 최신 함수를 참조하므로 deps []가 안전하다.
@@ -748,6 +750,18 @@ export function IndexPage() {
       setIsCameraCentered(true);
       // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
       startOrientationTrackingRef.current();
+      return;
+    }
+
+    if (
+      hasPendingOneTimeLocationCenterRef.current &&
+      mapInstanceRef.current
+    ) {
+      hasPendingOneTimeLocationCenterRef.current = false;
+      focusNaverMapOnCoordinates({
+        map: mapInstanceRef.current,
+        coordinates: firstLocation,
+      });
     }
   }, []);
 
@@ -762,16 +776,17 @@ export function IndexPage() {
         hasPendingMyLocationRequestRef.current = false;
       }
 
-      if (settlement.shouldClearPendingIntent) {
+      if (settlement.isPendingIntentClearRequired) {
         hasPendingMyLocationRequestRef.current = false;
         pendingOrientationStartRef.current = false;
+        hasPendingOneTimeLocationCenterRef.current = false;
       }
 
-      if (settlement.shouldResetCameraCentered) {
+      if (settlement.isCameraCenterResetRequired) {
         setIsCameraCentered(false);
       }
 
-      if (settlement.shouldOpenErrorPopup) {
+      if (settlement.isErrorPopupRequired) {
         setIsLocationErrorPopupOpen(true);
       }
 
@@ -1231,9 +1246,11 @@ export function IndexPage() {
       setIsLocationErrorPopupOpen(false);
       hasPendingMyLocationRequestRef.current = false;
       pendingOrientationStartRef.current = false;
+      hasPendingOneTimeLocationCenterRef.current = false;
 
       if (permission === "denied") {
         hasPendingMyLocationRequestRef.current = true;
+        hasPendingOneTimeLocationCenterRef.current = true;
         startTracking();
         return;
       }
@@ -1253,6 +1270,7 @@ export function IndexPage() {
         } else if (!isTracking) {
           // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
           hasPendingMyLocationRequestRef.current = true;
+          hasPendingOneTimeLocationCenterRef.current = true;
           startTracking();
         }
         return;
@@ -1270,6 +1288,7 @@ export function IndexPage() {
           });
         } else if (!isTracking) {
           hasPendingMyLocationRequestRef.current = true;
+          hasPendingOneTimeLocationCenterRef.current = true;
           startTracking();
         }
         return;

@@ -6,23 +6,23 @@ interface ResolveLocationRequestSettlementOptions {
 }
 
 interface LocationRequestSettlement {
-  shouldClearPendingIntent: boolean;
-  shouldResetCameraCentered: boolean;
-  shouldOpenErrorPopup: boolean;
+  isPendingIntentClearRequired: boolean;
+  isCameraCenterResetRequired: boolean;
+  isErrorPopupRequired: boolean;
 }
 
 export const resolveLocationRequestSettlement = ({
   outcome,
   isUserInitiated,
 }: ResolveLocationRequestSettlementOptions): LocationRequestSettlement => {
-  const shouldPreservePendingIntent =
+  const canPreservePendingIntent =
     outcome === "success" || outcome === "cancelled";
-  const shouldOpenErrorPopup =
+  const isErrorPopupRequired =
     isUserInitiated && (outcome === "timeout" || outcome === "unavailable");
 
   return {
-    shouldClearPendingIntent: !shouldPreservePendingIntent,
-    shouldResetCameraCentered: !shouldPreservePendingIntent,
-    shouldOpenErrorPopup,
+    isPendingIntentClearRequired: !canPreservePendingIntent,
+    isCameraCenterResetRequired: !canPreservePendingIntent,
+    isErrorPopupRequired,
   };
 };
