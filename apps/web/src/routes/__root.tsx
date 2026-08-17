@@ -39,11 +39,14 @@ import {
   resolveLanguageSyncAction,
   useAppLanguageStore,
 } from "#/shared/store/language";
+import { GtmBodyNoscript, GtmHeadScript } from "#/shared/ui/GtmContainer";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
 import {
   PageTransitionContentBoundary,
   PageTransitionOverlay,
 } from "#/shared/ui/PageTransitionOverlay";
+
+const GTM_CONTAINER_ID = import.meta.env.VITE_GTM_CONTAINER_ID;
 
 const CRITICAL_LAYOUT_CSS = `
   *, ::before, ::after {
@@ -372,6 +375,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       data-scroll-page={isDocumentScrollPage ? "true" : undefined}
     >
       <head>
+        <GtmHeadScript containerId={GTM_CONTAINER_ID} />
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script runs before hydration to normalize locale-less URLs
           dangerouslySetInnerHTML={{ __html: INITIAL_LANGUAGE_REDIRECT_SCRIPT }}
@@ -384,6 +388,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <GtmBodyNoscript containerId={GTM_CONTAINER_ID} />
         <AppContainer mode={isDocumentScrollPage ? "document" : "app"}>
           <PageTransitionContentBoundary isBlocked={isPageTransitionPending}>
             <AppShell
