@@ -3,8 +3,6 @@ import { postLocationDiagnostic } from "./location-diagnostics";
 
 const GEOLOCATION_RESPONSE_DELAY_MS = 12_000;
 const GEOLOCATION_FINAL_TIMEOUT_MS = 45_000;
-const INITIAL_LOCATION_TIMEOUT_MS = 10_000;
-const INITIAL_LOCATION_MAXIMUM_AGE_MS = 60_000;
 
 export type LocationPermissionState = "prompt" | "granted" | "denied";
 
@@ -186,89 +184,71 @@ export function useLocationTracking({
       onRequestSettledRef.current?.(outcome);
     };
 
-    let watchId: number | undefined;
+    postLocationDiagnostic("tracking_watch_started", {
+      isLocating: true,
+      isTracking: true,
+    });
 
-    const handlePosition = (position: GeolocationPosition) => {
-      if (isCleanedUp) return;
-
-      const nextLocation = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        heading: position.coords.heading,
-      };
-
-      if (isFirstLocationRef.current) {
-        isFirstLocationRef.current = false;
-        isLocatingRef.current = false;
-        clearInitialRequestTimers();
-        postLocationDiagnostic("tracking_first_position", {
-          elapsedMs: Date.now() - requestStartedAt,
-          isLocating: false,
-          isTracking: true,
-          permission: "granted",
-        });
-        settleInitialRequest("success");
-        onFirstLocationRef.current?.(nextLocation);
-      }
-      setLocation(nextLocation);
-      setError(null);
-      setPermission("granted");
-      setIsLocating(false);
-    };
-
-    const handlePositionError = (nextError: GeolocationPositionError) => {
-      if (isCleanedUp) return;
-
-      clearInitialRequestTimers();
-      postLocationDiagnostic("tracking_watch_error", {
-        elapsedMs: Date.now() - requestStartedAt,
-        errorCode: nextError.code,
-        isLocating: false,
-        isTracking: false,
-        permission: nextError.code === 1 ? "denied" : undefined,
-      });
-      isLocatingRef.current = false;
-      isTrackingRef.current = false;
-      settleInitialRequest(
-        nextError.code === 1
-          ? "permission-denied"
-          : nextError.code === 3
-            ? "timeout"
-            : "unavailable",
-      );
-      setError(nextError);
-      setIsTracking(false);
-      setIsLocating(false);
-      if (nextError.code === 1) {
-        setPermission("denied");
-      }
-      cleanupWatch();
-    };
-
-    navigator.geolocation.getCurrentPosition(
+    const watchId = navigator.geolocation.watchPosition(
       (position) => {
         if (isCleanedUp) return;
 
-        handlePosition(position);
-        postLocationDiagnostic("tracking_watch_started", {
-          isLocating: false,
-          isTracking: true,
-        });
-        watchId = navigator.geolocation.watchPosition(
-          handlePosition,
-          handlePositionError,
-          {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: GEOLOCATION_FINAL_TIMEOUT_MS,
-          },
-        );
+        const nextLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          heading: position.coords.heading,
+        };
+
+        if (isFirstLocationRef.current) {
+          isFirstLocationRef.current = false;
+          isLocatingRef.current = false;
+          clearInitialRequestTimers();
+          postLocationDiagnostic("tracking_first_position", {
+            elapsedMs: Date.now() - requestStartedAt,
+            isLocating: false,
+            isTracking: true,
+            permission: "granted",
+          });
+          settleInitialRequest("success");
+          onFirstLocationRef.current?.(nextLocation);
+        }
+        setLocation(nextLocation);
+        setError(null);
+        setPermission("granted");
+        setIsLocating(false);
       },
-      handlePositionError,
+      (nextError) => {
+        if (isCleanedUp) return;
+
+        clearInitialRequestTimers();
+        postLocationDiagnostic("tracking_watch_error", {
+          elapsedMs: Date.now() - requestStartedAt,
+          errorCode: nextError.code,
+          isLocating: false,
+          isTracking: false,
+          permission: nextError.code === 1 ? "denied" : undefined,
+        });
+        isLocatingRef.current = false;
+        isTrackingRef.current = false;
+        settleInitialRequest(
+          nextError.code === 1
+            ? "permission-denied"
+            : nextError.code === 3
+              ? "timeout"
+              : "unavailable",
+        );
+        setError(nextError);
+        setIsTracking(false);
+        setIsLocating(false);
+        if (nextError.code === 1) {
+          setPermission("denied");
+        }
+        cleanupWatch();
+      },
       {
-        enableHighAccuracy: false,
-        maximumAge: INITIAL_LOCATION_MAXIMUM_AGE_MS,
-        timeout: INITIAL_LOCATION_TIMEOUT_MS,
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: GEOLOCATION_FINAL_TIMEOUT_MS,
       },
     );
 
@@ -308,9 +288,7 @@ export function useLocationTracking({
       if (isCleanedUp) return;
       isCleanedUp = true;
       clearInitialRequestTimers();
-      if (watchId !== undefined) {
-        navigator.geolocation.clearWatch(watchId);
-      }
+      navigator.geolocation.clearWatch(watchId);
       if (isFirstLocationRef.current && !hasSettledInitialRequest) {
         postLocationDiagnostic("tracking_cancelled", {
           elapsedMs: Date.now() - requestStartedAt,
