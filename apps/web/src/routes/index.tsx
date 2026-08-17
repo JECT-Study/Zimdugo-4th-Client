@@ -897,9 +897,9 @@ export function IndexPage() {
     locationRequestStatus,
     startTracking,
   } = useLocationTracking({
-      onFirstLocation: handleFirstLocation,
-      onRequestSettled: handleLocationRequestSettled,
-    });
+    onFirstLocation: handleFirstLocation,
+    onRequestSettled: handleLocationRequestSettled,
+  });
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
   const shouldDeferHomeMapForLocation =
@@ -907,11 +907,15 @@ export function IndexPage() {
     !hasRequestedHomeLocation &&
     permission !== "denied" &&
     location == null &&
-    error == null;
+    error == null &&
+    (locationRequestStatus === "idle" ||
+      locationRequestStatus === "requesting");
   const isLocationDelayedLoading = useDelayedVisibility(
-    isLocating && !shouldDeferHomeMapForLocation,
+    locationRequestStatus === "requesting" && !shouldDeferHomeMapForLocation,
     300,
   );
+  const shouldShowLocationLoadingOverlay =
+    shouldDeferHomeMapForLocation || isLocationDelayedLoading;
 
   useEffect(() => {
     const hasRequestedHomeLocationInCurrentSession =
@@ -3095,7 +3099,7 @@ export function IndexPage() {
         />
       ) : null}
 
-      {isLocationDelayedLoading && (
+      {shouldShowLocationLoadingOverlay && (
         <MapLoadingOverlay
           label={m.location_loading_aria()}
           message={m.location_loading_message()}
@@ -3103,12 +3107,7 @@ export function IndexPage() {
       )}
 
       <NaverMapProvider language={languageTag()}>
-        {shouldDeferHomeMapForLocation ? (
-          <MapLoadingOverlay
-            label={m.location_loading_aria()}
-            message={m.location_loading_message()}
-          />
-        ) : (
+        {!shouldDeferHomeMapForLocation ? (
           <NaverMapCanvas
             key={mapRemountKey}
             onLoad={handleMapLoad}
@@ -3119,7 +3118,7 @@ export function IndexPage() {
             initialCenter={mapBootstrap.center}
             initialZoom={mapBootstrap.zoom}
           />
-        )}
+        ) : null}
         <MyLocationMarker
           map={mapInstance}
           location={location}
