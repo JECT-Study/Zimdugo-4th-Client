@@ -63,6 +63,7 @@ import {
   markHomeLocationRequestedInSession,
 } from "#/entities/map/model/home-location-request-session";
 import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
+import { canStartFreshLocationRequest } from "#/entities/map/model/location-request-retry";
 import {
   resolveLocationRequestSettlement,
 } from "#/entities/map/model/location-request-settlement";
@@ -813,6 +814,7 @@ export function IndexPage() {
     error,
     locationRequestStatus,
     startTracking,
+    stopTracking: stopLocationTracking,
   } = useLocationTracking({
     onFirstLocation: handleFirstLocation,
     onRequestSettled: handleLocationRequestSettled,
@@ -1243,6 +1245,18 @@ export function IndexPage() {
 
   const handleMyLocation = useCallback(
     async () => {
+      const canStartFreshLocationRequestNow = canStartFreshLocationRequest({
+        isTracking,
+        location,
+        status: locationRequestStatus,
+      });
+      const startFreshLocationTracking = () => {
+        if (isTracking) {
+          stopLocationTracking();
+        }
+        startTracking();
+      };
+
       setIsLocationErrorPopupOpen(false);
       hasPendingMyLocationRequestRef.current = false;
       pendingOrientationStartRef.current = false;
@@ -1251,7 +1265,7 @@ export function IndexPage() {
       if (permission === "denied") {
         hasPendingMyLocationRequestRef.current = true;
         hasPendingOneTimeLocationCenterRef.current = true;
-        startTracking();
+        startFreshLocationTracking();
         return;
       }
 
@@ -1267,11 +1281,11 @@ export function IndexPage() {
             map: mapInstanceRef.current,
             coordinates: location,
           });
-        } else if (!isTracking) {
+        } else if (canStartFreshLocationRequestNow) {
           // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
           hasPendingMyLocationRequestRef.current = true;
           hasPendingOneTimeLocationCenterRef.current = true;
-          startTracking();
+          startFreshLocationTracking();
         }
         return;
       }
@@ -1286,10 +1300,10 @@ export function IndexPage() {
             map: mapInstanceRef.current,
             coordinates: location,
           });
-        } else if (!isTracking) {
+        } else if (canStartFreshLocationRequestNow) {
           hasPendingMyLocationRequestRef.current = true;
           hasPendingOneTimeLocationCenterRef.current = true;
-          startTracking();
+          startFreshLocationTracking();
         }
         return;
       }
@@ -1305,10 +1319,13 @@ export function IndexPage() {
       // 이 시점에서 isOrientationSupported는 true(지원) 또는 null(미확정, 시도)이므로
       // 방향 트래킹을 항상 시도한다.
 
-      if (!isTracking) {
+      if (canStartFreshLocationRequestNow) {
         // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
         // iOS 13+는 DeviceOrientationEvent.requestPermission이 사용자 제스처 컨텍스트에서만
         // 동작하므로 GPS 콜백(handleFirstLocation) 시점이 아닌 지금 요청해야 한다.
+        if (isTracking) {
+          stopLocationTracking();
+        }
         const granted = await requestOrientationPermission();
         if (!granted) {
           setIsOrientationDeniedPopupOpen(true);
@@ -1356,7 +1373,9 @@ export function IndexPage() {
       isTracking,
       isOrientationTracking,
       isOrientationSupported,
+      locationRequestStatus,
       startTracking,
+      stopLocationTracking,
       requestOrientationPermission,
       startOrientationTracking,
       stopOrientationTracking,

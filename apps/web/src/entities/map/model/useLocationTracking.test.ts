@@ -348,6 +348,54 @@ describe("useLocationTracking", () => {
     ).not.toContain("tracking_cancelled");
   });
 
+  it("should accept the first position after the response becomes delayed", () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+      vi.advanceTimersByTime(12_000);
+    });
+    const successCallback = watchPositionMock.mock.calls[0][0];
+    act(() => {
+      successCallback({
+        coords: { latitude: 37.5, longitude: 127.1, heading: null },
+      });
+      vi.advanceTimersByTime(33_000);
+    });
+
+    expect(result.current.locationRequestStatus).toBe("success");
+    expect(result.current.location).toEqual({
+      lat: 37.5,
+      lng: 127.1,
+      heading: null,
+    });
+    expect(result.current.error).toBeNull();
+    expect(result.current.isTracking).toBe(true);
+    expect(clearWatchMock).not.toHaveBeenCalled();
+  });
+
+  it("should replace a delayed watch with a fresh manual request", () => {
+    vi.useFakeTimers();
+    watchPositionMock.mockReturnValueOnce(123).mockReturnValueOnce(456);
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+      vi.advanceTimersByTime(12_000);
+    });
+    act(() => {
+      result.current.stopTracking();
+      result.current.startTracking();
+    });
+
+    expect(clearWatchMock).toHaveBeenCalledWith(123);
+    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+    expect(result.current.locationRequestStatus).toBe("requesting");
+    expect(result.current.isLocating).toBe(true);
+    expect(result.current.isTracking).toBe(true);
+  });
+
   it("should cancel the application watchdog after the first position", () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useLocationTracking());
