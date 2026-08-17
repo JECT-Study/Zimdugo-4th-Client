@@ -111,6 +111,11 @@ describe("useLocationTracking", () => {
     });
 
     expect(onFirstLocation).toHaveBeenCalledTimes(1);
+    expect(onFirstLocation).toHaveBeenCalledWith({
+      lat: 37.0,
+      lng: 127.0,
+      heading: 90,
+    });
     expect(onRequestSettled).toHaveBeenCalledWith("success");
     expect(result.current.locationRequestStatus).toBe("success");
     expect(result.current.location).toEqual({

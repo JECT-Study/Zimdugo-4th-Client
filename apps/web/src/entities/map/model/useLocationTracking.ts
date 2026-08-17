@@ -20,14 +20,14 @@ export type LocationRequestStatus =
   | "requesting"
   | LocationRequestOutcome;
 
-interface LocationData {
+export interface LocationData {
   lat: number;
   lng: number;
   heading: number | null;
 }
 
 interface UseLocationTrackingOptions {
-  onFirstLocation?: () => void;
+  onFirstLocation?: (location: LocationData) => void;
   onRequestSettled?: (outcome: LocationRequestOutcome) => void;
 }
 
@@ -202,6 +202,12 @@ export function useLocationTracking({
       (position) => {
         if (isCleanedUp) return;
 
+        const nextLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          heading: position.coords.heading,
+        };
+
         if (isFirstLocationRef.current) {
           isFirstLocationRef.current = false;
           isLocatingRef.current = false;
@@ -213,13 +219,9 @@ export function useLocationTracking({
             permission: "granted",
           });
           settleInitialRequest("success");
-          onFirstLocationRef.current?.();
+          onFirstLocationRef.current?.(nextLocation);
         }
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          heading: position.coords.heading,
-        });
+        setLocation(nextLocation);
         setError(null);
         setPermission("granted");
         setIsLocating(false);
