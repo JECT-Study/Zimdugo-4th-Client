@@ -723,6 +723,85 @@ export function IndexPage() {
   } = useSearchHistory();
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
 
+  // 위치 및 방향 트래킹 — 위치 관련 훅과 콜백은 side effect보다 먼저 선언한다.
+  const [isCameraCentered, setIsCameraCentered] = useState(false);
+
+  // onFirstLocation을 useCallback으로 메모이즈
+  // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
+  //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
+  //   재등록되는 무한 루프가 발생함
+  // setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
+  // requestOrientationPermissionRef / startOrientationTrackingRef는
+  // render마다 갱신되는 ref이므로 deps []가 안전하다.
+  const handleFirstLocation = useCallback(() => {
+    // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
+    // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
+    // 항상 최신 함수를 참조하므로 deps []가 안전하다.
+    if (pendingOrientationStartRef.current) {
+      pendingOrientationStartRef.current = false;
+      // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
+      startOrientationTrackingRef.current();
+    }
+  }, []);
+
+  const handleLocationRequestSettled = useCallback(
+    (outcome: LocationRequestOutcome) => {
+      if (outcome === "permission-denied" || outcome === "unsupported") {
+        markHomeLocationRequestedInSession();
+        return;
+      }
+
+      if (outcome === "cancelled") return;
+
+      clearHomeLocationRequestedInSession();
+    },
+    [],
+  );
+
+  // isCameraCentered는 handleFirstLocation 위에서 선언됨
+  isCameraCenteredRef.current = isCameraCentered;
+
+  const {
+    permission,
+    isTracking,
+    isLocating,
+    location,
+    error,
+    locationRequestStatus,
+    startTracking,
+  } = useLocationTracking({
+    onFirstLocation: handleFirstLocation,
+    onRequestSettled: handleLocationRequestSettled,
+  });
+
+  // 아래에서 사용하는 shouldDeferHomeMapForLocation과 동일한 조건을 훅 호출부에서
+  // 계산해, 모든 훅이 파생 값과 side effect보다 먼저 실행되도록 한다.
+  const isLocationDelayedLoading = useDelayedVisibility(
+    locationRequestStatus === "requesting" &&
+      !(
+        lockerIdFromQuery === undefined &&
+        focusLat == null &&
+        focusLng == null &&
+        !hasRequestedHomeLocation &&
+        permission !== "denied" &&
+        location == null &&
+        error == null
+      ),
+    300,
+  );
+  const shouldPreferHomeLocation =
+    lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
+  const shouldDeferHomeMapForLocation =
+    shouldPreferHomeLocation &&
+    !hasRequestedHomeLocation &&
+    permission !== "denied" &&
+    location == null &&
+    error == null &&
+    (locationRequestStatus === "idle" ||
+      locationRequestStatus === "requesting");
+  const shouldShowLocationLoadingOverlay =
+    shouldDeferHomeMapForLocation || isLocationDelayedLoading;
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -837,44 +916,6 @@ export function IndexPage() {
     setIsSearchOpen,
   ]);
 
-  // 위치 및 방향 트래킹 — handleFirstLocation이 setIsCameraCentered를 참조하므로 먼저 선언
-  const [isCameraCentered, setIsCameraCentered] = useState(false);
-
-  // onFirstLocation을 useCallback으로 메모이즈
-  // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
-  //   useEffect([isTracking, onFirstLocation])이 불필요하게 재실행되어 watchPosition이
-  //   재등록되는 무한 루프가 발생함
-  // setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
-  // requestOrientationPermissionRef / startOrientationTrackingRef는
-  // render마다 갱신되는 ref이므로 deps []가 안전하다.
-  const handleFirstLocation = useCallback(() => {
-    // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
-    // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
-    // 항상 최신 함수를 참조하므로 deps []가 안전하다.
-    if (pendingOrientationStartRef.current) {
-      pendingOrientationStartRef.current = false;
-      // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
-      startOrientationTrackingRef.current();
-    }
-  }, []);
-
-  const handleLocationRequestSettled = useCallback(
-    (outcome: LocationRequestOutcome) => {
-      if (outcome === "permission-denied" || outcome === "unsupported") {
-        markHomeLocationRequestedInSession();
-        return;
-      }
-
-      if (outcome === "cancelled") return;
-
-      clearHomeLocationRequestedInSession();
-    },
-    [],
-  );
-
-  // isCameraCentered는 handleFirstLocation 위에서 선언됨
-  isCameraCenteredRef.current = isCameraCentered;
-
   useEffect(() => {
     if (activeLockerId === null) {
       lastFocusedLockerIdRef.current = null;
@@ -887,35 +928,6 @@ export function IndexPage() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const {
-    permission,
-    isTracking,
-    isLocating,
-    location,
-    error,
-    locationRequestStatus,
-    startTracking,
-  } = useLocationTracking({
-    onFirstLocation: handleFirstLocation,
-    onRequestSettled: handleLocationRequestSettled,
-  });
-  const shouldPreferHomeLocation =
-    lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
-  const shouldDeferHomeMapForLocation =
-    shouldPreferHomeLocation &&
-    !hasRequestedHomeLocation &&
-    permission !== "denied" &&
-    location == null &&
-    error == null &&
-    (locationRequestStatus === "idle" ||
-      locationRequestStatus === "requesting");
-  const isLocationDelayedLoading = useDelayedVisibility(
-    locationRequestStatus === "requesting" && !shouldDeferHomeMapForLocation,
-    300,
-  );
-  const shouldShowLocationLoadingOverlay =
-    shouldDeferHomeMapForLocation || isLocationDelayedLoading;
 
   useEffect(() => {
     const hasRequestedHomeLocationInCurrentSession =
