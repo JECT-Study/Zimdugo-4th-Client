@@ -732,6 +732,14 @@ export function IndexPage() {
 
   // 위치 및 방향 트래킹 — 위치 관련 훅과 콜백은 side effect보다 먼저 선언한다.
   const [isCameraCentered, setIsCameraCentered] = useState(false);
+  const [
+    hasResolvedInitialLocationPrompt,
+    setHasResolvedInitialLocationPrompt,
+  ] = useState(false);
+  const [
+    isInitialLocationRequestPopupOpen,
+    setIsInitialLocationRequestPopupOpen,
+  ] = useState(false);
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
 
@@ -839,6 +847,7 @@ export function IndexPage() {
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
   const shouldDeferHomeMapForLocation =
     shouldPreferHomeLocation &&
+    !hasResolvedInitialLocationPrompt &&
     !hasRequestedHomeLocation &&
     permission !== "denied" &&
     location == null &&
@@ -847,6 +856,29 @@ export function IndexPage() {
       locationRequestStatus === "requesting");
   const shouldShowLocationLoadingOverlay =
     shouldDeferHomeMapForLocation || isLocationDelayedLoading;
+
+  const handleInitialLocationRequestConfirm = useCallback(() => {
+    setIsInitialLocationRequestPopupOpen(false);
+    postLocationDiagnostic("home_auto_request_started", {
+      hasSessionRequestMarker: false,
+      isLocating: true,
+      isTracking: true,
+      permission,
+    });
+    markHomeLocationRequestedInSession();
+    startTracking({ isUserInitiated: true });
+  }, [permission, startTracking]);
+
+  const handleInitialLocationRequestPopupChange = useCallback(
+    (isOpen: boolean) => {
+      setIsInitialLocationRequestPopupOpen(isOpen);
+      if (isOpen) return;
+
+      setHasResolvedInitialLocationPrompt(true);
+      markHomeLocationRequestedInSession();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1012,14 +1044,7 @@ export function IndexPage() {
     }
 
     didRequestHomeLocationRef.current = true;
-    postLocationDiagnostic("home_auto_request_started", {
-      hasSessionRequestMarker: false,
-      isLocating: true,
-      isTracking: true,
-      permission,
-    });
-    markHomeLocationRequestedInSession();
-    startTracking();
+    setIsInitialLocationRequestPopupOpen(true);
   }, [
     error,
     hasRequestedHomeLocation,
@@ -1028,7 +1053,6 @@ export function IndexPage() {
     location,
     permission,
     shouldPreferHomeLocation,
-    startTracking,
   ]);
 
   const mapBootstrap = useMemo(() => {
@@ -1254,7 +1278,7 @@ export function IndexPage() {
         if (isTracking) {
           stopLocationTracking();
         }
-        startTracking();
+        startTracking({ isUserInitiated: true });
       };
 
       setIsLocationErrorPopupOpen(false);
@@ -1333,7 +1357,7 @@ export function IndexPage() {
         }
         hasPendingMyLocationRequestRef.current = true;
         pendingOrientationStartRef.current = true;
-        startTracking();
+        startTracking({ isUserInitiated: true });
         // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
       } else {
         if (!location) {
@@ -3301,6 +3325,17 @@ export function IndexPage() {
           />
         </div>
       ) : null}
+
+      <Popup
+        isOpen={isInitialLocationRequestPopupOpen}
+        onOpenChange={handleInitialLocationRequestPopupChange}
+        titleText={m.home_location_request_title()}
+        helperText={m.home_location_request_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: handleInitialLocationRequestConfirm,
+        }}
+      />
 
       <Popup
         isOpen={isLocationPopupOpen}

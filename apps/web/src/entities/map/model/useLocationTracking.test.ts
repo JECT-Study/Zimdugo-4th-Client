@@ -21,6 +21,10 @@ describe("useLocationTracking", () => {
     document,
     "visibilityState",
   );
+  const originalUserActivationDescriptor = Object.getOwnPropertyDescriptor(
+    navigator,
+    "userActivation",
+  );
   let getCurrentPositionMock: Mock;
   let watchPositionMock: Mock;
   let clearWatchMock: Mock;
@@ -67,6 +71,15 @@ describe("useLocationTracking", () => {
       );
     } else {
       Reflect.deleteProperty(document, "visibilityState");
+    }
+    if (originalUserActivationDescriptor) {
+      Object.defineProperty(
+        navigator,
+        "userActivation",
+        originalUserActivationDescriptor,
+      );
+    } else {
+      Reflect.deleteProperty(navigator, "userActivation");
     }
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -160,6 +173,27 @@ describe("useLocationTracking", () => {
       lng: 127.1,
       heading: 100,
     });
+  });
+
+  it("should invoke geolocation immediately with user activation diagnostics", () => {
+    Object.defineProperty(global.navigator, "userActivation", {
+      configurable: true,
+      value: { isActive: true },
+    });
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking({ isUserInitiated: true });
+      expect(getCurrentPositionMock).toHaveBeenCalledOnce();
+    });
+
+    expect(postLocationDiagnosticMock).toHaveBeenCalledWith(
+      "tracking_request_started",
+      expect.objectContaining({
+        hasUserActivation: true,
+        isUserInitiated: true,
+      }),
+    );
   });
 
   it("should clear tracking on unmount", async () => {

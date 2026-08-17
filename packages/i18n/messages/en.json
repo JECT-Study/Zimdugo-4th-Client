@@ -119,6 +119,8 @@
   "common_no": "No",
   "home_map_refresh_aria": "Refresh map",
   "home_location_permission_title": "Location permission required",
+  "home_location_request_title": "Use your current location?",
+  "home_location_request_helper": "Allow location access to find nearby lockers.",
   "home_location_permission_helper": "Allow location access in your browser settings,\nthen refresh this page.",
   "home_location_error_title": "Unable to get your current location",
   "home_location_error_helper": "Check your location services and try again in a moment.",

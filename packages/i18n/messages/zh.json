@@ -119,6 +119,8 @@
   "common_no": "否",
   "home_map_refresh_aria": "刷新地图",
   "home_location_permission_title": "需要位置权限",
+  "home_location_request_title": "使用当前位置吗？",
+  "home_location_request_helper": "请允许访问位置，以查找附近的寄存柜。",
   "home_location_permission_helper": "请在浏览器设置中允许位置权限，\n然后刷新页面。",
   "home_location_error_title": "无法获取当前位置",
   "home_location_error_helper": "请检查定位服务，稍后重试。",

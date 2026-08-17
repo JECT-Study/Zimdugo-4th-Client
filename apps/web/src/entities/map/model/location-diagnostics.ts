@@ -11,8 +11,10 @@ export interface LocationDiagnosticData {
   elapsedMs?: number;
   errorCode?: number;
   hasSessionRequestMarker?: boolean;
+  hasUserActivation?: boolean;
   isLocating?: boolean;
   isTracking?: boolean;
+  isUserInitiated?: boolean;
   permission?: "prompt" | "granted" | "denied";
 }
 
