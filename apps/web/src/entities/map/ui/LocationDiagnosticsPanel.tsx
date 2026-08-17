@@ -104,6 +104,8 @@ export function LocationDiagnosticsPanel({
   const watchIdRef = useRef<number | null>(null);
   const watchResponseTimerRef = useRef<number | null>(null);
   const hasWatchRespondedRef = useRef(false);
+  const isHomeLifecycleSimulationActiveRef = useRef(false);
+  const shouldResumeHomeLifecycleWatchRef = useRef(false);
   const requestTimerIdsRef = useRef<Set<number>>(new Set());
   const eventIdRef = useRef(0);
 
@@ -160,6 +162,8 @@ export function LocationDiagnosticsPanel({
   );
 
   const stopWatch = useCallback(() => {
+    isHomeLifecycleSimulationActiveRef.current = false;
+    shouldResumeHomeLifecycleWatchRef.current = false;
     clearWatch(true);
   }, [clearWatch]);
 
@@ -263,87 +267,105 @@ export function LocationDiagnosticsPanel({
     requestCurrentPosition("high-accuracy-current", HIGH_ACCURACY_OPTIONS);
   }, [requestCurrentPosition]);
 
-  const handleStartWatch = useCallback(() => {
-    clearWatch(false);
-    const requestMode = "high-accuracy-watch" as const;
-    const startedAt = Date.now();
-    hasWatchRespondedRef.current = false;
-    appendEvent({ event: "request-started", requestMode });
-    postLocationDiagnostic("diagnostic_request_started", {
-      ...getLifecycleState(),
-      isSecureContext: window.isSecureContext,
-      requestMode,
-    });
-    void recordPermission(requestMode);
-
-    if (!navigator.geolocation) {
-      appendEvent({ event: "geolocation-unsupported", requestMode });
-      postLocationDiagnostic("diagnostic_request_failed", { requestMode });
-      return;
-    }
-
-    watchResponseTimerRef.current = window.setTimeout(() => {
-      watchResponseTimerRef.current = null;
-      const elapsedMs = Date.now() - startedAt;
-      appendEvent({ event: "request-unresponsive", requestMode, elapsedMs });
-      postLocationDiagnostic("diagnostic_request_unresponsive", {
+  const startWatch = useCallback(
+    (requestMode: LocationDiagnosticRequestMode) => {
+      clearWatch(false);
+      const startedAt = Date.now();
+      hasWatchRespondedRef.current = false;
+      appendEvent({ event: "request-started", requestMode });
+      postLocationDiagnostic("diagnostic_request_started", {
         ...getLifecycleState(),
-        elapsedMs,
+        isSecureContext: window.isSecureContext,
         requestMode,
       });
-    }, REQUEST_RESPONSE_OBSERVATION_MS);
+      void recordPermission(requestMode);
 
-    const settleFirstResponse = () => {
-      if (hasWatchRespondedRef.current) return false;
-      hasWatchRespondedRef.current = true;
-      if (watchResponseTimerRef.current !== null) {
-        window.clearTimeout(watchResponseTimerRef.current);
-        watchResponseTimerRef.current = null;
+      if (!navigator.geolocation) {
+        appendEvent({ event: "geolocation-unsupported", requestMode });
+        postLocationDiagnostic("diagnostic_request_failed", { requestMode });
+        return;
       }
-      return true;
-    };
 
-    try {
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        () => {
-          if (!settleFirstResponse()) return;
-          const elapsedMs = Date.now() - startedAt;
-          appendEvent({ event: "request-success", requestMode, elapsedMs });
-          postLocationDiagnostic("diagnostic_request_succeeded", {
-            elapsedMs,
-            requestMode,
-          });
-          void recordPermission(requestMode);
-        },
-        (error) => {
-          if (!settleFirstResponse()) return;
-          const elapsedMs = Date.now() - startedAt;
-          appendEvent({
-            event: "request-error",
-            requestMode,
-            elapsedMs,
-            errorCode: error.code,
-            errorMessage: error.message,
-          });
-          postLocationDiagnostic("diagnostic_request_failed", {
-            elapsedMs,
-            errorCode: error.code,
-            requestMode,
-          });
-          void recordPermission(requestMode);
-        },
-        HIGH_ACCURACY_OPTIONS,
-      );
-    } catch (error) {
-      settleFirstResponse();
-      appendEvent({
-        event: "request-threw",
-        requestMode,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-      postLocationDiagnostic("diagnostic_request_failed", { requestMode });
-    }
-  }, [appendEvent, clearWatch, recordPermission]);
+      watchResponseTimerRef.current = window.setTimeout(() => {
+        watchResponseTimerRef.current = null;
+        const elapsedMs = Date.now() - startedAt;
+        appendEvent({ event: "request-unresponsive", requestMode, elapsedMs });
+        postLocationDiagnostic("diagnostic_request_unresponsive", {
+          ...getLifecycleState(),
+          elapsedMs,
+          requestMode,
+        });
+      }, REQUEST_RESPONSE_OBSERVATION_MS);
+
+      const settleFirstResponse = () => {
+        if (hasWatchRespondedRef.current) return false;
+        hasWatchRespondedRef.current = true;
+        if (watchResponseTimerRef.current !== null) {
+          window.clearTimeout(watchResponseTimerRef.current);
+          watchResponseTimerRef.current = null;
+        }
+        return true;
+      };
+
+      try {
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          () => {
+            if (!settleFirstResponse()) return;
+            const elapsedMs = Date.now() - startedAt;
+            appendEvent({ event: "request-success", requestMode, elapsedMs });
+            postLocationDiagnostic("diagnostic_request_succeeded", {
+              elapsedMs,
+              requestMode,
+            });
+            void recordPermission(requestMode);
+          },
+          (error) => {
+            if (!settleFirstResponse()) return;
+            const elapsedMs = Date.now() - startedAt;
+            appendEvent({
+              event: "request-error",
+              requestMode,
+              elapsedMs,
+              errorCode: error.code,
+              errorMessage: error.message,
+            });
+            postLocationDiagnostic("diagnostic_request_failed", {
+              elapsedMs,
+              errorCode: error.code,
+              requestMode,
+            });
+            void recordPermission(requestMode);
+          },
+          HIGH_ACCURACY_OPTIONS,
+        );
+      } catch (error) {
+        settleFirstResponse();
+        appendEvent({
+          event: "request-threw",
+          requestMode,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+        postLocationDiagnostic("diagnostic_request_failed", { requestMode });
+      }
+    },
+    [appendEvent, clearWatch, recordPermission],
+  );
+
+  const handleStartWatch = useCallback(() => {
+    isHomeLifecycleSimulationActiveRef.current = false;
+    shouldResumeHomeLifecycleWatchRef.current = false;
+    startWatch("high-accuracy-watch");
+  }, [startWatch]);
+
+  const handleStartHomeLifecycleSimulation = useCallback(() => {
+    isHomeLifecycleSimulationActiveRef.current = true;
+    shouldResumeHomeLifecycleWatchRef.current = false;
+    appendEvent({
+      event: "home-simulation-started",
+      requestMode: "home-lifecycle-watch",
+    });
+    startWatch("home-lifecycle-watch");
+  }, [appendEvent, startWatch]);
 
   const handleCopy = useCallback(async () => {
     const output = JSON.stringify(
@@ -391,7 +413,39 @@ export function LocationDiagnosticsPanel({
         },
       );
     };
-    const handleVisibilityChange = () => recordLifecycle("visibilitychange");
+    const handleVisibilityChange = () => {
+      recordLifecycle("visibilitychange");
+
+      if (!isHomeLifecycleSimulationActiveRef.current) return;
+      if (document.visibilityState === "hidden") {
+        if (hasWatchRespondedRef.current) {
+          appendEvent({
+            event: "home-simulation-watch-kept-after-response",
+            requestMode: "home-lifecycle-watch",
+          });
+          return;
+        }
+
+        shouldResumeHomeLifecycleWatchRef.current = true;
+        appendEvent({
+          event: "home-simulation-watch-cleared-while-pending",
+          requestMode: "home-lifecycle-watch",
+        });
+        clearWatch(false);
+        postLocationDiagnostic("diagnostic_watch_stopped", {
+          requestMode: "home-lifecycle-watch",
+        });
+        return;
+      }
+
+      if (!shouldResumeHomeLifecycleWatchRef.current) return;
+      shouldResumeHomeLifecycleWatchRef.current = false;
+      appendEvent({
+        event: "home-simulation-watch-auto-resumed",
+        requestMode: "home-lifecycle-watch",
+      });
+      startWatch("home-lifecycle-watch");
+    };
     const handleFocus = () => recordLifecycle("focus");
     const handleBlur = () => recordLifecycle("blur");
     const handlePageShow = () => recordLifecycle("pageshow");
@@ -411,7 +465,7 @@ export function LocationDiagnosticsPanel({
       window.removeEventListener("pageshow", handlePageShow);
       window.removeEventListener("pagehide", handlePageHide);
     };
-  }, [appendEvent, isEnabled]);
+  }, [appendEvent, clearWatch, isEnabled, startWatch]);
 
   useEffect(() => {
     if (!isEnabled || !navigator.permissions?.query) return;
@@ -502,6 +556,13 @@ export function LocationDiagnosticsPanel({
         <button type="button" style={buttonStyle} onClick={handleStartWatch}>
           고정밀 위치 추적
         </button>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={handleStartHomeLifecycleSimulation}
+        >
+          홈 잠금 복귀 재현
+        </button>
         <button type="button" style={buttonStyle} onClick={stopWatch}>
           위치 추적 중지
         </button>
@@ -512,6 +573,9 @@ export function LocationDiagnosticsPanel({
           기록 지우기
         </button>
       </div>
+      <p style={{ margin: 0 }}>
+        재현 모드: 버튼을 누른 직후 권한 팝업에 응답하지 말고 화면을 잠그세요.
+      </p>
       <pre
         style={{
           flex: 1,

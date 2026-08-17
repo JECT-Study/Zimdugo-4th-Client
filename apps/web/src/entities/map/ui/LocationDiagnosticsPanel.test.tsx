@@ -21,6 +21,10 @@ describe("LocationDiagnosticsPanel", () => {
     window.history.replaceState({}, "", "/location-diagnostics");
     window.sessionStorage.clear();
     vi.stubGlobal("fetch", fetchMock);
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
     Object.defineProperty(navigator, "permissions", {
       configurable: true,
       value: {
@@ -137,6 +141,45 @@ describe("LocationDiagnosticsPanel", () => {
       expect.objectContaining({
         event: "diagnostic_request_unresponsive",
         requestMode: "default-current",
+      }),
+    );
+  });
+
+  it("홈 재현 모드는 pending watch를 숨김에서 제거하고 복귀 시 자동 재생성한다", () => {
+    const watchPosition = vi.mocked(navigator.geolocation.watchPosition);
+    const clearWatch = vi.mocked(navigator.geolocation.clearWatch);
+    render(<LocationDiagnosticsPanel isEnabled />);
+
+    fireEvent.click(screen.getByRole("button", { name: "홈 잠금 복귀 재현" }));
+    expect(watchPosition).toHaveBeenCalledTimes(1);
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    fireEvent(document, new Event("visibilitychange"));
+    expect(clearWatch).toHaveBeenCalledWith(1);
+    expect(
+      screen.getByText(/home-simulation-watch-cleared-while-pending/),
+    ).toBeDefined();
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+    fireEvent(document, new Event("visibilitychange"));
+    expect(watchPosition).toHaveBeenCalledTimes(2);
+    expect(
+      screen.getByText(/home-simulation-watch-auto-resumed/),
+    ).toBeDefined();
+
+    const sentPayloads = fetchMock.mock.calls.map(([, options]) =>
+      JSON.parse(String(options.body)),
+    );
+    expect(sentPayloads).toContainEqual(
+      expect.objectContaining({
+        event: "diagnostic_request_started",
+        requestMode: "home-lifecycle-watch",
       }),
     );
   });

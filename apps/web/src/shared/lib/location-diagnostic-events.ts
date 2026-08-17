@@ -30,6 +30,7 @@ export const LOCATION_DIAGNOSTIC_REQUEST_MODES = [
   "default-current",
   "high-accuracy-current",
   "high-accuracy-watch",
+  "home-lifecycle-watch",
 ] as const;
 
 export type LocationDiagnosticRequestMode =
