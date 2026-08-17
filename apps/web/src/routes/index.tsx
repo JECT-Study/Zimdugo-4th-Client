@@ -863,6 +863,10 @@ export function IndexPage() {
 
   const handleLocationRequestSettled = useCallback(
     (outcome: LocationRequestOutcome) => {
+      if (outcome !== "success") {
+        hasPendingLocationRequestRef.current = false;
+      }
+
       if (outcome === "permission-denied" || outcome === "unsupported") {
         markHomeLocationRequestedInSession();
         return;
@@ -912,28 +916,28 @@ export function IndexPage() {
   useEffect(() => {
     const hasRequestedHomeLocationInCurrentSession =
       hasRequestedHomeLocationInSession();
+    const canStartAutoLocationRequest =
+      shouldPreferHomeLocation &&
+      location == null &&
+      permission !== "denied" &&
+      !isTracking &&
+      !isLocating &&
+      error == null &&
+      !hasRequestedHomeLocation &&
+      !didRequestHomeLocationRef.current &&
+      !hasRequestedHomeLocationInCurrentSession;
+    const shouldLogHomeLocationSessionSkip =
+      shouldPreferHomeLocation &&
+      location == null &&
+      permission === "prompt" &&
+      (hasRequestedHomeLocation ||
+        hasRequestedHomeLocationInCurrentSession) &&
+      !isLocating &&
+      !isTracking &&
+      !didLogHomeLocationSessionSkipRef.current;
 
-    if (
-      !shouldPreferHomeLocation ||
-      location != null ||
-      permission === "denied" ||
-      isTracking ||
-      isLocating ||
-      error != null ||
-      hasRequestedHomeLocation ||
-      didRequestHomeLocationRef.current ||
-      hasRequestedHomeLocationInCurrentSession
-    ) {
-      if (
-        shouldPreferHomeLocation &&
-        location == null &&
-        permission === "prompt" &&
-        (hasRequestedHomeLocation ||
-          hasRequestedHomeLocationInCurrentSession) &&
-        !isLocating &&
-        !isTracking &&
-        !didLogHomeLocationSessionSkipRef.current
-      ) {
+    if (!canStartAutoLocationRequest) {
+      if (shouldLogHomeLocationSessionSkip) {
         didLogHomeLocationSessionSkipRef.current = true;
         postLocationDiagnostic("home_auto_request_skipped_session", {
           hasSessionRequestMarker: true,

@@ -63,6 +63,26 @@ describe("location diagnostics server", () => {
     expect(consoleWarn).toHaveBeenCalledOnce();
   });
 
+  it("production에서는 진단 ID 샘플링으로 일부 로그를 생략한다", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+    const response = await handleLocationDiagnosticRequest(
+      createRequest(
+        createPayload({
+          diagnosticId: "123e4567-e89b-42d3-a456-426614174001",
+        }),
+      ),
+      {
+        VERCEL_ENV: "production",
+        LOCATION_DIAGNOSTICS_ENABLED: "true",
+      },
+    );
+
+    expect(response?.status).toBe(204);
+    expect(consoleWarn).not.toHaveBeenCalled();
+    expect(consoleInfo).not.toHaveBeenCalled();
+  });
+
   it("성공 이벤트는 info 레벨로 남긴다", async () => {
     const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
     const response = await handleLocationDiagnosticRequest(

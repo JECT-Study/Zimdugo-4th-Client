@@ -1,23 +1,11 @@
+import type { LocationDiagnosticEventName } from "#/shared/lib/location-diagnostic-events";
+
+export type { LocationDiagnosticEventName } from "#/shared/lib/location-diagnostic-events";
+
 export const LOCATION_DIAGNOSTICS_ENDPOINT = "/_internal/location-diagnostics";
 
 const LOCATION_DIAGNOSTICS_SESSION_KEY = "zimdugo:location-diagnostics-enabled";
 const LOCATION_DIAGNOSTICS_ID_SESSION_KEY = "zimdugo:location-diagnostics-id";
-
-export type LocationDiagnosticEventName =
-  | "home_auto_request_started"
-  | "home_auto_request_skipped_session"
-  | "permission_query_error"
-  | "permission_query_resolved"
-  | "permission_query_started"
-  | "tracking_first_position"
-  | "tracking_cancelled"
-  | "tracking_request_started"
-  | "tracking_resumed"
-  | "tracking_suspended"
-  | "tracking_unsupported"
-  | "tracking_watch_error"
-  | "tracking_watchdog_timeout"
-  | "tracking_watch_started";
 
 export interface LocationDiagnosticData {
   elapsedMs?: number;

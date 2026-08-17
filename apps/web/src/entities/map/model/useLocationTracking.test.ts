@@ -365,4 +365,32 @@ describe("useLocationTracking", () => {
     expect(result.current.isTracking).toBe(true);
     expect(clearWatchMock).not.toHaveBeenCalledWith(456);
   });
+
+  it("should bound visibility resume attempts before the first location", () => {
+    const { result } = renderHook(() => useLocationTracking());
+
+    act(() => {
+      result.current.startTracking();
+    });
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+    }
+
+    expect(watchPositionMock).toHaveBeenCalledTimes(4);
+  });
 });
