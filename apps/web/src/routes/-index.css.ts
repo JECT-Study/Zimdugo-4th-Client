@@ -6,8 +6,6 @@ import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
 
-const LOCATION_RECOVERY_NOTICE_OFFSET_ABOVE_CONTROLS = "112px";
-
 export const mapContainer = style({
   width: "100%",
   height: "100%",
@@ -129,7 +127,7 @@ export const locationButtonLocating = style({
 export const locationRecoveryNoticePositioner = style({
   position: "fixed",
   left: "50%",
-  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV} + ${LOCATION_RECOVERY_NOTICE_OFFSET_ABOVE_CONTROLS})`,
+  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
   transform: "translateX(-50%)",
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,
@@ -157,11 +155,13 @@ export const locationRecoveryNoticePositioner = style({
 
 export const locationRecoveryNotice = style({
   minHeight: "48px",
+  marginRight: "64px",
   padding: `${vars.spacing[12]} ${vars.spacing[16]}`,
+  border: `1px solid ${vars.color.palette.gray[200]}`,
   borderRadius: vars.radius[8],
-  backgroundColor: vars.color.palette.gray[800],
-  color: vars.color.text.white,
-  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.title,
+  boxShadow: vars.shadow[2],
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -213,7 +213,7 @@ export const locationRecoveryNoticeClose = style({
   border: 0,
   borderRadius: vars.radius.max,
   background: "transparent",
-  color: vars.color.text.white,
+  color: vars.color.text.content,
   fontSize: vars.typography.fontSize[20],
   lineHeight: 1,
   cursor: "pointer",
@@ -225,10 +225,10 @@ export const locationRecoveryNoticeClose = style({
   flexShrink: 0,
   selectors: {
     "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 0.12)",
+      backgroundColor: vars.color.bg.surface,
     },
     "&:active": {
-      backgroundColor: "rgba(255, 255, 255, 0.2)",
+      backgroundColor: vars.color.bg.active,
     },
     "&:focus-visible": {
       outline: `2px solid ${vars.color.focus}`,
