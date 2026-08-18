@@ -1,6 +1,7 @@
 import { m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import type {
   LockerCorrectionReason,
@@ -48,6 +49,12 @@ export function LockerCorrectionRequestFlow({
     setPendingRequest(null);
   };
 
+  const handleConfirmOpenChange = (nextIsOpen: boolean) => {
+    if (!nextIsOpen) {
+      setPendingRequest(null);
+    }
+  };
+
   const handleSuccessClose = () => {
     setIsSuccessOpen(false);
   };
@@ -75,11 +82,7 @@ export function LockerCorrectionRequestFlow({
       />
       <Popup
         isOpen={pendingRequest !== null}
-        onOpenChange={(nextIsOpen) => {
-          if (!nextIsOpen) {
-            setPendingRequest(null);
-          }
-        }}
+        onOpenChange={handleConfirmOpenChange}
         titleText={m.locker_correction_confirm_title()}
         primaryAction={{ label: m.common_yes(), onPress: handleConfirm }}
         secondaryAction={{
@@ -92,7 +95,19 @@ export function LockerCorrectionRequestFlow({
         onOpenChange={handleSuccessClose}
         titleText={m.locker_correction_submit_success_title()}
         helperText={m.locker_correction_submit_success_helper()}
-        icon={<IconCircleboxCheck32 />}
+        icon={
+          <motion.div
+            initial={{
+              mask: "linear-gradient(90deg, #000 0%, transparent 0%)",
+            }}
+            animate={{
+              mask: "linear-gradient(90deg, #000 100%, transparent 100%)",
+            }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            <IconCircleboxCheck32 />
+          </motion.div>
+        }
         primaryActionLayout="content"
         primaryAction={{
           label: m.locker_correction_submit_success_close(),

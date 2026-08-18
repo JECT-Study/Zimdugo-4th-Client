@@ -12,7 +12,7 @@ export type TextareaFieldSize = "default" | "compact";
 export interface TextareaFieldProps
   extends Omit<
     TextareaHTMLAttributes<HTMLTextAreaElement>,
-    "children" | "className" | "onChange" | "size" | "value"
+    "children" | "className" | "defaultValue" | "onChange" | "size" | "value"
   > {
   value: string;
   onChange: (value: string) => void;

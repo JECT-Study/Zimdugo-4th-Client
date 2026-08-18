@@ -1,10 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconPencil24 } from "../../tokens/icons/Icons.tsx";
 import { TextareaField, type TextareaFieldProps } from "./TextareaField.tsx";
 
-function TextareaFieldStory(props: TextareaFieldProps) {
+type TextareaFieldStoryProps = TextareaFieldProps;
+
+function TextareaFieldStory(props: TextareaFieldStoryProps) {
   const [value, setValue] = useState(props.value);
+
+  useEffect(() => {
+    setValue(props.value);
+  }, [props.value]);
 
   return (
     <TextareaField
