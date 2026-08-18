@@ -95,15 +95,118 @@ export const locationButton = style({
   },
 });
 
-export const refreshButtonDisabled = style({
-  cursor: "not-allowed",
-});
-
 const spin = keyframes({
   from: { transform: "rotate(0deg)" },
   to: { transform: "rotate(360deg)" },
 });
 
+export const locationButtonLocating = style({
+  selectors: {
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      inset: "5px",
+      borderRadius: vars.radius.max,
+      border: `2px solid ${vars.color.palette.gray[200]}`,
+      borderTopColor: vars.color.brand.primary,
+      animation: `${spin} 0.8s linear infinite`,
+      pointerEvents: "none",
+    },
+  },
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      selectors: {
+        "&::after": {
+          animation: "none",
+        },
+      },
+    },
+  },
+});
+
+export const locationRecoveryNoticePositioner = style({
+  position: "fixed",
+  left: "50%",
+  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
+  transform: "translateX(-50%)",
+  width: "100%",
+  maxWidth: vars.layout.appMaxWidth,
+  paddingLeft: vars.layout.safeAreaInlineStart,
+  paddingRight: vars.layout.safeAreaInlineEnd,
+  boxSizing: "border-box",
+  zIndex: 1200,
+  pointerEvents: "none",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
+    },
+  },
+});
+
+export const locationRecoveryNotice = style({
+  minHeight: "48px",
+  marginRight: "64px",
+  padding: `${vars.spacing[12]} ${vars.spacing[16]}`,
+  borderRadius: vars.radius[8],
+  backgroundColor: vars.color.palette.gray[800],
+  color: vars.color.text.white,
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: vars.spacing[12],
+  boxSizing: "border-box",
+  pointerEvents: "auto",
+});
+
+export const locationRecoveryNoticeMessage = style({
+  minWidth: 0,
+  flex: 1,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.4,
+  overflowWrap: "anywhere",
+});
+
+export const locationRecoveryNoticeAction = style({
+  flexShrink: 0,
+  padding: `${vars.spacing[8]} 0`,
+  border: 0,
+  background: "transparent",
+  color: vars.color.text.brand,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  WebkitTapHighlightColor: "transparent",
+  touchAction: "manipulation",
+  selectors: {
+    "&:hover": {
+      textDecoration: "underline",
+    },
+    "&:active": {
+      opacity: 0.8,
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "2px",
+    },
+  },
+});
+
+export const refreshButtonDisabled = style({
+  cursor: "not-allowed",
+});
 
 export const refreshIconSpinning = style({
   animation: `${spin} 0.45s ease-out 1`,
