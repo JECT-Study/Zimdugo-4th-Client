@@ -110,6 +110,7 @@ export const locationButtonLocating = style({
       border: `2px solid ${vars.color.palette.gray[200]}`,
       borderTopColor: vars.color.brand.primary,
       animation: `${spin} 0.8s linear infinite`,
+      zIndex: 1,
       pointerEvents: "none",
     },
   },
