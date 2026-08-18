@@ -3030,7 +3030,19 @@ export function IndexPage() {
     }
 
     if (selectedMapPin) {
-      return [selectedMapPin];
+      return [
+        selectedMapPin.pinType === "LOCKER" && selectedMapPin.lockerId != null
+          ? {
+              ...selectedMapPin,
+              isFavorite: favoriteSession.getEffectiveIsFavorite(
+                selectedMapPin.lockerId,
+                displayedLockerDetail?.lockerId === selectedMapPin.lockerId
+                  ? displayedLockerDetail.isFavorite
+                  : (selectedMapPin.isFavorite ?? undefined),
+              ),
+            }
+          : selectedMapPin,
+      ];
     }
 
     if (
@@ -3054,7 +3066,14 @@ export function IndexPage() {
         bounds: null,
       },
     ];
-  }, [context, selectedLockerDetail, selectedMapPin, sheetMode]);
+  }, [
+    context,
+    displayedLockerDetail,
+    favoriteSession.getEffectiveIsFavorite,
+    selectedLockerDetail,
+    selectedMapPin,
+    sheetMode,
+  ]);
   const markerLayer = resolveMapMarkerLayer({
     context,
     sheetMode,

@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
-import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import type { SearchLockerResultItem } from "#/composites/search/search-list-model";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   addFavoriteLocker,
   removeFavoriteLocker,
@@ -160,10 +160,50 @@ export function useFavoriteLockerSession() {
   );
 
   const handleDetailFavoriteChange = useCallback(
-    (item: LockerDetailItem, next: boolean, serverIsFavorite?: boolean) => {
-      toggle(item.lockerId, next, serverIsFavorite);
+    async (
+      item: LockerDetailItem,
+      next: boolean,
+      serverIsFavorite?: boolean,
+    ) => {
+      if (!isAuthenticated || accessToken == null) {
+        openAuthPopup("/");
+        return;
+      }
+
+      const serverFavorite = serverIsFavorite ?? false;
+
+      if (pendingRef.current.has(item.lockerId)) {
+        const updatedPending = new Map(pendingRef.current);
+        updatedPending.delete(item.lockerId);
+        pendingRef.current = updatedPending;
+        setPending(updatedPending);
+      }
+
+      if (next === serverFavorite) {
+        return;
+      }
+
+      await queryClient.cancelQueries({
+        queryKey: [LOCKER_DETAIL_QUERY_KEY, item.lockerId],
+      });
+      patchFavoriteInQueryCaches(queryClient, item.lockerId, next, authScope);
+
+      try {
+        if (next) {
+          await addFavoriteLocker(item.lockerId);
+        } else {
+          await removeFavoriteLocker(item.lockerId);
+        }
+      } catch {
+        patchFavoriteInQueryCaches(
+          queryClient,
+          item.lockerId,
+          serverFavorite,
+          authScope,
+        );
+      }
     },
-    [toggle],
+    [accessToken, authScope, isAuthenticated, openAuthPopup, queryClient],
   );
 
   return {
