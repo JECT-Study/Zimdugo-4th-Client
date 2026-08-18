@@ -135,6 +135,7 @@ describe("useFavoriteLockerSession", () => {
       wrapper: createWrapper(queryClient),
     });
     let detailRequest: Promise<void> | undefined;
+    let isFlushSettled = false;
 
     act(() => {
       detailRequest = result.current.handleDetailFavoriteChange(
@@ -143,15 +144,131 @@ describe("useFavoriteLockerSession", () => {
         false,
       );
     });
+    await vi.waitFor(() => expect(addFavoriteLocker).toHaveBeenCalledTimes(1));
 
-    await act(async () => {
-      expect(await result.current.flush()).toEqual({ hadChanges: false });
+    const flushRequest = result.current.flush().then((flushResult) => {
+      isFlushSettled = true;
+      return flushResult;
     });
+    await Promise.resolve();
+
+    expect(isFlushSettled).toBe(false);
     expect(addFavoriteLocker).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       resolveRequest();
       await detailRequest;
+      expect(await flushRequest).toEqual({ hadChanges: true });
+    });
+  });
+
+  it("같은 보관함의 상세 즐겨찾기 요청을 순서대로 전송한다", async () => {
+    const queryClient = createQueryClient();
+    let resolveAddRequest: () => void = () => undefined;
+    vi.mocked(addFavoriteLocker).mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveAddRequest = () => resolve();
+        }),
+    );
+    vi.mocked(removeFavoriteLocker).mockResolvedValue(undefined);
+    const { result } = renderHook(() => useFavoriteLockerSession(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    let addRequest: Promise<void> | undefined;
+    let removeRequest: Promise<void> | undefined;
+    act(() => {
+      addRequest = result.current.handleDetailFavoriteChange(
+        createLockerDetail(),
+        true,
+        false,
+      );
+    });
+    await vi.waitFor(() => expect(addFavoriteLocker).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      removeRequest = result.current.handleDetailFavoriteChange(
+        createLockerDetail({ isFavorite: true }),
+        false,
+        true,
+      );
+    });
+    await Promise.resolve();
+
+    expect(removeFavoriteLocker).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveAddRequest();
+      await addRequest;
+      await removeRequest;
+    });
+
+    expect(removeFavoriteLocker).toHaveBeenCalledTimes(1);
+  });
+
+  it("오래된 요청 실패가 최신 즐겨찾기 선택을 롤백하지 않는다", async () => {
+    const queryClient = createQueryClient();
+    const lockerPinsQueryKey = [LOCKER_PINS_QUERY_KEY, "viewport", 1];
+    queryClient.setQueryData(lockerPinsQueryKey, [createLockerPin()]);
+    let rejectFirstAdd: (reason?: unknown) => void = () => undefined;
+    let resolveLatestAdd: () => void = () => undefined;
+    vi.mocked(addFavoriteLocker)
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((_resolve, reject) => {
+            rejectFirstAdd = reject;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveLatestAdd = () => resolve();
+          }),
+      );
+    const { result } = renderHook(() => useFavoriteLockerSession(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    let firstAddRequest: Promise<void> | undefined;
+    let removeRequest: Promise<void> | undefined;
+    let latestAddRequest: Promise<void> | undefined;
+    act(() => {
+      firstAddRequest = result.current.handleDetailFavoriteChange(
+        createLockerDetail(),
+        true,
+        false,
+      );
+    });
+    await vi.waitFor(() => expect(addFavoriteLocker).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      removeRequest = result.current.handleDetailFavoriteChange(
+        createLockerDetail({ isFavorite: true }),
+        false,
+        true,
+      );
+      latestAddRequest = result.current.handleDetailFavoriteChange(
+        createLockerDetail(),
+        true,
+        false,
+      );
+    });
+
+    await act(async () => {
+      rejectFirstAdd(new Error("stale request failed"));
+      await firstAddRequest;
+    });
+    await vi.waitFor(() => expect(addFavoriteLocker).toHaveBeenCalledTimes(2));
+
+    expect(
+      queryClient.getQueryData<LockerPinItemResponse[]>(lockerPinsQueryKey),
+    ).toEqual([expect.objectContaining({ lockerId: 9, isFavorite: true })]);
+
+    await act(async () => {
+      resolveLatestAdd();
+      await removeRequest;
+      await latestAddRequest;
     });
   });
 

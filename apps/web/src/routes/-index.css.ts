@@ -320,7 +320,7 @@ const markerSpreadOut = keyframes({
   },
 });
 
-const favoriteMarkerPop = keyframes({
+const FAVORITE_MARKER_POP = keyframes({
   "0%": { transform: "scale(0.72) rotate(-6deg)", opacity: 0.65 },
   "55%": { transform: "scale(1.18) rotate(3deg)", opacity: 1 },
   "75%": { transform: "scale(0.96) rotate(-1deg)" },
@@ -366,7 +366,7 @@ globalStyle(".map-marker-visual", {
 });
 
 globalStyle(".map-marker-visual.favorite-added", {
-  animation: `${favoriteMarkerPop} 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
+  animation: `${FAVORITE_MARKER_POP} 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
   "@media": {
     "(prefers-reduced-motion: reduce)": {
       animation: "none",

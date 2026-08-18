@@ -10,7 +10,10 @@ import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
 import { collectServerFavoriteByLockerId } from "../lib/collect-server-favorite-state";
-import { patchFavoriteInQueryCaches } from "../lib/patch-favorite-query-cache";
+import {
+  cancelFavoriteQueryCaches,
+  patchFavoriteInQueryCaches,
+} from "../lib/patch-favorite-query-cache";
 import {
   buildFavoriteFlushOperations,
   type FavoriteLockerPending,
@@ -18,7 +21,6 @@ import {
   rollbackFailedFlush,
   toggleFavoritePending,
 } from "../model/favorite-locker-session";
-import { LOCKER_DETAIL_QUERY_KEY } from "./useLockerDetail";
 
 export function useFavoriteLockerSession() {
   const queryClient = useQueryClient();
@@ -30,8 +32,23 @@ export function useFavoriteLockerSession() {
     () => new Map(),
   );
   const pendingRef = useRef(pending);
+  const detailRequestChainsRef = useRef<Map<number, Promise<void>>>(new Map());
+  const detailRequestVersionsRef = useRef<Map<number, number>>(new Map());
+  const confirmedDetailFavoriteRef = useRef<Map<number, boolean>>(new Map());
   const authScope = getAuthQueryCacheScope(isAuthenticated, userId);
   pendingRef.current = pending;
+
+  const awaitDetailFavoriteRequests =
+    useCallback(async (): Promise<boolean> => {
+      let hadChanges = false;
+
+      while (detailRequestChainsRef.current.size > 0) {
+        hadChanges = true;
+        await Promise.allSettled(detailRequestChainsRef.current.values());
+      }
+
+      return hadChanges;
+    }, []);
 
   const getEffectiveIsFavorite = useCallback(
     (lockerId: number, serverIsFavorite?: boolean) =>
@@ -56,9 +73,10 @@ export function useFavoriteLockerSession() {
 
   const flush = useCallback(async (): Promise<{ hadChanges: boolean }> => {
     const currentPending = pendingRef.current;
+    const detailFlushPromise = awaitDetailFavoriteRequests();
 
     if (!isAuthenticated || accessToken == null || currentPending.size === 0) {
-      return { hadChanges: false };
+      return { hadChanges: await detailFlushPromise };
     }
 
     const serverByLockerId = collectServerFavoriteByLockerId(
@@ -73,7 +91,7 @@ export function useFavoriteLockerSession() {
 
     if (operations.length === 0) {
       setPending(new Map());
-      return { hadChanges: false };
+      return { hadChanges: await detailFlushPromise };
     }
 
     const pendingSnapshot = new Map(currentPending);
@@ -106,9 +124,7 @@ export function useFavoriteLockerSession() {
     if (succeededLockerIds.length > 0) {
       await Promise.all(
         succeededLockerIds.map((lockerId) =>
-          queryClient.cancelQueries({
-            queryKey: [LOCKER_DETAIL_QUERY_KEY, lockerId],
-          }),
+          cancelFavoriteQueryCaches(queryClient, lockerId, authScope),
         ),
       );
 
@@ -143,8 +159,15 @@ export function useFavoriteLockerSession() {
       );
     }
 
+    await detailFlushPromise;
     return { hadChanges: true };
-  }, [accessToken, authScope, isAuthenticated, queryClient]);
+  }, [
+    accessToken,
+    authScope,
+    awaitDetailFavoriteRequests,
+    isAuthenticated,
+    queryClient,
+  ]);
 
   const handleSearchFavoriteChange = useCallback(
     (item: SearchLockerResultItem, next: boolean) => {
@@ -183,25 +206,64 @@ export function useFavoriteLockerSession() {
         return;
       }
 
-      await queryClient.cancelQueries({
-        queryKey: [LOCKER_DETAIL_QUERY_KEY, item.lockerId],
-      });
-      patchFavoriteInQueryCaches(queryClient, item.lockerId, next, authScope);
+      const lockerId = item.lockerId;
+      const previousRequest = detailRequestChainsRef.current.get(lockerId);
+      const requestVersion =
+        (detailRequestVersionsRef.current.get(lockerId) ?? 0) + 1;
+      detailRequestVersionsRef.current.set(lockerId, requestVersion);
 
-      try {
-        if (next) {
-          await addFavoriteLocker(item.lockerId);
-        } else {
-          await removeFavoriteLocker(item.lockerId);
-        }
-      } catch {
-        patchFavoriteInQueryCaches(
-          queryClient,
-          item.lockerId,
-          serverFavorite,
-          authScope,
-        );
+      if (!previousRequest) {
+        confirmedDetailFavoriteRef.current.set(lockerId, serverFavorite);
       }
+
+      const request = (async () => {
+        await cancelFavoriteQueryCaches(queryClient, lockerId, authScope);
+
+        if (detailRequestVersionsRef.current.get(lockerId) === requestVersion) {
+          patchFavoriteInQueryCaches(queryClient, lockerId, next, authScope);
+        }
+
+        await previousRequest;
+
+        const confirmedFavorite =
+          confirmedDetailFavoriteRef.current.get(lockerId) ?? serverFavorite;
+
+        if (confirmedFavorite === next) {
+          return;
+        }
+
+        try {
+          if (next) {
+            await addFavoriteLocker(lockerId);
+          } else {
+            await removeFavoriteLocker(lockerId);
+          }
+          confirmedDetailFavoriteRef.current.set(lockerId, next);
+        } catch {
+          if (
+            detailRequestVersionsRef.current.get(lockerId) === requestVersion
+          ) {
+            patchFavoriteInQueryCaches(
+              queryClient,
+              lockerId,
+              confirmedFavorite,
+              authScope,
+            );
+          }
+        }
+      })();
+      const trackedRequest = request.finally(() => {
+        if (detailRequestChainsRef.current.get(lockerId) !== trackedRequest) {
+          return;
+        }
+
+        detailRequestChainsRef.current.delete(lockerId);
+        detailRequestVersionsRef.current.delete(lockerId);
+        confirmedDetailFavoriteRef.current.delete(lockerId);
+      });
+      detailRequestChainsRef.current.set(lockerId, trackedRequest);
+
+      await trackedRequest;
     },
     [accessToken, authScope, isAuthenticated, openAuthPopup, queryClient],
   );

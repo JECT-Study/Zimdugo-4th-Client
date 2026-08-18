@@ -281,7 +281,7 @@ interface LockerMarkerEntry {
   positionSignature: string;
   zIndex: number;
   wasSelectedBefore?: boolean;
-  wasFavoriteBefore?: boolean;
+  hasFavoriteBefore?: boolean;
   hadSpreadBefore?: boolean;
   /** selected-active가 마지막으로 적용된 시각(ms). 이중 effect 실행 시 애니메이션 덮어쓰기 방지용. */
   selectedActiveAppliedAt?: number;
@@ -510,7 +510,7 @@ const createMarkerIconOptions = (
   offsetX?: number,
   offsetY?: number,
   shouldAnimateSpread = false,
-  shouldAnimateFavorite = false,
+  isFavoriteAnimationActive = false,
 ): naver.maps.HtmlIcon => {
   const hasSpread =
     spreadX != null && spreadY != null && (spreadX !== 0 || spreadY !== 0);
@@ -518,7 +518,7 @@ const createMarkerIconOptions = (
     offsetX != null && offsetY != null && (offsetX !== 0 || offsetY !== 0);
   const key = `${getPinIconSignature(pin, isSelected, zoomLevel)}:${animationState}${
     shouldAnimateSpread && hasSpread ? `:spread:${spreadX}:${spreadY}` : ""
-  }${shouldAnimateFavorite ? ":favorite-added" : ""}${
+  }${isFavoriteAnimationActive ? ":favorite-added" : ""}${
     hasOffset ? `:offset:${offsetX}:${offsetY}` : ""
   }`;
 
@@ -531,7 +531,7 @@ const createMarkerIconOptions = (
   const isActiveAnimation =
     animationState === "selected-active" ||
     animationState === "unselected-active" ||
-    shouldAnimateFavorite;
+    isFavoriteAnimationActive;
 
   if (!isActiveAnimation) {
     const cached = innerMap.get(key);
@@ -554,7 +554,9 @@ const createMarkerIconOptions = (
   const offsetAttributes = hasOffset
     ? ` data-offset-x="${offsetX}" data-offset-y="${offsetY}"`
     : "";
-  const favoriteAnimationClass = shouldAnimateFavorite ? "favorite-added" : "";
+  const favoriteAnimationClass = isFavoriteAnimationActive
+    ? "favorite-added"
+    : "";
 
   const options = {
     content: `<div class="map-marker-offset-wrapper"${offsetAttributes} style="width: ${markerSize.width}px; height: ${markerSize.height}px;">
@@ -608,7 +610,7 @@ const createLockerMarker = ({
   offsetX,
   offsetY,
   shouldAnimateSpread,
-  shouldAnimateFavorite,
+  isFavoriteAnimationActive,
   zIndex,
 }: {
   map: naver.maps.Map;
@@ -622,7 +624,7 @@ const createLockerMarker = ({
   offsetX?: number;
   offsetY?: number;
   shouldAnimateSpread?: boolean;
-  shouldAnimateFavorite?: boolean;
+  isFavoriteAnimationActive?: boolean;
   zIndex: number;
 }) => {
   const marker = new maps.Marker({
@@ -646,7 +648,7 @@ const createLockerMarker = ({
       offsetX,
       offsetY,
       shouldAnimateSpread,
-      shouldAnimateFavorite,
+      isFavoriteAnimationActive,
     ),
     zIndex,
   });
@@ -868,19 +870,19 @@ export const syncLockerMarkers = ({
         hasSpread &&
         !existingEntry.hadSpreadBefore;
       const isFavorite = pin.pinType === "LOCKER" && pin.isFavorite === true;
-      let shouldAnimateFavorite = false;
-      if (isFavorite && existingEntry.wasFavoriteBefore === false) {
-        shouldAnimateFavorite = true;
+      let isFavoriteAnimationActive = false;
+      if (isFavorite && existingEntry.hasFavoriteBefore === false) {
+        isFavoriteAnimationActive = true;
         existingEntry.favoriteAddedAppliedAt = Date.now();
       } else if (isFavorite) {
-        shouldAnimateFavorite =
+        isFavoriteAnimationActive =
           existingEntry.favoriteAddedAppliedAt != null &&
           Date.now() - existingEntry.favoriteAddedAppliedAt <
             FAVORITE_ADDED_GUARD_MS;
       } else {
         existingEntry.favoriteAddedAppliedAt = undefined;
       }
-      const favoriteAnimationSignature = shouldAnimateFavorite
+      const favoriteAnimationSignature = isFavoriteAnimationActive
         ? ":favorite-added"
         : "";
       const nextIconSignature = `${iconSignature}:${animationState}${favoriteAnimationSignature}`;
@@ -897,13 +899,13 @@ export const syncLockerMarkers = ({
             offsetX,
             offsetY,
             shouldAnimateSpread,
-            shouldAnimateFavorite,
+            isFavoriteAnimationActive,
           ),
         );
         existingEntry.iconSignature = nextIconSignature;
       }
       existingEntry.wasSelectedBefore = isSelected;
-      existingEntry.wasFavoriteBefore = isFavorite;
+      existingEntry.hasFavoriteBefore = isFavorite;
       existingEntry.hadSpreadBefore = hasSpread;
       existingEntry.offset = offset;
 
@@ -949,7 +951,7 @@ export const syncLockerMarkers = ({
       offsetX,
       offsetY,
       shouldAnimateSpread,
-      shouldAnimateFavorite: false,
+      isFavoriteAnimationActive: false,
       zIndex,
     });
     // 선택된 마커는 컬링 대상에서 제외한다 (existingEntry와 동일한 정책).
@@ -962,7 +964,7 @@ export const syncLockerMarkers = ({
       positionSignature,
       zIndex,
       wasSelectedBefore: isSelected,
-      wasFavoriteBefore: pin.pinType === "LOCKER" && pin.isFavorite === true,
+      hasFavoriteBefore: pin.pinType === "LOCKER" && pin.isFavorite === true,
       hadSpreadBefore: hasSpread,
       selectedActiveAppliedAt,
     };

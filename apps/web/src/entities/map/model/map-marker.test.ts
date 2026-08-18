@@ -719,6 +719,46 @@ describe("syncLockerMarkers", () => {
     );
   });
 
+  it("removes the favorite animation class after the guard expires", () => {
+    vi.useFakeTimers();
+
+    try {
+      FakeMarker.instances = [];
+
+      const map = createMockMap();
+      const maps = createFakeMaps();
+      const registry = new Map();
+
+      syncLockerMarkers({
+        map,
+        maps,
+        lockers: [createLockerPin({ isFavorite: false })],
+        registry,
+      });
+      syncLockerMarkers({
+        map,
+        maps,
+        lockers: [createLockerPin({ isFavorite: true })],
+        registry,
+      });
+
+      vi.advanceTimersByTime(501);
+      syncLockerMarkers({
+        map,
+        maps,
+        lockers: [createLockerPin({ isFavorite: true })],
+        registry,
+      });
+
+      expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(2);
+      expect(getSetIconContent(FakeMarker.instances[0])).not.toContain(
+        "favorite-added",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("does not animate a marker when favorite is removed", () => {
     FakeMarker.instances = [];
 

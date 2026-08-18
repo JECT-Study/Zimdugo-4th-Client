@@ -3060,7 +3060,10 @@ export function IndexPage() {
         placeId: null,
         latitude: selectedLockerDetail.latitude,
         longitude: selectedLockerDetail.longitude,
-        isFavorite: null,
+        isFavorite:
+          displayedLockerDetail?.lockerId === selectedLockerDetail.lockerId
+            ? (displayedLockerDetail.isFavorite ?? null)
+            : (selectedLockerDetail.isFavorite ?? null),
         lockerCount: null,
         pinCount: null,
         bounds: null,
