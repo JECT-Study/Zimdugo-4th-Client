@@ -1,5 +1,6 @@
 import { m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
+import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
 import { useEffect, useState } from "react";
 import type {
   LockerCorrectionReason,
@@ -22,6 +23,7 @@ export function LockerCorrectionRequestFlow({
   const [details, setDetails] = useState("");
   const [pendingRequest, setPendingRequest] =
     useState<LockerCorrectionRequest | null>(null);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
   const handleOpenChange = (nextIsOpen: boolean) => {
     onOpenChange(nextIsOpen);
@@ -39,10 +41,15 @@ export function LockerCorrectionRequestFlow({
     onConfirm?.(pendingRequest);
     setPendingRequest(null);
     onOpenChange(false);
+    setIsSuccessOpen(true);
   };
 
   const handleCancelConfirm = () => {
     setPendingRequest(null);
+  };
+
+  const handleSuccessClose = () => {
+    setIsSuccessOpen(false);
   };
 
   useEffect(() => {
@@ -78,6 +85,16 @@ export function LockerCorrectionRequestFlow({
         secondaryAction={{
           label: m.common_no(),
           onPress: handleCancelConfirm,
+        }}
+      />
+      <Popup
+        isOpen={isSuccessOpen}
+        onOpenChange={handleSuccessClose}
+        titleText={m.locker_correction_submit_success_title()}
+        icon={<IconCircleboxCheck32 />}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: handleSuccessClose,
         }}
       />
     </>

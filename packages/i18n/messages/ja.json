@@ -343,6 +343,7 @@
   "locker_correction_details_placeholder": "詳細を入力してください（任意）。",
   "locker_correction_submit": "完了",
   "locker_correction_confirm_title": "本当に送信しますか？",
+  "locker_correction_submit_success_title": "送信が完了しました！",
   "locker_correction_close_aria": "報告を閉じる",
   "locker_detail_navigate": "ルート",
   "locker_detail_no_image_title": "まだ画像がありません。",

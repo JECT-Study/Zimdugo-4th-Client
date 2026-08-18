@@ -343,6 +343,7 @@
   "locker_correction_details_placeholder": "请输入详细内容（选填）。",
   "locker_correction_submit": "完成",
   "locker_correction_confirm_title": "确定要提交吗？",
+  "locker_correction_submit_success_title": "提交完成！",
   "locker_correction_close_aria": "关闭举报",
   "locker_detail_navigate": "路线",
   "locker_detail_no_image_title": "还没有图片。",

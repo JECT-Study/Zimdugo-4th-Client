@@ -343,6 +343,7 @@
   "locker_correction_details_placeholder": "Enter details (optional).",
   "locker_correction_submit": "Done",
   "locker_correction_confirm_title": "Are you sure you want to submit?",
+  "locker_correction_submit_success_title": "Submission complete!",
   "locker_correction_close_aria": "Close report",
   "locker_detail_navigate": "Directions",
   "locker_detail_no_image_title": "No photos yet.",

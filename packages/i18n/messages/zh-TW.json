@@ -343,6 +343,7 @@
   "locker_correction_details_placeholder": "請輸入詳細內容（選填）。",
   "locker_correction_submit": "完成",
   "locker_correction_confirm_title": "確定要提交嗎？",
+  "locker_correction_submit_success_title": "提交完成！",
   "locker_correction_close_aria": "關閉檢舉",
   "locker_detail_navigate": "路線",
   "locker_detail_no_image_title": "還沒有圖片。",
