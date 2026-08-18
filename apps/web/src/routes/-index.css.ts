@@ -100,31 +100,6 @@ const spin = keyframes({
   to: { transform: "rotate(360deg)" },
 });
 
-export const locationButtonLocating = style({
-  selectors: {
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      inset: "5px",
-      borderRadius: vars.radius.max,
-      border: `2px solid ${vars.color.palette.gray[200]}`,
-      borderTopColor: vars.color.brand.primary,
-      animation: `${spin} 0.8s linear infinite`,
-      zIndex: 1,
-      pointerEvents: "none",
-    },
-  },
-  "@media": {
-    "(prefers-reduced-motion: reduce)": {
-      selectors: {
-        "&::after": {
-          animation: "none",
-        },
-      },
-    },
-  },
-});
-
 export const locationRecoveryNoticePositioner = style({
   position: "fixed",
   left: "50%",
@@ -248,7 +223,7 @@ export const refreshIconSpinning = style({
   animation: `${spin} 0.45s ease-out 1`,
 });
 
-export const refreshCooldownBadge = style({
+const controlStatusBadge = style({
   position: "absolute",
   inset: 0,
   margin: "auto",
@@ -261,13 +236,45 @@ export const refreshCooldownBadge = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "13px",
-  fontWeight: vars.typography.fontWeight.SemiBold,
-  lineHeight: 1,
+  zIndex: 1,
   pointerEvents: "none",
   boxShadow: vars.shadow[1],
 });
 
+export const refreshCooldownBadge = style([
+  controlStatusBadge,
+  {
+    fontSize: "13px",
+    fontWeight: vars.typography.fontWeight.SemiBold,
+    lineHeight: 1,
+  },
+]);
+
+export const locationLoadingBadge = style([
+  controlStatusBadge,
+  {
+    selectors: {
+      "&::after": {
+        content: '""',
+        width: "12px",
+        height: "12px",
+        borderRadius: vars.radius.max,
+        border: `2px solid ${vars.color.palette.gray[300]}`,
+        borderTopColor: vars.color.brand.primary,
+        animation: `${spin} 0.8s linear infinite`,
+      },
+    },
+    "@media": {
+      "(prefers-reduced-motion: reduce)": {
+        selectors: {
+          "&::after": {
+            animation: "none",
+          },
+        },
+      },
+    },
+  },
+]);
 
 export const controlButton = style({
   width: "48px",
