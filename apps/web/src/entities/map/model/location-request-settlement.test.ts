@@ -21,6 +21,7 @@ describe("resolveLocationRequestSettlement", () => {
     "unsupported",
     "timeout",
     "unavailable",
+    "interrupted",
   ])("%s 결과에서는 진행 중인 사용자 의도를 정리한다", (outcome) => {
     const settlement = resolveLocationRequestSettlement({
       outcome,
