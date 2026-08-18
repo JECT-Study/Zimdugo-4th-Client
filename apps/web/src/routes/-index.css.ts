@@ -157,7 +157,7 @@ export const locationRecoveryNotice = style({
   position: "relative",
   minHeight: "48px",
   marginRight: "64px",
-  padding: `${vars.spacing[12]} 52px ${vars.spacing[12]} ${vars.spacing[16]}`,
+  padding: `${vars.spacing[12]} 36px ${vars.spacing[12]} ${vars.spacing[16]}`,
   border: `1px solid ${vars.color.palette.gray[200]}`,
   borderRadius: vars.radius[8],
   backgroundColor: vars.color.bg.default,
@@ -168,6 +168,7 @@ export const locationRecoveryNotice = style({
   justifyContent: "space-between",
   gap: vars.spacing[12],
   boxSizing: "border-box",
+  overflow: "visible",
   pointerEvents: "auto",
 });
 
@@ -208,9 +209,9 @@ export const locationRecoveryNoticeAction = style({
 
 export const locationRecoveryNoticeClose = style({
   position: "absolute",
-  top: "50%",
-  right: vars.spacing[4],
-  transform: "translateY(-50%)",
+  top: 0,
+  right: 0,
+  transform: "translate(50%, -50%)",
   width: "40px",
   height: "40px",
   padding: 0,
