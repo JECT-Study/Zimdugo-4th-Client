@@ -1,6 +1,7 @@
 import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import {
+  IconCircleboxClose32,
   IconCircleboxCrosshair48,
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
@@ -3339,7 +3340,7 @@ export function IndexPage() {
               aria-label={m.home_location_interrupted_notice_close_aria()}
               onClick={handleCloseLocationRecovery}
             >
-              <span aria-hidden="true">×</span>
+              <IconCircleboxClose32 />
             </button>
           </div>
         </div>
