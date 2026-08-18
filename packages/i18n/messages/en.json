@@ -127,7 +127,7 @@
   "home_location_interrupted_notice_close_aria": "Dismiss interrupted location notice",
   "home_location_interrupted_title": "Reconnect your current location?",
   "home_location_interrupted_helper": "Screen lock interrupted the location check. Reconnecting will briefly reopen this screen.",
-  "home_location_interrupted_reconnect": "Reconnect location",
+  "home_location_interrupted_reconnect": "Try again",
   "home_orientation_permission_title": "Compass permission required",
   "home_orientation_permission_helper": "See exactly which direction you're facing\nright on the map.",
   "map_area_aria": "Naver map area",

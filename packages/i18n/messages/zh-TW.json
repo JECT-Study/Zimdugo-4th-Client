@@ -127,7 +127,7 @@
   "home_location_interrupted_notice_close_aria": "關閉位置中斷提示",
   "home_location_interrupted_title": "重新連線目前位置？",
   "home_location_interrupted_helper": "螢幕鎖定中斷了位置確認。重新連線時，此頁面會短暫重新開啟。",
-  "home_location_interrupted_reconnect": "重新連線目前位置",
+  "home_location_interrupted_reconnect": "再試一次",
   "home_orientation_permission_title": "需要指南針權限",
   "home_orientation_permission_helper": "可以在地圖上\n即時查看目前朝向。",
   "map_area_aria": "Naver 地圖區域",
