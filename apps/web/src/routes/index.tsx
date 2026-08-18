@@ -239,6 +239,10 @@ const parseLockerSearchParam = (raw: unknown): number | undefined => {
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
 
+const reloadForLocationRecovery = () => {
+  window.location.reload();
+};
+
 type SeoHeadLocationContext = {
   location?: {
     publicHref?: string;
@@ -755,8 +759,6 @@ export function IndexPage() {
     useState(false);
   const [isLocationRequestInterrupted, setIsLocationRequestInterrupted] =
     useState(false);
-  const [isLocationInterruptedPopupOpen, setIsLocationInterruptedPopupOpen] =
-    useState(false);
   const [
     isLocationRecoveryNoticeDismissed,
     setIsLocationRecoveryNoticeDismissed,
@@ -1258,7 +1260,7 @@ export function IndexPage() {
       setIsLocationErrorPopupOpen(false);
 
       if (isLocationRequestInterrupted) {
-        setIsLocationInterruptedPopupOpen(true);
+        reloadForLocationRecovery();
         return;
       }
 
@@ -1383,28 +1385,9 @@ export function IndexPage() {
     ],
   );
 
-  const handleReloadForLocation = useCallback(() => {
-    window.location.reload();
-  }, []);
-
-  const handleOpenLocationRecovery = useCallback(() => {
-    setIsLocationInterruptedPopupOpen(true);
-  }, []);
-
-  const handleCloseLocationRecovery = useCallback(() => {
-    setIsLocationInterruptedPopupOpen(false);
+  const handleDismissLocationRecoveryNotice = useCallback(() => {
     setIsLocationRecoveryNoticeDismissed(true);
   }, []);
-
-  const handleLocationRecoveryPopupOpenChange = useCallback(
-    (isOpen: boolean) => {
-      setIsLocationInterruptedPopupOpen(isOpen);
-      if (!isOpen) {
-        setIsLocationRecoveryNoticeDismissed(true);
-      }
-    },
-    [],
-  );
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
@@ -3316,9 +3299,7 @@ export function IndexPage() {
         </div>
       ) : null}
 
-      {isLocationRequestInterrupted &&
-      !isLocationRecoveryNoticeDismissed &&
-      !isLocationInterruptedPopupOpen ? (
+      {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (
         <div className={locationRecoveryNoticePositioner}>
           <div
             className={locationRecoveryNotice}
@@ -3330,7 +3311,7 @@ export function IndexPage() {
             <button
               type="button"
               className={locationRecoveryNoticeAction}
-              onClick={handleOpenLocationRecovery}
+              onClick={reloadForLocationRecovery}
             >
               {m.home_location_interrupted_notice_action()}
             </button>
@@ -3338,7 +3319,7 @@ export function IndexPage() {
               type="button"
               className={locationRecoveryNoticeClose}
               aria-label={m.home_location_interrupted_notice_close_aria()}
-              onClick={handleCloseLocationRecovery}
+              onClick={handleDismissLocationRecoveryNotice}
             >
               <IconCircleboxClose32 />
             </button>
@@ -3367,21 +3348,6 @@ export function IndexPage() {
         primaryAction={{
           label: m.common_confirm(),
           onPress: () => setIsLocationErrorPopupOpen(false),
-        }}
-      />
-
-      <Popup
-        isOpen={isLocationInterruptedPopupOpen}
-        onOpenChange={handleLocationRecoveryPopupOpenChange}
-        titleText={m.home_location_interrupted_title()}
-        helperText={m.home_location_interrupted_helper()}
-        secondaryAction={{
-          label: m.common_cancel(),
-          onPress: handleCloseLocationRecovery,
-        }}
-        primaryAction={{
-          label: m.home_location_interrupted_reconnect(),
-          onPress: handleReloadForLocation,
         }}
       />
 
