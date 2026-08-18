@@ -65,6 +65,10 @@ import {
 } from "#/entities/map/model/home-location-request-session";
 import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import {
+  recoverInterruptedLocationRequest,
+  retryNavigationOriginLocation,
+} from "#/entities/map/model/location-request-recovery";
+import {
   resolveLocationRequestSettlement,
 } from "#/entities/map/model/location-request-settlement";
 import {
@@ -1246,10 +1250,13 @@ export function IndexPage() {
     async () => {
       setIsLocationErrorPopupOpen(false);
 
-      if (isLocationRequestInterrupted) {
-        reloadForLocationRecovery();
+      if (
+        recoverInterruptedLocationRequest({
+          isInterrupted: isLocationRequestInterrupted,
+          reload: reloadForLocationRecovery,
+        })
+      )
         return;
-      }
 
       hasPendingMyLocationRequestRef.current = false;
       pendingOrientationStartRef.current = false;
@@ -2654,11 +2661,14 @@ export function IndexPage() {
 
   const handleNavigationOriginResolved = useCallback(
     (result: ResolveNavigationOriginResult) => {
-      if (result.usedCurrentLocation) {
-        startTracking();
-      }
+      retryNavigationOriginLocation({
+        isCurrentLocationRequested: result.usedCurrentLocation,
+        isInterrupted: isLocationRequestInterrupted,
+        reload: reloadForLocationRecovery,
+        startTracking,
+      });
     },
-    [startTracking],
+    [isLocationRequestInterrupted, startTracking],
   );
 
   const handleNavigationPopupOpenChange = useCallback((isOpen: boolean) => {

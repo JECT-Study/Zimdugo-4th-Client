@@ -256,6 +256,7 @@ export const locationLoadingBadge = style([
     selectors: {
       "&::after": {
         content: '""',
+        display: "inline-block",
         width: "12px",
         height: "12px",
         borderRadius: vars.radius.max,

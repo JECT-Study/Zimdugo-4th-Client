@@ -381,6 +381,29 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).toHaveBeenCalledTimes(1);
   });
 
+  it("should settle interruption before the location effect creates a watch", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+
+    act(() => {
+      result.current.startTracking();
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(onRequestSettled).toHaveBeenCalledWith("interrupted");
+    expect(result.current.locationRequestStatus).toBe("interrupted");
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(watchPositionMock).not.toHaveBeenCalled();
+  });
+
   it("should ignore a late error from a suspended watch", () => {
     watchPositionMock.mockReturnValueOnce(123).mockReturnValueOnce(456);
     const { result } = renderHook(() => useLocationTracking());

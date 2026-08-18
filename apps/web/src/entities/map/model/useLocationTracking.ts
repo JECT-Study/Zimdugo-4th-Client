@@ -57,9 +57,10 @@ export function useLocationTracking({
   const isTrackingRef = useRef(false);
   const isLocatingRef = useRef(false);
   const requestStartedAtRef = useRef<number | null>(null);
-  const watchCleanupRef = useRef<(outcome?: LocationRequestOutcome) => void>(
-    () => {},
-  );
+  const isPendingRequestInterruptedRef = useRef(false);
+  const watchCleanupRef = useRef<
+    ((outcome?: LocationRequestOutcome) => void) | null
+  >(null);
   const onFirstLocationRef = useRef(onFirstLocation);
   const onRequestSettledRef = useRef(onRequestSettled);
 
@@ -84,6 +85,7 @@ export function useLocationTracking({
     }
 
     requestStartedAtRef.current = Date.now();
+    isPendingRequestInterruptedRef.current = false;
     isLocatingRef.current = true;
     isTrackingRef.current = true;
     isFirstLocationRef.current = true;
@@ -101,7 +103,7 @@ export function useLocationTracking({
   }, []);
 
   const stopTracking = useCallback(() => {
-    watchCleanupRef.current();
+    watchCleanupRef.current?.();
     isLocatingRef.current = false;
     isTrackingRef.current = false;
     setIsTracking(false);
@@ -109,7 +111,13 @@ export function useLocationTracking({
   }, []);
 
   const interruptTracking = useCallback(() => {
-    watchCleanupRef.current("interrupted");
+    isPendingRequestInterruptedRef.current = true;
+    if (watchCleanupRef.current) {
+      watchCleanupRef.current("interrupted");
+    } else {
+      setLocationRequestStatus("interrupted");
+      onRequestSettledRef.current?.("interrupted");
+    }
     isLocatingRef.current = false;
     isTrackingRef.current = false;
     setIsTracking(false);
@@ -169,6 +177,10 @@ export function useLocationTracking({
 
   useEffect(() => {
     if (trackingAttemptId === 0 || !navigator.geolocation) {
+      return;
+    }
+
+    if (isPendingRequestInterruptedRef.current) {
       return;
     }
 
@@ -292,7 +304,7 @@ export function useLocationTracking({
         }
         settleInitialRequest(outcome);
       }
-      watchCleanupRef.current = () => {};
+      watchCleanupRef.current = null;
     };
     watchCleanupRef.current = cleanupWatch;
 
