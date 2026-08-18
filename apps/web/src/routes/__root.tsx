@@ -196,6 +196,24 @@ export const Route = createRootRouteWithContext<{
           name: "theme-color",
           content: "#3bd569",
         },
+        // iOS Safari는 홈 화면에 추가된 PWA에서만 웹 푸시를 허용하므로
+        // 설치형 실행에 필요한 메타를 함께 내려준다.
+        {
+          name: "mobile-web-app-capable",
+          content: "yes",
+        },
+        {
+          name: "apple-mobile-web-app-capable",
+          content: "yes",
+        },
+        {
+          name: "apple-mobile-web-app-status-bar-style",
+          content: "default",
+        },
+        {
+          name: "apple-mobile-web-app-title",
+          content: "짐두고",
+        },
         {
           name: "google-site-verification",
           content: "gpgSPQCFt-Gg188XTXUl8KrpB4gPuU6EH0b0i9OTlLE",
@@ -206,6 +224,10 @@ export const Route = createRootRouteWithContext<{
         },
       ],
       links: [
+        {
+          rel: "manifest",
+          href: "/manifest.json",
+        },
         {
           rel: "icon",
           href: "/favicon.svg",

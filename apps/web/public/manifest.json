@@ -1,6 +1,10 @@
 {
-  "short_name": "TanStack App",
-  "name": "Create TanStack App Sample",
+  "id": "/",
+  "name": "짐두고 (Zimdugo)",
+  "short_name": "짐두고",
+  "description": "대한민국의 모든 물품보관함 위치와 요금, 운영 시간을 찾아보는 지도 서비스입니다.",
+  "lang": "ko",
+  "dir": "ltr",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +22,10 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
+  "orientation": "portrait",
+  "theme_color": "#3bd569",
   "background_color": "#ffffff"
 }
