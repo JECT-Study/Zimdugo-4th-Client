@@ -207,8 +207,8 @@ import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
 import {
   locationButton,
-  locationButtonLocating,
   locationControlStack,
+  locationLoadingBadge,
   locationRecoveryNotice,
   locationRecoveryNoticeAction,
   locationRecoveryNoticeClose,
@@ -480,9 +480,7 @@ const MyLocationButton = memo(function MyLocationButton({
   return (
     <button
       type="button"
-      className={[locationButton, isLocating ? locationButtonLocating : ""]
-        .filter(Boolean)
-        .join(" ")}
+      className={locationButton}
       onClick={onMyLocation}
       disabled={isLocating}
       aria-busy={isLocating}
@@ -499,6 +497,9 @@ const MyLocationButton = memo(function MyLocationButton({
               : "default"
         }
       />
+      {isLocating ? (
+        <span className={locationLoadingBadge} aria-hidden="true" />
+      ) : null}
     </button>
   );
 });
