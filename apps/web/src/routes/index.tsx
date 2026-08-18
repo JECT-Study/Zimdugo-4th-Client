@@ -88,7 +88,6 @@ import {
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
-import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
@@ -199,14 +198,18 @@ import {
   type LockerPinItemResponse,
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
-import { useDelayedVisibility } from "#/shared/hooks/useDelayedVisibility";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
 import {
   locationButton,
+  locationButtonLocating,
   locationControlStack,
+  locationRecoveryNotice,
+  locationRecoveryNoticeAction,
+  locationRecoveryNoticeMessage,
+  locationRecoveryNoticePositioner,
   pageWrapper,
   refreshButtonDisabled,
   refreshCooldownBadge,
@@ -466,11 +469,15 @@ const MyLocationButton = memo(function MyLocationButton({
   return (
     <button
       type="button"
-      className={locationButton}
+      className={[locationButton, isLocating ? locationButtonLocating : ""]
+        .filter(Boolean)
+        .join(" ")}
       onClick={onMyLocation}
       disabled={isLocating}
       aria-busy={isLocating}
-      aria-label={m.home_my_location_aria()}
+      aria-label={
+        isLocating ? m.location_loading_aria() : m.home_my_location_aria()
+      }
     >
       <IconCircleboxCrosshair48
         state={
@@ -782,7 +789,6 @@ export function IndexPage() {
 
       if (outcome === "interrupted") {
         setIsLocationRequestInterrupted(true);
-        setIsLocationInterruptedPopupOpen(true);
       }
 
       if (settlement.isPendingIntentClearRequired) {
@@ -827,34 +833,8 @@ export function IndexPage() {
     onRequestSettled: handleLocationRequestSettled,
   });
 
-  // 아래에서 사용하는 shouldDeferHomeMapForLocation과 동일한 조건을 훅 호출부에서
-  // 계산해, 모든 훅이 파생 값과 side effect보다 먼저 실행되도록 한다.
-  const isLocationDelayedLoading = useDelayedVisibility(
-    locationRequestStatus === "requesting" &&
-      !(
-        lockerIdFromQuery === undefined &&
-        focusLat == null &&
-        focusLng == null &&
-        !hasRequestedHomeLocation &&
-        permission !== "denied" &&
-        location == null &&
-        error == null
-      ),
-    300,
-  );
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
-  const shouldDeferHomeMapForLocation =
-    shouldPreferHomeLocation &&
-    !hasRequestedHomeLocation &&
-    permission !== "denied" &&
-    location == null &&
-    error == null &&
-    (locationRequestStatus === "idle" ||
-      locationRequestStatus === "requesting");
-  const shouldShowLocationLoadingOverlay =
-    shouldDeferHomeMapForLocation || isLocationDelayedLoading;
-
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -1147,7 +1127,7 @@ export function IndexPage() {
     stopOrientationTracking();
   }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
 
-  // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
+  // 위치 권한 거부 시 카메라 추적을 해제하고 설정 안내를 연다.
   useEffect(() => {
     if (permission === "denied") {
       setIsCameraCentered(false);
@@ -1384,6 +1364,14 @@ export function IndexPage() {
 
   const handleReloadForLocation = useCallback(() => {
     window.location.reload();
+  }, []);
+
+  const handleOpenLocationRecovery = useCallback(() => {
+    setIsLocationInterruptedPopupOpen(true);
+  }, []);
+
+  const handleCloseLocationRecovery = useCallback(() => {
+    setIsLocationInterruptedPopupOpen(false);
   }, []);
 
   const handleMapLoad = useCallback(
@@ -3199,26 +3187,17 @@ export function IndexPage() {
         />
       ) : null}
 
-      {shouldShowLocationLoadingOverlay && (
-        <MapLoadingOverlay
-          label={m.location_loading_aria()}
-          message={m.location_loading_message()}
-        />
-      )}
-
       <NaverMapProvider language={languageTag()}>
-        {!shouldDeferHomeMapForLocation ? (
-          <NaverMapCanvas
-            key={mapRemountKey}
-            onLoad={handleMapLoad}
-            onWillDestroy={persistMapViewport}
-            onLoadingChange={setIsMapLoading}
-            onErrorChange={setHasMapError}
-            onMapPress={handleMapPress}
-            initialCenter={mapBootstrap.center}
-            initialZoom={mapBootstrap.zoom}
-          />
-        ) : null}
+        <NaverMapCanvas
+          key={mapRemountKey}
+          onLoad={handleMapLoad}
+          onWillDestroy={persistMapViewport}
+          onLoadingChange={setIsMapLoading}
+          onErrorChange={setHasMapError}
+          onMapPress={handleMapPress}
+          initialCenter={mapBootstrap.center}
+          initialZoom={mapBootstrap.zoom}
+        />
         <MyLocationMarker
           map={mapInstance}
           location={location}
@@ -3305,6 +3284,26 @@ export function IndexPage() {
         </div>
       ) : null}
 
+      {isLocationRequestInterrupted && !isLocationInterruptedPopupOpen ? (
+        <div className={locationRecoveryNoticePositioner}>
+          <div
+            className={locationRecoveryNotice}
+            aria-live="polite"
+          >
+            <span className={locationRecoveryNoticeMessage}>
+              {m.home_location_interrupted_notice()}
+            </span>
+            <button
+              type="button"
+              className={locationRecoveryNoticeAction}
+              onClick={handleOpenLocationRecovery}
+            >
+              {m.home_location_interrupted_notice_action()}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <Popup
         isOpen={isLocationPopupOpen}
         onOpenChange={(isOpen) => {
@@ -3334,8 +3333,12 @@ export function IndexPage() {
         onOpenChange={setIsLocationInterruptedPopupOpen}
         titleText={m.home_location_interrupted_title()}
         helperText={m.home_location_interrupted_helper()}
+        secondaryAction={{
+          label: m.common_cancel(),
+          onPress: handleCloseLocationRecovery,
+        }}
         primaryAction={{
-          label: m.home_location_interrupted_reload(),
+          label: m.home_location_interrupted_reconnect(),
           onPress: handleReloadForLocation,
         }}
       />
