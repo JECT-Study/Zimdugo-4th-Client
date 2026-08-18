@@ -210,6 +210,7 @@ import {
   locationControlStack,
   locationRecoveryNotice,
   locationRecoveryNoticeAction,
+  locationRecoveryNoticeClose,
   locationRecoveryNoticeMessage,
   locationRecoveryNoticePositioner,
   pageWrapper,
@@ -755,6 +756,10 @@ export function IndexPage() {
     useState(false);
   const [isLocationInterruptedPopupOpen, setIsLocationInterruptedPopupOpen] =
     useState(false);
+  const [
+    isLocationRecoveryNoticeDismissed,
+    setIsLocationRecoveryNoticeDismissed,
+  ] = useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
@@ -800,6 +805,7 @@ export function IndexPage() {
 
       if (outcome === "interrupted") {
         setIsLocationRequestInterrupted(true);
+        setIsLocationRecoveryNoticeDismissed(false);
       }
 
       if (settlement.isPendingIntentClearRequired) {
@@ -1386,7 +1392,18 @@ export function IndexPage() {
 
   const handleCloseLocationRecovery = useCallback(() => {
     setIsLocationInterruptedPopupOpen(false);
+    setIsLocationRecoveryNoticeDismissed(true);
   }, []);
+
+  const handleLocationRecoveryPopupOpenChange = useCallback(
+    (isOpen: boolean) => {
+      setIsLocationInterruptedPopupOpen(isOpen);
+      if (!isOpen) {
+        setIsLocationRecoveryNoticeDismissed(true);
+      }
+    },
+    [],
+  );
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
@@ -3298,7 +3315,9 @@ export function IndexPage() {
         </div>
       ) : null}
 
-      {isLocationRequestInterrupted && !isLocationInterruptedPopupOpen ? (
+      {isLocationRequestInterrupted &&
+      !isLocationRecoveryNoticeDismissed &&
+      !isLocationInterruptedPopupOpen ? (
         <div className={locationRecoveryNoticePositioner}>
           <div
             className={locationRecoveryNotice}
@@ -3313,6 +3332,14 @@ export function IndexPage() {
               onClick={handleOpenLocationRecovery}
             >
               {m.home_location_interrupted_notice_action()}
+            </button>
+            <button
+              type="button"
+              className={locationRecoveryNoticeClose}
+              aria-label={m.home_location_interrupted_notice_close_aria()}
+              onClick={handleCloseLocationRecovery}
+            >
+              <span aria-hidden="true">×</span>
             </button>
           </div>
         </div>
@@ -3344,7 +3371,7 @@ export function IndexPage() {
 
       <Popup
         isOpen={isLocationInterruptedPopupOpen}
-        onOpenChange={setIsLocationInterruptedPopupOpen}
+        onOpenChange={handleLocationRecoveryPopupOpenChange}
         titleText={m.home_location_interrupted_title()}
         helperText={m.home_location_interrupted_helper()}
         secondaryAction={{

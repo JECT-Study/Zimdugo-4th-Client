@@ -124,6 +124,7 @@
   "home_location_error_helper": "位置情報サービスを確認して、しばらくしてからもう一度お試しください。",
   "home_location_interrupted_notice": "位置情報の確認が中断されました",
   "home_location_interrupted_notice_action": "再接続",
+  "home_location_interrupted_notice_close_aria": "位置情報の中断通知を閉じる",
   "home_location_interrupted_title": "現在地を再接続しますか？",
   "home_location_interrupted_helper": "画面ロックにより位置情報の確認が中断されました。再接続すると、この画面が一時的に開き直されます。",
   "home_location_interrupted_reconnect": "現在地を再接続",
