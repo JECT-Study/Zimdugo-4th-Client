@@ -320,6 +320,13 @@ const markerSpreadOut = keyframes({
   },
 });
 
+const favoriteMarkerPop = keyframes({
+  "0%": { transform: "scale(0.72) rotate(-6deg)", opacity: 0.65 },
+  "55%": { transform: "scale(1.18) rotate(3deg)", opacity: 1 },
+  "75%": { transform: "scale(0.96) rotate(-1deg)" },
+  "100%": { transform: "scale(1) rotate(0deg)", opacity: 1 },
+});
+
 globalStyle(".map-marker-item", {
   transformOrigin: "center center",
   display: "flex",
@@ -347,6 +354,24 @@ globalStyle(".map-marker-item.normal", {
 
 globalStyle(".map-marker-item.spread", {
   animation: `${markerSpreadOut} 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+});
+
+globalStyle(".map-marker-visual", {
+  width: "100%",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transformOrigin: "center center",
+});
+
+globalStyle(".map-marker-visual.favorite-added", {
+  animation: `${favoriteMarkerPop} 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      animation: "none",
+    },
+  },
 });
 
 globalStyle(".map-marker-offset-wrapper", {
