@@ -343,7 +343,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
   });
 
-  it("should cancel a pending request while hidden and wait for a manual retry", () => {
+  it("should mark a pending request as interrupted while hidden", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -364,8 +364,8 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
-    expect(onRequestSettled).toHaveBeenCalledWith("cancelled");
-    expect(result.current.locationRequestStatus).toBe("cancelled");
+    expect(onRequestSettled).toHaveBeenCalledWith("interrupted");
+    expect(result.current.locationRequestStatus).toBe("interrupted");
 
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
@@ -377,17 +377,8 @@ describe("useLocationTracking", () => {
 
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
-    expect(result.current.locationRequestStatus).toBe("cancelled");
+    expect(result.current.locationRequestStatus).toBe("interrupted");
     expect(watchPositionMock).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      result.current.startTracking();
-    });
-
-    expect(result.current.isLocating).toBe(true);
-    expect(result.current.isTracking).toBe(true);
-    expect(result.current.locationRequestStatus).toBe("requesting");
-    expect(watchPositionMock).toHaveBeenCalledTimes(2);
   });
 
   it("should ignore a late error from a suspended watch", () => {
@@ -453,6 +444,6 @@ describe("useLocationTracking", () => {
     }
 
     expect(watchPositionMock).toHaveBeenCalledTimes(1);
-    expect(result.current.locationRequestStatus).toBe("cancelled");
+    expect(result.current.locationRequestStatus).toBe("interrupted");
   });
 });

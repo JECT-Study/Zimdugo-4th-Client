@@ -744,6 +744,10 @@ export function IndexPage() {
   const [isCameraCentered, setIsCameraCentered] = useState(false);
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
+  const [isLocationRequestInterrupted, setIsLocationRequestInterrupted] =
+    useState(false);
+  const [isLocationInterruptedPopupOpen, setIsLocationInterruptedPopupOpen] =
+    useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
@@ -785,6 +789,11 @@ export function IndexPage() {
 
       if (outcome === "success") {
         hasPendingMyLocationRequestRef.current = false;
+      }
+
+      if (outcome === "interrupted") {
+        setIsLocationRequestInterrupted(true);
+        setIsLocationInterruptedPopupOpen(true);
       }
 
       if (settlement.isPendingIntentClearRequired) {
@@ -999,7 +1008,8 @@ export function IndexPage() {
       error == null &&
       !hasRequestedHomeLocation &&
       !didRequestHomeLocationRef.current &&
-      !hasRequestedHomeLocationInCurrentSession;
+      !hasRequestedHomeLocationInCurrentSession &&
+      !isLocationRequestInterrupted;
     const shouldLogHomeLocationSessionSkip =
       shouldPreferHomeLocation &&
       location == null &&
@@ -1037,6 +1047,7 @@ export function IndexPage() {
     hasRequestedHomeLocation,
     isLocating,
     isTracking,
+    isLocationRequestInterrupted,
     location,
     permission,
     shouldPreferHomeLocation,
@@ -1258,6 +1269,12 @@ export function IndexPage() {
   const handleMyLocation = useCallback(
     async () => {
       setIsLocationErrorPopupOpen(false);
+
+      if (isLocationRequestInterrupted) {
+        setIsLocationInterruptedPopupOpen(true);
+        return;
+      }
+
       hasPendingMyLocationRequestRef.current = false;
       pendingOrientationStartRef.current = false;
       hasPendingOneTimeLocationCenterRef.current = false;
@@ -1363,6 +1380,7 @@ export function IndexPage() {
     },
     [
       permission,
+      isLocationRequestInterrupted,
       context,
       sheetMode,
       isSearchOpen,
@@ -1377,6 +1395,10 @@ export function IndexPage() {
       setIsOrientationDeniedPopupOpen,
     ],
   );
+
+  const handleReloadForLocation = useCallback(() => {
+    window.location.reload();
+  }, []);
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
@@ -3318,6 +3340,17 @@ export function IndexPage() {
         primaryAction={{
           label: m.common_confirm(),
           onPress: () => setIsLocationErrorPopupOpen(false),
+        }}
+      />
+
+      <Popup
+        isOpen={isLocationInterruptedPopupOpen}
+        onOpenChange={setIsLocationInterruptedPopupOpen}
+        titleText={m.home_location_interrupted_title()}
+        helperText={m.home_location_interrupted_helper()}
+        primaryAction={{
+          label: m.home_location_interrupted_reload(),
+          onPress: handleReloadForLocation,
         }}
       />
 
