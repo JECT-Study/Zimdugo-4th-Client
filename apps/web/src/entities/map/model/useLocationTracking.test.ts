@@ -343,7 +343,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
   });
 
-  it("should suspend a pending request while hidden and retry when visible", () => {
+  it("should mark a pending request as interrupted while hidden", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -364,8 +364,8 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
-    expect(onRequestSettled).toHaveBeenCalledWith("cancelled");
-    expect(result.current.locationRequestStatus).toBe("cancelled");
+    expect(onRequestSettled).toHaveBeenCalledWith("interrupted");
+    expect(result.current.locationRequestStatus).toBe("interrupted");
 
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
@@ -375,15 +375,99 @@ describe("useLocationTracking", () => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
 
-    expect(result.current.isLocating).toBe(true);
-    expect(result.current.isTracking).toBe(true);
-    expect(result.current.locationRequestStatus).toBe("requesting");
-    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(result.current.locationRequestStatus).toBe("interrupted");
+    expect(watchPositionMock).toHaveBeenCalledTimes(1);
+  });
 
+  it("should settle interruption before the location effect creates a watch", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+
+    act(() => {
+      result.current.startTracking();
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(onRequestSettled).toHaveBeenCalledWith("interrupted");
+    expect(result.current.locationRequestStatus).toBe("interrupted");
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(watchPositionMock).not.toHaveBeenCalled();
+  });
+
+  it("should settle a new request independently from the previous successful watch", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const successCallback = watchPositionMock.mock.calls[0][0];
+    act(() => {
+      successCallback({
+        coords: { latitude: 37.0, longitude: 127.0, heading: null },
+      });
+    });
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    act(() => {
+      result.current.startTracking();
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(onRequestSettled.mock.calls.map(([outcome]) => outcome)).toEqual([
+      "success",
+      "interrupted",
+    ]);
+    expect(result.current.locationRequestStatus).toBe("interrupted");
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(watchPositionMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("should preserve successful tracking across normal visibility changes", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const successCallback = watchPositionMock.mock.calls[0][0];
+    act(() => {
+      successCallback({
+        coords: { latitude: 37.0, longitude: 127.0, heading: null },
+      });
+    });
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
     act(() => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
-    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+
+    expect(onRequestSettled).toHaveBeenCalledTimes(1);
+    expect(onRequestSettled).toHaveBeenCalledWith("success");
+    expect(result.current.locationRequestStatus).toBe("success");
+    expect(result.current.isTracking).toBe(true);
+    expect(clearWatchMock).not.toHaveBeenCalled();
   });
 
   it("should ignore a late error from a suspended watch", () => {
@@ -411,6 +495,10 @@ describe("useLocationTracking", () => {
     });
 
     act(() => {
+      result.current.startTracking();
+    });
+
+    act(() => {
       staleErrorCallback({ code: 3, message: "Late timeout" });
     });
 
@@ -419,7 +507,7 @@ describe("useLocationTracking", () => {
     expect(clearWatchMock).not.toHaveBeenCalledWith(456);
   });
 
-  it("should bound visibility resume attempts before the first location", () => {
+  it("should not create watches from repeated visibility changes", () => {
     const { result } = renderHook(() => useLocationTracking());
 
     act(() => {
@@ -444,6 +532,7 @@ describe("useLocationTracking", () => {
       });
     }
 
-    expect(watchPositionMock).toHaveBeenCalledTimes(4);
+    expect(watchPositionMock).toHaveBeenCalledTimes(1);
+    expect(result.current.locationRequestStatus).toBe("interrupted");
   });
 });

@@ -1,6 +1,7 @@
 import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import {
+  IconCircleboxClose32,
   IconCircleboxCrosshair48,
   IconCircleboxRefresh48,
 } from "@repo/ui/tokens/icons";
@@ -88,7 +89,6 @@ import {
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
-import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
@@ -105,7 +105,6 @@ import {
   applyFavoriteOverlayToLockerItems,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
-import type { ResolveNavigationOriginResult } from "#/features/search/lib/navigation-platform-links";
 import {
   createLockerCanonicalUrl,
   createLockerDeepLinkSlug,
@@ -199,7 +198,6 @@ import {
   type LockerPinItemResponse,
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
-import { useDelayedVisibility } from "#/shared/hooks/useDelayedVisibility";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
@@ -207,6 +205,12 @@ import { useSearchStore } from "#/shared/store/search";
 import {
   locationButton,
   locationControlStack,
+  locationLoadingBadge,
+  locationRecoveryNotice,
+  locationRecoveryNoticeAction,
+  locationRecoveryNoticeClose,
+  locationRecoveryNoticeMessage,
+  locationRecoveryNoticePositioner,
   pageWrapper,
   refreshButtonDisabled,
   refreshCooldownBadge,
@@ -231,6 +235,10 @@ const parseLockerSearchParam = (raw: unknown): number | undefined => {
 };
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
+
+const reloadForLocationRecovery = () => {
+  window.location.reload();
+};
 
 type SeoHeadLocationContext = {
   location?: {
@@ -470,7 +478,9 @@ const MyLocationButton = memo(function MyLocationButton({
       onClick={onMyLocation}
       disabled={isLocating}
       aria-busy={isLocating}
-      aria-label={m.home_my_location_aria()}
+      aria-label={
+        isLocating ? m.location_loading_aria() : m.home_my_location_aria()
+      }
     >
       <IconCircleboxCrosshair48
         state={
@@ -481,6 +491,9 @@ const MyLocationButton = memo(function MyLocationButton({
               : "default"
         }
       />
+      {isLocating ? (
+        <span className={locationLoadingBadge} aria-hidden="true" />
+      ) : null}
     </button>
   );
 });
@@ -733,6 +746,12 @@ export function IndexPage() {
   const [isCameraCentered, setIsCameraCentered] = useState(false);
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
+  const [isLocationRequestInterrupted, setIsLocationRequestInterrupted] =
+    useState(false);
+  const [
+    isLocationRecoveryNoticeDismissed,
+    setIsLocationRecoveryNoticeDismissed,
+  ] = useState(false);
 
   // onFirstLocation을 useCallback으로 메모이즈
   // → 매 렌더마다 새 함수 레퍼런스가 생성되면 useLocationTracking 내부
@@ -774,6 +793,11 @@ export function IndexPage() {
 
       if (outcome === "success") {
         hasPendingMyLocationRequestRef.current = false;
+      }
+
+      if (outcome === "interrupted") {
+        setIsLocationRequestInterrupted(true);
+        setIsLocationRecoveryNoticeDismissed(false);
       }
 
       if (settlement.isPendingIntentClearRequired) {
@@ -818,34 +842,8 @@ export function IndexPage() {
     onRequestSettled: handleLocationRequestSettled,
   });
 
-  // 아래에서 사용하는 shouldDeferHomeMapForLocation과 동일한 조건을 훅 호출부에서
-  // 계산해, 모든 훅이 파생 값과 side effect보다 먼저 실행되도록 한다.
-  const isLocationDelayedLoading = useDelayedVisibility(
-    locationRequestStatus === "requesting" &&
-      !(
-        lockerIdFromQuery === undefined &&
-        focusLat == null &&
-        focusLng == null &&
-        !hasRequestedHomeLocation &&
-        permission !== "denied" &&
-        location == null &&
-        error == null
-      ),
-    300,
-  );
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
-  const shouldDeferHomeMapForLocation =
-    shouldPreferHomeLocation &&
-    !hasRequestedHomeLocation &&
-    permission !== "denied" &&
-    location == null &&
-    error == null &&
-    (locationRequestStatus === "idle" ||
-      locationRequestStatus === "requesting");
-  const shouldShowLocationLoadingOverlay =
-    shouldDeferHomeMapForLocation || isLocationDelayedLoading;
-
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -985,7 +983,8 @@ export function IndexPage() {
       error == null &&
       !hasRequestedHomeLocation &&
       !didRequestHomeLocationRef.current &&
-      !hasRequestedHomeLocationInCurrentSession;
+      !hasRequestedHomeLocationInCurrentSession &&
+      !isLocationRequestInterrupted;
     const shouldLogHomeLocationSessionSkip =
       shouldPreferHomeLocation &&
       location == null &&
@@ -1023,6 +1022,7 @@ export function IndexPage() {
     hasRequestedHomeLocation,
     isLocating,
     isTracking,
+    isLocationRequestInterrupted,
     location,
     permission,
     shouldPreferHomeLocation,
@@ -1136,7 +1136,7 @@ export function IndexPage() {
     stopOrientationTracking();
   }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
 
-  // 위치 권한 거부 시 지연 로딩 오버레이 해제 및 타이머 정리
+  // 위치 권한 거부 시 카메라 추적을 해제하고 설정 안내를 연다.
   useEffect(() => {
     if (permission === "denied") {
       setIsCameraCentered(false);
@@ -1244,6 +1244,12 @@ export function IndexPage() {
   const handleMyLocation = useCallback(
     async () => {
       setIsLocationErrorPopupOpen(false);
+
+      if (isLocationRequestInterrupted) {
+        reloadForLocationRecovery();
+        return;
+      }
+
       hasPendingMyLocationRequestRef.current = false;
       pendingOrientationStartRef.current = false;
       hasPendingOneTimeLocationCenterRef.current = false;
@@ -1349,6 +1355,7 @@ export function IndexPage() {
     },
     [
       permission,
+      isLocationRequestInterrupted,
       context,
       sheetMode,
       isSearchOpen,
@@ -1363,6 +1370,10 @@ export function IndexPage() {
       setIsOrientationDeniedPopupOpen,
     ],
   );
+
+  const handleDismissLocationRecoveryNotice = useCallback(() => {
+    setIsLocationRecoveryNoticeDismissed(true);
+  }, []);
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
@@ -2640,15 +2651,6 @@ export function IndexPage() {
     [permission, location],
   );
 
-  const handleNavigationOriginResolved = useCallback(
-    (result: ResolveNavigationOriginResult) => {
-      if (result.usedCurrentLocation) {
-        startTracking();
-      }
-    },
-    [startTracking],
-  );
-
   const handleNavigationPopupOpenChange = useCallback((isOpen: boolean) => {
     setIsNavigationPopupOpen(isOpen);
   }, []);
@@ -3177,26 +3179,17 @@ export function IndexPage() {
         />
       ) : null}
 
-      {shouldShowLocationLoadingOverlay && (
-        <MapLoadingOverlay
-          label={m.location_loading_aria()}
-          message={m.location_loading_message()}
-        />
-      )}
-
       <NaverMapProvider language={languageTag()}>
-        {!shouldDeferHomeMapForLocation ? (
-          <NaverMapCanvas
-            key={mapRemountKey}
-            onLoad={handleMapLoad}
-            onWillDestroy={persistMapViewport}
-            onLoadingChange={setIsMapLoading}
-            onErrorChange={setHasMapError}
-            onMapPress={handleMapPress}
-            initialCenter={mapBootstrap.center}
-            initialZoom={mapBootstrap.zoom}
-          />
-        ) : null}
+        <NaverMapCanvas
+          key={mapRemountKey}
+          onLoad={handleMapLoad}
+          onWillDestroy={persistMapViewport}
+          onLoadingChange={setIsMapLoading}
+          onErrorChange={setHasMapError}
+          onMapPress={handleMapPress}
+          initialCenter={mapBootstrap.center}
+          initialZoom={mapBootstrap.zoom}
+        />
         <MyLocationMarker
           map={mapInstance}
           location={location}
@@ -3280,6 +3273,34 @@ export function IndexPage() {
             isOrientationTracking={isOrientationTracking}
             onMyLocation={handleMyLocation}
           />
+        </div>
+      ) : null}
+
+      {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (
+        <div className={locationRecoveryNoticePositioner}>
+          <div
+            className={locationRecoveryNotice}
+            aria-live="polite"
+          >
+            <span className={locationRecoveryNoticeMessage}>
+              {m.home_location_interrupted_notice()}
+            </span>
+            <button
+              type="button"
+              className={locationRecoveryNoticeAction}
+              onClick={reloadForLocationRecovery}
+            >
+              {m.home_location_interrupted_notice_action()}
+            </button>
+            <button
+              type="button"
+              className={locationRecoveryNoticeClose}
+              aria-label={m.home_location_interrupted_notice_close_aria()}
+              onClick={handleDismissLocationRecoveryNotice}
+            >
+              <IconCircleboxClose32 />
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -3379,7 +3400,6 @@ export function IndexPage() {
         isOpen={isNavigationPopupOpen}
         locker={displayedLockerDetail}
         knownLocation={navigationKnownLocation}
-        onOriginResolved={handleNavigationOriginResolved}
         onOpenChange={handleNavigationPopupOpenChange}
       />
 
