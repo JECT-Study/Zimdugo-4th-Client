@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "react-aria-components";
 import { IconNormalArrow24 } from "../../tokens/icons/Icons.tsx";
-import { SyncPlacement, type Placement } from "./SyncPlacement.tsx";
 import {
   button,
   chevronRecipe,
@@ -20,11 +19,14 @@ import {
   root,
   valueText,
 } from "./Dropdown.css.ts";
+import { type Placement, SyncPlacement } from "./SyncPlacement.tsx";
 
 export interface DropdownOption {
   id: string | number;
   label: string;
 }
+
+export type DropdownSize = "default" | "compact";
 
 export interface DropdownProps
   extends Omit<SelectProps<DropdownOption>, "children" | "items"> {
@@ -34,6 +36,7 @@ export interface DropdownProps
   label?: string;
   "aria-label"?: string;
   popoverPlacement?: PopoverProps["placement"];
+  size?: DropdownSize;
 }
 
 export function Dropdown({
@@ -44,6 +47,7 @@ export function Dropdown({
   "aria-label": ariaLabel,
   name,
   popoverPlacement = "bottom",
+  size = "default",
   ...props
 }: DropdownProps & { name?: string }) {
   const computedAriaLabel = ariaLabel ?? label ?? placeholder;
@@ -79,8 +83,8 @@ export function Dropdown({
 
           return (
             <>
-              <Button className={button}>
-                <SelectValue className={valueText}>
+              <Button className={button({ size })}>
+                <SelectValue className={valueText({ size })}>
                   {({ selectedItem }) =>
                     (selectedItem as DropdownOption | null)?.label ||
                     placeholder
@@ -94,7 +98,10 @@ export function Dropdown({
                   <IconNormalArrow24 direction="down" />
                 </span>
               </Button>
-              <Popover className={popover} placement={popoverPlacement}>
+              <Popover
+                className={popover({ size })}
+                placement={popoverPlacement}
+              >
                 {({ placement }) => (
                   <>
                     {placement ? (
@@ -103,12 +110,12 @@ export function Dropdown({
                         setPlacement={setActualPlacement}
                       />
                     ) : null}
-                    <ListBox items={options} className={listbox}>
+                    <ListBox items={options} className={listbox({ size })}>
                       {(option: DropdownOption) => (
                         <ListBoxItem
                           id={option.id}
                           textValue={option.label}
-                          className={item}
+                          className={item({ size })}
                         >
                           {option.label}
                         </ListBoxItem>

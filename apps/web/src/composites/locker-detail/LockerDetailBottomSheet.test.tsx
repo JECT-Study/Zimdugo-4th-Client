@@ -94,6 +94,12 @@ const getSheetRoot = () =>
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setLanguageTag("ko");
+    Object.defineProperty(globalThis, "CSS", {
+      configurable: true,
+      value: {
+        escape: (value: string) => value,
+      },
+    });
   });
 
   afterEach(() => {
@@ -256,15 +262,17 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.getByRole("button", { name: "신고하기" })).toBeTruthy();
   });
 
-  it("더보기 메뉴에서 즐겨찾기와 신고 동작을 실행하고 메뉴를 닫는다", () => {
+  it("더보기 메뉴에서 즐겨찾기와 수정 요청 흐름을 실행한다", () => {
     const handleFavoriteChange = vi.fn();
     const handleReport = vi.fn();
+    const handleCorrectionSubmit = vi.fn();
 
     render(
       <LockerDetailBottomSheet
         locker={LOCKER_DETAIL}
         onFavoriteChange={handleFavoriteChange}
         onReport={handleReport}
+        onCorrectionSubmit={handleCorrectionSubmit}
       />,
     );
     const sheet = getSheetRoot();
@@ -279,7 +287,39 @@ describe("LockerDetailBottomSheet", () => {
     openMoreActions();
     fireEvent.click(screen.getByRole("button", { name: "신고하기" }));
     expect(handleReport).toHaveBeenCalledWith(LOCKER_DETAIL);
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      screen.queryByRole("dialog", { name: "보관함 더보기 메뉴" }),
+    ).toBeNull();
+    expect(screen.getByRole("dialog", { name: "신고하기" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /신고 유형 선택/ }));
+    fireEvent.click(
+      screen.getByRole("option", { name: "위치가 잘못되었어요" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+
+    expect(
+      screen.getByRole("dialog", { name: "정말 제출하시겠어요?" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "아니오" }));
+    expect(screen.getByRole("dialog", { name: "신고하기" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "예" }));
+
+    expect(handleCorrectionSubmit).toHaveBeenCalledWith(LOCKER_DETAIL, {
+      reason: "WRONG_LOCATION",
+      details: null,
+    });
+    expect(screen.queryByRole("dialog", { name: "신고하기" })).toBeNull();
+    const successDialog = screen.getByRole("dialog", { name: "신고 접수됨" });
+    expect(successDialog.textContent).toContain("불편을 드려 죄송합니다");
+    expect(successDialog.textContent).toContain(
+      "빠른 시일 내에 조치하겠습니다",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {

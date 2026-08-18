@@ -91,6 +91,9 @@
     "./components/input-text": {
       "import": "./src/components/input-text/InputText.tsx"
     },
+    "./components/textarea-field": {
+      "import": "./src/components/textarea-field/TextareaField.tsx"
+    },
     "./components/label-title": {
       "import": "./src/components/label-title/LabelTitle.tsx"
     },

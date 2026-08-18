@@ -29,6 +29,8 @@ import type {
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
 import { LockerRealtimeAvailabilityCard } from "#/entities/locker/ui/realtime-availability";
+import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
+import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import {
   formatLockerOperatingHoursLabel,
@@ -114,6 +116,10 @@ export interface LockerDetailBottomSheetProps {
   onBack?: () => void;
   onShare?: (item: LockerDetailItem) => void;
   onReport?: (item: LockerDetailItem) => void;
+  onCorrectionSubmit?: (
+    item: LockerDetailItem,
+    request: LockerCorrectionRequest,
+  ) => void;
   onNavigate?: (item: LockerDetailItem) => void;
   isFavoriteActionVisible?: boolean;
   minSnapPoint?: number;
@@ -258,6 +264,7 @@ export function LockerDetailBottomSheet({
   onBack,
   onShare,
   onReport,
+  onCorrectionSubmit,
   onNavigate,
   isFavoriteActionVisible = true,
   minSnapPoint,
@@ -271,6 +278,7 @@ export function LockerDetailBottomSheet({
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
+  const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
@@ -364,7 +372,12 @@ export function LockerDetailBottomSheet({
   };
 
   const handleReport = () => {
+    setIsCorrectionOpen(true);
     onReport?.(locker);
+  };
+
+  const handleCorrectionSubmit = (request: LockerCorrectionRequest) => {
+    onCorrectionSubmit?.(locker, request);
   };
 
   const handleNavigate = () => {
@@ -483,6 +496,12 @@ export function LockerDetailBottomSheet({
         onShare={handleShare}
         onFavoriteChange={handleFavoritePress}
         onReport={handleReport}
+      />
+      <LockerCorrectionRequestFlow
+        key={locker.lockerId}
+        isOpen={isCorrectionOpen}
+        onOpenChange={setIsCorrectionOpen}
+        onConfirm={handleCorrectionSubmit}
       />
     </>
   );

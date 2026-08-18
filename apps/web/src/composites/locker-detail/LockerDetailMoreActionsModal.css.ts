@@ -1,16 +1,43 @@
+import {
+  compactDeviceSelector,
+  layoutScale,
+} from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
 export const overlay = style({
   position: "fixed",
-  inset: 0,
+  top: 0,
+  bottom: 0,
+  left: "50%",
+  width: "100%",
+  maxWidth: vars.layout.appMaxWidth,
+  height: "100dvh",
+  transform: "translateX(-50%)",
   zIndex: vars.zIndex.modal,
+  overflow: "hidden",
+  overscrollBehavior: "contain",
   backgroundColor: "rgba(0, 0, 0, 0.32)",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
+    },
+  },
 });
 
 export const modal = style({
   position: "absolute",
-  width: "min(235px, calc(100vw - 32px))",
+  width: "min(235px, calc(100% - 32px))",
   maxHeight: "calc(100dvh - 32px)",
   overflowY: "auto",
   outline: 0,

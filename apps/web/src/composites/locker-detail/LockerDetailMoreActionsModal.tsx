@@ -82,7 +82,8 @@ export function LockerDetailMoreActionsModal({
     }
 
     const rect = anchor.getBoundingClientRect();
-    const modalHeight = modalRef.current?.getBoundingClientRect().height ?? 0;
+    const modalElement = modalRef.current;
+    const modalHeight = modalElement?.getBoundingClientRect().height ?? 0;
     const preferredTop = rect.bottom + MODAL_EDGE_GAP;
     const maximumTop =
       window.innerHeight - modalHeight - MODAL_VIEWPORT_PADDING;
