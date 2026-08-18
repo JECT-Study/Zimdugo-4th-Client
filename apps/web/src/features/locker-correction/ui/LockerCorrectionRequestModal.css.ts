@@ -6,16 +6,18 @@ export const overlay = style({
   inset: 0,
   zIndex: vars.zIndex.modal,
   display: "flex",
-  alignItems: "flex-start",
   justifyContent: "center",
-  padding: "clamp(24px, 30vh, 246px) 24px 24px",
+  padding:
+    "max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left))",
   overflowY: "auto",
+  overscrollBehavior: "contain",
   backgroundColor: "rgba(10, 13, 15, 0.38)",
   boxSizing: "border-box",
 });
 
 export const modal = style({
   width: "min(327px, calc(100vw - 48px))",
+  margin: "auto 0",
   outline: 0,
 });
 
