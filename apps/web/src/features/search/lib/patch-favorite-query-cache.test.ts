@@ -2,7 +2,15 @@ import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
-import { patchFavoriteInQueryCaches } from "./patch-favorite-query-cache";
+import { LOCKER_DETAIL_QUERY_KEY } from "../hooks/useLockerDetail";
+import {
+  LOCKER_SEARCH_QUERY_KEY,
+  PLACE_LOCKERS_QUERY_KEY,
+} from "../hooks/useSearch";
+import {
+  cancelFavoriteQueryCaches,
+  patchFavoriteInQueryCaches,
+} from "./patch-favorite-query-cache";
 
 const createLockerPin = (
   overrides: Partial<
@@ -37,6 +45,44 @@ const createPlacePin = (): Extract<
 });
 
 describe("patchFavoriteInQueryCaches", () => {
+  it("낙관적 패치 대상인 현재 사용자 쿼리만 취소한다", async () => {
+    const queryClient = new QueryClient();
+    const targetQueryKeys = [
+      [LOCKER_SEARCH_QUERY_KEY, "params", 1],
+      [PLACE_LOCKERS_QUERY_KEY, 1, 1],
+      [LOCKER_DETAIL_QUERY_KEY, 9, 1],
+      [LOCKER_PINS_QUERY_KEY, "viewport", 1],
+    ] as const;
+    const preservedQueryKeys = [
+      [LOCKER_DETAIL_QUERY_KEY, 10, 1],
+      [LOCKER_PINS_QUERY_KEY, "viewport", 2],
+    ] as const;
+    const queryPromises = [...targetQueryKeys, ...preservedQueryKeys].map(
+      (queryKey) =>
+        queryClient
+          .fetchQuery({
+            queryKey,
+            queryFn: ({ signal }) =>
+              new Promise<void>((_resolve, reject) => {
+                signal.addEventListener("abort", () => reject(signal.reason));
+              }),
+          })
+          .catch(() => undefined),
+    );
+
+    await cancelFavoriteQueryCaches(queryClient, 9, 1);
+
+    for (const queryKey of targetQueryKeys) {
+      expect(queryClient.getQueryState(queryKey)?.fetchStatus).toBe("idle");
+    }
+    for (const queryKey of preservedQueryKeys) {
+      expect(queryClient.getQueryState(queryKey)?.fetchStatus).toBe("fetching");
+    }
+
+    await queryClient.cancelQueries();
+    await Promise.all(queryPromises);
+  });
+
   it("지도 핀 캐시의 즐겨찾기 상태도 함께 갱신한다", () => {
     const queryClient = new QueryClient();
     const queryKey = [LOCKER_PINS_QUERY_KEY, 37, 127, 38, 128, 15, 1];

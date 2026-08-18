@@ -662,7 +662,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
   });
 
-  it("updates an existing locker marker when favorite state changes", () => {
+  it("animates an existing locker marker when it becomes a favorite", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -685,6 +685,102 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances).toHaveLength(1);
     expect(getSetIconContent(FakeMarker.instances[0])).toContain(
       'data-map-pin-variant="save"',
+    );
+    expect(getSetIconContent(FakeMarker.instances[0])).toContain(
+      "favorite-added",
+    );
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ isFavorite: true })],
+      registry,
+    });
+
+    expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not animate a marker that is initially a favorite", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ isFavorite: true })],
+      registry,
+    });
+
+    expect(getMarkerContent(FakeMarker.instances[0])).not.toContain(
+      "favorite-added",
+    );
+  });
+
+  it("removes the favorite animation class after the guard expires", () => {
+    vi.useFakeTimers();
+
+    try {
+      FakeMarker.instances = [];
+
+      const map = createMockMap();
+      const maps = createFakeMaps();
+      const registry = new Map();
+
+      syncLockerMarkers({
+        map,
+        maps,
+        lockers: [createLockerPin({ isFavorite: false })],
+        registry,
+      });
+      syncLockerMarkers({
+        map,
+        maps,
+        lockers: [createLockerPin({ isFavorite: true })],
+        registry,
+      });
+
+      vi.advanceTimersByTime(501);
+      syncLockerMarkers({
+        map,
+        maps,
+        lockers: [createLockerPin({ isFavorite: true })],
+        registry,
+      });
+
+      expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(2);
+      expect(getSetIconContent(FakeMarker.instances[0])).not.toContain(
+        "favorite-added",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not animate a marker when favorite is removed", () => {
+    FakeMarker.instances = [];
+
+    const map = createMockMap();
+    const maps = createFakeMaps();
+    const registry = new Map();
+
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ isFavorite: true })],
+      registry,
+    });
+    syncLockerMarkers({
+      map,
+      maps,
+      lockers: [createLockerPin({ isFavorite: false })],
+      registry,
+    });
+
+    expect(getSetIconContent(FakeMarker.instances[0])).not.toContain(
+      "favorite-added",
     );
   });
 

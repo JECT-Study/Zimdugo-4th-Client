@@ -1,10 +1,10 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
-import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import type {
   SearchLockerResultItem,
   SearchLockerResultItems,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import type {
   LockerSearchViewModel,
@@ -56,6 +56,42 @@ const isCurrentAuthScopeQuery = (
   authScope: AuthQueryCacheScope,
 ): boolean =>
   Array.isArray(queryKey) && queryKey[queryKey.length - 1] === authScope;
+
+const isFavoriteQueryCache = (
+  queryKey: QueryKey,
+  lockerId: number,
+  authScope: AuthQueryCacheScope,
+): boolean => {
+  if (
+    !Array.isArray(queryKey) ||
+    !isCurrentAuthScopeQuery(queryKey, authScope)
+  ) {
+    return false;
+  }
+
+  const rootKey = queryKey[0];
+
+  if (rootKey === LOCKER_DETAIL_QUERY_KEY) {
+    return queryKey[1] === lockerId;
+  }
+
+  return (
+    rootKey === LOCKER_SEARCH_QUERY_KEY ||
+    rootKey === PLACE_LOCKERS_QUERY_KEY ||
+    rootKey === LOCKER_PINS_QUERY_KEY
+  );
+};
+
+export const cancelFavoriteQueryCaches = async (
+  queryClient: QueryClient,
+  lockerId: number,
+  authScope: AuthQueryCacheScope,
+): Promise<void> => {
+  await queryClient.cancelQueries({
+    predicate: (query) =>
+      isFavoriteQueryCache(query.queryKey, lockerId, authScope),
+  });
+};
 
 export const patchFavoriteInQueryCaches = (
   queryClient: QueryClient,
