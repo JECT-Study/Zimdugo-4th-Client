@@ -344,6 +344,7 @@
   "locker_correction_submit": "完了",
   "locker_correction_confirm_title": "本当に送信しますか？",
   "locker_correction_submit_success_title": "報告を受け付けました",
+  "locker_correction_submit_success_helper": "ご不便をおかけして申し訳ありません。\nできるだけ早く対応いたします。",
   "locker_correction_submit_success_close": "閉じる",
   "locker_correction_close_aria": "報告を閉じる",
   "locker_detail_navigate": "ルート",

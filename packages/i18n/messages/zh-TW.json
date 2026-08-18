@@ -344,6 +344,7 @@
   "locker_correction_submit": "完成",
   "locker_correction_confirm_title": "確定要提交嗎？",
   "locker_correction_submit_success_title": "檢舉已受理",
+  "locker_correction_submit_success_helper": "很抱歉造成您的不便。\n我們會儘快處理。",
   "locker_correction_submit_success_close": "關閉",
   "locker_correction_close_aria": "關閉檢舉",
   "locker_detail_navigate": "路線",

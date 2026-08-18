@@ -344,6 +344,7 @@
   "locker_correction_submit": "완료",
   "locker_correction_confirm_title": "정말 제출하시겠어요?",
   "locker_correction_submit_success_title": "신고 접수됨",
+  "locker_correction_submit_success_helper": "불편을 드려 죄송합니다\n빠른 시일 내에 조치하겠습니다",
   "locker_correction_submit_success_close": "닫기",
   "locker_correction_close_aria": "신고하기 닫기",
   "locker_detail_navigate": "길찾기",

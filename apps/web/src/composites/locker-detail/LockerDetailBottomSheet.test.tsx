@@ -312,7 +312,11 @@ describe("LockerDetailBottomSheet", () => {
       details: null,
     });
     expect(screen.queryByRole("dialog", { name: "신고하기" })).toBeNull();
-    expect(screen.getByRole("dialog", { name: "신고 접수됨" })).toBeTruthy();
+    const successDialog = screen.getByRole("dialog", { name: "신고 접수됨" });
+    expect(successDialog.textContent).toContain("불편을 드려 죄송합니다");
+    expect(successDialog.textContent).toContain(
+      "빠른 시일 내에 조치하겠습니다",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
     expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();

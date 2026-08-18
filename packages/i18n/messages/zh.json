@@ -344,6 +344,7 @@
   "locker_correction_submit": "完成",
   "locker_correction_confirm_title": "确定要提交吗？",
   "locker_correction_submit_success_title": "举报已受理",
+  "locker_correction_submit_success_helper": "很抱歉给您带来不便。\n我们会尽快处理。",
   "locker_correction_submit_success_close": "关闭",
   "locker_correction_close_aria": "关闭举报",
   "locker_detail_navigate": "路线",

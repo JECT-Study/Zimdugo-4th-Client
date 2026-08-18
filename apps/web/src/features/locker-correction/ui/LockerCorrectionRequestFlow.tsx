@@ -91,6 +91,7 @@ export function LockerCorrectionRequestFlow({
         isOpen={isSuccessOpen}
         onOpenChange={handleSuccessClose}
         titleText={m.locker_correction_submit_success_title()}
+        helperText={m.locker_correction_submit_success_helper()}
         icon={<IconCircleboxCheck32 />}
         primaryActionLayout="content"
         primaryAction={{

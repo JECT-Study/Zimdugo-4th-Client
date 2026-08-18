@@ -344,6 +344,7 @@
   "locker_correction_submit": "Done",
   "locker_correction_confirm_title": "Are you sure you want to submit?",
   "locker_correction_submit_success_title": "Report received",
+  "locker_correction_submit_success_helper": "We apologize for the inconvenience.\nWe'll address it as soon as possible.",
   "locker_correction_submit_success_close": "Close",
   "locker_correction_close_aria": "Close report",
   "locker_detail_navigate": "Directions",
