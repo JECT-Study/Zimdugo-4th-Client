@@ -190,4 +190,10 @@ export const primaryButtonItem = style([
   },
 ]);
 
+export const contentPrimaryButtonItem = style({
+  width: "auto",
+  flex: "none",
+  fontSize: vars.typography.fontSize[16],
+});
+
 export const secondaryButtonItem = style([popupButtonBase, { flex: 1 }]);

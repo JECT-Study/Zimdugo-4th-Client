@@ -12,6 +12,7 @@ import {
   bottomSection,
   buttonRow,
   container,
+  contentPrimaryButtonItem,
   dialog,
   helper,
   helperArea,
@@ -48,6 +49,7 @@ export interface PopupProps {
     onPress: () => void;
   };
   width?: "default" | "wide";
+  primaryActionLayout?: "fill" | "content";
   className?: string;
 }
 
@@ -61,6 +63,7 @@ export function Popup({
   secondaryAction,
   subAction,
   width = "default",
+  primaryActionLayout = "fill",
   className,
 }: PopupProps) {
   const hasHelper = !!helperText;
@@ -82,6 +85,9 @@ export function Popup({
       : hasMiddleElement
         ? bottomSection.withMiddle
         : bottomSection.default;
+  const isContentPrimaryAction = primaryActionLayout === "content";
+  const primaryActionSize =
+    secondaryAction || isContentPrimaryAction ? "S" : "L";
 
   return (
     <ModalOverlay
@@ -144,11 +150,18 @@ export function Popup({
                         </Button>
                       )}
                       <Button
-                        className={primaryButtonItem}
+                        className={[
+                          primaryButtonItem,
+                          isContentPrimaryAction
+                            ? contentPrimaryButtonItem
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                         variant="filled"
                         intent="primary"
-                        size={secondaryAction ? "S" : "L"}
-                        data-size={secondaryAction ? "S" : "L"}
+                        size={primaryActionSize}
+                        data-size={primaryActionSize}
                         onPress={handlePrimary}
                       >
                         {primaryAction.label}

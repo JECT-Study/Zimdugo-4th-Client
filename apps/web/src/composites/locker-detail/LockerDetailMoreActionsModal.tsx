@@ -65,7 +65,7 @@ export function LockerDetailMoreActionsModal({
 }: LockerDetailMoreActionsModalProps) {
   const [position, setPosition] = useState<ModalPosition>({
     top: MODAL_VIEWPORT_PADDING,
-    right: MODAL_VIEWPORT_PADDING,
+    right: 0,
   });
   const modalRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,16 +84,12 @@ export function LockerDetailMoreActionsModal({
     const rect = anchor.getBoundingClientRect();
     const modalElement = modalRef.current;
     const modalHeight = modalElement?.getBoundingClientRect().height ?? 0;
-    const overlayRect = modalElement?.parentElement?.getBoundingClientRect();
     const preferredTop = rect.bottom + MODAL_EDGE_GAP;
     const maximumTop =
       window.innerHeight - modalHeight - MODAL_VIEWPORT_PADDING;
     setPosition({
       top: Math.max(MODAL_VIEWPORT_PADDING, Math.min(preferredTop, maximumTop)),
-      right: Math.max(
-        MODAL_VIEWPORT_PADDING,
-        (overlayRect?.right ?? window.innerWidth) - rect.right,
-      ),
+      right: 0,
     });
   }, [anchorRef]);
 

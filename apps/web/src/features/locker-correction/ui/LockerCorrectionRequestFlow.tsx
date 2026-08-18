@@ -92,8 +92,9 @@ export function LockerCorrectionRequestFlow({
         onOpenChange={handleSuccessClose}
         titleText={m.locker_correction_submit_success_title()}
         icon={<IconCircleboxCheck32 />}
+        primaryActionLayout="content"
         primaryAction={{
-          label: m.common_confirm(),
+          label: m.locker_correction_submit_success_close(),
           onPress: handleSuccessClose,
         }}
       />

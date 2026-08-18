@@ -312,14 +312,10 @@ describe("LockerDetailBottomSheet", () => {
       details: null,
     });
     expect(screen.queryByRole("dialog", { name: "신고하기" })).toBeNull();
-    expect(
-      screen.getByRole("dialog", { name: "제출이 완료되었습니다!" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "신고 접수됨" })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "확인" }));
-    expect(
-      screen.queryByRole("dialog", { name: "제출이 완료되었습니다!" }),
-    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {

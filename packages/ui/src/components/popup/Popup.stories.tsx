@@ -22,6 +22,15 @@ export const Default: Story = {
   name: "Default",
 };
 
+export const ContentAction: Story = {
+  name: "Content Action",
+  args: {
+    titleText: "Report received",
+    primaryAction: { label: "Close", onPress: action },
+    primaryActionLayout: "content",
+  },
+};
+
 export const Helper: Story = {
   name: "Helper",
   args: {
