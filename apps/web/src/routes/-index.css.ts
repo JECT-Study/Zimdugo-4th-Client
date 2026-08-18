@@ -6,6 +6,8 @@ import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
 
+const LOCATION_RECOVERY_NOTICE_OFFSET_ABOVE_CONTROLS = "112px";
+
 export const mapContainer = style({
   width: "100%",
   height: "100%",
@@ -127,7 +129,7 @@ export const locationButtonLocating = style({
 export const locationRecoveryNoticePositioner = style({
   position: "fixed",
   left: "50%",
-  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
+  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV} + ${LOCATION_RECOVERY_NOTICE_OFFSET_ABOVE_CONTROLS})`,
   transform: "translateX(-50%)",
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,
@@ -155,7 +157,6 @@ export const locationRecoveryNoticePositioner = style({
 
 export const locationRecoveryNotice = style({
   minHeight: "48px",
-  marginRight: "64px",
   padding: `${vars.spacing[12]} ${vars.spacing[16]}`,
   borderRadius: vars.radius[8],
   backgroundColor: vars.color.palette.gray[800],
@@ -196,6 +197,38 @@ export const locationRecoveryNoticeAction = style({
     },
     "&:active": {
       opacity: 0.8,
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "2px",
+    },
+  },
+});
+
+export const locationRecoveryNoticeClose = style({
+  width: "40px",
+  height: "40px",
+  marginRight: `-${vars.spacing[8]}`,
+  padding: 0,
+  border: 0,
+  borderRadius: vars.radius.max,
+  background: "transparent",
+  color: vars.color.text.white,
+  fontSize: vars.typography.fontSize[20],
+  lineHeight: 1,
+  cursor: "pointer",
+  WebkitTapHighlightColor: "transparent",
+  touchAction: "manipulation",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  selectors: {
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 0.12)",
+    },
+    "&:active": {
+      backgroundColor: "rgba(255, 255, 255, 0.2)",
     },
     "&:focus-visible": {
       outline: `2px solid ${vars.color.focus}`,

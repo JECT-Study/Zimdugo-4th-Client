@@ -124,6 +124,7 @@
   "home_location_error_helper": "请检查定位服务，稍后重试。",
   "home_location_interrupted_notice": "位置确认已中断",
   "home_location_interrupted_notice_action": "重新连接",
+  "home_location_interrupted_notice_close_aria": "关闭位置中断提示",
   "home_location_interrupted_title": "重新连接当前位置？",
   "home_location_interrupted_helper": "屏幕锁定中断了位置确认。重新连接时，此页面会短暂重新打开。",
   "home_location_interrupted_reconnect": "重新连接当前位置",

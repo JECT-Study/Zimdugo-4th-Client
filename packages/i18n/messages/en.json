@@ -124,6 +124,7 @@
   "home_location_error_helper": "Check your location services and try again in a moment.",
   "home_location_interrupted_notice": "Location check was interrupted",
   "home_location_interrupted_notice_action": "Reconnect",
+  "home_location_interrupted_notice_close_aria": "Dismiss interrupted location notice",
   "home_location_interrupted_title": "Reconnect your current location?",
   "home_location_interrupted_helper": "Screen lock interrupted the location check. Reconnecting will briefly reopen this screen.",
   "home_location_interrupted_reconnect": "Reconnect location",
