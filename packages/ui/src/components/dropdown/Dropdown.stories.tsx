@@ -33,6 +33,19 @@ export const Default: Story = {
   ],
 };
 
+export const Compact: Story = {
+  args: {
+    size: "compact",
+  },
+  decorators: [
+    (Story: ComponentType) => (
+      <div style={{ width: 293 }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
 export const DynamicPlacement: Story = {
   name: "Dynamic Placement",
   parameters: { layout: "fullscreen" },
