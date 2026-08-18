@@ -404,6 +404,72 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).not.toHaveBeenCalled();
   });
 
+  it("should settle a new request independently from the previous successful watch", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const successCallback = watchPositionMock.mock.calls[0][0];
+    act(() => {
+      successCallback({
+        coords: { latitude: 37.0, longitude: 127.0, heading: null },
+      });
+    });
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    act(() => {
+      result.current.startTracking();
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(onRequestSettled.mock.calls.map(([outcome]) => outcome)).toEqual([
+      "success",
+      "interrupted",
+    ]);
+    expect(result.current.locationRequestStatus).toBe("interrupted");
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(watchPositionMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("should preserve successful tracking across normal visibility changes", () => {
+    const onRequestSettled = vi.fn();
+    const { result } = renderHook(() =>
+      useLocationTracking({ onRequestSettled }),
+    );
+
+    act(() => {
+      result.current.startTracking();
+    });
+    const successCallback = watchPositionMock.mock.calls[0][0];
+    act(() => {
+      successCallback({
+        coords: { latitude: 37.0, longitude: 127.0, heading: null },
+      });
+    });
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(onRequestSettled).toHaveBeenCalledTimes(1);
+    expect(onRequestSettled).toHaveBeenCalledWith("success");
+    expect(result.current.locationRequestStatus).toBe("success");
+    expect(result.current.isTracking).toBe(true);
+    expect(clearWatchMock).not.toHaveBeenCalled();
+  });
+
   it("should ignore a late error from a suspended watch", () => {
     watchPositionMock.mockReturnValueOnce(123).mockReturnValueOnce(456);
     const { result } = renderHook(() => useLocationTracking());

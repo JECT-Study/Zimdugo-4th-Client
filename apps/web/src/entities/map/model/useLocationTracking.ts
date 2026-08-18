@@ -57,7 +57,9 @@ export function useLocationTracking({
   const isTrackingRef = useRef(false);
   const isLocatingRef = useRef(false);
   const requestStartedAtRef = useRef<number | null>(null);
-  const isPendingRequestInterruptedRef = useRef(false);
+  const requestAttemptIdRef = useRef(0);
+  const settledRequestAttemptIdRef = useRef<number | null>(null);
+  const interruptedRequestAttemptIdRef = useRef<number | null>(null);
   const watchCleanupRef = useRef<
     ((outcome?: LocationRequestOutcome) => void) | null
   >(null);
@@ -66,6 +68,22 @@ export function useLocationTracking({
 
   onFirstLocationRef.current = onFirstLocation;
   onRequestSettledRef.current = onRequestSettled;
+
+  const settleRequestAttempt = useCallback(
+    (attemptId: number, outcome: LocationRequestOutcome) => {
+      if (
+        requestAttemptIdRef.current !== attemptId ||
+        settledRequestAttemptIdRef.current === attemptId
+      ) {
+        return;
+      }
+
+      settledRequestAttemptIdRef.current = attemptId;
+      setLocationRequestStatus(outcome);
+      onRequestSettledRef.current?.(outcome);
+    },
+    [],
+  );
 
   const startTracking = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -84,8 +102,9 @@ export function useLocationTracking({
       return;
     }
 
+    const nextAttemptId = requestAttemptIdRef.current + 1;
+    requestAttemptIdRef.current = nextAttemptId;
     requestStartedAtRef.current = Date.now();
-    isPendingRequestInterruptedRef.current = false;
     isLocatingRef.current = true;
     isTrackingRef.current = true;
     isFirstLocationRef.current = true;
@@ -95,7 +114,7 @@ export function useLocationTracking({
       isTracking: true,
       permission: "prompt",
     });
-    setTrackingAttemptId((attemptId) => attemptId + 1);
+    setTrackingAttemptId(nextAttemptId);
     setIsTracking(true);
     setIsLocating(true);
     setError(null);
@@ -111,18 +130,17 @@ export function useLocationTracking({
   }, []);
 
   const interruptTracking = useCallback(() => {
-    isPendingRequestInterruptedRef.current = true;
+    const interruptedAttemptId = requestAttemptIdRef.current;
+    interruptedRequestAttemptIdRef.current = interruptedAttemptId;
+    settleRequestAttempt(interruptedAttemptId, "interrupted");
     if (watchCleanupRef.current) {
       watchCleanupRef.current("interrupted");
-    } else {
-      setLocationRequestStatus("interrupted");
-      onRequestSettledRef.current?.("interrupted");
     }
     isLocatingRef.current = false;
     isTrackingRef.current = false;
     setIsTracking(false);
     setIsLocating(false);
-  }, []);
+  }, [settleRequestAttempt]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.permissions) return;
@@ -180,7 +198,7 @@ export function useLocationTracking({
       return;
     }
 
-    if (isPendingRequestInterruptedRef.current) {
+    if (interruptedRequestAttemptIdRef.current === trackingAttemptId) {
       return;
     }
 
@@ -198,8 +216,7 @@ export function useLocationTracking({
     const settleInitialRequest = (outcome: LocationRequestOutcome) => {
       if (hasSettledInitialRequest) return;
       hasSettledInitialRequest = true;
-      setLocationRequestStatus(outcome);
-      onRequestSettledRef.current?.(outcome);
+      settleRequestAttempt(trackingAttemptId, outcome);
     };
 
     postLocationDiagnostic("tracking_watch_started", {
@@ -309,7 +326,7 @@ export function useLocationTracking({
     watchCleanupRef.current = cleanupWatch;
 
     return cleanupWatch;
-  }, [trackingAttemptId]);
+  }, [settleRequestAttempt, trackingAttemptId]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {

@@ -13,7 +13,6 @@ import {
   hasNavigationDestination,
   type NavigationPlatform,
   openNavigationPlatformLinks,
-  type ResolveNavigationOriginResult,
   resolveNavigationOriginForDirections,
 } from "#/features/search/lib/navigation-platform-links";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
@@ -42,7 +41,6 @@ export interface NavigationPlatformPopupProps {
   locker: LockerDetailItem | null;
   knownLocation?: { lat: number; lng: number } | null;
   onOpenChange: (isOpen: boolean) => void;
-  onOriginResolved?: (result: ResolveNavigationOriginResult) => void;
   onSelectPlatform?: (
     platform: NavigationPlatform,
     url: string,
@@ -55,7 +53,6 @@ export function NavigationPlatformPopup({
   locker,
   knownLocation = null,
   onOpenChange,
-  onOriginResolved,
   onSelectPlatform,
 }: NavigationPlatformPopupProps) {
   const [isNaverLanguageWarningOpen, setIsNaverLanguageWarningOpen] =
@@ -74,7 +71,6 @@ export function NavigationPlatformPopup({
 
     try {
       const result = resolveNavigationOriginForDirections(knownLocation);
-      onOriginResolved?.(result);
 
       const links = getNavigationPlatformLinks(platform, locker, {
         navigationOrigin: result.origin,

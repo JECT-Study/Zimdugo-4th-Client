@@ -65,10 +65,6 @@ import {
 } from "#/entities/map/model/home-location-request-session";
 import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import {
-  recoverInterruptedLocationRequest,
-  retryNavigationOriginLocation,
-} from "#/entities/map/model/location-request-recovery";
-import {
   resolveLocationRequestSettlement,
 } from "#/entities/map/model/location-request-settlement";
 import {
@@ -109,7 +105,6 @@ import {
   applyFavoriteOverlayToLockerItems,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
-import type { ResolveNavigationOriginResult } from "#/features/search/lib/navigation-platform-links";
 import {
   createLockerCanonicalUrl,
   createLockerDeepLinkSlug,
@@ -1250,13 +1245,10 @@ export function IndexPage() {
     async () => {
       setIsLocationErrorPopupOpen(false);
 
-      if (
-        recoverInterruptedLocationRequest({
-          isInterrupted: isLocationRequestInterrupted,
-          reload: reloadForLocationRecovery,
-        })
-      )
+      if (isLocationRequestInterrupted) {
+        reloadForLocationRecovery();
         return;
+      }
 
       hasPendingMyLocationRequestRef.current = false;
       pendingOrientationStartRef.current = false;
@@ -2659,18 +2651,6 @@ export function IndexPage() {
     [permission, location],
   );
 
-  const handleNavigationOriginResolved = useCallback(
-    (result: ResolveNavigationOriginResult) => {
-      retryNavigationOriginLocation({
-        isCurrentLocationRequested: result.usedCurrentLocation,
-        isInterrupted: isLocationRequestInterrupted,
-        reload: reloadForLocationRecovery,
-        startTracking,
-      });
-    },
-    [isLocationRequestInterrupted, startTracking],
-  );
-
   const handleNavigationPopupOpenChange = useCallback((isOpen: boolean) => {
     setIsNavigationPopupOpen(isOpen);
   }, []);
@@ -3420,7 +3400,6 @@ export function IndexPage() {
         isOpen={isNavigationPopupOpen}
         locker={displayedLockerDetail}
         knownLocation={navigationKnownLocation}
-        onOriginResolved={handleNavigationOriginResolved}
         onOpenChange={handleNavigationPopupOpenChange}
       />
 
