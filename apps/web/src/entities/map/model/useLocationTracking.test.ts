@@ -343,7 +343,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
   });
 
-  it("should suspend a pending request while hidden and retry when visible", () => {
+  it("should mark a pending request as interrupted while hidden", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -364,8 +364,8 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
     expect(result.current.isTracking).toBe(false);
     expect(clearWatchMock).toHaveBeenCalledWith(123);
-    expect(onRequestSettled).toHaveBeenCalledWith("cancelled");
-    expect(result.current.locationRequestStatus).toBe("cancelled");
+    expect(onRequestSettled).toHaveBeenCalledWith("interrupted");
+    expect(result.current.locationRequestStatus).toBe("interrupted");
 
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
@@ -375,15 +375,10 @@ describe("useLocationTracking", () => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
 
-    expect(result.current.isLocating).toBe(true);
-    expect(result.current.isTracking).toBe(true);
-    expect(result.current.locationRequestStatus).toBe("requesting");
-    expect(watchPositionMock).toHaveBeenCalledTimes(2);
-
-    act(() => {
-      document.dispatchEvent(new Event("visibilitychange"));
-    });
-    expect(watchPositionMock).toHaveBeenCalledTimes(2);
+    expect(result.current.isLocating).toBe(false);
+    expect(result.current.isTracking).toBe(false);
+    expect(result.current.locationRequestStatus).toBe("interrupted");
+    expect(watchPositionMock).toHaveBeenCalledTimes(1);
   });
 
   it("should ignore a late error from a suspended watch", () => {
@@ -411,6 +406,10 @@ describe("useLocationTracking", () => {
     });
 
     act(() => {
+      result.current.startTracking();
+    });
+
+    act(() => {
       staleErrorCallback({ code: 3, message: "Late timeout" });
     });
 
@@ -419,7 +418,7 @@ describe("useLocationTracking", () => {
     expect(clearWatchMock).not.toHaveBeenCalledWith(456);
   });
 
-  it("should bound visibility resume attempts before the first location", () => {
+  it("should not create watches from repeated visibility changes", () => {
     const { result } = renderHook(() => useLocationTracking());
 
     act(() => {
@@ -444,6 +443,7 @@ describe("useLocationTracking", () => {
       });
     }
 
-    expect(watchPositionMock).toHaveBeenCalledTimes(4);
+    expect(watchPositionMock).toHaveBeenCalledTimes(1);
+    expect(result.current.locationRequestStatus).toBe("interrupted");
   });
 });

@@ -1,4 +1,8 @@
-import type { LocationDiagnosticEventName } from "#/shared/lib/location-diagnostic-events";
+import type {
+  LocationDiagnosticEventName,
+  LocationDiagnosticLifecycleEvent,
+  LocationDiagnosticRequestMode,
+} from "#/shared/lib/location-diagnostic-events";
 
 export type { LocationDiagnosticEventName } from "#/shared/lib/location-diagnostic-events";
 
@@ -10,10 +14,15 @@ const LOCATION_DIAGNOSTICS_ID_SESSION_KEY = "zimdugo:location-diagnostics-id";
 export interface LocationDiagnosticData {
   elapsedMs?: number;
   errorCode?: number;
+  hasFocus?: boolean;
   hasSessionRequestMarker?: boolean;
+  hasUserActivation?: boolean;
+  isSecureContext?: boolean;
   isLocating?: boolean;
   isTracking?: boolean;
+  lifecycleEvent?: LocationDiagnosticLifecycleEvent;
   permission?: "prompt" | "granted" | "denied";
+  requestMode?: LocationDiagnosticRequestMode;
 }
 
 const getLocationDiagnosticId = () => {
@@ -35,6 +44,9 @@ export const isLocationDiagnosticsEnabled = () => {
 
   try {
     const searchParams = new URLSearchParams(window.location.search);
+    if (window.location.pathname === "/location-diagnostics") {
+      return true;
+    }
     if (searchParams.get("locationDebug") === "1") {
       window.sessionStorage.setItem(LOCATION_DIAGNOSTICS_SESSION_KEY, "true");
       return true;

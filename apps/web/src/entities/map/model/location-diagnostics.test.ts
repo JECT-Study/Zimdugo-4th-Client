@@ -30,6 +30,25 @@ describe("location diagnostics client", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("전용 진단 경로에서는 쿼리 없이 진단 이벤트를 보낸다", () => {
+    window.history.replaceState({}, "", "/location-diagnostics");
+
+    postLocationDiagnostic("diagnostic_request_started", {
+      requestMode: "default-current",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    expect(payload).toMatchObject({
+      event: "diagnostic_request_started",
+      requestMode: "default-current",
+    });
+
+    window.history.replaceState({}, "", "/");
+    postLocationDiagnostic("diagnostic_request_started");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("locationDebug가 켜지면 식별 정보 없이 진단 이벤트를 보낸다", () => {
     window.history.replaceState({}, "", "/?locationDebug=1");
 

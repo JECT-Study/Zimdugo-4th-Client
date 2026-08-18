@@ -95,21 +95,135 @@ export const locationButton = style({
   },
 });
 
-export const refreshButtonDisabled = style({
-  cursor: "not-allowed",
-});
-
 const spin = keyframes({
   from: { transform: "rotate(0deg)" },
   to: { transform: "rotate(360deg)" },
 });
 
+export const locationRecoveryNoticePositioner = style({
+  position: "fixed",
+  left: "50%",
+  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
+  transform: "translateX(-50%)",
+  width: "100%",
+  maxWidth: vars.layout.appMaxWidth,
+  paddingLeft: vars.layout.safeAreaInlineStart,
+  paddingRight: vars.layout.safeAreaInlineEnd,
+  boxSizing: "border-box",
+  zIndex: 1200,
+  pointerEvents: "none",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
+    },
+  },
+});
+
+export const locationRecoveryNotice = style({
+  position: "relative",
+  minHeight: "48px",
+  marginRight: "64px",
+  padding: `${vars.spacing[12]} 36px ${vars.spacing[12]} ${vars.spacing[16]}`,
+  border: `1px solid ${vars.color.palette.gray[200]}`,
+  borderRadius: vars.radius[8],
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.title,
+  boxShadow: vars.shadow[2],
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: vars.spacing[12],
+  boxSizing: "border-box",
+  overflow: "visible",
+  pointerEvents: "auto",
+});
+
+export const locationRecoveryNoticeMessage = style({
+  minWidth: 0,
+  flex: 1,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: 1.4,
+  overflowWrap: "anywhere",
+});
+
+export const locationRecoveryNoticeAction = style({
+  flexShrink: 0,
+  padding: `${vars.spacing[8]} 0`,
+  border: 0,
+  background: "transparent",
+  color: vars.color.text.brand,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  WebkitTapHighlightColor: "transparent",
+  touchAction: "manipulation",
+  selectors: {
+    "&:hover": {
+      textDecoration: "underline",
+    },
+    "&:active": {
+      opacity: 0.8,
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "2px",
+    },
+  },
+});
+
+export const locationRecoveryNoticeClose = style({
+  position: "absolute",
+  top: 0,
+  right: 0,
+  transform: "translate(50%, -50%)",
+  width: "40px",
+  height: "40px",
+  padding: 0,
+  border: 0,
+  borderRadius: vars.radius.max,
+  background: "transparent",
+  cursor: "pointer",
+  WebkitTapHighlightColor: "transparent",
+  touchAction: "manipulation",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  selectors: {
+    "&:hover": {
+      backgroundColor: vars.color.bg.surface,
+    },
+    "&:active": {
+      backgroundColor: vars.color.bg.active,
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "2px",
+    },
+  },
+});
+
+export const refreshButtonDisabled = style({
+  cursor: "not-allowed",
+});
 
 export const refreshIconSpinning = style({
   animation: `${spin} 0.45s ease-out 1`,
 });
 
-export const refreshCooldownBadge = style({
+const controlStatusBadge = style({
   position: "absolute",
   inset: 0,
   margin: "auto",
@@ -122,13 +236,45 @@ export const refreshCooldownBadge = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "13px",
-  fontWeight: vars.typography.fontWeight.SemiBold,
-  lineHeight: 1,
+  zIndex: 1,
   pointerEvents: "none",
   boxShadow: vars.shadow[1],
 });
 
+export const refreshCooldownBadge = style([
+  controlStatusBadge,
+  {
+    fontSize: "13px",
+    fontWeight: vars.typography.fontWeight.SemiBold,
+    lineHeight: 1,
+  },
+]);
+
+export const locationLoadingBadge = style([
+  controlStatusBadge,
+  {
+    selectors: {
+      "&::after": {
+        content: '""',
+        width: "12px",
+        height: "12px",
+        borderRadius: vars.radius.max,
+        border: `2px solid ${vars.color.palette.gray[300]}`,
+        borderTopColor: vars.color.brand.primary,
+        animation: `${spin} 0.8s linear infinite`,
+      },
+    },
+    "@media": {
+      "(prefers-reduced-motion: reduce)": {
+        selectors: {
+          "&::after": {
+            animation: "none",
+          },
+        },
+      },
+    },
+  },
+]);
 
 export const controlButton = style({
   width: "48px",
