@@ -7,18 +7,18 @@ import { type AppLocale, BASE_LOCALE } from "#/shared/i18n/locales";
  * jsdom 주소는 항상 "/" 라서 setLocale 로는 언어를 바꿀 수 없으므로,
  * 테스트에서는 런타임 구현 자체를 갈아끼워 언어를 고정한다.
  */
-export type LanguageRuntime = {
+export interface LanguageRuntime {
   getLocale: () => AppLocale;
   setLocale: (locale: AppLocale, options?: { reload?: boolean }) => void;
   overwriteGetLocale: (fn: () => AppLocale) => void;
   overwriteSetLocale: (fn: (locale: AppLocale) => void) => void;
-};
+}
 
-type InstalledRuntime = {
+interface InstalledRuntime {
   locale: AppLocale;
   originalGetLocale: LanguageRuntime["getLocale"];
   originalSetLocale: LanguageRuntime["setLocale"];
-};
+}
 
 const installedRuntimes = new Map<LanguageRuntime, InstalledRuntime>();
 
