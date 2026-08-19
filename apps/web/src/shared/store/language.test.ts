@@ -1,5 +1,8 @@
-import { languageTag, setLanguageTag } from "@repo/i18n";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  installTestLanguage,
+  type LanguageRuntime,
+} from "#/shared/test/language-runtime";
 
 import type { AppLanguage } from "./language";
 
@@ -29,7 +32,22 @@ const readLocaleCookie = () => {
   return entry?.split("=").slice(1).join("=") ?? null;
 };
 
+// vi.resetModules() 를 쓰므로 스토어가 보는 paraglide 런타임도 매번 새 인스턴스다.
+// 언어 고정과 검증은 그 인스턴스 기준으로 해야 한다.
+let currentRuntime: LanguageRuntime | null = null;
+
+const languageTag = () => currentRuntime?.getLocale() ?? null;
+
+const setRuntimeLanguage = (locale: AppLanguage) => {
+  if (currentRuntime) {
+    installTestLanguage(currentRuntime, locale);
+  }
+};
+
 const loadLanguageStore = async () => {
+  currentRuntime = (await import("@repo/i18n")) as unknown as LanguageRuntime;
+  installTestLanguage(currentRuntime);
+
   const languageModule = await import("./language");
   return languageModule.useAppLanguageStore;
 };
@@ -39,7 +57,7 @@ describe("useAppLanguageStore", () => {
     vi.resetModules();
     window.localStorage.clear();
     clearLocaleCookie();
-    setLanguageTag("ko", { reload: false });
+    currentRuntime = null;
   });
 
   it("keeps the persisted app language when URL locale is missing", async () => {
@@ -58,7 +76,7 @@ describe("useAppLanguageStore", () => {
     const useAppLanguageStore = await loadLanguageStore();
 
     useAppLanguageStore.getState().initializeLanguage(null);
-    setLanguageTag("ko", { reload: false });
+    setRuntimeLanguage("ko");
     clearLocaleCookie();
     useAppLanguageStore.getState().initializeLanguage(null);
 

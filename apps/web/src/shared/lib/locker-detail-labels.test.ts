@@ -1,5 +1,5 @@
-import { setLanguageTag } from "@repo/i18n";
 import { describe, expect, it } from "vitest";
+import { setTestLanguage } from "#/shared/test/language-runtime";
 import {
   formatLockerFloorLabel,
   formatLockerOperatingHoursLabel,
@@ -9,33 +9,33 @@ import {
 
 describe("locker-detail-labels", () => {
   it("한국어 미제공 문구를 반환한다", () => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
 
     expect(formatLockerOperatingHoursLabel()).toBe("운영시간 미제공");
     expect(formatLockerPriceLabel()).toBe("미제공");
   });
 
   it("영어 미제공 문구를 반환한다", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
 
     expect(formatLockerOperatingHoursLabel()).toBe("Not available");
     expect(formatLockerPriceLabel()).toBe("Not provided");
   });
 
   it("층수·규격을 로케일에 맞게 포맷한다", () => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
 
     expect(formatLockerFloorLabel(1)).toBe("1층");
     expect(formatLockerFloorLabel(2, "UNDERGROUND")).toBe("B2층");
     expect(formatLockerSizeTypesLabel(["LARGE", "SMALL"])).toBe("소형, 대형");
 
-    setLanguageTag("en");
+    setTestLanguage("en");
     expect(formatLockerFloorLabel(1)).toBe("1F");
     expect(formatLockerSizeTypesLabel(["MEDIUM"])).toBe("Medium");
   });
 
   it("운영시간·가격 범위를 포맷한다", () => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
 
     expect(formatLockerOperatingHoursLabel("06:00", "23:00")).toBe(
       "06:00 ~ 23:00",
@@ -54,16 +54,16 @@ describe("locker-detail-labels", () => {
   });
 
   it("비한국어 가격 단위는 KRW로 표시한다", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW – 5,000 KRW");
 
-    setLanguageTag("ja");
+    setTestLanguage("ja");
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW ~ 5,000 KRW");
 
-    setLanguageTag("zh");
+    setTestLanguage("zh");
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW ~ 5,000 KRW");
 
-    setLanguageTag("zh-TW");
+    setTestLanguage("zh-TW");
     expect(formatLockerPriceLabel(3000, 5000)).toBe("3,000 KRW ~ 5,000 KRW");
   });
 });

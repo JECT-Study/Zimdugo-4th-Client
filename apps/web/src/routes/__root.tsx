@@ -136,10 +136,6 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
       ? normalizeLocaleValue(pathLocaleMatch[0].slice(1))
       : null;
 
-    // 서버는 URL 경로로, 클라이언트 런타임은 쿠키로 로케일을 정한다.
-    // 프리렌더/캐시 응답은 Set-Cookie 를 싣지 못하므로 여기서 URL 기준으로 맞춰준다.
-    writeLocaleCookie(pathLocale || baseLocale);
-
     var raw = window.localStorage.getItem("app-language");
     if (!raw) return;
 

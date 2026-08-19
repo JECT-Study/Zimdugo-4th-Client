@@ -1,4 +1,4 @@
-import { setLanguageTag } from "@repo/i18n";
+import { overwriteGetLocale } from "@repo/i18n";
 import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ const meta = {
   decorators: [
     (Story) => {
       // 영어로 강제 설정
-      setLanguageTag("en");
+      overwriteGetLocale(() => "en");
       return (
         <QueryClientProvider client={storyQueryClient}>
           <div

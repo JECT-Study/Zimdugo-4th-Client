@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentType } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setTestLanguage } from "#/shared/test/language-runtime";
 
 const mocks = vi.hoisted(() => ({
   useQuery: vi.fn(),
@@ -70,7 +70,7 @@ const setReportHistoryState = ({
 
 describe("MyReportsPage", () => {
   beforeEach(() => {
-    setLanguageTag("ko", { reload: false });
+    setTestLanguage("ko");
     mocks.useQuery.mockReturnValue({
       data: null,
       isPending: false,
@@ -121,7 +121,7 @@ describe("MyReportsPage", () => {
   });
 
   it("설정 언어가 영어일 때는 영문 보조문구를 중복 노출하지 않는다", () => {
-    setLanguageTag("en", { reload: false });
+    setTestLanguage("en");
     setReportHistoryState({ items: [], totalCount: 0 });
     const MyReportsPage = Route.options.component as ComponentType;
 

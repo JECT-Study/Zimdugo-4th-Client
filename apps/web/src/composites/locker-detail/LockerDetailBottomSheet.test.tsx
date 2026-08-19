@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { m, setLanguageTag } from "@repo/i18n";
+import { m } from "@repo/i18n";
 import {
   cleanup,
   fireEvent,
@@ -11,6 +11,7 @@ import {
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setTestLanguage } from "#/shared/test/language-runtime";
 
 const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
 
@@ -93,7 +94,7 @@ const getSheetRoot = () =>
 
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
     Object.defineProperty(globalThis, "CSS", {
       configurable: true,
       value: {
@@ -369,7 +370,7 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("거리 정보가 비어 있어도 미제공 문구를 노출한다", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
 
     render(
       <LockerDetailBottomSheet

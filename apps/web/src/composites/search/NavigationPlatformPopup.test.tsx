@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as navigationPlatformLinks from "#/features/search/lib/navigation-platform-links";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
+import * as navigationPlatformLinks from "#/features/search/lib/navigation-platform-links";
+import { setTestLanguage } from "#/shared/test/language-runtime";
 import {
   getNavigationPlatformUrl,
   NavigationPlatformPopup,
@@ -36,7 +36,7 @@ const DEFAULT_NAVIGATION_ORIGIN = {
 
 describe("NavigationPlatformPopup", () => {
   beforeEach(() => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
   });
 
   afterEach(() => {
@@ -151,7 +151,7 @@ describe("NavigationPlatformPopup", () => {
   });
 
   it("한국어가 아니면 네이버지도 선택 시 언어 지원 안내 팝업을 띄운다", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
     const onSelectPlatform = vi.fn();
 
     vi.spyOn(
@@ -182,7 +182,7 @@ describe("NavigationPlatformPopup", () => {
   });
 
   it("한국어가 아니면 언어 지원 안내에서 아니오를 누르면 네이버지도를 열지 않는다", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
 
     const open = vi
       .spyOn(navigationPlatformLinks, "openNavigationPlatformLinks")
@@ -206,7 +206,7 @@ describe("NavigationPlatformPopup", () => {
   });
 
   it("한국어가 아니면 언어 지원 안내에서 예를 누르면 네이버지도를 연다", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
     const onSelectPlatform = vi.fn();
 
     const open = vi

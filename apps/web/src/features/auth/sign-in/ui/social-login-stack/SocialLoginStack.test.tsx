@@ -1,18 +1,18 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setTestLanguage } from "#/shared/test/language-runtime";
 import { SocialLoginStack } from "./SocialLoginStack";
 
 describe("SocialLoginStack", () => {
   afterEach(() => {
     cleanup();
-    setLanguageTag("ko");
+    setTestLanguage("ko");
   });
 
   beforeEach(() => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
   });
 
   it("shows English sub labels for non-English UI locales", () => {
@@ -22,7 +22,7 @@ describe("SocialLoginStack", () => {
   });
 
   it("hides English sub labels when UI locale is English", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
 
     render(<SocialLoginStack />);
 
