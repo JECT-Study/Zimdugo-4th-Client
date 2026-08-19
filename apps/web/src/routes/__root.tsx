@@ -28,6 +28,8 @@ import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
 import {
   BASE_LOCALE,
+  LOCALE_COOKIE_MAX_AGE,
+  LOCALE_COOKIE_NAME,
   LOCALE_NORMALIZATION_GROUPS,
   LOCALE_PATH_PREFIX,
   stripLocalePathPrefix,
@@ -104,47 +106,49 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
     var baseLocale = ${JSON.stringify(BASE_LOCALE)};
     var normalizationGroups = ${JSON.stringify(LOCALE_NORMALIZATION_GROUPS)};
     var localePathPattern = new RegExp(${JSON.stringify(LOCALE_PATH_PREFIX.source)}, ${JSON.stringify(LOCALE_PATH_PREFIX.flags)});
-    var raw = window.localStorage.getItem("app-language");
-    if (!raw) return;
+    var cookieName = ${JSON.stringify(LOCALE_COOKIE_NAME)};
+    var cookieMaxAge = ${JSON.stringify(LOCALE_COOKIE_MAX_AGE)};
 
-    var parsed = JSON.parse(raw);
-    var language = parsed && parsed.state && parsed.state.appLanguage;
-    var normalized = null;
+    function normalizeLocaleValue(value) {
+      if (typeof value !== "string") return null;
 
-    if (typeof language === "string") {
-      var lower = language.toLowerCase().replace(/_/g, "-");
+      var lower = value.toLowerCase().replace(/_/g, "-");
       for (var i = 0; i < normalizationGroups.length; i += 1) {
         var group = normalizationGroups[i];
         for (var j = 0; j < group.prefixes.length; j += 1) {
           if (lower.indexOf(group.prefixes[j]) === 0) {
-            normalized = group.locale;
-            break;
+            return group.locale;
           }
         }
-        if (normalized) break;
       }
+
+      return null;
     }
 
-    if (!normalized) return;
+    function writeLocaleCookie(locale) {
+      document.cookie =
+        cookieName + "=" + locale + ";path=/;max-age=" + cookieMaxAge + ";SameSite=Lax";
+    }
 
     var pathname = window.location.pathname;
     var pathLocaleMatch = pathname.match(localePathPattern);
-    var pathLocale = null;
+    var pathLocale = pathLocaleMatch
+      ? normalizeLocaleValue(pathLocaleMatch[0].slice(1))
+      : null;
 
-    if (pathLocaleMatch) {
-      var lowerPathLocale = pathLocaleMatch[0].slice(1).toLowerCase().replace(/_/g, "-");
-      for (var pathIndex = 0; pathIndex < normalizationGroups.length; pathIndex += 1) {
-        var pathGroup = normalizationGroups[pathIndex];
-        for (var prefixIndex = 0; prefixIndex < pathGroup.prefixes.length; prefixIndex += 1) {
-          if (lowerPathLocale.indexOf(pathGroup.prefixes[prefixIndex]) === 0) {
-            pathLocale = pathGroup.locale;
-            break;
-          }
-        }
-        if (pathLocale) break;
-      }
-    }
+    // 서버는 URL 경로로, 클라이언트 런타임은 쿠키로 로케일을 정한다.
+    // 프리렌더/캐시 응답은 Set-Cookie 를 싣지 못하므로 여기서 URL 기준으로 맞춰준다.
+    writeLocaleCookie(pathLocale || baseLocale);
 
+    var raw = window.localStorage.getItem("app-language");
+    if (!raw) return;
+
+    var parsed = JSON.parse(raw);
+    var normalized = normalizeLocaleValue(
+      parsed && parsed.state && parsed.state.appLanguage,
+    );
+
+    if (!normalized) return;
     if (pathLocale === normalized) return;
     if (!pathLocale && normalized === baseLocale) return;
 
@@ -154,6 +158,9 @@ const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
       : "/" + normalized + (basePathname === "/" ? "" : basePathname);
 
     if (nextPathname === pathname) return;
+
+    // 목적지 로케일로 쿠키를 먼저 갱신해야 서버 가드가 되돌려보내지 않는다.
+    writeLocaleCookie(normalized);
 
     window.location.replace(nextPathname + window.location.search + window.location.hash);
   } catch (_) {
