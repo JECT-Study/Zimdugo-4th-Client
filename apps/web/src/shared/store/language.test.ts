@@ -202,4 +202,90 @@ describe("resolveLanguageSyncAction", () => {
       }),
     ).toEqual({ kind: "sync", language: "ko" });
   });
+
+  it("does not redirect to the current href when the locale prefix is already correct", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/en",
+        urlLanguage: null,
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "sync", language: "en" });
+  });
+
+  it("does not redirect to the current nested href when the locale prefix is already correct", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/en/settings",
+        urlLanguage: null,
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "sync", language: "en" });
+  });
+
+  it("treats a trailing slash href as the current href", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/en/settings/",
+        urlLanguage: null,
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "sync", language: "en" });
+  });
+
+  it("does not redirect when the URL locale branch already points at the current href", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/en/settings",
+        urlLanguage: "ja",
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "sync", language: "en" });
+  });
+
+  it("still redirects when the target href differs from the current href", async () => {
+    const { resolveLanguageSyncAction } = await import("./language");
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/settings",
+        urlLanguage: null,
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "redirect", href: "/en/settings" });
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/ja/settings",
+        urlLanguage: "ja",
+        persistedLanguage: "en",
+        runtimeLanguage: "ko",
+      }),
+    ).toEqual({ kind: "redirect", href: "/en/settings" });
+
+    expect(
+      resolveLanguageSyncAction({
+        href: "/en/settings?tab=language#current",
+        urlLanguage: "en",
+        persistedLanguage: "ko",
+        runtimeLanguage: "en",
+      }),
+    ).toEqual({
+      kind: "redirect",
+      href: "/settings?tab=language#current",
+    });
+  });
 });

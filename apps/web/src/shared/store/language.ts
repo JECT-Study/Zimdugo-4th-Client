@@ -69,6 +69,38 @@ export type LanguageSyncAction =
   | { kind: "sync"; language: AppLanguage }
   | { kind: "redirect"; href: string };
 
+/** trailing slash 등 표기만 다른 동일 주소를 같은 값으로 보기 위한 정규화. */
+const normalizeHrefForComparison = (href: string): string => {
+  const isProtocolRelative = href.startsWith("//");
+  const url = new URL(
+    href,
+    isProtocolRelative ? `http:${href}` : HREF_PARSE_BASE_ORIGIN,
+  );
+  const pathname = url.pathname.replace(/\/+$/, "") || "/";
+
+  return `${url.origin}${pathname}${url.search}${url.hash}`;
+};
+
+/**
+ * 목적지가 현재 주소와 같으면 리다이렉트 대신 sync 를 돌려준다.
+ * 같은 주소로 replace 하면 그대로 무한 새로고침이 되기 때문이다.
+ */
+const resolveRedirectOrSyncAction = (
+  href: string,
+  language: AppLanguage,
+): LanguageSyncAction => {
+  const localizedHref = getLocalizedHref(href, language);
+
+  if (
+    normalizeHrefForComparison(localizedHref) ===
+    normalizeHrefForComparison(href)
+  ) {
+    return { kind: "sync", language };
+  }
+
+  return { kind: "redirect", href: localizedHref };
+};
+
 export const resolveLanguageSyncAction = ({
   href,
   urlLanguage,
@@ -84,10 +116,7 @@ export const resolveLanguageSyncAction = ({
 
   if (normalizedUrlLanguage) {
     if (normalizedUrlLanguage !== persistedLanguage) {
-      return {
-        kind: "redirect",
-        href: getLocalizedHref(href, persistedLanguage),
-      };
+      return resolveRedirectOrSyncAction(href, persistedLanguage);
     }
 
     return { kind: "sync", language: normalizedUrlLanguage };
@@ -100,10 +129,7 @@ export const resolveLanguageSyncAction = ({
     persistedLanguage !== DEFAULT_APP_LANGUAGE &&
     persistedLanguage !== normalizedRuntimeLanguage
   ) {
-    return {
-      kind: "redirect",
-      href: getLocalizedHref(href, persistedLanguage),
-    };
+    return resolveRedirectOrSyncAction(href, persistedLanguage);
   }
 
   return { kind: "sync", language: normalizedRuntimeLanguage };
