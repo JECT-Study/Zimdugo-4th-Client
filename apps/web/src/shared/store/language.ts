@@ -9,6 +9,7 @@ import {
   LOCALE_COOKIE_NAME,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
+  parsePathLocale,
   resolveBrowserLanguageCandidates,
 } from "#/shared/i18n/locales";
 
@@ -28,9 +29,9 @@ export const getUrlLanguage = (href: string): AppLanguage | null => {
     href,
     isProtocolRelative ? `http:${href}` : HREF_PARSE_BASE_ORIGIN,
   );
-  const firstSegment = url.pathname.split("/").filter(Boolean)[0];
-
-  return normalizeLanguage(firstSegment);
+  // normalizeLanguage 는 BCP-47 태그용 접두 매칭이라 "/japan" 을 ja 로 오인한다.
+  // 경로 세그먼트는 정확히 일치할 때만 로케일로 인정한다.
+  return parsePathLocale(url.pathname);
 };
 
 export const getLocalizedHref = (

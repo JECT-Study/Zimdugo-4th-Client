@@ -114,6 +114,35 @@ describe("useAppLanguageStore", () => {
   });
 });
 
+describe("getUrlLanguage", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it("reads the locale from the first path segment", async () => {
+    const { getUrlLanguage } = await import("./language");
+
+    expect(getUrlLanguage("/en/settings")).toBe("en");
+    expect(getUrlLanguage("/zh-TW")).toBe("zh-TW");
+    expect(getUrlLanguage("https://zimdugo.com/ja/notices")).toBe("ja");
+  });
+
+  it("returns null for locale-less paths", async () => {
+    const { getUrlLanguage } = await import("./language");
+
+    expect(getUrlLanguage("/")).toBeNull();
+    expect(getUrlLanguage("/settings")).toBeNull();
+  });
+
+  it("does not treat a path segment that merely starts with a locale as a locale", async () => {
+    const { getUrlLanguage } = await import("./language");
+
+    expect(getUrlLanguage("/japan")).toBeNull();
+    expect(getUrlLanguage("/korea")).toBeNull();
+    expect(getUrlLanguage("/enterprise")).toBeNull();
+  });
+});
+
 describe("resolveLanguageSyncAction", () => {
   beforeEach(() => {
     vi.resetModules();
