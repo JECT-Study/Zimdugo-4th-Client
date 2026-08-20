@@ -15,8 +15,6 @@ const renderView = ({ isAuthenticated = true } = {}) => {
         nickname: "여정이",
         profileImageUrl:
           "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E",
-        favoriteCount: 12,
-        reportCount: 3,
         onProfileImagePress: vi.fn(),
         onFileChange: vi.fn(),
         onNicknameChange: vi.fn(),
@@ -54,8 +52,8 @@ describe("SettingsPageView", () => {
     renderView();
 
     expect(screen.getByDisplayValue("여정이")).toBeTruthy();
-    expect(screen.getByText("12개")).toBeTruthy();
-    expect(screen.getByText("3건")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "즐겨찾기" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "제보 히스토리" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "언어 설정" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "로그아웃" })).toBeTruthy();
   });

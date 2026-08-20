@@ -10,7 +10,6 @@ import {
 import { useEffect, useState } from "react";
 import { useUser } from "#/entities/user/hooks/useUser";
 import { authService } from "#/features/auth/sign-in/api/authService";
-import { useMyPageSummary } from "#/features/my/hooks/useMyPageSummary";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
 import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
 import { resolveMyPageNickname } from "#/features/my/lib/resolve-my-page-nickname";
@@ -43,9 +42,6 @@ export function SettingsPage() {
       stripLocalePathPrefix(state.location.pathname) === "/settings",
   });
   const { data: profile, isPending: isProfilePending } = useUser(
-    isAuthenticated && isSettingsRoot,
-  );
-  const { data: summary, isPending: isSummaryPending } = useMyPageSummary(
     isAuthenticated && isSettingsRoot,
   );
   const { mutate: updateProfile } = useUpdateMeProfile();
@@ -172,9 +168,6 @@ export function SettingsPage() {
             ? {
                 nickname: nicknameDraft,
                 profileImageUrl: profile?.profileImageUrl,
-                favoriteCount: summary?.favoriteLockerCount ?? 0,
-                reportCount: summary?.lockerReportCount ?? 0,
-                isSummaryPending,
                 isUpdatingProfileImage,
                 fileInputRef,
                 onProfileImagePress: openConfirmPopup,

@@ -1,6 +1,6 @@
 import { vars } from "@repo/ui/vars";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Meta, StoryObj } from "@storybook/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SettingsPageView } from "./SettingsPageView";
 
 const queryClient = new QueryClient({
@@ -45,8 +45,6 @@ const meta = {
     profile: {
       nickname: "여정이",
       profileImageUrl: PROFILE_IMAGE_URL,
-      favoriteCount: 12,
-      reportCount: 3,
       onProfileImagePress: () => undefined,
       onFileChange: () => undefined,
       onNicknameChange: () => undefined,

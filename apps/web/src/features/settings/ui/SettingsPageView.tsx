@@ -26,9 +26,6 @@ import {
 interface SettingsProfile {
   nickname: string;
   profileImageUrl?: string;
-  favoriteCount: number;
-  reportCount: number;
-  isSummaryPending?: boolean;
   isUpdatingProfileImage?: boolean;
   fileInputRef?: RefObject<HTMLInputElement | null>;
   onProfileImagePress: () => void;
@@ -61,15 +58,6 @@ export function SettingsPageView({
   onPrivacyPress,
   onWithdrawPress,
 }: SettingsPageViewProps) {
-  const favoriteCountLabel = profile?.isSummaryPending
-    ? m.my_summary_loading()
-    : m.my_summary_favorite_count({
-        count: String(profile?.favoriteCount ?? 0),
-      });
-  const reportCountLabel = profile?.isSummaryPending
-    ? m.my_summary_loading()
-    : m.my_summary_report_count({ count: String(profile?.reportCount ?? 0) });
-
   return (
     <div className={page}>
       <Header
@@ -83,7 +71,10 @@ export function SettingsPageView({
       <main className={content}>
         {profile ? (
           <>
-            <section className={profileSection} aria-label={m.my_profile_aria()}>
+            <section
+              className={profileSection}
+              aria-label={m.my_profile_aria()}
+            >
               <button
                 type="button"
                 className={profileImageButton}
@@ -123,12 +114,10 @@ export function SettingsPageView({
             >
               <SettingsRow
                 label={m.my_menu_favorite()}
-                value={favoriteCountLabel}
                 onPress={profile.onFavoritesPress}
               />
               <SettingsRow
                 label={m.my_menu_report_history()}
-                value={reportCountLabel}
                 onPress={profile.onReportsPress}
               />
             </section>
@@ -136,7 +125,10 @@ export function SettingsPageView({
         ) : null}
 
         <section className={[group, profile ? groupGap : ""].join(" ")}>
-          <SettingsRow label={m.settings_language()} onPress={onLanguagePress} />
+          <SettingsRow
+            label={m.settings_language()}
+            onPress={onLanguagePress}
+          />
         </section>
 
         <section className={[group, groupGap].join(" ")}>
