@@ -58,6 +58,7 @@ import {
   IconNormalGlobe32,
   IconNormalMapPin24,
   IconNormalProfile,
+  IconProfile22,
   IconNormalSearch24,
   IconNormalWallet24,
   IconPencil24,
@@ -843,6 +844,13 @@ export const Circlebox: Story = {
       </Cell>
       <Cell name="profile" ingredients={["IconMarker22"]} probeTarget="root">
         <IconNormalProfile />
+      </Cell>
+      <Cell
+        name="profile-22"
+        ingredients={["IconProfile22"]}
+        probeTarget="root"
+      >
+        <IconProfile22 />
       </Cell>
       <Cell
         name="clock"

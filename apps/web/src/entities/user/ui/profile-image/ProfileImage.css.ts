@@ -7,7 +7,7 @@ export const profileImageContainer = style({
   alignItems: "center",
   justifyContent: "center",
   borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
+  backgroundColor: vars.color.palette.gray[300],
   overflow: "hidden",
   flexShrink: 0,
 });
@@ -22,5 +22,6 @@ export const profileImageContent = style({
 });
 
 export const profileImageIcon = style({
-  color: vars.color.icon.lighten,
+  width: "68.75%",
+  height: "68.75%",
 });

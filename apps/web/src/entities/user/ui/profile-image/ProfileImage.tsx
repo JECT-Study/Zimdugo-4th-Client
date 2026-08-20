@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
 import { useEffect, useState } from "react";
-import { IconCamera24 } from "@repo/ui/tokens/icons";
+import { IconProfile22 } from "@repo/ui/tokens/icons";
 import { useUser } from "../../hooks/useUser.ts";
 import * as styles from "./ProfileImage.css.ts";
 
@@ -72,7 +72,7 @@ export function ProfileImage({
           onError={handleSetImageError}
         />
       ) : (
-        <IconCamera24 className={styles.profileImageIcon} />
+        <IconProfile22 className={styles.profileImageIcon} />
       )}
     </div>
   );
