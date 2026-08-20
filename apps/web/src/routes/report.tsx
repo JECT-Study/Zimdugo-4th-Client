@@ -321,7 +321,7 @@ function ReportPage() {
             label: m.report_submit_success_history(),
             onPress: () => {
               setIsPopupOpen(false);
-              navigate({ to: "/my" });
+              navigate({ to: "/my/reports" });
             },
           }}
         />

@@ -78,7 +78,7 @@ function MyFavoritesPage() {
   });
 
   const handleBack = () => {
-    navigate({ to: "/my" });
+    navigate({ to: "/settings" });
   };
 
   const handleRetry = () => {
