@@ -17,9 +17,11 @@ const meta = {
       <QueryClientProvider client={queryClient}>
         <div
           style={{
-            width: vars.layout.designWidth,
+            width: vars.layout.tabletAppMaxWidth,
+            maxWidth: "100%",
             height: "100dvh",
             margin: "0 auto",
+            overflow: "hidden",
           }}
         >
           <Story />
