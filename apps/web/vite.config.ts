@@ -53,16 +53,24 @@ const config = defineConfig({
               // 로케일 prefix 없는 문서 요청만 정적 서빙을 건너뛰고 함수로 보내
               // 기존 가드가 판정하게 한다. /en, /ja, /zh, /zh-TW 와 정적 자산은
               // 이 패턴에 걸리지 않으므로 그대로 CDN 에서 나간다.
+              //
+              // PARAGLIDE_LOCALE 쿠키가 있으면 건너뛰는 missing 조건을 한때 뒀지만
+              // 뺐다. resolvePreferredDocumentLocale 이 쿠키를 가장 먼저 보므로
+              // 쿠키 기반 선호 판정도 서버에서 이뤄져야 하는데, missing 이 바로 그
+              // 요청을 함수에 닿지 못하게 막아 재방문자가 한국어 정적 페이지에 갇혔다.
+              //
+              // 대가로 로케일 prefix 없는 문서 요청은 전부 함수를 탄다. 다만 대부분의
+              // 봇은 Accept-Language 를 보내지 않아 has 에 걸리지 않고, prefix 가 있는
+              // 경로는 src 에 매치되지 않으므로 영향 범위는 prefix 없는 진입뿐이다.
               src: "^/(login|my|notices|report|settings)?(/.*)?$",
               has: [{ type: "header", key: "accept-language" }],
-              missing: [{ type: "cookie", key: "PARAGLIDE_LOCALE" }],
               dest: "/__server",
             },
           ],
-          // Nitro 의 VercelBuildConfigV3 route 타입에는 has/missing 이 없어서
-          // 캐스트 없이는 컴파일되지 않는다. Vercel Build Output API 자체는 둘 다
-          // 지원하며(Nitro 도 skew protection 에서 has 를 emit 한다), 캐스트를 지우면
-          // 타입 에러가 나거나 조건이 사라져 모든 요청이 함수로 간다. 지우지 말 것.
+          // Nitro 의 VercelBuildConfigV3 route 타입에는 has 가 없어서 캐스트 없이는
+          // 컴파일되지 않는다. Vercel Build Output API 자체는 지원하며(Nitro 도 skew
+          // protection 에서 has 를 emit 한다), 캐스트를 지우면 타입 에러가 나거나
+          // 조건이 사라져 모든 요청이 함수로 간다. 지우지 말 것.
         } as never,
       },
       routeRules:
