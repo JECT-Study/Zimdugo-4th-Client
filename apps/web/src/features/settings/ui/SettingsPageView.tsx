@@ -16,6 +16,8 @@ import {
   nameField,
   page,
   profileImageButton,
+  profileImageControl,
+  profileImageEditButton,
   profileImageEditIcon,
   profileSection,
   rowButton,
@@ -31,7 +33,9 @@ interface SettingsProfile {
   profileImageUrl?: string;
   isUpdatingProfileImage?: boolean;
   fileInputRef?: RefObject<HTMLInputElement | null>;
+  profileImageButtonRef?: RefObject<HTMLButtonElement | null>;
   onProfileImagePress: () => void;
+  onProfileImageEditPress: () => void;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onNicknameChange: (nickname: string) => void;
   onNicknameBlur: () => void;
@@ -80,23 +84,36 @@ export function SettingsPageView({
               className={profileSection}
               aria-label={m.my_profile_aria()}
             >
-              <button
-                type="button"
-                className={profileImageButton}
-                aria-label={m.my_profile_image_change_aria()}
-                onClick={profile.onProfileImagePress}
-                disabled={isGuest || profile.isUpdatingProfileImage}
-              >
-                <ProfileImage
-                  src={profile.profileImageUrl}
-                  size={111}
-                  placeholderTone={isGuest ? "guest" : "default"}
-                  alt={m.my_profile_image_alt()}
-                />
+              <div className={profileImageControl}>
+                <button
+                  ref={profile.profileImageButtonRef}
+                  type="button"
+                  className={profileImageButton}
+                  aria-label={
+                    isGuest ? m.auth_required_login() : m.my_profile_image_alt()
+                  }
+                  onClick={profile.onProfileImagePress}
+                  disabled={!isGuest && !profile.profileImageUrl}
+                >
+                  <ProfileImage
+                    src={profile.profileImageUrl}
+                    size={111}
+                    placeholderTone={isGuest ? "guest" : "default"}
+                    alt={m.my_profile_image_alt()}
+                  />
+                </button>
                 {!isGuest ? (
-                  <IconCircleboxPencil32 className={profileImageEditIcon} />
+                  <button
+                    type="button"
+                    className={profileImageEditButton}
+                    aria-label={m.my_profile_image_change_aria()}
+                    onClick={profile.onProfileImageEditPress}
+                    disabled={profile.isUpdatingProfileImage}
+                  >
+                    <IconCircleboxPencil32 className={profileImageEditIcon} />
+                  </button>
                 ) : null}
-              </button>
+              </div>
               <input
                 ref={profile.fileInputRef}
                 className={hiddenFileInput}

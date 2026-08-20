@@ -71,8 +71,12 @@ export const profileSection = style({
   width: "100%",
 });
 
-export const profileImageButton = style({
+export const profileImageControl = style({
   position: "relative",
+  display: "inline-flex",
+});
+
+export const profileImageButton = style({
   display: "inline-flex",
   padding: 0,
   border: 0,
@@ -85,6 +89,29 @@ export const profileImageButton = style({
       outlineOffset: "4px",
     },
     "&:disabled": {
+      cursor: "default",
+    },
+  },
+});
+
+export const profileImageEditButton = style({
+  position: "absolute",
+  right: 0,
+  bottom: 0,
+  display: "inline-flex",
+  width: "32px",
+  height: "32px",
+  padding: 0,
+  border: 0,
+  borderRadius: vars.radius.max,
+  background: "transparent",
+  cursor: "pointer",
+  selectors: {
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "2px",
+    },
+    "&:disabled": {
       cursor: "not-allowed",
       opacity: 0.6,
     },
@@ -92,9 +119,6 @@ export const profileImageButton = style({
 });
 
 export const profileImageEditIcon = style({
-  position: "absolute",
-  right: 0,
-  bottom: 0,
   pointerEvents: "none",
 });
 

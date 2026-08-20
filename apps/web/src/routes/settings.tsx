@@ -7,7 +7,7 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUser } from "#/entities/user/hooks/useUser";
 import { authService } from "#/features/auth/sign-in/api/authService";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
@@ -25,6 +25,7 @@ import { useAuth } from "#/shared/hooks/useAuth";
 import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { useAuthStore } from "#/shared/store/authStore";
+import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 
 export const Route = createFileRoute("/settings")({
   head: createNoIndexNoFollowHead,
@@ -60,6 +61,12 @@ export function SettingsPage() {
   const [nicknameDraft, setNicknameDraft] = useState("");
   const [isNicknameInitialized, setIsNicknameInitialized] = useState(false);
   const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const profileImageButtonRef = useRef<HTMLButtonElement | null>(null);
+  const handleCloseImagePreview = useCallback(() => {
+    setPreviewImageUrl(null);
+    profileImageButtonRef.current?.focus();
+  }, []);
 
   // 2. Derived values
   const { isStyleReady } = useSettingsStyleReady({ enabled: isSettingsRoot });
@@ -113,6 +120,20 @@ export function SettingsPage() {
 
   const handleLogout = () => {
     void logout();
+  };
+
+  const handleProfileImagePress = () => {
+    if (!isAuthenticated) {
+      void navigate({
+        to: "/login",
+        search: { returnPath: "/settings", code: undefined },
+      });
+      return;
+    }
+
+    if (profile?.profileImageUrl) {
+      setPreviewImageUrl(profile.profileImageUrl);
+    }
   };
 
   // 4. Side effects
@@ -169,7 +190,9 @@ export function SettingsPage() {
           profileImageUrl: profile?.profileImageUrl,
           isUpdatingProfileImage,
           fileInputRef,
-          onProfileImagePress: openConfirmPopup,
+          profileImageButtonRef,
+          onProfileImagePress: handleProfileImagePress,
+          onProfileImageEditPress: openConfirmPopup,
           onFileChange: (event) => {
             void handleFileChange(event);
           },
@@ -180,6 +203,15 @@ export function SettingsPage() {
           onLogout: handleLogout,
         }}
       />
+
+      {previewImageUrl ? (
+        <OriginalImagePreview
+          imageUrl={previewImageUrl}
+          alt={m.my_profile_image_alt()}
+          closeLabel={m.my_report_detail_close()}
+          onClose={handleCloseImagePreview}
+        />
+      ) : null}
 
       <Popup
         isOpen={isConfirmPopupOpen}

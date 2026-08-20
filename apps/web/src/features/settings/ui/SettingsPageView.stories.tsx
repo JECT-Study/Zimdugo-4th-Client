@@ -1,7 +1,13 @@
+import { m } from "@repo/i18n";
 import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SettingsPageView } from "./SettingsPageView";
+import { useState } from "react";
+import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
+import {
+  SettingsPageView,
+  type SettingsPageViewProps,
+} from "./SettingsPageView";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -42,6 +48,7 @@ const meta = {
       nickname: "여정이",
       profileImageUrl: PROFILE_IMAGE_URL,
       onProfileImagePress: () => undefined,
+      onProfileImageEditPress: () => undefined,
       onFileChange: () => undefined,
       onNicknameChange: () => undefined,
       onNicknameBlur: () => undefined,
@@ -50,6 +57,7 @@ const meta = {
       onLogout: () => undefined,
     },
   },
+  render: (args) => <SettingsPageStory {...args} />,
 } satisfies Meta<typeof SettingsPageView>;
 
 export default meta;
@@ -78,3 +86,38 @@ export const Guest: Story = {
     onWithdrawPress: undefined,
   },
 };
+
+function SettingsPageStory(args: SettingsPageViewProps) {
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const profile = args.profile;
+
+  const handleProfileImagePress = () => {
+    if (profile?.isGuest || !profile?.profileImageUrl) {
+      profile?.onProfileImagePress();
+      return;
+    }
+
+    setPreviewImageUrl(profile.profileImageUrl);
+  };
+
+  return (
+    <>
+      <SettingsPageView
+        {...args}
+        profile={
+          profile
+            ? { ...profile, onProfileImagePress: handleProfileImagePress }
+            : undefined
+        }
+      />
+      {previewImageUrl ? (
+        <OriginalImagePreview
+          imageUrl={previewImageUrl}
+          alt={m.my_profile_image_alt()}
+          closeLabel={m.search_close_aria()}
+          onClose={() => setPreviewImageUrl(null)}
+        />
+      ) : null}
+    </>
+  );
+}
