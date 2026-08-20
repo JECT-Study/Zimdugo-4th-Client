@@ -19,6 +19,7 @@ import {
 
 export type { FlagCountry } from "./IconFlagCircle24";
 export { IconFlagCircle24 } from "./IconFlagCircle24";
+export { IconHomeProfile32 } from "./IconHomeProfile32";
 export type { SocialProvider } from "./IconSocialProvider18";
 export { IconSocialProvider18 } from "./IconSocialProvider18";
 export type { LanguageFlag } from "./LanguageFlagIcon";

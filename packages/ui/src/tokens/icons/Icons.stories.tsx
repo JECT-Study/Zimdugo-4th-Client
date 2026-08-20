@@ -33,6 +33,7 @@ import {
   IconFilter20,
   IconFlagCircle24,
   IconGoogle24,
+  IconHomeProfile32,
   IconKakao24,
   IconLockerDetailCapacity24,
   IconLockerDetailHeader24,
@@ -910,6 +911,13 @@ export const Circlebox: Story = {
         probeTarget="root"
       >
         <IconProfile32 />
+      </Cell>
+      <Cell
+        name="home-profile-32"
+        ingredients={["IconHomeProfile32", "Profile / My Page"]}
+        probeTarget="root"
+      >
+        <IconHomeProfile32 />
       </Cell>
       <Cell
         name="clock"
