@@ -23,9 +23,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe(
       "/zh-TW/settings?tab=1",
     );
-    expect(result.response.headers.get("Set-Cookie")).toContain(
-      "PARAGLIDE_LOCALE=zh-TW",
-    );
+    expect(result.response.headers.get("Set-Cookie")).toBeNull();
   });
 
   it("redirects an uppercase locale prefix to its canonical casing", () => {
@@ -48,8 +46,11 @@ describe("resolveLocaleRequest", () => {
     if (result.kind !== "continue") return;
 
     expect(result.pathLocale).toBe("zh-TW");
-    expect(result.middlewareRequest.headers.get("Cookie")).toContain(
-      "PARAGLIDE_LOCALE=zh-TW",
+    // 로케일은 URL 로 해석되므로 가드가 요청 쿠키를 조작하지 않는다.
+    // 쿠키는 사용자가 언어를 직접 고를 때만 기록되는 선호 채널이다.
+    expect(result.middlewareRequest.headers.get("Cookie")).toBeNull();
+    expect(result.middlewareRequest.url).toBe(
+      "https://zimdugo.com/zh-TW/settings",
     );
   });
 
@@ -64,6 +65,24 @@ describe("resolveLocaleRequest", () => {
     if (result.kind !== "redirect") return;
 
     expect(result.response.headers.get("Location")).toBe("/ja/settings");
+    expect(result.response.headers.get("Vary")).toBe("Cookie, Accept-Language");
+  });
+
+  it("never writes the locale preference cookie", () => {
+    const preferenceRedirect = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/settings", {
+        "Accept-Language": "en-US,en;q=0.9",
+      }),
+    );
+
+    expect(preferenceRedirect.kind).toBe("redirect");
+    if (preferenceRedirect.kind !== "redirect") return;
+
+    expect(preferenceRedirect.response.headers.get("Location")).toBe(
+      "/en/settings",
+    );
+    // 로케일 링크 방문이나 Accept-Language 감지는 선호 기록이 아니다.
+    expect(preferenceRedirect.response.headers.get("Set-Cookie")).toBeNull();
   });
 
   it("leaves locale-less document requests alone for the base locale", () => {

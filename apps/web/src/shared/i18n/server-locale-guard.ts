@@ -1,7 +1,6 @@
 import {
   type AppLocale,
   BASE_LOCALE,
-  LOCALE_COOKIE_MAX_AGE,
   LOCALE_COOKIE_NAME,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
@@ -86,7 +85,8 @@ const resolvePreferredDocumentLocale = (req: Request): AppLocale => {
   const acceptLanguageHeader = req.headers.get("Accept-Language");
   if (acceptLanguageHeader) {
     return (
-      getAcceptLanguageLocale(acceptLanguageHeader) ?? UNSUPPORTED_LOCALE_FALLBACK
+      getAcceptLanguageLocale(acceptLanguageHeader) ??
+      UNSUPPORTED_LOCALE_FALLBACK
     );
   }
 
@@ -116,63 +116,20 @@ const getCanonicalLocalePath = (url: URL, locale: AppLocale): string | null => {
   return `/${locale}${url.pathname.slice(match[0].length)}${url.search}`;
 };
 
-const getLocaleCookie = (locale: AppLocale): string => {
-  return `${LOCALE_COOKIE_NAME}=${locale}; Path=/; Max-Age=${LOCALE_COOKIE_MAX_AGE}; SameSite=Lax`;
-};
-
-const getRequestCookieHeader = (
-  currentCookie: string | null,
-  locale: AppLocale,
-): string => {
-  const preservedCookies = currentCookie
-    ? currentCookie
-        .split(";")
-        .map((cookie) => cookie.trim())
-        .filter((cookie) => cookie.split("=")[0] !== LOCALE_COOKIE_NAME)
-    : [];
-
-  return [...preservedCookies, `${LOCALE_COOKIE_NAME}=${locale}`].join("; ");
-};
-
-const withLocaleCookieHeader = (req: Request, locale: AppLocale): Request => {
-  const headers = new Headers(req.headers);
-  headers.set("Cookie", getRequestCookieHeader(headers.get("Cookie"), locale));
-
-  // Nitro/prerender Request는 `new Request(req, …)` 복제 시 undici #state 오류가 난다.
-  const init: RequestInit = { method: req.method, headers };
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    init.body = req.body;
-    init.duplex = "half";
-  }
-
-  return new Request(req.url, init);
-};
-
-const withLocaleCookieResponse = (
-  response: Response,
-  locale: AppLocale,
-): Response => {
-  const headers = new Headers(response.headers);
-  headers.append("Set-Cookie", getLocaleCookie(locale));
-
-  const hasNoBody = response.status === 204 || response.status === 304;
-
-  return new Response(hasNoBody ? null : response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-};
-
+/**
+ * 리다이렉트든 렌더든 서버는 로케일 선호 쿠키를 쓰지 않는다.
+ * 쿠키는 사용자가 설정 화면이나 홈 검색바에서 언어를 직접 고를 때만 기록된다.
+ * 로케일 URL 방문이나 Accept-Language 감지는 "선택"이 아니라서다.
+ */
 const getLocaleRedirectResponse = (
   location: string,
-  locale: AppLocale,
+  extraHeaders?: Record<string, string>,
 ): Response => {
   return new Response(null, {
     status: 307,
     headers: {
       Location: location,
-      "Set-Cookie": getLocaleCookie(locale),
+      ...extraHeaders,
     },
   });
 };
@@ -193,9 +150,10 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
     const canonicalPath = getCanonicalLocalePath(url, pathLocale);
 
     if (canonicalPath) {
+      // 표기 정규화는 경로만 보고 정하므로 요청 헤더에 따라 달라지지 않는다.
       return {
         kind: "redirect",
-        response: getLocaleRedirectResponse(canonicalPath, pathLocale),
+        response: getLocaleRedirectResponse(canonicalPath),
       };
     }
   } else if (isDocumentRequest(req)) {
@@ -204,9 +162,11 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
     if (preferredLocale !== BASE_LOCALE) {
       return {
         kind: "redirect",
+        // 목적지가 쿠키와 Accept-Language 에 따라 달라진다. 공용 캐시가
+        // 한 사용자의 결과를 다른 사용자에게 주지 않도록 Vary 를 붙인다.
         response: getLocaleRedirectResponse(
           getLocalizedPath(url, preferredLocale),
-          preferredLocale,
+          { Vary: "Cookie, Accept-Language" },
         ),
       };
     }
@@ -214,16 +174,7 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
 
   return {
     kind: "continue",
-    middlewareRequest: pathLocale
-      ? withLocaleCookieHeader(req, pathLocale)
-      : req,
+    middlewareRequest: req,
     pathLocale,
   };
-};
-
-export const finalizeLocaleResponse = (
-  response: Response,
-  pathLocale: AppLocale | null,
-): Response => {
-  return pathLocale ? withLocaleCookieResponse(response, pathLocale) : response;
 };
