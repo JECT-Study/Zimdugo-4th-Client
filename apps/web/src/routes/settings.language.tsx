@@ -34,7 +34,7 @@ import {
   appLanguageLabelMap,
   getLocalizedHref,
   normalizeLanguage,
-  useAppLanguageStore,
+  setAppLanguage,
 } from "#/shared/store/language";
 
 export const Route = createFileRoute("/settings/language")({
@@ -44,7 +44,6 @@ export const Route = createFileRoute("/settings/language")({
 
 function SettingsLanguagePage() {
   const navigate = useNavigate();
-  const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady();
   const applyFallbackStyle = isStyleTimedOut;
   const currentLanguage = normalizeLanguage(languageTag()) ?? BASE_LOCALE;

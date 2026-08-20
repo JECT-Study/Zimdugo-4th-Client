@@ -51,16 +51,3 @@ export const parsePathLocale = (pathname: string): AppLocale | null => {
 
   return normalizeLocale(match[0].slice(1));
 };
-
-export const resolveBrowserLanguageCandidates = (
-  candidates: readonly string[],
-): AppLocale | null => {
-  for (const candidate of candidates) {
-    const normalized = normalizeLocale(candidate);
-    if (normalized) {
-      return normalized;
-    }
-  }
-
-  return candidates.length > 0 ? UNSUPPORTED_LOCALE_FALLBACK : null;
-};

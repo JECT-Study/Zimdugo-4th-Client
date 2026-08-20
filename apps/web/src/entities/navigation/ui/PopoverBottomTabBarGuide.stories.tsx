@@ -5,7 +5,6 @@ import { vars } from "@repo/ui/vars";
 import type React from "react";
 import { useLayoutEffect, useState } from "react";
 import { Button as AriaButton } from "react-aria-components";
-import { useAppLanguageStore } from "@/shared/store/language.ts";
 import { BottomTabBar, type BottomTabKey } from "./BottomTabBar.tsx";
 import { storyRelativeFrame } from "./BottomTabBar.stories.css.ts";
 
@@ -45,13 +44,8 @@ const TAB_COUNT = TAB_ORDER.length;
 const TAB_BAR_HEIGHT = 60;
 const POPOVER_EDGE_PADDING = 12;
 
-const ensureKoreanHydrated = () => {
+const ensureKoreanLocale = () => {
   setLanguageTag("ko");
-  useAppLanguageStore.setState({
-    appLanguage: "ko",
-    hasHydrated: true,
-    hasInitialized: true,
-  });
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -186,7 +180,7 @@ function BottomTabPopoverPreview({ activeTab }: { activeTab: BottomTabKey }) {
   );
 }
 
-ensureKoreanHydrated();
+ensureKoreanLocale();
 
 function BottomTabBarGuideGrid() {
   return (

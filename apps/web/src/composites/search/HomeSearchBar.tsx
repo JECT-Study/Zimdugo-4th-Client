@@ -24,7 +24,7 @@ import {
   appLanguageLabelMap,
   getLocalizedHref,
   normalizeLanguage,
-  useAppLanguageStore,
+  setAppLanguage,
 } from "#/shared/store/language";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
@@ -154,7 +154,6 @@ export function HomeSearchBar({
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
   const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
-  const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const shouldProbeStyle = !hasHomeSearchBarStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
     enabled: shouldProbeStyle,

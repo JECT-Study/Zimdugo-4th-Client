@@ -4,9 +4,7 @@ import {
   isAppLocale,
   normalizeLocale,
   parsePathLocale,
-  resolveBrowserLanguageCandidates,
   stripLocalePathPrefix,
-  UNSUPPORTED_LOCALE_FALLBACK,
 } from "./locales";
 
 describe("normalizeLocale", () => {
@@ -40,15 +38,5 @@ describe("locale path helpers", () => {
     expect(stripLocalePathPrefix("/zh-TW/settings/language")).toBe(
       "/settings/language",
     );
-  });
-});
-
-describe("resolveBrowserLanguageCandidates", () => {
-  it("falls back to English when browser languages are unsupported", () => {
-    expect(resolveBrowserLanguageCandidates(["fr-FR", "de-DE"])).toBe(
-      UNSUPPORTED_LOCALE_FALLBACK,
-    );
-    expect(resolveBrowserLanguageCandidates(["ko-KR"])).toBe("ko");
-    expect(resolveBrowserLanguageCandidates([])).toBeNull();
   });
 });
