@@ -82,6 +82,7 @@ import {
   IconX16,
   IconX24,
 } from "./Icons.tsx";
+import { LanguageFlagIcon } from "./LanguageFlagIcon";
 
 const meta = {
   title: "Design System/Tokens/Icons",
@@ -744,6 +745,29 @@ export const Normal: Story = {
   ),
 };
 
+export const Language: Story = {
+  name: "icon.language",
+  render: () => (
+    <div style={grid}>
+      <Cell name="korea" probeTarget="root">
+        <LanguageFlagIcon language="ko" />
+      </Cell>
+      <Cell name="unitedStates" probeTarget="root">
+        <LanguageFlagIcon language="en" />
+      </Cell>
+      <Cell name="japan" probeTarget="root">
+        <LanguageFlagIcon language="ja" />
+      </Cell>
+      <Cell name="china" probeTarget="root">
+        <LanguageFlagIcon language="zh" />
+      </Cell>
+      <Cell name="taiwan" probeTarget="root">
+        <LanguageFlagIcon language="zh-TW" />
+      </Cell>
+    </div>
+  ),
+};
+
 export const Search: Story = {
   name: "icon.search",
   render: () => (
@@ -1175,6 +1199,24 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="minusBox">
           <IconMinusBox18 />
+        </Cell>
+      </RowSection>
+
+      <RowSection title="icon.language">
+        <Cell name="korea" probeTarget="root">
+          <LanguageFlagIcon language="ko" />
+        </Cell>
+        <Cell name="unitedStates" probeTarget="root">
+          <LanguageFlagIcon language="en" />
+        </Cell>
+        <Cell name="japan" probeTarget="root">
+          <LanguageFlagIcon language="ja" />
+        </Cell>
+        <Cell name="china" probeTarget="root">
+          <LanguageFlagIcon language="zh" />
+        </Cell>
+        <Cell name="taiwan" probeTarget="root">
+          <LanguageFlagIcon language="zh-TW" />
         </Cell>
       </RowSection>
 

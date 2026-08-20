@@ -1,5 +1,5 @@
-import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
+import { vars } from "../../vars.css.ts";
 
 export const flagFrame = style({
   position: "relative",

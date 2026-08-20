@@ -17,6 +17,9 @@ import {
   iconSvgFixed,
 } from "./Icons.css.ts";
 
+export type { LanguageFlag } from "./LanguageFlagIcon";
+export { LanguageFlagIcon } from "./LanguageFlagIcon";
+
 export function IconNavigationSearch24({
   className,
   tone = "default",
