@@ -38,17 +38,19 @@ describe("resolveLocaleRequest", () => {
   });
 
   it("keeps a canonical locale prefix as is", () => {
+    // 로케일은 URL 로 해석되므로 가드가 요청을 손대지 않는다. 쿠키는 사용자가
+    // 언어를 직접 고를 때만 기록되는 선호 채널이라, 가드가 덮어써서도 안 되고
+    // 다른 쿠키를 흘려서도 안 된다.
+    const cookie = "PARAGLIDE_LOCALE=en; session=abc123";
     const result = resolveLocaleRequest(
-      createDocumentRequest("https://zimdugo.com/zh-TW/settings"),
+      createDocumentRequest("https://zimdugo.com/zh-TW/settings", { cookie }),
     );
 
     expect(result.kind).toBe("continue");
     if (result.kind !== "continue") return;
 
     expect(result.pathLocale).toBe("zh-TW");
-    // 로케일은 URL 로 해석되므로 가드가 요청 쿠키를 조작하지 않는다.
-    // 쿠키는 사용자가 언어를 직접 고를 때만 기록되는 선호 채널이다.
-    expect(result.middlewareRequest.headers.get("Cookie")).toBeNull();
+    expect(result.middlewareRequest.headers.get("Cookie")).toBe(cookie);
     expect(result.middlewareRequest.url).toBe(
       "https://zimdugo.com/zh-TW/settings",
     );
