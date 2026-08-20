@@ -97,7 +97,9 @@ export function HomeHeader({
           ]
             .filter(Boolean)
             .join(" ")}
-          animate={{ width: isLanguageExpanded ? "max-content" : 32 }}
+          animate={{
+            width: isLanguageExpanded ? styles.LANGUAGE_MENU_WIDTH : 32,
+          }}
           transition={LANGUAGE_DROPDOWN_TRANSITION}
         >
           <motion.button

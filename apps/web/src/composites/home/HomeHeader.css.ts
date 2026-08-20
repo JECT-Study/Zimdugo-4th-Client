@@ -47,6 +47,11 @@ export const actions = style({
   minWidth: 0,
 });
 
+/** 펼친 드롭다운은 트리거와 선택지 목록이 같은 너비를 쓴다. */
+export const LANGUAGE_MENU_WIDTH = 164;
+
+const languageMenuWidth = `${LANGUAGE_MENU_WIDTH}px`;
+
 export const languageDropdown = style({
   position: "relative",
   display: "inline-flex",
@@ -57,7 +62,7 @@ export const languageDropdown = style({
 });
 
 export const languageDropdownExpanded = style({
-  width: "max-content",
+  width: languageMenuWidth,
 });
 
 export const languageTrigger = style({
@@ -78,7 +83,7 @@ export const languageTrigger = style({
   overflow: "hidden",
   selectors: {
     [`${languageDropdownExpanded} &`]: {
-      width: "max-content",
+      width: "100%",
       height: "36px",
       gap: "4px",
       padding: "2px 6px",
@@ -104,6 +109,8 @@ export const languageTriggerLabel = style({
 export const languageChevron = style({
   width: 0,
   height: 0,
+  // 펼친 트리거는 선택지 목록 너비까지 늘어나므로 화살표를 오른쪽 끝에 붙인다.
+  marginLeft: "auto",
   flexShrink: 0,
   opacity: 0,
   borderLeft: "5px solid transparent",
@@ -118,8 +125,7 @@ export const languageOptions = style({
   right: 0,
   display: "flex",
   flexDirection: "column",
-  width: "max-content",
-  minWidth: "164px",
+  width: "100%",
   paddingTop: "6px",
   paddingBottom: "5px",
   borderRadius: vars.radius[6],
