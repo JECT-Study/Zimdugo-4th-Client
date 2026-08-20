@@ -766,27 +766,19 @@ export const Language: Story = {
       <Cell name="taiwan" probeTarget="root">
         <LanguageFlagIcon language="zh-TW" />
       </Cell>
-    </div>
-  ),
-};
-
-export const FlagCircle: Story = {
-  name: "icon.flag.circle",
-  render: () => (
-    <div style={grid}>
-      <Cell name="korea" probeTarget="root">
+      <Cell name="circle.korea" probeTarget="root">
         <IconFlagCircle24 country="ko" />
       </Cell>
-      <Cell name="japan" probeTarget="root">
+      <Cell name="circle.japan" probeTarget="root">
         <IconFlagCircle24 country="ja" />
       </Cell>
-      <Cell name="taiwan" probeTarget="root">
+      <Cell name="circle.taiwan" probeTarget="root">
         <IconFlagCircle24 country="zh-TW" />
       </Cell>
-      <Cell name="china" probeTarget="root">
+      <Cell name="circle.china" probeTarget="root">
         <IconFlagCircle24 country="zh" />
       </Cell>
-      <Cell name="unitedStates" probeTarget="root">
+      <Cell name="circle.unitedStates" probeTarget="root">
         <IconFlagCircle24 country="en" />
       </Cell>
     </div>
@@ -882,21 +874,13 @@ export const Social: Story = {
           <IconGoogle24 />
         </SocialBadge>
       </Cell>
-    </div>
-  ),
-};
-
-export const SocialProvider: Story = {
-  name: "icon.social.provider",
-  render: () => (
-    <div style={grid}>
-      <Cell name="google" probeTarget="root">
+      <Cell name="provider.google" probeTarget="root">
         <IconSocialProvider18 provider="google" />
       </Cell>
-      <Cell name="naver" probeTarget="root">
+      <Cell name="provider.naver" probeTarget="root">
         <IconSocialProvider18 provider="naver" />
       </Cell>
-      <Cell name="kakao" probeTarget="root">
+      <Cell name="provider.kakao" probeTarget="root">
         <IconSocialProvider18 provider="kakao" />
       </Cell>
     </div>
@@ -1260,22 +1244,19 @@ export const Gallery: Story = {
         <Cell name="taiwan" probeTarget="root">
           <LanguageFlagIcon language="zh-TW" />
         </Cell>
-      </RowSection>
-
-      <RowSection title="icon.flag.circle">
-        <Cell name="korea" probeTarget="root">
+        <Cell name="circle.korea" probeTarget="root">
           <IconFlagCircle24 country="ko" />
         </Cell>
-        <Cell name="japan" probeTarget="root">
+        <Cell name="circle.japan" probeTarget="root">
           <IconFlagCircle24 country="ja" />
         </Cell>
-        <Cell name="taiwan" probeTarget="root">
+        <Cell name="circle.taiwan" probeTarget="root">
           <IconFlagCircle24 country="zh-TW" />
         </Cell>
-        <Cell name="china" probeTarget="root">
+        <Cell name="circle.china" probeTarget="root">
           <IconFlagCircle24 country="zh" />
         </Cell>
-        <Cell name="unitedStates" probeTarget="root">
+        <Cell name="circle.unitedStates" probeTarget="root">
           <IconFlagCircle24 country="en" />
         </Cell>
       </RowSection>
@@ -1348,16 +1329,13 @@ export const Gallery: Story = {
         <Cell name="small" spanColumns={2}>
           <BrandTextLogoSmall />
         </Cell>
-      </RowSection>
-
-      <RowSection title="icon.social.provider">
-        <Cell name="google" probeTarget="root">
+        <Cell name="provider.google" probeTarget="root">
           <IconSocialProvider18 provider="google" />
         </Cell>
-        <Cell name="naver" probeTarget="root">
+        <Cell name="provider.naver" probeTarget="root">
           <IconSocialProvider18 provider="naver" />
         </Cell>
-        <Cell name="kakao" probeTarget="root">
+        <Cell name="provider.kakao" probeTarget="root">
           <IconSocialProvider18 provider="kakao" />
         </Cell>
       </RowSection>
