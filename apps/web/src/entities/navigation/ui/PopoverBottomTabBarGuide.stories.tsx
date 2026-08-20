@@ -34,7 +34,7 @@ const defaultLinks = {
   settings: "#",
 } satisfies Record<BottomTabKey, string>;
 
-const TAB_ORDER = ["home", "report", "settings"] as const;
+const TAB_ORDER = ["home", "report", "my", "settings"] as const;
 type VisibleBottomTabKey = (typeof TAB_ORDER)[number];
 
 const TAB_LABELS = {
