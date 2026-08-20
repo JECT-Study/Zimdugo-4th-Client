@@ -119,7 +119,7 @@ export const nameField = style({
 });
 
 export const activityGroup = style({
-  marginTop: vars.spacing[32],
+  marginTop: "32px",
 });
 
 export const rowButton = style({

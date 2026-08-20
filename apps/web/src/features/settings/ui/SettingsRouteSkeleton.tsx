@@ -29,10 +29,35 @@ export function SettingsHeaderSkeleton() {
   return <HeaderSkeleton className={header} />;
 }
 
-export function SettingsSkeleton() {
+export function SettingsSkeleton({ showProfile = false } = {}) {
   return (
     <div style={settingsSkeletonContentInlineFallbackStyle}>
+      {showProfile ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <Skeleton
+            width={111}
+            height={111}
+            variant="circle"
+            style={skeletonSurfaceStyle}
+          />
+          <Skeleton
+            width={120}
+            height={16}
+            borderRadius={4}
+            style={skeletonSurfaceStyle}
+          />
+        </div>
+      ) : null}
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {showProfile ? <SettingsSkeletonRow width={72} /> : null}
+        {showProfile ? <SettingsSkeletonRow width={96} /> : null}
         <SettingsSkeletonRow width={128} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

@@ -1,5 +1,4 @@
 import { m } from "@repo/i18n";
-import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,34 +7,22 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useUser } from "#/entities/user/hooks/useUser";
 import { authService } from "#/features/auth/sign-in/api/authService";
+import { useMyPageSummary } from "#/features/my/hooks/useMyPageSummary";
+import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
+import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
+import { resolveMyPageNickname } from "#/features/my/lib/resolve-my-page-nickname";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
+import { SettingsPageView } from "#/features/settings/ui/SettingsPageView";
 import {
   SettingsHeaderSkeleton,
   SettingsSkeleton,
   SettingsSkeletonFrame,
 } from "#/features/settings/ui/SettingsRouteSkeleton";
-import {
-  content,
-  group,
-  groupGap,
-  header,
-  page,
-  rowButton,
-  settingRow,
-  settingRowText,
-  versionText,
-} from "#/features/settings/ui/settings.css.ts";
-import {
-  settingsContentInlineFallbackStyle,
-  settingsGroupGapInlineFallbackStyle,
-  settingsGroupInlineFallbackStyle,
-  settingsPageInlineFallbackStyle,
-  settingsSettingRowInlineFallbackStyle,
-} from "#/features/settings/ui/settings-page-fallback";
+import { useAuth } from "#/shared/hooks/useAuth";
 import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { useAuthStore } from "#/shared/store/authStore";
@@ -49,21 +36,71 @@ export function SettingsPage() {
   // 1. Hooks
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
+  const email = useAuthStore((state) => state.email);
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { data: profile, isPending: isProfilePending } =
+    useUser(isAuthenticated);
+  const { data: summary, isPending: isSummaryPending } =
+    useMyPageSummary(isAuthenticated);
+  const { mutate: updateProfile } = useUpdateMeProfile();
+  const {
+    isConfirmPopupOpen,
+    setIsConfirmPopupOpen,
+    isErrorPopupOpen,
+    setIsErrorPopupOpen,
+    errorMessage,
+    fileInputRef,
+    isUpdatingProfileImage,
+    openConfirmPopup,
+    handleConfirmChange,
+    handleFileChange,
+  } = useProfileImageChange();
+  const [nicknameDraft, setNicknameDraft] = useState("");
+  const [isNicknameInitialized, setIsNicknameInitialized] = useState(false);
+  const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
 
   // 2. Derived values
   const normalizedPath = stripLocalePathPrefix(pathname);
   const isSettingsRoot = normalizedPath === "/settings";
-  const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady({
-    enabled: isSettingsRoot,
-  });
-  const applyFallbackStyle = isStyleTimedOut;
+  const { isStyleReady } = useSettingsStyleReady({ enabled: isSettingsRoot });
+  const isProfileReady =
+    !isAuthenticated || (!isProfilePending && isNicknameInitialized);
 
   // 3. Event handlers
+  const handleNicknameBlur = () => {
+    const trimmedNickname = nicknameDraft.trim();
+    if (!trimmedNickname) {
+      setNicknameDraft(
+        resolveMyPageNickname({
+          profileNickname: profile?.nickname,
+          email,
+        }),
+      );
+      return;
+    }
+
+    if (trimmedNickname === profile?.nickname) {
+      return;
+    }
+
+    updateProfile(
+      { nickname: trimmedNickname },
+      {
+        onError: () => {
+          setNicknameDraft(
+            resolveMyPageNickname({
+              profileNickname: profile?.nickname,
+              email,
+            }),
+          );
+        },
+      },
+    );
+  };
+
   const handleConfirmWithdraw = async () => {
     try {
       await authService.withdraw();
@@ -77,98 +114,106 @@ export function SettingsPage() {
     }
   };
 
+  const handleLogout = () => {
+    void logout();
+  };
+
+  // 4. Side effects
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNicknameDraft("");
+      setIsNicknameInitialized(false);
+      return;
+    }
+
+    if (isProfilePending) {
+      return;
+    }
+
+    setNicknameDraft(
+      resolveMyPageNickname({
+        profileNickname: profile?.nickname,
+        email,
+      }),
+    );
+    setIsNicknameInitialized(true);
+  }, [isAuthenticated, isProfilePending, profile?.nickname, email]);
+
   // 5. Early returns
   if (!isSettingsRoot) {
     return <Outlet />;
   }
 
-  if (!isStyleReady) {
+  if (!isStyleReady || !isProfileReady) {
     return (
       <SettingsSkeletonFrame>
         <SettingsHeaderSkeleton />
-        <SettingsSkeleton />
+        <SettingsSkeleton showProfile={isAuthenticated} />
       </SettingsSkeletonFrame>
     );
   }
 
   // 6. JSX return
   return (
-    <div
-      className={page}
-      style={applyFallbackStyle ? settingsPageInlineFallbackStyle : undefined}
-    >
-      <Header
-        className={header}
-        leading="back"
-        titleType="text"
-        title={m.settings_title()}
+    <>
+      <SettingsPageView
+        appVersion={import.meta.env.VITE_APP_VERSION || "1.0.0"}
         onBack={() => navigate({ to: "/" })}
+        onLanguagePress={() => navigate({ to: "/settings/language" })}
+        onNoticePress={() => navigate({ to: "/notices" })}
+        onTermsPress={() => navigate({ to: "/settings/terms" })}
+        onPrivacyPress={() => navigate({ to: "/settings/privacy" })}
+        onWithdrawPress={
+          isAuthenticated ? () => setIsWithdrawPopupOpen(true) : undefined
+        }
+        profile={
+          isAuthenticated
+            ? {
+                nickname: nicknameDraft,
+                profileImageUrl: profile?.profileImageUrl,
+                favoriteCount: summary?.favoriteLockerCount ?? 0,
+                reportCount: summary?.lockerReportCount ?? 0,
+                isSummaryPending,
+                isUpdatingProfileImage,
+                fileInputRef,
+                onProfileImagePress: openConfirmPopup,
+                onFileChange: (event) => {
+                  void handleFileChange(event);
+                },
+                onNicknameChange: setNicknameDraft,
+                onNicknameBlur: handleNicknameBlur,
+                onFavoritesPress: () => navigate({ to: "/my/favorites" }),
+                onReportsPress: () => navigate({ to: "/my/reports" }),
+                onLogout: handleLogout,
+              }
+            : undefined
+        }
       />
 
-      <main
-        className={content}
-        style={
-          applyFallbackStyle ? settingsContentInlineFallbackStyle : undefined
-        }
-      >
-        <section
-          className={group}
-          style={
-            applyFallbackStyle ? settingsGroupInlineFallbackStyle : undefined
-          }
-        >
-          <SettingRow
-            label={m.settings_language()}
-            onClick={() => navigate({ to: "/settings/language" })}
-            applyFallbackStyle={applyFallbackStyle}
-          />
-          {/* Theme settings are hidden until the dark-mode rollout decision is made. */}
-          {/* <SettingRow label={m.settings_dark_mode()} /> */}
-        </section>
+      <Popup
+        isOpen={isConfirmPopupOpen}
+        onOpenChange={setIsConfirmPopupOpen}
+        titleText={m.my_profile_image_change_title()}
+        helperText={m.my_profile_image_change_helper()}
+        primaryAction={{
+          label: m.common_yes(),
+          onPress: handleConfirmChange,
+        }}
+        secondaryAction={{
+          label: m.common_no(),
+          onPress: () => setIsConfirmPopupOpen(false),
+        }}
+      />
 
-        <section
-          className={[group, groupGap].join(" ")}
-          style={
-            applyFallbackStyle
-              ? {
-                  ...settingsGroupInlineFallbackStyle,
-                  ...settingsGroupGapInlineFallbackStyle,
-                }
-              : undefined
-          }
-        >
-          <SettingRow
-            label={m.settings_notice()}
-            onClick={() => navigate({ to: "/notices" })}
-            applyFallbackStyle={applyFallbackStyle}
-          />
-          <SettingRow
-            label={m.settings_terms()}
-            onClick={() => navigate({ to: "/settings/terms" })}
-            applyFallbackStyle={applyFallbackStyle}
-            attached
-          />
-          <SettingRow
-            label={m.settings_privacy()}
-            onClick={() => navigate({ to: "/settings/privacy" })}
-            applyFallbackStyle={applyFallbackStyle}
-            attached
-          />
-          {isAuthenticated && (
-            <SettingRow
-              label={m.settings_withdraw()}
-              onClick={() => setIsWithdrawPopupOpen(true)}
-              applyFallbackStyle={applyFallbackStyle}
-              attached
-            />
-          )}
-        </section>
-
-        <p className={versionText}>
-          {m.settings_version_prefix()}{" "}
-          {import.meta.env.VITE_APP_VERSION || "1.0.0"}
-        </p>
-      </main>
+      <Popup
+        isOpen={isErrorPopupOpen}
+        onOpenChange={setIsErrorPopupOpen}
+        titleText={errorMessage}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsErrorPopupOpen(false),
+        }}
+      />
 
       <Popup
         isOpen={isWithdrawPopupOpen}
@@ -186,39 +231,6 @@ export function SettingsPage() {
           onPress: () => setIsWithdrawPopupOpen(false),
         }}
       />
-    </div>
-  );
-}
-
-interface SettingRowProps {
-  label: string;
-  onClick?: () => void;
-  children?: ReactNode;
-  applyFallbackStyle?: boolean;
-  attached?: boolean;
-}
-
-function SettingRow({
-  label,
-  onClick,
-  children,
-  applyFallbackStyle = false,
-  attached = false,
-}: SettingRowProps) {
-  return (
-    <button
-      type="button"
-      className={[rowButton, settingRow].join(" ")}
-      style={
-        applyFallbackStyle
-          ? settingsSettingRowInlineFallbackStyle({ attached })
-          : undefined
-      }
-      aria-label={label}
-      onClick={onClick}
-    >
-      <span className={settingRowText}>{label}</span>
-      {children}
-    </button>
+    </>
   );
 }
