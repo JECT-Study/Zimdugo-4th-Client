@@ -17,6 +17,7 @@ export interface OriginalImagePreviewProps {
   imageUrl: string;
   alt: string;
   closeLabel: string;
+  portalContainer?: Element | null;
   onClose: () => void;
 }
 
@@ -24,6 +25,7 @@ export function OriginalImagePreview({
   imageUrl,
   alt,
   closeLabel,
+  portalContainer,
   onClose,
 }: OriginalImagePreviewProps) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -119,6 +121,6 @@ export function OriginalImagePreview({
         </button>
       </div>
     </div>,
-    document.body,
+    portalContainer ?? document.body,
   );
 }

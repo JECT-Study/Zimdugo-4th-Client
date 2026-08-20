@@ -70,6 +70,7 @@ export function ReportDetailViewerModal({
 }: ReportDetailViewerModalProps) {
   const [collapsedSnap, setCollapsedSnap] = useState(760);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const imagePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const informationGroups =
     detail != null && loadState === "ready"
@@ -123,7 +124,7 @@ export function ReportDetailViewerModal({
       className={overlay}
       isDismissable
     >
-      <Modal className={className}>
+      <Modal ref={modalRef} className={className}>
         <DraggableBottomSheet
           snapPoint={DEFAULT_SNAP_POINT}
           initialSnapPoint={DEFAULT_SNAP_POINT}
@@ -232,6 +233,7 @@ export function ReportDetailViewerModal({
             imageUrl={previewImageUrl}
             alt={m.report_section_photo()}
             closeLabel={m.my_report_detail_close()}
+            portalContainer={modalRef.current}
             onClose={handleCloseImagePreview}
           />
         ) : null}
