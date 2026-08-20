@@ -27,6 +27,7 @@ export const content = style({
   boxSizing: "border-box",
   overflowY: "auto",
   overscrollBehaviorY: "contain",
+  scrollbarGutter: "stable both-edges",
   selectors: {
     [compactDeviceSelector]: {
       maxWidth: "none",
