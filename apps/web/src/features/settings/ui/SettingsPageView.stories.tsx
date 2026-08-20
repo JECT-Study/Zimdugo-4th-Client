@@ -81,7 +81,7 @@ export const Guest: Story = {
     profile: {
       ...meta.args.profile,
       isGuest: true,
-      email: "로그인이 필요한 기능입니다",
+      email: "게스트",
       providers: [],
       profileImageUrl: undefined,
     },

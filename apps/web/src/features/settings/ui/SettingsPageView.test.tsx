@@ -14,7 +14,7 @@ const renderView = ({ isAuthenticated = true } = {}) => {
   const providers: SocialProvider[] = isAuthenticated ? ["google"] : [];
   const profile = {
     isGuest: !isAuthenticated,
-    email: isAuthenticated ? "zimdugo@gmail.com" : "로그인이 필요한 기능입니다",
+    email: isAuthenticated ? "zimdugo@gmail.com" : "게스트",
     providers,
     profileImageUrl:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E",
@@ -86,7 +86,7 @@ describe("SettingsPageView", () => {
     expect(screen.getByLabelText("프로필")).toBeTruthy();
     expect(
       screen.getByRole("textbox", { name: "이메일" }).getAttribute("value"),
-    ).toBe("로그인이 필요한 기능입니다");
+    ).toBe("게스트");
     expect(screen.queryByTitle("수정")).toBeNull();
     expect(document.querySelector("[data-social-provider]")).toBeNull();
     expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();

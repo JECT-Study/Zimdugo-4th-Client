@@ -67,7 +67,7 @@ export function SettingsPage() {
   const isProfileReady = !isAuthenticated || !isProfilePending;
   const profileEmail = isAuthenticated
     ? (profile?.email ?? "")
-    : m.auth_required_title();
+    : m.my_guest_label();
 
   // 3. Event handlers
   const handleConfirmWithdraw = async () => {
