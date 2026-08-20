@@ -88,6 +88,7 @@ export function SettingsPageView({
                 <ProfileImage
                   src={profile.profileImageUrl}
                   size={111}
+                  placeholderTone={isGuest ? "guest" : "default"}
                   alt={m.my_profile_image_alt()}
                 />
               </button>

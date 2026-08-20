@@ -21,6 +21,8 @@ export interface ProfileImageProps {
    * 프로필 이미지 크기 (기본값: 111)
    */
   size?: number | string;
+  /** 이미지가 없을 때 원형 배경 톤 */
+  placeholderTone?: "default" | "guest";
   /**
    * 커스텀 클래스
    */
@@ -36,6 +38,7 @@ export function ProfileImage({
   src: initialSrc,
   alt,
   size = 111,
+  placeholderTone = "default",
   className,
 }: ProfileImageProps) {
   const [hasError, setHasError] = useState(false);
@@ -56,7 +59,11 @@ export function ProfileImage({
 
   return (
     <div
-      className={[styles.profileImageContainer, className]
+      className={[
+        styles.profileImageContainer,
+        styles.profileImagePlaceholderTone[placeholderTone],
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
       style={{
