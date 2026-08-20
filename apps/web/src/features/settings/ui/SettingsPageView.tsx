@@ -140,6 +140,7 @@ export function SettingsPageView({
                   className={emailText}
                   type="text"
                   value={profile.email}
+                  size={Math.max(profile.email.length, 1)}
                   readOnly
                   aria-label={m.settings_profile_email_aria()}
                 />

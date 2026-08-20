@@ -134,7 +134,7 @@ export const emailField = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: vars.spacing[8],
+  gap: vars.spacing[2],
   boxSizing: "border-box",
   outline: "none",
   selectors: {
@@ -164,7 +164,7 @@ export const emailText = style({
   fontWeight: vars.typography.fontWeight.Medium,
   lineHeight: vars.typography.lineHeight.normal,
   outline: "none",
-  textAlign: "center",
+  textAlign: "left",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 });
