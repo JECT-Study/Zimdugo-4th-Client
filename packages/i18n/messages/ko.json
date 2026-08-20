@@ -247,6 +247,7 @@
   "my_profile_aria": "프로필",
   "my_activity_aria": "내 활동",
   "my_logout": "로그아웃",
+  "my_logout_confirm_title": "로그아웃하시겠습니까?",
   "my_login": "로그인",
   "my_guest_label": "게스트",
   "my_menu_favorite": "즐겨찾기",

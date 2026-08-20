@@ -1,4 +1,5 @@
 import { m } from "@repo/i18n";
+import { Popup } from "@repo/ui/components/popup";
 import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -91,6 +92,7 @@ export const Guest: Story = {
 
 function SettingsPageStory(args: SettingsPageViewProps) {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [isLogoutPopupOpen, setIsLogoutPopupOpen] = useState(false);
   const profile = args.profile;
 
   const handleProfileImagePress = () => {
@@ -108,7 +110,11 @@ function SettingsPageStory(args: SettingsPageViewProps) {
         {...args}
         profile={
           profile
-            ? { ...profile, onProfileImagePress: handleProfileImagePress }
+            ? {
+                ...profile,
+                onProfileImagePress: handleProfileImagePress,
+                onLogout: () => setIsLogoutPopupOpen(true),
+              }
             : undefined
         }
       />
@@ -120,6 +126,19 @@ function SettingsPageStory(args: SettingsPageViewProps) {
           onClose={() => setPreviewImageUrl(null)}
         />
       ) : null}
+      <Popup
+        isOpen={isLogoutPopupOpen}
+        onOpenChange={setIsLogoutPopupOpen}
+        titleText={m.my_logout_confirm_title()}
+        primaryAction={{
+          label: m.common_yes(),
+          onPress: () => setIsLogoutPopupOpen(false),
+        }}
+        secondaryAction={{
+          label: m.common_no(),
+          onPress: () => setIsLogoutPopupOpen(false),
+        }}
+      />
     </>
   );
 }

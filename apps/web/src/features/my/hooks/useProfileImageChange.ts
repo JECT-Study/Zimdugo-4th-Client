@@ -17,7 +17,6 @@ const getProfilePhotoValidationMessage = (
 
 export function useProfileImageChange() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const [isConfirmPopupOpen, setIsConfirmPopupOpen] = useState(false);
   const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
@@ -25,12 +24,7 @@ export function useProfileImageChange() {
   const { mutateAsync: updateProfile, isPending: isUpdatingProfileImage } =
     useUpdateMeProfile();
 
-  const openConfirmPopup = useCallback(() => {
-    setIsConfirmPopupOpen(true);
-  }, []);
-
-  const handleConfirmChange = useCallback(() => {
-    setIsConfirmPopupOpen(false);
+  const openFilePicker = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
@@ -64,15 +58,12 @@ export function useProfileImageChange() {
   );
 
   return {
-    isConfirmPopupOpen,
-    setIsConfirmPopupOpen,
     isErrorPopupOpen,
     setIsErrorPopupOpen,
     errorMessage,
     fileInputRef,
     isUpdatingProfileImage: isUploadingProfileImage || isUpdatingProfileImage,
-    openConfirmPopup,
-    handleConfirmChange,
+    openFilePicker,
     handleFileChange,
   };
 }

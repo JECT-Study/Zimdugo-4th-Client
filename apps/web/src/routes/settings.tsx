@@ -43,17 +43,15 @@ export function SettingsPage() {
     isAuthenticated && isSettingsRoot,
   );
   const {
-    isConfirmPopupOpen,
-    setIsConfirmPopupOpen,
     isErrorPopupOpen,
     setIsErrorPopupOpen,
     errorMessage,
     fileInputRef,
     isUpdatingProfileImage,
-    openConfirmPopup,
-    handleConfirmChange,
+    openFilePicker,
     handleFileChange,
   } = useProfileImageChange();
+  const [isLogoutPopupOpen, setIsLogoutPopupOpen] = useState(false);
   const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const profileImageButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -83,7 +81,7 @@ export function SettingsPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleConfirmLogout = () => {
     void logout();
   };
 
@@ -143,14 +141,14 @@ export function SettingsPage() {
           fileInputRef,
           profileImageButtonRef,
           onProfileImagePress: handleProfileImagePress,
-          onProfileImageEditPress: openConfirmPopup,
+          onProfileImageEditPress: openFilePicker,
           onFileChange: (event) => {
             void handleFileChange(event);
           },
           onFavoritesPress: () => navigate({ to: "/my/favorites" }),
           onReportsPress: () => navigate({ to: "/my/reports" }),
           onLogin: handleLogin,
-          onLogout: handleLogout,
+          onLogout: () => setIsLogoutPopupOpen(true),
         }}
       />
 
@@ -164,17 +162,16 @@ export function SettingsPage() {
       ) : null}
 
       <Popup
-        isOpen={isConfirmPopupOpen}
-        onOpenChange={setIsConfirmPopupOpen}
-        titleText={m.my_profile_image_change_title()}
-        helperText={m.my_profile_image_change_helper()}
+        isOpen={isLogoutPopupOpen}
+        onOpenChange={setIsLogoutPopupOpen}
+        titleText={m.my_logout_confirm_title()}
         primaryAction={{
           label: m.common_yes(),
-          onPress: handleConfirmChange,
+          onPress: handleConfirmLogout,
         }}
         secondaryAction={{
           label: m.common_no(),
-          onPress: () => setIsConfirmPopupOpen(false),
+          onPress: () => setIsLogoutPopupOpen(false),
         }}
       />
 

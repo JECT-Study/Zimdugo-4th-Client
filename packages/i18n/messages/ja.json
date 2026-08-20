@@ -247,6 +247,7 @@
   "my_profile_aria": "プロフィール",
   "my_activity_aria": "マイアクティビティ",
   "my_logout": "ログアウト",
+  "my_logout_confirm_title": "ログアウトしますか？",
   "my_login": "ログイン",
   "my_guest_label": "ゲスト",
   "my_menu_favorite": "お気に入り",
