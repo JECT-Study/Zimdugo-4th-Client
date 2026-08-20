@@ -44,6 +44,6 @@ export const GuestAndWithoutProfileImage: Story = {
 
 export const WithProfileImage: Story = {
   args: {
-    profileImageUrl: "https://i.pravatar.cc/160?img=12",
+    profileImageUrl: "https://picsum.photos/200",
   },
 };

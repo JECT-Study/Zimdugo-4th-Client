@@ -3,6 +3,7 @@ import {
   BrandTextLogoSmall,
   IconCheck24,
   IconFlagCircle24,
+  IconHomeProfile32,
   IconNormalGlobe32,
 } from "@repo/ui/tokens/icons";
 import { AnimatePresence, motion } from "motion/react";
@@ -183,11 +184,11 @@ export function HomeHeader({
           aria-label={m.my_profile_aria()}
           onClick={onProfilePress}
         >
-          <ProfileImage
-            src={profileImageUrl}
-            size={32}
-            placeholderTone="default"
-          />
+          {profileImageUrl ? (
+            <ProfileImage src={profileImageUrl} size={32} />
+          ) : (
+            <IconHomeProfile32 />
+          )}
         </button>
       </div>
     </header>
