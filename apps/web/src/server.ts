@@ -1,9 +1,6 @@
 import { paraglideMiddleware } from "@repo/i18n/server";
 import handler from "@tanstack/react-start/server-entry";
-import {
-  finalizeLocaleResponse,
-  resolveLocaleRequest,
-} from "#/shared/i18n/server-locale-guard";
+import { resolveLocaleRequest } from "#/shared/i18n/server-locale-guard";
 
 import { handleLocationDiagnosticRequest } from "#/shared/lib/location-diagnostics-server";
 
@@ -19,11 +16,10 @@ export default {
       return guard.response;
     }
 
-    const { middlewareRequest, pathLocale } = guard;
-    const response = await paraglideMiddleware(middlewareRequest, () =>
+    const { middlewareRequest } = guard;
+
+    return paraglideMiddleware(middlewareRequest, () =>
       handler.fetch(middlewareRequest),
     );
-
-    return finalizeLocaleResponse(response, pathLocale);
   },
 };
