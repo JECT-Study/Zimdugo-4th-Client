@@ -12,7 +12,6 @@ import {
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
   IconNavigationClock24,
-  IconX24,
 } from "@repo/ui/tokens/icons";
 import {
   type CSSProperties,
@@ -23,7 +22,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 import type {
   LockerDetailItem,
   LockerDetailLoadState,
@@ -40,6 +38,7 @@ import {
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
 } from "#/shared/ui/DraggableBottomSheet";
+import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
@@ -69,10 +68,6 @@ import {
   fullImageReportCard,
   fullLockerImage,
   fullPrimaryActionButton,
-  imagePreviewCloseButton,
-  imagePreviewDialog,
-  imagePreviewImage,
-  imagePreviewOverlay,
   imageReportCard,
   imageReportText,
   loadingActionRow,
@@ -645,21 +640,6 @@ function FullDetailContent({
     setPreviewImageUrl(null);
   };
 
-  useEffect(() => {
-    if (!previewImageUrl) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setPreviewImageUrl(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [previewImageUrl]);
-
   return (
     <div
       className={[
@@ -728,8 +708,10 @@ function FullDetailContent({
         </div>
       </div>
       {previewImageUrl ? (
-        <ImagePreviewOverlay
+        <OriginalImagePreview
           imageUrl={previewImageUrl}
+          alt={m.report_section_photo()}
+          closeLabel={m.search_close_aria()}
           onClose={handleCloseImagePreview}
         />
       ) : null}
@@ -1053,43 +1035,5 @@ function ImageReportCard({
         <span>{m.locker_detail_no_image_helper()}</span>
       </div>
     </div>
-  );
-}
-
-function ImagePreviewOverlay({
-  imageUrl,
-  onClose,
-}: {
-  imageUrl: string;
-  onClose: () => void;
-}) {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  return createPortal(
-    <div className={imagePreviewOverlay}>
-      <div
-        className={imagePreviewDialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={m.report_section_photo()}
-      >
-        <img
-          className={imagePreviewImage}
-          src={imageUrl}
-          alt={m.report_section_photo()}
-        />
-        <button
-          type="button"
-          className={imagePreviewCloseButton}
-          onClick={onClose}
-          aria-label={m.search_close_aria()}
-        >
-          <IconX24 />
-        </button>
-      </div>
-    </div>,
-    document.body,
   );
 }
