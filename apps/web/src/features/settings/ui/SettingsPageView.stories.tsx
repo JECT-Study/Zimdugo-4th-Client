@@ -72,7 +72,7 @@ export const WithoutProfileImage: Story = {
   args: {
     profile: {
       ...meta.args.profile,
-      profileImageUrl: undefined,
+      profileImageUrl: "",
     },
   },
 };
