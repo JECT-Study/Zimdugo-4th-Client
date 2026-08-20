@@ -17,6 +17,13 @@ import {
   iconSvgFixed,
 } from "./Icons.css.ts";
 
+export type { FlagCountry } from "./IconFlagCircle24";
+export { IconFlagCircle24 } from "./IconFlagCircle24";
+export type { SocialProvider } from "./IconSocialProvider18";
+export { IconSocialProvider18 } from "./IconSocialProvider18";
+export type { LanguageFlag } from "./LanguageFlagIcon";
+export { LanguageFlagIcon } from "./LanguageFlagIcon";
+
 export function IconNavigationSearch24({
   className,
   tone = "default",
@@ -1392,7 +1399,13 @@ export function IconMarker22({
   );
 }
 
-export function IconPencil24({ className }: { className?: string }) {
+export function IconPencil24({
+  className,
+  fill = color.palette.gray[500],
+}: {
+  className?: string;
+  fill?: string;
+}) {
   return (
     <svg
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
@@ -1406,7 +1419,7 @@ export function IconPencil24({ className }: { className?: string }) {
       <title>수정</title>
       <path
         d="M15.7279 9.57628L14.3137 8.16207L5 17.4758V18.89H6.41421L15.7279 9.57628ZM17.1421 8.16207L18.5563 6.74786L17.1421 5.33364L15.7279 6.74786L17.1421 8.16207ZM7.24264 20.89H3V16.6473L16.435 3.21232C16.8256 2.8218 17.4587 2.8218 17.8492 3.21232L20.6777 6.04075C21.0682 6.43127 21.0682 7.06444 20.6777 7.45496L7.24264 20.89Z"
-        fill={color.palette.gray[500]}
+        fill={fill}
       />
     </svg>
   );
@@ -1505,6 +1518,53 @@ export function IconNormalProfile({ className }: { className?: string }) {
     <CircleBox size={32} className={className}>
       <IconMarker22 size={22} fill="green[500]" />
     </CircleBox>
+  );
+}
+
+export function IconProfile22({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 22 22"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={22}
+      height={22}
+      aria-hidden
+    >
+      <title>프로필</title>
+      <path
+        d="M19 21H17V19C17 17.3431 15.6569 16 14 16H8C6.34315 16 5 17.3431 5 19V21H3V19C3 16.2386 5.23858 14 8 14H14C16.7614 14 19 16.2386 19 19V21ZM11 12C7.68629 12 5 9.3137 5 6C5 2.68629 7.68629 0 11 0C14.3137 0 17 2.68629 17 6C17 9.3137 14.3137 12 11 12ZM11 10C13.2091 10 15 8.20914 15 6C15 3.79086 13.2091 2 11 2C8.79086 2 7 3.79086 7 6C7 8.20914 8.79086 10 11 10Z"
+        fill={color.palette.gray[600]}
+      />
+    </svg>
+  );
+}
+
+const profileCircleStyle = {
+  backgroundColor: color.palette.gray[100],
+  boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
+} satisfies CSSProperties;
+
+/** 홈 헤더와 프로필 placeholder에서 함께 사용하는 32px 프로필 아이콘 */
+export function IconProfile32({ className }: { className?: string }) {
+  return (
+    <span
+      className={className}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "32px",
+        height: "32px",
+        borderRadius: "9999px",
+        ...profileCircleStyle,
+        flexShrink: 0,
+      }}
+      aria-hidden
+    >
+      <IconProfile22 />
+    </span>
   );
 }
 
@@ -1619,6 +1679,14 @@ export function IconCircleboxMore32({ className }: { className?: string }) {
   return (
     <CircleBox size={32} className={className}>
       <IconMore24 />
+    </CircleBox>
+  );
+}
+
+export function IconCircleboxPencil32({ className }: { className?: string }) {
+  return (
+    <CircleBox size={32} className={className} style={profileCircleStyle}>
+      <IconPencil24 fill={color.palette.gray[600]} />
     </CircleBox>
   );
 }

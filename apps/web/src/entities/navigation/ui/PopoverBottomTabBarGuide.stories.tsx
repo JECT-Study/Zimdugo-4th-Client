@@ -1,18 +1,26 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { setLanguageTag } from "@repo/i18n";
 import { Popover } from "@repo/ui/components/popover";
 import { vars } from "@repo/ui/vars";
+import type { Meta, StoryObj } from "@storybook/react";
 import type React from "react";
 import { useLayoutEffect, useState } from "react";
 import { Button as AriaButton } from "react-aria-components";
-import { BottomTabBar, type BottomTabKey } from "./BottomTabBar.tsx";
 import { storyRelativeFrame } from "./BottomTabBar.stories.css.ts";
+import { BottomTabBar, type BottomTabKey } from "./BottomTabBar.tsx";
+
+const GUIDE_TEXT =
+  "선택한 하단 탭을 안내하는 말풍선입니다. 탭 위치에 따라 꼬리 위치를 0~100 값으로 조정합니다.";
 
 const meta = {
   title: "Product/Guides/Navigation/Bottom Tab Bar Guide",
   component: Popover,
   parameters: {
     layout: "fullscreen",
+  },
+  args: {
+    trigger: <span />,
+    titleText: "하단 탭 안내",
+    bodyText: GUIDE_TEXT,
   },
 } satisfies Meta<typeof Popover>;
 
@@ -27,6 +35,7 @@ const defaultLinks = {
 } satisfies Record<BottomTabKey, string>;
 
 const TAB_ORDER = ["home", "report", "my", "settings"] as const;
+type VisibleBottomTabKey = (typeof TAB_ORDER)[number];
 
 const TAB_LABELS = {
   home: "홈",
@@ -34,9 +43,6 @@ const TAB_LABELS = {
   my: "마이",
   settings: "설정",
 } satisfies Record<BottomTabKey, string>;
-
-const GUIDE_TEXT =
-  "선택한 하단 탭을 안내하는 말풍선입니다. 탭 위치에 따라 꼬리 위치를 0~100 값으로 조정합니다.";
 
 const FRAME_WIDTH = 375;
 const POPOVER_WIDTH = 240;
@@ -51,7 +57,7 @@ const ensureKoreanLocale = () => {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-const getFallbackTabCenterX = (tab: BottomTabKey) => {
+const getFallbackTabCenterX = (tab: VisibleBottomTabKey) => {
   const index = TAB_ORDER.indexOf(tab);
   const tabWidth = FRAME_WIDTH / TAB_COUNT;
 
@@ -66,8 +72,7 @@ const getPopoverLeft = (anchorCenterX: number) =>
   );
 
 const getTailPosition = (anchorCenterX: number, popoverLeft: number) => {
-  const tailPosition =
-    ((anchorCenterX - popoverLeft) / POPOVER_WIDTH) * 100;
+  const tailPosition = ((anchorCenterX - popoverLeft) / POPOVER_WIDTH) * 100;
 
   return clamp(tailPosition, 0, 100);
 };
@@ -77,7 +82,7 @@ interface PopoverMetrics {
   tailPosition: number;
 }
 
-const getFallbackMetrics = (tab: BottomTabKey): PopoverMetrics => {
+const getFallbackMetrics = (tab: VisibleBottomTabKey): PopoverMetrics => {
   const anchorCenterX = getFallbackTabCenterX(tab);
   const popoverLeft = getPopoverLeft(anchorCenterX);
 
@@ -104,7 +109,11 @@ const getGuideTriggerStyle = ({
   };
 };
 
-function BottomTabPopoverPreview({ activeTab }: { activeTab: BottomTabKey }) {
+function BottomTabPopoverPreview({
+  activeTab,
+}: {
+  activeTab: VisibleBottomTabKey;
+}) {
   const [metrics, setMetrics] = useState<PopoverMetrics>(() =>
     getFallbackMetrics(activeTab),
   );
@@ -126,8 +135,7 @@ function BottomTabPopoverPreview({ activeTab }: { activeTab: BottomTabKey }) {
 
     const frameRect = portalContainer.getBoundingClientRect();
     const iconRect = iconElement.getBoundingClientRect();
-    const anchorCenterX =
-      iconRect.left + iconRect.width / 2 - frameRect.left;
+    const anchorCenterX = iconRect.left + iconRect.width / 2 - frameRect.left;
     const popoverLeft = getPopoverLeft(anchorCenterX);
 
     setMetrics({

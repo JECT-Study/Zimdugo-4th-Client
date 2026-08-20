@@ -4,7 +4,7 @@ import type { BackendResponse } from "./lockers";
 export interface MeProfileData {
   id: number;
   email: string;
-  nickname: string;
+  nickname?: string;
   profileImageUrl: string;
   status: string;
   providers: string[];
@@ -26,10 +26,9 @@ const unwrapBackendData = <T>(response: BackendResponse<T> | undefined): T => {
 export const getMeProfile = async (
   signal?: AbortSignal,
 ): Promise<MeProfileData> => {
-  const { data: response } = await apiClient.get<BackendResponse<MeProfileData>>(
-    "/api/v1/me",
-    { signal },
-  );
+  const { data: response } = await apiClient.get<
+    BackendResponse<MeProfileData>
+  >("/api/v1/me", { signal });
 
   return unwrapBackendData(response);
 };

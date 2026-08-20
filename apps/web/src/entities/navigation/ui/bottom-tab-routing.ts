@@ -8,7 +8,7 @@ import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 export const BOTTOM_TAB_LINKS: Record<BottomTabKey, string> = {
   home: "/",
   report: "/report",
-  my: "/my",
+  my: "/settings",
   settings: "/settings",
 };
 
@@ -23,10 +23,9 @@ export const getActiveBottomTab = (pathname: string): BottomTabKey => {
   if (normalizedPath === "/report" || normalizedPath.startsWith("/report/")) {
     return "report";
   }
-  if (normalizedPath === "/my" || normalizedPath.startsWith("/my/")) {
-    return "my";
-  }
   if (
+    normalizedPath === "/my" ||
+    normalizedPath.startsWith("/my/") ||
     normalizedPath === "/settings" ||
     normalizedPath.startsWith("/settings/")
   ) {
