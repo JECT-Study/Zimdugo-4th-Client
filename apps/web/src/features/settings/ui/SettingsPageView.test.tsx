@@ -70,6 +70,18 @@ describe("SettingsPageView", () => {
     expect(screen.getByRole("button", { name: "로그아웃" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "로그인" })).toBeNull();
 
+    const profileSection = screen.getByLabelText("프로필");
+    const languageButton = screen.getByRole("button", { name: "언어 설정" });
+    const favoritesButton = screen.getByRole("button", { name: "즐겨찾기" });
+    expect(
+      profileSection.compareDocumentPosition(languageButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      languageButton.compareDocumentPosition(favoritesButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
     fireEvent.click(screen.getByRole("button", { name: "프로필 이미지" }));
     expect(profile.onProfileImagePress).toHaveBeenCalledOnce();
 

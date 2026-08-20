@@ -35,10 +35,6 @@ export function SettingsSkeleton({
 } = {}) {
   return (
     <div style={settingsSkeletonContentInlineFallbackStyle}>
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <SettingsSkeletonRow width={128} />
-        <SettingsSkeletonRow attached width={116} />
-      </div>
       {showProfile ? (
         <div
           style={{
@@ -62,6 +58,10 @@ export function SettingsSkeleton({
           />
         </div>
       ) : null}
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <SettingsSkeletonRow width={128} />
+        <SettingsSkeletonRow attached width={116} />
+      </div>
       {showProfile ? (
         <div style={{ display: "flex", flexDirection: "column" }}>
           {!isGuest ? <SettingsSkeletonRow width={72} /> : null}

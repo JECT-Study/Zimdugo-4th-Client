@@ -83,18 +83,10 @@ export function SettingsPageView({
       />
 
       <main className={content}>
-        <section className={group}>
-          <SettingsRow
-            label={m.settings_language()}
-            onPress={onLanguagePress}
-          />
-          <SettingsRow label={m.settings_dark_mode()} onPress={onThemePress} />
-        </section>
-
         {profile ? (
           <>
             <section
-              className={[profileSection, groupGap].join(" ")}
+              className={profileSection}
               aria-label={m.my_profile_aria()}
             >
               <div className={profileImageControl}>
@@ -154,6 +146,17 @@ export function SettingsPageView({
               </div>
             </section>
 
+            <section className={[group, groupGap].join(" ")}>
+              <SettingsRow
+                label={m.settings_language()}
+                onPress={onLanguagePress}
+              />
+              <SettingsRow
+                label={m.settings_dark_mode()}
+                onPress={onThemePress}
+              />
+            </section>
+
             <section
               className={[group, activityGroup].join(" ")}
               aria-label={m.my_activity_aria()}
@@ -176,7 +179,18 @@ export function SettingsPageView({
               />
             </section>
           </>
-        ) : null}
+        ) : (
+          <section className={group}>
+            <SettingsRow
+              label={m.settings_language()}
+              onPress={onLanguagePress}
+            />
+            <SettingsRow
+              label={m.settings_dark_mode()}
+              onPress={onThemePress}
+            />
+          </section>
+        )}
 
         <section className={[group, groupGap].join(" ")}>
           <SettingsRow label={m.settings_notice()} onPress={onNoticePress} />
