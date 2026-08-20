@@ -57,7 +57,7 @@ export const languageContent = style({
 export const languageGroup = style({
   display: "flex",
   flexDirection: "column",
-  gap: "24px",
+  gap: "31px",
 });
 
 export const groupGap = style({
@@ -192,6 +192,13 @@ export const languageSettingRow = style({
   borderRadius: vars.radius.scale[6],
   boxSizing: "border-box",
   backgroundColor: vars.color.bg.default,
+});
+
+export const languageSettingRowLabel = style({
+  display: "inline-flex",
+  alignItems: "center",
+  minWidth: 0,
+  gap: vars.spacing[12],
 });
 
 export const languageSettingRowCheck = style({

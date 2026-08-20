@@ -57,7 +57,7 @@ export const settingsGroupGapInlineFallbackStyle: CSSProperties = {
 export const settingsLanguageGroupInlineFallbackStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "24px",
+  gap: "31px",
 };
 
 export const settingsSkeletonContentInlineFallbackStyle: CSSProperties = {
