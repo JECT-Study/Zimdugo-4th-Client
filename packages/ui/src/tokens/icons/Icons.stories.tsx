@@ -23,6 +23,7 @@ import {
   IconCircleboxHappy32,
   IconCircleboxMike32,
   IconCircleboxMore32,
+  IconCircleboxPencil32,
   IconCircleboxRefresh48,
   IconCircleboxThumbDown32,
   IconCircleboxThumbUp32,
@@ -869,6 +870,9 @@ export const Circlebox: Story = {
       </Cell>
       <Cell name="more" ingredients={["IconMore24"]} probeTarget="root">
         <IconCircleboxMore32 />
+      </Cell>
+      <Cell name="pencil" ingredients={["IconPencil24"]} probeTarget="root">
+        <IconCircleboxPencil32 />
       </Cell>
       <Cell name="close" ingredients={["IconX24"]} probeTarget="root">
         <IconCircleboxClose32 />

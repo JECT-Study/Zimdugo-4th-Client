@@ -1392,7 +1392,13 @@ export function IconMarker22({
   );
 }
 
-export function IconPencil24({ className }: { className?: string }) {
+export function IconPencil24({
+  className,
+  fill = color.palette.gray[500],
+}: {
+  className?: string;
+  fill?: string;
+}) {
   return (
     <svg
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
@@ -1406,7 +1412,7 @@ export function IconPencil24({ className }: { className?: string }) {
       <title>수정</title>
       <path
         d="M15.7279 9.57628L14.3137 8.16207L5 17.4758V18.89H6.41421L15.7279 9.57628ZM17.1421 8.16207L18.5563 6.74786L17.1421 5.33364L15.7279 6.74786L17.1421 8.16207ZM7.24264 20.89H3V16.6473L16.435 3.21232C16.8256 2.8218 17.4587 2.8218 17.8492 3.21232L20.6777 6.04075C21.0682 6.43127 21.0682 7.06444 20.6777 7.45496L7.24264 20.89Z"
-        fill={color.palette.gray[500]}
+        fill={fill}
       />
     </svg>
   );
@@ -1528,6 +1534,11 @@ export function IconProfile22({ className }: { className?: string }) {
   );
 }
 
+const profileCircleStyle = {
+  backgroundColor: color.palette.gray[100],
+  boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
+} satisfies CSSProperties;
+
 /** 홈 헤더와 프로필 placeholder에서 함께 사용하는 32px 프로필 아이콘 */
 export function IconProfile32({ className }: { className?: string }) {
   return (
@@ -1540,8 +1551,7 @@ export function IconProfile32({ className }: { className?: string }) {
         width: "32px",
         height: "32px",
         borderRadius: "9999px",
-        backgroundColor: color.bg.default,
-        boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
+        ...profileCircleStyle,
         flexShrink: 0,
       }}
       aria-hidden
@@ -1662,6 +1672,14 @@ export function IconCircleboxMore32({ className }: { className?: string }) {
   return (
     <CircleBox size={32} className={className}>
       <IconMore24 />
+    </CircleBox>
+  );
+}
+
+export function IconCircleboxPencil32({ className }: { className?: string }) {
+  return (
+    <CircleBox size={32} className={className} style={profileCircleStyle}>
+      <IconPencil24 fill={color.palette.gray[700]} />
     </CircleBox>
   );
 }
