@@ -134,6 +134,7 @@ export const emailField = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  gap: vars.spacing[8],
   boxSizing: "border-box",
   outline: "none",
   selectors: {
@@ -141,6 +142,13 @@ export const emailField = style({
       borderBottomColor: vars.color.focus,
     },
   },
+});
+
+export const emailProviderList = style({
+  display: "inline-flex",
+  alignItems: "center",
+  flexShrink: 0,
+  gap: vars.spacing[4],
 });
 
 export const emailText = style({

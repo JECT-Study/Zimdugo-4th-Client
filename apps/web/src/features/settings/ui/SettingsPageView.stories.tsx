@@ -46,6 +46,7 @@ const meta = {
     onWithdrawPress: () => undefined,
     profile: {
       email: "zimdugo@gmail.com",
+      providers: ["google"],
       profileImageUrl: PROFILE_IMAGE_URL,
       onProfileImagePress: () => undefined,
       onProfileImageEditPress: () => undefined,
@@ -79,6 +80,7 @@ export const Guest: Story = {
       ...meta.args.profile,
       isGuest: true,
       email: "로그인이 필요합니다",
+      providers: [],
       profileImageUrl: undefined,
     },
     onWithdrawPress: undefined,

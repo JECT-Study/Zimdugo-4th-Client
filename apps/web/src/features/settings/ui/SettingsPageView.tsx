@@ -1,13 +1,18 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
-import { IconCircleboxPencil32 } from "@repo/ui/tokens/icons";
+import {
+  IconCircleboxPencil32,
+  IconSocialProvider18,
+  type SocialProvider,
+} from "@repo/ui/tokens/icons";
 import type { ChangeEvent, RefObject } from "react";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
 import {
   activityGroup,
   content,
   emailField,
+  emailProviderList,
   emailText,
   group,
   groupGap,
@@ -30,6 +35,7 @@ import {
 
 interface SettingsProfile {
   email: string;
+  providers?: SocialProvider[];
   isGuest?: boolean;
   profileImageUrl?: string;
   isUpdatingProfileImage?: boolean;
@@ -121,6 +127,15 @@ export function SettingsPageView({
                 onChange={profile.onFileChange}
               />
               <div className={emailField}>
+                {profile.providers?.length ? (
+                  <span className={emailProviderList}>
+                    {profile.providers.map((provider) => (
+                      <span key={provider} data-social-provider={provider}>
+                        <IconSocialProvider18 provider={provider} />
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
                 <input
                   className={emailText}
                   type="text"

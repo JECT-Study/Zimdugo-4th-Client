@@ -12,6 +12,7 @@ import { useUser } from "#/entities/user/hooks/useUser";
 import { authService } from "#/features/auth/sign-in/api/authService";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
+import { resolveSocialProviders } from "#/features/settings/lib/resolve-social-providers";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import { SettingsPageView } from "#/features/settings/ui/SettingsPageView";
 import {
@@ -130,6 +131,9 @@ export function SettingsPage() {
         profile={{
           isGuest: !isAuthenticated,
           email: profileEmail,
+          providers: isAuthenticated
+            ? resolveSocialProviders(profile?.providers)
+            : [],
           profileImageUrl: profile?.profileImageUrl,
           isUpdatingProfileImage,
           fileInputRef,

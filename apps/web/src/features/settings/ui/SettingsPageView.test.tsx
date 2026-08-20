@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { setLanguageTag } from "@repo/i18n";
+import type { SocialProvider } from "@repo/ui/tokens/icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,9 +11,11 @@ const renderView = ({ isAuthenticated = true } = {}) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  const providers: SocialProvider[] = isAuthenticated ? ["google"] : [];
   const profile = {
     isGuest: !isAuthenticated,
     email: isAuthenticated ? "zimdugo@gmail.com" : "로그인이 필요합니다",
+    providers,
     profileImageUrl:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E",
     onProfileImagePress: vi.fn(),
@@ -55,6 +58,9 @@ describe("SettingsPageView", () => {
     const emailField = screen.getByRole("textbox", { name: "이메일" });
     expect(emailField.getAttribute("value")).toBe("zimdugo@gmail.com");
     expect(emailField.hasAttribute("readonly")).toBe(true);
+    expect(
+      document.querySelector('[data-social-provider="google"]'),
+    ).toBeTruthy();
     expect(screen.getByTitle("수정")).toBeTruthy();
     expect(screen.getByRole("button", { name: "즐겨찾기" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "제보 히스토리" })).toBeTruthy();
@@ -76,6 +82,7 @@ describe("SettingsPageView", () => {
       screen.getByRole("textbox", { name: "이메일" }).getAttribute("value"),
     ).toBe("로그인이 필요합니다");
     expect(screen.queryByTitle("수정")).toBeNull();
+    expect(document.querySelector("[data-social-provider]")).toBeNull();
     expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();
     expect(screen.queryByRole("button", { name: "제보 히스토리" })).toBeNull();
     expect(screen.getByRole("button", { name: "언어 설정" })).toBeTruthy();
