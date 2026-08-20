@@ -1,6 +1,7 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
+import { IconCircleboxPencil32 } from "@repo/ui/tokens/icons";
 import type { ChangeEvent, RefObject } from "react";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
 import {
@@ -15,6 +16,7 @@ import {
   nameField,
   page,
   profileImageButton,
+  profileImageEditIcon,
   profileSection,
   rowButton,
   settingRow,
@@ -91,6 +93,9 @@ export function SettingsPageView({
                   placeholderTone={isGuest ? "guest" : "default"}
                   alt={m.my_profile_image_alt()}
                 />
+                {!isGuest ? (
+                  <IconCircleboxPencil32 className={profileImageEditIcon} />
+                ) : null}
               </button>
               <input
                 ref={profile.fileInputRef}

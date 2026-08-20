@@ -51,6 +51,7 @@ describe("SettingsPageView", () => {
     renderView();
 
     expect(screen.getByDisplayValue("여정이")).toBeTruthy();
+    expect(screen.getByTitle("수정")).toBeTruthy();
     expect(screen.getByRole("button", { name: "즐겨찾기" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "제보 히스토리" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "언어 설정" })).toBeTruthy();
@@ -62,6 +63,7 @@ describe("SettingsPageView", () => {
 
     expect(screen.getByLabelText("프로필")).toBeTruthy();
     expect(screen.getByDisplayValue("로그인이 필요합니다")).toBeTruthy();
+    expect(screen.queryByTitle("수정")).toBeNull();
     expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();
     expect(screen.queryByRole("button", { name: "제보 히스토리" })).toBeNull();
     expect(screen.getByRole("button", { name: "언어 설정" })).toBeTruthy();

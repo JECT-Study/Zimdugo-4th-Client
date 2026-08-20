@@ -72,6 +72,7 @@ export const profileSection = style({
 });
 
 export const profileImageButton = style({
+  position: "relative",
   display: "inline-flex",
   padding: 0,
   border: 0,
@@ -88,6 +89,13 @@ export const profileImageButton = style({
       opacity: 0.6,
     },
   },
+});
+
+export const profileImageEditIcon = style({
+  position: "absolute",
+  right: 0,
+  bottom: 0,
+  pointerEvents: "none",
 });
 
 export const hiddenFileInput = style({
