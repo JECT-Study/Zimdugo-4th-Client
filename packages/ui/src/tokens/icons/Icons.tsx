@@ -1679,7 +1679,7 @@ export function IconCircleboxMore32({ className }: { className?: string }) {
 export function IconCircleboxPencil32({ className }: { className?: string }) {
   return (
     <CircleBox size={32} className={className} style={profileCircleStyle}>
-      <IconPencil24 fill={color.palette.gray[700]} />
+      <IconPencil24 fill={color.palette.gray[600]} />
     </CircleBox>
   );
 }
