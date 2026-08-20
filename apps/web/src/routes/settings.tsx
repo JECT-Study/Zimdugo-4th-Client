@@ -163,25 +163,22 @@ export function SettingsPage() {
         onWithdrawPress={
           isAuthenticated ? () => setIsWithdrawPopupOpen(true) : undefined
         }
-        profile={
-          isAuthenticated
-            ? {
-                nickname: nicknameDraft,
-                profileImageUrl: profile?.profileImageUrl,
-                isUpdatingProfileImage,
-                fileInputRef,
-                onProfileImagePress: openConfirmPopup,
-                onFileChange: (event) => {
-                  void handleFileChange(event);
-                },
-                onNicknameChange: setNicknameDraft,
-                onNicknameBlur: handleNicknameBlur,
-                onFavoritesPress: () => navigate({ to: "/my/favorites" }),
-                onReportsPress: () => navigate({ to: "/my/reports" }),
-                onLogout: handleLogout,
-              }
-            : undefined
-        }
+        profile={{
+          isGuest: !isAuthenticated,
+          nickname: isAuthenticated ? nicknameDraft : m.auth_required_title(),
+          profileImageUrl: profile?.profileImageUrl,
+          isUpdatingProfileImage,
+          fileInputRef,
+          onProfileImagePress: openConfirmPopup,
+          onFileChange: (event) => {
+            void handleFileChange(event);
+          },
+          onNicknameChange: setNicknameDraft,
+          onNicknameBlur: handleNicknameBlur,
+          onFavoritesPress: () => navigate({ to: "/my/favorites" }),
+          onReportsPress: () => navigate({ to: "/my/reports" }),
+          onLogout: handleLogout,
+        }}
       />
 
       <Popup

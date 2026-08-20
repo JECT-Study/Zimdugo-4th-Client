@@ -8,8 +8,6 @@ import {
   content,
   group,
   groupGap,
-  guestHeader,
-  guestPage,
   header,
   hiddenFileInput,
   logoutButton,
@@ -27,6 +25,7 @@ import {
 
 interface SettingsProfile {
   nickname: string;
+  isGuest?: boolean;
   profileImageUrl?: string;
   isUpdatingProfileImage?: boolean;
   fileInputRef?: RefObject<HTMLInputElement | null>;
@@ -60,10 +59,12 @@ export function SettingsPageView({
   onPrivacyPress,
   onWithdrawPress,
 }: SettingsPageViewProps) {
+  const isGuest = profile?.isGuest ?? false;
+
   return (
-    <div className={[page, profile ? "" : guestPage].join(" ")}>
+    <div className={page}>
       <Header
-        className={[header, profile ? "" : guestHeader].join(" ")}
+        className={header}
         leading="back"
         titleType="text"
         title={m.settings_title()}
@@ -82,7 +83,7 @@ export function SettingsPageView({
                 className={profileImageButton}
                 aria-label={m.my_profile_image_change_aria()}
                 onClick={profile.onProfileImagePress}
-                disabled={profile.isUpdatingProfileImage}
+                disabled={isGuest || profile.isUpdatingProfileImage}
               >
                 <ProfileImage
                   src={profile.profileImageUrl}
@@ -101,6 +102,7 @@ export function SettingsPageView({
                 className={nameField}
                 type="text"
                 value={profile.nickname}
+                readOnly={isGuest}
                 placeholder={m.my_name_placeholder()}
                 aria-label={m.my_nickname_input_aria()}
                 onChange={(event) =>
@@ -110,19 +112,21 @@ export function SettingsPageView({
               />
             </section>
 
-            <section
-              className={[group, activityGroup].join(" ")}
-              aria-label={m.my_activity_aria()}
-            >
-              <SettingsRow
-                label={m.my_menu_favorite()}
-                onPress={profile.onFavoritesPress}
-              />
-              <SettingsRow
-                label={m.my_menu_report_history()}
-                onPress={profile.onReportsPress}
-              />
-            </section>
+            {!isGuest ? (
+              <section
+                className={[group, activityGroup].join(" ")}
+                aria-label={m.my_activity_aria()}
+              >
+                <SettingsRow
+                  label={m.my_menu_favorite()}
+                  onPress={profile.onFavoritesPress}
+                />
+                <SettingsRow
+                  label={m.my_menu_report_history()}
+                  onPress={profile.onReportsPress}
+                />
+              </section>
+            ) : null}
           </>
         ) : null}
 
@@ -149,7 +153,7 @@ export function SettingsPageView({
           {m.settings_version_prefix()} {appVersion}
         </p>
 
-        {profile ? (
+        {profile && !isGuest ? (
           <div className={logoutSlot}>
             <Button
               variant="filled"

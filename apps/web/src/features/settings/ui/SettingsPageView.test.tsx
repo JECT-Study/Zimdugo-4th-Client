@@ -10,20 +10,19 @@ const renderView = ({ isAuthenticated = true } = {}) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  const profile = isAuthenticated
-    ? {
-        nickname: "여정이",
-        profileImageUrl:
-          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E",
-        onProfileImagePress: vi.fn(),
-        onFileChange: vi.fn(),
-        onNicknameChange: vi.fn(),
-        onNicknameBlur: vi.fn(),
-        onFavoritesPress: vi.fn(),
-        onReportsPress: vi.fn(),
-        onLogout: vi.fn(),
-      }
-    : undefined;
+  const profile = {
+    isGuest: !isAuthenticated,
+    nickname: isAuthenticated ? "여정이" : "로그인이 필요합니다",
+    profileImageUrl:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E",
+    onProfileImagePress: vi.fn(),
+    onFileChange: vi.fn(),
+    onNicknameChange: vi.fn(),
+    onNicknameBlur: vi.fn(),
+    onFavoritesPress: vi.fn(),
+    onReportsPress: vi.fn(),
+    onLogout: vi.fn(),
+  };
 
   return render(
     <QueryClientProvider client={queryClient}>
@@ -61,9 +60,8 @@ describe("SettingsPageView", () => {
   it("비로그인 사용자에게 공용 설정만 표시한다", () => {
     renderView({ isAuthenticated: false });
 
-    expect(document.querySelector('[class*="guestPage"]')).toBeTruthy();
-    expect(document.querySelector('[class*="guestHeader"]')).toBeTruthy();
-    expect(screen.queryByLabelText("프로필")).toBeNull();
+    expect(screen.getByLabelText("프로필")).toBeTruthy();
+    expect(screen.getByDisplayValue("로그인이 필요합니다")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();
     expect(screen.queryByRole("button", { name: "제보 히스토리" })).toBeNull();
     expect(screen.getByRole("button", { name: "언어 설정" })).toBeTruthy();

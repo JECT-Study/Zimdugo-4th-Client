@@ -69,7 +69,12 @@ export const WithoutProfileImage: Story = {
 
 export const Guest: Story = {
   args: {
-    profile: undefined,
+    profile: {
+      ...meta.args.profile,
+      isGuest: true,
+      nickname: "로그인이 필요합니다",
+      profileImageUrl: undefined,
+    },
     onWithdrawPress: undefined,
   },
 };
