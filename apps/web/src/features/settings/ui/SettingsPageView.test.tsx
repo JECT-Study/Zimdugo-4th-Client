@@ -62,6 +62,8 @@ describe("SettingsPageView", () => {
     renderView({ isAuthenticated: false });
 
     expect(screen.queryByLabelText("프로필")).toBeNull();
+    expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "제보 히스토리" })).toBeNull();
     expect(screen.getByRole("button", { name: "언어 설정" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "회원탈퇴" })).toBeNull();
   });
