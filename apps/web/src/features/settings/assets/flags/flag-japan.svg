@@ -1,6 +1,11 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="67.5" height="45" viewBox="0 0 67.5 45" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Group">
-<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M0 0H67.5V45H0V0Z" fill="white"/>
-<path id="Vector_2" d="M33.7551 36.4899C41.4803 36.4899 47.7429 30.2274 47.7429 22.5021C47.7429 14.7768 41.4803 8.51424 33.7551 8.51424C26.0298 8.51424 19.7672 14.7768 19.7672 22.5021C19.7672 30.2274 26.0298 36.4899 33.7551 36.4899Z" fill="#BC002D"/>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" width="25" height="20" viewBox="0 0 25 20" fill="none">
+  <g clip-path="url(#clip0_3001_1650)">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M-1.5625 0H26.5625V20H-1.5625V0Z" fill="white"/>
+    <path d="M12.5021 16.2178C15.721 16.2178 18.3304 13.4345 18.3304 10.001C18.3304 6.56755 15.721 3.78418 12.5021 3.78418C9.28323 3.78418 6.67383 6.56755 6.67383 10.001C6.67383 13.4345 9.28323 16.2178 12.5021 16.2178Z" fill="#BC002D"/>
+  </g>
+  <defs>
+    <clipPath id="clip0_3001_1650">
+      <rect width="25" height="20" fill="white"/>
+    </clipPath>
+  </defs>
 </svg>
