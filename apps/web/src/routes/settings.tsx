@@ -38,13 +38,16 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
   const { isAuthenticated, logout } = useAuth();
   const email = useAuthStore((state) => state.email);
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
+  const isSettingsRoot = useRouterState({
+    select: (state) =>
+      stripLocalePathPrefix(state.location.pathname) === "/settings",
   });
-  const { data: profile, isPending: isProfilePending } =
-    useUser(isAuthenticated);
-  const { data: summary, isPending: isSummaryPending } =
-    useMyPageSummary(isAuthenticated);
+  const { data: profile, isPending: isProfilePending } = useUser(
+    isAuthenticated && isSettingsRoot,
+  );
+  const { data: summary, isPending: isSummaryPending } = useMyPageSummary(
+    isAuthenticated && isSettingsRoot,
+  );
   const { mutate: updateProfile } = useUpdateMeProfile();
   const {
     isConfirmPopupOpen,
@@ -63,8 +66,6 @@ export function SettingsPage() {
   const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
 
   // 2. Derived values
-  const normalizedPath = stripLocalePathPrefix(pathname);
-  const isSettingsRoot = normalizedPath === "/settings";
   const { isStyleReady } = useSettingsStyleReady({ enabled: isSettingsRoot });
   const isProfileReady =
     !isAuthenticated || (!isProfilePending && isNicknameInitialized);
