@@ -17,6 +17,10 @@ import {
   iconSvgFixed,
 } from "./Icons.css.ts";
 
+export type { FlagCountry } from "./IconFlagCircle24";
+export { IconFlagCircle24 } from "./IconFlagCircle24";
+export type { SocialProvider } from "./IconSocialProvider18";
+export { IconSocialProvider18 } from "./IconSocialProvider18";
 export type { LanguageFlag } from "./LanguageFlagIcon";
 export { LanguageFlagIcon } from "./LanguageFlagIcon";
 
