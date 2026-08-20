@@ -61,6 +61,8 @@ describe("SettingsPageView", () => {
   it("비로그인 사용자에게 공용 설정만 표시한다", () => {
     renderView({ isAuthenticated: false });
 
+    expect(document.querySelector('[class*="guestPage"]')).toBeTruthy();
+    expect(document.querySelector('[class*="guestHeader"]')).toBeTruthy();
     expect(screen.queryByLabelText("프로필")).toBeNull();
     expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();
     expect(screen.queryByRole("button", { name: "제보 히스토리" })).toBeNull();

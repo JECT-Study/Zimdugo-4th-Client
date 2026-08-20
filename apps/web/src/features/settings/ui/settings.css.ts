@@ -13,9 +13,17 @@ export const page = style({
   boxSizing: "border-box",
 });
 
+export const guestPage = style({
+  background: vars.color.bg.surface,
+});
+
 export const header = style({
   background: vars.color.bg.default,
   borderBottom: `1px solid ${vars.color.palette.gray[200]}`,
+});
+
+export const guestHeader = style({
+  background: vars.color.bg.surface,
 });
 
 export const content = style({

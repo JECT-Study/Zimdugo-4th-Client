@@ -8,6 +8,8 @@ import {
   content,
   group,
   groupGap,
+  guestHeader,
+  guestPage,
   header,
   hiddenFileInput,
   logoutButton,
@@ -59,9 +61,9 @@ export function SettingsPageView({
   onWithdrawPress,
 }: SettingsPageViewProps) {
   return (
-    <div className={page}>
+    <div className={[page, profile ? "" : guestPage].join(" ")}>
       <Header
-        className={header}
+        className={[header, profile ? "" : guestHeader].join(" ")}
         leading="back"
         titleType="text"
         title={m.settings_title()}
