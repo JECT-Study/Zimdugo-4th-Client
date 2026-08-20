@@ -5,7 +5,11 @@ import {
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
-import { locationButton, locationControlStack } from "#/routes/-index.css";
+import {
+  locationButton,
+  locationControlStack,
+  myLocationIcon,
+} from "#/routes/-index.css";
 import { HomeHeader } from "./HomeHeader";
 
 const storyQueryClient = new QueryClient({
@@ -43,7 +47,7 @@ function HomeMapChromePreview() {
             <IconNavigationRefresh24 />
           </button>
           <button type="button" className={locationButton} aria-label="내 위치">
-            <IconNavigationCrosshair24 />
+            <IconNavigationCrosshair24 className={myLocationIcon} />
           </button>
         </div>
       </main>

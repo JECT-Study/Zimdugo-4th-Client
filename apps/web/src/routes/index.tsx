@@ -213,6 +213,7 @@ import {
   locationRecoveryNoticeClose,
   locationRecoveryNoticeMessage,
   locationRecoveryNoticePositioner,
+  myLocationIcon,
   pageWrapper,
   refreshButtonDisabled,
   refreshCooldownBadge,
@@ -485,6 +486,7 @@ const MyLocationButton = memo(function MyLocationButton({
       }
     >
       <IconNavigationCrosshair24
+        className={myLocationIcon}
         state={
           permission === "denied"
             ? "denied"

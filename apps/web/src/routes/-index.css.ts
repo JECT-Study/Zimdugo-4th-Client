@@ -99,6 +99,12 @@ export const locationButton = style({
   },
 });
 
+export const myLocationIcon = style({
+  width: "30px",
+  height: "30px",
+  transform: "translate(1.25px, 1.25px)",
+});
+
 const spin = keyframes({
   from: { transform: "rotate(0deg)" },
   to: { transform: "rotate(360deg)" },
