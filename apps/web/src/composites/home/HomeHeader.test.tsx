@@ -1,8 +1,12 @@
 import { m } from "@repo/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { HomeHeader } from "./HomeHeader";
+
+// vitest 에 globals 가 꺼져 있어 RTL 자동 정리가 걸리지 않는다. 직접 정리하지
+// 않으면 앞선 테스트의 헤더가 body 에 남아 screen 질의가 중복으로 잡힌다.
+afterEach(cleanup);
 
 const renderHeader = (profileImageUrl = "") => {
   const queryClient = new QueryClient({
@@ -20,13 +24,30 @@ const renderHeader = (profileImageUrl = "") => {
   );
 };
 
+/**
+ * 헤더는 CSS 청크가 붙기 전까지 스켈레톤을 보여준다. jsdom 에는 vanilla-extract
+ * 스타일이 적용되지 않아 프로브가 항상 타임아웃으로 끝나므로, 실제 UI 를 보는
+ * 단언은 프로브가 끝날 때까지 기다려야 한다.
+ */
+const findProfileButton = () =>
+  screen.findByRole("button", { name: m.my_profile_aria() });
+
 describe("HomeHeader", () => {
-  it("사진이 없으면 홈 전용 프로필 아이콘을 표시한다", () => {
+  it("스타일이 붙기 전에는 스켈레톤을 표시한다", () => {
+    const { container } = renderHeader();
+
+    expect(
+      screen.queryByRole("button", { name: m.my_profile_aria() }),
+    ).toBeNull();
+    expect(
+      container.querySelectorAll("[aria-hidden='true']").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("사진이 없으면 홈 전용 프로필 아이콘을 표시한다", async () => {
     renderHeader();
 
-    const profileButton = screen.getByRole("button", {
-      name: m.my_profile_aria(),
-    });
+    const profileButton = await findProfileButton();
 
     expect(profileButton.querySelector("svg")).not.toBeNull();
     expect(screen.queryByRole("img", { name: m.my_profile_image_alt() })).toBe(
@@ -34,18 +55,19 @@ describe("HomeHeader", () => {
     );
   });
 
-  it("사진이 있으면 ProfileImage로 전달해 표시한다", () => {
+  it("사진이 있으면 ProfileImage로 전달해 표시한다", async () => {
     const profileImageUrl = "https://example.com/profile.jpg";
     renderHeader(profileImageUrl);
 
-    const profileImage = screen.getByRole("img", {
+    const profileImage = await screen.findByRole("img", {
       name: m.my_profile_image_alt(),
     });
     expect(profileImage.getAttribute("src")).toBe(profileImageUrl);
   });
 
-  it("헤더 아이콘을 인라인 SVG 로 그린다", () => {
+  it("헤더 아이콘을 인라인 SVG 로 그린다", async () => {
     const { container } = renderHeader();
+    await findProfileButton();
 
     // new URL(..., import.meta.url) 로 만든 <img> 자산은 서버 번들에서 치환되지
     // 않아 프리렌더된 HTML 에 file:// 경로가 박히고 초기 진입에서 깨진다.

@@ -24,7 +24,7 @@ export const SKELETON_SURFACE_STYLE: CSSProperties = {
  * - Favicon is out of scope for skeleton policy.
  * - Static document pages (terms, privacy) -> no skeleton, no style probe.
  * - Unimplemented routes (notices) -> 404/placeholder, no skeleton.
- * - App chrome (BottomTabBar) -> probe once per session (module cache); Header fallback TODO.
+ * - App chrome (BottomTabBar, HomeHeader) -> probe once per session (module cache).
  * - Settings subtree -> style probe on first visit; reuse cache like chrome after CSS resolves.
  *
  * Inline fallback convention:

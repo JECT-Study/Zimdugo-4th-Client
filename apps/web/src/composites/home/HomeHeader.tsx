@@ -1,4 +1,5 @@
 import { languageTag, m } from "@repo/i18n";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import {
   BrandTextLogoSmall,
   IconCheck24,
@@ -7,7 +8,7 @@ import {
   IconNormalGlobe32,
 } from "@repo/ui/tokens/icons";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
 import {
   APP_LANGUAGES,
@@ -16,6 +17,11 @@ import {
   normalizeLanguage,
   switchAppLanguage,
 } from "#/shared/store/language";
+import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
+import {
+  type StyleReadyProbe,
+  useStyleReadyProbe,
+} from "#/shared/ui/useStyleReadyProbe";
 import * as styles from "./HomeHeader.css";
 
 export interface HomeHeaderProps {
@@ -33,6 +39,117 @@ const LANGUAGE_LABEL_TRANSITION = {
   ease: "easeOut",
 } as const;
 
+/**
+ * CSS 청크가 붙기 전 첫 페인트에도 헤더가 제자리에 보이도록 하는 인라인 폴백.
+ * 토큰이 아니라 리터럴을 쓰는 이유는 vanilla-extract 가 아직 없기 때문이다.
+ */
+const headerFallbackStyle: CSSProperties = {
+  position: "absolute",
+  top: "env(safe-area-inset-top, 0px)",
+  left: 0,
+  right: 0,
+  zIndex: 20,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  maxWidth: "430px",
+  height: "48px",
+  margin: "0 auto",
+  padding: "0 16px 0 30px",
+  boxSizing: "border-box",
+  backgroundColor: "#ffffff",
+};
+
+const logoFallbackStyle: CSSProperties = {
+  width: "78px",
+  height: "16px",
+  flexShrink: 0,
+};
+
+const actionsFallbackStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  gap: "12px",
+  minWidth: 0,
+};
+
+const circleActionFallbackStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "32px",
+  height: "32px",
+  flexShrink: 0,
+};
+
+/**
+ * 프로브 엘리먼트는 width/height 를 인라인으로 0 으로 덮어쓰므로 그 두 값은 보지
+ * 않는다. 헤더 클래스에서만 나오는 정렬과 좌측 패딩으로 판정한다.
+ */
+const isHomeHeaderStyleReady = (element: HTMLElement) => {
+  const style = window.getComputedStyle(element);
+
+  return (
+    style.display === "flex" &&
+    style.alignItems === "center" &&
+    style.justifyContent === "space-between" &&
+    style.paddingLeft === "30px"
+  );
+};
+
+const HOME_HEADER_STYLE_PROBES: StyleReadyProbe[] = [
+  {
+    className: styles.header,
+    isReady: isHomeHeaderStyleReady,
+  },
+];
+
+/** 앱 크롬이라 세션당 한 번만 프로브한다. */
+let hasHomeHeaderStyleResolved = false;
+
+/** CSS 청크가 붙기 전에 헤더 자리를 잡아두는 스켈레톤. */
+export function HomeHeaderSkeleton() {
+  return (
+    <header className={styles.header} style={headerFallbackStyle}>
+      <HomeHeaderSkeletonContent />
+    </header>
+  );
+}
+
+function HomeHeaderSkeletonContent() {
+  return (
+    <>
+      <Skeleton
+        width={78}
+        height={16}
+        borderRadius={4}
+        className={styles.logo}
+        style={{ ...logoFallbackStyle, ...SKELETON_SURFACE_STYLE }}
+      />
+      <div
+        className={styles.actions}
+        style={actionsFallbackStyle}
+        aria-hidden="true"
+      >
+        <Skeleton
+          width={32}
+          height={32}
+          variant="circle"
+          style={SKELETON_SURFACE_STYLE}
+        />
+        <Skeleton
+          width={32}
+          height={32}
+          variant="circle"
+          style={SKELETON_SURFACE_STYLE}
+        />
+      </div>
+    </>
+  );
+}
+
 export function HomeHeader({
   profileImageUrl = "",
   onProfilePress,
@@ -42,6 +159,13 @@ export function HomeHeader({
   const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
   const normalizedLanguage = normalizeLanguage(languageTag());
   const currentLanguage = normalizedLanguage ?? APP_LANGUAGES[0];
+  const shouldProbeStyle = !hasHomeHeaderStyleResolved;
+  const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
+    enabled: shouldProbeStyle,
+    probes: HOME_HEADER_STYLE_PROBES,
+  });
+  const fallbackStyle = (style: CSSProperties) =>
+    isStyleTimedOut ? style : undefined;
 
   const handleToggleLanguage = () => {
     if (!isLanguageExpanded) {
@@ -85,10 +209,27 @@ export function HomeHeader({
     };
   }, [isLanguageExpanded]);
 
+  useEffect(() => {
+    if (shouldProbeStyle && isStyleReady && !isStyleTimedOut) {
+      hasHomeHeaderStyleResolved = true;
+    }
+  }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
+
+  if (!isStyleReady) {
+    return <HomeHeaderSkeleton />;
+  }
+
   return (
-    <header className={styles.header}>
+    <header
+      className={styles.header}
+      style={fallbackStyle(headerFallbackStyle)}
+    >
+      {/* 로고 svg 는 width/height 속성을 갖고 있어 CSS 없이도 크기가 유지된다. */}
       <BrandTextLogoSmall className={styles.logo} />
-      <div className={styles.actions}>
+      <div
+        className={styles.actions}
+        style={fallbackStyle(actionsFallbackStyle)}
+      >
         <motion.div
           ref={languageDropdownRef}
           className={[
@@ -181,6 +322,7 @@ export function HomeHeader({
         <button
           type="button"
           className={styles.profileButton}
+          style={fallbackStyle(circleActionFallbackStyle)}
           aria-label={m.my_profile_aria()}
           onClick={onProfilePress}
         >

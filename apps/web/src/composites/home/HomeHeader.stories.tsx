@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HomeHeader } from "./HomeHeader";
+import { HomeHeader, HomeHeaderSkeleton } from "./HomeHeader";
 
 const storyQueryClient = new QueryClient({
   defaultOptions: {
@@ -46,4 +46,8 @@ export const WithProfileImage: Story = {
   args: {
     profileImageUrl: "https://picsum.photos/200",
   },
+};
+
+export const StyleLoadingSkeleton: StoryObj = {
+  render: () => <HomeHeaderSkeleton />,
 };
