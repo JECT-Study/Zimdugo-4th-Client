@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { Analytics } from "@vercel/analytics/react";
-import { type ReactNode, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import "@repo/ui/styles/global.css";
 import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
@@ -28,19 +28,10 @@ import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
 import {
   BASE_LOCALE,
-  LOCALE_COOKIE_MAX_AGE,
-  LOCALE_COOKIE_NAME,
-  LOCALE_NORMALIZATION_GROUPS,
-  LOCALE_PATH_PREFIX,
+  normalizeLocale,
   stripLocalePathPrefix,
 } from "#/shared/i18n/locales";
 import { isPathnameTransitionPending } from "#/shared/model/page-transition";
-import {
-  getRuntimeLanguage,
-  getUrlLanguage,
-  resolveLanguageSyncAction,
-  useAppLanguageStore,
-} from "#/shared/store/language";
 import { GtmBodyNoscript, GtmHeadScript } from "#/shared/ui/GtmContainer";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
 import {
@@ -98,70 +89,6 @@ const CRITICAL_LAYOUT_CSS = `
     color: inherit;
     text-decoration: none;
   }
-`;
-
-const INITIAL_LANGUAGE_REDIRECT_SCRIPT = `
-(function () {
-  try {
-    var baseLocale = ${JSON.stringify(BASE_LOCALE)};
-    var normalizationGroups = ${JSON.stringify(LOCALE_NORMALIZATION_GROUPS)};
-    var localePathPattern = new RegExp(${JSON.stringify(LOCALE_PATH_PREFIX.source)}, ${JSON.stringify(LOCALE_PATH_PREFIX.flags)});
-    var cookieName = ${JSON.stringify(LOCALE_COOKIE_NAME)};
-    var cookieMaxAge = ${JSON.stringify(LOCALE_COOKIE_MAX_AGE)};
-
-    function normalizeLocaleValue(value) {
-      if (typeof value !== "string") return null;
-
-      var lower = value.toLowerCase().replace(/_/g, "-");
-      for (var i = 0; i < normalizationGroups.length; i += 1) {
-        var group = normalizationGroups[i];
-        for (var j = 0; j < group.prefixes.length; j += 1) {
-          if (lower.indexOf(group.prefixes[j]) === 0) {
-            return group.locale;
-          }
-        }
-      }
-
-      return null;
-    }
-
-    function writeLocaleCookie(locale) {
-      document.cookie =
-        cookieName + "=" + locale + ";path=/;max-age=" + cookieMaxAge + ";SameSite=Lax";
-    }
-
-    var pathname = window.location.pathname;
-    var pathLocaleMatch = pathname.match(localePathPattern);
-    var pathLocale = pathLocaleMatch
-      ? normalizeLocaleValue(pathLocaleMatch[0].slice(1))
-      : null;
-
-    var raw = window.localStorage.getItem("app-language");
-    if (!raw) return;
-
-    var parsed = JSON.parse(raw);
-    var normalized = normalizeLocaleValue(
-      parsed && parsed.state && parsed.state.appLanguage,
-    );
-
-    if (!normalized) return;
-    if (pathLocale === normalized) return;
-    if (!pathLocale && normalized === baseLocale) return;
-
-    var basePathname = pathname.replace(localePathPattern, "") || "/";
-    var nextPathname = normalized === baseLocale
-      ? basePathname
-      : "/" + normalized + (basePathname === "/" ? "" : basePathname);
-
-    if (nextPathname === pathname) return;
-
-    // 목적지 로케일로 쿠키를 먼저 갱신해야 서버 가드가 되돌려보내지 않는다.
-    writeLocaleCookie(normalized);
-
-    window.location.replace(nextPathname + window.location.search + window.location.hash);
-  } catch (_) {
-  }
-})();
 `;
 
 const COMPACT_DEVICE_LAYOUT_SCRIPT = `
@@ -323,7 +250,6 @@ function RootDocument({ children }: { children: ReactNode }) {
   useBootstrapAuth();
   useLoginResultHandler();
 
-  // 경로가 바뀌면 URL locale과 runtime/store 언어를 다시 맞춘다.
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -336,41 +262,12 @@ function RootDocument({ children }: { children: ReactNode }) {
           state.resolvedLocation?.pathname ?? state.matches.at(-1)?.pathname,
       }),
   });
-  const [runtimeLanguage, setRuntimeLanguage] = useState(() =>
-    getRuntimeLanguage(),
-  );
-  const hasLanguageHydrated = useAppLanguageStore((state) => state.hasHydrated);
-  const initializeLanguage = useAppLanguageStore(
-    (state) => state.initializeLanguage,
-  );
-  const urlLanguage = getUrlLanguage(pathname);
-  const lang = urlLanguage ?? runtimeLanguage;
+  // paraglide 가 URL 우선 전략이라 서버와 클라이언트가 같은 값을 낸다.
+  const lang = normalizeLocale(languageTag()) ?? BASE_LOCALE;
   const showBottomTab = shouldShowBottomTab(pathname);
   const normalizedPath = stripLocalePathPrefix(pathname);
   const isDocumentScrollPage =
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
-
-  useEffect(() => {
-    if (!hasLanguageHydrated) {
-      return;
-    }
-
-    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    const action = resolveLanguageSyncAction({
-      href: currentHref,
-      urlLanguage: getUrlLanguage(pathname),
-      persistedLanguage: useAppLanguageStore.getState().appLanguage,
-      runtimeLanguage: languageTag(),
-    });
-
-    if (action.kind === "redirect") {
-      window.location.replace(action.href);
-      return;
-    }
-
-    initializeLanguage(action.language);
-    setRuntimeLanguage(getRuntimeLanguage());
-  }, [hasLanguageHydrated, initializeLanguage, pathname]);
 
   return (
     <html
@@ -379,10 +276,6 @@ function RootDocument({ children }: { children: ReactNode }) {
     >
       <head>
         <GtmHeadScript containerId={GTM_CONTAINER_ID} />
-        <script
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script runs before hydration to normalize locale-less URLs
-          dangerouslySetInnerHTML={{ __html: INITIAL_LANGUAGE_REDIRECT_SCRIPT }}
-        />
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script marks compact physical devices before first paint
           dangerouslySetInnerHTML={{ __html: COMPACT_DEVICE_LAYOUT_SCRIPT }}

@@ -1,6 +1,4 @@
-import { languageTag, setLanguageTag } from "@repo/i18n";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { languageTag } from "@repo/i18n";
 import {
   APP_LOCALES,
   type AppLocale,
@@ -9,30 +7,16 @@ import {
   LOCALE_COOKIE_NAME,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
-  parsePathLocale,
-  resolveBrowserLanguageCandidates,
 } from "#/shared/i18n/locales";
 
 export const APP_LANGUAGES = APP_LOCALES;
 
 export type AppLanguage = AppLocale;
 
-const APP_LANGUAGE_STORAGE_KEY = "app-language";
 const DEFAULT_APP_LANGUAGE: AppLanguage = BASE_LOCALE;
 const HREF_PARSE_BASE_ORIGIN = "http://zimdugo.local";
 
 export const normalizeLanguage = normalizeLocale;
-
-export const getUrlLanguage = (href: string): AppLanguage | null => {
-  const isProtocolRelative = href.startsWith("//");
-  const url = new URL(
-    href,
-    isProtocolRelative ? `http:${href}` : HREF_PARSE_BASE_ORIGIN,
-  );
-  // normalizeLanguage 는 BCP-47 태그용 접두 매칭이라 "/japan" 을 ja 로 오인한다.
-  // 경로 세그먼트는 정확히 일치할 때만 로케일로 인정한다.
-  return parsePathLocale(url.pathname);
-};
 
 export const getLocalizedHref = (
   href: string,
@@ -63,221 +47,40 @@ export const getLocalizedHref = (
   return `${url.pathname}${url.search}${url.hash}`;
 };
 
-export const getRuntimeLanguage = (): AppLanguage =>
-  normalizeLanguage(languageTag()) ?? DEFAULT_APP_LANGUAGE;
-
-export type LanguageSyncAction =
-  | { kind: "sync"; language: AppLanguage }
-  | { kind: "redirect"; href: string };
-
-/** trailing slash 등 표기만 다른 동일 주소를 같은 값으로 보기 위한 정규화. */
-const normalizeHrefForComparison = (href: string): string => {
-  const isProtocolRelative = href.startsWith("//");
-  const url = new URL(
-    href,
-    isProtocolRelative ? `http:${href}` : HREF_PARSE_BASE_ORIGIN,
-  );
-  const pathname = url.pathname.replace(/\/+$/, "") || "/";
-
-  return `${url.origin}${pathname}${url.search}${url.hash}`;
-};
-
 /**
- * 목적지가 현재 주소와 같으면 리다이렉트 대신 sync 를 돌려준다.
- * 같은 주소로 replace 하면 그대로 무한 새로고침이 되기 때문이다.
+ * 현재 로케일은 URL 이 정하고(paraglide url 전략), 사용자 선호는 이 쿠키가 정한다.
+ * 서버의 로케일 가드가 prefix 없는 문서 요청을 판정할 때 이 값을 가장 먼저 본다.
  */
-const resolveRedirectOrSyncAction = (
-  href: string,
-  language: AppLanguage,
-): LanguageSyncAction => {
-  const localizedHref = getLocalizedHref(href, language);
-
-  if (
-    normalizeHrefForComparison(localizedHref) ===
-    normalizeHrefForComparison(href)
-  ) {
-    return { kind: "sync", language };
-  }
-
-  return { kind: "redirect", href: localizedHref };
-};
-
-export const resolveLanguageSyncAction = ({
-  href,
-  urlLanguage,
-  persistedLanguage,
-  runtimeLanguage,
-}: {
-  href: string;
-  urlLanguage?: string | null;
-  persistedLanguage: AppLanguage;
-  runtimeLanguage?: string | null;
-}): LanguageSyncAction => {
-  const normalizedUrlLanguage = normalizeLanguage(urlLanguage);
-
-  if (normalizedUrlLanguage) {
-    if (normalizedUrlLanguage !== persistedLanguage) {
-      return resolveRedirectOrSyncAction(href, persistedLanguage);
-    }
-
-    return { kind: "sync", language: normalizedUrlLanguage };
-  }
-
-  const normalizedRuntimeLanguage =
-    normalizeLanguage(runtimeLanguage) ?? getRuntimeLanguage();
-
-  if (
-    persistedLanguage !== DEFAULT_APP_LANGUAGE &&
-    persistedLanguage !== normalizedRuntimeLanguage
-  ) {
-    return resolveRedirectOrSyncAction(href, persistedLanguage);
-  }
-
-  return { kind: "sync", language: normalizedRuntimeLanguage };
-};
-
-const getSystemLanguage = (): AppLanguage | null => {
-  if (typeof navigator === "undefined" || !navigator.language) {
-    return null;
-  }
-
-  return resolveBrowserLanguageCandidates([
-    navigator.language,
-    ...(navigator.languages ?? []),
-  ]);
-};
-
-const setLanguageCookie = (language: AppLanguage) => {
-  if (typeof document === "undefined") {
+export const setAppLanguage = (language: AppLanguage) => {
+  if (!APP_LANGUAGES.includes(language) || typeof document === "undefined") {
     return;
   }
 
   document.cookie = `${LOCALE_COOKIE_NAME}=${language};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`;
 };
 
-const getLanguageCookie = (): AppLanguage | null => {
-  if (typeof document === "undefined") {
-    return null;
+/**
+ * 언어 전환은 선호 쿠키를 쓰고 로케일이 적용된 주소로 이동하는 것이 전부다.
+ * 현재 로케일은 URL 이 정하므로 런타임을 제자리에서 바꾸지 않고 페이지를 다시 띄운다.
+ */
+export const switchAppLanguage = (language: AppLanguage) => {
+  setAppLanguage(language);
+
+  const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const localizedHref = getLocalizedHref(currentHref, language);
+
+  if (localizedHref !== currentHref) {
+    window.location.assign(localizedHref);
+    return;
   }
 
-  const localeCookie = document.cookie
-    .split(";")
-    .map((cookie) => cookie.trim())
-    .find((cookie) => cookie.startsWith(`${LOCALE_COOKIE_NAME}=`));
+  const currentLanguage =
+    normalizeLanguage(languageTag()) ?? DEFAULT_APP_LANGUAGE;
 
-  const cookieValue = localeCookie?.split("=").slice(1).join("=");
-
-  return normalizeLanguage(cookieValue);
-};
-
-const syncLanguageRuntime = (language: AppLanguage) => {
-  setLanguageTag(language, { reload: false });
-  setLanguageCookie(language);
-};
-
-const shouldSyncLanguageRuntime = (language: AppLanguage) =>
-  languageTag() !== language || getLanguageCookie() !== language;
-
-const resolvePersistedLanguage = (
-  persistedState: unknown,
-  fallbackLanguage: AppLanguage,
-): AppLanguage => {
-  if (
-    typeof persistedState === "object" &&
-    persistedState !== null &&
-    "appLanguage" in persistedState
-  ) {
-    const persistedLanguage = (persistedState as { appLanguage?: unknown })
-      .appLanguage;
-
-    return typeof persistedLanguage === "string"
-      ? (normalizeLanguage(persistedLanguage) ?? fallbackLanguage)
-      : fallbackLanguage;
+  if (currentLanguage !== language) {
+    window.location.reload();
   }
-
-  return fallbackLanguage;
 };
-
-interface AppLanguageState {
-  appLanguage: AppLanguage;
-  hasInitialized: boolean;
-  hasHydrated: boolean;
-  initializeLanguage: (urlLanguage?: string | null) => void;
-  setAppLanguage: (language: AppLanguage) => void;
-  markHydrated: () => void;
-}
-
-export const useAppLanguageStore = create<AppLanguageState>()(
-  persist(
-    (set, get) => ({
-      appLanguage: DEFAULT_APP_LANGUAGE,
-      hasInitialized: false,
-      hasHydrated: false,
-      initializeLanguage: (urlLanguageParam) => {
-        const urlLanguage = normalizeLanguage(urlLanguageParam);
-
-        if (get().hasInitialized) {
-          const nextLanguage = urlLanguage ?? get().appLanguage;
-          if (nextLanguage !== get().appLanguage) {
-            set({ appLanguage: nextLanguage });
-          }
-          if (shouldSyncLanguageRuntime(nextLanguage)) {
-            syncLanguageRuntime(nextLanguage);
-          }
-          return;
-        }
-
-        const hydratedLanguage = get().hasHydrated ? get().appLanguage : null;
-        const fallbackSystemLanguage = getSystemLanguage();
-        const nextLanguage =
-          urlLanguage ??
-          hydratedLanguage ??
-          fallbackSystemLanguage ??
-          DEFAULT_APP_LANGUAGE;
-
-        set({
-          appLanguage: nextLanguage,
-          hasInitialized: true,
-        });
-        syncLanguageRuntime(nextLanguage);
-      },
-      setAppLanguage: (language) => {
-        if (!APP_LANGUAGES.includes(language)) {
-          return;
-        }
-
-        set({ appLanguage: language, hasInitialized: true });
-        syncLanguageRuntime(language);
-      },
-      markHydrated: () => {
-        set({ hasInitialized: false, hasHydrated: true });
-      },
-    }),
-    {
-      name: APP_LANGUAGE_STORAGE_KEY,
-      storage: createJSONStorage(() =>
-        typeof window === "undefined"
-          ? {
-              getItem: () => null,
-              setItem: () => {},
-              removeItem: () => {},
-            }
-          : window.localStorage,
-      ),
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        appLanguage: resolvePersistedLanguage(
-          persistedState,
-          currentState.appLanguage,
-        ),
-      }),
-      partialize: (state) => ({ appLanguage: state.appLanguage }),
-      onRehydrateStorage: () => (state) => {
-        state?.markHydrated();
-      },
-    },
-  ),
-);
 
 export const appLanguageLabelMap: Record<AppLanguage, string> = {
   ko: "\uD55C\uAD6D\uC5B4",

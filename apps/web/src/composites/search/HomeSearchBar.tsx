@@ -22,9 +22,8 @@ import {
   APP_LANGUAGES,
   type AppLanguage,
   appLanguageLabelMap,
-  getLocalizedHref,
   normalizeLanguage,
-  useAppLanguageStore,
+  switchAppLanguage,
 } from "#/shared/store/language";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
@@ -154,7 +153,6 @@ export function HomeSearchBar({
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
   const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
-  const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const shouldProbeStyle = !hasHomeSearchBarStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
     enabled: shouldProbeStyle,
@@ -184,19 +182,7 @@ export function HomeSearchBar({
   const handleSelectLanguage = (language: AppLanguage) => {
     setIsLanguageOptionsOpen(false);
     setIsLanguageExpanded(false);
-    setAppLanguage(language);
-
-    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    const localizedHref = getLocalizedHref(currentHref, language);
-
-    if (localizedHref !== currentHref) {
-      window.location.assign(localizedHref);
-      return;
-    }
-
-    if (currentLanguage !== language) {
-      window.location.reload();
-    }
+    switchAppLanguage(language);
   };
 
   const handleCloseSearchContext = (event: MouseEvent<HTMLButtonElement>) => {

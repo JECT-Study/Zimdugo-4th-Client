@@ -32,9 +32,8 @@ import {
   APP_LANGUAGES,
   type AppLanguage,
   appLanguageLabelMap,
-  getLocalizedHref,
   normalizeLanguage,
-  useAppLanguageStore,
+  switchAppLanguage,
 } from "#/shared/store/language";
 
 export const Route = createFileRoute("/settings/language")({
@@ -44,25 +43,12 @@ export const Route = createFileRoute("/settings/language")({
 
 function SettingsLanguagePage() {
   const navigate = useNavigate();
-  const setAppLanguage = useAppLanguageStore((state) => state.setAppLanguage);
   const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady();
   const applyFallbackStyle = isStyleTimedOut;
   const currentLanguage = normalizeLanguage(languageTag()) ?? BASE_LOCALE;
 
   const handleSelectLanguage = (language: AppLanguage) => {
-    setAppLanguage(language);
-
-    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    const localizedHref = getLocalizedHref(currentHref, language);
-
-    if (localizedHref !== currentHref) {
-      window.location.assign(localizedHref);
-      return;
-    }
-
-    if (currentLanguage !== language) {
-      window.location.reload();
-    }
+    switchAppLanguage(language);
   };
 
   if (!isStyleReady) {
