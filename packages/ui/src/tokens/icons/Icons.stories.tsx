@@ -58,10 +58,11 @@ import {
   IconNormalGlobe32,
   IconNormalMapPin24,
   IconNormalProfile,
-  IconProfile22,
   IconNormalSearch24,
   IconNormalWallet24,
   IconPencil24,
+  IconProfile22,
+  IconProfile32,
   IconReport24,
   IconSearchAutocompleteLocker14,
   IconSearchAutocompletePlace14,
@@ -851,6 +852,13 @@ export const Circlebox: Story = {
         probeTarget="root"
       >
         <IconProfile22 />
+      </Cell>
+      <Cell
+        name="profile-32"
+        ingredients={["IconProfile32", "IconProfile22"]}
+        probeTarget="root"
+      >
+        <IconProfile32 />
       </Cell>
       <Cell
         name="clock"

@@ -1528,6 +1528,29 @@ export function IconProfile22({ className }: { className?: string }) {
   );
 }
 
+/** 홈 헤더와 프로필 placeholder에서 함께 사용하는 32px 프로필 아이콘 */
+export function IconProfile32({ className }: { className?: string }) {
+  return (
+    <span
+      className={className}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "32px",
+        height: "32px",
+        borderRadius: "9999px",
+        backgroundColor: color.bg.default,
+        boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
+        flexShrink: 0,
+      }}
+      aria-hidden
+    >
+      <IconProfile22 />
+    </span>
+  );
+}
+
 export function IconThumbnail24({ className }: { className?: string }) {
   return (
     <CircleBox size={24} className={className}>

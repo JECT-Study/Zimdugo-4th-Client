@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
-import { useEffect, useState } from "react";
 import { IconProfile22 } from "@repo/ui/tokens/icons";
+import { useEffect, useState } from "react";
 import { useUser } from "../../hooks/useUser.ts";
 import * as styles from "./ProfileImage.css.ts";
 

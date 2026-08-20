@@ -1,5 +1,5 @@
-import { style } from "@vanilla-extract/css";
 import { vars } from "@repo/ui/vars";
+import { style } from "@vanilla-extract/css";
 
 export const profileImageContainer = style({
   position: "relative",
@@ -7,7 +7,8 @@ export const profileImageContainer = style({
   alignItems: "center",
   justifyContent: "center",
   borderRadius: vars.radius.max,
-  backgroundColor: vars.color.palette.gray[300],
+  backgroundColor: vars.color.bg.default,
+  boxShadow: "0 3px 12px 0 rgba(22, 24, 28, 0.12)",
   overflow: "hidden",
   flexShrink: 0,
 });
@@ -22,6 +23,6 @@ export const profileImageContent = style({
 });
 
 export const profileImageIcon = style({
-  width: "68.75%",
-  height: "68.75%",
+  width: "22px",
+  height: "22px",
 });
