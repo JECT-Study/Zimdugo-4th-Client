@@ -2,8 +2,8 @@ import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import {
   IconCircleboxClose32,
-  IconCircleboxCrosshair48,
-  IconCircleboxRefresh48,
+  IconNavigationCrosshair24,
+  IconNavigationRefresh24,
 } from "@repo/ui/tokens/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -447,7 +447,7 @@ const RefreshButton = memo(function RefreshButton({
       aria-label={m.home_map_refresh_aria()}
       disabled={isDisabled}
     >
-      <IconCircleboxRefresh48
+      <IconNavigationRefresh24
         state={isDisabled ? "refresh" : "refreshActive"}
         className={isRefreshSpinning ? refreshIconSpinning : ""}
       />
@@ -484,7 +484,7 @@ const MyLocationButton = memo(function MyLocationButton({
         isLocating ? m.location_loading_aria() : m.home_my_location_aria()
       }
     >
-      <IconCircleboxCrosshair48
+      <IconNavigationCrosshair24
         state={
           permission === "denied"
             ? "denied"

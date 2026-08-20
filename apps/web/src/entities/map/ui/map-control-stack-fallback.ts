@@ -1,21 +1,18 @@
 import { appShellMaxWidth } from "@repo/ui/tokens/layout/layout.css";
 import type { CSSProperties } from "react";
 
-/** `-index.css.ts` locationControlStack의 `calc(bottomNav + N)`와 동기화 */
-export const MAP_CONTROL_OFFSET_ABOVE_NAV = "52px";
+/** `-index.css.ts` locationControlStack의 하단 위치와 동기화 */
+export const MAP_CONTROL_BOTTOM = "70px";
 
 export const MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX = 430;
-export const MAP_CONTROL_FALLBACK_BOTTOM_NAV_PX = 60;
-export const MAP_CONTROL_FALLBACK_OFFSET_ABOVE_NAV_PX = 52;
 export const MAP_CONTROL_FALLBACK_SIDE_INSET_PX = 16;
 export const MAP_CONTROL_FALLBACK_SIDE_INSET =
   "max(16px, env(safe-area-inset-right, 0px))";
 export const MAP_CONTROL_FALLBACK_MAX_WIDTH = appShellMaxWidth;
-export const MAP_CONTROL_FALLBACK_GAP_PX = 8;
+export const MAP_CONTROL_FALLBACK_GAP_PX = 12;
 export const MAP_CONTROL_FALLBACK_Z_INDEX = 20;
 
-export const MAP_CONTROL_FALLBACK_BOTTOM_PX =
-  MAP_CONTROL_FALLBACK_BOTTOM_NAV_PX + MAP_CONTROL_FALLBACK_OFFSET_ABOVE_NAV_PX;
+export const MAP_CONTROL_FALLBACK_BOTTOM_PX = 70;
 
 /** CSS 청크 도착 전 위치·레이아웃 인라인 폴백 */
 export const mapControlStackPositionFallbackStyle: CSSProperties = {

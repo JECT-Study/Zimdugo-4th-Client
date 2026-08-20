@@ -4,7 +4,7 @@ import {
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
-import { MAP_CONTROL_OFFSET_ABOVE_NAV } from "#/entities/map/ui/map-control-stack-fallback";
+import { MAP_CONTROL_BOTTOM } from "#/entities/map/ui/map-control-stack-fallback";
 
 export const mapContainer = style({
   width: "100%",
@@ -40,7 +40,7 @@ export const topControlStack = style({
 export const locationControlStack = style({
   position: "fixed",
   left: "50%",
-  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
+  bottom: MAP_CONTROL_BOTTOM,
   transform: "translateX(-50%)",
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,
@@ -49,7 +49,7 @@ export const locationControlStack = style({
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-end",
-  gap: vars.spacing[8],
+  gap: vars.spacing[12],
   zIndex: 350,
   pointerEvents: "none",
   selectors: {
@@ -71,12 +71,16 @@ export const locationControlStack = style({
 
 export const locationButton = style({
   position: "relative",
-  width: "48px",
-  height: "48px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "42px",
+  height: "42px",
   borderRadius: vars.radius.max,
   cursor: "pointer",
-  backgroundColor: "transparent",
-  border: "none",
+  backgroundColor: vars.color.bg.default,
+  border: `1px solid ${vars.color.palette.gray[200]}`,
+  boxShadow: vars.shadow[1],
   outline: "2px solid transparent",
   outlineOffset: "2px",
   padding: 0,
@@ -103,7 +107,7 @@ const spin = keyframes({
 export const locationRecoveryNoticePositioner = style({
   position: "fixed",
   left: "50%",
-  bottom: `calc(${vars.layout.bottomNav} + ${MAP_CONTROL_OFFSET_ABOVE_NAV})`,
+  bottom: MAP_CONTROL_BOTTOM,
   transform: "translateX(-50%)",
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,

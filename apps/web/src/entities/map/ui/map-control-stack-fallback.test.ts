@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX,
+  MAP_CONTROL_FALLBACK_BOTTOM_PX,
+  MAP_CONTROL_FALLBACK_GAP_PX,
   MAP_CONTROL_FALLBACK_MAX_WIDTH,
   MAP_CONTROL_FALLBACK_SIDE_INSET,
   mapControlStackInlineFallbackStyle,
@@ -31,5 +33,14 @@ describe("map-control-stack-fallback", () => {
     expect(mapControlStackInlineFallbackStyle.paddingRight).toBe(
       MAP_CONTROL_FALLBACK_SIDE_INSET,
     );
+  });
+
+  it("바텀 탭 없이 디자인 기준 하단 위치와 간격을 사용한다", () => {
+    expect(MAP_CONTROL_FALLBACK_BOTTOM_PX).toBe(70);
+    expect(MAP_CONTROL_FALLBACK_GAP_PX).toBe(12);
+    expect(mapControlStackPositionFallbackStyle).toMatchObject({
+      bottom: 70,
+      gap: 12,
+    });
   });
 });
