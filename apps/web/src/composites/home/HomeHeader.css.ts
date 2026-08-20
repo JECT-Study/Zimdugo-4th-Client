@@ -47,10 +47,8 @@ export const actions = style({
   minWidth: 0,
 });
 
-/** 펼친 드롭다운은 트리거와 선택지 목록이 같은 너비를 쓴다. */
-export const LANGUAGE_MENU_WIDTH = 164;
-
-const languageMenuWidth = `${LANGUAGE_MENU_WIDTH}px`;
+/** 펼친 트리거와 선택지 목록이 같은 너비를 쓴다. */
+const languageMenuWidth = "164px";
 
 export const languageDropdown = style({
   position: "relative",
@@ -62,10 +60,11 @@ export const languageDropdown = style({
 });
 
 export const languageDropdownExpanded = style({
-  width: languageMenuWidth,
+  width: "max-content",
 });
 
 export const languageTrigger = style({
+  position: "relative",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "flex-start",
@@ -83,8 +82,10 @@ export const languageTrigger = style({
   overflow: "hidden",
   selectors: {
     [`${languageDropdownExpanded} &`]: {
-      width: "100%",
+      width: languageMenuWidth,
       height: "36px",
+      // 넓어진 폭 안에서 국기와 라벨만 가운데로 모은다. 화살표는 오른쪽 끝 고정.
+      justifyContent: "center",
       gap: "4px",
       padding: "2px 6px",
       border: `1px solid ${vars.color.brand.primary}`,
@@ -107,10 +108,13 @@ export const languageTriggerLabel = style({
 });
 
 export const languageChevron = style({
+  // 국기·라벨의 가운데 정렬에 끼어들지 않도록 흐름에서 빼 오른쪽 끝에 둔다.
+  position: "absolute",
+  right: "6px",
+  top: "50%",
   width: 0,
   height: 0,
-  // 펼친 트리거는 선택지 목록 너비까지 늘어나므로 화살표를 오른쪽 끝에 붙인다.
-  marginLeft: "auto",
+  marginTop: "-3px",
   flexShrink: 0,
   opacity: 0,
   borderLeft: "5px solid transparent",
@@ -125,7 +129,7 @@ export const languageOptions = style({
   right: 0,
   display: "flex",
   flexDirection: "column",
-  width: "100%",
+  width: languageMenuWidth,
   paddingTop: "6px",
   paddingBottom: "5px",
   borderRadius: vars.radius[6],
