@@ -1,3 +1,4 @@
+import { languageTag } from "@repo/i18n";
 import {
   APP_LOCALES,
   type AppLocale,
@@ -56,6 +57,29 @@ export const setAppLanguage = (language: AppLanguage) => {
   }
 
   document.cookie = `${LOCALE_COOKIE_NAME}=${language};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`;
+};
+
+/**
+ * 언어 전환은 선호 쿠키를 쓰고 로케일이 적용된 주소로 이동하는 것이 전부다.
+ * 현재 로케일은 URL 이 정하므로 런타임을 제자리에서 바꾸지 않고 페이지를 다시 띄운다.
+ */
+export const switchAppLanguage = (language: AppLanguage) => {
+  setAppLanguage(language);
+
+  const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const localizedHref = getLocalizedHref(currentHref, language);
+
+  if (localizedHref !== currentHref) {
+    window.location.assign(localizedHref);
+    return;
+  }
+
+  const currentLanguage =
+    normalizeLanguage(languageTag()) ?? DEFAULT_APP_LANGUAGE;
+
+  if (currentLanguage !== language) {
+    window.location.reload();
+  }
 };
 
 export const appLanguageLabelMap: Record<AppLanguage, string> = {

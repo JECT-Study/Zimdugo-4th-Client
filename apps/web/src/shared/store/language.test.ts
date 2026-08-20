@@ -44,6 +44,15 @@ describe("getLocalizedHref", () => {
       "https://zimdugo.com/en/settings",
     );
   });
+
+  it("프로토콜 상대 주소는 호스트 표기를 유지한 채 로케일만 넣는다", () => {
+    expect(getLocalizedHref("//zimdugo.com/settings", "en")).toBe(
+      "//zimdugo.com/en/settings",
+    );
+    expect(getLocalizedHref("//zimdugo.com/en/settings", "ko")).toBe(
+      "//zimdugo.com/settings",
+    );
+  });
 });
 
 describe("setAppLanguage", () => {

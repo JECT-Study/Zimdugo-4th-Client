@@ -12,6 +12,8 @@ const appI18nEntry = fileURLToPath(new URL("./src/i18n.ts", import.meta.url));
 const appI18nServerEntry = fileURLToPath(
   new URL("./src/i18n-server.ts", import.meta.url),
 );
+// 로케일 prefix 가 없는 문서 경로. 프리렌더 대상과 겹치는 주 진입 경로들이다.
+const LOCALE_LESS_DOCUMENT_SRC = "^/(login|my|notices|report|settings)?(/.*)?$";
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ??
   process.env.API_BASE_URL ??
@@ -62,8 +64,17 @@ const config = defineConfig({
               // 대가로 로케일 prefix 없는 문서 요청은 전부 함수를 탄다. 다만 대부분의
               // 봇은 Accept-Language 를 보내지 않아 has 에 걸리지 않고, prefix 가 있는
               // 경로는 src 에 매치되지 않으므로 영향 범위는 prefix 없는 진입뿐이다.
-              src: "^/(login|my|notices|report|settings)?(/.*)?$",
+              src: LOCALE_LESS_DOCUMENT_SRC,
               has: [{ type: "header", key: "accept-language" }],
+              dest: "/__server",
+            },
+            {
+              // Vercel 의 has 는 AND 라서 "헤더 또는 쿠키" 를 한 규칙으로 표현할 수 없다.
+              // Accept-Language 를 보내지 않는 클라이언트(일부 웹뷰·프라이버시 도구)라도
+              // 선호 쿠키가 있으면 서버가 그 값으로 판정해야 하므로 규칙을 하나 더 둔다.
+              // 두 조건을 모두 만족하는 요청은 위 규칙에서 이미 함수로 가므로 중복 비용은 없다.
+              src: LOCALE_LESS_DOCUMENT_SRC,
+              has: [{ type: "cookie", key: "PARAGLIDE_LOCALE" }],
               dest: "/__server",
             },
           ],
