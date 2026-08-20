@@ -135,7 +135,7 @@ export const emailField = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: vars.spacing[2],
+  gap: vars.spacing[4],
   boxSizing: "border-box",
   outline: "none",
   selectors: {
@@ -155,6 +155,7 @@ export const emailProviderList = style({
 export const emailText = style({
   minWidth: 0,
   width: "auto",
+  fieldSizing: "content",
   maxWidth: "100%",
   padding: 0,
   border: 0,
