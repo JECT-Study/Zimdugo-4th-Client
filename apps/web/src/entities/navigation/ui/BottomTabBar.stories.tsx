@@ -31,7 +31,7 @@ const meta = {
   argTypes: {
     activeTab: {
       control: "select",
-      options: ["home", "report", "my", "settings"],
+      options: ["home", "report", "settings"],
       description: "현재 활성화된 탭",
     },
   },

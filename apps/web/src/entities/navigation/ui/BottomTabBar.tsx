@@ -22,7 +22,7 @@ import { getActiveBottomTab } from "./bottom-tab-routing.ts";
 
 export type { BottomTabKey };
 
-const TAB_ORDER: BottomTabKey[] = ["home", "report", "my", "settings"];
+const TAB_ORDER: BottomTabKey[] = ["home", "report", "settings"];
 
 const skeletonFallbackStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 
