@@ -1,5 +1,4 @@
 import { m } from "@repo/i18n";
-import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import {
   IconCircleboxPencil32,
@@ -18,8 +17,6 @@ import {
   groupGap,
   header,
   hiddenFileInput,
-  logoutButton,
-  logoutSlot,
   page,
   profileImageButton,
   profileImageControl,
@@ -46,6 +43,7 @@ interface SettingsProfile {
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onFavoritesPress: () => void;
   onReportsPress: () => void;
+  onLogin: () => void;
   onLogout: () => void;
 }
 
@@ -54,6 +52,7 @@ export interface SettingsPageViewProps {
   appVersion: string;
   onBack: () => void;
   onLanguagePress: () => void;
+  onThemePress?: () => void;
   onNoticePress: () => void;
   onTermsPress: () => void;
   onPrivacyPress: () => void;
@@ -65,6 +64,7 @@ export function SettingsPageView({
   appVersion,
   onBack,
   onLanguagePress,
+  onThemePress,
   onNoticePress,
   onTermsPress,
   onPrivacyPress,
@@ -83,10 +83,18 @@ export function SettingsPageView({
       />
 
       <main className={content}>
+        <section className={group}>
+          <SettingsRow
+            label={m.settings_language()}
+            onPress={onLanguagePress}
+          />
+          <SettingsRow label={m.settings_dark_mode()} onPress={onThemePress} />
+        </section>
+
         {profile ? (
           <>
             <section
-              className={profileSection}
+              className={[profileSection, groupGap].join(" ")}
               aria-label={m.my_profile_aria()}
             >
               <div className={profileImageControl}>
@@ -146,30 +154,29 @@ export function SettingsPageView({
               </div>
             </section>
 
-            {!isGuest ? (
-              <section
-                className={[group, activityGroup].join(" ")}
-                aria-label={m.my_activity_aria()}
-              >
-                <SettingsRow
-                  label={m.my_menu_favorite()}
-                  onPress={profile.onFavoritesPress}
-                />
-                <SettingsRow
-                  label={m.my_menu_report_history()}
-                  onPress={profile.onReportsPress}
-                />
-              </section>
-            ) : null}
+            <section
+              className={[group, activityGroup].join(" ")}
+              aria-label={m.my_activity_aria()}
+            >
+              {!isGuest ? (
+                <>
+                  <SettingsRow
+                    label={m.my_menu_favorite()}
+                    onPress={profile.onFavoritesPress}
+                  />
+                  <SettingsRow
+                    label={m.my_menu_report_history()}
+                    onPress={profile.onReportsPress}
+                  />
+                </>
+              ) : null}
+              <SettingsRow
+                label={isGuest ? m.my_login() : m.my_logout()}
+                onPress={isGuest ? profile.onLogin : profile.onLogout}
+              />
+            </section>
           </>
         ) : null}
-
-        <section className={[group, profile ? groupGap : ""].join(" ")}>
-          <SettingsRow
-            label={m.settings_language()}
-            onPress={onLanguagePress}
-          />
-        </section>
 
         <section className={[group, groupGap].join(" ")}>
           <SettingsRow label={m.settings_notice()} onPress={onNoticePress} />
@@ -186,20 +193,6 @@ export function SettingsPageView({
         <p className={versionText}>
           {m.settings_version_prefix()} {appVersion}
         </p>
-
-        {profile && !isGuest ? (
-          <div className={logoutSlot}>
-            <Button
-              variant="filled"
-              intent="neutral"
-              size="L"
-              className={logoutButton}
-              onPress={profile.onLogout}
-            >
-              {m.my_logout()}
-            </Button>
-          </div>
-        ) : null}
       </main>
     </div>
   );
@@ -208,7 +201,7 @@ export function SettingsPageView({
 interface SettingsRowProps {
   label: string;
   value?: string;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 function SettingsRow({ label, value, onPress }: SettingsRowProps) {
@@ -218,6 +211,7 @@ function SettingsRow({ label, value, onPress }: SettingsRowProps) {
       className={[rowButton, settingRow].join(" ")}
       aria-label={label}
       onClick={onPress}
+      disabled={!onPress}
     >
       <span className={settingRowText}>{label}</span>
       {value ? <span className={settingRowValue}>{value}</span> : null}

@@ -182,6 +182,11 @@ export const rowButton = style({
   padding: 0,
   cursor: "pointer",
   textAlign: "left",
+  selectors: {
+    "&:disabled": {
+      cursor: "default",
+    },
+  },
 });
 
 export const settingRow = style({
@@ -271,18 +276,4 @@ export const versionText = style({
   color: vars.color.palette.gray[600],
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
-});
-
-export const logoutSlot = style({
-  display: "flex",
-  justifyContent: "center",
-  paddingTop: vars.spacing[24],
-});
-
-export const logoutButton = style({
-  minWidth: "112px",
-  paddingLeft: vars.spacing[24],
-  paddingRight: vars.spacing[24],
-  color: vars.color.text.surface,
-  fontSize: vars.typography.fontSize[18],
 });

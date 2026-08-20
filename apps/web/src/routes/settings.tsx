@@ -87,12 +87,16 @@ export function SettingsPage() {
     void logout();
   };
 
+  const handleLogin = () => {
+    void navigate({
+      to: "/login",
+      search: { returnPath: "/settings", code: undefined },
+    });
+  };
+
   const handleProfileImagePress = () => {
     if (!isAuthenticated) {
-      void navigate({
-        to: "/login",
-        search: { returnPath: "/settings", code: undefined },
-      });
+      handleLogin();
       return;
     }
 
@@ -110,7 +114,7 @@ export function SettingsPage() {
     return (
       <SettingsSkeletonFrame>
         <SettingsHeaderSkeleton />
-        <SettingsSkeleton showProfile={isAuthenticated} />
+        <SettingsSkeleton showProfile isGuest={!isAuthenticated} />
       </SettingsSkeletonFrame>
     );
   }
@@ -145,6 +149,7 @@ export function SettingsPage() {
           },
           onFavoritesPress: () => navigate({ to: "/my/favorites" }),
           onReportsPress: () => navigate({ to: "/my/reports" }),
+          onLogin: handleLogin,
           onLogout: handleLogout,
         }}
       />

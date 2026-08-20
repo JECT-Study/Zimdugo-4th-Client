@@ -29,9 +29,16 @@ export function SettingsHeaderSkeleton() {
   return <HeaderSkeleton className={header} />;
 }
 
-export function SettingsSkeleton({ showProfile = false } = {}) {
+export function SettingsSkeleton({
+  showProfile = false,
+  isGuest = false,
+} = {}) {
   return (
     <div style={settingsSkeletonContentInlineFallbackStyle}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <SettingsSkeletonRow width={128} />
+        <SettingsSkeletonRow attached width={116} />
+      </div>
       {showProfile ? (
         <div
           style={{
@@ -55,12 +62,14 @@ export function SettingsSkeleton({ showProfile = false } = {}) {
           />
         </div>
       ) : null}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {showProfile ? <SettingsSkeletonRow width={72} /> : null}
-        {showProfile ? <SettingsSkeletonRow width={96} /> : null}
-        <SettingsSkeletonRow width={128} />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      {showProfile ? (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {!isGuest ? <SettingsSkeletonRow width={72} /> : null}
+          {!isGuest ? <SettingsSkeletonRow attached width={96} /> : null}
+          <SettingsSkeletonRow attached={!isGuest} width={64} />
+        </div>
+      ) : null}
+      <div style={{ display: "flex", flexDirection: "column" }}>
         <SettingsSkeletonRow width={124} />
         <SettingsSkeletonRow attached width={116} />
         <SettingsSkeletonRow attached width={108} />
