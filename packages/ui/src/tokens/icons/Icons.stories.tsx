@@ -31,6 +31,7 @@ import {
   IconDistanceRoute24,
   IconFilter14,
   IconFilter20,
+  IconFlagCircle24,
   IconGoogle24,
   IconKakao24,
   IconLockerDetailCapacity24,
@@ -74,6 +75,7 @@ import {
   IconSizeL,
   IconSizeM,
   IconSizeS,
+  IconSocialProvider18,
   IconStarFilled24,
   IconStarOutline24,
   IconThumbDown24,
@@ -768,6 +770,29 @@ export const Language: Story = {
   ),
 };
 
+export const FlagCircle: Story = {
+  name: "icon.flag.circle",
+  render: () => (
+    <div style={grid}>
+      <Cell name="korea" probeTarget="root">
+        <IconFlagCircle24 country="ko" />
+      </Cell>
+      <Cell name="japan" probeTarget="root">
+        <IconFlagCircle24 country="ja" />
+      </Cell>
+      <Cell name="taiwan" probeTarget="root">
+        <IconFlagCircle24 country="zh-TW" />
+      </Cell>
+      <Cell name="china" probeTarget="root">
+        <IconFlagCircle24 country="zh" />
+      </Cell>
+      <Cell name="unitedStates" probeTarget="root">
+        <IconFlagCircle24 country="en" />
+      </Cell>
+    </div>
+  ),
+};
+
 export const Search: Story = {
   name: "icon.search",
   render: () => (
@@ -856,6 +881,23 @@ export const Social: Story = {
         <SocialBadge provider="google">
           <IconGoogle24 />
         </SocialBadge>
+      </Cell>
+    </div>
+  ),
+};
+
+export const SocialProvider: Story = {
+  name: "icon.social.provider",
+  render: () => (
+    <div style={grid}>
+      <Cell name="google" probeTarget="root">
+        <IconSocialProvider18 provider="google" />
+      </Cell>
+      <Cell name="naver" probeTarget="root">
+        <IconSocialProvider18 provider="naver" />
+      </Cell>
+      <Cell name="kakao" probeTarget="root">
+        <IconSocialProvider18 provider="kakao" />
       </Cell>
     </div>
   ),
@@ -1220,6 +1262,24 @@ export const Gallery: Story = {
         </Cell>
       </RowSection>
 
+      <RowSection title="icon.flag.circle">
+        <Cell name="korea" probeTarget="root">
+          <IconFlagCircle24 country="ko" />
+        </Cell>
+        <Cell name="japan" probeTarget="root">
+          <IconFlagCircle24 country="ja" />
+        </Cell>
+        <Cell name="taiwan" probeTarget="root">
+          <IconFlagCircle24 country="zh-TW" />
+        </Cell>
+        <Cell name="china" probeTarget="root">
+          <IconFlagCircle24 country="zh" />
+        </Cell>
+        <Cell name="unitedStates" probeTarget="root">
+          <IconFlagCircle24 country="en" />
+        </Cell>
+      </RowSection>
+
       <RowSection title="icon.search">
         <Cell name="search.place.row">
           <IconSearchPlaceRow14 />
@@ -1287,6 +1347,18 @@ export const Gallery: Story = {
         </Cell>
         <Cell name="small" spanColumns={2}>
           <BrandTextLogoSmall />
+        </Cell>
+      </RowSection>
+
+      <RowSection title="icon.social.provider">
+        <Cell name="google" probeTarget="root">
+          <IconSocialProvider18 provider="google" />
+        </Cell>
+        <Cell name="naver" probeTarget="root">
+          <IconSocialProvider18 provider="naver" />
+        </Cell>
+        <Cell name="kakao" probeTarget="root">
+          <IconSocialProvider18 provider="kakao" />
         </Cell>
       </RowSection>
 
