@@ -126,28 +126,39 @@ export const hiddenFileInput = style({
   display: "none",
 });
 
-export const nameField = style({
+export const emailField = style({
   width: "100%",
   height: "48px",
   marginTop: vars.spacing[16],
-  border: 0,
   borderBottom: `2px solid ${vars.color.border.default}`,
-  backgroundColor: "transparent",
-  color: vars.color.text.title,
-  fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: "48px",
-  outline: "none",
-  textAlign: "center",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   boxSizing: "border-box",
+  outline: "none",
   selectors: {
-    "&::placeholder": {
-      color: vars.color.text.surface,
-    },
     "&:focus-visible": {
       borderBottomColor: vars.color.focus,
     },
   },
+});
+
+export const emailText = style({
+  minWidth: 0,
+  width: "auto",
+  maxWidth: "100%",
+  padding: 0,
+  border: 0,
+  background: "transparent",
+  overflow: "hidden",
+  color: vars.color.text.title,
+  fontSize: vars.typography.fontSize[14],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: vars.typography.lineHeight.normal,
+  outline: "none",
+  textAlign: "center",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 });
 
 export const activityGroup = style({

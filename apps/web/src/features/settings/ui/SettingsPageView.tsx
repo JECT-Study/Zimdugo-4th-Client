@@ -7,13 +7,14 @@ import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
 import {
   activityGroup,
   content,
+  emailField,
+  emailText,
   group,
   groupGap,
   header,
   hiddenFileInput,
   logoutButton,
   logoutSlot,
-  nameField,
   page,
   profileImageButton,
   profileImageControl,
@@ -28,7 +29,7 @@ import {
 } from "./settings.css.ts";
 
 interface SettingsProfile {
-  nickname: string;
+  email: string;
   isGuest?: boolean;
   profileImageUrl?: string;
   isUpdatingProfileImage?: boolean;
@@ -37,8 +38,6 @@ interface SettingsProfile {
   onProfileImagePress: () => void;
   onProfileImageEditPress: () => void;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onNicknameChange: (nickname: string) => void;
-  onNicknameBlur: () => void;
   onFavoritesPress: () => void;
   onReportsPress: () => void;
   onLogout: () => void;
@@ -121,18 +120,15 @@ export function SettingsPageView({
                 accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                 onChange={profile.onFileChange}
               />
-              <input
-                className={nameField}
-                type="text"
-                value={profile.nickname}
-                readOnly={isGuest}
-                placeholder={m.my_name_placeholder()}
-                aria-label={m.my_nickname_input_aria()}
-                onChange={(event) =>
-                  profile.onNicknameChange(event.target.value)
-                }
-                onBlur={profile.onNicknameBlur}
-              />
+              <div className={emailField}>
+                <input
+                  className={emailText}
+                  type="text"
+                  value={profile.email}
+                  readOnly
+                  aria-label={m.settings_profile_email_aria()}
+                />
+              </div>
             </section>
 
             {!isGuest ? (

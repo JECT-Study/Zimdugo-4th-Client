@@ -12,14 +12,12 @@ const renderView = ({ isAuthenticated = true } = {}) => {
   });
   const profile = {
     isGuest: !isAuthenticated,
-    nickname: isAuthenticated ? "여정이" : "로그인이 필요합니다",
+    email: isAuthenticated ? "zimdugo@gmail.com" : "로그인이 필요합니다",
     profileImageUrl:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E",
     onProfileImagePress: vi.fn(),
     onProfileImageEditPress: vi.fn(),
     onFileChange: vi.fn(),
-    onNicknameChange: vi.fn(),
-    onNicknameBlur: vi.fn(),
     onFavoritesPress: vi.fn(),
     onReportsPress: vi.fn(),
     onLogout: vi.fn(),
@@ -54,7 +52,9 @@ describe("SettingsPageView", () => {
   it("로그인 사용자에게 프로필, 활동, 설정을 함께 표시한다", () => {
     const { profile } = renderView();
 
-    expect(screen.getByDisplayValue("여정이")).toBeTruthy();
+    const emailField = screen.getByRole("textbox", { name: "이메일" });
+    expect(emailField.getAttribute("value")).toBe("zimdugo@gmail.com");
+    expect(emailField.hasAttribute("readonly")).toBe(true);
     expect(screen.getByTitle("수정")).toBeTruthy();
     expect(screen.getByRole("button", { name: "즐겨찾기" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "제보 히스토리" })).toBeTruthy();
@@ -72,7 +72,9 @@ describe("SettingsPageView", () => {
     const { profile } = renderView({ isAuthenticated: false });
 
     expect(screen.getByLabelText("프로필")).toBeTruthy();
-    expect(screen.getByDisplayValue("로그인이 필요합니다")).toBeTruthy();
+    expect(
+      screen.getByRole("textbox", { name: "이메일" }).getAttribute("value"),
+    ).toBe("로그인이 필요합니다");
     expect(screen.queryByTitle("수정")).toBeNull();
     expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();
     expect(screen.queryByRole("button", { name: "제보 히스토리" })).toBeNull();

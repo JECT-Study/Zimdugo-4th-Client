@@ -282,6 +282,7 @@
   "my_name_placeholder": "Enter your nickname",
   "my_default_nickname": "User",
   "my_nickname_input_aria": "Nickname",
+  "settings_profile_email_aria": "Email",
   "my_profile_image_alt": "Profile image",
   "my_profile_image_change_aria": "Change profile photo",
   "my_profile_image_change_title": "Change your profile photo?",

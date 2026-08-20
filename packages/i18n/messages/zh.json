@@ -282,6 +282,7 @@
   "my_name_placeholder": "请输入昵称",
   "my_default_nickname": "用户",
   "my_nickname_input_aria": "昵称",
+  "settings_profile_email_aria": "电子邮箱",
   "my_profile_image_alt": "个人资料图片",
   "my_profile_image_change_aria": "更改个人资料照片",
   "my_profile_image_change_title": "要更改个人资料照片吗？",

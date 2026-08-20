@@ -282,6 +282,7 @@
   "my_name_placeholder": "名前を入力してください",
   "my_default_nickname": "ユーザー",
   "my_nickname_input_aria": "ニックネーム",
+  "settings_profile_email_aria": "メールアドレス",
   "my_profile_image_alt": "プロフィール画像",
   "my_profile_image_change_aria": "プロフィール写真を変更",
   "my_profile_image_change_title": "プロフィール写真を変更しますか？",

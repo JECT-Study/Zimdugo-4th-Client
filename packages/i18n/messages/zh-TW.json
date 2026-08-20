@@ -282,6 +282,7 @@
   "my_name_placeholder": "請輸入暱稱",
   "my_default_nickname": "用戶",
   "my_nickname_input_aria": "暱稱",
+  "settings_profile_email_aria": "電子郵件",
   "my_profile_image_alt": "個人資料圖片",
   "my_profile_image_change_aria": "更改個人資料照片",
   "my_profile_image_change_title": "要更改個人資料照片嗎？",

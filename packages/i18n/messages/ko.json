@@ -282,6 +282,7 @@
   "my_name_placeholder": "이름을 입력하세요",
   "my_default_nickname": "사용자",
   "my_nickname_input_aria": "닉네임",
+  "settings_profile_email_aria": "이메일",
   "my_profile_image_alt": "프로필 이미지",
   "my_profile_image_change_aria": "프로필 사진 변경",
   "my_profile_image_change_title": "프로필 사진을 변경하시겠습니까?",

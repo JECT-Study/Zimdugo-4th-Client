@@ -7,12 +7,10 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useUser } from "#/entities/user/hooks/useUser";
 import { authService } from "#/features/auth/sign-in/api/authService";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
-import { useUpdateMeProfile } from "#/features/my/hooks/useUpdateMeProfile";
-import { resolveMyPageNickname } from "#/features/my/lib/resolve-my-page-nickname";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import { SettingsPageView } from "#/features/settings/ui/SettingsPageView";
@@ -24,7 +22,6 @@ import {
 import { useAuth } from "#/shared/hooks/useAuth";
 import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
-import { useAuthStore } from "#/shared/store/authStore";
 import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 
 export const Route = createFileRoute("/settings")({
@@ -37,7 +34,6 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated, logout } = useAuth();
-  const email = useAuthStore((state) => state.email);
   const isSettingsRoot = useRouterState({
     select: (state) =>
       stripLocalePathPrefix(state.location.pathname) === "/settings",
@@ -45,7 +41,6 @@ export function SettingsPage() {
   const { data: profile, isPending: isProfilePending } = useUser(
     isAuthenticated && isSettingsRoot,
   );
-  const { mutate: updateProfile } = useUpdateMeProfile();
   const {
     isConfirmPopupOpen,
     setIsConfirmPopupOpen,
@@ -58,8 +53,6 @@ export function SettingsPage() {
     handleConfirmChange,
     handleFileChange,
   } = useProfileImageChange();
-  const [nicknameDraft, setNicknameDraft] = useState("");
-  const [isNicknameInitialized, setIsNicknameInitialized] = useState(false);
   const [isWithdrawPopupOpen, setIsWithdrawPopupOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const profileImageButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -70,41 +63,12 @@ export function SettingsPage() {
 
   // 2. Derived values
   const { isStyleReady } = useSettingsStyleReady({ enabled: isSettingsRoot });
-  const isProfileReady =
-    !isAuthenticated || (!isProfilePending && isNicknameInitialized);
+  const isProfileReady = !isAuthenticated || !isProfilePending;
+  const profileEmail = isAuthenticated
+    ? (profile?.email ?? "")
+    : m.auth_required_title();
 
   // 3. Event handlers
-  const handleNicknameBlur = () => {
-    const trimmedNickname = nicknameDraft.trim();
-    if (!trimmedNickname) {
-      setNicknameDraft(
-        resolveMyPageNickname({
-          profileNickname: profile?.nickname,
-          email,
-        }),
-      );
-      return;
-    }
-
-    if (trimmedNickname === profile?.nickname) {
-      return;
-    }
-
-    updateProfile(
-      { nickname: trimmedNickname },
-      {
-        onError: () => {
-          setNicknameDraft(
-            resolveMyPageNickname({
-              profileNickname: profile?.nickname,
-              email,
-            }),
-          );
-        },
-      },
-    );
-  };
-
   const handleConfirmWithdraw = async () => {
     try {
       await authService.withdraw();
@@ -136,27 +100,6 @@ export function SettingsPage() {
     }
   };
 
-  // 4. Side effects
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setNicknameDraft("");
-      setIsNicknameInitialized(false);
-      return;
-    }
-
-    if (isProfilePending) {
-      return;
-    }
-
-    setNicknameDraft(
-      resolveMyPageNickname({
-        profileNickname: profile?.nickname,
-        email,
-      }),
-    );
-    setIsNicknameInitialized(true);
-  }, [isAuthenticated, isProfilePending, profile?.nickname, email]);
-
   // 5. Early returns
   if (!isSettingsRoot) {
     return <Outlet />;
@@ -186,7 +129,7 @@ export function SettingsPage() {
         }
         profile={{
           isGuest: !isAuthenticated,
-          nickname: isAuthenticated ? nicknameDraft : m.auth_required_title(),
+          email: profileEmail,
           profileImageUrl: profile?.profileImageUrl,
           isUpdatingProfileImage,
           fileInputRef,
@@ -196,8 +139,6 @@ export function SettingsPage() {
           onFileChange: (event) => {
             void handleFileChange(event);
           },
-          onNicknameChange: setNicknameDraft,
-          onNicknameBlur: handleNicknameBlur,
           onFavoritesPress: () => navigate({ to: "/my/favorites" }),
           onReportsPress: () => navigate({ to: "/my/reports" }),
           onLogout: handleLogout,

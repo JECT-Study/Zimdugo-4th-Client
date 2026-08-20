@@ -45,13 +45,11 @@ const meta = {
     onPrivacyPress: () => undefined,
     onWithdrawPress: () => undefined,
     profile: {
-      nickname: "여정이",
+      email: "zimdugo@gmail.com",
       profileImageUrl: PROFILE_IMAGE_URL,
       onProfileImagePress: () => undefined,
       onProfileImageEditPress: () => undefined,
       onFileChange: () => undefined,
-      onNicknameChange: () => undefined,
-      onNicknameBlur: () => undefined,
       onFavoritesPress: () => undefined,
       onReportsPress: () => undefined,
       onLogout: () => undefined,
@@ -80,7 +78,7 @@ export const Guest: Story = {
     profile: {
       ...meta.args.profile,
       isGuest: true,
-      nickname: "로그인이 필요합니다",
+      email: "로그인이 필요합니다",
       profileImageUrl: undefined,
     },
     onWithdrawPress: undefined,
