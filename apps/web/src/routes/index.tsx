@@ -12,25 +12,14 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
+import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
   type LockerDetailSheetSnapRequest,
   type LockerDetailSheetSnapStage,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
-import {
-  createLockerDetailFromAutocompleteItem,
-  createLockerDetailFromHistoryEntry,
-  createLockerDetailFromPin,
-  createLockerDetailFromSearchItem,
-  createLockerDetailPlaceholder,
-} from "#/entities/locker/lib/create-locker-detail";
-import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
-import type {
-  LockerDetailItem,
-  LockerDetailLoadState,
-} from "#/entities/locker/model/locker-detail";
+import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
   createDefaultSearchFilters,
@@ -48,6 +37,18 @@ import type {
   SearchPlaceResultItem,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
+import {
+  createLockerDetailFromAutocompleteItem,
+  createLockerDetailFromHistoryEntry,
+  createLockerDetailFromPin,
+  createLockerDetailFromSearchItem,
+  createLockerDetailPlaceholder,
+} from "#/entities/locker/lib/create-locker-detail";
+import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
+import type {
+  LockerDetailItem,
+  LockerDetailLoadState,
+} from "#/entities/locker/model/locker-detail";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
@@ -90,6 +91,7 @@ import {
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
+import { useUser } from "#/entities/user/hooks/useUser";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -503,6 +505,7 @@ export function IndexPage() {
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { data: user } = useUser(isAuthenticated);
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
@@ -3190,6 +3193,12 @@ export function IndexPage() {
 
   return (
     <main className={pageWrapper}>
+      {shouldRenderHomeSearchBar && context !== "search" ? (
+        <HomeHeader
+          profileImageUrl={user?.profileImageUrl ?? ""}
+          onProfilePress={() => navigate({ to: "/settings" })}
+        />
+      ) : null}
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
           onOpenSearch={handleOpenSearch}
