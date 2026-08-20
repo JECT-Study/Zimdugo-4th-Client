@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { setLanguageTag } from "@repo/i18n";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
+import { setTestLanguage } from "#/shared/test/language-runtime";
 import {
   DEFAULT_NAVIGATION_ORIGIN,
   encodeNaverCoordinate,
@@ -46,7 +46,7 @@ const linkOptions = (navigationOrigin = resolveNavigationOrigin(CURRENT_ORIGIN))
 
 describe("navigation-platform-links", () => {
   beforeEach(() => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
   });
 
   it("이미 알고 있는 위치가 있으면 해당 좌표를 출발지로 사용한다", () => {
@@ -118,13 +118,13 @@ describe("navigation-platform-links", () => {
   });
 
   it("구글맵 URL hl은 앱 언어에 맞춘다", () => {
-    setLanguageTag("en");
+    setTestLanguage("en");
     expect(resolveGoogleMapsHl("en")).toBe("en");
     expect(
       getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),
     ).toContain("hl=en");
 
-    setLanguageTag("zh-TW");
+    setTestLanguage("zh-TW");
     expect(resolveGoogleMapsHl("zh-TW")).toBe("zh-TW");
     expect(
       getNavigationPlatformUrl("google", LOCKER_WITH_COORDS, linkOptions()),

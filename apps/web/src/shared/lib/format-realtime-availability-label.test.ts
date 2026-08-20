@@ -1,5 +1,5 @@
-import { setLanguageTag } from "@repo/i18n";
 import { describe, expect, it } from "vitest";
+import { setTestLanguage } from "#/shared/test/language-runtime";
 import { formatRealtimeAvailabilityAsOfLabel } from "./format-updated-label";
 
 describe("formatRealtimeAvailabilityAsOfLabel", () => {
@@ -10,7 +10,7 @@ describe("formatRealtimeAvailabilityAsOfLabel", () => {
     ["zh", "截至 2026/08/14 14:19"],
     ["zh-TW", "截至 2026/08/14 14:19"],
   ] as const)("%s 로케일의 기준 시각을 표시한다", (locale, expected) => {
-    setLanguageTag(locale);
+    setTestLanguage(locale);
 
     expect(
       formatRealtimeAvailabilityAsOfLabel("2026-08-14T14:19:47.013473"),
@@ -18,7 +18,7 @@ describe("formatRealtimeAvailabilityAsOfLabel", () => {
   });
 
   it("유효하지 않은 값은 빈 문자열을 반환한다", () => {
-    setLanguageTag("ko");
+    setTestLanguage("ko");
 
     expect(formatRealtimeAvailabilityAsOfLabel(undefined)).toBe("");
     expect(formatRealtimeAvailabilityAsOfLabel("invalid")).toBe("");

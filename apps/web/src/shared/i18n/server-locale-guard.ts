@@ -3,6 +3,7 @@ import {
   BASE_LOCALE,
   LOCALE_COOKIE_MAX_AGE,
   LOCALE_COOKIE_NAME,
+  LOCALE_PATH_PREFIX,
   normalizeLocale,
   parsePathLocale,
   UNSUPPORTED_LOCALE_FALLBACK,
@@ -100,6 +101,21 @@ const getLocalizedPath = (url: URL, locale: AppLocale): string => {
   return `/${locale}${url.pathname === "/" ? "" : url.pathname}${url.search}`;
 };
 
+/**
+ * `/zh-tw` 처럼 표기만 다른 로케일 경로를 정규 표기(`/zh-TW`)로 되돌린다.
+ * LOCALE_PATH_PREFIX 는 대소문자를 무시하지만 라우터의 URL 패턴은 구분하므로,
+ * 정규 표기가 아니면 SSR 로케일만 맞고 라우트 매칭은 실패한다.
+ */
+const getCanonicalLocalePath = (url: URL, locale: AppLocale): string | null => {
+  const match = url.pathname.match(LOCALE_PATH_PREFIX);
+
+  if (!match || match[0] === `/${locale}`) {
+    return null;
+  }
+
+  return `/${locale}${url.pathname.slice(match[0].length)}${url.search}`;
+};
+
 const getLocaleCookie = (locale: AppLocale): string => {
   return `${LOCALE_COOKIE_NAME}=${locale}; Path=/; Max-Age=${LOCALE_COOKIE_MAX_AGE}; SameSite=Lax`;
 };
@@ -148,11 +164,14 @@ const withLocaleCookieResponse = (
   });
 };
 
-const getLocaleRedirectResponse = (url: URL, locale: AppLocale): Response => {
+const getLocaleRedirectResponse = (
+  location: string,
+  locale: AppLocale,
+): Response => {
   return new Response(null, {
     status: 307,
     headers: {
-      Location: getLocalizedPath(url, locale),
+      Location: location,
       "Set-Cookie": getLocaleCookie(locale),
     },
   });
@@ -170,13 +189,25 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
   const url = new URL(req.url);
   const pathLocale = getPathLocale(url.pathname);
 
-  if (isDocumentRequest(req) && !pathLocale) {
+  if (pathLocale) {
+    const canonicalPath = getCanonicalLocalePath(url, pathLocale);
+
+    if (canonicalPath) {
+      return {
+        kind: "redirect",
+        response: getLocaleRedirectResponse(canonicalPath, pathLocale),
+      };
+    }
+  } else if (isDocumentRequest(req)) {
     const preferredLocale = resolvePreferredDocumentLocale(req);
 
     if (preferredLocale !== BASE_LOCALE) {
       return {
         kind: "redirect",
-        response: getLocaleRedirectResponse(url, preferredLocale),
+        response: getLocaleRedirectResponse(
+          getLocalizedPath(url, preferredLocale),
+          preferredLocale,
+        ),
       };
     }
   }
