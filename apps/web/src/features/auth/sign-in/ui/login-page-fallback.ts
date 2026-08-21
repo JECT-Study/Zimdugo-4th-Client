@@ -79,12 +79,23 @@ export const loginBackButtonInlineFallbackStyle: CSSProperties = {
 };
 
 /** `SocialLoginStack.css.ts` labelBase와 동기화 */
-export const loginSocialLabelInlineFallbackStyle: CSSProperties = {
+const loginSocialLabelInlineFallbackBase: CSSProperties = {
   display: "block",
-  textAlign: "center",
   lineHeight: 1.2,
   maxWidth: "100%",
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
+};
+
+/** `labelTitle`과 동기화 — 세 버튼의 제목 시작선을 맞추기 위해 왼쪽 정렬 */
+export const loginSocialTitleInlineFallbackStyle: CSSProperties = {
+  ...loginSocialLabelInlineFallbackBase,
+  textAlign: "left",
+};
+
+/** `labelEn`과 동기화 — 제목보다 짧아 가운데 정렬 */
+export const loginSocialSubInlineFallbackStyle: CSSProperties = {
+  ...loginSocialLabelInlineFallbackBase,
+  textAlign: "center",
 };
