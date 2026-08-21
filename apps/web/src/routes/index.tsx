@@ -2982,6 +2982,7 @@ export function IndexPage() {
   const mapControlBottom = resolveMapControlBottomPx({
     baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
     sheetVisibleHeightPx: sheetVisibleHeight,
+    windowHeightPx: windowHeight,
   });
   const isSearchFilterActive =
     searchFilters.regionActive ||

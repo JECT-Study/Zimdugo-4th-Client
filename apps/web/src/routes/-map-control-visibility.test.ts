@@ -32,6 +32,7 @@ describe("resolveMapControlBottomPx", () => {
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: null,
+        windowHeightPx: 812,
       }),
     ).toBe(70);
   });
@@ -42,6 +43,7 @@ describe("resolveMapControlBottomPx", () => {
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 111,
+        windowHeightPx: 812,
       }),
     ).toBe(123);
   });
@@ -51,6 +53,7 @@ describe("resolveMapControlBottomPx", () => {
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 40,
+        windowHeightPx: 812,
       }),
     ).toBe(70);
   });
@@ -90,5 +93,29 @@ describe("resolveSearchListStageVisibleHeight", () => {
   it("full·dismiss 는 따라 올릴 단계가 아니다", () => {
     expect(resolveSearchListStageVisibleHeight("full", 812)).toBeNull();
     expect(resolveSearchListStageVisibleHeight("dismiss", 812)).toBeNull();
+  });
+});
+
+describe("resolveMapControlBottomPx 상단 경계", () => {
+  it("낮은 화면에서는 검색 바를 덮지 않도록 잘라 낸다", () => {
+    // 390px 화면 + 상세 하프 191px => 그대로면 bottom 203px 라 스택이 검색 바 위로
+    // 올라온다. 상단 경계 120px, 스택 높이 96px => 390 - 120 - 96 = 174px 로 제한.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 390,
+      }),
+    ).toBe(174);
+  });
+
+  it("잘라 낸 값이 기본 위치보다 낮으면 기본 위치를 유지한다", () => {
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 260,
+      }),
+    ).toBe(70);
   });
 });

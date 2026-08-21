@@ -39,14 +39,25 @@ export const shouldShowMapControls = ({
   return !isMapLoading && !hasMapError && hasMapInstance;
 };
 
-/** 컨트롤과 미니 시트 사이 간격 */
+/** 컨트롤과 시트 사이 간격 */
 const MAP_CONTROL_SHEET_GAP_PX = 12;
+
+/** 새로고침·내 위치 버튼과 그 사이 간격을 합한 스택 높이 */
+const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
+
+/**
+ * 컨트롤 스택 상단이 넘어서면 안 되는 경계.
+ * 검색 바 하단(safe-area + 60 + 48)에 간격 12 를 더한 값이다.
+ */
+const MAP_CONTROL_TOP_LIMIT_PX = 120;
 
 interface ResolveMapControlBottomOptions {
   /** 시트가 컨트롤을 밀어 올리지 않을 때 쓰는 기본 하단 위치 */
   baseBottomPx: number;
   /** 현재 단계에서 시트가 화면 하단에 차지하는 높이. 밀어 올릴 단계가 아니면 null */
   sheetVisibleHeightPx: number | null;
+  /** 상단 경계를 계산할 뷰포트 높이 */
+  windowHeightPx: number;
 }
 
 /**
@@ -59,17 +70,22 @@ interface ResolveMapControlBottomOptions {
  * 미니와 하프까지는 컨트롤이 시트를 따라 올라간다. full 은 시트가 화면을 덮는
  * 단계라 따라 올릴 자리가 없고, dismiss 는 시트가 사실상 닫힌 상태다. 두 단계는
  * 시트 쪽에서 null 을 주므로 기본 위치를 그대로 쓴다.
+ *
+ * 다만 화면이 낮으면(가로 모드 등) 시트 높이를 그대로 더했을 때 스택이 검색 바
+ * 위를 덮거나 뷰포트 밖으로 밀려난다. 상단 경계를 넘지 않도록 잘라 낸다.
  */
 export const resolveMapControlBottomPx = ({
   baseBottomPx,
   sheetVisibleHeightPx,
+  windowHeightPx,
 }: ResolveMapControlBottomOptions) => {
   if (sheetVisibleHeightPx === null) {
     return baseBottomPx;
   }
 
-  return Math.max(
-    baseBottomPx,
-    sheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX,
-  );
+  const raisedBottomPx = sheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX;
+  const topLimitedBottomPx =
+    windowHeightPx - MAP_CONTROL_TOP_LIMIT_PX - MAP_CONTROL_STACK_HEIGHT_PX;
+
+  return Math.max(baseBottomPx, Math.min(raisedBottomPx, topLimitedBottomPx));
 };
