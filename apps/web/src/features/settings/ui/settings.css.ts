@@ -9,7 +9,7 @@ export const page = style({
   height: "100dvh",
   background: vars.color.bg.default,
   paddingTop: `calc(env(safe-area-inset-top, 0px) + ${vars.layout.header})`,
-  paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${vars.layout.bottomNav})`,
+  paddingBottom: "env(safe-area-inset-bottom, 0px)",
   boxSizing: "border-box",
 });
 
@@ -20,7 +20,7 @@ export const header = style({
 
 export const content = style({
   width: "100%",
-  height: `calc(100dvh - env(safe-area-inset-top, 0px) - ${vars.layout.header} - env(safe-area-inset-bottom, 0px) - ${vars.layout.bottomNav})`,
+  height: `calc(100dvh - env(safe-area-inset-top, 0px) - ${vars.layout.header} - env(safe-area-inset-bottom, 0px))`,
   maxWidth: vars.layout.appMaxWidth,
   margin: "0 auto",
   padding: `32px ${vars.spacing[16]} ${vars.spacing[24]}`,
