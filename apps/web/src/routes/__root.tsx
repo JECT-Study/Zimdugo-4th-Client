@@ -21,6 +21,7 @@ import {
 } from "#/features/seo/model/localized-seo-head";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
+import { useServiceWorker } from "#/shared/hooks/useServiceWorker";
 import {
   BASE_LOCALE,
   normalizeLocale,
@@ -266,6 +267,7 @@ export const Route = createRootRouteWithContext<{
 function RootDocument({ children }: { children: ReactNode }) {
   useBootstrapAuth();
   useLoginResultHandler();
+  useServiceWorker();
 
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
