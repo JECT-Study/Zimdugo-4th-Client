@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { logo } from "#/routes/-login.css.ts";
 import { naver } from "#/features/auth/sign-in/ui/social-login-stack/SocialLoginStack.css.ts";
+import { logo } from "#/routes/-login.css.ts";
 
 const STYLE_READY_CHECK_LIMIT = 20;
+const STYLE_RECHECK_INTERVAL_MS = 100;
+const STYLE_RECHECK_LIMIT = 50;
 
 const isLoginLogoStyleReady = (element: HTMLElement) => {
   const style = window.getComputedStyle(element);
@@ -13,7 +15,12 @@ const isLoginLogoStyleReady = (element: HTMLElement) => {
 const isLoginButtonStyleReady = (element: HTMLElement) => {
   const style = window.getComputedStyle(element);
 
-  return style.height === "48px" && style.display === "flex";
+  // 버튼은 subgrid를 쓰는 grid이고, subgrid 미지원 브라우저에서만 flex로 떨어진다.
+  // display를 하나로 못 박으면 CSS가 적용됐는데도 probe가 실패해 폴백에 갇힌다.
+  return (
+    style.height === "48px" &&
+    (style.display === "grid" || style.display === "flex")
+  );
 };
 
 /**
@@ -26,7 +33,9 @@ export function useLoginPageStyleReady() {
 
   useEffect(() => {
     let frameId = 0;
+    let timerId = 0;
     let checkCount = 0;
+    let recheckCount = 0;
 
     const logoProbe = document.createElement("div");
     logoProbe.className = logo;
@@ -41,11 +50,27 @@ export function useLoginPageStyleReady() {
     document.body.appendChild(logoProbe);
     document.body.appendChild(buttonProbe);
 
+    const isStyleApplied = () =>
+      isLoginLogoStyleReady(logoProbe) && isLoginButtonStyleReady(buttonProbe);
+
+    // 타임아웃 뒤에도 CSS 청크는 늦게 도착할 수 있다. 계속 지켜보다가 도착하면
+    // 폴백을 걷어내야 인라인 스타일이 실제 레이아웃을 덮은 채로 굳지 않는다.
+    const recheckStyleReady = () => {
+      if (isStyleApplied()) {
+        setIsStyleTimedOut(false);
+        return;
+      }
+
+      if (recheckCount >= STYLE_RECHECK_LIMIT) {
+        return;
+      }
+
+      recheckCount += 1;
+      timerId = window.setTimeout(recheckStyleReady, STYLE_RECHECK_INTERVAL_MS);
+    };
+
     const checkStyleReady = () => {
-      if (
-        isLoginLogoStyleReady(logoProbe) &&
-        isLoginButtonStyleReady(buttonProbe)
-      ) {
+      if (isStyleApplied()) {
         setIsStyleReady(true);
         return;
       }
@@ -53,6 +78,10 @@ export function useLoginPageStyleReady() {
       if (checkCount >= STYLE_READY_CHECK_LIMIT) {
         setIsStyleTimedOut(true);
         setIsStyleReady(true);
+        timerId = window.setTimeout(
+          recheckStyleReady,
+          STYLE_RECHECK_INTERVAL_MS,
+        );
         return;
       }
 
@@ -64,6 +93,7 @@ export function useLoginPageStyleReady() {
 
     return () => {
       window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timerId);
       logoProbe.remove();
       buttonProbe.remove();
     };
