@@ -1,6 +1,8 @@
 import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
 import { createFileRoute, redirect, useSearch } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
+import { useRedirectWhenAuthenticated } from "#/features/auth/sign-in/hooks/useRedirectWhenAuthenticated";
+import { resolveSafeReturnPath } from "#/features/auth/sign-in/model/safe-return-path";
 import {
   loginLogoInlineFallbackStyle,
   loginPageInlineFallbackStyle,
@@ -22,19 +24,10 @@ export const Route = createFileRoute("/login")({
       typeof window !== "undefined" &&
       useAuthStore.getState().isAuthenticated
     ) {
-      let safePath = (search as Record<string, any>).returnPath as
-        | string
-        | undefined;
-      if (
-        !safePath ||
-        !safePath.startsWith("/") ||
-        safePath.startsWith("//") ||
-        safePath.includes("://")
-      ) {
-        safePath = "/";
-      }
       throw redirect({
-        to: safePath,
+        to: resolveSafeReturnPath(
+          (search as Record<string, unknown>).returnPath,
+        ),
         replace: true,
       });
     }
@@ -77,6 +70,9 @@ function LoginPage() {
 
   // 소셜 로그인 콜백으로 돌아온 경우, UI를 숨겨 화면 깜빡임 방지 (Hydration 에러 방지를 위해 구조는 유지)
   const isProcessing = !!code;
+
+  // beforeLoad가 다시 실행되지 않는 뒤로가기·bfcache 복원 경로까지 막는다.
+  useRedirectWhenAuthenticated({ returnPath, enabled: !isProcessing });
 
   if (isProcessing) {
     return (

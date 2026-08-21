@@ -1,10 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useSearch, useNavigate } from "@tanstack/react-router";
-import { useLoginResultStore } from "../store/loginResultStore";
-import { authService } from "../../features/auth/sign-in/api/authService";
+import { resolveSafeReturnPath } from "#/features/auth/sign-in/model/safe-return-path";
 import { invalidatePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
+import { authService } from "../../features/auth/sign-in/api/authService";
 import { useAuthStore } from "../store/authStore";
+import { useLoginResultStore } from "../store/loginResultStore";
 
 export const useLoginResultHandler = () => {
   const navigate = useNavigate();
@@ -12,10 +13,7 @@ export const useLoginResultHandler = () => {
   // @tanstack/react-router의 useSearch는 strict: false일 때 location.search 전체를 반환합니다.
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const code = search.code as string | undefined;
-  let returnPath = (search.returnPath as string) || "/";
-  if (!returnPath.startsWith("/") || returnPath.startsWith("//")) {
-    returnPath = "/";
-  }
+  const returnPath = resolveSafeReturnPath(search.returnPath);
 
   useEffect(() => {
     if (code) {
@@ -50,8 +48,12 @@ export const useLoginResultHandler = () => {
 // ... 외부 헬퍼 함수
 function handleFailure(returnPath: string, navigate: any) {
   useLoginResultStore.getState().open("failure");
-  
+
   // 실패 시에는 사용자가 다시 로그인할 수 있도록 무조건 로그인 폼을 보여주어야 하므로
   // URL에서 code 파라미터를 명확히 제거(undefined)하여 무한 루프를 방지하고 /login 경로로 렌더링을 갱신합니다.
-  navigate({ to: "/login", search: { returnPath, code: undefined }, replace: true });
+  navigate({
+    to: "/login",
+    search: { returnPath, code: undefined },
+    replace: true,
+  });
 }
