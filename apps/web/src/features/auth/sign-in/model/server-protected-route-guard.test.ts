@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveProtectedRequest } from "./server-protected-route-guard";
+import {
+  resolveProtectedRequest,
+  withProtectedDocumentHeaders,
+} from "./server-protected-route-guard";
 
 const AUTHENTICATED_COOKIE = `auth-storage=${encodeURIComponent(
   JSON.stringify({ state: { isAuthenticated: true }, version: 0 }),
@@ -93,5 +96,55 @@ describe("resolveProtectedRequest", () => {
     });
 
     expect(resolveProtectedRequest(assetRequest)).toBeNull();
+  });
+});
+
+describe("withProtectedDocumentHeaders", () => {
+  const html = (body = "<!doctype html>") =>
+    new Response(body, {
+      status: 200,
+      headers: { "Content-Type": "text/html" },
+    });
+
+  it("통과시킨 보호 문서 응답에도 no-store 를 남긴다", () => {
+    const response = withProtectedDocumentHeaders(
+      documentRequest("https://zimdugo.com/report", AUTHENTICATED_COOKIE),
+      html(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("본문과 나머지 헤더는 그대로 둔다", async () => {
+    const response = withProtectedDocumentHeaders(
+      documentRequest("https://zimdugo.com/my/reports", AUTHENTICATED_COOKIE),
+      html("<!doctype html><p>제보</p>"),
+    );
+
+    expect(await response.text()).toBe("<!doctype html><p>제보</p>");
+    expect(response.headers.get("Content-Type")).toBe("text/html");
+  });
+
+  it("헤더가 불변인 응답도 감싸서 처리한다", () => {
+    const immutable = Response.redirect("https://zimdugo.com/", 302);
+
+    expect(() =>
+      withProtectedDocumentHeaders(
+        documentRequest("https://zimdugo.com/report", AUTHENTICATED_COOKIE),
+        immutable,
+      ),
+    ).not.toThrow();
+  });
+
+  it("보호 경로가 아니면 응답을 그대로 돌려준다", () => {
+    const original = html();
+    const response = withProtectedDocumentHeaders(
+      documentRequest("https://zimdugo.com/notices", AUTHENTICATED_COOKIE),
+      original,
+    );
+
+    expect(response).toBe(original);
+    expect(response.headers.get("Cache-Control")).toBeNull();
   });
 });

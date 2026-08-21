@@ -19,6 +19,18 @@ const PROTECTED_PATHNAMES = new Set([
 const normalizePathname = (pathname: string) =>
   pathname.length > 1 ? pathname.replace(/\/+$/, "") || "/" : pathname;
 
+/** 로그인해야 받을 수 있는 문서 요청인가. 로그인 여부는 보지 않는다. */
+export const isProtectedDocumentRequest = (req: Request): boolean => {
+  if (!isDocumentRequest(req)) return false;
+
+  const url = new URL(req.url);
+  const localePrefix = url.pathname.match(LOCALE_PATH_PREFIX)?.[0] ?? "";
+  const pathnameWithoutLocale =
+    normalizePathname(url.pathname.slice(localePrefix.length)) || "/";
+
+  return PROTECTED_PATHNAMES.has(pathnameWithoutLocale);
+};
+
 /**
  * 비로그인 상태로 보호 경로 문서를 요청하면 서버에서 곧장 홈으로 돌려보낸다.
  *
@@ -32,15 +44,11 @@ const normalizePathname = (pathname: string) =>
  * 로그인 페이지의 역가드(`resolveLoginRequest`)와 방향만 반대인 같은 구조다.
  */
 export const resolveProtectedRequest = (req: Request): Response | null => {
-  if (!isDocumentRequest(req)) return null;
+  if (!isProtectedDocumentRequest(req)) return null;
+  if (isAuthenticatedRequest(req)) return null;
 
   const url = new URL(req.url);
   const localePrefix = url.pathname.match(LOCALE_PATH_PREFIX)?.[0] ?? "";
-  const pathnameWithoutLocale =
-    normalizePathname(url.pathname.slice(localePrefix.length)) || "/";
-
-  if (!PROTECTED_PATHNAMES.has(pathnameWithoutLocale)) return null;
-  if (isAuthenticatedRequest(req)) return null;
 
   return new Response(null, {
     status: 302,
@@ -49,5 +57,30 @@ export const resolveProtectedRequest = (req: Request): Response | null => {
       // 로그인 상태에 따라 응답이 갈리므로 이 판정은 캐시되면 안 된다.
       "Cache-Control": "no-store",
     },
+  });
+};
+
+/**
+ * 통과시킨 보호 문서 응답에도 `no-store` 를 남긴다.
+ *
+ * 위 리다이렉트에만 헤더를 붙이면 로그인 사용자가 받는 200 문서는 캐시 지시가
+ * 없는 채로 나간다. 같은 URL 의 응답이 로그인 여부로 갈리는 건 리다이렉트 쪽과
+ * 똑같으므로, 통과한 응답도 공유 캐시나 뒤로가기 캐시에 남으면 안 된다.
+ *
+ * 헤더가 불변인 응답이 올 수 있어 새 `Response` 로 감싼다.
+ */
+export const withProtectedDocumentHeaders = (
+  req: Request,
+  response: Response,
+): Response => {
+  if (!isProtectedDocumentRequest(req)) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "no-store");
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   });
 };
