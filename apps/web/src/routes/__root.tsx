@@ -13,6 +13,7 @@ import "@repo/ui/styles/global.css";
 import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
+import { useRedirectWhenUnauthenticated } from "#/features/auth/sign-in/hooks/useRedirectWhenUnauthenticated";
 import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import {
@@ -267,6 +268,7 @@ export const Route = createRootRouteWithContext<{
 function RootDocument({ children }: { children: ReactNode }) {
   useBootstrapAuth();
   useLoginResultHandler();
+  useRedirectWhenUnauthenticated();
   useServiceWorker();
 
   const pathname = useRouterState({

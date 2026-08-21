@@ -6,6 +6,7 @@ import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { PROTECTED_PATHS } from "./src/shared/model/protected-paths";
 
 const LOCALES = ["ko", "en", "ja", "zh", "zh-TW"] as const;
 const appI18nEntry = fileURLToPath(new URL("./src/i18n.ts", import.meta.url));
@@ -40,12 +41,9 @@ const prerenderRoutes = ["/"].flatMap((path) =>
 // 리다이렉트된 결과가 그 경로의 정적 파일로 굳어 있었다. 제보 페이지 자리에
 // 홈 HTML 이 `noindex` 도 없이 들어앉아 중복 콘텐츠가 되고, 그 파일이 서빙되면
 // 서버 가드도 건너뛴다. 프리렌더 대상에서 제외한다.
-const AUTH_DEPENDENT_PATHS = [
-  "/login",
-  "/report",
-  "/my/reports",
-  "/my/favorites",
-] as const;
+// 보호 경로 목록은 서버 가드·클라이언트 가드와 같은 출처를 써야 한다. 하나만
+// 빠뜨리면 그 경로가 홈 HTML 로 프리렌더되어 서버 가드까지 건너뛴다.
+const AUTH_DEPENDENT_PATHS = ["/login", ...PROTECTED_PATHS] as const;
 
 const nonPrerenderRoutes = AUTH_DEPENDENT_PATHS.flatMap((path) =>
   LOCALES.map((locale) => ({
