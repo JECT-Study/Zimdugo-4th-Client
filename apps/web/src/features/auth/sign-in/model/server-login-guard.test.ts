@@ -57,6 +57,47 @@ describe("resolveLoginRequest", () => {
     ).toBe("/zh-TW/notices");
   });
 
+  it("returnPath에 이미 로케일이 붙어 있어도 접두사를 겹쳐 붙이지 않는다", () => {
+    expect(
+      resolveLoginRequest(
+        documentRequest(
+          "https://zimdugo.com/ja/login?returnPath=%2Fja%2Fnotices",
+          AUTHENTICATED_COOKIE,
+        ),
+      )?.headers.get("Location"),
+    ).toBe("/ja/notices");
+
+    // 로케일이 서로 다르면 현재 경로의 로케일을 따른다.
+    expect(
+      resolveLoginRequest(
+        documentRequest(
+          "https://zimdugo.com/ja/login?returnPath=%2Fzh-TW%2Fnotices",
+          AUTHENTICATED_COOKIE,
+        ),
+      )?.headers.get("Location"),
+    ).toBe("/ja/notices");
+
+    // 로케일 접두사만 있는 returnPath는 해당 로케일 홈으로 간다.
+    expect(
+      resolveLoginRequest(
+        documentRequest(
+          "https://zimdugo.com/ja/login?returnPath=%2Fja",
+          AUTHENTICATED_COOKIE,
+        ),
+      )?.headers.get("Location"),
+    ).toBe("/ja");
+
+    // 기본 로케일 경로에서는 접두사가 붙지 않는다.
+    expect(
+      resolveLoginRequest(
+        documentRequest(
+          "https://zimdugo.com/login?returnPath=%2Fja%2Fnotices",
+          AUTHENTICATED_COOKIE,
+        ),
+      )?.headers.get("Location"),
+    ).toBe("/notices");
+  });
+
   it("외부 URL이 returnPath로 들어와도 홈으로만 보낸다", () => {
     expect(
       resolveLoginRequest(

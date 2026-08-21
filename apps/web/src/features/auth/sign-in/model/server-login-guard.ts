@@ -61,8 +61,13 @@ export const resolveLoginRequest = (req: Request): Response | null => {
   if (!isAuthenticatedRequest(req)) return null;
 
   const safePath = resolveSafeReturnPath(url.searchParams.get("returnPath"));
+  // returnPath에 이미 로케일이 붙어 올 수 있다(`/ja/notices`). 그대로 접두사를
+  // 덧붙이면 `/ja/ja/notices`가 되므로, 벗겨낸 뒤 현재 접두사만 한 번 붙인다.
+  const unlocalizedPath = safePath.replace(LOCALE_PATH_PREFIX, "") || "/";
   const location =
-    safePath === "/" ? localePrefix || "/" : `${localePrefix}${safePath}`;
+    unlocalizedPath === "/"
+      ? localePrefix || "/"
+      : `${localePrefix}${unlocalizedPath}`;
 
   return new Response(null, {
     status: 302,

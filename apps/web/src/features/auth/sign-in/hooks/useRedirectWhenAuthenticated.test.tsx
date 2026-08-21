@@ -130,6 +130,16 @@ describe("useRedirectWhenAuthenticated", () => {
     });
   });
 
+  it("같은 복원에서 리다이렉트를 두 번 실행하지 않는다", async () => {
+    render(<Probe />);
+
+    setPersistedAuthenticated();
+    await firePageShow({ persisted: true });
+
+    // 재수화가 구독 effect도 깨우지만 이동은 한 번만 일어나야 한다.
+    expect(mocks.navigate).toHaveBeenCalledTimes(1);
+  });
+
   it("일반 pageshow(비복원)에는 반응하지 않는다", async () => {
     setAuthenticated();
     render(<Probe />);

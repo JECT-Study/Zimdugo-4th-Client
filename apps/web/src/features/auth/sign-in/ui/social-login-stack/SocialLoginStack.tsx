@@ -1,7 +1,9 @@
 import { languageTag, m } from "@repo/i18n";
 import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/tokens/icons";
-import type { CSSProperties } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import {
+  isSubgridSupported,
+  loginSocialButtonFlexInlineFallbackStyle,
   loginSocialButtonInlineFallbackStyle,
   loginSocialLabelInlineFallbackStyle,
 } from "#/features/auth/sign-in/ui/login-page-fallback";
@@ -106,8 +108,14 @@ export function SocialLoginStack({
   returnPath = "/",
 }: SocialLoginStackProps) {
   const appLanguage = normalizeLocale(languageTag()) ?? BASE_LOCALE;
+  // SSR과 첫 렌더가 어긋나지 않도록 지원한다고 보고 시작한 뒤, 마운트 후 정정한다.
+  const [hasSubgrid, setHasSubgrid] = useState(true);
+
   const isEnglishSubVisible =
     showEnglishLabel ?? resolveEnglishSubVisibility({ appLanguage });
+  const buttonFallbackStyle = hasSubgrid
+    ? loginSocialButtonInlineFallbackStyle
+    : loginSocialButtonFlexInlineFallbackStyle;
 
   const getHref = (provider: LoginProvider) => {
     const baseUrl =
@@ -140,6 +148,12 @@ export function SocialLoginStack({
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}?callbackUrl=${encodeURIComponent(absoluteCallbackUrl)}`;
   };
 
+  useEffect(() => {
+    if (isSubgridSupported()) return;
+
+    setHasSubgrid(false);
+  }, []);
+
   return (
     <div
       className={[stack, className].filter(Boolean).join(" ")}
@@ -160,11 +174,7 @@ export function SocialLoginStack({
               key={provider}
               href={getHref(provider)}
               className={buttonClassName}
-              style={
-                applyFallbackStyle
-                  ? loginSocialButtonInlineFallbackStyle
-                  : undefined
-              }
+              style={applyFallbackStyle ? buttonFallbackStyle : undefined}
               onClick={(e) => handleClick(e, provider)}
             >
               <span
