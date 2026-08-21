@@ -213,7 +213,7 @@ export const Route = createRootRouteWithContext<{
         },
         {
           name: "apple-mobile-web-app-title",
-          content: "ZimDugo",
+          content: "Zimdugo",
         },
         {
           name: "google-site-verification",
