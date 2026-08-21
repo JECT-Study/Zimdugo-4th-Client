@@ -374,6 +374,7 @@
   "home_search_back_aria": "홈으로 돌아가기",
   "search_suggest_loading_aria": "자동완성 불러오는 중",
   "search_result_loading_aria": "검색 결과 불러오는 중",
+  "login_back_aria": "뒤로 가기",
   "login_social_naver": "네이버 1초 로그인/회원가입",
   "login_social_naver_sub": "Naver 1 second login/membership",
   "login_social_kakao": "카카오 1초 로그인/회원가입",

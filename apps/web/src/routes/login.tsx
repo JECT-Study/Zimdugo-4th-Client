@@ -1,5 +1,15 @@
-import { BrandSymbolIcon, BrandTextLogoLarge } from "@repo/ui/tokens/icons";
-import { createFileRoute, redirect, useSearch } from "@tanstack/react-router";
+import { m } from "@repo/i18n";
+import {
+  BrandSymbolIcon,
+  BrandTextLogoLarge,
+  IconChevronLeft13,
+} from "@repo/ui/tokens/icons";
+import {
+  createFileRoute,
+  redirect,
+  useRouter,
+  useSearch,
+} from "@tanstack/react-router";
 import type { CSSProperties } from "react";
 import { useRedirectWhenAuthenticated } from "#/features/auth/sign-in/hooks/useRedirectWhenAuthenticated";
 import { resolveSafeReturnPath } from "#/features/auth/sign-in/model/safe-return-path";
@@ -12,7 +22,7 @@ import { SocialLoginStack } from "#/features/auth/sign-in/ui/social-login-stack/
 import { useLoginPageStyleReady } from "#/features/auth/sign-in/ui/useLoginPageStyleReady";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useAuthStore } from "#/shared/store/authStore";
-import { loginStack, logo, page } from "./-login.css.ts";
+import { backButton, backIcon, loginStack, logo, page } from "./-login.css.ts";
 
 export const Route = createFileRoute("/login")({
   head: createNoIndexNoFollowHead,
@@ -114,6 +124,7 @@ function LoginPageContent({
 }) {
   return (
     <>
+      <LoginBackButton returnPath={returnPath} />
       <div
         className={logo}
         style={applyFallbackStyle ? loginLogoInlineFallbackStyle : undefined}
@@ -136,5 +147,34 @@ function LoginPageContent({
         applyFallbackStyle={applyFallbackStyle}
       />
     </>
+  );
+}
+
+function LoginBackButton({ returnPath }: { returnPath: string }) {
+  const router = useRouter();
+
+  const handleBack = () => {
+    // 앱 안에서 진입했으면 직전 화면으로, 외부 링크·새로고침으로 바로 들어왔으면
+    // 돌아갈 히스토리가 없으므로 returnPath로 보낸다.
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+
+    router.navigate({
+      to: resolveSafeReturnPath(returnPath),
+      replace: true,
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      className={backButton}
+      onClick={handleBack}
+      aria-label={m.login_back_aria()}
+    >
+      <IconChevronLeft13 className={backIcon} />
+    </button>
   );
 }
