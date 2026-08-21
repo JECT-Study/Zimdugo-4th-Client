@@ -43,32 +43,33 @@ export const shouldShowMapControls = ({
 const MAP_CONTROL_SHEET_GAP_PX = 12;
 
 interface ResolveMapControlBottomOptions {
-  /** 시트가 닫혀 있을 때 쓰는 기본 하단 위치 */
+  /** 시트가 컨트롤을 밀어 올리지 않을 때 쓰는 기본 하단 위치 */
   baseBottomPx: number;
-  /** 현재 미니 단계인 시트가 화면 하단에 차지하는 높이. 없으면 null */
-  miniSheetVisibleHeightPx: number | null;
+  /** 현재 단계에서 시트가 화면 하단에 차지하는 높이. 밀어 올릴 단계가 아니면 null */
+  sheetVisibleHeightPx: number | null;
 }
 
 /**
- * 미니 시트가 떠 있으면 그 위로 컨트롤을 올린다.
+ * 시트가 떠 있으면 그 위로 컨트롤을 올린다.
  *
  * 시트는 z-index 1000 이라 컨트롤(350)보다 항상 위에 그려진다. 바텀 탭이 있을
  * 때는 컨트롤이 하단 112px 에 있어 111px 짜리 미니 시트를 아슬하게 넘겼는데,
  * 탭을 없애며 70px 로 내리면서 내 위치 버튼이 시트 뒤로 들어가 눌리지 않았다.
  *
- * half·full 단계는 시트가 화면을 지배하므로 기존처럼 기본 위치를 그대로 둔다.
- * 미니 단계만 컨트롤이 함께 보여야 하는 구간이다.
+ * 미니와 하프까지는 컨트롤이 시트를 따라 올라간다. full 은 시트가 화면을 덮는
+ * 단계라 따라 올릴 자리가 없고, dismiss 는 시트가 사실상 닫힌 상태다. 두 단계는
+ * 시트 쪽에서 null 을 주므로 기본 위치를 그대로 쓴다.
  */
 export const resolveMapControlBottomPx = ({
   baseBottomPx,
-  miniSheetVisibleHeightPx,
+  sheetVisibleHeightPx,
 }: ResolveMapControlBottomOptions) => {
-  if (miniSheetVisibleHeightPx === null) {
+  if (sheetVisibleHeightPx === null) {
     return baseBottomPx;
   }
 
   return Math.max(
     baseBottomPx,
-    miniSheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX,
+    sheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX,
   );
 };

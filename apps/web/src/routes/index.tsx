@@ -14,8 +14,8 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
-  DETAIL_MINI_VISIBLE_HEIGHT,
   LOCKER_DETAIL_FULL_TOP_OFFSET,
+  resolveDetailSheetVisibleHeight,
   LockerDetailBottomSheet,
   type LockerDetailSheetSnapRequest,
   type LockerDetailSheetSnapStage,
@@ -28,7 +28,7 @@ import {
   SearchFilterBottomSheet,
 } from "#/composites/search/SearchFilterBottomSheet";
 import {
-  resolveSearchListMiniVisibleHeight,
+  resolveSearchListStageVisibleHeight,
   SearchListBottomSheet,
   type SearchListSheetSnapRequest,
   type SearchListSheetSnapStage,
@@ -2973,15 +2973,15 @@ export function IndexPage() {
   const shouldRenderHomeHeader = shouldShowHomeHeader({
     isSearchContextActive: context === "search",
   });
-  const miniSheetVisibleHeight =
-    sheetMode === "detail" && detailSheetSnapStage === "mini"
-      ? DETAIL_MINI_VISIBLE_HEIGHT
-      : sheetMode === "list" && listSheetSnapStage === "mini"
-        ? resolveSearchListMiniVisibleHeight(windowHeight)
+  const sheetVisibleHeight =
+    sheetMode === "detail"
+      ? resolveDetailSheetVisibleHeight(detailSheetSnapStage)
+      : sheetMode === "list"
+        ? resolveSearchListStageVisibleHeight(listSheetSnapStage, windowHeight)
         : null;
   const mapControlBottom = resolveMapControlBottomPx({
     baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
-    miniSheetVisibleHeightPx: miniSheetVisibleHeight,
+    sheetVisibleHeightPx: sheetVisibleHeight,
   });
   const isSearchFilterActive =
     searchFilters.regionActive ||

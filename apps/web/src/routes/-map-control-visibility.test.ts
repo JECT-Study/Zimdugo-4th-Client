@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchListBottomSheet";
 import {
   resolveMapControlBottomPx,
   shouldShowHomeHeader,
@@ -25,30 +27,30 @@ describe("shouldShowMapControls", () => {
 });
 
 describe("resolveMapControlBottomPx", () => {
-  it("시트가 없으면 기본 하단 위치를 쓴다", () => {
+  it("밀어 올릴 단계가 아니면 기본 하단 위치를 쓴다", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        miniSheetVisibleHeightPx: null,
+        sheetVisibleHeightPx: null,
       }),
     ).toBe(70);
   });
 
-  it("미니 시트 위로 컨트롤을 올린다", () => {
+  it("시트 위로 컨트롤을 올린다", () => {
     // 상세 미니 시트 111px + 간격 12px. 기본 70px 이면 시트 뒤로 들어간다.
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        miniSheetVisibleHeightPx: 111,
+        sheetVisibleHeightPx: 111,
       }),
     ).toBe(123);
   });
 
-  it("미니 시트가 기본 위치보다 낮으면 기본 위치를 유지한다", () => {
+  it("시트가 기본 위치보다 낮으면 기본 위치를 유지한다", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        miniSheetVisibleHeightPx: 40,
+        sheetVisibleHeightPx: 40,
       }),
     ).toBe(70);
   });
@@ -63,5 +65,30 @@ describe("shouldShowHomeHeader", () => {
 
   it("검색 컨텍스트에서는 헤더를 숨긴다", () => {
     expect(shouldShowHomeHeader({ isSearchContextActive: true })).toBe(false);
+  });
+});
+
+describe("resolveDetailSheetVisibleHeight", () => {
+  it("미니와 하프까지 컨트롤이 따라 올라갈 높이를 준다", () => {
+    expect(resolveDetailSheetVisibleHeight("mini")).toBe(111);
+    expect(resolveDetailSheetVisibleHeight("half")).toBe(191);
+  });
+
+  it("full·dismiss 는 따라 올릴 단계가 아니다", () => {
+    expect(resolveDetailSheetVisibleHeight("full")).toBeNull();
+    expect(resolveDetailSheetVisibleHeight("dismiss")).toBeNull();
+  });
+});
+
+describe("resolveSearchListStageVisibleHeight", () => {
+  it("화면 높이에 따라 단계별 높이를 계산한다", () => {
+    // mini: min(242, round(812 * 0.22)) = 179 / half: min(481, round(812 * 0.42)) = 341
+    expect(resolveSearchListStageVisibleHeight("mini", 812)).toBe(179);
+    expect(resolveSearchListStageVisibleHeight("half", 812)).toBe(341);
+  });
+
+  it("full·dismiss 는 따라 올릴 단계가 아니다", () => {
+    expect(resolveSearchListStageVisibleHeight("full", 812)).toBeNull();
+    expect(resolveSearchListStageVisibleHeight("dismiss", 812)).toBeNull();
   });
 });
