@@ -432,6 +432,8 @@ export const Route = createFileRoute("/")({
 interface RefreshButtonProps {
   isRefreshing: boolean;
   isMapReady: boolean;
+  /** 다른 컨트롤이 동작 중이면 같이 잠근다 */
+  isOtherControlBusy: boolean;
   isRefreshSpinning: boolean;
   refreshCooldownRemaining: number;
   onRefresh: () => void;
@@ -440,11 +442,12 @@ interface RefreshButtonProps {
 const RefreshButton = memo(function RefreshButton({
   isRefreshing,
   isMapReady,
+  isOtherControlBusy,
   isRefreshSpinning,
   refreshCooldownRemaining,
   onRefresh,
 }: RefreshButtonProps) {
-  const isDisabled = isRefreshing || !isMapReady;
+  const isDisabled = isRefreshing || !isMapReady || isOtherControlBusy;
   return (
     <button
       type="button"
@@ -468,6 +471,8 @@ const RefreshButton = memo(function RefreshButton({
 
 interface MyLocationButtonProps {
   permission: PermissionState;
+  /** 다른 컨트롤이 동작 중이면 같이 잠근다 */
+  isOtherControlBusy: boolean;
   isCameraCentered: boolean;
   isLocating: boolean;
   isOrientationTracking: boolean;
@@ -476,6 +481,7 @@ interface MyLocationButtonProps {
 
 const MyLocationButton = memo(function MyLocationButton({
   permission,
+  isOtherControlBusy,
   isCameraCentered,
   isLocating,
   isOrientationTracking,
@@ -486,7 +492,7 @@ const MyLocationButton = memo(function MyLocationButton({
       type="button"
       className={locationButton}
       onClick={onMyLocation}
-      disabled={isLocating}
+      disabled={isLocating || isOtherControlBusy}
       aria-busy={isLocating}
       aria-label={
         isLocating ? m.location_loading_aria() : m.home_my_location_aria()
@@ -3321,12 +3327,14 @@ export function IndexPage() {
           <RefreshButton
             isRefreshing={isRefreshing}
             isMapReady={!!mapInstance}
+            isOtherControlBusy={isLocating}
             isRefreshSpinning={isRefreshSpinning}
             refreshCooldownRemaining={refreshCooldownRemaining}
             onRefresh={handleRefreshMap}
           />
           <MyLocationButton
             permission={permission}
+            isOtherControlBusy={isRefreshing}
             isCameraCentered={isCameraCentered}
             isLocating={isLocating}
             isOrientationTracking={isOrientationTracking}
