@@ -22,17 +22,13 @@ import {
 
 type LoginProvider = "naver" | "kakao" | "google";
 
+// CSS의 row와 마찬가지로 아이콘·라벨이 버튼의 subgrid 열에 직접 놓이게 한다.
 const rowFallbackStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  gap: 10,
-  width: "fit-content",
-  maxWidth: "calc(100% - 32px)",
-  boxSizing: "border-box",
+  display: "contents",
 };
 
 const iconFallbackStyle: CSSProperties = {
+  gridColumn: 2,
   width: 24,
   height: 24,
   display: "inline-flex",
@@ -42,6 +38,7 @@ const iconFallbackStyle: CSSProperties = {
 };
 
 const labelContainerFallbackStyle: CSSProperties = {
+  gridColumn: 3,
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",

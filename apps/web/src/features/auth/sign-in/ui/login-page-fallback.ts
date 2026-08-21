@@ -38,15 +38,19 @@ export const loginStackInlineFallbackStyle: CSSProperties = {
   bottom: `max(${LOGIN_STACK_BOTTOM_PX}px, env(safe-area-inset-bottom))`,
   transform: "translateX(-50%)",
   width: `min(${LOGIN_STACK_MAX_WIDTH_PX}px, calc(100% - ${LOGIN_STACK_HORIZONTAL_INSET_PX}px))`,
-  display: "flex",
-  flexDirection: "column",
-  gap: LOGIN_STACK_GAP_PX,
+  // `SocialLoginStack.css.ts` stack과 동일한 열 구성.
+  // 폴백이 CSS와 다른 레이아웃을 그리면 CSS가 늦게 도착할 때 정렬이 튄다.
+  display: "grid",
+  gridTemplateColumns: "1fr auto minmax(0, auto) 1fr",
+  columnGap: 10,
+  rowGap: LOGIN_STACK_GAP_PX,
 };
 
 export const loginSocialButtonInlineFallbackStyle: CSSProperties = {
-  display: "flex",
+  display: "grid",
+  gridTemplateColumns: "subgrid",
+  gridColumn: "1 / -1",
   alignItems: "center",
-  justifyContent: "center",
   width: "100%",
   height: LOGIN_BUTTON_HEIGHT_PX,
   boxSizing: "border-box",
