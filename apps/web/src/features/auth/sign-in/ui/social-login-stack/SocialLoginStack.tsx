@@ -24,7 +24,10 @@ const rowFallbackStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "flex-start",
   gap: 10,
-  width: 207,
+  width: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  padding: "0 20px",
 };
 
 const iconFallbackStyle: CSSProperties = {
@@ -41,7 +44,8 @@ const labelContainerFallbackStyle: CSSProperties = {
   flexDirection: "column",
   alignItems: "flex-start",
   justifyContent: "center",
-  width: 173,
+  flex: 1,
+  minWidth: 0,
   lineHeight: 1.2,
 };
 
@@ -145,8 +149,13 @@ export function SocialLoginStack({
     >
       {(Object.keys(LOGIN_PROVIDER_CONTENT) as LoginProvider[]).map(
         (provider) => {
-          const { className: buttonClassName, iconClassName, Icon, title, sub } =
-            LOGIN_PROVIDER_CONTENT[provider];
+          const {
+            className: buttonClassName,
+            iconClassName,
+            Icon,
+            title,
+            sub,
+          } = LOGIN_PROVIDER_CONTENT[provider];
 
           return (
             <a

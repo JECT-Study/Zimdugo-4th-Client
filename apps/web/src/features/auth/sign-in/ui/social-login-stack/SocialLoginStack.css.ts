@@ -1,5 +1,5 @@
-import { style } from "@vanilla-extract/css";
 import { vars } from "@repo/ui/vars";
+import { style } from "@vanilla-extract/css";
 
 export const stack = style({
   display: "flex",
@@ -56,12 +56,17 @@ export const google = style([
   },
 ]);
 
+// 고정 폭 대신 버튼 안쪽 여백으로 콘텐츠 폭을 정하면
+// 일본어·중국어처럼 제목이 긴 로케일에서도 아이콘·라벨 시작 위치가 세 버튼 모두 동일하게 유지된다.
 export const row = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "flex-start",
-  gap: "inherit",
-  width: "207px",
+  gap: "10px",
+  width: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+  padding: `0 ${vars.spacing[20]}`,
 });
 
 export const icon19 = style({
@@ -87,23 +92,34 @@ export const labelContainer = style({
   flexDirection: "column",
   alignItems: "flex-start",
   justifyContent: "center",
-  width: "173px",
+  flex: 1,
+  minWidth: 0,
   lineHeight: 1.2,
 });
 
-export const labelTitle = style({
+const labelBase = style({
   textAlign: "left",
-  fontSize: vars.typography.fontSize[16],
-  fontWeight: vars.typography.fontWeight.SemiBold,
   lineHeight: 1.2,
+  // 한 줄 유지가 원칙이되, 버튼 폭을 넘기면 넘치지 않고 말줄임으로 처리한다.
+  maxWidth: "100%",
   whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 });
 
-export const labelEn = style({
-  textAlign: "left",
-  fontSize: "10px",
-  fontWeight: vars.typography.fontWeight.Regular,
-  opacity: 0.9,
-  lineHeight: 1.2,
-  whiteSpace: "nowrap",
-});
+export const labelTitle = style([
+  labelBase,
+  {
+    fontSize: vars.typography.fontSize[16],
+    fontWeight: vars.typography.fontWeight.SemiBold,
+  },
+]);
+
+export const labelEn = style([
+  labelBase,
+  {
+    fontSize: "10px",
+    fontWeight: vars.typography.fontWeight.Regular,
+    opacity: 0.9,
+  },
+]);
