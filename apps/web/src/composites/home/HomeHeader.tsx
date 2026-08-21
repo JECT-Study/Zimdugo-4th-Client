@@ -53,7 +53,9 @@ const headerFallbackStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
-  maxWidth: "430px",
+  // maxWidth 는 넣지 않는다. 인라인 값은 미디어 쿼리를 표현할 수 없어서 430px 로
+  // 고정되고, CSS 가 붙는 순간 태블릿 폭(480px)으로 튄다. 폭은 styles.header 가
+  // 반응형으로 정하게 두고 폴백은 위치·높이만 잡는다. (HomeSearchBar 와 동일)
   height: "48px",
   margin: "0 auto",
   padding: "0 16px 0 30px",
