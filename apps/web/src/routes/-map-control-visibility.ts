@@ -10,6 +10,7 @@ interface ShouldShowHomeSearchBarOptions {
 
 interface ShouldShowHomeHeaderOptions {
   isSearchContextActive: boolean;
+  hasMapError: boolean;
 }
 
 export const shouldShowHomeSearchBar = ({
@@ -23,12 +24,16 @@ export const shouldShowHomeSearchBar = ({
  *
  * 검색 바와 같은 조건으로 묶어 두면 지도 로드가 실패했을 때 헤더까지 사라진다.
  * 오류 화면에는 재시도 버튼뿐이고 하단 탭도 없어서, 그 상태로는 설정·프로필·언어
- * 어디로도 갈 수 없다. 검색 컨텍스트에서만 자리를 비켜 준다.
+ * 어디로도 갈 수 없다. 평소에는 검색 컨텍스트에서만 자리를 비켜 준다.
+ *
+ * 다만 `/?q=...` 같은 딥링크로 들어오면 첫 컨텍스트가 검색이라, 지도 오류와 겹치면
+ * 검색 바도 헤더도 없는 상태가 된다. 오류 중에는 검색 컨텍스트여도 헤더를 남긴다.
  */
 export const shouldShowHomeHeader = ({
   isSearchContextActive,
+  hasMapError,
 }: ShouldShowHomeHeaderOptions) => {
-  return !isSearchContextActive;
+  return hasMapError || !isSearchContextActive;
 };
 
 export const shouldShowMapControls = ({
@@ -73,12 +78,16 @@ interface ResolveMapControlBottomOptions {
  *
  * 다만 화면이 낮으면(가로 모드 등) 시트 높이를 그대로 더했을 때 스택이 검색 바
  * 위를 덮거나 뷰포트 밖으로 밀려난다. 상단 경계를 넘지 않도록 잘라 낸다.
+ *
+ * 잘라 낸 자리마저 기본 위치보다 낮으면 검색 바를 덮지 않으면서 시트도 피하는
+ * 위치가 없다는 뜻이다. 기본 위치로 되돌리면 어차피 시트 뒤에 깔려 누르지도
+ * 못하면서 검색 바만 가리므로, 배치 불가를 알리도록 null 을 준다.
  */
 export const resolveMapControlBottomPx = ({
   baseBottomPx,
   sheetVisibleHeightPx,
   windowHeightPx,
-}: ResolveMapControlBottomOptions) => {
+}: ResolveMapControlBottomOptions): number | null => {
   if (sheetVisibleHeightPx === null) {
     return baseBottomPx;
   }
@@ -86,6 +95,10 @@ export const resolveMapControlBottomPx = ({
   const raisedBottomPx = sheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX;
   const topLimitedBottomPx =
     windowHeightPx - MAP_CONTROL_TOP_LIMIT_PX - MAP_CONTROL_STACK_HEIGHT_PX;
+
+  if (topLimitedBottomPx < baseBottomPx) {
+    return null;
+  }
 
   return Math.max(baseBottomPx, Math.min(raisedBottomPx, topLimitedBottomPx));
 };

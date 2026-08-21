@@ -63,11 +63,18 @@ describe("shouldShowHomeHeader", () => {
   it("지도 오류에도 헤더를 유지한다", () => {
     // 오류 화면에는 재시도 버튼뿐이고 하단 탭도 없어서, 헤더가 사라지면
     // 설정·프로필·언어로 갈 방법이 없다.
-    expect(shouldShowHomeHeader({ isSearchContextActive: false })).toBe(true);
+    expect(
+      shouldShowHomeHeader({
+        isSearchContextActive: false,
+        hasMapError: false,
+      }),
+    ).toBe(true);
   });
 
   it("검색 컨텍스트에서는 헤더를 숨긴다", () => {
-    expect(shouldShowHomeHeader({ isSearchContextActive: true })).toBe(false);
+    expect(
+      shouldShowHomeHeader({ isSearchContextActive: true, hasMapError: false }),
+    ).toBe(false);
   });
 });
 
@@ -109,13 +116,25 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     ).toBe(174);
   });
 
-  it("잘라 낸 값이 기본 위치보다 낮으면 기본 위치를 유지한다", () => {
+  it("배치할 자리가 없으면 null 을 준다", () => {
+    // 260px 화면이면 상단 경계를 지키는 bottom 이 44px 라 기본 70px 보다 낮다.
+    // 기본 위치로 되돌리면 시트 뒤에 깔린 채 검색 바만 가리므로 숨기는 편이 낫다.
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 191,
         windowHeightPx: 260,
       }),
-    ).toBe(70);
+    ).toBeNull();
+  });
+});
+
+describe("shouldShowHomeHeader 지도 오류", () => {
+  it("검색 컨텍스트여도 지도 오류 중에는 헤더를 유지한다", () => {
+    // /?q=... 딥링크는 첫 컨텍스트가 검색이라, 오류와 겹치면 검색 바도 헤더도
+    // 사라져 설정·언어로 갈 방법이 없어진다.
+    expect(
+      shouldShowHomeHeader({ isSearchContextActive: true, hasMapError: true }),
+    ).toBe(true);
   });
 });
