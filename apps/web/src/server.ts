@@ -1,6 +1,7 @@
 import { paraglideMiddleware } from "@repo/i18n/server";
 import handler from "@tanstack/react-start/server-entry";
 import { resolveLoginRequest } from "#/features/auth/sign-in/model/server-login-guard";
+import { resolveProtectedRequest } from "#/features/auth/sign-in/model/server-protected-route-guard";
 import { resolveLocaleRequest } from "#/shared/i18n/server-locale-guard";
 
 import { handleLocationDiagnosticRequest } from "#/shared/lib/location-diagnostics-server";
@@ -23,6 +24,11 @@ export default {
     const loginRedirect = resolveLoginRequest(middlewareRequest);
     if (loginRedirect) {
       return loginRedirect;
+    }
+
+    const protectedRedirect = resolveProtectedRequest(middlewareRequest);
+    if (protectedRedirect) {
+      return protectedRedirect;
     }
 
     return paraglideMiddleware(middlewareRequest, () =>
