@@ -27,10 +27,10 @@ const rowFallbackStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "flex-start",
   gap: 10,
-  width: "100%",
-  minWidth: 0,
+  width: "fit-content",
+  minWidth: "min(207px, 100%)",
+  maxWidth: "calc(100% - 32px)",
   boxSizing: "border-box",
-  padding: "0 20px",
 };
 
 const iconFallbackStyle: CSSProperties = {
@@ -45,9 +45,8 @@ const iconFallbackStyle: CSSProperties = {
 const labelContainerFallbackStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
+  alignItems: "center",
   justifyContent: "center",
-  flex: 1,
   minWidth: 0,
   lineHeight: 1.2,
 };

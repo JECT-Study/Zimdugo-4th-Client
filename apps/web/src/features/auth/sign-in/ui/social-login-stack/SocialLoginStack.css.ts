@@ -56,17 +56,26 @@ export const google = style([
   },
 ]);
 
-// 고정 폭 대신 버튼 안쪽 여백으로 콘텐츠 폭을 정하면
-// 일본어·중국어처럼 제목이 긴 로케일에서도 아이콘·라벨 시작 위치가 세 버튼 모두 동일하게 유지된다.
+/**
+ * 콘텐츠 묶음은 항상 버튼 가운데에 놓는다.
+ *
+ * 폭은 내용에 맞추되 최소 `ROW_BASE_WIDTH`를 유지한다. 한국어·영어·중국어처럼
+ * 제목이 이 안에 들어오는 로케일은 모두 같은 폭이 되어 세 버튼의 아이콘·라벨
+ * 시작 위치가 정확히 맞고, 기존 고정 폭 디자인과 동일한 위치에 놓인다.
+ * 일본어처럼 넘치는 로케일에서만 필요한 만큼 넓어져 버튼 밖으로 밀려나지 않는다.
+ */
+const ROW_BASE_WIDTH = "207px";
+
 export const row = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "flex-start",
   gap: "10px",
-  width: "100%",
-  minWidth: 0,
+  width: "fit-content",
+  minWidth: `min(${ROW_BASE_WIDTH}, 100%)`,
+  // 넘치는 로케일에서도 버튼 좌우 16px 여백은 남긴다.
+  maxWidth: "calc(100% - 32px)",
   boxSizing: "border-box",
-  padding: `0 ${vars.spacing[20]}`,
 });
 
 export const icon19 = style({
@@ -87,18 +96,19 @@ export const icon24 = style({
   flexShrink: 0,
 });
 
+// 제목과 영문 sub는 서로 길이가 달라서, 긴 쪽 기준으로 가운데를 맞춰야
+// 일본어처럼 제목이 훨씬 긴 로케일에서 sub가 한쪽으로 치우쳐 보이지 않는다.
 export const labelContainer = style({
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
+  alignItems: "center",
   justifyContent: "center",
-  flex: 1,
   minWidth: 0,
   lineHeight: 1.2,
 });
 
 const labelBase = style({
-  textAlign: "left",
+  textAlign: "center",
   lineHeight: 1.2,
   // 한 줄 유지가 원칙이되, 버튼 폭을 넘기면 넘치지 않고 말줄임으로 처리한다.
   maxWidth: "100%",

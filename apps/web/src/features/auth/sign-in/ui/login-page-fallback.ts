@@ -81,7 +81,7 @@ export const loginBackButtonInlineFallbackStyle: CSSProperties = {
 /** `SocialLoginStack.css.ts` labelBase와 동기화 */
 export const loginSocialLabelInlineFallbackStyle: CSSProperties = {
   display: "block",
-  textAlign: "left",
+  textAlign: "center",
   lineHeight: 1.2,
   maxWidth: "100%",
   whiteSpace: "nowrap",
