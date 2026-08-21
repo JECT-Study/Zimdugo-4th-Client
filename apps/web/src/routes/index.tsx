@@ -224,6 +224,7 @@ import {
 } from "./-index.css";
 import {
   resolveMapControlBottomPx,
+  shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -2969,6 +2970,9 @@ export function IndexPage() {
     hasMapInstance: !!mapInstance,
   });
   const shouldRenderHomeSearchBar = shouldShowHomeSearchBar({ hasMapError });
+  const shouldRenderHomeHeader = shouldShowHomeHeader({
+    isSearchContextActive: context === "search",
+  });
   const miniSheetVisibleHeight =
     sheetMode === "detail" && detailSheetSnapStage === "mini"
       ? DETAIL_MINI_VISIBLE_HEIGHT
@@ -3209,7 +3213,7 @@ export function IndexPage() {
 
   return (
     <main className={pageWrapper}>
-      {shouldRenderHomeSearchBar && context !== "search" ? (
+      {shouldRenderHomeHeader ? (
         <HomeHeader
           profileImageUrl={user?.profileImageUrl ?? ""}
           onProfilePress={() => navigate({ to: "/settings" })}

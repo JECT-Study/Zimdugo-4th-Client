@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   resolveMapControlBottomPx,
+  shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -50,5 +51,17 @@ describe("resolveMapControlBottomPx", () => {
         miniSheetVisibleHeightPx: 40,
       }),
     ).toBe(70);
+  });
+});
+
+describe("shouldShowHomeHeader", () => {
+  it("지도 오류에도 헤더를 유지한다", () => {
+    // 오류 화면에는 재시도 버튼뿐이고 하단 탭도 없어서, 헤더가 사라지면
+    // 설정·프로필·언어로 갈 방법이 없다.
+    expect(shouldShowHomeHeader({ isSearchContextActive: false })).toBe(true);
+  });
+
+  it("검색 컨텍스트에서는 헤더를 숨긴다", () => {
+    expect(shouldShowHomeHeader({ isSearchContextActive: true })).toBe(false);
   });
 });
