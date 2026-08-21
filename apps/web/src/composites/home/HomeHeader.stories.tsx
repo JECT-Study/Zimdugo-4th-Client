@@ -20,9 +20,23 @@ const meta = {
     (Story) => (
       <QueryClientProvider client={storyQueryClient}>
         <div
-          style={{ position: "relative", minHeight: 180, background: "#eee" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            background: "#eee",
+          }}
         >
-          <Story />
+          {/*
+            헤더는 position: absolute 라 가장 가까운 위치 지정 조상을 기준으로
+            붙는다. 헤더 높이(48px)만큼의 상자를 하나 두고 그 상자를 화면
+            정가운데로 보내면, 헤더가 세로 가운데에 놓이고 가로 가운데 정렬은
+            헤더 자신의 max-width + margin auto 가 그대로 처리한다.
+          */}
+          <div style={{ position: "relative", width: "100%", height: 48 }}>
+            <Story />
+          </div>
         </div>
       </QueryClientProvider>
     ),
