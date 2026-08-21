@@ -87,3 +87,59 @@ self.addEventListener("push", (event) => {
   // waitUntil 을 빼면 알림을 띄우기 전에 워커가 종료될 수 있다.
   event.waitUntil(self.registration.showNotification(title, options));
 });
+
+/**
+ * 페이로드의 url 은 서버가 보낸 값이라 신뢰할 수 없는 입력이다. 절대 URL 을 그대로
+ * 열면 오픈 리다이렉트가 되므로 같은 출처의 경로만 통과시킨다.
+ *
+ * "//evil.com" 은 프로토콜 상대 URL 이라 외부로 나간다. 앞의 "/" 하나만 보고
+ * 판단하면 걸러지지 않으므로 따로 막는다.
+ */
+const toSameOriginPath = (url) => {
+  if (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")) {
+    return "/";
+  }
+
+  return url;
+};
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const path = toSameOriginPath(event.notification.data?.url);
+  const target = new URL(path, self.location.origin);
+
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({
+        type: "window",
+        // 워커가 아직 제어하지 않는 탭도 후보에 넣는다. 그러지 않으면 이미 열려
+        // 있는 앱을 두고 매번 새 탭을 띄우게 된다.
+        includeUncontrolled: true,
+      });
+
+      const existing = windows.find(
+        (client) => new URL(client.url).origin === self.location.origin,
+      );
+
+      if (!existing) {
+        await self.clients.openWindow(target.href);
+        return;
+      }
+
+      await existing.focus();
+
+      // 이미 그 화면이면 다시 띄우지 않는다.
+      if (new URL(existing.url).pathname === target.pathname) return;
+
+      // 로케일 prefix 가 없는 경로를 서버가 사용자의 선호에 맞게 붙여주므로
+      // 클라이언트 라우팅이 아니라 실제 내비게이션으로 보낸다.
+      // navigate 는 워커가 제어하는 탭에서만 되므로 실패하면 새 창으로 폴백한다.
+      try {
+        await existing.navigate(target.href);
+      } catch (_) {
+        await self.clients.openWindow(target.href);
+      }
+    })(),
+  );
+});
