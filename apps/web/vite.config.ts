@@ -32,15 +32,29 @@ const prerenderRoutes = ["/"].flatMap((path) =>
   })),
 );
 
-// 로그인 페이지는 로그인 여부에 따라 응답이 갈려야 한다. 정적으로 프리렌더되면
-// 그 파일이 서버 핸들러보다 먼저 응답해 로그인 상태 가드가 아예 실행되지 않고,
-// CDN에도 로그인 폼이 그대로 캐시된다. 프리렌더 대상에서 제외한다.
-const nonPrerenderRoutes = LOCALES.map((locale) => ({
-  path: localizeHref("/login", { locale }),
-  prerender: {
-    enabled: false,
-  },
-}));
+// 로그인 여부에 따라 응답이 갈려야 하는 경로들. 정적으로 프리렌더되면 그 파일이
+// 서버 핸들러보다 먼저 응답해 가드가 아예 실행되지 않고, CDN에도 한 쪽 상태가
+// 그대로 캐시된다.
+//
+// 보호 경로(`/report`, `/my/reports`, `/my/favorites`)는 프리렌더가 비로그인으로 판정돼 홈으로
+// 리다이렉트된 결과가 그 경로의 정적 파일로 굳어 있었다. 제보 페이지 자리에
+// 홈 HTML 이 `noindex` 도 없이 들어앉아 중복 콘텐츠가 되고, 그 파일이 서빙되면
+// 서버 가드도 건너뛴다. 프리렌더 대상에서 제외한다.
+const AUTH_DEPENDENT_PATHS = [
+  "/login",
+  "/report",
+  "/my/reports",
+  "/my/favorites",
+] as const;
+
+const nonPrerenderRoutes = AUTH_DEPENDENT_PATHS.flatMap((path) =>
+  LOCALES.map((locale) => ({
+    path: localizeHref(path, { locale }),
+    prerender: {
+      enabled: false,
+    },
+  })),
+);
 
 const config = defineConfig({
   resolve: {
