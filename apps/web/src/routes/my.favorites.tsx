@@ -8,6 +8,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { FavoriteListItem } from "#/entities/favorite";
 import { NonSearch } from "#/entities/search";
+import { requireAuthenticatedRoute } from "#/features/auth/sign-in/model/require-authenticated-route";
 import { useFavoriteRemoval } from "#/features/my/hooks/useFavoriteRemoval";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
@@ -31,7 +32,6 @@ import {
   childSkeletonText,
   header,
 } from "./-my.css.ts";
-import { requireAuthenticatedMyRoute } from "./-my-auth";
 
 const FAVORITE_SKELETON_ROW_KEYS = [
   "favorite-skeleton-1",
@@ -43,7 +43,7 @@ const FAVORITE_SKELETON_ROW_KEYS = [
 
 export const Route = createFileRoute("/my/favorites")({
   head: createNoIndexNoFollowHead,
-  beforeLoad: requireAuthenticatedMyRoute,
+  beforeLoad: requireAuthenticatedRoute,
   component: MyFavoritesPage,
 });
 

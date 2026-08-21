@@ -3,10 +3,11 @@ import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { FormProvider, useWatch } from "react-hook-form";
+import { requireAuthenticatedRoute } from "#/features/auth/sign-in/model/require-authenticated-route";
 import { REPORT_CONTENT_SCROLL_CONTAINER_ATTR } from "#/features/report/lib/scroll-to-report-section";
 import {
   cardsToSizeTypes,
@@ -38,7 +39,6 @@ import {
   reportPageVisibleContentStyle,
 } from "#/features/report/ui/report-page-fallback";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
-import { useAuthStore } from "#/shared/store/authStore";
 
 const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
   { label: m.search_filter_place_museum_short(), value: "MUSEUM" },
@@ -59,19 +59,7 @@ const lockerTypeOptions: Array<{ label: string; value: LockerType }> = [
 
 export const Route = createFileRoute("/report")({
   head: createNoIndexNoFollowHead,
-  beforeLoad: ({ location, preload }) => {
-    if (!useAuthStore.getState().isAuthenticated) {
-      if (typeof window !== "undefined" && !preload) {
-        import("#/shared/store/authPopupStore").then((m) =>
-          m.useAuthPopupStore.getState().openPopup(location.pathname),
-        );
-      }
-      throw redirect({
-        to: "/",
-        replace: true,
-      });
-    }
-  },
+  beforeLoad: requireAuthenticatedRoute,
   component: ReportPage,
 });
 
