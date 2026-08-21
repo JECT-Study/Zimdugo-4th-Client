@@ -32,6 +32,16 @@ const prerenderRoutes = ["/"].flatMap((path) =>
   })),
 );
 
+// 로그인 페이지는 로그인 여부에 따라 응답이 갈려야 한다. 정적으로 프리렌더되면
+// 그 파일이 서버 핸들러보다 먼저 응답해 로그인 상태 가드가 아예 실행되지 않고,
+// CDN에도 로그인 폼이 그대로 캐시된다. 프리렌더 대상에서 제외한다.
+const nonPrerenderRoutes = LOCALES.map((locale) => ({
+  path: localizeHref("/login", { locale }),
+  prerender: {
+    enabled: false,
+  },
+}));
+
 const config = defineConfig({
   resolve: {
     dedupe: ["react", "react-dom"],
@@ -102,7 +112,7 @@ const config = defineConfig({
         enabled: true,
         crawlLinks: false,
       },
-      pages: prerenderRoutes,
+      pages: [...prerenderRoutes, ...nonPrerenderRoutes],
     }),
     viteReact({
       babel: {

@@ -8,7 +8,7 @@ import {
   UNSUPPORTED_LOCALE_FALLBACK,
 } from "#/shared/i18n/locales";
 
-const isDocumentRequest = (req: Request): boolean => {
+export const isDocumentRequest = (req: Request): boolean => {
   if (!["GET", "HEAD"].includes(req.method)) return false;
 
   const url = new URL(req.url);
