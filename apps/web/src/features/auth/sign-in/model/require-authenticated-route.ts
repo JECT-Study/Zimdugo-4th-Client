@@ -1,10 +1,10 @@
 import { redirect } from "@tanstack/react-router";
 import { useAuthStore } from "#/shared/store/authStore";
 
-type RequireAuthenticatedRouteArgs = {
+interface RequireAuthenticatedRouteArgs {
   location: { pathname: string };
   preload?: boolean;
-};
+}
 
 /**
  * 로그인해야 볼 수 있는 라우트의 `beforeLoad` 가드.
