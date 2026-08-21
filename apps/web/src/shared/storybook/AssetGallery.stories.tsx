@@ -5,8 +5,16 @@ import selectedMapPin from "#/entities/map/assets/selected-map-pin.png";
 const PUBLIC_IMAGE_ASSETS = [
   { name: "favicon.svg", src: "/favicon.svg" },
   { name: "favicon.ico", src: "/favicon.ico" },
-  { name: "logo192.png", src: "/logo192.png" },
-  { name: "logo512.png", src: "/logo512.png" },
+  {
+    name: "android-chrome-192x192.png",
+    src: "/icons/android-chrome-192x192.png",
+  },
+  {
+    name: "android-chrome-512x512.png",
+    src: "/icons/android-chrome-512x512.png",
+  },
+  { name: "maskable-512x512.png", src: "/icons/maskable-512x512.png" },
+  { name: "badge-96x96.png", src: "/icons/badge-96x96.png" },
   { name: "tanstack-circle-logo.png", src: "/tanstack-circle-logo.png" },
   {
     name: "tanstack-word-logo-white.svg",

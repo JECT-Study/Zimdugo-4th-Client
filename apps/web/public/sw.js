@@ -89,25 +89,31 @@ self.addEventListener("push", (event) => {
 });
 
 /**
- * 페이로드의 url 은 서버가 보낸 값이라 신뢰할 수 없는 입력이다. 절대 URL 을 그대로
- * 열면 오픈 리다이렉트가 되므로 같은 출처의 경로만 통과시킨다.
+ * 페이로드의 url 은 서버가 보낸 값이라 신뢰할 수 없는 입력이다. 외부 주소를 그대로
+ * 열면 알림이 오픈 리다이렉트가 된다.
  *
- * "//evil.com" 은 프로토콜 상대 URL 이라 외부로 나간다. 앞의 "/" 하나만 보고
- * 판단하면 걸러지지 않으므로 따로 막는다.
+ * 문자열 접두사만 보면 뚫린다. URL 표준은 http(s) 주소의 역슬래시를 슬래시로
+ * 정규화하므로 "/\evil.example/path" 는 "/" 로 시작하고 "//" 로 시작하지 않아
+ * 접두사 검사를 통과하지만 https://evil.example/path 로 해석된다.
+ * 그래서 실제로 파싱한 뒤 origin 이 같은지로 판정한다.
  */
-const toSameOriginPath = (url) => {
-  if (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")) {
-    return "/";
-  }
+const toSameOriginUrl = (rawUrl) => {
+  const fallback = new URL("/", self.location.origin);
 
-  return url;
+  if (typeof rawUrl !== "string") return fallback;
+
+  try {
+    const parsed = new URL(rawUrl, self.location.origin);
+    return parsed.origin === self.location.origin ? parsed : fallback;
+  } catch (_) {
+    return fallback;
+  }
 };
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const path = toSameOriginPath(event.notification.data?.url);
-  const target = new URL(path, self.location.origin);
+  const target = toSameOriginUrl(event.notification.data?.url);
 
   event.waitUntil(
     (async () => {
@@ -129,8 +135,9 @@ self.addEventListener("notificationclick", (event) => {
 
       await existing.focus();
 
-      // 이미 그 화면이면 다시 띄우지 않는다.
-      if (new URL(existing.url).pathname === target.pathname) return;
+      // 이미 그 화면이면 다시 띄우지 않는다. pathname 만 비교하면 홈의 ?locker= 처럼
+      // 쿼리로 화면 상태를 정하는 딥링크가 무시되므로 전체 URL 을 본다.
+      if (new URL(existing.url).href === target.href) return;
 
       // 로케일 prefix 가 없는 경로를 서버가 사용자의 선호에 맞게 붙여주므로
       // 클라이언트 라우팅이 아니라 실제 내비게이션으로 보낸다.
