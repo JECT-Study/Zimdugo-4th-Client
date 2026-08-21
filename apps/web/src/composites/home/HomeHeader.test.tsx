@@ -1,8 +1,9 @@
 import { m } from "@repo/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HomeHeader } from "./HomeHeader";
+import * as styles from "./HomeHeader.css";
 
 // vitest 에 globals 가 꺼져 있어 RTL 자동 정리가 걸리지 않는다. 직접 정리하지
 // 않으면 앞선 테스트의 헤더가 body 에 남아 screen 질의가 중복으로 잡힌다.
@@ -73,5 +74,29 @@ describe("HomeHeader", () => {
     // 않아 프리렌더된 HTML 에 file:// 경로가 박히고 초기 진입에서 깨진다.
     expect(container.querySelectorAll("img")).toHaveLength(0);
     expect(container.querySelectorAll("svg").length).toBeGreaterThan(0);
+  });
+
+  it("언어 목록이 열린 동안에만 헤더를 바텀시트 위로 올린다", async () => {
+    const { container } = renderHeader();
+    const trigger = await screen.findByRole("button", {
+      name: m.settings_language(),
+    });
+    const header = container.querySelector("header");
+
+    expect(header?.classList.contains(styles.headerAboveBottomSheet)).toBe(
+      false,
+    );
+
+    // 상세 시트를 full 로 열면 46px 부터 펼쳐지는 목록이 시트(z-index 1000) 뒤로
+    // 들어간다. 목록이 열린 동안만 헤더를 시트 위로 올린다.
+    fireEvent.click(trigger);
+    expect(header?.classList.contains(styles.headerAboveBottomSheet)).toBe(
+      true,
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(header?.classList.contains(styles.headerAboveBottomSheet)).toBe(
+      false,
+    );
   });
 });

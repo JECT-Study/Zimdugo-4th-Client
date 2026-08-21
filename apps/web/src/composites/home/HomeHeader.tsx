@@ -226,7 +226,12 @@ export function HomeHeader({
 
   return (
     <header
-      className={styles.header}
+      className={[
+        styles.header,
+        isLanguageOptionsOpen ? styles.headerAboveBottomSheet : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={fallbackStyle(headerFallbackStyle)}
     >
       {/* 로고 svg 는 width/height 속성을 갖고 있어 CSS 없이도 크기가 유지된다. */}

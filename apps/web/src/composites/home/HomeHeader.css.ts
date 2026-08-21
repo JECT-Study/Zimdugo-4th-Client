@@ -49,6 +49,18 @@ export const actions = style({
   minWidth: 0,
 });
 
+/**
+ * 언어 목록이 열린 동안만 헤더를 바텀시트 위로 올린다.
+ *
+ * 헤더가 z-index 로 쌓임 맥락을 만들어 목록이 헤더 밖으로 못 올라간다. 상세 시트를
+ * full 로 열면 시트 상단이 112px 까지 올라오는데 목록은 46px 부터 아래로 펼쳐지므로,
+ * 그대로 두면 두 번째 항목부터 시트(z-index 1000) 뒤에 가려 고를 수 없다.
+ * 헤더 자체는 48px 높이라 full 시트와 겹치지 않아 올려도 시트를 가리지 않는다.
+ */
+export const headerAboveBottomSheet = style({
+  zIndex: `calc(${vars.zIndex.bottomSheet} + 1)`,
+});
+
 /** 펼친 트리거와 선택지 목록이 같은 너비를 쓴다. */
 const languageMenuWidth = "164px";
 
