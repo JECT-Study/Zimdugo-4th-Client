@@ -59,6 +59,16 @@ const config = defineConfig({
           version: 3,
           routes: [
             {
+              // 서비스 워커 스크립트는 캐시되면 갱신이 지연된다. 페이로드 스키마가 바뀌었을
+              // 때 구형 워커가 남아 잘못 표시하는 것을 막으려면 매 요청 재검증해야 한다.
+              // Vercel 정적 파일 기본값(public, max-age=0, must-revalidate)도 같은 효과지만,
+              // 우리가 통제하지 않는 값이라 명시한다. continue 를 주지 않으면 라우팅이 여기서
+              // 끝나 파일이 서빙되지 않는다(Nitro 도 publicAssets 캐시 규칙에 같은 처리를 한다).
+              src: "^/sw[.]js$",
+              headers: { "cache-control": "no-cache" },
+              continue: true,
+            },
+            {
               // 프리렌더된 정적 HTML 은 Vercel 엣지가 바로 서빙해서 Nitro 핸들러가
               // 아예 실행되지 않는다. 그래서 server-locale-guard 의 Accept-Language
               // 자동 감지가 프리렌더 경로에서만 죽어 있었다.
