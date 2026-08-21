@@ -155,6 +155,19 @@ export function HomeSearchBar({
     }
   }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
 
+  // 폴백은 CSS 가 없을 때만 얹는다. 항상 얹으면 인라인 zIndex 10 이 클래스의 ui
+  // 레이어(20)를 덮어써 검색 바가 의도보다 아래 층으로 내려가고, position/top/left
+  // /right 도 searchBarLayerHome 대신 인라인 값이 화면을 잡는다.
+  const layerStyle =
+    !isStyleReady || isStyleTimedOut
+      ? {
+          ...searchBarLayerFallbackStyle,
+          top: isSearchContextActive
+            ? searchBarLayerFallbackStyle.top
+            : "calc(env(safe-area-inset-top, 0px) + 60px)",
+        }
+      : undefined;
+
   return (
     <div
       className={[
@@ -163,12 +176,7 @@ export function HomeSearchBar({
       ]
         .filter(Boolean)
         .join(" ")}
-      style={{
-        ...searchBarLayerFallbackStyle,
-        top: isSearchContextActive
-          ? searchBarLayerFallbackStyle.top
-          : "calc(env(safe-area-inset-top, 0px) + 60px)",
-      }}
+      style={layerStyle}
     >
       {!isStyleReady ? (
         <Skeleton

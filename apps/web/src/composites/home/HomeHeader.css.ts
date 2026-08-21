@@ -10,7 +10,9 @@ export const header = style({
   top: "env(safe-area-inset-top, 0px)",
   left: 0,
   right: 0,
-  zIndex: vars.zIndex.ui,
+  // 검색 바와 같은 ui 레이어에 두면 나중에 그려지는 검색 바가 위로 올라와
+  // 펼친 언어 목록(52px~)이 검색 바(60px~)에 가린다. 한 단계 위로 올린다.
+  zIndex: `calc(${vars.zIndex.ui} + 1)`,
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -150,7 +152,9 @@ export const languageOption = style({
   border: 0,
   borderBottom: `1px solid ${vars.color.border.default}`,
   backgroundColor: vars.color.bg.default,
-  color: vars.color.text.disable,
+  // text.disable(#CACACA)은 흰 배경 대비 1.6:1 로 12px 본문 기준 WCAG 를 통과하지
+  // 못한다. 선택 여부는 배경 톤과 체크 아이콘이 이미 구분해 준다.
+  color: vars.color.text.content,
   cursor: "pointer",
   outline: "none",
   selectors: {

@@ -5,10 +5,9 @@ import {
   IconCheck24,
   IconFlagCircle24,
   IconHomeProfile32,
-  IconNormalGlobe32,
 } from "@repo/ui/tokens/icons";
 import { AnimatePresence, motion } from "motion/react";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
 import {
   APP_LANGUAGES,
@@ -48,7 +47,8 @@ const headerFallbackStyle: CSSProperties = {
   top: "env(safe-area-inset-top, 0px)",
   left: 0,
   right: 0,
-  zIndex: 20,
+  // styles.header 의 calc(ui + 1) 과 같은 층. 검색 바(ui=20) 보다 위여야 한다.
+  zIndex: 21,
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -155,10 +155,11 @@ export function HomeHeader({
   onProfilePress,
 }: HomeHeaderProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
+  const languageTriggerRef = useRef<HTMLButtonElement>(null);
+  const languageOptionsId = useId();
   const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
   const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
-  const normalizedLanguage = normalizeLanguage(languageTag());
-  const currentLanguage = normalizedLanguage ?? APP_LANGUAGES[0];
+  const currentLanguage = normalizeLanguage(languageTag()) ?? APP_LANGUAGES[0];
   const shouldProbeStyle = !hasHomeHeaderStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
     enabled: shouldProbeStyle,
@@ -197,6 +198,8 @@ export function HomeHeader({
       if (event.key === "Escape") {
         setIsLanguageOptionsOpen(false);
         setIsLanguageExpanded(false);
+        // 닫기만 하면 포커스가 사라진 목록에 남아 키보드 사용자가 위치를 잃는다.
+        languageTriggerRef.current?.focus();
       }
     };
 
@@ -242,10 +245,15 @@ export function HomeHeader({
           transition={LANGUAGE_DROPDOWN_TRANSITION}
         >
           <motion.button
+            ref={languageTriggerRef}
             type="button"
             className={styles.languageTrigger}
             aria-label={m.settings_language()}
+            aria-haspopup="listbox"
             aria-expanded={isLanguageOptionsOpen}
+            aria-controls={
+              isLanguageOptionsOpen ? languageOptionsId : undefined
+            }
             onClick={handleToggleLanguage}
             animate={{
               height: isLanguageExpanded ? 36 : 32,
@@ -254,11 +262,13 @@ export function HomeHeader({
             }}
             transition={LANGUAGE_DROPDOWN_TRANSITION}
           >
-            {normalizedLanguage ? (
-              <IconFlagCircle24 country={normalizedLanguage} />
-            ) : (
-              <IconNormalGlobe32 />
-            )}
+            {/*
+              languageTag() 는 항상 지원 로케일을 돌려주므로 normalizeLanguage 가
+              비는 경우가 없다. 32px 인 IconNormalGlobe32 는 24px 인 접힌 트리거
+              콘텐츠 영역에서 잘리기만 하므로, 라벨과 같은 기준인 currentLanguage
+              국기를 그린다.
+            */}
+            <IconFlagCircle24 country={currentLanguage} />
             <motion.span
               className={styles.languageTriggerLabel}
               animate={{
@@ -282,6 +292,7 @@ export function HomeHeader({
           <AnimatePresence>
             {isLanguageOptionsOpen ? (
               <motion.div
+                id={languageOptionsId}
                 className={styles.languageOptions}
                 role="listbox"
                 initial={{ opacity: 0, y: -8 }}
