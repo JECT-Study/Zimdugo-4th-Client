@@ -13,6 +13,7 @@ import {
 } from "#/entities/report";
 import { resolveReportStatusDisplay } from "#/entities/report/lib/resolve-report-status";
 import { NonSearch } from "#/entities/search";
+import { requireAuthenticatedRoute } from "#/features/auth/sign-in/model/require-authenticated-route";
 import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScrollSentinel";
 import { useReportHistoryList } from "#/features/my/hooks/useReportHistoryList";
 import { formatReportListDetailText } from "#/features/my/lib/format-report-list-labels";
@@ -38,11 +39,10 @@ import {
   childSkeletonText,
   header,
 } from "./-my.css.ts";
-import { requireAuthenticatedMyRoute } from "./-my-auth";
 
 export const Route = createFileRoute("/my/reports")({
   head: createNoIndexNoFollowHead,
-  beforeLoad: requireAuthenticatedMyRoute,
+  beforeLoad: requireAuthenticatedRoute,
   component: MyReportsPage,
 });
 
