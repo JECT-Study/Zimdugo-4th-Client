@@ -18,4 +18,15 @@ describe("resolveSafeReturnPath", () => {
     expect(resolveSafeReturnPath("https://evil.com")).toBe("/");
     expect(resolveSafeReturnPath("/redirect?next=javascript://evil")).toBe("/");
   });
+
+  it("역슬래시가 섞인 경로는 홈으로 대체한다", () => {
+    // WHATWG URL 파서가 `\`를 `/`로 처리해 `/\evil.com`이 외부 origin이 된다.
+    expect(new URL("/\\evil.com", "https://zimdugo.com").origin).toBe(
+      "https://evil.com",
+    );
+
+    expect(resolveSafeReturnPath("/\\evil.com")).toBe("/");
+    expect(resolveSafeReturnPath("/\\/evil.com")).toBe("/");
+    expect(resolveSafeReturnPath("\\\\evil.com")).toBe("/");
+  });
 });
