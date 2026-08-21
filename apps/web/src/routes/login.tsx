@@ -14,6 +14,7 @@ import type { CSSProperties } from "react";
 import { useRedirectWhenAuthenticated } from "#/features/auth/sign-in/hooks/useRedirectWhenAuthenticated";
 import { resolveSafeReturnPath } from "#/features/auth/sign-in/model/safe-return-path";
 import {
+  loginBackButtonInlineFallbackStyle,
   loginLogoInlineFallbackStyle,
   loginPageInlineFallbackStyle,
   loginStackInlineFallbackStyle,
@@ -78,11 +79,12 @@ function LoginPage() {
   const { code, returnPath } = useSearch({ from: "/login" });
   const { isStyleReady, isStyleTimedOut } = useLoginPageStyleReady();
 
+  // beforeLoad가 다시 실행되지 않는 뒤로가기·bfcache 복원 경로까지 막는다.
+  // OAuth 콜백 처리 중에는 useLoginResultHandler가 이동을 담당하므로 비활성화한다.
+  useRedirectWhenAuthenticated({ returnPath, isEnabled: !code });
+
   // 소셜 로그인 콜백으로 돌아온 경우, UI를 숨겨 화면 깜빡임 방지 (Hydration 에러 방지를 위해 구조는 유지)
   const isProcessing = !!code;
-
-  // beforeLoad가 다시 실행되지 않는 뒤로가기·bfcache 복원 경로까지 막는다.
-  useRedirectWhenAuthenticated({ returnPath, enabled: !isProcessing });
 
   if (isProcessing) {
     return (
@@ -124,7 +126,10 @@ function LoginPageContent({
 }) {
   return (
     <>
-      <LoginBackButton returnPath={returnPath} />
+      <LoginBackButton
+        applyFallbackStyle={applyFallbackStyle}
+        returnPath={returnPath}
+      />
       <div
         className={logo}
         style={applyFallbackStyle ? loginLogoInlineFallbackStyle : undefined}
@@ -150,7 +155,13 @@ function LoginPageContent({
   );
 }
 
-function LoginBackButton({ returnPath }: { returnPath: string }) {
+function LoginBackButton({
+  applyFallbackStyle,
+  returnPath,
+}: {
+  applyFallbackStyle: boolean;
+  returnPath: string;
+}) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -171,6 +182,9 @@ function LoginBackButton({ returnPath }: { returnPath: string }) {
     <button
       type="button"
       className={backButton}
+      style={
+        applyFallbackStyle ? loginBackButtonInlineFallbackStyle : undefined
+      }
       onClick={handleBack}
       aria-label={m.login_back_aria()}
     >

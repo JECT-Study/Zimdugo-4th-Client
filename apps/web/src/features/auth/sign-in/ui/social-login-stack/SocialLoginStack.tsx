@@ -1,7 +1,10 @@
 import { languageTag, m } from "@repo/i18n";
 import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/tokens/icons";
 import type { CSSProperties } from "react";
-import { loginSocialButtonInlineFallbackStyle } from "#/features/auth/sign-in/ui/login-page-fallback";
+import {
+  loginSocialButtonInlineFallbackStyle,
+  loginSocialLabelInlineFallbackStyle,
+} from "#/features/auth/sign-in/ui/login-page-fallback";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import {
@@ -185,9 +188,27 @@ export function SocialLoginStack({
                     applyFallbackStyle ? labelContainerFallbackStyle : undefined
                   }
                 >
-                  <span className={labelTitle}>{title()}</span>
+                  <span
+                    className={labelTitle}
+                    style={
+                      applyFallbackStyle
+                        ? loginSocialLabelInlineFallbackStyle
+                        : undefined
+                    }
+                  >
+                    {title()}
+                  </span>
                   {isEnglishSubVisible ? (
-                    <span className={labelEn}>{sub()}</span>
+                    <span
+                      className={labelEn}
+                      style={
+                        applyFallbackStyle
+                          ? loginSocialLabelInlineFallbackStyle
+                          : undefined
+                      }
+                    >
+                      {sub()}
+                    </span>
                   ) : null}
                 </span>
               </span>

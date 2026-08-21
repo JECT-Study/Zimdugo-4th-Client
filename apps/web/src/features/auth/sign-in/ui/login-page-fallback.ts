@@ -43,7 +43,6 @@ export const loginStackInlineFallbackStyle: CSSProperties = {
   gap: LOGIN_STACK_GAP_PX,
 };
 
-
 export const loginSocialButtonInlineFallbackStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -56,4 +55,36 @@ export const loginSocialButtonInlineFallbackStyle: CSSProperties = {
   border: "none",
   textDecoration: "none",
   cursor: "pointer",
+};
+
+export const LOGIN_BACK_BUTTON_TOP_PX = 20;
+export const LOGIN_BACK_BUTTON_LEFT_PX = 16;
+export const LOGIN_BACK_BUTTON_SIZE_PX = 24;
+
+/** `-login.css.ts` backButton과 동기화 */
+export const loginBackButtonInlineFallbackStyle: CSSProperties = {
+  position: "absolute",
+  top: `calc(env(safe-area-inset-top, 0px) + ${LOGIN_BACK_BUTTON_TOP_PX}px)`,
+  left: LOGIN_BACK_BUTTON_LEFT_PX,
+  zIndex: 1,
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: LOGIN_BACK_BUTTON_SIZE_PX,
+  height: LOGIN_BACK_BUTTON_SIZE_PX,
+};
+
+/** `SocialLoginStack.css.ts` labelBase와 동기화 */
+export const loginSocialLabelInlineFallbackStyle: CSSProperties = {
+  display: "block",
+  textAlign: "left",
+  lineHeight: 1.2,
+  maxWidth: "100%",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
