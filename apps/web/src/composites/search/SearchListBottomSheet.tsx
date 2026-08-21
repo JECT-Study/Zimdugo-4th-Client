@@ -146,6 +146,14 @@ export const resolveSearchListVisibleHeight = ({
   windowHeight: number;
 }) => Math.min(maxVisibleHeight, Math.round(windowHeight * ratio));
 
+/** 미니 단계에서 화면 하단에 남는 시트 높이. 지도 컨트롤 오프셋이 이 값을 피한다. */
+export const resolveSearchListMiniVisibleHeight = (windowHeight: number) =>
+  resolveSearchListVisibleHeight({
+    maxVisibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
+    ratio: SEARCH_LIST_MINI_VISIBLE_HEIGHT_RATIO,
+    windowHeight,
+  });
+
 export const resolveSearchListSnapStage = ({
   maxSnapPoint,
   miniSnapPoint,

@@ -14,6 +14,7 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
+  DETAIL_MINI_VISIBLE_HEIGHT,
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
   type LockerDetailSheetSnapRequest,
@@ -27,6 +28,7 @@ import {
   SearchFilterBottomSheet,
 } from "#/composites/search/SearchFilterBottomSheet";
 import {
+  resolveSearchListMiniVisibleHeight,
   SearchListBottomSheet,
   type SearchListSheetSnapRequest,
   type SearchListSheetSnapStage,
@@ -59,6 +61,7 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
+import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
 import {
   clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
@@ -220,6 +223,7 @@ import {
   refreshIconSpinning,
 } from "./-index.css";
 import {
+  resolveMapControlBottomPx,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -2965,6 +2969,16 @@ export function IndexPage() {
     hasMapInstance: !!mapInstance,
   });
   const shouldRenderHomeSearchBar = shouldShowHomeSearchBar({ hasMapError });
+  const miniSheetVisibleHeight =
+    sheetMode === "detail" && detailSheetSnapStage === "mini"
+      ? DETAIL_MINI_VISIBLE_HEIGHT
+      : sheetMode === "list" && listSheetSnapStage === "mini"
+        ? resolveSearchListMiniVisibleHeight(windowHeight)
+        : null;
+  const mapControlBottom = resolveMapControlBottomPx({
+    baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
+    miniSheetVisibleHeightPx: miniSheetVisibleHeight,
+  });
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3291,7 +3305,10 @@ export function IndexPage() {
       {isMapLoading && !hasMapError && !isRefreshing ? (
         <MapControlsSkeleton />
       ) : shouldRenderMapControls || isRefreshing ? (
-        <div className={locationControlStack}>
+        <div
+          className={locationControlStack}
+          style={{ bottom: mapControlBottom }}
+        >
           <RefreshButton
             isRefreshing={isRefreshing}
             isMapReady={!!mapInstance}
