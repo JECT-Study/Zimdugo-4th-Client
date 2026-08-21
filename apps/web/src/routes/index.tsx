@@ -11,6 +11,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
+import { motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
@@ -61,6 +62,7 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
+import { SHEET_SETTLE_SPRING } from "#/shared/ui/DraggableBottomSheet";
 import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
 import {
   clearHomeLocationRequestedInSession,
@@ -3310,9 +3312,11 @@ export function IndexPage() {
       {isMapLoading && !hasMapError && !isRefreshing ? (
         <MapControlsSkeleton />
       ) : shouldRenderMapControls || isRefreshing ? (
-        <div
+        <motion.div
           className={locationControlStack}
-          style={{ bottom: mapControlBottom }}
+          initial={false}
+          animate={{ bottom: mapControlBottom }}
+          transition={SHEET_SETTLE_SPRING}
         >
           <RefreshButton
             isRefreshing={isRefreshing}
@@ -3328,7 +3332,7 @@ export function IndexPage() {
             isOrientationTracking={isOrientationTracking}
             onMyLocation={handleMyLocation}
           />
-        </div>
+        </motion.div>
       ) : null}
 
       {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (

@@ -26,7 +26,8 @@ const INTERACTIVE_DRAG_EXCLUSION_SELECTOR =
   'button, a, input, textarea, select, [role="button"], [contenteditable="true"]';
 
 const DRAG_START_THRESHOLD_PX = 6;
-const SHEET_SETTLE_SPRING = {
+/** 시트가 스냅 지점으로 안착할 때 쓰는 스프링. 시트를 따라 움직이는 UI 도 같은 값을 쓴다. */
+export const SHEET_SETTLE_SPRING = {
   type: "spring",
   stiffness: 420,
   damping: 48,
