@@ -146,6 +146,33 @@ export const resolveSearchListVisibleHeight = ({
   windowHeight: number;
 }) => Math.min(maxVisibleHeight, Math.round(windowHeight * ratio));
 
+/**
+ * 해당 단계에서 시트가 화면 하단에 차지하는 높이. 지도 컨트롤이 이 위로 올라간다.
+ * full·dismiss 는 컨트롤이 시트를 피할 단계가 아니라 null 을 준다.
+ */
+export const resolveSearchListStageVisibleHeight = (
+  stage: SearchListSheetSnapStage,
+  windowHeight: number,
+) => {
+  if (stage === "mini") {
+    return resolveSearchListVisibleHeight({
+      maxVisibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
+      ratio: SEARCH_LIST_MINI_VISIBLE_HEIGHT_RATIO,
+      windowHeight,
+    });
+  }
+
+  if (stage === "half") {
+    return resolveSearchListVisibleHeight({
+      maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
+      ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
+      windowHeight,
+    });
+  }
+
+  return null;
+};
+
 export const resolveSearchListSnapStage = ({
   maxSnapPoint,
   miniSnapPoint,

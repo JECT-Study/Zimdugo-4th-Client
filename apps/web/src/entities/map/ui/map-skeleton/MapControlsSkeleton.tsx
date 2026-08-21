@@ -23,16 +23,16 @@ export function MapControlsSkeleton() {
       aria-hidden="true"
     >
       <Skeleton
-        width={48}
-        height={48}
+        width={42}
+        height={42}
         borderRadius={9999}
         variant="rect"
         className={controlButton}
         style={controlButtonStyle}
       />
       <Skeleton
-        width={48}
-        height={48}
+        width={42}
+        height={42}
         borderRadius={9999}
         variant="rect"
         className={controlButton}

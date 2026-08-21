@@ -116,7 +116,7 @@ export const undoToast = style({
   position: "fixed",
   left: vars.spacing[16],
   right: vars.spacing[16],
-  bottom: `calc(env(safe-area-inset-bottom, 0px) + ${vars.layout.bottomNav} + ${vars.spacing[16]})`,
+  bottom: `calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
   zIndex: 1200,
   display: "flex",
   alignItems: "center",

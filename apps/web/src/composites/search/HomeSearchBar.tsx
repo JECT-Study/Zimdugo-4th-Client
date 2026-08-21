@@ -1,30 +1,17 @@
-import { languageTag, m } from "@repo/i18n";
+import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { SearchField } from "@repo/ui/components/search-field";
 import {
-  IconCheck24,
   IconChevronLeft13,
-  IconNormalGlobe32,
   IconNormalSearch24,
   IconX24,
 } from "@repo/ui/tokens/icons";
-import { AnimatePresence, motion } from "motion/react";
 import {
   type CSSProperties,
   type MouseEvent,
   type PointerEvent,
   useEffect,
-  useRef,
-  useState,
 } from "react";
-import { BASE_LOCALE } from "#/shared/i18n/locales";
-import {
-  APP_LANGUAGES,
-  type AppLanguage,
-  appLanguageLabelMap,
-  normalizeLanguage,
-  switchAppLanguage,
-} from "#/shared/store/language";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   type StyleReadyProbe,
@@ -35,18 +22,9 @@ import {
   fallbackButton,
   fallbackIconSlot,
   fallbackLabel,
-  languageCheckIcon,
-  languageChevron,
-  languageDropdown,
-  languageDropdownExpanded,
-  languageOption,
-  languageOptionSelected,
-  languageOptions,
-  languageOptionText,
-  languageTrigger,
-  languageTriggerLabel,
   leadingBackButton,
   searchBarLayer,
+  searchBarLayerHome,
   searchControlRow,
   searchField,
   searchFieldWithClose,
@@ -130,16 +108,6 @@ const HOME_SEARCH_BAR_STYLE_PROBES: StyleReadyProbe[] = [
   },
 ];
 
-const LANGUAGE_DROPDOWN_TRANSITION = {
-  duration: 0.18,
-  ease: "easeOut",
-} as const;
-
-const LANGUAGE_LABEL_TRANSITION = {
-  duration: 0.12,
-  ease: "easeOut",
-} as const;
-
 let hasHomeSearchBarStyleResolved = false;
 
 export function HomeSearchBar({
@@ -150,39 +118,13 @@ export function HomeSearchBar({
   showBackButton = false,
   isSearchContextActive = false,
 }: HomeSearchBarProps) {
-  const languageDropdownRef = useRef<HTMLDivElement>(null);
-  const [isLanguageExpanded, setIsLanguageExpanded] = useState(false);
-  const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
   const shouldProbeStyle = !hasHomeSearchBarStyleResolved;
   const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
     enabled: shouldProbeStyle,
     probes: HOME_SEARCH_BAR_STYLE_PROBES,
   });
-  const currentLanguage = normalizeLanguage(languageTag()) ?? BASE_LOCALE;
-
   const handleOpenSearch = () => {
     onOpenSearch();
-  };
-
-  const handleToggleLanguage = () => {
-    if (!isLanguageExpanded) {
-      setIsLanguageExpanded(true);
-      setIsLanguageOptionsOpen(true);
-      return;
-    }
-
-    if (isLanguageOptionsOpen) {
-      setIsLanguageOptionsOpen(false);
-      return;
-    }
-
-    setIsLanguageOptionsOpen(true);
-  };
-
-  const handleSelectLanguage = (language: AppLanguage) => {
-    setIsLanguageOptionsOpen(false);
-    setIsLanguageExpanded(false);
-    switchAppLanguage(language);
   };
 
   const handleCloseSearchContext = (event: MouseEvent<HTMLButtonElement>) => {
@@ -213,36 +155,29 @@ export function HomeSearchBar({
     }
   }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
 
-  useEffect(() => {
-    if (!isLanguageExpanded) {
-      return;
-    }
-
-    const handleDocumentPointerDown = (event: globalThis.PointerEvent) => {
-      if (!languageDropdownRef.current?.contains(event.target as Node)) {
-        setIsLanguageOptionsOpen(false);
-        setIsLanguageExpanded(false);
-      }
-    };
-
-    const handleDocumentKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsLanguageOptionsOpen(false);
-        setIsLanguageExpanded(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handleDocumentPointerDown);
-    document.addEventListener("keydown", handleDocumentKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handleDocumentPointerDown);
-      document.removeEventListener("keydown", handleDocumentKeyDown);
-    };
-  }, [isLanguageExpanded]);
+  // 폴백은 CSS 가 없을 때만 얹는다. 항상 얹으면 인라인 zIndex 10 이 클래스의 ui
+  // 레이어(20)를 덮어써 검색 바가 의도보다 아래 층으로 내려가고, position/top/left
+  // /right 도 searchBarLayerHome 대신 인라인 값이 화면을 잡는다.
+  const layerStyle =
+    !isStyleReady || isStyleTimedOut
+      ? {
+          ...searchBarLayerFallbackStyle,
+          top: isSearchContextActive
+            ? searchBarLayerFallbackStyle.top
+            : "calc(env(safe-area-inset-top, 0px) + 60px)",
+        }
+      : undefined;
 
   return (
-    <div className={searchBarLayer} style={searchBarLayerFallbackStyle}>
+    <div
+      className={[
+        searchBarLayer,
+        isSearchContextActive ? "" : searchBarLayerHome,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={layerStyle}
+    >
       {!isStyleReady ? (
         <Skeleton
           height={48}
@@ -269,138 +204,48 @@ export function HomeSearchBar({
           </span>
         </button>
       ) : (
-        <>
-          <div className={searchControlRow}>
-            {showBackButton && onBackPress ? (
-              <button
-                type="button"
-                className={leadingBackButton}
-                onPointerDown={handleBackPointerDown}
-                onClick={handleBackPress}
-                aria-label={m.home_search_back_aria()}
-              >
-                <IconChevronLeft13 />
-              </button>
-            ) : null}
-            <div className={searchInputFrame}>
-              <SearchField
-                className={[
-                  searchField,
-                  isSearchContextActive ? searchFieldWithClose : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                variant="searchHome"
-                searchIconPlacement="left"
-                placeholder={m.search_placeholder()}
-                aria-label={m.search_input_aria()}
-                value={isSearchContextActive ? searchQuery : ""}
-                textTone={isSearchContextActive ? "on" : "auto"}
-                isReadOnly
-                onFocus={handleOpenSearch}
-              />
-              {isSearchContextActive ? (
-                <button
-                  type="button"
-                  className={closeButton}
-                  onPointerDown={handleClosePointerDown}
-                  onClick={handleCloseSearchContext}
-                  aria-label={m.search_close_aria()}
-                >
-                  <IconX24 />
-                </button>
-              ) : null}
-            </div>
-          </div>
-          {!isSearchContextActive ? (
-            <motion.div
-              ref={languageDropdownRef}
+        <div className={searchControlRow}>
+          {showBackButton && onBackPress ? (
+            <button
+              type="button"
+              className={leadingBackButton}
+              onPointerDown={handleBackPointerDown}
+              onClick={handleBackPress}
+              aria-label={m.home_search_back_aria()}
+            >
+              <IconChevronLeft13 />
+            </button>
+          ) : null}
+          <div className={searchInputFrame}>
+            <SearchField
               className={[
-                languageDropdown,
-                isLanguageExpanded ? languageDropdownExpanded : "",
+                searchField,
+                isSearchContextActive ? searchFieldWithClose : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              animate={{ width: isLanguageExpanded ? "max-content" : 32 }}
-              transition={LANGUAGE_DROPDOWN_TRANSITION}
-            >
-              <motion.button
+              variant="searchHome"
+              searchIconPlacement="left"
+              placeholder={m.search_placeholder()}
+              aria-label={m.search_input_aria()}
+              value={isSearchContextActive ? searchQuery : ""}
+              textTone={isSearchContextActive ? "on" : "auto"}
+              isReadOnly
+              onFocus={handleOpenSearch}
+            />
+            {isSearchContextActive ? (
+              <button
                 type="button"
-                className={languageTrigger}
-                aria-label={m.settings_language()}
-                aria-expanded={isLanguageOptionsOpen}
-                onClick={handleToggleLanguage}
-                animate={{
-                  height: isLanguageExpanded ? 36 : 32,
-                  padding: isLanguageExpanded ? "2px 6px" : "0px",
-                  borderWidth: isLanguageExpanded ? 1 : 0,
-                }}
-                transition={LANGUAGE_DROPDOWN_TRANSITION}
+                className={closeButton}
+                onPointerDown={handleClosePointerDown}
+                onClick={handleCloseSearchContext}
+                aria-label={m.search_close_aria()}
               >
-                <IconNormalGlobe32 />
-                <motion.span
-                  className={languageTriggerLabel}
-                  animate={{
-                    opacity: isLanguageExpanded ? 1 : 0,
-                    x: isLanguageExpanded ? 0 : -4,
-                  }}
-                  transition={LANGUAGE_LABEL_TRANSITION}
-                >
-                  {appLanguageLabelMap[currentLanguage]}
-                </motion.span>
-                <motion.span
-                  className={languageChevron}
-                  aria-hidden
-                  animate={{
-                    opacity: isLanguageExpanded ? 1 : 0,
-                    x: isLanguageExpanded ? 0 : -4,
-                  }}
-                  transition={LANGUAGE_LABEL_TRANSITION}
-                />
-              </motion.button>
-              <AnimatePresence>
-                {isLanguageOptionsOpen ? (
-                  <motion.div
-                    className={languageOptions}
-                    role="listbox"
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={LANGUAGE_DROPDOWN_TRANSITION}
-                  >
-                    {APP_LANGUAGES.map((language) => {
-                      const isCurrent = language === currentLanguage;
-                      return (
-                        <button
-                          key={language}
-                          type="button"
-                          className={[
-                            languageOption,
-                            isCurrent ? languageOptionSelected : "",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                          role="option"
-                          aria-selected={isCurrent}
-                          onClick={() => handleSelectLanguage(language)}
-                        >
-                          <span className={languageOptionText}>
-                            {appLanguageLabelMap[language]}
-                          </span>
-                          {isCurrent ? (
-                            <span className={languageCheckIcon}>
-                              <IconCheck24 />
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </motion.div>
-          ) : null}
-        </>
+                <IconX24 />
+              </button>
+            ) : null}
+          </div>
+        </div>
       )}
     </div>
   );

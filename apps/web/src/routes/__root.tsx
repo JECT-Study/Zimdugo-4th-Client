@@ -13,11 +13,6 @@ import "@repo/ui/styles/global.css";
 import { languageTag, m } from "@repo/i18n";
 import { AppContainer } from "@repo/ui/components/layout/app-container";
 import { AppShell } from "@repo/ui/components/layout/app-shell";
-import {
-  BOTTOM_TAB_LINKS,
-  BottomTabBar,
-  shouldShowBottomTab,
-} from "#/entities/navigation";
 import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
 import {
@@ -264,7 +259,6 @@ function RootDocument({ children }: { children: ReactNode }) {
   });
   // paraglide 가 URL 우선 전략이라 서버와 클라이언트가 같은 값을 낸다.
   const lang = normalizeLocale(languageTag()) ?? BASE_LOCALE;
-  const showBottomTab = shouldShowBottomTab(pathname);
   const normalizedPath = stripLocalePathPrefix(pathname);
   const isDocumentScrollPage =
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
@@ -287,14 +281,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <GtmBodyNoscript containerId={GTM_CONTAINER_ID} />
         <AppContainer mode={isDocumentScrollPage ? "document" : "app"}>
           <PageTransitionContentBoundary isBlocked={isPageTransitionPending}>
-            <AppShell
-              mode={isDocumentScrollPage ? "document" : "app"}
-              bottomTabBar={
-                showBottomTab ? (
-                  <BottomTabBar links={BOTTOM_TAB_LINKS} />
-                ) : undefined
-              }
-            >
+            <AppShell mode={isDocumentScrollPage ? "document" : "app"}>
               {children}
             </AppShell>
           </PageTransitionContentBoundary>

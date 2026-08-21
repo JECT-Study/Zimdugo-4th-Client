@@ -138,6 +138,18 @@ const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
 
+/**
+ * 해당 단계에서 시트가 화면 하단에 차지하는 높이. 지도 컨트롤이 이 위로 올라간다.
+ * full·dismiss 는 컨트롤이 시트를 피할 단계가 아니라 null 을 준다.
+ */
+export const resolveDetailSheetVisibleHeight = (
+  stage: LockerDetailSheetSnapStage,
+) => {
+  if (stage === "mini") return DETAIL_MINI_VISIBLE_HEIGHT;
+  if (stage === "half") return DETAIL_HALF_VISIBLE_HEIGHT;
+  return null;
+};
+
 export interface LockerDetailSheetSnapRequest {
   id: number;
   stage: LockerDetailSheetSnapStage;

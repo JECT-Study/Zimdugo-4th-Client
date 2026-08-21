@@ -13,9 +13,9 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as NoticesRouteImport } from './routes/notices'
-import { Route as MyRouteImport } from './routes/my'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MyIndexRouteImport } from './routes/my.index'
 import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
 import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
@@ -44,11 +44,6 @@ const NoticesRoute = NoticesRouteImport.update({
   path: '/notices',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MyRoute = MyRouteImport.update({
-  id: '/my',
-  path: '/my',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -57,6 +52,11 @@ const LoginRoute = LoginRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyIndexRoute = MyIndexRouteImport.update({
+  id: '/my/',
+  path: '/my/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsTermsRoute = SettingsTermsRouteImport.update({
@@ -85,20 +85,19 @@ const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
   getParentRoute: () => NoticesRoute,
 } as any)
 const MyReportsRoute = MyReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => MyRoute,
+  id: '/my/reports',
+  path: '/my/reports',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MyFavoritesRoute = MyFavoritesRouteImport.update({
-  id: '/favorites',
-  path: '/favorites',
-  getParentRoute: () => MyRoute,
+  id: '/my/favorites',
+  path: '/my/favorites',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/my': typeof MyRouteWithChildren
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -110,11 +109,11 @@ export interface FileRoutesByFullPath {
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/terms': typeof SettingsTermsRoute
+  '/my/': typeof MyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/my': typeof MyRouteWithChildren
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -126,12 +125,12 @@ export interface FileRoutesByTo {
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/terms': typeof SettingsTermsRoute
+  '/my': typeof MyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/my': typeof MyRouteWithChildren
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -143,13 +142,13 @@ export interface FileRoutesById {
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/terms': typeof SettingsTermsRoute
+  '/my/': typeof MyIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login'
-    | '/my'
     | '/notices'
     | '/report'
     | '/settings'
@@ -161,11 +160,11 @@ export interface FileRouteTypes {
     | '/settings/notices'
     | '/settings/privacy'
     | '/settings/terms'
+    | '/my/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/my'
     | '/notices'
     | '/report'
     | '/settings'
@@ -177,11 +176,11 @@ export interface FileRouteTypes {
     | '/settings/notices'
     | '/settings/privacy'
     | '/settings/terms'
+    | '/my'
   id:
     | '__root__'
     | '/'
     | '/login'
-    | '/my'
     | '/notices'
     | '/report'
     | '/settings'
@@ -193,16 +192,19 @@ export interface FileRouteTypes {
     | '/settings/notices'
     | '/settings/privacy'
     | '/settings/terms'
+    | '/my/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
-  MyRoute: typeof MyRouteWithChildren
   NoticesRoute: typeof NoticesRouteWithChildren
   ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  MyFavoritesRoute: typeof MyFavoritesRoute
+  MyReportsRoute: typeof MyReportsRoute
+  MyIndexRoute: typeof MyIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -235,13 +237,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/my': {
-      id: '/my'
-      path: '/my'
-      fullPath: '/my'
-      preLoaderRoute: typeof MyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -254,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my/': {
+      id: '/my/'
+      path: '/my'
+      fullPath: '/my/'
+      preLoaderRoute: typeof MyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/terms': {
@@ -293,32 +295,20 @@ declare module '@tanstack/react-router' {
     }
     '/my/reports': {
       id: '/my/reports'
-      path: '/reports'
+      path: '/my/reports'
       fullPath: '/my/reports'
       preLoaderRoute: typeof MyReportsRouteImport
-      parentRoute: typeof MyRoute
+      parentRoute: typeof rootRouteImport
     }
     '/my/favorites': {
       id: '/my/favorites'
-      path: '/favorites'
+      path: '/my/favorites'
       fullPath: '/my/favorites'
       preLoaderRoute: typeof MyFavoritesRouteImport
-      parentRoute: typeof MyRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface MyRouteChildren {
-  MyFavoritesRoute: typeof MyFavoritesRoute
-  MyReportsRoute: typeof MyReportsRoute
-}
-
-const MyRouteChildren: MyRouteChildren = {
-  MyFavoritesRoute: MyFavoritesRoute,
-  MyReportsRoute: MyReportsRoute,
-}
-
-const MyRouteWithChildren = MyRoute._addFileChildren(MyRouteChildren)
 
 interface NoticesRouteChildren {
   NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
@@ -352,11 +342,13 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
-  MyRoute: MyRouteWithChildren,
   NoticesRoute: NoticesRouteWithChildren,
   ReportRoute: ReportRoute,
   SettingsRoute: SettingsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  MyFavoritesRoute: MyFavoritesRoute,
+  MyReportsRoute: MyReportsRoute,
+  MyIndexRoute: MyIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -10,7 +10,7 @@ export const childPage = style({
   minHeight: "100dvh",
   backgroundColor: vars.color.bg.default,
   paddingTop: `calc(env(safe-area-inset-top, 0px) + ${vars.layout.header})`,
-  paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${vars.layout.bottomNav})`,
+  paddingBottom: "env(safe-area-inset-bottom, 0px)",
   boxSizing: "border-box",
 });
 

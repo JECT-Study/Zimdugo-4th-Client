@@ -3,12 +3,11 @@ import { isPathnameTransitionPending } from "./page-transition";
 
 describe("isPathnameTransitionPending", () => {
   it.each([
-    ["하단 탭", "/", "/my"],
-    ["설정", "/my", "/settings"],
+    ["설정", "/", "/settings"],
     ["공지", "/settings", "/notices"],
-    ["마이페이지", "/notices", "/my"],
+    ["설정 복귀", "/notices", "/settings"],
     ["제보", "/", "/report"],
-    ["하위 경로", "/my", "/my/reports"],
+    ["하위 경로", "/settings", "/my/reports"],
   ])("%s pathname 전환을 표시한다", (_, resolvedPathname, currentPathname) => {
     expect(
       isPathnameTransitionPending({
@@ -23,8 +22,8 @@ describe("isPathnameTransitionPending", () => {
     expect(
       isPathnameTransitionPending({
         status: "pending",
-        currentPathname: "/en/my",
-        resolvedPathname: "/my",
+        currentPathname: "/en/settings",
+        resolvedPathname: "/settings",
       }),
     ).toBe(false);
   });

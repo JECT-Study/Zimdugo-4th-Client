@@ -74,7 +74,7 @@ export const content = style({
   paddingTop: vars.spacing[12], // 그룹 간 12px
   overflowY: "auto",
   WebkitOverflowScrolling: "touch",
-  paddingBottom: `calc(${vars.layout.bottomNav} + env(safe-area-inset-bottom, 0px))`,
+  paddingBottom: "env(safe-area-inset-bottom, 0px)",
 });
 
 export const sectionHeader = style({

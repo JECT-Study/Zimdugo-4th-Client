@@ -2,8 +2,8 @@ import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import {
   IconCircleboxClose32,
-  IconCircleboxCrosshair48,
-  IconCircleboxRefresh48,
+  IconNavigationCrosshair24,
+  IconNavigationRefresh24,
 } from "@repo/ui/tokens/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,14 +11,35 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
+import { motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
+import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
+  resolveDetailSheetVisibleHeight,
   LockerDetailBottomSheet,
   type LockerDetailSheetSnapRequest,
   type LockerDetailSheetSnapStage,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
+import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
+import {
+  createDefaultSearchFilters,
+  type SearchFilterAppliedState,
+  SearchFilterBottomSheet,
+} from "#/composites/search/SearchFilterBottomSheet";
+import {
+  resolveSearchListStageVisibleHeight,
+  SearchListBottomSheet,
+  type SearchListSheetSnapRequest,
+  type SearchListSheetSnapStage,
+} from "#/composites/search/SearchListBottomSheet";
+import { SearchOverlay } from "#/composites/search/SearchOverlay";
+import type {
+  SearchLockerResultItem,
+  SearchPlaceResultItem,
+  SearchResultItem,
+} from "#/composites/search/search-list-model";
 import {
   createLockerDetailFromAutocompleteItem,
   createLockerDetailFromHistoryEntry,
@@ -31,23 +52,6 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
-import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
-import {
-  createDefaultSearchFilters,
-  type SearchFilterAppliedState,
-  SearchFilterBottomSheet,
-} from "#/composites/search/SearchFilterBottomSheet";
-import {
-  SearchListBottomSheet,
-  type SearchListSheetSnapRequest,
-  type SearchListSheetSnapStage,
-} from "#/composites/search/SearchListBottomSheet";
-import { SearchOverlay } from "#/composites/search/SearchOverlay";
-import type {
-  SearchLockerResultItem,
-  SearchPlaceResultItem,
-  SearchResultItem,
-} from "#/composites/search/search-list-model";
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
@@ -58,6 +62,8 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
+import { SHEET_SETTLE_SPRING } from "#/shared/ui/DraggableBottomSheet";
+import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
 import {
   clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
@@ -90,6 +96,7 @@ import {
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import type { SearchAutocompleteItemData } from "#/entities/search";
+import { useUser } from "#/entities/user/hooks/useUser";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -211,12 +218,15 @@ import {
   locationRecoveryNoticeClose,
   locationRecoveryNoticeMessage,
   locationRecoveryNoticePositioner,
+  myLocationIcon,
   pageWrapper,
   refreshButtonDisabled,
   refreshCooldownBadge,
   refreshIconSpinning,
 } from "./-index.css";
 import {
+  resolveMapControlBottomPx,
+  shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -422,6 +432,8 @@ export const Route = createFileRoute("/")({
 interface RefreshButtonProps {
   isRefreshing: boolean;
   isMapReady: boolean;
+  /** 다른 컨트롤이 동작 중이면 같이 잠근다 */
+  isOtherControlBusy: boolean;
   isRefreshSpinning: boolean;
   refreshCooldownRemaining: number;
   onRefresh: () => void;
@@ -430,11 +442,12 @@ interface RefreshButtonProps {
 const RefreshButton = memo(function RefreshButton({
   isRefreshing,
   isMapReady,
+  isOtherControlBusy,
   isRefreshSpinning,
   refreshCooldownRemaining,
   onRefresh,
 }: RefreshButtonProps) {
-  const isDisabled = isRefreshing || !isMapReady;
+  const isDisabled = isRefreshing || !isMapReady || isOtherControlBusy;
   return (
     <button
       type="button"
@@ -445,7 +458,7 @@ const RefreshButton = memo(function RefreshButton({
       aria-label={m.home_map_refresh_aria()}
       disabled={isDisabled}
     >
-      <IconCircleboxRefresh48
+      <IconNavigationRefresh24
         state={isDisabled ? "refresh" : "refreshActive"}
         className={isRefreshSpinning ? refreshIconSpinning : ""}
       />
@@ -458,6 +471,8 @@ const RefreshButton = memo(function RefreshButton({
 
 interface MyLocationButtonProps {
   permission: PermissionState;
+  /** 다른 컨트롤이 동작 중이면 같이 잠근다 */
+  isOtherControlBusy: boolean;
   isCameraCentered: boolean;
   isLocating: boolean;
   isOrientationTracking: boolean;
@@ -466,6 +481,7 @@ interface MyLocationButtonProps {
 
 const MyLocationButton = memo(function MyLocationButton({
   permission,
+  isOtherControlBusy,
   isCameraCentered,
   isLocating,
   isOrientationTracking,
@@ -476,13 +492,14 @@ const MyLocationButton = memo(function MyLocationButton({
       type="button"
       className={locationButton}
       onClick={onMyLocation}
-      disabled={isLocating}
+      disabled={isLocating || isOtherControlBusy}
       aria-busy={isLocating}
       aria-label={
         isLocating ? m.location_loading_aria() : m.home_my_location_aria()
       }
     >
-      <IconCircleboxCrosshair48
+      <IconNavigationCrosshair24
+        className={myLocationIcon}
         state={
           permission === "denied"
             ? "denied"
@@ -503,6 +520,7 @@ export function IndexPage() {
   const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { data: user } = useUser(isAuthenticated);
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
@@ -746,6 +764,9 @@ export function IndexPage() {
   const [isCameraCentered, setIsCameraCentered] = useState(false);
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
+  // isLocating 은 GPS 수신 중에만 true 라, 방향 권한 프롬프트를 기다리는 동안은
+  // false 다. 그 틈에 새로고침이 눌리지 않도록 버튼을 누른 즉시 잠근다.
+  const [isMyLocationPending, setIsMyLocationPending] = useState(false);
   const [isLocationRequestInterrupted, setIsLocationRequestInterrupted] =
     useState(false);
   const [
@@ -1243,89 +1264,80 @@ export function IndexPage() {
 
   const handleMyLocation = useCallback(
     async () => {
-      setIsLocationErrorPopupOpen(false);
+      setIsMyLocationPending(true);
+      try {
+        setIsLocationErrorPopupOpen(false);
 
-      if (isLocationRequestInterrupted) {
-        reloadForLocationRecovery();
-        return;
-      }
-
-      hasPendingMyLocationRequestRef.current = false;
-      pendingOrientationStartRef.current = false;
-      hasPendingOneTimeLocationCenterRef.current = false;
-
-      if (permission === "denied") {
-        hasPendingMyLocationRequestRef.current = true;
-        hasPendingOneTimeLocationCenterRef.current = true;
-        startTracking();
-        return;
-      }
-
-      // 홈 화면 idle 컨텍스트 여부 판단
-      // 검색 중이거나 핀/시트가 활성화된 상황에서는 단순 위치 이동만 수행한다.
-      const isHomeContext =
-        context === "idle" && sheetMode === "idle" && !isSearchOpen;
-
-      if (!isHomeContext) {
-        // 비홈 컨텍스트: isCameraCentered 변경 없이 단순 위치 이동만 수행
-        if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
-        } else if (!isTracking) {
-          // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
-          hasPendingMyLocationRequestRef.current = true;
-          hasPendingOneTimeLocationCenterRef.current = true;
-          startTracking();
-        }
-        return;
-      }
-
-      // ── 홈 idle 컨텍스트 전용 로직 ──────────────────────────────
-
-      // 방향 센서가 확정적으로 없는 환경(데스크톱 등): 단순 panTo만 제공
-      // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
-      if (isOrientationSupported === false) {
-        if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
-        } else if (!isTracking) {
-          hasPendingMyLocationRequestRef.current = true;
-          hasPendingOneTimeLocationCenterRef.current = true;
-          startTracking();
-        }
-        return;
-      }
-
-      // 상태 2(방향 트래킹 활성) → 상태 0으로 복귀
-      if (isOrientationTracking) {
-        setIsCameraCentered(false);
-        stopOrientationTracking();
-        return;
-      }
-
-      // isOrientationSupported === false 케이스는 위 guard에서 early return 처리됨
-      // 이 시점에서 isOrientationSupported는 true(지원) 또는 null(미확정, 시도)이므로
-      // 방향 트래킹을 항상 시도한다.
-
-      if (!isTracking) {
-        // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
-        // iOS 13+는 DeviceOrientationEvent.requestPermission이 사용자 제스처 컨텍스트에서만
-        // 동작하므로 GPS 콜백(handleFirstLocation) 시점이 아닌 지금 요청해야 한다.
-        const granted = await requestOrientationPermission();
-        if (!granted) {
-          setIsOrientationDeniedPopupOpen(true);
+        if (isLocationRequestInterrupted) {
+          reloadForLocationRecovery();
           return;
         }
-        hasPendingMyLocationRequestRef.current = true;
-        pendingOrientationStartRef.current = true;
-        startTracking();
-        // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
-      } else {
-        if (!location) {
+
+        hasPendingMyLocationRequestRef.current = false;
+        pendingOrientationStartRef.current = false;
+        hasPendingOneTimeLocationCenterRef.current = false;
+
+        if (permission === "denied") {
+          hasPendingMyLocationRequestRef.current = true;
+          hasPendingOneTimeLocationCenterRef.current = true;
+          startTracking();
+          return;
+        }
+
+        // 홈 화면 idle 컨텍스트 여부 판단
+        // 검색 중이거나 핀/시트가 활성화된 상황에서는 단순 위치 이동만 수행한다.
+        const isHomeContext =
+          context === "idle" && sheetMode === "idle" && !isSearchOpen;
+
+        if (!isHomeContext) {
+          // 비홈 컨텍스트: isCameraCentered 변경 없이 단순 위치 이동만 수행
+          if (location && mapInstanceRef.current) {
+            focusNaverMapOnCoordinates({
+              map: mapInstanceRef.current,
+              coordinates: location,
+            });
+          } else if (!isTracking) {
+            // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
+            hasPendingMyLocationRequestRef.current = true;
+            hasPendingOneTimeLocationCenterRef.current = true;
+            startTracking();
+          }
+          return;
+        }
+
+        // ── 홈 idle 컨텍스트 전용 로직 ──────────────────────────────
+
+        // 방향 센서가 확정적으로 없는 환경(데스크톱 등): 단순 panTo만 제공
+        // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
+        if (isOrientationSupported === false) {
+          if (location && mapInstanceRef.current) {
+            focusNaverMapOnCoordinates({
+              map: mapInstanceRef.current,
+              coordinates: location,
+            });
+          } else if (!isTracking) {
+            hasPendingMyLocationRequestRef.current = true;
+            hasPendingOneTimeLocationCenterRef.current = true;
+            startTracking();
+          }
+          return;
+        }
+
+        // 상태 2(방향 트래킹 활성) → 상태 0으로 복귀
+        if (isOrientationTracking) {
+          setIsCameraCentered(false);
+          stopOrientationTracking();
+          return;
+        }
+
+        // isOrientationSupported === false 케이스는 위 guard에서 early return 처리됨
+        // 이 시점에서 isOrientationSupported는 true(지원) 또는 null(미확정, 시도)이므로
+        // 방향 트래킹을 항상 시도한다.
+
+        if (!isTracking) {
+          // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 방향 트래킹 시작
+          // iOS 13+는 DeviceOrientationEvent.requestPermission이 사용자 제스처 컨텍스트에서만
+          // 동작하므로 GPS 콜백(handleFirstLocation) 시점이 아닌 지금 요청해야 한다.
           const granted = await requestOrientationPermission();
           if (!granted) {
             setIsOrientationDeniedPopupOpen(true);
@@ -1333,24 +1345,38 @@ export function IndexPage() {
           }
           hasPendingMyLocationRequestRef.current = true;
           pendingOrientationStartRef.current = true;
-          return;
-        }
-
-        // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
-        // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
-        if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
-        }
-        setIsCameraCentered(true);
-        const granted = await requestOrientationPermission();
-        if (granted) {
-          startOrientationTracking();
+          startTracking();
+          // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
         } else {
-          setIsOrientationDeniedPopupOpen(true);
+          if (!location) {
+            const granted = await requestOrientationPermission();
+            if (!granted) {
+              setIsOrientationDeniedPopupOpen(true);
+              return;
+            }
+            hasPendingMyLocationRequestRef.current = true;
+            pendingOrientationStartRef.current = true;
+            return;
+          }
+
+          // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
+          // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
+          if (location && mapInstanceRef.current) {
+            focusNaverMapOnCoordinates({
+              map: mapInstanceRef.current,
+              coordinates: location,
+            });
+          }
+          setIsCameraCentered(true);
+          const granted = await requestOrientationPermission();
+          if (granted) {
+            startOrientationTracking();
+          } else {
+            setIsOrientationDeniedPopupOpen(true);
+          }
         }
+      } finally {
+        setIsMyLocationPending(false);
       }
     },
     [
@@ -2960,6 +2986,21 @@ export function IndexPage() {
     hasMapInstance: !!mapInstance,
   });
   const shouldRenderHomeSearchBar = shouldShowHomeSearchBar({ hasMapError });
+  const shouldRenderHomeHeader = shouldShowHomeHeader({
+    isSearchContextActive: context === "search",
+    hasMapError,
+  });
+  const sheetVisibleHeight =
+    sheetMode === "detail"
+      ? resolveDetailSheetVisibleHeight(detailSheetSnapStage)
+      : sheetMode === "list"
+        ? resolveSearchListStageVisibleHeight(listSheetSnapStage, windowHeight)
+        : null;
+  const mapControlBottom = resolveMapControlBottomPx({
+    baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
+    sheetVisibleHeightPx: sheetVisibleHeight,
+    windowHeightPx: windowHeight,
+  });
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3190,6 +3231,12 @@ export function IndexPage() {
 
   return (
     <main className={pageWrapper}>
+      {shouldRenderHomeHeader ? (
+        <HomeHeader
+          profileImageUrl={user?.profileImageUrl ?? ""}
+          onProfilePress={() => navigate({ to: "/settings" })}
+        />
+      ) : null}
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
           onOpenSearch={handleOpenSearch}
@@ -3279,23 +3326,31 @@ export function IndexPage() {
       </NaverMapProvider>
       {isMapLoading && !hasMapError && !isRefreshing ? (
         <MapControlsSkeleton />
-      ) : shouldRenderMapControls || isRefreshing ? (
-        <div className={locationControlStack}>
+      ) : (shouldRenderMapControls || isRefreshing) &&
+        mapControlBottom !== null ? (
+        <motion.div
+          className={locationControlStack}
+          initial={false}
+          animate={{ bottom: mapControlBottom }}
+          transition={SHEET_SETTLE_SPRING}
+        >
           <RefreshButton
             isRefreshing={isRefreshing}
             isMapReady={!!mapInstance}
+            isOtherControlBusy={isLocating || isMyLocationPending}
             isRefreshSpinning={isRefreshSpinning}
             refreshCooldownRemaining={refreshCooldownRemaining}
             onRefresh={handleRefreshMap}
           />
           <MyLocationButton
             permission={permission}
+            isOtherControlBusy={isRefreshing}
             isCameraCentered={isCameraCentered}
-            isLocating={isLocating}
+            isLocating={isLocating || isMyLocationPending}
             isOrientationTracking={isOrientationTracking}
             onMyLocation={handleMyLocation}
           />
-        </div>
+        </motion.div>
       ) : null}
 
       {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (
