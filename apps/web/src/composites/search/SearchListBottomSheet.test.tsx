@@ -151,7 +151,9 @@ describe("SearchListBottomSheet", () => {
       }),
     ).toEqual({
       maxSnapPoint: 700,
-      miniSnapPoint: 585,
+      // miniSnapPoint 만 호출자가 주지 않으므로 미니 단계에서 보일 높이로 계산된다.
+      // min(242, round(812 * 0.22)) = 179 → 812 - 179 = 633 (min 80 ~ max 700 안)
+      miniSnapPoint: 633,
       minSnapPoint: 80,
       snapPoint: 320,
     });
