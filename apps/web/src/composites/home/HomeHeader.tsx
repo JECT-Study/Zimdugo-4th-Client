@@ -63,6 +63,9 @@ const headerFallbackStyle: CSSProperties = {
   backgroundColor: "#ffffff",
 };
 
+/** styles.headerAboveBottomSheet 와 같은 층. 바텀시트(1000) 바로 위. */
+const HEADER_ABOVE_BOTTOM_SHEET_Z_INDEX = 1001;
+
 const logoFallbackStyle: CSSProperties = {
   width: "78px",
   height: "16px",
@@ -169,6 +172,13 @@ export function HomeHeader({
   });
   const fallbackStyle = (style: CSSProperties) =>
     isStyleTimedOut ? style : undefined;
+  // 폴백의 인라인 zIndex 는 headerAboveBottomSheet 클래스를 덮는다. 목록이 열려
+  // 있으면 폴백에서도 바텀시트 위 층을 직접 써야 목록이 시트에 가리지 않는다.
+  const headerStyle = fallbackStyle(
+    isLanguageOptionsOpen
+      ? { ...headerFallbackStyle, zIndex: HEADER_ABOVE_BOTTOM_SHEET_Z_INDEX }
+      : headerFallbackStyle,
+  );
 
   const handleToggleLanguage = () => {
     if (!isLanguageExpanded) {
@@ -232,7 +242,7 @@ export function HomeHeader({
       ]
         .filter(Boolean)
         .join(" ")}
-      style={fallbackStyle(headerFallbackStyle)}
+      style={headerStyle}
     >
       {/* 로고 svg 는 width/height 속성을 갖고 있어 CSS 없이도 크기가 유지된다. */}
       <BrandTextLogoSmall className={styles.logo} />
