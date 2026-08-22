@@ -18,7 +18,6 @@ import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   resolveDetailSheetVisibleHeight,
   LockerDetailBottomSheet,
-  type LockerDetailSheetSnapRequest,
   type LockerDetailSheetSnapStage,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
@@ -31,7 +30,6 @@ import {
 import {
   resolveSearchListStageVisibleHeight,
   SearchListBottomSheet,
-  type SearchListSheetSnapRequest,
   type SearchListSheetSnapStage,
 } from "#/composites/search/SearchListBottomSheet";
 import { SearchOverlay } from "#/composites/search/SearchOverlay";
@@ -192,6 +190,7 @@ import {
   shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
+import { useSheetSnapRequest } from "#/features/search/model/useSheetSnapRequest";
 import {
   createAlternateLinksForPathname,
   createLocalizedUrl,
@@ -691,12 +690,18 @@ export function IndexPage() {
   });
   const [listSheetSnapStage, setListSheetSnapStage] =
     useState<SearchListSheetSnapStage>("half");
-  const [listSheetSnapRequest, setListSheetSnapRequest] =
-    useState<SearchListSheetSnapRequest | null>(null);
+  const {
+    snapRequest: listSheetSnapRequest,
+    requestSnap: requestListSheetSnap,
+    clearSnapRequest: clearListSheetSnapRequest,
+  } = useSheetSnapRequest<SearchListSheetSnapStage>();
   const [detailSheetSnapStage, setDetailSheetSnapStage] =
     useState<LockerDetailSheetSnapStage>("half");
-  const [detailSheetSnapRequest, setDetailSheetSnapRequest] =
-    useState<LockerDetailSheetSnapRequest | null>(null);
+  const {
+    snapRequest: detailSheetSnapRequest,
+    requestSnap: requestDetailSheetSnap,
+    clearSnapRequest: clearDetailSheetSnapRequest,
+  } = useSheetSnapRequest<LockerDetailSheetSnapStage>();
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(() => {
       if (lockerIdFromQuery !== undefined) {
@@ -2179,26 +2184,6 @@ export function IndexPage() {
     [clearPendingLockerDetailOpen, openLockerDetailById, syncLockerDetailUrl],
   );
 
-  const requestListSheetSnap = useCallback(
-    (stage: SearchListSheetSnapStage) => {
-      setListSheetSnapRequest((previousRequest) => ({
-        id: (previousRequest?.id ?? 0) + 1,
-        stage,
-      }));
-    },
-    [],
-  );
-
-  const requestDetailSheetSnap = useCallback(
-    (stage: LockerDetailSheetSnapStage) => {
-      setDetailSheetSnapRequest((previousRequest) => ({
-        id: (previousRequest?.id ?? 0) + 1,
-        stage,
-      }));
-    },
-    [],
-  );
-
   const handleListSheetSnapStageChange = useCallback(
     (nextStage: SearchListSheetSnapStage) => {
       setListSheetSnapStage(nextStage);
@@ -3158,16 +3143,21 @@ export function IndexPage() {
   useEffect(() => {
     if (sheetMode === "list") {
       setListSheetSnapStage("half");
-      setListSheetSnapRequest(null);
+      clearListSheetSnapRequest();
     }
-  }, [searchListSheetKey, sheetMode]);
+  }, [clearListSheetSnapRequest, searchListSheetKey, sheetMode]);
 
   useEffect(() => {
     if (sheetMode === "detail") {
       setDetailSheetSnapStage(lockerDetailOpensFull ? "full" : "half");
-      setDetailSheetSnapRequest(null);
+      clearDetailSheetSnapRequest();
     }
-  }, [activeLockerId, lockerDetailOpensFull, sheetMode]);
+  }, [
+    activeLockerId,
+    clearDetailSheetSnapRequest,
+    lockerDetailOpensFull,
+    sheetMode,
+  ]);
 
   const handleMapPress = useCallback(() => {
     setTimeout(() => {
