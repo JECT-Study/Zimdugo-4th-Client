@@ -13,6 +13,7 @@ import {
   IconLockerDetailWallet24,
   IconNavigationClock24,
 } from "@repo/ui/tokens/icons";
+import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import {
   type CSSProperties,
   type ReactNode,
@@ -386,12 +387,16 @@ export function LockerDetailBottomSheet({
 
   /**
    * 스냅 애니메이션이 진행되는 동안의 실제 시트 오프셋.
+   *
    * onSnapChange 는 스프링이 끝나기 전에 호출되므로, 단계별 고정 높이로 오버레이를
-   * 배치하면 카드가 시트보다 먼저 순간이동한다. 라이브 오프셋을 따라가면 시트와 함께 움직인다.
+   * 배치하면 카드가 시트보다 먼저 순간이동한다. 라이브 오프셋을 따라가야 함께 움직인다.
+   *
+   * state 가 아니라 motion value 인 이유는 이 값이 프레임마다 바뀌기 때문이다.
+   * state 로 두면 드래그 내내 시트 전체가 초당 60번 리렌더된다. 시트가 자기 높이를
+   * 잡는 방식과 같은 100dvh 기준이라, 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다.
    */
-  const [liveSheetOffset, setLiveSheetOffset] = useState(
-    resolvedInitialSnapPoint,
-  );
+  const sheetOffsetValue = useMotionValue(resolvedInitialSnapPoint);
+  const realtimeOverlayBottom = useMotionTemplate`calc(100dvh - ${sheetOffsetValue}px + ${REALTIME_STATUS_CARD_OVERLAY_GAP}px)`;
   /**
    * 스프링이 실제로 향하는 오프셋. onSnapChange 가 주는 값이라 클램프까지 끝난 값이다.
    *
@@ -400,14 +405,13 @@ export function LockerDetailBottomSheet({
    * 이전 값에 안착한다. 그러면 "도착했는지" 판정이 영원히 거짓이 되어
    * 오버레이 카드가 시트 안 카드로 넘어가지 못한다.
    */
-  const [snapTargetOffset, setSnapTargetOffset] = useState(
-    resolvedInitialSnapPoint,
-  );
+  const snapTargetOffsetRef = useRef(resolvedInitialSnapPoint);
+  /** 오프셋이 타깃에 닿았는지. 전환당 한 번만 뒤집혀 리렌더도 그만큼만 난다. */
+  const [isOffsetAtSnapTarget, setIsOffsetAtSnapTarget] = useState(true);
 
-  const liveSheetVisibleHeight = Math.max(0, windowHeight - liveSheetOffset);
   /** 시트가 full 에 안착한 뒤에야 오버레이 카드를 내부 카드로 넘긴다. */
   const isSheetAtFullOffset =
-    currentSnapStage === "full" && liveSheetOffset <= snapTargetOffset;
+    currentSnapStage === "full" && isOffsetAtSnapTarget;
   const isRealtimeOverlayVisible =
     loadState === "ready" &&
     isRealtimeAvailable &&
@@ -460,14 +464,23 @@ export function LockerDetailBottomSheet({
     });
 
     setCurrentSnapStage(nextStage);
-    setSnapTargetOffset(nextSnap);
+    snapTargetOffsetRef.current = nextSnap;
+    setIsOffsetAtSnapTarget(sheetOffsetValue.get() <= nextSnap);
     onSnapChange?.(nextSnap);
     onSnapStageChange?.(nextStage);
   };
 
-  const handleLiveOffsetChange = ({ offset }: BottomSheetLiveOffsetState) => {
-    setLiveSheetOffset(offset);
-  };
+  /**
+   * 프레임마다 불린다. identity 가 매 렌더 바뀌면 시트 쪽 구독 effect 가
+   * 그때마다 떼었다 붙으므로 useCallback 으로 고정한다.
+   */
+  const handleLiveOffsetChange = useCallback(
+    ({ offset }: BottomSheetLiveOffsetState) => {
+      sheetOffsetValue.set(offset);
+      setIsOffsetAtSnapTarget(offset <= snapTargetOffsetRef.current);
+    },
+    [sheetOffsetValue],
+  );
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
@@ -501,8 +514,9 @@ export function LockerDetailBottomSheet({
     }
 
     initialSnapPointRef.current = resolvedInitialSnapPoint;
-    setLiveSheetOffset(resolvedInitialSnapPoint);
-    setSnapTargetOffset(resolvedInitialSnapPoint);
+    sheetOffsetValue.set(resolvedInitialSnapPoint);
+    snapTargetOffsetRef.current = resolvedInitialSnapPoint;
+    setIsOffsetAtSnapTarget(true);
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,
@@ -518,19 +532,18 @@ export function LockerDetailBottomSheet({
     resolvedMiniSnapPoint,
     resolvedMinSnapPoint,
     resolvedSnapPoint,
+    sheetOffsetValue.set,
   ]);
 
   return (
     <>
       {isRealtimeOverlayVisible ? (
-        <div
+        <motion.div
           className={realtimeStatusCardOverlay}
-          style={{
-            bottom: liveSheetVisibleHeight + REALTIME_STATUS_CARD_OVERLAY_GAP,
-          }}
+          style={{ bottom: realtimeOverlayBottom }}
         >
           <LockerRealtimeStatusCard availability={realtimeAvailability} />
-        </div>
+        </motion.div>
       ) : null}
       <DraggableBottomSheet
         key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}

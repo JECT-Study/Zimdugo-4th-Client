@@ -98,6 +98,13 @@ const LOCKER_DETAIL: LockerDetailItem = {
 const getSheetRoot = () =>
   within(screen.getByTestId("mock-draggable-bottom-sheet"));
 
+/**
+ * 오버레이 카드는 시트와 같은 100dvh 기준으로 배치된다(간격 14px).
+ * jsdom 이 calc 를 이 순서로 직렬화한다.
+ */
+const overlayBottomAt = (sheetOffset: number) =>
+  `calc(100dvh + 14px - ${sheetOffset}px)`;
+
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setTestLanguage("ko");
@@ -175,7 +182,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
     expect(sheet.queryByRole("region", { name: "실시간" })).toBeNull();
     const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
-    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("205px");
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
+      overlayBottomAt(621),
+    );
     expect(within(realtimeStatusCard).getByText("소형")).toBeTruthy();
     expect(within(realtimeStatusCard).getByText("12")).toBeTruthy();
     expect(within(realtimeStatusCard).getByText("마감")).toBeTruthy();
@@ -205,7 +214,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.queryAllByRole("region", { name: "실시간" })).toHaveLength(1);
   });
 
-  it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", () => {
+  it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", async () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
@@ -236,16 +245,42 @@ describe("LockerDetailBottomSheet", () => {
     // 스프링은 놓는 순간 타깃을 잡고(onSnapChange), 그 뒤에 오프셋이 따라간다.
     emitSnapChange(LOCKER_DETAIL_FULL_TOP_OFFSET);
 
+    // 위치는 motion value 가 다음 프레임에 스타일로 반영한다.
     emitLiveOffset(500);
-    expect(getOverlay()?.style.bottom).toBe("326px");
+    await waitFor(() => {
+      expect(getOverlay()?.style.bottom).toBe(overlayBottomAt(500));
+    });
 
     emitLiveOffset(300);
-    expect(getOverlay()?.style.bottom).toBe("526px");
+    await waitFor(() => {
+      expect(getOverlay()?.style.bottom).toBe(overlayBottomAt(300));
+    });
 
     // 타깃에 안착한 뒤에야 시트 내부 카드로 넘긴다.
     emitLiveOffset(LOCKER_DETAIL_FULL_TOP_OFFSET);
     expect(getOverlay()).toBeNull();
     expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+  });
+
+  it("라이브 오프셋이 프레임마다 바뀌어도 시트를 리렌더하지 않는다", () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const renderCountBefore = draggableBottomSheetMock.mock.calls.length;
+
+    // 하프(621)에서 위로 끌어올리는 중. 타깃을 넘지 않아 판정은 그대로다.
+    for (const offset of [600, 580, 560, 540, 520]) {
+      act(() => {
+        draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+          offset,
+          expandedProgress: 0,
+          snapPoints: [],
+        });
+      });
+    }
+
+    // 위치는 motion value 가 직접 쓰므로 리렌더가 늘지 않아야 한다.
+    expect(draggableBottomSheetMock.mock.calls.length).toBe(renderCountBefore);
   });
 
   it("full 진입으로 콘텐츠가 늘어 minSnapPoint 가 내려가도 내부 카드로 넘긴다", async () => {
@@ -358,7 +393,9 @@ describe("LockerDetailBottomSheet", () => {
 
     const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
 
-    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("125px");
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
+      overlayBottomAt(701),
+    );
     expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
   });
 
