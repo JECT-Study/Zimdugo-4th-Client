@@ -14,9 +14,24 @@ vi.mock("@tanstack/react-router", () => ({
     select({ location: { pathname: mocks.pathname } }),
 }));
 
+import Cookies from "js-cookie";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useRedirectWhenUnauthenticated } from "./useRedirectWhenUnauthenticated";
+
+const AUTH_STORAGE_COOKIE = "auth-storage";
+
+/**
+ * 다른 탭에서 로그아웃한 상황. 공유 쿠키만 바뀌고 이 문서의 메모리 상태는
+ * 그대로 `true` 로 남는다 — 쿠키에는 `storage` 이벤트가 없기 때문이다.
+ */
+const signOutInAnotherTab = () => {
+  Cookies.set(
+    AUTH_STORAGE_COOKIE,
+    JSON.stringify({ state: { isAuthenticated: false }, version: 0 }),
+    { path: "/" },
+  );
+};
 
 function Probe() {
   useRedirectWhenUnauthenticated();
@@ -45,6 +60,7 @@ beforeEach(() => {
   mocks.pathname = "/report";
   useAuthStore.getState().clearAuth();
   useAuthPopupStore.getState().closePopup();
+  Cookies.remove(AUTH_STORAGE_COOKIE, { path: "/" });
 });
 
 afterEach(() => {
@@ -125,16 +141,41 @@ describe("useRedirectWhenUnauthenticated", () => {
     expect(mocks.navigate).toHaveBeenCalledTimes(1);
   });
 
-  it("bfcache 복원처럼 effect 없이 돌아온 경우에도 내보낸다", () => {
-    // 로그인 상태로 렌더한 뒤, effect 를 깨우지 않고 스토어만 비운다.
+  it("bfcache 복원 시 저장소를 다시 읽어 판정한다", async () => {
     setAuthenticated();
     render(<Probe />);
-    useAuthStore.setState({ isAuthenticated: false });
+
+    signOutInAnotherTab();
+    // 메모리 상태만 보면 아직 로그인 중이라 이 시점에는 아무 일도 없다.
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(mocks.navigate).not.toHaveBeenCalled();
 
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new Event("pageshow"));
     });
+
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/", replace: true });
+  });
+
+  it("다른 탭에서 로그아웃한 뒤 탭이 다시 보이면 내보낸다", async () => {
+    setAuthenticated();
+    render(<Probe />);
+
+    signOutInAnotherTab();
+
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/", replace: true });
+  });
+
+  it("끝 슬래시가 붙은 보호 경로도 알아본다", () => {
+    mocks.pathname = "/report/";
+    setAuthenticated();
+    render(<Probe />);
+
+    loseAuthentication();
 
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/", replace: true });
   });

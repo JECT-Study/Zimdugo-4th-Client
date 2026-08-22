@@ -25,3 +25,20 @@ export const PROTECTED_PATHS = [
   "/my/reports",
   "/my/favorites",
 ] as const;
+
+const PROTECTED_PATHNAMES = new Set<string>(PROTECTED_PATHS);
+
+/** `/report/` 처럼 끝에 슬래시가 붙어도 같은 경로로 봐야 한다. */
+const normalizePathname = (pathname: string) =>
+  pathname.length > 1 ? pathname.replace(/\/+$/, "") || "/" : pathname;
+
+/**
+ * 보호 경로인가. **로케일 접두사를 벗긴** 경로를 넘겨야 한다.
+ *
+ * 접두사를 벗기는 방법이 서버(요청 URL 정규식)와 클라이언트(`stripLocalePathPrefix`)에서
+ * 다르므로 그 단계는 호출부에 맡기고, 정규화와 목록 대조만 여기서 한다. 양쪽이
+ * 끝 슬래시를 다르게 다루면 같은 URL 이 서버에서는 막히고 클라이언트에서는
+ * 통과하는 어긋남이 생긴다.
+ */
+export const isProtectedPath = (pathnameWithoutLocale: string): boolean =>
+  PROTECTED_PATHNAMES.has(normalizePathname(pathnameWithoutLocale));

@@ -1,14 +1,9 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
 import { stripLocalePathPrefix } from "#/shared/i18n/locales";
-import { PROTECTED_PATHS } from "#/shared/model/protected-paths";
+import { isProtectedPath } from "#/shared/model/protected-paths";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
-
-const PROTECTED_PATHNAMES = new Set<string>(PROTECTED_PATHS);
-
-const isProtectedPathname = (pathname: string) =>
-  PROTECTED_PATHNAMES.has(stripLocalePathPrefix(pathname));
 
 /**
  * 보호 경로 체류 중 인증이 끊기면 내보내는 가드.
@@ -20,7 +15,8 @@ const isProtectedPathname = (pathname: string) =>
  *
  * - `useBootstrapAuth` 의 세션 복구 실패
  * - `apiClient` 401 인터셉터의 재시도 실패 (페이지를 열어둔 채 세션 만료)
- * - 다른 탭에서 로그아웃
+ * - 다른 탭에서 로그아웃 — 이 경우는 공유 쿠키만 바뀌고 이 문서의 메모리 상태는
+ *   그대로라, 탭이 다시 보이거나 bfcache 로 복원될 때 저장소를 다시 읽어야 한다
  *
  * 로그인 페이지의 역가드 `useRedirectWhenAuthenticated` 와 방향만 반대인 같은 구조다.
  * 그쪽 주석이 설명하는 "`beforeLoad` 가 다시 실행되지 않는" 문제를 보호 경로가
@@ -41,7 +37,7 @@ export const useRedirectWhenUnauthenticated = () => {
 
   const redirectIfUnauthenticated = useCallback(() => {
     if (hasRedirectedRef.current) return;
-    if (!isProtectedPathname(pathname)) return;
+    if (!isProtectedPath(stripLocalePathPrefix(pathname))) return;
     if (useAuthStore.getState().isAuthenticated) return;
 
     hasRedirectedRef.current = true;
@@ -49,6 +45,20 @@ export const useRedirectWhenUnauthenticated = () => {
     useAuthPopupStore.getState().openPopup(pathname);
     navigate({ to: "/", replace: true });
   }, [navigate, pathname]);
+
+  /**
+   * 저장소를 다시 읽은 뒤 판정한다.
+   *
+   * 로그아웃은 공유 쿠키를 갱신하지만, 쿠키에는 `storage` 이벤트가 없어서 다른
+   * 탭의 zustand 메모리 상태는 `true` 로 남는다. 그래서 이 문서의 스토어만 보면
+   * 이미 로그아웃한 사용자를 계속 보호 페이지에 두게 된다. 탭이 다시 보이는
+   * 시점과 bfcache 복원 시점에 쿠키를 메모리로 끌어와야 판정이 최신이 된다.
+   */
+  const rehydrateAndRedirect = useCallback(() => {
+    void Promise.resolve(useAuthStore.persist.rehydrate()).then(() => {
+      redirectIfUnauthenticated();
+    });
+  }, [redirectIfUnauthenticated]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -62,12 +72,19 @@ export const useRedirectWhenUnauthenticated = () => {
 
   useEffect(() => {
     const handlePageShow = () => {
-      redirectIfUnauthenticated();
+      rehydrateAndRedirect();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      rehydrateAndRedirect();
     };
 
     window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [redirectIfUnauthenticated]);
+  }, [rehydrateAndRedirect]);
 };
