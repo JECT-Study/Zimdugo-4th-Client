@@ -282,6 +282,17 @@ export const Route = createFileRoute("/")({
       searchPlaceId,
     };
   },
+  /**
+   * 공개 데이터만 다룬다. 딥링크로 들어온 보관함의 메타 태그를 서버에서 만들기
+   * 위한 로더이고, 여기서 가져오는 값은 누구에게나 같다.
+   *
+   * ⚠️ 사용자별 데이터(즐겨찾기 여부, 알림 개수 등)를 여기에 넣으면 안 된다.
+   * 서버는 요청자가 누구인지 모른다 — 액세스 토큰은 쿠키에 저장되지 않고,
+   * 서버 가드가 읽는 `auth-storage` 는 클라이언트가 쓰는 위조 가능한 쿠키다.
+   * 게다가 홈은 프리렌더 대상이라 개인화 값이 정적 파일에 굳어 모든 방문자에게
+   * 서빙된다. 개인화가 필요하면 클라이언트에서 채우고, SSR 로 다뤄야 한다면
+   * 서버가 신원을 확인할 수단을 먼저 만들어야 한다.
+   */
   loader: async ({ search }: any) => {
     const lockerParam = search?.locker;
     const lockerId = parseLockerSearchParam(lockerParam);

@@ -1,34 +1,24 @@
 import { isAuthenticatedRequest } from "#/features/auth/sign-in/model/server-login-guard";
 import { LOCALE_PATH_PREFIX } from "#/shared/i18n/locales";
 import { isDocumentRequest } from "#/shared/i18n/server-locale-guard";
+import { isProtectedPath } from "#/shared/model/protected-paths";
 
 /**
- * 로그인해야 문서를 받을 수 있는 경로. 로케일 접두사를 벗긴 형태로 적는다.
+ * 로그인해야 받을 수 있는 문서 요청인가. 로그인 여부는 보지 않는다.
  *
- * `requireAuthenticatedRoute` 를 `beforeLoad` 로 거는 라우트와 정확히 같아야 한다.
+ * 경로 판정은 `isProtectedPath` 하나에 맡긴다. 목록도 끝 슬래시 정규화도 서버와
+ * 클라이언트가 같은 코드를 써야 같은 URL 을 같게 판정한다.
+ *
  * `/my` 는 `/settings` 로 보내는 호환용 리디렉션일 뿐이고 비로그인도 설정을 볼 수
- * 있으므로 여기 넣지 않는다.
+ * 있으므로 그 목록에 없다.
  */
-const PROTECTED_PATHNAMES = new Set([
-  "/report",
-  "/my/reports",
-  "/my/favorites",
-]);
-
-/** `/report/` 처럼 끝에 슬래시가 붙어도 같은 경로로 봐야 한다. */
-const normalizePathname = (pathname: string) =>
-  pathname.length > 1 ? pathname.replace(/\/+$/, "") || "/" : pathname;
-
-/** 로그인해야 받을 수 있는 문서 요청인가. 로그인 여부는 보지 않는다. */
 export const isProtectedDocumentRequest = (req: Request): boolean => {
   if (!isDocumentRequest(req)) return false;
 
   const url = new URL(req.url);
   const localePrefix = url.pathname.match(LOCALE_PATH_PREFIX)?.[0] ?? "";
-  const pathnameWithoutLocale =
-    normalizePathname(url.pathname.slice(localePrefix.length)) || "/";
 
-  return PROTECTED_PATHNAMES.has(pathnameWithoutLocale);
+  return isProtectedPath(url.pathname.slice(localePrefix.length) || "/");
 };
 
 /**
