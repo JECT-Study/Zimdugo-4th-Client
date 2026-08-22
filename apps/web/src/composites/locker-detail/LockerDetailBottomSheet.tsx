@@ -5,13 +5,13 @@ import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
-  IconCircleboxClose32,
-  IconCircleboxMore32,
   IconDistanceRoute24,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
+  IconMore24,
   IconNavigationClock24,
+  IconX24,
 } from "@repo/ui/tokens/icons";
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import {
@@ -981,7 +981,7 @@ function SummarySection({
             onClick={onMoreActionsOpen}
             aria-label={m.locker_detail_more_actions_open_aria()}
           >
-            <IconCircleboxMore32 />
+            <IconMore24 />
           </button>
           <button
             type="button"
@@ -989,7 +989,7 @@ function SummarySection({
             onClick={onClose}
             aria-label={m.search_close_aria()}
           >
-            <IconCircleboxClose32 />
+            <IconX24 />
           </button>
         </div>
       </div>

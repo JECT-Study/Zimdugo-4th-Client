@@ -257,6 +257,16 @@ export const metaDot = style({
   backgroundColor: vars.color.text.disable,
 });
 
+/**
+ * 홈 헤더의 원형 버튼과 같은 결로 맞춘다. 회색 원(CircleBox) 대신 흰 원에 그림자를
+ * 얹어 띄우고, 포커스 링도 헤더와 동일하게 준다.
+ *
+ * 그림자는 헤더 프로필 버튼(IconHomeProfile32)과 같은 shadow[2] 를 쓴다. 시트 배경도
+ * 흰색이라 한 단계 옅은 shadow[1] 로는 원의 경계가 거의 드러나지 않는다.
+ *
+ * 원 32px·아이콘 24px 은 그대로다. 원을 버튼이 그리게 되면서 아이콘은 원을 품지 않는
+ * 24px 글리프(IconMore24·IconX24)를 쓴다. 같은 글리프라 모양은 달라지지 않는다.
+ */
 export const summaryIconButton = style({
   display: "inline-flex",
   alignItems: "center",
@@ -268,9 +278,15 @@ export const summaryIconButton = style({
   flexShrink: 0,
   border: 0,
   borderRadius: vars.radius.max,
-  background: "transparent",
-  color: vars.color.text.disable,
+  backgroundColor: vars.color.bg.default,
+  boxShadow: vars.shadow[2],
   cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
 });
 
 export const summaryActions = style({
