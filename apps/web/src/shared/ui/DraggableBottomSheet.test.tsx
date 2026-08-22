@@ -474,6 +474,72 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).toHaveBeenLastCalledWith(480);
   });
 
+  it("does not replay an already consumed snap request after remounting", () => {
+    const handleSnapChange = vi.fn();
+    const snapRequest = { id: 1, snapPoint: 480 };
+    const renderSheet = (
+      sheetKey: string,
+      request: typeof snapRequest | null,
+    ) => (
+      <DraggableBottomSheet
+        key={sheetKey}
+        minSnapPoint={40}
+        snapPoint={240}
+        miniSnapPoint={480}
+        maxSnapPoint={720}
+        snapRequest={request}
+        onSnapChange={handleSnapChange}
+      >
+        <div>sheet surface</div>
+      </DraggableBottomSheet>
+    );
+
+    const { rerender } = render(renderSheet("locker-1", null));
+    rerender(renderSheet("locker-1", snapRequest));
+
+    expect(animateTargets.at(-1)).toBe(480);
+
+    // 다른 보관함으로 교체되어 시트가 리마운트된다. 부모가 아직 들고 있는 과거
+    // 요청을 다시 재생하면 새 시트가 기본 스냅 대신 직전 단계로 열린다.
+    animateTargets.length = 0;
+    handleSnapChange.mockClear();
+    rerender(renderSheet("locker-2", snapRequest));
+
+    expect(animateTargets).toEqual([]);
+    expect(handleSnapChange).not.toHaveBeenCalled();
+  });
+
+  it("still settles to a snap request that arrives after remounting", () => {
+    const handleSnapChange = vi.fn();
+    const renderSheet = (
+      sheetKey: string,
+      request: { id: number; snapPoint: number } | null,
+    ) => (
+      <DraggableBottomSheet
+        key={sheetKey}
+        minSnapPoint={40}
+        snapPoint={240}
+        miniSnapPoint={480}
+        maxSnapPoint={720}
+        snapRequest={request}
+        onSnapChange={handleSnapChange}
+      >
+        <div>sheet surface</div>
+      </DraggableBottomSheet>
+    );
+
+    const { rerender } = render(
+      renderSheet("locker-1", { id: 1, snapPoint: 480 }),
+    );
+    rerender(renderSheet("locker-2", { id: 1, snapPoint: 480 }));
+
+    animateTargets.length = 0;
+    rerender(renderSheet("locker-2", { id: 2, snapPoint: 40 }));
+
+    expect(animateTargets.at(-1)).toBe(40);
+    expect(handleSnapChange).toHaveBeenLastCalledWith(40);
+  });
+
   it("reports live offset changes while dragging", () => {
     const handleLiveOffsetChange = vi.fn();
 
