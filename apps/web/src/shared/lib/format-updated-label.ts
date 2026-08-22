@@ -3,7 +3,11 @@ import { m } from "@repo/i18n";
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
-const JUST_NOW_THRESHOLD_MS = 5 * MINUTE_MS;
+/**
+ * 이 값 미만만 "방금" 으로 뭉뚱그리고, 나머지는 분 단위로 정량 표시한다.
+ * 1분으로 두면 "방금" 과 "1분 전" 사이에 빈 구간이 생기지 않는다.
+ */
+const JUST_NOW_THRESHOLD_MS = MINUTE_MS;
 const DAYS_PER_MONTH = 30;
 const DAYS_PER_YEAR = 365;
 
