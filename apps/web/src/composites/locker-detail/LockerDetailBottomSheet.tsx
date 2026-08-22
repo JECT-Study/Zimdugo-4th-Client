@@ -392,10 +392,22 @@ export function LockerDetailBottomSheet({
   const [liveSheetOffset, setLiveSheetOffset] = useState(
     resolvedInitialSnapPoint,
   );
+  /**
+   * 스프링이 실제로 향하는 오프셋. onSnapChange 가 주는 값이라 클램프까지 끝난 값이다.
+   *
+   * minSnapPoint 와 비교하면 안 된다. full 진입과 동시에 제목 펼치기 버튼이 붙어
+   * 콘텐츠가 5px 늘고 minSnapPoint 가 그만큼 내려가는데, 스프링은 이미 잡아 둔
+   * 이전 값에 안착한다. 그러면 "도착했는지" 판정이 영원히 거짓이 되어
+   * 오버레이 카드가 시트 안 카드로 넘어가지 못한다.
+   */
+  const [snapTargetOffset, setSnapTargetOffset] = useState(
+    resolvedInitialSnapPoint,
+  );
 
   const liveSheetVisibleHeight = Math.max(0, windowHeight - liveSheetOffset);
   /** 시트가 full 에 안착한 뒤에야 오버레이 카드를 내부 카드로 넘긴다. */
-  const isSheetAtFullOffset = liveSheetOffset <= resolvedMinSnapPoint;
+  const isSheetAtFullOffset =
+    currentSnapStage === "full" && liveSheetOffset <= snapTargetOffset;
   const isRealtimeOverlayVisible =
     loadState === "ready" &&
     isRealtimeAvailable &&
@@ -448,6 +460,7 @@ export function LockerDetailBottomSheet({
     });
 
     setCurrentSnapStage(nextStage);
+    setSnapTargetOffset(nextSnap);
     onSnapChange?.(nextSnap);
     onSnapStageChange?.(nextStage);
   };
@@ -489,6 +502,7 @@ export function LockerDetailBottomSheet({
 
     initialSnapPointRef.current = resolvedInitialSnapPoint;
     setLiveSheetOffset(resolvedInitialSnapPoint);
+    setSnapTargetOffset(resolvedInitialSnapPoint);
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,

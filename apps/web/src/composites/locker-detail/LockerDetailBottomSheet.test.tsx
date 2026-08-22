@@ -119,6 +119,7 @@ describe("LockerDetailBottomSheet", () => {
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
     draggableBottomSheetMock.mockClear();
   });
 
@@ -217,6 +218,11 @@ describe("LockerDetailBottomSheet", () => {
         });
       });
     };
+    const emitSnapChange = (nextSnap: number) => {
+      act(() => {
+        draggableBottomSheetMock.mock.lastCall?.[0].onSnapChange?.(nextSnap);
+      });
+    };
     const getOverlay = () => {
       const sheet = screen.getByTestId("mock-draggable-bottom-sheet");
 
@@ -227,15 +233,80 @@ describe("LockerDetailBottomSheet", () => {
       );
     };
 
+    // 스프링은 놓는 순간 타깃을 잡고(onSnapChange), 그 뒤에 오프셋이 따라간다.
+    emitSnapChange(LOCKER_DETAIL_FULL_TOP_OFFSET);
+
     emitLiveOffset(500);
     expect(getOverlay()?.style.bottom).toBe("326px");
 
     emitLiveOffset(300);
     expect(getOverlay()?.style.bottom).toBe("526px");
 
-    // full 오프셋(=minSnapPoint)에 안착한 뒤에야 시트 내부 카드로 넘긴다.
+    // 타깃에 안착한 뒤에야 시트 내부 카드로 넘긴다.
     emitLiveOffset(LOCKER_DETAIL_FULL_TOP_OFFSET);
     expect(getOverlay()).toBeNull();
+    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+  });
+
+  it("full 진입으로 콘텐츠가 늘어 minSnapPoint 가 내려가도 내부 카드로 넘긴다", async () => {
+    // 제목 펼치기 버튼은 full 에서만 붙어 콘텐츠를 5px 늘린다(브라우저 실측).
+    const TITLE_EXPAND_BUTTON_GROWTH = 5;
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        const hasExpandButton =
+          this.querySelector(
+            `[aria-label="${m.locker_detail_title_expand_aria()}"]`,
+          ) !== null;
+        return 400 + (hasExpandButton ? TITLE_EXPAND_BUTTON_GROWTH : 0);
+      },
+    });
+    const resizeCallbacks: ResizeObserverCallback[] = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resizeCallbacks.push(callback);
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const fullSnapTarget =
+      draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint;
+
+    // 스프링이 타깃을 잡는다. 이때 콘텐츠에는 아직 펼치기 버튼이 없다.
+    act(() => {
+      draggableBottomSheetMock.mock.lastCall?.[0].onSnapChange?.(
+        fullSnapTarget,
+      );
+    });
+    await screen.findByRole("button", {
+      name: m.locker_detail_title_expand_aria(),
+    });
+    // 버튼이 붙어 콘텐츠가 커졌고, 브라우저라면 ResizeObserver 가 다시 재는 시점이다.
+    act(() => {
+      for (const callback of resizeCallbacks) {
+        callback([], {} as ResizeObserver);
+      }
+    });
+    act(() => {
+      draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+        offset: fullSnapTarget,
+        expandedProgress: 1,
+        snapPoints: [],
+      });
+    });
+
+    // minSnapPoint 는 타깃보다 내려갔지만, 시트는 타깃에 안착해 있다.
+    expect(
+      draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint,
+    ).toBeLessThan(fullSnapTarget);
     expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
   });
 
