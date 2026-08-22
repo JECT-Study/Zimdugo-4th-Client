@@ -35,6 +35,7 @@ import {
   formatLockerPriceLabel,
 } from "#/shared/lib/locker-detail-labels";
 import {
+  type BottomSheetLiveOffsetState,
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
 } from "#/shared/ui/DraggableBottomSheet";
@@ -88,6 +89,7 @@ import {
   primaryActionButton,
   realtimeAvailabilityDivider,
   realtimeStatusCardOverlay,
+  realtimeStatusCardSlotHidden,
   sheetColumn,
   summaryActions,
   summaryIconButton,
@@ -360,14 +362,25 @@ export function LockerDetailBottomSheet({
     );
   const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
 
+  /**
+   * 스냅 애니메이션이 진행되는 동안의 실제 시트 오프셋.
+   * onSnapChange 는 스프링이 끝나기 전에 호출되므로, 단계별 고정 높이로 오버레이를
+   * 배치하면 카드가 시트보다 먼저 순간이동한다. 라이브 오프셋을 따라가면 시트와 함께 움직인다.
+   */
+  const [liveSheetOffset, setLiveSheetOffset] = useState(
+    resolvedInitialSnapPoint,
+  );
+
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
-  const overlaySheetVisibleHeight =
-    resolveDetailSheetVisibleHeight(currentSnapStage);
-  const shouldShowRealtimeOverlay =
+  const liveSheetVisibleHeight = Math.max(0, windowHeight - liveSheetOffset);
+  /** 시트가 full 에 안착한 뒤에야 오버레이 카드를 내부 카드로 넘긴다. */
+  const isSheetAtFullOffset = liveSheetOffset <= resolvedMinSnapPoint;
+  const isRealtimeOverlayVisible =
     loadState === "ready" &&
     isRealtimeAvailable &&
-    overlaySheetVisibleHeight !== null;
+    currentSnapStage !== "dismiss" &&
+    !isSheetAtFullOffset;
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
@@ -419,6 +432,10 @@ export function LockerDetailBottomSheet({
     onSnapStageChange?.(nextStage);
   };
 
+  const handleLiveOffsetChange = ({ offset }: BottomSheetLiveOffsetState) => {
+    setLiveSheetOffset(offset);
+  };
+
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
     handleResize();
@@ -451,6 +468,7 @@ export function LockerDetailBottomSheet({
     }
 
     initialSnapPointRef.current = resolvedInitialSnapPoint;
+    setLiveSheetOffset(resolvedInitialSnapPoint);
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,
@@ -470,12 +488,11 @@ export function LockerDetailBottomSheet({
 
   return (
     <>
-      {shouldShowRealtimeOverlay ? (
+      {isRealtimeOverlayVisible ? (
         <div
           className={realtimeStatusCardOverlay}
           style={{
-            bottom:
-              overlaySheetVisibleHeight + REALTIME_STATUS_CARD_OVERLAY_GAP,
+            bottom: liveSheetVisibleHeight + REALTIME_STATUS_CARD_OVERLAY_GAP,
           }}
         >
           <LockerRealtimeStatusCard availability={realtimeAvailability} />
@@ -493,6 +510,7 @@ export function LockerDetailBottomSheet({
         showHomeIndicator={false}
         snapRequest={resolvedSnapRequest}
         onSnapChange={handleSnapChange}
+        onLiveOffsetChange={handleLiveOffsetChange}
         onDismiss={handleBack}
       >
         <div className={sheetColumn}>
@@ -509,6 +527,7 @@ export function LockerDetailBottomSheet({
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
               snapStage={currentSnapStage}
+              isRealtimeCardVisible={isSheetAtFullOffset}
               isScrollEnabled={currentSnapStage === "full"}
               contentRef={handleFullContentMeasureRef}
             />
@@ -651,6 +670,7 @@ function FullDetailContent({
   moreActionsButtonRef,
   onNavigate,
   snapStage,
+  isRealtimeCardVisible,
   isScrollEnabled,
   contentRef,
 }: {
@@ -661,13 +681,13 @@ function FullDetailContent({
   moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   onNavigate: () => void;
   snapStage: LockerDetailSheetSnapStage;
+  isRealtimeCardVisible: boolean;
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
-  const isFullSnapStage = snapStage === "full";
 
   const handleOpenImagePreview = (imageUrl: string) => {
     setPreviewImageUrl(imageUrl);
@@ -696,8 +716,19 @@ function FullDetailContent({
           snapStage={snapStage}
           canExpandTitle={isScrollEnabled}
         />
-        {isFullSnapStage && isRealtimeAvailable ? (
-          <LockerRealtimeStatusCard availability={realtimeAvailability} />
+        {/*
+          full 스냅 높이는 이 콘텐츠의 scrollHeight 로 정해진다. 단계에 따라 카드를 넣고 빼면
+          측정값이 달라져 full 진입 후 시트가 다시 움직이므로, DOM 에는 항상 두고 노출만 감춘다.
+        */}
+        {isRealtimeAvailable ? (
+          <div
+            className={
+              isRealtimeCardVisible ? undefined : realtimeStatusCardSlotHidden
+            }
+            aria-hidden={isRealtimeCardVisible ? undefined : true}
+          >
+            <LockerRealtimeStatusCard availability={realtimeAvailability} />
+          </div>
         ) : null}
         <hr className={realtimeAvailabilityDivider} />
         <div className={fullDetailList}>

@@ -2,6 +2,7 @@
 
 import { m } from "@repo/i18n";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -24,6 +25,11 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
     miniSnapPoint?: number;
     minSnapPoint?: number;
     onSnapChange?: (nextSnap: number) => void;
+    onLiveOffsetChange?: (state: {
+      offset: number;
+      expandedProgress: number;
+      snapPoints: number[];
+    }) => void;
     snapPoint?: number;
     snapRequest?: { id: number; snapPoint: number } | null;
   }) => {
@@ -192,8 +198,72 @@ describe("LockerDetailBottomSheet", () => {
     const realtimeStatusCard = sheet.getByRole("region", { name: "실시간" });
     const realtimeAvailabilityDivider = sheet.getByRole("separator");
 
-    expect(realtimeStatusCard.nextElementSibling).toBe(
+    expect(realtimeStatusCard.parentElement?.nextElementSibling).toBe(
       realtimeAvailabilityDivider,
+    );
+    expect(screen.queryAllByRole("region", { name: "실시간" })).toHaveLength(1);
+  });
+
+  it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const emitLiveOffset = (offset: number) => {
+      act(() => {
+        draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+          offset,
+          expandedProgress: 0,
+          snapPoints: [],
+        });
+      });
+    };
+    const getOverlay = () => {
+      const sheet = screen.getByTestId("mock-draggable-bottom-sheet");
+
+      return (
+        screen
+          .getAllByRole("region", { name: "실시간" })
+          .find((card) => !sheet.contains(card))?.parentElement ?? null
+      );
+    };
+
+    emitLiveOffset(500);
+    expect(getOverlay()?.style.bottom).toBe("326px");
+
+    emitLiveOffset(300);
+    expect(getOverlay()?.style.bottom).toBe("526px");
+
+    // full 오프셋(=minSnapPoint)에 안착한 뒤에야 시트 내부 카드로 넘긴다.
+    emitLiveOffset(LOCKER_DETAIL_FULL_TOP_OFFSET);
+    expect(getOverlay()).toBeNull();
+    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+  });
+
+  it("하프에서 풀로 올라가도 측정 대상 콘텐츠와 full 스냅 위치가 그대로다", () => {
+    const countMeasuredCards = () =>
+      screen
+        .getByTestId("mock-draggable-bottom-sheet")
+        .querySelectorAll('section[aria-label="실시간"]').length;
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const halfMinSnapPoint =
+      draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint;
+
+    // 하프에서도 카드는 DOM 에 남아 있어야 full 높이 측정값이 흔들리지 않는다.
+    expect(countMeasuredCards()).toBe(1);
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(countMeasuredCards()).toBe(1);
+    expect(draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint).toBe(
+      halfMinSnapPoint,
     );
   });
 

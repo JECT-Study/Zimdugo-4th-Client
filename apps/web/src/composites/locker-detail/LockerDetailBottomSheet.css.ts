@@ -131,6 +131,13 @@ export const realtimeAvailabilityDivider = style({
   backgroundColor: vars.color.border.default,
 });
 
+/**
+ * full 스냅 높이 측정값을 단계와 무관하게 유지하려고, 감출 때도 레이아웃 자리는 남긴다.
+ */
+export const realtimeStatusCardSlotHidden = style({
+  visibility: "hidden",
+});
+
 export const realtimeStatusCardOverlay = style({
   position: "absolute",
   left: vars.spacing[16],
