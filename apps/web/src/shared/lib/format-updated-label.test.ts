@@ -8,26 +8,33 @@ import {
 const NOW = new Date("2026-06-07T12:00:00.000Z");
 
 describe("formatUpdatedLabel", () => {
-  it("5분 이내는 방금 업데이트로 표시한다", () => {
+  it("1분 미만만 방금 업데이트로 표시한다", () => {
     setLanguageTag("ko");
 
-    expect(
-      formatUpdatedLabel("2026-06-07T11:56:00.000Z", NOW),
-    ).toBe("방금 업데이트");
-    expect(
-      formatUpdatedLabel("2026-06-07T11:55:01.000Z", NOW),
-    ).toBe("방금 업데이트");
+    expect(formatUpdatedLabel("2026-06-07T12:00:00.000Z", NOW)).toBe(
+      "방금 업데이트",
+    );
+    expect(formatUpdatedLabel("2026-06-07T11:59:01.000Z", NOW)).toBe(
+      "방금 업데이트",
+    );
   });
 
-  it("5분 이상 1시간 미만은 분 단위 상대 시간을 표시한다", () => {
+  it("1분부터는 분 단위로 정량 표시한다", () => {
     setLanguageTag("ko");
 
-    expect(
-      formatUpdatedLabel("2026-06-07T11:54:59.000Z", NOW),
-    ).toBe("5분 전 업데이트");
-    expect(
-      formatUpdatedLabel("2026-06-07T11:01:00.000Z", NOW),
-    ).toBe("59분 전 업데이트");
+    // 경계. 여기서 방금과 분 단위가 빈틈없이 이어져야 한다.
+    expect(formatUpdatedLabel("2026-06-07T11:59:00.000Z", NOW)).toBe(
+      "1분 전 업데이트",
+    );
+    expect(formatUpdatedLabel("2026-06-07T11:56:00.000Z", NOW)).toBe(
+      "4분 전 업데이트",
+    );
+    expect(formatUpdatedLabel("2026-06-07T11:54:59.000Z", NOW)).toBe(
+      "5분 전 업데이트",
+    );
+    expect(formatUpdatedLabel("2026-06-07T11:01:00.000Z", NOW)).toBe(
+      "59분 전 업데이트",
+    );
   });
 
   it("1시간 이상 1일 미만은 시간 단위 상대 시간을 표시한다", () => {
@@ -81,9 +88,9 @@ describe("formatUpdatedLabel", () => {
   it("마이크로초 단위 updatedAt도 파싱해 상대 시간을 표시한다", () => {
     setLanguageTag("ko");
 
-    expect(
-      formatUpdatedLabel("2026-06-07T11:56:00.298782Z", NOW),
-    ).toBe("방금 업데이트");
+    expect(formatUpdatedLabel("2026-06-07T11:56:00.298782Z", NOW)).toBe(
+      "3분 전 업데이트",
+    );
   });
 });
 
