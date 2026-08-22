@@ -131,6 +131,13 @@ export const realtimeAvailabilityDivider = style({
   backgroundColor: vars.color.border.default,
 });
 
+export const realtimeStatusCardOverlay = style({
+  position: "absolute",
+  left: 0,
+  zIndex: vars.zIndex.bottomSheet,
+  pointerEvents: "none",
+});
+
 export const summaryTextColumn = style({
   display: "flex",
   flexDirection: "column",

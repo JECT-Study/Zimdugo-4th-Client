@@ -26,7 +26,10 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
-import { LockerRealtimeAvailabilityCard } from "#/entities/locker/ui/realtime-availability";
+import {
+  LockerRealtimeAvailabilityCard,
+  LockerRealtimeStatusCard,
+} from "#/entities/locker/ui/realtime-availability";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
@@ -87,6 +90,7 @@ import {
   metaTruncatedText,
   primaryActionButton,
   realtimeAvailabilityDivider,
+  realtimeStatusCardOverlay,
   sheetColumn,
   summaryActions,
   summaryIconButton,
@@ -102,6 +106,7 @@ import { LockerDetailMoreActionsModal } from "./LockerDetailMoreActionsModal";
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
+const REALTIME_STATUS_CARD_OVERLAY_GAP = 29;
 
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
@@ -358,6 +363,14 @@ export function LockerDetailBottomSheet({
     );
   const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
 
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
+  const overlaySheetVisibleHeight =
+    resolveDetailSheetVisibleHeight(currentSnapStage);
+  const shouldShowRealtimeOverlay =
+    loadState === "ready" &&
+    isRealtimeAvailable &&
+    overlaySheetVisibleHeight !== null;
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
@@ -460,6 +473,17 @@ export function LockerDetailBottomSheet({
 
   return (
     <>
+      {shouldShowRealtimeOverlay ? (
+        <div
+          className={realtimeStatusCardOverlay}
+          style={{
+            bottom:
+              overlaySheetVisibleHeight + REALTIME_STATUS_CARD_OVERLAY_GAP,
+          }}
+        >
+          <LockerRealtimeStatusCard availability={realtimeAvailability} />
+        </div>
+      ) : null}
       <DraggableBottomSheet
         key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
         snapPoint={resolvedSnapPoint}
@@ -644,6 +668,10 @@ function FullDetailContent({
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
+  const isFullSnapStage = snapStage === "full";
+
   const handleOpenImagePreview = (imageUrl: string) => {
     setPreviewImageUrl(imageUrl);
   };
@@ -671,9 +699,15 @@ function FullDetailContent({
           snapStage={snapStage}
           canExpandTitle={isScrollEnabled}
         />
-        <LockerRealtimeAvailabilityCard
-          availability={locker.realtimeAvailability}
-        />
+        {isFullSnapStage ? (
+          isRealtimeAvailable ? (
+            <LockerRealtimeStatusCard availability={realtimeAvailability} />
+          ) : (
+            <LockerRealtimeAvailabilityCard
+              availability={realtimeAvailability}
+            />
+          )
+        ) : null}
         <hr className={realtimeAvailabilityDivider} />
         <div className={fullDetailList}>
           <DetailInfoRow

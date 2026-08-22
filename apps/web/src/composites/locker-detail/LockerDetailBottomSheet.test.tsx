@@ -95,6 +95,14 @@ const getSheetRoot = () =>
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setTestLanguage("ko");
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 812,
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get: () => 900,
+    });
     Object.defineProperty(globalThis, "CSS", {
       configurable: true,
       value: {
@@ -145,7 +153,7 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
   });
 
-  it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
+  it("하프 시트에서는 실시간 카드를 시트 바깥에 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
@@ -158,35 +166,65 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
-    expect(sheet.getByText("실시간 보관함 잔여석")).toBeTruthy();
-    expect(sheet.getByText("S 12 · M 2 · L 0")).toBeTruthy();
-    const realtimeAvailabilityCard = sheet
-      .getByText("실시간 보관함 잔여석")
-      .closest("section");
-    const realtimeAvailabilityDivider = sheet.getByRole("separator");
-    expect(realtimeAvailabilityCard?.nextElementSibling).toBe(
-      realtimeAvailabilityDivider,
-    );
+    expect(sheet.queryByRole("region", { name: "실시간" })).toBeNull();
+    const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("220px");
+    expect(within(realtimeStatusCard).getByText("소형")).toBeTruthy();
+    expect(within(realtimeStatusCard).getByText("12")).toBeTruthy();
+    expect(within(realtimeStatusCard).getByText("마감")).toBeTruthy();
+    expect(sheet.getByRole("separator")).toBeTruthy();
     expect(
       sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
     ).toBeTruthy();
     expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
   });
 
-  it("실시간 정보가 없으면 사이즈별 잔여석을 대시로 표시한다", () => {
+  it("풀 시트에서는 실시간 카드를 시트 내부에 렌더링한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const sheet = getSheetRoot();
+    const realtimeStatusCard = sheet.getByRole("region", { name: "실시간" });
+    const realtimeAvailabilityDivider = sheet.getByRole("separator");
+
+    expect(realtimeStatusCard.nextElementSibling).toBe(
+      realtimeAvailabilityDivider,
+    );
+  });
+
+  it("미니 시트에서도 실시간 카드를 시트 바깥에 렌더링한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={701}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
+
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("140px");
+    expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
+  });
+
+  it("실시간 정보가 없으면 시트 바깥 카드를 표시하지 않는다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{ ...LOCKER_DETAIL, realtimeAvailability: null }}
         onReport={vi.fn()}
       />,
     );
-    const sheet = getSheetRoot();
 
-    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
-    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(screen.queryByText("실시간 이용 정보 미제공")).toBeNull();
   });
 
-  it("실시간 이용 불가 상태이면 사이즈별 잔여석을 대시로 표시한다", () => {
+  it("풀 시트의 실시간 정보 미제공 표시는 기존 동작을 유지한다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{
@@ -199,6 +237,7 @@ describe("LockerDetailBottomSheet", () => {
             fetchedAt: "2026-08-14T14:19:47.013473",
           },
         }}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
         onReport={vi.fn()}
       />,
     );

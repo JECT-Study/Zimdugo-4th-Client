@@ -314,6 +314,8 @@
   "time_updated_years_ago": "{years}年前更新",
   "locker_detail_last_updated": "最近更新 {datetime}",
   "locker_detail_realtime_availability": "实时寄存柜余量",
+  "locker_detail_realtime_status": "实时",
+  "locker_detail_realtime_full": "已满",
   "locker_detail_realtime_as_of": "截至 {datetime}",
   "locker_detail_realtime_unavailable": "暂不提供实时使用信息",
   "locker_detail_price_section": "价格",
