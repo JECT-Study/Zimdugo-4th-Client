@@ -12,52 +12,67 @@ export const LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX = 58;
 export const card = style({
   display: "flex",
   flexDirection: "column",
-  width: "195px",
+  alignItems: "center",
+  width: "fit-content",
+  minWidth: "178px",
   height: `${LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX}px`,
-  padding: "8px 6px 7px 9px",
+  padding: "4px 12px 8px",
   boxSizing: "border-box",
   overflow: "hidden",
-  border: "1px solid #B8EDC9",
   borderRadius: "16px",
-  backgroundColor: "#F0FCF5",
+  backgroundColor: vars.color.bg.default,
+});
+
+export const cardVariant = styleVariants({
+  floating: {
+    boxShadow: "0 4px 20px rgb(0 0 0 / 25%)",
+  },
+  inline: {
+    border: "1px solid #EEE",
+    padding: "3px 11px 7px",
+  },
 });
 
 export const statusHeader = style({
-  display: "flex",
-  alignItems: "flex-start",
-  gap: vars.spacing[8],
+  position: "relative",
   width: "100%",
+  minWidth: "154px",
   height: "20px",
+  flexShrink: 0,
   overflow: "hidden",
   backgroundColor: vars.color.bg.default,
 });
 
 export const liveIndicator = style({
-  width: "8px",
-  height: "8px",
-  marginTop: "1px",
-  flexShrink: 0,
-  borderRadius: vars.radius.max,
-  backgroundColor: "#1FCA5A",
+  position: "absolute",
+  top: "50%",
+  left: "3px",
+  width: "6px",
+  height: "6px",
+  transform: "translateY(-50%)",
 });
 
 export const statusLabel = style({
-  flexShrink: 0,
-  color: "#0D7330",
-  fontSize: vars.typography.fontSize[12],
+  position: "absolute",
+  top: "4px",
+  left: "13px",
+  color: "#16181C",
+  fontSize: "10px",
   fontWeight: vars.typography.fontWeight.SemiBold,
-  lineHeight: "15px",
+  lineHeight: "normal",
   whiteSpace: "nowrap",
 });
 
 export const updatedLabel = style({
-  minWidth: 0,
-  flex: 1,
+  position: "absolute",
+  top: "5px",
+  right: 0,
+  width: "120px",
   overflow: "hidden",
   color: "#617A69",
-  fontSize: vars.typography.fontSize[12],
+  fontSize: "8px",
   fontWeight: vars.typography.fontWeight.Regular,
-  lineHeight: "15px",
+  lineHeight: "normal",
   textAlign: "right",
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
@@ -67,24 +82,22 @@ export const sizeList = style({
   display: "flex",
   alignItems: "flex-start",
   gap: vars.spacing[8],
-  height: "21px",
+  marginTop: "6px",
   overflow: "hidden",
   backgroundColor: vars.color.bg.default,
-  fontSize: "11px",
-  lineHeight: "13px",
+  fontSize: "10px",
+  lineHeight: "normal",
   whiteSpace: "nowrap",
 });
 
 /**
- * 카드 폭은 195px 로 고정이라 en 처럼 사이즈 이름이 긴 로케일에서는 세 항목이 다 들어가지 않는다.
- * 마지막 항목이 잘려 사라지지 않도록 항목을 축소 가능하게 두고, 이름만 말줄임 처리한다.
+ * `대형 마감`과 가변 수량까지 세 항목이 모두 잘리지 않도록 카드 폭을 콘텐츠에 맞춘다.
  */
 export const sizeItem = style({
   display: "flex",
-  alignItems: "flex-start",
+  alignItems: "center",
   gap: "5px",
-  minWidth: 0,
-  flex: "0 1 auto",
+  flexShrink: 0,
   padding: "4px 8px",
   boxSizing: "border-box",
   overflow: "hidden",
@@ -103,10 +116,7 @@ export const sizeItemState = styleVariants({
 });
 
 export const sizeLabel = style({
-  minWidth: 0,
-  overflow: "hidden",
   fontWeight: vars.typography.fontWeight.Regular,
-  textOverflow: "ellipsis",
 });
 
 export const sizeValue = style({

@@ -542,7 +542,10 @@ export function LockerDetailBottomSheet({
           className={realtimeStatusCardOverlay}
           style={{ bottom: realtimeOverlayBottom }}
         >
-          <LockerRealtimeStatusCard availability={realtimeAvailability} />
+          <LockerRealtimeStatusCard
+            availability={realtimeAvailability}
+            variant="floating"
+          />
         </motion.div>
       ) : null}
       <DraggableBottomSheet
@@ -766,7 +769,10 @@ function FullDetailContent({
         {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
         {isRealtimeAvailable && isRealtimeCardVisible ? (
           <div data-realtime-status-card="">
-            <LockerRealtimeStatusCard availability={realtimeAvailability} />
+            <LockerRealtimeStatusCard
+              availability={realtimeAvailability}
+              variant="inline"
+            />
           </div>
         ) : null}
         <hr className={realtimeAvailabilityDivider} />

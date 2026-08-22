@@ -23,6 +23,12 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const Inline: Story = {
+  args: {
+    variant: "inline",
+  },
+};
+
 export const AllAvailable: Story = {
   args: {
     availability: {

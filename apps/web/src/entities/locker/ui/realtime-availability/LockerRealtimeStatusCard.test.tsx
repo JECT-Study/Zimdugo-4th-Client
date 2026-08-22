@@ -15,7 +15,7 @@ describe("LockerRealtimeStatusCard", () => {
     vi.setSystemTime(new Date("2026-08-14T14:20:00+09:00"));
   });
 
-  it("사이즈별 잔여 수량과 마감 상태를 표시한다", () => {
+  it("사이즈별 잔여 수량과 실시간 이용 가능 상태를 표시한다", () => {
     render(
       <LockerRealtimeStatusCard
         availability={{
@@ -28,7 +28,9 @@ describe("LockerRealtimeStatusCard", () => {
       />,
     );
 
-    expect(screen.getByRole("region", { name: "실시간" })).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeTruthy();
     expect(screen.getByText("방금 업데이트")).toBeTruthy();
     expect(screen.getByText("4")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();

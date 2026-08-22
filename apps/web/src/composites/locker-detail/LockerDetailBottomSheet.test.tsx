@@ -180,8 +180,12 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
-    expect(sheet.queryByRole("region", { name: "실시간" })).toBeNull();
-    const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
+    expect(
+      sheet.queryByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeNull();
+    const realtimeStatusCard = screen.getByRole("region", {
+      name: "실시간 이용 가능",
+    });
     expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
       overlayBottomAt(621),
     );
@@ -205,13 +209,17 @@ describe("LockerDetailBottomSheet", () => {
     );
 
     const sheet = getSheetRoot();
-    const realtimeStatusCard = sheet.getByRole("region", { name: "실시간" });
+    const realtimeStatusCard = sheet.getByRole("region", {
+      name: "실시간 이용 가능",
+    });
     const realtimeAvailabilityDivider = sheet.getByRole("separator");
 
     expect(realtimeStatusCard.parentElement?.nextElementSibling).toBe(
       realtimeAvailabilityDivider,
     );
-    expect(screen.queryAllByRole("region", { name: "실시간" })).toHaveLength(1);
+    expect(
+      screen.queryAllByRole("region", { name: "실시간 이용 가능" }),
+    ).toHaveLength(1);
   });
 
   it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", async () => {
@@ -237,7 +245,7 @@ describe("LockerDetailBottomSheet", () => {
 
       return (
         screen
-          .getAllByRole("region", { name: "실시간" })
+          .getAllByRole("region", { name: "실시간 이용 가능" })
           .find((card) => !sheet.contains(card))?.parentElement ?? null
       );
     };
@@ -259,7 +267,9 @@ describe("LockerDetailBottomSheet", () => {
     // 타깃에 안착한 뒤에야 시트 내부 카드로 넘긴다.
     emitLiveOffset(LOCKER_DETAIL_FULL_TOP_OFFSET);
     expect(getOverlay()).toBeNull();
-    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+    expect(
+      getSheetRoot().getByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeTruthy();
   });
 
   it("라이브 오프셋이 프레임마다 바뀌어도 시트를 리렌더하지 않는다", () => {
@@ -342,7 +352,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint,
     ).toBeLessThan(fullSnapTarget);
-    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+    expect(
+      getSheetRoot().getByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeTruthy();
   });
 
   it("카드가 빠진 단계에서도 full 스냅 위치는 카드를 포함한 높이로 유지한다", () => {
@@ -365,7 +377,9 @@ describe("LockerDetailBottomSheet", () => {
       draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint;
 
     // 하프에서는 카드가 DOM 에서 빠져야 빈 자리가 보이지 않는다.
-    expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(
+      getSheetRoot().queryByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeNull();
     expect(halfMinSnapPoint).toBe(812 - (FULL_CONTENT_HEIGHT + 8 + 24));
 
     rerender(
@@ -376,7 +390,9 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+    expect(
+      getSheetRoot().getByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeTruthy();
     expect(draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint).toBe(
       halfMinSnapPoint,
     );
@@ -391,12 +407,16 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
+    const realtimeStatusCard = screen.getByRole("region", {
+      name: "실시간 이용 가능",
+    });
 
     expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
       overlayBottomAt(701),
     );
-    expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(
+      getSheetRoot().queryByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeNull();
   });
 
   it("실시간 정보가 없으면 시트 바깥 카드를 표시하지 않는다", () => {
@@ -407,7 +427,9 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    expect(screen.queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeNull();
     expect(screen.queryByText("실시간 이용 정보 미제공")).toBeNull();
   });
 
@@ -428,7 +450,9 @@ describe("LockerDetailBottomSheet", () => {
         onReport={vi.fn()}
       />,
     );
-    expect(screen.queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeNull();
     expect(screen.queryByText("실시간 이용 정보 미제공")).toBeNull();
     expect(screen.queryByText("S - · M - · L -")).toBeNull();
   });

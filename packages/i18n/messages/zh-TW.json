@@ -313,7 +313,7 @@
   "time_updated_months_ago": "{months}個月前更新",
   "time_updated_years_ago": "{years}年前更新",
   "locker_detail_last_updated": "最近更新 {datetime}",
-  "locker_detail_realtime_status": "即時",
+  "locker_detail_realtime_status": "即時可用",
   "locker_detail_realtime_full": "已滿",
   "locker_detail_price_section": "價格",
   "locker_detail_size_section": "尺寸",

@@ -3,6 +3,7 @@ import type { LockerRealtimeAvailability } from "#/entities/locker/model/locker-
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
 import {
   card,
+  cardVariant,
   liveIndicator,
   sizeItem,
   sizeItemState,
@@ -13,15 +14,20 @@ import {
   statusLabel,
   updatedLabel,
 } from "./LockerRealtimeStatusCard.css";
+import liveIndicatorUrl from "./live-indicator.svg";
+
+export type LockerRealtimeStatusCardVariant = "floating" | "inline";
 
 export interface LockerRealtimeStatusCardProps {
   availability: LockerRealtimeAvailability;
   className?: string;
+  variant?: LockerRealtimeStatusCardVariant;
 }
 
 export function LockerRealtimeStatusCard({
   availability,
   className,
+  variant = "floating",
 }: LockerRealtimeStatusCardProps) {
   const statusText = m.locker_detail_realtime_status();
   const updatedText = formatUpdatedLabel(availability.fetchedAt);
@@ -43,11 +49,18 @@ export function LockerRealtimeStatusCard({
 
   return (
     <section
-      className={[card, className].filter(Boolean).join(" ")}
+      className={[card, cardVariant[variant], className]
+        .filter(Boolean)
+        .join(" ")}
       aria-label={statusText}
     >
       <div className={statusHeader}>
-        <span className={liveIndicator} aria-hidden="true" />
+        <img
+          src={liveIndicatorUrl}
+          alt=""
+          className={liveIndicator}
+          aria-hidden="true"
+        />
         <span className={statusLabel}>{statusText}</span>
         <span className={updatedLabel}>{updatedText}</span>
       </div>
