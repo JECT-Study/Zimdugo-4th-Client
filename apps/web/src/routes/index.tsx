@@ -190,7 +190,7 @@ import {
   shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
-import { useSheetSnapRequest } from "#/features/search/model/use-sheet-snap-request";
+import { useSheetSnapRequest } from "#/features/search/model/useSheetSnapRequest";
 import {
   createAlternateLinksForPathname,
   createLocalizedUrl,

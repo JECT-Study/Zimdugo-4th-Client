@@ -2,7 +2,7 @@
 
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { useSheetSnapRequest } from "./use-sheet-snap-request";
+import { useSheetSnapRequest } from "./useSheetSnapRequest";
 
 type Stage = "full" | "half" | "mini";
 
