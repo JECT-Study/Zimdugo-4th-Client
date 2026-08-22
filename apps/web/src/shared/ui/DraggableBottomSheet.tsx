@@ -49,6 +49,10 @@ export interface BottomSheetSnapRequest {
 export interface DraggableBottomSheetProps {
   children: ReactNode;
   snapPoint: number;
+  /**
+   * 마운트 시 시트가 열릴 위치. 시트를 특정 단계로 "여는" 방법은 이 prop 하나다.
+   * 생략하면 snapPoint 로 연다.
+   */
   initialSnapPoint?: number;
   minSnapPoint?: number;
   miniSnapPoint?: number;
@@ -57,6 +61,15 @@ export interface DraggableBottomSheetProps {
   dragSensitivity?: number;
   animateOnMount?: boolean;
   showHomeIndicator?: boolean;
+  /**
+   * 이미 떠 있는 시트를 다른 단계로 옮길 때 쓴다. id 를 올려 새 요청임을 알린다.
+   *
+   * 마운트 시점에 들어와 있는 요청은 무시한다. 이 prop 은 부모 state 라 소비돼도
+   * 남아 있어서, 리마운트된 시트가 과거 요청을 그대로 재생하는 것을 막을 방법이
+   * 마운트 시점 판정밖에 없다. 그래서 "시트를 특정 단계로 연다" 는 initialSnapPoint
+   * 담당이고, 이 prop 은 "마운트 이후의 전환" 만 담당한다. 마운트와 같은 렌더에
+   * 새 요청을 실어 보내면 조용히 무시되므로 initialSnapPoint 를 써야 한다.
+   */
   snapRequest?: BottomSheetSnapRequest | null;
   onSnapChange?: (nextSnap: number) => void;
   onLiveOffsetChange?: (state: BottomSheetLiveOffsetState) => void;
@@ -261,17 +274,12 @@ export function DraggableBottomSheet({
   const currentSnapRef = useRef(clampedInitialSnap);
   const lastInitialSnapRef = useRef<number | null>(null);
   /**
-   * 이미 처리한 스냅 요청 id. 마운트 시점에 들어와 있던 요청은 처리된 것으로 본다.
+   * 이미 처리한 스냅 요청 id. 마운트 시점의 요청은 처리된 것으로 본다(snapRequest 참고).
    *
-   * snapRequest 는 명령이 아니라 부모 state 라 소비돼도 남아 있고, 중복 실행은 이
-   * ref 로만 막는다. 그런데 ref 는 인스턴스에 붙어 있어서, 시트가 key 변경으로
-   * 리마운트되면(예: 다른 핀을 눌러 상세 보관함이 바뀔 때) null 로 초기화되고
-   * 남아 있던 과거 요청을 새 요청으로 오인해 다시 재생한다. 그래서 half 로 열려야
-   * 할 시트가 직전 단계(mini 등)로 되돌아갔다. 부모가 요청을 비우는 이펙트로는
-   * 막을 수 없다 — 자식 이펙트가 부모보다 먼저 실행되기 때문이다.
-   *
-   * 새로 마운트된 시트는 initialSnapPoint 로만 열리고, 마운트 이후에 들어온
-   * 요청에만 반응한다.
+   * key 변경으로 시트가 리마운트되면(예: 다른 핀을 눌러 상세 보관함이 바뀔 때) 이 ref 가
+   * 초기화되는데, 부모가 아직 들고 있는 과거 요청을 새 요청으로 오인해 다시 재생하면서
+   * half 로 열려야 할 시트가 직전 단계(mini 등)로 되돌아갔다. 부모가 요청을 비우는
+   * 이펙트로는 막을 수 없다 — 자식 이펙트가 부모보다 먼저 실행되기 때문이다.
    */
   const lastSnapRequestIdRef = useRef<number | null>(snapRequest?.id ?? null);
   const snapPoints = useMemo(
