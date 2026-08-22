@@ -10,6 +10,12 @@ export const sheetColumn = style({
   padding: `${vars.spacing[8]} ${vars.spacing[16]} 0`,
 });
 
+/**
+ * contentStack 의 세로 간격.
+ * 콘텐츠에 빠져 있는 항목을 더해 full 높이를 보정할 때 이 값도 함께 쓴다.
+ */
+export const CONTENT_STACK_GAP_PX = Number.parseFloat(vars.spacing.scale[8]);
+
 export const contentStack = style({
   display: "flex",
   flexDirection: "column",
@@ -129,6 +135,13 @@ export const realtimeAvailabilityDivider = style({
   padding: 0,
   flexShrink: 0,
   backgroundColor: vars.color.border.default,
+});
+
+export const realtimeStatusCardOverlay = style({
+  position: "absolute",
+  left: vars.spacing[16],
+  zIndex: vars.zIndex.bottomSheet,
+  pointerEvents: "none",
 });
 
 export const summaryTextColumn = style({

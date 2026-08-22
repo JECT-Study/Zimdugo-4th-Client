@@ -2,6 +2,7 @@
 
 import { m } from "@repo/i18n";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -24,6 +25,11 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
     miniSnapPoint?: number;
     minSnapPoint?: number;
     onSnapChange?: (nextSnap: number) => void;
+    onLiveOffsetChange?: (state: {
+      offset: number;
+      expandedProgress: number;
+      snapPoints: number[];
+    }) => void;
     snapPoint?: number;
     snapRequest?: { id: number; snapPoint: number } | null;
   }) => {
@@ -92,9 +98,24 @@ const LOCKER_DETAIL: LockerDetailItem = {
 const getSheetRoot = () =>
   within(screen.getByTestId("mock-draggable-bottom-sheet"));
 
+/**
+ * 오버레이 카드는 시트와 같은 100dvh 기준으로 배치된다(간격 14px).
+ * jsdom 이 calc 를 이 순서로 직렬화한다.
+ */
+const overlayBottomAt = (sheetOffset: number) =>
+  `calc(100dvh + 14px - ${sheetOffset}px)`;
+
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setTestLanguage("ko");
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 812,
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get: () => 900,
+    });
     Object.defineProperty(globalThis, "CSS", {
       configurable: true,
       value: {
@@ -105,6 +126,7 @@ describe("LockerDetailBottomSheet", () => {
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
     draggableBottomSheetMock.mockClear();
   });
 
@@ -145,7 +167,7 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
   });
 
-  it("기본 진입부터 풀 상세 콘텐츠를 렌더링한다", () => {
+  it("하프 시트에서는 실시간 카드를 시트 바깥에 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
@@ -158,35 +180,238 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
     expect(sheet.getByText("사이즈")).toBeTruthy();
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
-    expect(sheet.getByText("실시간 보관함 잔여석")).toBeTruthy();
-    expect(sheet.getByText("S 12 · M 2 · L 0")).toBeTruthy();
-    const realtimeAvailabilityCard = sheet
-      .getByText("실시간 보관함 잔여석")
-      .closest("section");
-    const realtimeAvailabilityDivider = sheet.getByRole("separator");
-    expect(realtimeAvailabilityCard?.nextElementSibling).toBe(
-      realtimeAvailabilityDivider,
+    expect(sheet.queryByRole("region", { name: "실시간" })).toBeNull();
+    const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
+      overlayBottomAt(621),
     );
+    expect(within(realtimeStatusCard).getByText("소형")).toBeTruthy();
+    expect(within(realtimeStatusCard).getByText("12")).toBeTruthy();
+    expect(within(realtimeStatusCard).getByText("마감")).toBeTruthy();
+    expect(sheet.getByRole("separator")).toBeTruthy();
     expect(
       sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
     ).toBeTruthy();
     expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
   });
 
-  it("실시간 정보가 없으면 사이즈별 잔여석을 대시로 표시한다", () => {
+  it("풀 시트에서는 실시간 카드를 시트 내부에 렌더링한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const sheet = getSheetRoot();
+    const realtimeStatusCard = sheet.getByRole("region", { name: "실시간" });
+    const realtimeAvailabilityDivider = sheet.getByRole("separator");
+
+    expect(realtimeStatusCard.parentElement?.nextElementSibling).toBe(
+      realtimeAvailabilityDivider,
+    );
+    expect(screen.queryAllByRole("region", { name: "실시간" })).toHaveLength(1);
+  });
+
+  it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", async () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const emitLiveOffset = (offset: number) => {
+      act(() => {
+        draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+          offset,
+          expandedProgress: 0,
+          snapPoints: [],
+        });
+      });
+    };
+    const emitSnapChange = (nextSnap: number) => {
+      act(() => {
+        draggableBottomSheetMock.mock.lastCall?.[0].onSnapChange?.(nextSnap);
+      });
+    };
+    const getOverlay = () => {
+      const sheet = screen.getByTestId("mock-draggable-bottom-sheet");
+
+      return (
+        screen
+          .getAllByRole("region", { name: "실시간" })
+          .find((card) => !sheet.contains(card))?.parentElement ?? null
+      );
+    };
+
+    // 스프링은 놓는 순간 타깃을 잡고(onSnapChange), 그 뒤에 오프셋이 따라간다.
+    emitSnapChange(LOCKER_DETAIL_FULL_TOP_OFFSET);
+
+    // 위치는 motion value 가 다음 프레임에 스타일로 반영한다.
+    emitLiveOffset(500);
+    await waitFor(() => {
+      expect(getOverlay()?.style.bottom).toBe(overlayBottomAt(500));
+    });
+
+    emitLiveOffset(300);
+    await waitFor(() => {
+      expect(getOverlay()?.style.bottom).toBe(overlayBottomAt(300));
+    });
+
+    // 타깃에 안착한 뒤에야 시트 내부 카드로 넘긴다.
+    emitLiveOffset(LOCKER_DETAIL_FULL_TOP_OFFSET);
+    expect(getOverlay()).toBeNull();
+    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+  });
+
+  it("라이브 오프셋이 프레임마다 바뀌어도 시트를 리렌더하지 않는다", () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const renderCountBefore = draggableBottomSheetMock.mock.calls.length;
+
+    // 하프(621)에서 위로 끌어올리는 중. 타깃을 넘지 않아 판정은 그대로다.
+    for (const offset of [600, 580, 560, 540, 520]) {
+      act(() => {
+        draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+          offset,
+          expandedProgress: 0,
+          snapPoints: [],
+        });
+      });
+    }
+
+    // 위치는 motion value 가 직접 쓰므로 리렌더가 늘지 않아야 한다.
+    expect(draggableBottomSheetMock.mock.calls.length).toBe(renderCountBefore);
+  });
+
+  it("full 진입으로 콘텐츠가 늘어 minSnapPoint 가 내려가도 내부 카드로 넘긴다", async () => {
+    // 제목 펼치기 버튼은 full 에서만 붙어 콘텐츠를 5px 늘린다(브라우저 실측).
+    const TITLE_EXPAND_BUTTON_GROWTH = 5;
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        const hasExpandButton =
+          this.querySelector(
+            `[aria-label="${m.locker_detail_title_expand_aria()}"]`,
+          ) !== null;
+        return 400 + (hasExpandButton ? TITLE_EXPAND_BUTTON_GROWTH : 0);
+      },
+    });
+    const resizeCallbacks: ResizeObserverCallback[] = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resizeCallbacks.push(callback);
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const fullSnapTarget =
+      draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint;
+
+    // 스프링이 타깃을 잡는다. 이때 콘텐츠에는 아직 펼치기 버튼이 없다.
+    act(() => {
+      draggableBottomSheetMock.mock.lastCall?.[0].onSnapChange?.(
+        fullSnapTarget,
+      );
+    });
+    await screen.findByRole("button", {
+      name: m.locker_detail_title_expand_aria(),
+    });
+    // 버튼이 붙어 콘텐츠가 커졌고, 브라우저라면 ResizeObserver 가 다시 재는 시점이다.
+    act(() => {
+      for (const callback of resizeCallbacks) {
+        callback([], {} as ResizeObserver);
+      }
+    });
+    act(() => {
+      draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+        offset: fullSnapTarget,
+        expandedProgress: 1,
+        snapPoints: [],
+      });
+    });
+
+    // minSnapPoint 는 타깃보다 내려갔지만, 시트는 타깃에 안착해 있다.
+    expect(
+      draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint,
+    ).toBeLessThan(fullSnapTarget);
+    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+  });
+
+  it("카드가 빠진 단계에서도 full 스냅 위치는 카드를 포함한 높이로 유지한다", () => {
+    const FULL_CONTENT_HEIGHT = 400;
+    const REALTIME_CARD_BLOCK_HEIGHT = 58 + 8;
+    // 카드를 빼면 콘텐츠가 그만큼 줄어드는 실제 상황을 흉내 낸다.
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.querySelector("[data-realtime-status-card]") === null
+          ? FULL_CONTENT_HEIGHT - REALTIME_CARD_BLOCK_HEIGHT
+          : FULL_CONTENT_HEIGHT;
+      },
+    });
+
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const halfMinSnapPoint =
+      draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint;
+
+    // 하프에서는 카드가 DOM 에서 빠져야 빈 자리가 보이지 않는다.
+    expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(halfMinSnapPoint).toBe(812 - (FULL_CONTENT_HEIGHT + 8 + 24));
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
+    expect(draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint).toBe(
+      halfMinSnapPoint,
+    );
+  });
+
+  it("미니 시트에서도 실시간 카드를 시트 바깥에 렌더링한다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={701}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
+
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
+      overlayBottomAt(701),
+    );
+    expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
+  });
+
+  it("실시간 정보가 없으면 시트 바깥 카드를 표시하지 않는다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{ ...LOCKER_DETAIL, realtimeAvailability: null }}
         onReport={vi.fn()}
       />,
     );
-    const sheet = getSheetRoot();
 
-    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
-    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(screen.queryByText("실시간 이용 정보 미제공")).toBeNull();
   });
 
-  it("실시간 이용 불가 상태이면 사이즈별 잔여석을 대시로 표시한다", () => {
+  it("풀 시트에서도 실시간 정보가 없으면 카드를 표시하지 않는다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{
@@ -199,13 +424,13 @@ describe("LockerDetailBottomSheet", () => {
             fetchedAt: "2026-08-14T14:19:47.013473",
           },
         }}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
         onReport={vi.fn()}
       />,
     );
-    const sheet = getSheetRoot();
-
-    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
-    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(screen.queryByText("실시간 이용 정보 미제공")).toBeNull();
+    expect(screen.queryByText("S - · M - · L -")).toBeNull();
   });
 
   it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {
