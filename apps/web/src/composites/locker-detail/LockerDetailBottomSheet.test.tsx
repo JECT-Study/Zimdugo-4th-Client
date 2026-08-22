@@ -239,19 +239,28 @@ describe("LockerDetailBottomSheet", () => {
     expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
   });
 
-  it("하프에서 풀로 올라가도 측정 대상 콘텐츠와 full 스냅 위치가 그대로다", () => {
-    const countMeasuredCards = () =>
-      screen
-        .getByTestId("mock-draggable-bottom-sheet")
-        .querySelectorAll('section[aria-label="실시간"]').length;
+  it("카드가 빠진 단계에서도 full 스냅 위치는 카드를 포함한 높이로 유지한다", () => {
+    const FULL_CONTENT_HEIGHT = 400;
+    const REALTIME_CARD_BLOCK_HEIGHT = 58 + 8;
+    // 카드를 빼면 콘텐츠가 그만큼 줄어드는 실제 상황을 흉내 낸다.
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.querySelector("[data-realtime-status-card]") === null
+          ? FULL_CONTENT_HEIGHT - REALTIME_CARD_BLOCK_HEIGHT
+          : FULL_CONTENT_HEIGHT;
+      },
+    });
+
     const { rerender } = render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
     const halfMinSnapPoint =
       draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint;
 
-    // 하프에서도 카드는 DOM 에 남아 있어야 full 높이 측정값이 흔들리지 않는다.
-    expect(countMeasuredCards()).toBe(1);
+    // 하프에서는 카드가 DOM 에서 빠져야 빈 자리가 보이지 않는다.
+    expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(halfMinSnapPoint).toBe(812 - (FULL_CONTENT_HEIGHT + 8 + 24));
 
     rerender(
       <LockerDetailBottomSheet
@@ -261,7 +270,7 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    expect(countMeasuredCards()).toBe(1);
+    expect(getSheetRoot().getByRole("region", { name: "실시간" })).toBeTruthy();
     expect(draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint).toBe(
       halfMinSnapPoint,
     );

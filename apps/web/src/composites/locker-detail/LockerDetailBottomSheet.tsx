@@ -26,7 +26,10 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
-import { LockerRealtimeStatusCard } from "#/entities/locker/ui/realtime-availability";
+import {
+  LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX,
+  LockerRealtimeStatusCard,
+} from "#/entities/locker/ui/realtime-availability";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
@@ -48,6 +51,7 @@ import {
   actionSection,
   backButton,
   backIcon,
+  CONTENT_STACK_GAP_PX,
   contentStack,
   detailDescription,
   detailDescriptionMultiline,
@@ -89,7 +93,6 @@ import {
   primaryActionButton,
   realtimeAvailabilityDivider,
   realtimeStatusCardOverlay,
-  realtimeStatusCardSlotHidden,
   sheetColumn,
   summaryActions,
   summaryIconButton,
@@ -106,6 +109,8 @@ import { LockerDetailMoreActionsModal } from "./LockerDetailMoreActionsModal";
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
 const REALTIME_STATUS_CARD_OVERLAY_GAP = 14;
+/** full 콘텐츠 측정 시 실시간 카드가 DOM 에 들어 있는지 확인하는 표식 */
+const REALTIME_CARD_MEASURE_SELECTOR = "[data-realtime-status-card]";
 
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
@@ -295,6 +300,8 @@ export function LockerDetailBottomSheet({
   );
   const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
   const updateFullContentHeight = useCallback(() => {
     const element = fullContentMeasureRef.current;
 
@@ -303,14 +310,29 @@ export function LockerDetailBottomSheet({
       return;
     }
 
+    /**
+     * 실시간 카드는 full 에서만 콘텐츠 안에 들어간다. 단계에 따라 DOM 에서 빠지면
+     * 측정값이 달라져 full 스냅 위치가 흔들리므로, 빠져 있는 동안은 카드 블록 높이를
+     * 더해 full 기준으로 맞춘다. 자리를 비워 두면 하프에서 빈 공간이 보인다.
+     *
+     * 카드가 드나들면 contentStack 높이가 바뀌어 ResizeObserver 가 다시 부르고,
+     * 그때 DOM 을 직접 확인하므로 보정값이 측정 시점과 어긋나지 않는다.
+     */
+    const missingRealtimeCardHeight =
+      isRealtimeAvailable &&
+      element.querySelector(REALTIME_CARD_MEASURE_SELECTOR) === null
+        ? LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX
+        : 0;
+
     setFullContentHeight(
       Math.ceil(
         element.scrollHeight +
+          missingRealtimeCardHeight +
           DETAIL_CONTENT_TOP_PADDING +
           DETAIL_CONTENT_BOTTOM_PADDING,
       ),
     );
-  }, []);
+  }, [isRealtimeAvailable]);
   const handleFullContentMeasureRef = useCallback(
     (element: HTMLDivElement | null) => {
       fullContentMeasureRef.current = element;
@@ -371,8 +393,6 @@ export function LockerDetailBottomSheet({
     resolvedInitialSnapPoint,
   );
 
-  const realtimeAvailability = locker.realtimeAvailability;
-  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
   const liveSheetVisibleHeight = Math.max(0, windowHeight - liveSheetOffset);
   /** 시트가 full 에 안착한 뒤에야 오버레이 카드를 내부 카드로 넘긴다. */
   const isSheetAtFullOffset = liveSheetOffset <= resolvedMinSnapPoint;
@@ -716,17 +736,9 @@ function FullDetailContent({
           snapStage={snapStage}
           canExpandTitle={isScrollEnabled}
         />
-        {/*
-          full 스냅 높이는 이 콘텐츠의 scrollHeight 로 정해진다. 단계에 따라 카드를 넣고 빼면
-          측정값이 달라져 full 진입 후 시트가 다시 움직이므로, DOM 에는 항상 두고 노출만 감춘다.
-        */}
-        {isRealtimeAvailable ? (
-          <div
-            className={
-              isRealtimeCardVisible ? undefined : realtimeStatusCardSlotHidden
-            }
-            aria-hidden={isRealtimeCardVisible ? undefined : true}
-          >
+        {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
+        {isRealtimeAvailable && isRealtimeCardVisible ? (
+          <div data-realtime-status-card="">
             <LockerRealtimeStatusCard availability={realtimeAvailability} />
           </div>
         ) : null}

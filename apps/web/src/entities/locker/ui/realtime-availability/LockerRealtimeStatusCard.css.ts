@@ -1,11 +1,19 @@
 import { vars } from "@repo/ui/vars";
 import { style, styleVariants } from "@vanilla-extract/css";
 
+/**
+ * 카드 높이. Figma 고정값이다.
+ *
+ * 상세 시트가 카드 없이 full 콘텐츠 높이를 잴 때 이 값을 더해 보정하므로,
+ * 높이를 바꾸면 시트의 full 스냅 위치도 함께 따라온다.
+ */
+export const LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX = 58;
+
 export const card = style({
   display: "flex",
   flexDirection: "column",
   width: "195px",
-  height: "58px",
+  height: `${LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX}px`,
   padding: "8px 6px 7px 9px",
   boxSizing: "border-box",
   overflow: "hidden",

@@ -10,6 +10,12 @@ export const sheetColumn = style({
   padding: `${vars.spacing[8]} ${vars.spacing[16]} 0`,
 });
 
+/**
+ * contentStack 의 세로 간격.
+ * 콘텐츠에 빠져 있는 항목을 더해 full 높이를 보정할 때 이 값도 함께 쓴다.
+ */
+export const CONTENT_STACK_GAP_PX = Number.parseFloat(vars.spacing.scale[8]);
+
 export const contentStack = style({
   display: "flex",
   flexDirection: "column",
@@ -129,13 +135,6 @@ export const realtimeAvailabilityDivider = style({
   padding: 0,
   flexShrink: 0,
   backgroundColor: vars.color.border.default,
-});
-
-/**
- * full 스냅 높이 측정값을 단계와 무관하게 유지하려고, 감출 때도 레이아웃 자리는 남긴다.
- */
-export const realtimeStatusCardSlotHidden = style({
-  visibility: "hidden",
 });
 
 export const realtimeStatusCardOverlay = style({
