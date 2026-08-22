@@ -19,6 +19,19 @@ const API_BASE_URL =
   process.env.VITE_API_BASE_URL ??
   process.env.API_BASE_URL ??
   "https://api.zimdugo.com";
+/**
+ * Vercel Deployment Protection 이 걸린 배포인지.
+ *
+ * 보호가 걸리면 인증 없는 요청이 vercel.com/sso-api 로 리다이렉트된다. manifest 는
+ * 기본적으로 credentials 없이 요청되므로 이 리다이렉트에 걸려 CORS 로 막힌다.
+ * 그 배포에서만 manifest 링크에 use-credentials 를 달아 쿠키를 함께 보낸다.
+ *
+ * 프로덕션은 공개라 이 처리가 필요 없고, 애초에 붙이지 않아 동작이 달라질 여지도 없다.
+ * VERCEL_ENV 는 Vercel 이 빌드에 넣어주는 시스템 변수라 대시보드 설정이 필요 없다.
+ * 나중에 프로덕션까지 보호를 켠다면 이 조건도 함께 넓혀야 한다.
+ */
+const IS_PROTECTED_DEPLOYMENT = process.env.VERCEL_ENV === "preview";
+
 const localizeHref = (path: string, { locale }: { locale: string }) => {
   if (locale === "ko") return path;
   return path === "/" ? `/${locale}` : `/${locale}${path}`;
@@ -55,6 +68,11 @@ const nonPrerenderRoutes = AUTH_DEPENDENT_PATHS.flatMap((path) =>
 );
 
 const config = defineConfig({
+  define: {
+    "import.meta.env.VITE_MANIFEST_USE_CREDENTIALS": JSON.stringify(
+      IS_PROTECTED_DEPLOYMENT,
+    ),
+  },
   resolve: {
     dedupe: ["react", "react-dom"],
     alias: [
