@@ -133,7 +133,7 @@ export const realtimeAvailabilityDivider = style({
 
 export const realtimeStatusCardOverlay = style({
   position: "absolute",
-  left: 0,
+  left: vars.spacing[16],
   zIndex: vars.zIndex.bottomSheet,
   pointerEvents: "none",
 });

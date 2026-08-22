@@ -168,7 +168,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.getByText("보관함 상세 정보")).toBeTruthy();
     expect(sheet.queryByRole("region", { name: "실시간" })).toBeNull();
     const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
-    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("220px");
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("205px");
     expect(within(realtimeStatusCard).getByText("소형")).toBeTruthy();
     expect(within(realtimeStatusCard).getByText("12")).toBeTruthy();
     expect(within(realtimeStatusCard).getByText("마감")).toBeTruthy();
@@ -208,7 +208,7 @@ describe("LockerDetailBottomSheet", () => {
 
     const realtimeStatusCard = screen.getByRole("region", { name: "실시간" });
 
-    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("140px");
+    expect(realtimeStatusCard.parentElement?.style.bottom).toBe("125px");
     expect(getSheetRoot().queryByRole("region", { name: "실시간" })).toBeNull();
   });
 
@@ -224,7 +224,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.queryByText("실시간 이용 정보 미제공")).toBeNull();
   });
 
-  it("풀 시트의 실시간 정보 미제공 표시는 기존 동작을 유지한다", () => {
+  it("풀 시트에서도 실시간 정보가 없으면 카드를 표시하지 않는다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{
@@ -241,10 +241,9 @@ describe("LockerDetailBottomSheet", () => {
         onReport={vi.fn()}
       />,
     );
-    const sheet = getSheetRoot();
-
-    expect(sheet.getByText("실시간 이용 정보 미제공")).toBeTruthy();
-    expect(sheet.getByText("S - · M - · L -")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "실시간" })).toBeNull();
+    expect(screen.queryByText("실시간 이용 정보 미제공")).toBeNull();
+    expect(screen.queryByText("S - · M - · L -")).toBeNull();
   });
 
   it("상세 로드 실패 시 오류 피드백과 재시도를 표시한다", () => {
