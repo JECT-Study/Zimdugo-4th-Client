@@ -114,6 +114,11 @@ const REALTIME_STATUS_CARD_OVERLAY_GAP = 14;
 /** full 콘텐츠 측정 시 실시간 카드가 DOM 에 들어 있는지 확인하는 표식 */
 const REALTIME_CARD_MEASURE_SELECTOR = "[data-realtime-status-card]";
 
+export interface LockerDetailSheetLiveOffsetState {
+  /** 뷰포트 상단부터 시트 상단까지 거리. `100dvh - offsetPx` 가 시트가 차지하는 높이다. */
+  offsetPx: number;
+}
+
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
   loadState?: LockerDetailLoadState;
@@ -136,6 +141,13 @@ export interface LockerDetailBottomSheetProps {
   animateOnMount?: boolean;
   onSnapChange?: (nextSnap: number) => void;
   onSnapStageChange?: (nextStage: LockerDetailSheetSnapStage) => void;
+  /**
+   * 프레임마다 불린다. 지도 컨트롤이 시트 윗변을 따라오게 하는 용도다.
+   *
+   * 부모는 반드시 identity 가 고정된 콜백을 넘겨야 한다. 매 렌더 새 함수를 주면
+   * 시트 쪽 구독 effect 가 프레임마다 떼었다 붙는다.
+   */
+  onLiveOffsetChange?: (state: LockerDetailSheetLiveOffsetState) => void;
   snapRequest?: LockerDetailSheetSnapRequest | null;
 }
 
@@ -292,6 +304,7 @@ export function LockerDetailBottomSheet({
   animateOnMount = false,
   onSnapChange,
   onSnapStageChange,
+  onLiveOffsetChange,
   snapRequest,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
@@ -492,8 +505,9 @@ export function LockerDetailBottomSheet({
     ({ offset }: BottomSheetLiveOffsetState) => {
       sheetOffsetValue.set(offset);
       setIsOffsetAtSnapTarget(offset <= snapTargetOffsetRef.current);
+      onLiveOffsetChange?.({ offsetPx: offset });
     },
-    [sheetOffsetValue],
+    [onLiveOffsetChange, sheetOffsetValue],
   );
 
   useEffect(() => {

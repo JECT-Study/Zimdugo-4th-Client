@@ -5,6 +5,7 @@ import { IconFilter14 } from "@repo/ui/tokens/icons";
 import {
   type CSSProperties,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -59,6 +60,11 @@ export type {
   SearchResultItem,
 } from "./search-list-model";
 
+export interface SearchListSheetLiveOffsetState {
+  /** 뷰포트 상단부터 시트 상단까지 거리. `100dvh - offsetPx` 가 시트가 차지하는 높이다. */
+  offsetPx: number;
+}
+
 export interface SearchListBottomSheetProps {
   searchQuery: string;
   items?: SearchResultItem[];
@@ -83,6 +89,11 @@ export interface SearchListBottomSheetProps {
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
   onSnapStageChange?: (nextStage: SearchListSheetSnapStage) => void;
+  /**
+   * 프레임마다 불린다. 지도 컨트롤이 시트 윗변을 따라오게 하는 용도다.
+   * 부모는 identity 가 고정된 콜백을 넘겨야 한다.
+   */
+  onLiveOffsetChange?: (state: SearchListSheetLiveOffsetState) => void;
   snapRequest?: SearchListSheetSnapRequest | null;
   onDismiss?: () => void;
   children?: ReactNode;
@@ -296,6 +307,7 @@ export function SearchListBottomSheet({
   maxSnapPoint,
   onSnapChange,
   onSnapStageChange,
+  onLiveOffsetChange,
   snapRequest,
   onDismiss,
   children,
@@ -398,11 +410,17 @@ export function SearchListBottomSheet({
     });
   };
 
-  const handleLiveOffsetChange = ({
-    expandedProgress,
-  }: BottomSheetLiveOffsetState) => {
-    setExpandedProgress(expandedProgress);
-  };
+  /**
+   * 프레임마다 불린다. identity 가 매 렌더 바뀌면 시트 쪽 구독 effect 가
+   * 그때마다 떼었다 붙으므로 useCallback 으로 고정한다.
+   */
+  const handleLiveOffsetChange = useCallback(
+    ({ expandedProgress, offset }: BottomSheetLiveOffsetState) => {
+      setExpandedProgress(expandedProgress);
+      onLiveOffsetChange?.({ offsetPx: offset });
+    },
+    [onLiveOffsetChange],
+  );
   const handleSnapChange = (nextSnap: number) => {
     onSnapChange?.(nextSnap);
     onSnapStageChange?.(

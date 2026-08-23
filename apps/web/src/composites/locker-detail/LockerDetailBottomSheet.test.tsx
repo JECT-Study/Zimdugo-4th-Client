@@ -294,6 +294,37 @@ describe("LockerDetailBottomSheet", () => {
     expect(draggableBottomSheetMock.mock.calls.length).toBe(renderCountBefore);
   });
 
+  it("라이브 오프셋을 부모로 올려주고 그때도 리렌더하지 않는다", () => {
+    const handleLiveOffsetChange = vi.fn();
+    render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        onLiveOffsetChange={handleLiveOffsetChange}
+        onReport={vi.fn()}
+      />,
+    );
+    const renderCountBefore = draggableBottomSheetMock.mock.calls.length;
+
+    for (const offset of [600, 560, 520]) {
+      act(() => {
+        draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+          offset,
+          expandedProgress: 0,
+          snapPoints: [],
+        });
+      });
+    }
+
+    // 지도 컨트롤이 시트 윗변을 따라오려면 이 값이 프레임마다 올라와야 한다.
+    expect(handleLiveOffsetChange.mock.calls.map(([state]) => state)).toEqual([
+      { offsetPx: 600 },
+      { offsetPx: 560 },
+      { offsetPx: 520 },
+    ]);
+    // 부모가 motion value 로 받으므로 시트는 여전히 리렌더되지 않는다.
+    expect(draggableBottomSheetMock.mock.calls.length).toBe(renderCountBefore);
+  });
+
   it("full 진입으로 콘텐츠가 늘어 minSnapPoint 가 내려가도 내부 카드로 넘긴다", async () => {
     // 제목 펼치기 버튼은 full 에서만 붙어 콘텐츠를 5px 늘린다(브라우저 실측).
     const TITLE_EXPAND_BUTTON_GROWTH = 5;

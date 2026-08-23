@@ -11,7 +11,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { motion } from "motion/react";
+import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
@@ -60,7 +60,6 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
-import { SHEET_SETTLE_SPRING } from "#/shared/ui/DraggableBottomSheet";
 import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
 import {
   clearHomeLocationRequestedInSession,
@@ -224,7 +223,9 @@ import {
   refreshIconSpinning,
 } from "./-index.css";
 import {
-  resolveMapControlBottomPx,
+  canPlaceRaisedMapControl,
+  MAP_CONTROL_SHEET_GAP_PX,
+  MAP_CONTROL_TOP_RESERVED_PX,
   shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
@@ -3007,6 +3008,9 @@ export function IndexPage() {
     isSearchContextActive: context === "search",
     hasMapError,
   });
+  // 스켈레톤은 하이드레이션 전에도 그려지므로 라이브 오프셋을 쓸 수 없다.
+  // 시트가 아직 없는 단계라 정적 계산이 맞고, 실제 컨트롤로 넘어갈 때는 이미
+  // 시트가 자리를 잡아 두 값이 같은 위치를 가리킨다.
   const sheetVisibleHeight = !hasMeasuredViewport
     ? null
     : sheetMode === "detail"
@@ -3019,6 +3023,55 @@ export function IndexPage() {
     sheetVisibleHeightPx: sheetVisibleHeight,
     windowHeightPx: windowHeight,
   });
+
+  /**
+   * 시트 윗변의 라이브 위치. 프레임마다 바뀌므로 state 가 아니라 motion value 다.
+   *
+   * state 로 두면 지도까지 들고 있는 이 컴포넌트가 드래그 내내 초당 60번 리렌더된다.
+   * 시트가 없을 때는 뷰포트 높이를 넣어 "차지하는 높이 0" 으로 만든다.
+   */
+  const sheetLiveOffset = useMotionValue(windowHeight);
+  /**
+   * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
+   * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
+   * 계산하므로 React 렌더가 필요 없다.
+   */
+  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc(100dvh - ${sheetLiveOffset}px + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
+  const handleSheetLiveOffsetChange = useCallback(
+    ({ offsetPx }: { offsetPx: number }) => {
+      sheetLiveOffset.set(offsetPx);
+    },
+    [sheetLiveOffset],
+  );
+
+  /**
+   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 이것만 state 로 두고 프레임마다 다시
+   * 계산하지 않는다. full·dismiss 는 밀어 올릴 자리가 없고, filter 시트는 사실상
+   * full 전용이라 같은 범주다(스냅이 하나뿐이라 항상 화면을 덮는다).
+   */
+  const isMapControlRaised =
+    sheetMode === "detail"
+      ? resolveDetailSheetVisibleHeight(detailSheetSnapStage) !== null
+      : sheetMode === "list"
+        ? resolveSearchListStageVisibleHeight(
+            listSheetSnapStage,
+            windowHeight,
+          ) !== null
+        : false;
+  const canRaiseMapControl = canPlaceRaisedMapControl({
+    baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
+    windowHeightPx: windowHeight,
+  });
+
+  /**
+   * 시트가 사라진 뒤에도 오프셋이 과거 값에 멈춰 있으면 컨트롤이 없는 시트 위에
+   * 떠 있게 된다. 밀어 올릴 단계가 아니면 "차지하는 높이 0" 으로 되돌린다.
+   */
+  useEffect(() => {
+    if (!isMapControlRaised) {
+      sheetLiveOffset.set(windowHeight);
+    }
+  }, [isMapControlRaised, sheetLiveOffset, windowHeight]);
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3357,12 +3410,15 @@ export function IndexPage() {
       mapControlBottom !== null ? (
         <MapControlsSkeleton bottomPx={mapControlBottom} />
       ) : (shouldRenderMapControls || isRefreshing) &&
-        mapControlBottom !== null ? (
+        (!isMapControlRaised || canRaiseMapControl) ? (
         <motion.div
           className={locationControlStack}
           initial={false}
-          animate={{ bottom: mapControlBottom }}
-          transition={SHEET_SETTLE_SPRING}
+          style={{
+            bottom: isMapControlRaised
+              ? mapControlRaisedBottom
+              : MAP_CONTROL_FALLBACK_BOTTOM_PX,
+          }}
         >
           <RefreshButton
             isRefreshing={isRefreshing}
@@ -3469,6 +3525,7 @@ export function IndexPage() {
           onDismiss={listSheetDismissPress}
           snapRequest={listSheetSnapRequest}
           onSnapStageChange={handleListSheetSnapStageChange}
+          onLiveOffsetChange={handleSheetLiveOffsetChange}
         />
       ) : null}
 
@@ -3500,6 +3557,7 @@ export function IndexPage() {
           animateOnMount={lockerDetailAnimatesOnMount}
           snapRequest={detailSheetSnapRequest}
           onSnapStageChange={handleDetailSheetSnapStageChange}
+          onLiveOffsetChange={handleSheetLiveOffsetChange}
         />
       ) : null}
 
