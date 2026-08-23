@@ -74,14 +74,14 @@ const REALTIME_AVAILABILITY_FIXTURES: Record<
     smallAvailableCount: 12,
     mediumAvailableCount: 2,
     largeAvailableCount: 0,
-    fetchedAt: "2026-08-14T14:19:47.013473",
+    fetchedAt: new Date().toISOString(),
   },
   full: {
     isAvailable: true,
     smallAvailableCount: 0,
     mediumAvailableCount: 0,
     largeAvailableCount: 0,
-    fetchedAt: "2026-08-14T14:19:47.013473",
+    fetchedAt: new Date().toISOString(),
   },
   unavailable: null,
 };

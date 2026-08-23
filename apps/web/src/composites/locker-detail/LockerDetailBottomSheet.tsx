@@ -5,14 +5,15 @@ import {
   IconCamera24,
   IconCaution24,
   IconChevronLeft13,
-  IconCircleboxClose32,
-  IconCircleboxMore32,
   IconDistanceRoute24,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
+  IconMore24,
   IconNavigationClock24,
+  IconX24,
 } from "@repo/ui/tokens/icons";
+import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import {
   type CSSProperties,
   type ReactNode,
@@ -26,7 +27,10 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
-import { LockerRealtimeAvailabilityCard } from "#/entities/locker/ui/realtime-availability";
+import {
+  LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX,
+  LockerRealtimeStatusCard,
+} from "#/entities/locker/ui/realtime-availability";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
@@ -35,8 +39,10 @@ import {
   formatLockerPriceLabel,
 } from "#/shared/lib/locker-detail-labels";
 import {
+  type BottomSheetLiveOffsetState,
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
+  SHEET_SETTLE_SPRING,
 } from "#/shared/ui/DraggableBottomSheet";
 import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
@@ -47,6 +53,7 @@ import {
   actionSection,
   backButton,
   backIcon,
+  CONTENT_STACK_GAP_PX,
   contentStack,
   detailDescription,
   detailDescriptionMultiline,
@@ -87,6 +94,7 @@ import {
   metaTruncatedText,
   primaryActionButton,
   realtimeAvailabilityDivider,
+  realtimeStatusCardOverlay,
   sheetColumn,
   summaryActions,
   summaryIconButton,
@@ -102,6 +110,9 @@ import { LockerDetailMoreActionsModal } from "./LockerDetailMoreActionsModal";
 
 const skeletonSurfaceStyle: CSSProperties = SKELETON_SURFACE_STYLE;
 const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
+const REALTIME_STATUS_CARD_OVERLAY_GAP = 14;
+/** full 콘텐츠 측정 시 실시간 카드가 DOM 에 들어 있는지 확인하는 표식 */
+const REALTIME_CARD_MEASURE_SELECTOR = "[data-realtime-status-card]";
 
 export interface LockerDetailBottomSheetProps {
   locker: LockerDetailItem;
@@ -291,6 +302,8 @@ export function LockerDetailBottomSheet({
   );
   const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
   const updateFullContentHeight = useCallback(() => {
     const element = fullContentMeasureRef.current;
 
@@ -299,14 +312,29 @@ export function LockerDetailBottomSheet({
       return;
     }
 
+    /**
+     * 실시간 카드는 full 에서만 콘텐츠 안에 들어간다. 단계에 따라 DOM 에서 빠지면
+     * 측정값이 달라져 full 스냅 위치가 흔들리므로, 빠져 있는 동안은 카드 블록 높이를
+     * 더해 full 기준으로 맞춘다. 자리를 비워 두면 하프에서 빈 공간이 보인다.
+     *
+     * 카드가 드나들면 contentStack 높이가 바뀌어 ResizeObserver 가 다시 부르고,
+     * 그때 DOM 을 직접 확인하므로 보정값이 측정 시점과 어긋나지 않는다.
+     */
+    const missingRealtimeCardHeight =
+      isRealtimeAvailable &&
+      element.querySelector(REALTIME_CARD_MEASURE_SELECTOR) === null
+        ? LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX
+        : 0;
+
     setFullContentHeight(
       Math.ceil(
         element.scrollHeight +
+          missingRealtimeCardHeight +
           DETAIL_CONTENT_TOP_PADDING +
           DETAIL_CONTENT_BOTTOM_PADDING,
       ),
     );
-  }, []);
+  }, [isRealtimeAvailable]);
   const handleFullContentMeasureRef = useCallback(
     (element: HTMLDivElement | null) => {
       fullContentMeasureRef.current = element;
@@ -357,7 +385,52 @@ export function LockerDetailBottomSheet({
       }),
     );
   const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
+  const lockerIdRef = useRef(locker.lockerId);
 
+  /**
+   * 스냅 애니메이션이 진행되는 동안의 실제 시트 오프셋.
+   *
+   * onSnapChange 는 스프링이 끝나기 전에 호출되므로, 단계별 고정 높이로 오버레이를
+   * 배치하면 카드가 시트보다 먼저 순간이동한다. 라이브 오프셋을 따라가야 함께 움직인다.
+   *
+   * state 가 아니라 motion value 인 이유는 이 값이 프레임마다 바뀌기 때문이다.
+   * state 로 두면 드래그 내내 시트 전체가 초당 60번 리렌더된다. 시트가 자기 높이를
+   * 잡는 방식과 같은 100dvh 기준이라, 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다.
+   */
+  const sheetOffsetValue = useMotionValue(resolvedInitialSnapPoint);
+  const realtimeOverlayBottom = useMotionTemplate`calc(100dvh - ${sheetOffsetValue}px + ${REALTIME_STATUS_CARD_OVERLAY_GAP}px)`;
+  /**
+   * 스프링이 실제로 향하는 오프셋. onSnapChange 가 주는 값이라 클램프까지 끝난 값이다.
+   *
+   * minSnapPoint 와 비교하면 안 된다. full 진입과 동시에 제목 펼치기 버튼이 붙어
+   * 콘텐츠가 5px 늘고 minSnapPoint 가 그만큼 내려가는데, 스프링은 이미 잡아 둔
+   * 이전 값에 안착한다. 그러면 "도착했는지" 판정이 영원히 거짓이 되어
+   * 오버레이 카드가 시트 안 카드로 넘어가지 못한다.
+   */
+  const snapTargetOffsetRef = useRef(resolvedInitialSnapPoint);
+  /** 오프셋이 타깃에 닿았는지. 전환당 한 번만 뒤집혀 리렌더도 그만큼만 난다. */
+  const [isOffsetAtSnapTarget, setIsOffsetAtSnapTarget] = useState(true);
+
+  /**
+   * 마운트 애니메이션에서 시트가 아래에서 올라오는 거리.
+   *
+   * 시트는 sheetOffset 이 아니라 자기 높이만큼의 y 변환(100% -> 0)으로 올라온다.
+   * 오버레이는 그 변환 밖에 있어 그대로 두면 최종 위치에 먼저 붙어 있고 시트만
+   * 뒤늦게 따라 올라온다. 같은 거리를 같은 스프링으로 움직여 함께 오게 한다.
+   */
+  const mountSlideDistance = Math.max(
+    0,
+    windowHeight - resolvedInitialSnapPoint,
+  );
+
+  /** 시트가 full 에 안착한 뒤에야 오버레이 카드를 내부 카드로 넘긴다. */
+  const isSheetAtFullOffset =
+    currentSnapStage === "full" && isOffsetAtSnapTarget;
+  const isRealtimeOverlayVisible =
+    loadState === "ready" &&
+    isRealtimeAvailable &&
+    currentSnapStage !== "dismiss" &&
+    !isSheetAtFullOffset;
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
@@ -405,9 +478,23 @@ export function LockerDetailBottomSheet({
     });
 
     setCurrentSnapStage(nextStage);
+    snapTargetOffsetRef.current = nextSnap;
+    setIsOffsetAtSnapTarget(sheetOffsetValue.get() <= nextSnap);
     onSnapChange?.(nextSnap);
     onSnapStageChange?.(nextStage);
   };
+
+  /**
+   * 프레임마다 불린다. identity 가 매 렌더 바뀌면 시트 쪽 구독 effect 가
+   * 그때마다 떼었다 붙으므로 useCallback 으로 고정한다.
+   */
+  const handleLiveOffsetChange = useCallback(
+    ({ offset }: BottomSheetLiveOffsetState) => {
+      sheetOffsetValue.set(offset);
+      setIsOffsetAtSnapTarget(offset <= snapTargetOffsetRef.current);
+    },
+    [sheetOffsetValue],
+  );
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
@@ -435,12 +522,27 @@ export function LockerDetailBottomSheet({
     return () => observer.disconnect();
   }, [loadState, updateFullContentHeight]);
 
+  /**
+   * 보관함이 바뀌어도 초기 스냅이 같으면(대부분 half 로 연다) 이 초기화가 건너뛰어졌다.
+   *
+   * index.tsx 는 이 컴포넌트에 key 를 주지 않고 안쪽 DraggableBottomSheet 만 lockerId 로
+   * 리마운트한다. 시트는 초기 스냅으로 새로 뜨는데 여기 라이브 상태는 직전 보관함의
+   * 단계·오프셋으로 남아, mini 에서 다른 핀을 열면 카드가 mini 높이에 뜨거나 full 이었다면
+   * 오버레이 대신 시트 안 카드가 나왔다. 안쪽 key 와 같은 기준으로 초기화한다.
+   */
   useEffect(() => {
-    if (initialSnapPointRef.current === resolvedInitialSnapPoint) {
+    if (
+      initialSnapPointRef.current === resolvedInitialSnapPoint &&
+      lockerIdRef.current === locker.lockerId
+    ) {
       return;
     }
 
     initialSnapPointRef.current = resolvedInitialSnapPoint;
+    lockerIdRef.current = locker.lockerId;
+    sheetOffsetValue.set(resolvedInitialSnapPoint);
+    snapTargetOffsetRef.current = resolvedInitialSnapPoint;
+    setIsOffsetAtSnapTarget(true);
     setCurrentSnapStage(
       resolveLockerDetailSnapStage({
         maxSnapPoint: resolvedMaxSnapPoint,
@@ -451,15 +553,31 @@ export function LockerDetailBottomSheet({
       }),
     );
   }, [
+    locker.lockerId,
     resolvedInitialSnapPoint,
     resolvedMaxSnapPoint,
     resolvedMiniSnapPoint,
     resolvedMinSnapPoint,
     resolvedSnapPoint,
+    sheetOffsetValue.set,
   ]);
 
   return (
     <>
+      {isRealtimeOverlayVisible ? (
+        <motion.div
+          className={realtimeStatusCardOverlay}
+          initial={animateOnMount ? { y: mountSlideDistance } : { y: 0 }}
+          animate={{ y: 0 }}
+          transition={SHEET_SETTLE_SPRING}
+          style={{ bottom: realtimeOverlayBottom }}
+        >
+          <LockerRealtimeStatusCard
+            availability={realtimeAvailability}
+            variant="floating"
+          />
+        </motion.div>
+      ) : null}
       <DraggableBottomSheet
         key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
         snapPoint={resolvedSnapPoint}
@@ -472,6 +590,7 @@ export function LockerDetailBottomSheet({
         showHomeIndicator={false}
         snapRequest={resolvedSnapRequest}
         onSnapChange={handleSnapChange}
+        onLiveOffsetChange={handleLiveOffsetChange}
         onDismiss={handleBack}
       >
         <div className={sheetColumn}>
@@ -488,6 +607,7 @@ export function LockerDetailBottomSheet({
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
               snapStage={currentSnapStage}
+              isRealtimeCardVisible={isSheetAtFullOffset}
               isScrollEnabled={currentSnapStage === "full"}
               contentRef={handleFullContentMeasureRef}
             />
@@ -630,6 +750,7 @@ function FullDetailContent({
   moreActionsButtonRef,
   onNavigate,
   snapStage,
+  isRealtimeCardVisible,
   isScrollEnabled,
   contentRef,
 }: {
@@ -640,10 +761,14 @@ function FullDetailContent({
   moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   onNavigate: () => void;
   snapStage: LockerDetailSheetSnapStage;
+  isRealtimeCardVisible: boolean;
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
+
   const handleOpenImagePreview = (imageUrl: string) => {
     setPreviewImageUrl(imageUrl);
   };
@@ -671,9 +796,15 @@ function FullDetailContent({
           snapStage={snapStage}
           canExpandTitle={isScrollEnabled}
         />
-        <LockerRealtimeAvailabilityCard
-          availability={locker.realtimeAvailability}
-        />
+        {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
+        {isRealtimeAvailable && isRealtimeCardVisible ? (
+          <div data-realtime-status-card="">
+            <LockerRealtimeStatusCard
+              availability={realtimeAvailability}
+              variant="inline"
+            />
+          </div>
+        ) : null}
         <hr className={realtimeAvailabilityDivider} />
         <div className={fullDetailList}>
           <DetailInfoRow
@@ -880,7 +1011,7 @@ function SummarySection({
             onClick={onMoreActionsOpen}
             aria-label={m.locker_detail_more_actions_open_aria()}
           >
-            <IconCircleboxMore32 />
+            <IconMore24 />
           </button>
           <button
             type="button"
@@ -888,7 +1019,7 @@ function SummarySection({
             onClick={onClose}
             aria-label={m.search_close_aria()}
           >
-            <IconCircleboxClose32 />
+            <IconX24 />
           </button>
         </div>
       </div>
