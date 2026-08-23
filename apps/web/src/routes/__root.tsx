@@ -38,6 +38,22 @@ import {
 
 const GTM_CONTAINER_ID = import.meta.env.VITE_GTM_CONTAINER_ID;
 
+/**
+ * manifest 는 기본적으로 credentials 없이 요청된다. Vercel Deployment Protection 이
+ * 걸린 배포에서는 그 요청만 인증을 통과하지 못해 vercel.com/sso-api 로 리다이렉트되고,
+ * 다른 오리진이라 CORS 로 막혀 PWA 설치·아이콘이 동작하지 않는다.
+ *
+ * 보호가 걸린 배포에서만 켜지는 플래그다(vite.config.ts 의 VERCEL_ENV 판정).
+ * 공개 배포에서는 아예 속성이 붙지 않는다.
+ */
+const MANIFEST_LINK = {
+  rel: "manifest",
+  href: "/manifest.json",
+  ...(import.meta.env.VITE_MANIFEST_USE_CREDENTIALS
+    ? { crossOrigin: "use-credentials" as const }
+    : {}),
+};
+
 const CRITICAL_LAYOUT_CSS = `
   *, ::before, ::after {
     box-sizing: border-box;
@@ -226,10 +242,7 @@ export const Route = createRootRouteWithContext<{
         },
       ],
       links: [
-        {
-          rel: "manifest",
-          href: "/manifest.json",
-        },
+        MANIFEST_LINK,
         {
           rel: "icon",
           href: "/favicon.svg",
