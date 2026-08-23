@@ -1647,22 +1647,14 @@ export function IndexPage() {
       return null;
     }
 
-    if (lockerIdFromQuery !== undefined && loaderData?.detail) {
-      return {
-        lockerId: activeLockerId,
-        lat: loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
-        lng: loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
-      };
-    }
-
-    const origin = lockerDetailQueryOrigin ?? DEFAULT_SEARCH_COORDINATES;
+    const origin = lockerDetailQueryOrigin ?? searchCoordinates;
 
     return {
       lockerId: activeLockerId,
-      lat: origin.lat ?? DEFAULT_SEARCH_COORDINATES.lat,
-      lng: origin.lng ?? DEFAULT_SEARCH_COORDINATES.lng,
+      lat: origin.lat,
+      lng: origin.lng,
     };
-  }, [activeLockerId, lockerDetailQueryOrigin, lockerIdFromQuery, loaderData]);
+  }, [activeLockerId, lockerDetailQueryOrigin, searchCoordinates]);
 
   const {
     data: lockerDetail,
@@ -1835,6 +1827,10 @@ export function IndexPage() {
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
+      setLockerDetailQueryOrigin({
+        lat: searchCoordinates.lat,
+        lng: searchCoordinates.lng,
+      });
       await flushLockerSheetMutations();
 
       // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
@@ -1889,6 +1885,8 @@ export function IndexPage() {
       clearPendingLockerDetailOpen,
       setIsSearchOpen,
       setSheetMode,
+      searchCoordinates.lat,
+      searchCoordinates.lng,
       syncLockerDetailUrl,
     ],
   );
