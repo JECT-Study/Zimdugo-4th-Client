@@ -129,6 +129,32 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
   });
 });
 
+describe("로딩 스켈레톤과 실제 컨트롤의 위치 일치", () => {
+  it("같은 입력이면 같은 값을 준다", () => {
+    // 스켈레톤은 이 값을 bottomPx 로 그대로 받는다. 예전에는 70px 로 하드코딩돼
+    // 있어서 지도가 준비되는 순간 실제 컨트롤 위치로 튀었다.
+    const options = {
+      baseBottomPx: 70,
+      sheetVisibleHeightPx: 191,
+      windowHeightPx: 812,
+    };
+
+    expect(resolveMapControlBottomPx(options)).toBe(203);
+  });
+
+  it("배치 불가면 null 이라 스켈레톤도 렌더하지 않는다", () => {
+    // 실제 컨트롤이 숨겨지는 조건과 같아야 한다. 스켈레톤만 남기면 지도가
+    // 준비되는 순간 버튼이 사라진다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 260,
+      }),
+    ).toBeNull();
+  });
+});
+
 describe("shouldShowHomeHeader 지도 오류", () => {
   it("검색 컨텍스트여도 지도 오류 중에는 헤더를 유지한다", () => {
     // /?q=... 딥링크는 첫 컨텍스트가 검색이라, 오류와 겹치면 검색 바도 헤더도
