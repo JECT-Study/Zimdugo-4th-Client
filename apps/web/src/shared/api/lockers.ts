@@ -242,7 +242,7 @@ export interface LockerDetailRaw {
   lockerSizes?: string[];
   latitude: number;
   longitude: number;
-  distanceMeters?: number;
+  distanceMeters: number;
   updatedAt?: string;
   isFavorite?: boolean;
   startTime?: string;

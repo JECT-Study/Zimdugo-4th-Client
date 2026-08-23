@@ -37,10 +37,7 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   longitude: raw.longitude,
   categoryLabel: getLockerTypeLabel(raw.lockerType),
   updatedLabel: formatUpdatedLabel(raw.updatedAt),
-  distanceLabel:
-    raw.distanceMeters !== undefined
-      ? formatDistanceMeters(raw.distanceMeters)
-      : "",
+  distanceLabel: formatDistanceMeters(raw.distanceMeters),
   distanceMeters: raw.distanceMeters,
   updatedAt: raw.updatedAt,
   minPrice: raw.minPrice,

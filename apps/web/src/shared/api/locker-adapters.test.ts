@@ -141,6 +141,7 @@ describe("locker-adapters", () => {
       lockerType: "SUBWAY_STATION",
       latitude: 37.496068,
       longitude: 127.028506,
+      distanceMeters: 238,
       minPrice: 3000,
       maxPrice: 5000,
       floor: 1,
@@ -166,6 +167,8 @@ describe("locker-adapters", () => {
     const detail = toLockerDetailItem(raw);
 
     expect(detail.title).toBe("강남역 4번 출구 지하 1층");
+    expect(detail.distanceMeters).toBe(238);
+    expect(detail.distanceLabel).toBe("238m");
     expect(detail.operatingHoursLabel).toBe("06:00 ~ 23:00");
     expect(detail.floorLabel).toBe("1층");
     expect(detail.priceLabel).toBe("3,000원 ~ 5,000원");
@@ -193,6 +196,7 @@ describe("locker-adapters", () => {
       lockerType: "SUBWAY_STATION",
       latitude: 37.5,
       longitude: 127.0,
+      distanceMeters: 0,
       accurateVoteCount: 2,
       inaccurateVoteCount: 0,
       realtimeAvailability: null,
@@ -212,6 +216,7 @@ describe("locker-adapters", () => {
       lockerType: "SUBWAY_STATION",
       latitude: 37.5,
       longitude: 127.0,
+      distanceMeters: 0,
       isFavorite: false,
       realtimeAvailability: null,
     });
@@ -228,6 +233,7 @@ describe("locker-adapters", () => {
       lockerType: "SUBWAY_STATION",
       latitude: 37.5,
       longitude: 127.0,
+      distanceMeters: 0,
       imageUrl: " https://example.com/locker.jpg ",
       realtimeAvailability: null,
     });
