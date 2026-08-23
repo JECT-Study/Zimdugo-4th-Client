@@ -42,6 +42,7 @@ import {
   type BottomSheetLiveOffsetState,
   type BottomSheetSnapRequest,
   DraggableBottomSheet,
+  SHEET_SETTLE_SPRING,
 } from "#/shared/ui/DraggableBottomSheet";
 import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
@@ -384,6 +385,7 @@ export function LockerDetailBottomSheet({
       }),
     );
   const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
+  const lockerIdRef = useRef(locker.lockerId);
 
   /**
    * 스냅 애니메이션이 진행되는 동안의 실제 시트 오프셋.
@@ -408,6 +410,18 @@ export function LockerDetailBottomSheet({
   const snapTargetOffsetRef = useRef(resolvedInitialSnapPoint);
   /** 오프셋이 타깃에 닿았는지. 전환당 한 번만 뒤집혀 리렌더도 그만큼만 난다. */
   const [isOffsetAtSnapTarget, setIsOffsetAtSnapTarget] = useState(true);
+
+  /**
+   * 마운트 애니메이션에서 시트가 아래에서 올라오는 거리.
+   *
+   * 시트는 sheetOffset 이 아니라 자기 높이만큼의 y 변환(100% -> 0)으로 올라온다.
+   * 오버레이는 그 변환 밖에 있어 그대로 두면 최종 위치에 먼저 붙어 있고 시트만
+   * 뒤늦게 따라 올라온다. 같은 거리를 같은 스프링으로 움직여 함께 오게 한다.
+   */
+  const mountSlideDistance = Math.max(
+    0,
+    windowHeight - resolvedInitialSnapPoint,
+  );
 
   /** 시트가 full 에 안착한 뒤에야 오버레이 카드를 내부 카드로 넘긴다. */
   const isSheetAtFullOffset =
@@ -508,12 +522,24 @@ export function LockerDetailBottomSheet({
     return () => observer.disconnect();
   }, [loadState, updateFullContentHeight]);
 
+  /**
+   * 보관함이 바뀌어도 초기 스냅이 같으면(대부분 half 로 연다) 이 초기화가 건너뛰어졌다.
+   *
+   * index.tsx 는 이 컴포넌트에 key 를 주지 않고 안쪽 DraggableBottomSheet 만 lockerId 로
+   * 리마운트한다. 시트는 초기 스냅으로 새로 뜨는데 여기 라이브 상태는 직전 보관함의
+   * 단계·오프셋으로 남아, mini 에서 다른 핀을 열면 카드가 mini 높이에 뜨거나 full 이었다면
+   * 오버레이 대신 시트 안 카드가 나왔다. 안쪽 key 와 같은 기준으로 초기화한다.
+   */
   useEffect(() => {
-    if (initialSnapPointRef.current === resolvedInitialSnapPoint) {
+    if (
+      initialSnapPointRef.current === resolvedInitialSnapPoint &&
+      lockerIdRef.current === locker.lockerId
+    ) {
       return;
     }
 
     initialSnapPointRef.current = resolvedInitialSnapPoint;
+    lockerIdRef.current = locker.lockerId;
     sheetOffsetValue.set(resolvedInitialSnapPoint);
     snapTargetOffsetRef.current = resolvedInitialSnapPoint;
     setIsOffsetAtSnapTarget(true);
@@ -527,6 +553,7 @@ export function LockerDetailBottomSheet({
       }),
     );
   }, [
+    locker.lockerId,
     resolvedInitialSnapPoint,
     resolvedMaxSnapPoint,
     resolvedMiniSnapPoint,
@@ -540,6 +567,9 @@ export function LockerDetailBottomSheet({
       {isRealtimeOverlayVisible ? (
         <motion.div
           className={realtimeStatusCardOverlay}
+          initial={animateOnMount ? { y: mountSlideDistance } : { y: 0 }}
+          animate={{ y: 0 }}
+          transition={SHEET_SETTLE_SPRING}
           style={{ bottom: realtimeOverlayBottom }}
         >
           <LockerRealtimeStatusCard

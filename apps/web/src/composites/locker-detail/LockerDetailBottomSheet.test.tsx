@@ -17,6 +17,7 @@ import { setTestLanguage } from "#/shared/test/language-runtime";
 const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
 
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
+  SHEET_SETTLE_SPRING: { type: "spring" },
   DraggableBottomSheet: (props: {
     animateOnMount?: boolean;
     children: ReactNode;
@@ -396,6 +397,49 @@ describe("LockerDetailBottomSheet", () => {
     expect(draggableBottomSheetMock.mock.lastCall?.[0].minSnapPoint).toBe(
       halfMinSnapPoint,
     );
+  });
+
+  it("다른 보관함을 열면 초기 스냅이 같아도 라이브 상태를 초기화한다", async () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const getOverlayBottom = () => {
+      const sheet = screen.getByTestId("mock-draggable-bottom-sheet");
+
+      return (
+        screen
+          .getAllByRole("region", { name: "실시간 이용 가능" })
+          .find((card) => !sheet.contains(card))?.parentElement?.style.bottom ??
+        null
+      );
+    };
+
+    // 하프로 연 뒤 미니로 내려둔다.
+    act(() => {
+      draggableBottomSheetMock.mock.lastCall?.[0].onSnapChange?.(701);
+    });
+    act(() => {
+      draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
+        offset: 701,
+        expandedProgress: 0,
+        snapPoints: [],
+      });
+    });
+    await waitFor(() => {
+      expect(getOverlayBottom()).toBe(overlayBottomAt(701));
+    });
+
+    // 다른 보관함. initialSnapPoint 는 그대로라 안쪽 시트만 하프로 리마운트된다.
+    rerender(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, lockerId: 22 }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getOverlayBottom()).toBe(overlayBottomAt(621));
+    });
   });
 
   it("미니 시트에서도 실시간 카드를 시트 바깥에 렌더링한다", () => {

@@ -1,5 +1,6 @@
 import { m } from "@repo/i18n";
 import type { LockerRealtimeAvailability } from "#/entities/locker/model/locker-detail";
+import { useMinuteTick } from "#/shared/hooks/useMinuteTick";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
 import {
   card,
@@ -30,6 +31,8 @@ export function LockerRealtimeStatusCard({
   variant = "floating",
 }: LockerRealtimeStatusCardProps) {
   const statusText = m.locker_detail_realtime_status();
+  // 시트를 열어 둔 채로도 "방금" -> "n분 전" 경계를 넘어가도록 분마다 다시 그린다.
+  useMinuteTick();
   const updatedText = formatUpdatedLabel(availability.fetchedAt);
   const closedLabel = m.locker_detail_realtime_full();
   const items = [
