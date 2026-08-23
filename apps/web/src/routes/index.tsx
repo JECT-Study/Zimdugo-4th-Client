@@ -3326,7 +3326,9 @@ export function IndexPage() {
           )}
       </NaverMapProvider>
       {isMapLoading && !hasMapError && !isRefreshing ? (
-        <MapControlsSkeleton />
+        <MapControlsSkeleton
+          bottomPx={mapControlBottom ?? MAP_CONTROL_FALLBACK_BOTTOM_PX}
+        />
       ) : (shouldRenderMapControls || isRefreshing) &&
         mapControlBottom !== null ? (
         <motion.div
