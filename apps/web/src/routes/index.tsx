@@ -675,6 +675,15 @@ export function IndexPage() {
    * 불일치가 된다. 실제 높이는 마운트 직후 리사이즈 핸들러가 한 번 채운다.
    */
   const [windowHeight, setWindowHeight] = useState(SSR_WINDOW_HEIGHT_PX);
+  /**
+   * 실제 뷰포트 높이를 재기 전인지.
+   *
+   * 재기 전의 windowHeight 는 가정값이라 그 값으로 컨트롤을 시트만큼 밀어 올리면
+   * 위치가 틀린다. 낮은 화면에서는 시트 뒤나 화면 밖에 놓이기까지 한다. 측정
+   * 전에는 밀어 올리지 않고 기본 위치에 둔다. 서버와 첫 클라이언트 렌더가 같은
+   * 값을 내므로 하이드레이션도 어긋나지 않는다.
+   */
+  const [hasMeasuredViewport, setHasMeasuredViewport] = useState(false);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
@@ -1017,6 +1026,7 @@ export function IndexPage() {
     const handleResize = () => setWindowHeight(window.innerHeight);
     // 하이드레이션이 끝난 뒤 실제 뷰포트 높이로 교정한다.
     handleResize();
+    setHasMeasuredViewport(true);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -2999,8 +3009,9 @@ export function IndexPage() {
     isSearchContextActive: context === "search",
     hasMapError,
   });
-  const sheetVisibleHeight =
-    sheetMode === "detail"
+  const sheetVisibleHeight = !hasMeasuredViewport
+    ? null
+    : sheetMode === "detail"
       ? resolveDetailSheetVisibleHeight(detailSheetSnapStage)
       : sheetMode === "list"
         ? resolveSearchListStageVisibleHeight(listSheetSnapStage, windowHeight)

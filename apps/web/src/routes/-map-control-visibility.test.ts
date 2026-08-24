@@ -104,16 +104,46 @@ describe("resolveSearchListStageVisibleHeight", () => {
 });
 
 describe("resolveMapControlBottomPx 상단 경계", () => {
-  it("낮은 화면에서는 검색 바를 덮지 않도록 잘라 낸다", () => {
-    // 390px 화면 + 상세 하프 191px => 그대로면 bottom 203px 라 스택이 검색 바 위로
-    // 올라온다. 상단 경계 120px, 스택 높이 96px => 390 - 120 - 96 = 174px 로 제한.
+  it("시트를 피한 자리가 경계를 넘으면 잘라 내지 않고 숨긴다", () => {
+    // 390px 화면 + 상세 하프 191px. 상단 경계에 맞춰 174px 로 내리면 스택 아래쪽
+    // 내 위치 버튼이 174~216px 에 놓이는데 시트 상단이 191px 이라 도로 시트 뒤로
+    // 들어간다. 이 함수가 없애려던 문제라 잘라 내는 대신 배치 불가로 판정한다.
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 191,
         windowHeightPx: 390,
       }),
-    ).toBe(174);
+    ).toBeNull();
+  });
+
+  it("시트와 경계를 모두 지킬 수 있으면 시트 위에 그대로 올린다", () => {
+    // 하프 시트 191px + 간격 12 + 스택 96 + 경계 120 = 419px 가 최소 높이다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 419,
+      }),
+    ).toBe(203);
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 418,
+      }),
+    ).toBeNull();
+  });
+
+  it("미니 시트는 낮은 화면에서도 자리가 남는다", () => {
+    // 111 + 12 + 96 + 120 = 339px. 390px 화면이면 하프는 못 놓아도 미니는 놓는다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 111,
+        windowHeightPx: 390,
+      }),
+    ).toBe(123);
   });
 
   it("밀어 올릴 단계가 아니어도 자리가 없으면 null 을 준다", () => {
