@@ -9,6 +9,8 @@ import { style } from "@vanilla-extract/css";
 import {
   MAP_CONTROL_BOTTOM,
   MAP_CONTROL_MIN_VIEWPORT_HEIGHT_PX,
+  MAP_CONTROL_SKELETON_BOTTOM_VAR,
+  MAP_CONTROL_TOP_RESERVED_PX,
 } from "#/entities/map/ui/map-control-stack-fallback";
 
 // routes/-index.css.ts의 locationControlStack과 같은 레이아웃 토큰을 쓴다.
@@ -23,7 +25,12 @@ export const controlStack = style({
   },
   position: "fixed",
   left: "50%",
-  bottom: MAP_CONTROL_BOTTOM,
+  // 프리렌더 시점의 bottom 은 가정 높이로 계산된 값이라 실제 뷰포트가 낮으면
+  // 스택이 검색 바 위로, 심하면 화면 밖으로 밀려난다. 뷰포트 기준으로 잘라 낸다.
+  //
+  // important 는 인라인 폴백 때문이다. 이 컴포넌트는 CSS 청크가 늦어도 자리가
+  // 잡히도록 bottom 을 인라인으로 갖고 있는데, 인라인은 클래스보다 우선한다.
+  bottom: `min(var(${MAP_CONTROL_SKELETON_BOTTOM_VAR}, ${MAP_CONTROL_BOTTOM}), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px)) !important`,
   transform: "translateX(-50%)",
   width: "100%",
   maxWidth: appShellMaxWidth,

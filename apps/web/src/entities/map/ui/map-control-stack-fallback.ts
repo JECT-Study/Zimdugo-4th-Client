@@ -26,6 +26,15 @@ export const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
  */
 export const MAP_CONTROL_TOP_LIMIT_PX = 120;
 
+/**
+ * 스켈레톤이 계산 결과를 스타일시트로 넘기는 커스텀 프로퍼티.
+ *
+ * 인라인 bottom 은 숫자로 두고 뷰포트 제한은 스타일시트가 이 값을 받아 건다.
+ * min()·dvh 를 인라인에 쓰면 jsdom 의 CSS 파서가 선언을 통째로 버려서
+ * style.bottom 이 빈 문자열이 되고, 위치를 검증하는 테스트가 값을 읽지 못한다.
+ */
+export const MAP_CONTROL_SKELETON_BOTTOM_VAR = "--map-control-skeleton-bottom";
+
 /** 스택과 상단 경계가 함께 요구하는 세로 공간 */
 export const MAP_CONTROL_TOP_RESERVED_PX =
   MAP_CONTROL_TOP_LIMIT_PX + MAP_CONTROL_STACK_HEIGHT_PX;

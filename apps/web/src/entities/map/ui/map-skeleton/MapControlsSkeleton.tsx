@@ -1,7 +1,7 @@
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import type { CSSProperties } from "react";
 import {
-  MAP_CONTROL_TOP_RESERVED_PX,
+  MAP_CONTROL_SKELETON_BOTTOM_VAR,
   mapControlStackInlineFallbackStyle,
 } from "#/entities/map/ui/map-control-stack-fallback";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
@@ -30,13 +30,14 @@ export function MapControlsSkeleton({ bottomPx }: MapControlsSkeletonProps) {
   return (
     <div
       className={controlStack}
-      style={{
-        ...mapControlStackInlineFallbackStyle,
-        // bottomPx 는 프리렌더 시점의 가정 높이로 계산된 값이라 실제 뷰포트가
-        // 낮으면 스택이 검색 바 위로 올라온다. 하이드레이션이 끝나면 JS 가 같은
-        // 경계를 적용한 값을 주므로, 교체 시점의 위치는 이 식과 일치한다.
-        bottom: `min(${bottomPx}px, calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`,
-      }}
+      style={
+        {
+          ...mapControlStackInlineFallbackStyle,
+          // 숫자로 둔다. 뷰포트 기준 제한은 스타일시트가 이 변수를 받아 건다.
+          bottom: bottomPx,
+          [MAP_CONTROL_SKELETON_BOTTOM_VAR]: `${bottomPx}px`,
+        } as CSSProperties
+      }
       aria-hidden="true"
     >
       <Skeleton
