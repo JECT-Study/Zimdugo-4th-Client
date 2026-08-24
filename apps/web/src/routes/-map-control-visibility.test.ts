@@ -116,6 +116,19 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     ).toBe(174);
   });
 
+  it("밀어 올릴 단계가 아니어도 자리가 없으면 null 을 준다", () => {
+    // 낮은 화면에서 상세가 full 로 올라가면 시트 쪽이 null 을 준다. 예전에는 이때
+    // 상단 경계를 아예 안 보고 기본 70px 을 그대로 써서, 스택 상단이 94px 에 놓여
+    // 검색 바를 덮은 채 시트 뒤에 깔렸다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: null,
+        windowHeightPx: 260,
+      }),
+    ).toBeNull();
+  });
+
   it("배치할 자리가 없으면 null 을 준다", () => {
     // 260px 화면이면 상단 경계를 지키는 bottom 이 44px 라 기본 70px 보다 낮다.
     // 기본 위치로 되돌리면 시트 뒤에 깔린 채 검색 바만 가리므로 숨기는 편이 낫다.

@@ -81,24 +81,31 @@ interface ResolveMapControlBottomOptions {
  *
  * 잘라 낸 자리마저 기본 위치보다 낮으면 검색 바를 덮지 않으면서 시트도 피하는
  * 위치가 없다는 뜻이다. 기본 위치로 되돌리면 어차피 시트 뒤에 깔려 누르지도
- * 못하면서 검색 바만 가리므로, 배치 불가를 알리도록 null 을 준다.
+ * 못하면서 검색 바만 가리므로, 배치 불가를 알리도록 null 을 준다. 이 판정은
+ * 시트가 밀어 올리는 단계인지와 무관하다. 화면 높이만으로 정해지는 조건이라
+ * full 이나 시트가 없는 상태에서도 똑같이 적용해야 한다.
  */
 export const resolveMapControlBottomPx = ({
   baseBottomPx,
   sheetVisibleHeightPx,
   windowHeightPx,
 }: ResolveMapControlBottomOptions): number | null => {
+  const topLimitedBottomPx =
+    windowHeightPx - MAP_CONTROL_TOP_LIMIT_PX - MAP_CONTROL_STACK_HEIGHT_PX;
+
+  // 상단 경계는 시트 단계와 무관하게 먼저 본다. 밀어 올릴 단계가 아니어도 화면이
+  // 낮으면 기본 위치의 스택이 그대로 검색 바를 덮기 때문이다. 예전에는 이 검사가
+  // 시트가 있을 때만 돌아서, 낮은 화면에서 상세가 full 로 올라가면(full 은 null 을
+  // 준다) 버튼이 시트 뒤에 깔린 채 검색 바만 가렸다.
+  if (topLimitedBottomPx < baseBottomPx) {
+    return null;
+  }
+
   if (sheetVisibleHeightPx === null) {
     return baseBottomPx;
   }
 
   const raisedBottomPx = sheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX;
-  const topLimitedBottomPx =
-    windowHeightPx - MAP_CONTROL_TOP_LIMIT_PX - MAP_CONTROL_STACK_HEIGHT_PX;
-
-  if (topLimitedBottomPx < baseBottomPx) {
-    return null;
-  }
 
   return Math.max(baseBottomPx, Math.min(raisedBottomPx, topLimitedBottomPx));
 };
