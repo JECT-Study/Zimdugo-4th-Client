@@ -231,6 +231,12 @@ import {
 } from "./-map-control-visibility";
 
 export const DETAIL_FOCUS_ZOOM = 17;
+/**
+ * 서버·프리렌더에서 뷰포트 높이를 알 수 없을 때 쓰는 값.
+ * 클라이언트 첫 렌더도 이 값으로 시작해야 하이드레이션이 어긋나지 않는다.
+ */
+const SSR_WINDOW_HEIGHT_PX = 800;
+
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
   DETAIL_FOCUS_MORPH_DURATION_MS + 40;
@@ -661,9 +667,23 @@ export function IndexPage() {
   // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [hasMapError, setHasMapError] = useState(false);
-  const [windowHeight, setWindowHeight] = useState(
-    typeof window !== "undefined" ? window.innerHeight : 800,
-  );
+  /**
+   * 첫 렌더는 서버와 같은 값으로 시작한다.
+   *
+   * 예전에는 클라이언트에서 곧바로 window.innerHeight 로 초기화했는데, 이 값이
+   * 렌더 결과에 들어가는 순간(스켈레톤 위치처럼) 서버 HTML 과 어긋나 하이드레이션
+   * 불일치가 된다. 실제 높이는 마운트 직후 리사이즈 핸들러가 한 번 채운다.
+   */
+  const [windowHeight, setWindowHeight] = useState(SSR_WINDOW_HEIGHT_PX);
+  /**
+   * 실제 뷰포트 높이를 재기 전인지.
+   *
+   * 재기 전의 windowHeight 는 가정값이라 그 값으로 컨트롤을 시트만큼 밀어 올리면
+   * 위치가 틀린다. 낮은 화면에서는 시트 뒤나 화면 밖에 놓이기까지 한다. 측정
+   * 전에는 밀어 올리지 않고 기본 위치에 둔다. 서버와 첫 클라이언트 렌더가 같은
+   * 값을 내므로 하이드레이션도 어긋나지 않는다.
+   */
+  const [hasMeasuredViewport, setHasMeasuredViewport] = useState(false);
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
@@ -1004,6 +1024,9 @@ export function IndexPage() {
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
+    // 하이드레이션이 끝난 뒤 실제 뷰포트 높이로 교정한다.
+    handleResize();
+    setHasMeasuredViewport(true);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -2984,8 +3007,9 @@ export function IndexPage() {
     isSearchContextActive: context === "search",
     hasMapError,
   });
-  const sheetVisibleHeight =
-    sheetMode === "detail"
+  const sheetVisibleHeight = !hasMeasuredViewport
+    ? null
+    : sheetMode === "detail"
       ? resolveDetailSheetVisibleHeight(detailSheetSnapStage)
       : sheetMode === "list"
         ? resolveSearchListStageVisibleHeight(listSheetSnapStage, windowHeight)
@@ -3323,8 +3347,15 @@ export function IndexPage() {
             />
           )}
       </NaverMapProvider>
-      {isMapLoading && !hasMapError && !isRefreshing ? (
-        <MapControlsSkeleton />
+      {/*
+        배치 불가(null)면 스켈레톤도 내보내지 않는다. 실제 컨트롤은 바로 아래
+        분기에서 숨겨지므로, 스켈레톤만 남기면 지도가 준비되는 순간 버튼이 사라진다.
+      */}
+      {isMapLoading &&
+      !hasMapError &&
+      !isRefreshing &&
+      mapControlBottom !== null ? (
+        <MapControlsSkeleton bottomPx={mapControlBottom} />
       ) : (shouldRenderMapControls || isRefreshing) &&
         mapControlBottom !== null ? (
         <motion.div

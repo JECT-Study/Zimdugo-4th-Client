@@ -1,3 +1,8 @@
+import {
+  MAP_CONTROL_SHEET_GAP_PX,
+  MAP_CONTROL_TOP_RESERVED_PX,
+} from "#/entities/map/ui/map-control-stack-fallback";
+
 interface ShouldShowMapControlsOptions {
   isMapLoading: boolean;
   hasMapError: boolean;
@@ -44,18 +49,6 @@ export const shouldShowMapControls = ({
   return !isMapLoading && !hasMapError && hasMapInstance;
 };
 
-/** 컨트롤과 시트 사이 간격 */
-const MAP_CONTROL_SHEET_GAP_PX = 12;
-
-/** 새로고침·내 위치 버튼과 그 사이 간격을 합한 스택 높이 */
-const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
-
-/**
- * 컨트롤 스택 상단이 넘어서면 안 되는 경계.
- * 검색 바 하단(safe-area + 60 + 48)에 간격 12 를 더한 값이다.
- */
-const MAP_CONTROL_TOP_LIMIT_PX = 120;
-
 interface ResolveMapControlBottomOptions {
   /** 시트가 컨트롤을 밀어 올리지 않을 때 쓰는 기본 하단 위치 */
   baseBottomPx: number;
@@ -77,28 +70,45 @@ interface ResolveMapControlBottomOptions {
  * 시트 쪽에서 null 을 주므로 기본 위치를 그대로 쓴다.
  *
  * 다만 화면이 낮으면(가로 모드 등) 시트 높이를 그대로 더했을 때 스택이 검색 바
- * 위를 덮거나 뷰포트 밖으로 밀려난다. 상단 경계를 넘지 않도록 잘라 낸다.
+ * 위를 덮거나 뷰포트 밖으로 밀려난다.
  *
- * 잘라 낸 자리마저 기본 위치보다 낮으면 검색 바를 덮지 않으면서 시트도 피하는
- * 위치가 없다는 뜻이다. 기본 위치로 되돌리면 어차피 시트 뒤에 깔려 누르지도
- * 못하면서 검색 바만 가리므로, 배치 불가를 알리도록 null 을 준다.
+ * 이때 상단 경계에 맞춰 아래로 잘라 내면 안 된다. 잘라 낸 자리는 시트보다 낮아
+ * 스택 아래쪽 버튼이 도로 시트 뒤로 들어간다. 390px 화면에 하프 시트(191px)면
+ * 잘라 낸 값이 174px 이라 내 위치 버튼이 174~216px 에 놓이는데 시트 상단이
+ * 191px 이고, 350px 화면에서는 아예 통째로 묻힌다. 이 함수가 없애려던 문제가
+ * 그대로 돌아온다.
+ *
+ * 그래서 시트를 피하면서 상단 경계도 지키는 자리가 없으면 잘라 내는 대신 null 을
+ * 준다. 기본 위치로 되돌려도 시트 뒤에 깔린 채 검색 바만 가리므로 마찬가지다.
+ * 화면 높이만으로 정해지는 판정(기본 위치조차 못 놓는 경우)은 시트 단계와
+ * 무관하므로, full 이나 시트가 없는 상태에도 똑같이 적용한다.
  */
 export const resolveMapControlBottomPx = ({
   baseBottomPx,
   sheetVisibleHeightPx,
   windowHeightPx,
 }: ResolveMapControlBottomOptions): number | null => {
+  const topLimitedBottomPx = windowHeightPx - MAP_CONTROL_TOP_RESERVED_PX;
+
+  // 상단 경계는 시트 단계와 무관하게 먼저 본다. 밀어 올릴 단계가 아니어도 화면이
+  // 낮으면 기본 위치의 스택이 그대로 검색 바를 덮기 때문이다. 예전에는 이 검사가
+  // 시트가 있을 때만 돌아서, 낮은 화면에서 상세가 full 로 올라가면(full 은 null 을
+  // 준다) 버튼이 시트 뒤에 깔린 채 검색 바만 가렸다.
+  if (topLimitedBottomPx < baseBottomPx) {
+    return null;
+  }
+
   if (sheetVisibleHeightPx === null) {
     return baseBottomPx;
   }
 
   const raisedBottomPx = sheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX;
-  const topLimitedBottomPx =
-    windowHeightPx - MAP_CONTROL_TOP_LIMIT_PX - MAP_CONTROL_STACK_HEIGHT_PX;
 
-  if (topLimitedBottomPx < baseBottomPx) {
+  // 시트를 피한 자리가 상단 경계를 넘으면 놓을 곳이 없다. 경계에 맞춰 내리면
+  // 시트 뒤로 들어가므로 잘라 내지 않고 배치 불가로 판정한다.
+  if (raisedBottomPx > topLimitedBottomPx) {
     return null;
   }
 
-  return Math.max(baseBottomPx, Math.min(raisedBottomPx, topLimitedBottomPx));
+  return Math.max(baseBottomPx, raisedBottomPx);
 };
