@@ -1,3 +1,8 @@
+import {
+  MAP_CONTROL_SHEET_GAP_PX,
+  MAP_CONTROL_TOP_RESERVED_PX,
+} from "#/entities/map/ui/map-control-stack-fallback";
+
 interface ShouldShowMapControlsOptions {
   isMapLoading: boolean;
   hasMapError: boolean;
@@ -44,18 +49,6 @@ export const shouldShowMapControls = ({
   return !isMapLoading && !hasMapError && hasMapInstance;
 };
 
-/** 컨트롤과 시트 사이 간격 */
-const MAP_CONTROL_SHEET_GAP_PX = 12;
-
-/** 새로고침·내 위치 버튼과 그 사이 간격을 합한 스택 높이 */
-const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
-
-/**
- * 컨트롤 스택 상단이 넘어서면 안 되는 경계.
- * 검색 바 하단(safe-area + 60 + 48)에 간격 12 를 더한 값이다.
- */
-const MAP_CONTROL_TOP_LIMIT_PX = 120;
-
 interface ResolveMapControlBottomOptions {
   /** 시트가 컨트롤을 밀어 올리지 않을 때 쓰는 기본 하단 위치 */
   baseBottomPx: number;
@@ -90,8 +83,7 @@ export const resolveMapControlBottomPx = ({
   sheetVisibleHeightPx,
   windowHeightPx,
 }: ResolveMapControlBottomOptions): number | null => {
-  const topLimitedBottomPx =
-    windowHeightPx - MAP_CONTROL_TOP_LIMIT_PX - MAP_CONTROL_STACK_HEIGHT_PX;
+  const topLimitedBottomPx = windowHeightPx - MAP_CONTROL_TOP_RESERVED_PX;
 
   // 상단 경계는 시트 단계와 무관하게 먼저 본다. 밀어 올릴 단계가 아니어도 화면이
   // 낮으면 기본 위치의 스택이 그대로 검색 바를 덮기 때문이다. 예전에는 이 검사가
