@@ -112,20 +112,3 @@ export const resolveMapControlBottomPx = ({
 
   return Math.max(baseBottomPx, raisedBottomPx);
 };
-
-/**
- * 밀어 올린 컨트롤을 놓을 자리가 있는지.
- *
- * 화면이 낮으면(가로 모드 등) 검색 바를 덮지 않으면서 시트도 피하는 위치가 없다.
- * `resolveMapControlBottomPx` 가 그때 null 을 주는 것과 같은 판정인데, 위치를
- * 프레임마다 다시 계산하더라도 "렌더할지" 는 이 값으로만 정해야 한다.
- * 매 프레임 렌더 여부를 뒤집으면 드래그 중 컨트롤이 깜빡인다.
- */
-export const canPlaceRaisedMapControl = ({
-  baseBottomPx,
-  windowHeightPx,
-}: {
-  baseBottomPx: number;
-  windowHeightPx: number;
-}): boolean =>
-  windowHeightPx - MAP_CONTROL_TOP_RESERVED_PX >= baseBottomPx;

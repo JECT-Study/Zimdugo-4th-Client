@@ -276,6 +276,25 @@ describe("resolveBottomSheetDragIntent", () => {
 });
 
 describe("DraggableBottomSheet", () => {
+  it("마운트 직후 현재 오프셋을 한 번 알려 준다", () => {
+    // 부모가 이 값으로 자리를 잡으므로 첫 드래그 전에도 알고 있어야 한다.
+    // 지금은 초기 스냅 동기화의 set 이 change 를 띄워 주지만, 그 동작에 기대지
+    // 않도록 구독 시점 알림을 계약으로 못 박는다.
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleLiveOffsetChange).toHaveBeenCalled();
+    expect(handleLiveOffsetChange.mock.calls[0][0].offset).toBe(120);
+  });
+
   it("updates live offset from a non-interactive sheet surface", () => {
     const handleLiveOffsetChange = vi.fn();
 

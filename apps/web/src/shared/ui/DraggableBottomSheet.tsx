@@ -318,13 +318,20 @@ export function DraggableBottomSheet({
     [maxSnapPoint, minSnapPoint, onLiveOffsetChange, snapPoints],
   );
 
-  useEffect(
-    () =>
-      sheetOffset.on("change", (offset) => {
-        notifyLiveOffsetChange(clampSnap(offset));
-      }),
-    [clampSnap, notifyLiveOffsetChange, sheetOffset],
-  );
+  useEffect(() => {
+    // 구독을 걸면서 현재 값을 한 번 흘려 준다.
+    //
+    // 지금은 아래 초기 스냅 동기화가 마운트마다 반드시 돌고(lastInitialSnapRef 가
+    // null 로 시작한다) 그때의 set 이 change 를 띄워서 부모도 값을 받는다. 다만
+    // 그건 "같은 값으로 set 해도 알림이 온다" 는 motion 의 현재 동작에 기댄 것이라,
+    // 부모가 첫 값을 못 받으면 그 값으로 자리를 잡는 쪽이 시트 뒤에 깔린 채 남는다.
+    // 구독 시점에 한 번 내보내 그 보장을 이 컴포넌트 안에 둔다.
+    notifyLiveOffsetChange(clampSnap(sheetOffset.get()));
+
+    return sheetOffset.on("change", (offset) => {
+      notifyLiveOffsetChange(clampSnap(offset));
+    });
+  }, [clampSnap, notifyLiveOffsetChange, sheetOffset]);
 
   useEffect(() => {
     const nextInitialSnap = clampSnap(resolvedInitialSnap);

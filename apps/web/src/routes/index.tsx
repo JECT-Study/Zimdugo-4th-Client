@@ -60,7 +60,11 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
-import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
+import {
+  MAP_CONTROL_FALLBACK_BOTTOM_PX,
+  MAP_CONTROL_SHEET_GAP_PX,
+  MAP_CONTROL_TOP_RESERVED_PX,
+} from "#/entities/map/ui/map-control-stack-fallback";
 import {
   clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
@@ -223,9 +227,7 @@ import {
   refreshIconSpinning,
 } from "./-index.css";
 import {
-  canPlaceRaisedMapControl,
-  MAP_CONTROL_SHEET_GAP_PX,
-  MAP_CONTROL_TOP_RESERVED_PX,
+  resolveMapControlBottomPx,
   shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
@@ -685,6 +687,26 @@ export function IndexPage() {
    * 값을 내므로 하이드레이션도 어긋나지 않는다.
    */
   const [hasMeasuredViewport, setHasMeasuredViewport] = useState(false);
+  /**
+   * 시트 윗변의 라이브 위치. 프레임마다 바뀌므로 state 가 아니라 motion value 다.
+   *
+   * state 로 두면 지도까지 들고 있는 이 컴포넌트가 드래그 내내 초당 60번 리렌더된다.
+   * 시트가 없을 때는 뷰포트 높이를 넣어 "차지하는 높이 0" 으로 만든다.
+   */
+  const sheetLiveOffset = useMotionValue(windowHeight);
+  /**
+   * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
+   * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
+   * 계산하므로 React 렌더가 필요 없다.
+   */
+  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc(100dvh - ${sheetLiveOffset}px + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
+  const handleSheetLiveOffsetChange = useCallback(
+    ({ offsetPx }: { offsetPx: number }) => {
+      sheetLiveOffset.set(offsetPx);
+    },
+    [sheetLiveOffset],
+  );
+
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
@@ -3025,43 +3047,11 @@ export function IndexPage() {
   });
 
   /**
-   * 시트 윗변의 라이브 위치. 프레임마다 바뀌므로 state 가 아니라 motion value 다.
-   *
-   * state 로 두면 지도까지 들고 있는 이 컴포넌트가 드래그 내내 초당 60번 리렌더된다.
-   * 시트가 없을 때는 뷰포트 높이를 넣어 "차지하는 높이 0" 으로 만든다.
+   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 단계로만 정하고 프레임마다 다시 계산하지
+   * 않는다. 라이브 오프셋으로 판정하면 드래그 중 컨트롤이 깜빡인다. full·dismiss 는
+   * 밀어 올릴 자리가 없고, filter 시트는 스냅이 하나뿐이라 같은 범주다.
    */
-  const sheetLiveOffset = useMotionValue(windowHeight);
-  /**
-   * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
-   * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
-   * 계산하므로 React 렌더가 필요 없다.
-   */
-  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc(100dvh - ${sheetLiveOffset}px + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
-  const handleSheetLiveOffsetChange = useCallback(
-    ({ offsetPx }: { offsetPx: number }) => {
-      sheetLiveOffset.set(offsetPx);
-    },
-    [sheetLiveOffset],
-  );
-
-  /**
-   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 이것만 state 로 두고 프레임마다 다시
-   * 계산하지 않는다. full·dismiss 는 밀어 올릴 자리가 없고, filter 시트는 사실상
-   * full 전용이라 같은 범주다(스냅이 하나뿐이라 항상 화면을 덮는다).
-   */
-  const isMapControlRaised =
-    sheetMode === "detail"
-      ? resolveDetailSheetVisibleHeight(detailSheetSnapStage) !== null
-      : sheetMode === "list"
-        ? resolveSearchListStageVisibleHeight(
-            listSheetSnapStage,
-            windowHeight,
-          ) !== null
-        : false;
-  const canRaiseMapControl = canPlaceRaisedMapControl({
-    baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
-    windowHeightPx: windowHeight,
-  });
+  const isMapControlRaised = sheetVisibleHeight !== null;
 
   /**
    * 시트가 사라진 뒤에도 오프셋이 과거 값에 멈춰 있으면 컨트롤이 없는 시트 위에
@@ -3410,7 +3400,7 @@ export function IndexPage() {
       mapControlBottom !== null ? (
         <MapControlsSkeleton bottomPx={mapControlBottom} />
       ) : (shouldRenderMapControls || isRefreshing) &&
-        (!isMapControlRaised || canRaiseMapControl) ? (
+        mapControlBottom !== null ? (
         <motion.div
           className={locationControlStack}
           initial={false}

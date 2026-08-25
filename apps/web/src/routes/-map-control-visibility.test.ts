@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchListBottomSheet";
 import {
-  canPlaceRaisedMapControl,
   resolveMapControlBottomPx,
   shouldShowHomeHeader,
   shouldShowHomeSearchBar,
@@ -196,29 +195,6 @@ describe("로딩 스켈레톤과 실제 컨트롤의 위치 일치", () => {
         windowHeightPx: 260,
       }),
     ).toBeNull();
-  });
-});
-
-describe("canPlaceRaisedMapControl", () => {
-  it("자리가 있으면 true, 없으면 false 로 resolveMapControlBottomPx 의 null 판정과 일치한다", () => {
-    // 위 두 케이스와 같은 입력. 위치 계산을 프레임마다 하더라도 "렌더할지" 는
-    // 이 판정으로만 정해야 드래그 중 컨트롤이 깜빡이지 않는다.
-    expect(
-      canPlaceRaisedMapControl({ baseBottomPx: 70, windowHeightPx: 390 }),
-    ).toBe(true);
-    expect(
-      canPlaceRaisedMapControl({ baseBottomPx: 70, windowHeightPx: 260 }),
-    ).toBe(false);
-  });
-
-  it("경계값에서 갈린다", () => {
-    // 상단 경계 120 + 스택 96 = 216. 기본 70 을 지키려면 최소 286px 이 필요하다.
-    expect(
-      canPlaceRaisedMapControl({ baseBottomPx: 70, windowHeightPx: 286 }),
-    ).toBe(true);
-    expect(
-      canPlaceRaisedMapControl({ baseBottomPx: 70, windowHeightPx: 285 }),
-    ).toBe(false);
   });
 });
 
