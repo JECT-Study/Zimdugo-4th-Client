@@ -1,9 +1,9 @@
-import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import type {
   SearchLockerResultItem,
   SearchLockerResultItems,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 
 export type ResolveEffectiveFavorite = (
   lockerId: number,

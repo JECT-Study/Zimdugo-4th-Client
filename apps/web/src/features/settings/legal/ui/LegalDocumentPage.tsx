@@ -18,6 +18,9 @@ import {
   sectionTitle,
 } from "./legal-document.css.ts";
 
+// 로딩 자리표시자. 개수가 고정이고 순서가 바뀌지 않는다.
+const LOADING_SECTION_KEYS = ["section-0", "section-1", "section-2"];
+
 const DOCUMENT_TYPE_TITLE: Record<DocumentType, () => string> = {
   NOTICE: () => m.settings_notice(),
   TERMS: () => m.settings_terms(),
@@ -80,8 +83,8 @@ export function LegalDocumentPage({
             style={SKELETON_SURFACE_STYLE}
           />
           <div className={documentBox} style={{ marginTop: 16 }}>
-            {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className={section}>
+            {LOADING_SECTION_KEYS.map((sectionKey) => (
+              <div key={sectionKey} className={section}>
                 <Skeleton
                   width={120}
                   height={14}

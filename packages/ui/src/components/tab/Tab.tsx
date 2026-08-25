@@ -1,8 +1,8 @@
 import {
   Tab as AriaTab,
+  type TabProps as AriaTabProps,
   TabList,
   Tabs,
-  type TabProps as AriaTabProps,
   type TabsProps,
 } from "react-aria-components";
 import { tab, tabBar } from "./Tab.css.ts";

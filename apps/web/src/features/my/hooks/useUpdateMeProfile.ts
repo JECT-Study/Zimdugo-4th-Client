@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { userProfileQueryKey } from "#/entities/user/hooks/useUser";
-import { patchMeProfile, type PatchMeProfileBody } from "#/shared/api/me";
+import { type PatchMeProfileBody, patchMeProfile } from "#/shared/api/me";
 import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";
 

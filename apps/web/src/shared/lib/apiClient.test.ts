@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { createApiClient } from "@repo/libs/axios";
+import { describe, expect, it } from "vitest";
 
 describe("createApiClient", () => {
   it("serializes array query params without bracket suffixes", () => {

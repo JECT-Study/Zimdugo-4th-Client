@@ -31,17 +31,22 @@ const textColumnStyle: CSSProperties = {
 
 const SUGGEST_SKELETON_ROW_COUNT = 4;
 
+// 개수가 고정된 자리표시자다. 순서가 바뀌지 않으므로 키를 미리 만들어 둔다.
+const SUGGEST_SKELETON_ROW_KEYS = Array.from(
+  { length: SUGGEST_SKELETON_ROW_COUNT },
+  (_, index) => `skeleton-${index}`,
+);
+
 export function SearchSuggestListSkeleton() {
   return (
-    <div
+    <output
       style={listStyle}
-      role="status"
       aria-live="polite"
       aria-busy="true"
       aria-label={m.search_suggest_loading_aria()}
     >
-      {Array.from({ length: SUGGEST_SKELETON_ROW_COUNT }, (_, index) => (
-        <div key={index} style={rowStyle}>
+      {SUGGEST_SKELETON_ROW_KEYS.map((rowKey) => (
+        <div key={rowKey} style={rowStyle}>
           <Skeleton
             width={24}
             height={24}
@@ -64,6 +69,6 @@ export function SearchSuggestListSkeleton() {
           </div>
         </div>
       ))}
-    </div>
+    </output>
   );
 }

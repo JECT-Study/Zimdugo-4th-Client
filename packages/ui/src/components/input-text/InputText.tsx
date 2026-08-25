@@ -1,5 +1,5 @@
-import { Input as AriaInput } from "react-aria-components";
 import type { ComponentProps } from "react";
+import { Input as AriaInput } from "react-aria-components";
 import { inputText, inputTextTone } from "./InputText.css.ts";
 
 export type InputTextTone = "on" | "off";

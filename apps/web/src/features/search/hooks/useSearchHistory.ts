@@ -1,9 +1,9 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { SEARCH_HISTORY_STORAGE_KEY } from "../model/search-history";
 import type {
   SearchHistoryEntry,
   SearchHistoryInput,
 } from "../model/search-history";
+import { SEARCH_HISTORY_STORAGE_KEY } from "../model/search-history";
 import {
   appendSearchHistoryEntry,
   clearSearchHistoryEntries,

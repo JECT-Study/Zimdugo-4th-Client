@@ -1,9 +1,9 @@
-import { apiClient } from "#/shared/lib/apiClient";
 import type {
   LockerReportCreateRequest,
   LockerReportCreateResponse,
   RestResponse,
 } from "#/features/report/model/report-types";
+import { apiClient } from "#/shared/lib/apiClient";
 
 export async function postLockerReport(
   payload: LockerReportCreateRequest,

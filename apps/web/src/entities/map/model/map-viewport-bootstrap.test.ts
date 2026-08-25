@@ -5,8 +5,8 @@ import {
   isMapViewportCacheStale,
   MAP_VIEWPORT_STALE_DISTANCE_M,
   MAP_VIEWPORT_STALE_MS,
-  resolveMapBootstrapViewport,
   type MapViewportCache,
+  resolveMapBootstrapViewport,
 } from "./map-viewport-bootstrap";
 
 const createCache = (

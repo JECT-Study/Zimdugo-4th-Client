@@ -1,4 +1,5 @@
 import { Button } from "react-aria-components";
+import { IconChevronLeft13 } from "../../../tokens/icons/Icons";
 import {
   centerContainer,
   ghostBox,
@@ -9,7 +10,7 @@ import {
   stepIndicator,
   titleText,
 } from "./Header.css.ts";
-import { IconChevronLeft13 } from "../../../tokens/icons/Icons";
+
 export { HeaderSkeleton } from "./HeaderSkeleton";
 
 export interface HeaderProps {

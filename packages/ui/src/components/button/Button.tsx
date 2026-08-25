@@ -2,7 +2,7 @@ import {
   Button as AriaButton,
   type ButtonProps as AriaButtonProps,
 } from "react-aria-components";
-import { button, loadingDots, dot } from "./Button.css.ts";
+import { button, dot, loadingDots } from "./Button.css.ts";
 
 type ButtonVariant = "filled" | "outline" | "ghost";
 type ButtonIntent = "primary" | "neutral";

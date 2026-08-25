@@ -1,10 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { readLockerDetailFromQueryCache } from "#/features/search/lib/read-locker-detail-from-query-cache";
 import type { AuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import {
   type EffectiveLockerVote,
   serverVoteStateToEffective,
 } from "../model/vote-locker-session";
-import { readLockerDetailFromQueryCache } from "#/features/search/lib/read-locker-detail-from-query-cache";
 
 export const collectServerVoteByLockerId = (
   queryClient: QueryClient,

@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
-import { useEffect } from "react";
 import { Popup } from "@repo/ui/components/popup";
+import { useEffect } from "react";
 import { useLoginResultStore } from "#/shared/store/loginResultStore";
 
 export function LoginResultModal() {

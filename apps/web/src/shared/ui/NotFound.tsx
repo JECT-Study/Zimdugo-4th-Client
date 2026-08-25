@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
 import { IconCaution24 } from "@repo/ui/tokens/icons";
 import { vars } from "@repo/ui/vars";
+import { Link } from "@tanstack/react-router";
 
 export function NotFoundComponent() {
   return (

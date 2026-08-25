@@ -42,10 +42,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # 지금은 포맷만 본다. 린트·import 정렬은 기존 위반이 50건 가까이 남아
-      # 있어 게이트로 걸면 처음부터 빨갛다. 정리한 뒤 `pnpm check` 로 넓힌다.
-      - name: Biome (format)
-        run: pnpm biome format .
+      # 포맷·린트·import 정렬. 로컬에서는 `pnpm check` 와 같다.
+      - name: Biome
+        run: pnpm check
 
       # 각 앱의 pretest 가 paraglide 메시지를 먼저 컴파일한다.
       - name: Test (web)

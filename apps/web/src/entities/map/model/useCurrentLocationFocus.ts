@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import {
   DEFAULT_CURRENT_LOCATION_OPTIONS,
   focusNaverMapOnCoordinates,
-  getCurrentMapCoordinates,
   type GeolocationPermission,
+  getCurrentMapCoordinates,
   type MapCoordinates,
   watchCurrentLocationPermission,
 } from "./current-location";

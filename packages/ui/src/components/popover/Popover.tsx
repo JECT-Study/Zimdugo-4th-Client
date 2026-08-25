@@ -1,12 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   Button as AriaButton,
-  Dialog,
-  DialogTrigger,
   Popover as AriaPopover,
-  type DialogRenderProps,
-  type DialogTriggerProps,
   type PopoverProps as AriaPopoverProps,
+  Dialog,
+  type DialogRenderProps,
+  DialogTrigger,
+  type DialogTriggerProps,
 } from "react-aria-components";
 import { IconX16 } from "../../tokens/icons/Icons.tsx";
 import { Button } from "../button/Button.tsx";

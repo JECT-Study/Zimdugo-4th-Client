@@ -8,7 +8,6 @@ export interface ProfileImageProps {
   /**
    * 사용자 ID. src가 없을 때 프로필 이미지 URL을 조회합니다.
    */
-  userId?: number | null;
   /**
    * 이미지 소스 URL. 직접 주입 시 API 조회보다 우선합니다.
    */
@@ -31,10 +30,11 @@ export interface ProfileImageProps {
 
 /**
  * 사용자 프로필 이미지 엔티티 컴포넌트.
- * userId가 제공되면 useUser로 프로필 이미지 URL을 조회합니다.
+ *
+ * 이미지 URL 은 호출부가 넘긴다. 예전에는 userId 를 받아 직접 조회하려던
+ * 흔적이 prop 으로 남아 있었는데, 넘기는 곳도 읽는 곳도 없어 지웠다.
  */
 export function ProfileImage({
-  userId,
   src: initialSrc,
   alt,
   size = 111,

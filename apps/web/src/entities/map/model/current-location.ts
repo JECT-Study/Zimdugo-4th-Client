@@ -118,7 +118,7 @@ export const focusNaverMapOnCoordinates = ({
     let targetSpan = latitudeSpan;
     if (isZoomingIn) {
       const zoomDiff = zoom - currentZoom;
-      targetSpan = latitudeSpan / Math.pow(2, zoomDiff);
+      targetSpan = latitudeSpan / 2 ** zoomDiff;
     }
 
     const verticalOffsetRatio =

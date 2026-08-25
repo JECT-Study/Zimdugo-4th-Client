@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { authService } from "../../features/auth/sign-in/api/authService";
 import { invalidatePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { useAuthStore } from "#/shared/store/authStore";
+import { authService } from "../../features/auth/sign-in/api/authService";
 
 export const useBootstrapAuth = () => {
   const queryClient = useQueryClient();
@@ -19,7 +19,7 @@ export const useBootstrapAuth = () => {
         useAuthStore.getState().setAuth(authData);
 
         await invalidatePersonalizedQueries(queryClient);
-      } catch (error) {
+      } catch {
         useAuthStore.getState().clearAuth();
       }
     };

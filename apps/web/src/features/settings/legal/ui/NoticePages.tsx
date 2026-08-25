@@ -211,6 +211,9 @@ export function NoticeDetailPage({ doc, onBack }: NoticeDetailPageProps) {
           <div className={noticeImageContainer}>
             {images.map((url, index) => (
               <img
+                // 같은 이미지가 여러 번 올 수 있어 url 만으로는 키가 겹친다.
+                // 목록이 재정렬되지 않으므로 index 를 함께 쓴다.
+                // biome-ignore lint/suspicious/noArrayIndexKey: 위 사유
                 key={`${url}-${index}`}
                 src={url}
                 alt={`${doc.title} - ${index + 1}`}

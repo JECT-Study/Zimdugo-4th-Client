@@ -1,5 +1,5 @@
-import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import { languageTag, m } from "@repo/i18n";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   type AppLocale,
   BASE_LOCALE,

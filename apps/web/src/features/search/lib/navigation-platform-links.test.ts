@@ -10,9 +10,9 @@ import {
   getNavigationPlatformUrl,
   hasNavigationDestination,
   openNavigationPlatformLinks,
+  resolveGoogleMapsHl,
   resolveNavigationOrigin,
   resolveNavigationOriginForDirections,
-  resolveGoogleMapsHl,
   sanitizeNaverNavigationLabel,
 } from "./navigation-platform-links";
 
