@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
-import { root, subtitle as subtitleStyle, title as titleStyle } from "./LabelTitle.css.ts";
+import {
+  root,
+  subtitle as subtitleStyle,
+  title as titleStyle,
+} from "./LabelTitle.css.ts";
 
 export type LabelTitleSize = "large" | "small";
 

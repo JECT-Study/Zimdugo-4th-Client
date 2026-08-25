@@ -67,11 +67,7 @@ export interface RadioProps
 }
 
 /** 개별 라디오 아이템 */
-export function Radio({
-  children,
-  className,
-  ...props
-}: RadioProps) {
+export function Radio({ children, className, ...props }: RadioProps) {
   const { labelLayout } = useContext(RadioContext);
 
   return (
@@ -84,7 +80,8 @@ export function Radio({
       }
     >
       {(renderProps: RadioRenderProps) => {
-        const { isSelected, isHovered, isPressed, isFocusVisible, isDisabled } = renderProps;
+        const { isSelected, isHovered, isPressed, isFocusVisible, isDisabled } =
+          renderProps;
 
         return (
           <>
@@ -97,9 +94,7 @@ export function Radio({
                 isDisabled,
               })}
             >
-              {isSelected ? (
-                <span className={dot({ isDisabled })} />
-              ) : null}
+              {isSelected ? <span className={dot({ isDisabled })} /> : null}
             </span>
             <span
               className={text({

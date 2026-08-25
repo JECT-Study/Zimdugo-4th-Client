@@ -69,14 +69,37 @@ export function LegalDocumentPage({
           title={title}
           onBack={handleBack}
         />
-        <main className={content} aria-label={m.settings_document_loading_aria()}>
-          <Skeleton width={200} height={16} borderRadius={6} style={SKELETON_SURFACE_STYLE} />
+        <main
+          className={content}
+          aria-label={m.settings_document_loading_aria()}
+        >
+          <Skeleton
+            width={200}
+            height={16}
+            borderRadius={6}
+            style={SKELETON_SURFACE_STYLE}
+          />
           <div className={documentBox} style={{ marginTop: 16 }}>
             {Array.from({ length: 3 }, (_, i) => (
               <div key={i} className={section}>
-                <Skeleton width={120} height={14} borderRadius={6} style={SKELETON_SURFACE_STYLE} />
-                <Skeleton width="100%" height={12} borderRadius={6} style={SKELETON_SURFACE_STYLE} />
-                <Skeleton width="80%" height={12} borderRadius={6} style={SKELETON_SURFACE_STYLE} />
+                <Skeleton
+                  width={120}
+                  height={14}
+                  borderRadius={6}
+                  style={SKELETON_SURFACE_STYLE}
+                />
+                <Skeleton
+                  width="100%"
+                  height={12}
+                  borderRadius={6}
+                  style={SKELETON_SURFACE_STYLE}
+                />
+                <Skeleton
+                  width="80%"
+                  height={12}
+                  borderRadius={6}
+                  style={SKELETON_SURFACE_STYLE}
+                />
               </div>
             ))}
           </div>
@@ -96,7 +119,10 @@ export function LegalDocumentPage({
           title={title}
           onBack={handleBack}
         />
-        <main className={content} style={{ textAlign: "center", paddingTop: 64 }}>
+        <main
+          className={content}
+          style={{ textAlign: "center", paddingTop: 64 }}
+        >
           <p className={introText}>{m.settings_document_error_title()}</p>
           <p className={paragraph} style={{ marginBottom: 16 }}>
             {m.settings_document_error_helper()}
@@ -133,7 +159,10 @@ export function LegalDocumentPage({
           title={title}
           onBack={handleBack}
         />
-        <main className={content} style={{ textAlign: "center", paddingTop: 64 }}>
+        <main
+          className={content}
+          style={{ textAlign: "center", paddingTop: 64 }}
+        >
           <p className={introText}>{m.settings_notice_empty()}</p>
         </main>
       </div>

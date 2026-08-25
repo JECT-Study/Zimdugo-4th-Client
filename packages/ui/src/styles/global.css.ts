@@ -31,7 +31,8 @@ METROPOLIS_WEIGHTS.forEach(({ fileName, fontWeight }) => {
 });
 
 globalStyle("html, body", {
-  fontFamily: '"Pretendard", "Metropolis", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily:
+    '"Pretendard", "Metropolis", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   height: "100%",
   margin: 0,
   padding: 0,

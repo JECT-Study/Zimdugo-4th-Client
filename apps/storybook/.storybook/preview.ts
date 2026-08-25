@@ -12,14 +12,7 @@ const preview: Preview = {
           ["Design System", ["Tokens", "Components"]],
           [
             "Product",
-            [
-              "Guides",
-              ["Navigation"],
-              "Search",
-              "Auth",
-              "My",
-              "Pages",
-            ],
+            ["Guides", ["Navigation"], "Search", "Auth", "My", "Pages"],
           ],
         ],
       },

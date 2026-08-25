@@ -1,10 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
-import {
-  type LockerVoteType,
-  postLockerVote,
-} from "../api/post-locker-vote";
+import { type LockerVoteType, postLockerVote } from "../api/post-locker-vote";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
 import {

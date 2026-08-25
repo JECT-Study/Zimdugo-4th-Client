@@ -1,10 +1,6 @@
 import { languageTag } from "@repo/i18n";
 
-import {
-  type AppLocale,
-  BASE_LOCALE,
-  normalizeLocale,
-} from "./locales";
+import { type AppLocale, BASE_LOCALE, normalizeLocale } from "./locales";
 
 export type ApiLocale = "ko-KR" | "en-US" | "ja-JP" | "zh-CN" | "zh-TW";
 

@@ -39,4 +39,3 @@ export const subtitle = style({
   color: vars.color.text.surface,
   flexShrink: 0,
 });
-

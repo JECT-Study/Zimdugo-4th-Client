@@ -47,7 +47,9 @@ const syncSnapshotFromStorage = (): SearchHistoryEntry[] => {
 export const readSearchHistoryEntries = (): SearchHistoryEntry[] =>
   syncSnapshotFromStorage();
 
-export const writeSearchHistoryEntries = (entries: SearchHistoryEntry[]): void => {
+export const writeSearchHistoryEntries = (
+  entries: SearchHistoryEntry[],
+): void => {
   if (typeof window === "undefined") {
     return;
   }
@@ -65,13 +67,18 @@ export const writeSearchHistoryEntries = (entries: SearchHistoryEntry[]): void =
 export const appendSearchHistoryEntry = (
   input: SearchHistoryInput,
 ): SearchHistoryEntry[] => {
-  const nextEntries = upsertSearchHistoryEntry(readSearchHistoryEntries(), input);
+  const nextEntries = upsertSearchHistoryEntry(
+    readSearchHistoryEntries(),
+    input,
+  );
   writeSearchHistoryEntries(nextEntries);
   return nextEntries;
 };
 
 export const removeSearchHistoryEntry = (id: string): SearchHistoryEntry[] => {
-  const nextEntries = readSearchHistoryEntries().filter((entry) => entry.id !== id);
+  const nextEntries = readSearchHistoryEntries().filter(
+    (entry) => entry.id !== id,
+  );
   writeSearchHistoryEntries(nextEntries);
   return nextEntries;
 };

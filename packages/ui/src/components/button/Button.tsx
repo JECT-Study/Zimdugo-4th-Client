@@ -29,7 +29,9 @@ export function Button({
 }: ButtonProps) {
   const defaultLabel = typeof children === "string" ? children : "요청 처리";
   const resolvedAriaLabel = isLoading
-    ? (ariaLabel ? `${ariaLabel} 중...` : `${defaultLabel} 중...`)
+    ? ariaLabel
+      ? `${ariaLabel} 중...`
+      : `${defaultLabel} 중...`
     : ariaLabel;
 
   return (

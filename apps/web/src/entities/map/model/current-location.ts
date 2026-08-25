@@ -45,10 +45,7 @@ export const getCurrentMapCoordinates = (
 
 export const getCurrentLocationPermission =
   async (): Promise<GeolocationPermission | null> => {
-    if (
-      typeof navigator === "undefined" ||
-      !navigator.permissions?.query
-    ) {
+    if (typeof navigator === "undefined" || !navigator.permissions?.query) {
       return null;
     }
 
@@ -109,8 +106,7 @@ export const focusNaverMapOnCoordinates = ({
   const ne = bounds?.getNE?.();
   const sw = bounds?.getSW?.();
   const viewportHeight = size?.height ?? 0;
-  const latitudeSpan =
-    ne && sw ? Math.abs(ne.lat() - sw.lat()) : 0;
+  const latitudeSpan = ne && sw ? Math.abs(ne.lat() - sw.lat()) : 0;
 
   const currentZoom = map.getZoom();
   let adjustedLatitude = coordinates.lat;

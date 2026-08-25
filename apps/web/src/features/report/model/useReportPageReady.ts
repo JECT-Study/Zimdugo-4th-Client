@@ -1,8 +1,4 @@
-import {
-  type RefObject,
-  useLayoutEffect,
-  useState,
-} from "react";
+import { type RefObject, useLayoutEffect, useState } from "react";
 
 /** ~3s @ 60fps — CSS 청크 지연 대비 */
 const STYLE_READY_CHECK_LIMIT = 180;

@@ -41,7 +41,9 @@ describe("search-history-storage", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { readSearchHistoryEntries } = await import("./search-history-storage");
+    const { readSearchHistoryEntries } = await import(
+      "./search-history-storage"
+    );
 
     expect(readSearchHistoryEntries()).toEqual([]);
   });
@@ -54,7 +56,9 @@ describe("search-history-storage", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { writeSearchHistoryEntries } = await import("./search-history-storage");
+    const { writeSearchHistoryEntries } = await import(
+      "./search-history-storage"
+    );
 
     expect(() =>
       writeSearchHistoryEntries([
@@ -69,9 +73,8 @@ describe("search-history-storage", () => {
   });
 
   it("저장한 검색 히스토리를 읽어온다", async () => {
-    const { writeSearchHistoryEntries, readSearchHistoryEntries } = await import(
-      "./search-history-storage"
-    );
+    const { writeSearchHistoryEntries, readSearchHistoryEntries } =
+      await import("./search-history-storage");
     const entries = [
       {
         kind: "keyword" as const,

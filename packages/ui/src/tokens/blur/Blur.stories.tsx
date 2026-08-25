@@ -28,8 +28,8 @@ function BlurTokens() {
       <div className={styles.pageHeader}>
         <h2 className={styles.pageTitle}>Blur Tokens</h2>
         <p className={styles.pageSubtitle}>
-          backdrop-filter 또는 filter에 사용하는 블러 토큰입니다.
-          calc를 조합해 단계적으로 조절할 수 있습니다.
+          backdrop-filter 또는 filter에 사용하는 블러 토큰입니다. calc를 조합해
+          단계적으로 조절할 수 있습니다.
         </p>
       </div>
 

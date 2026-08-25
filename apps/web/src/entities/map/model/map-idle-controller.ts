@@ -62,8 +62,14 @@ export const readViewport = (map: naver.maps.Map): MapViewport => {
     center: { lat: centerLat, lng: centerLng },
     zoom: map.getZoom(),
     bounds: {
-      northEast: { lat: ne?.lat?.() ?? centerLat, lng: ne?.lng?.() ?? centerLng },
-      southWest: { lat: sw?.lat?.() ?? centerLat, lng: sw?.lng?.() ?? centerLng },
+      northEast: {
+        lat: ne?.lat?.() ?? centerLat,
+        lng: ne?.lng?.() ?? centerLng,
+      },
+      southWest: {
+        lat: sw?.lat?.() ?? centerLat,
+        lng: sw?.lng?.() ?? centerLng,
+      },
     },
     size: size ? { width: size.width, height: size.height } : undefined,
   };
@@ -133,7 +139,10 @@ export const subscribeMapIdle = ({
   const handler = () => {
     if (isCancelled) return;
     const viewport = readViewport(map);
-    if (lastViewport !== null && !isViewportChangedSignificantly(lastViewport, viewport)) {
+    if (
+      lastViewport !== null &&
+      !isViewportChangedSignificantly(lastViewport, viewport)
+    ) {
       return;
     }
     lastViewport = viewport;

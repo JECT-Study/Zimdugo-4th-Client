@@ -10,7 +10,9 @@ describe("getReportValidationMessage", () => {
     expect(getReportValidationMessage("pair_required")).toBe(
       m.report_error_time_pair_required(),
     );
-    expect(getReportValidationMessage("required")).toBe(m.report_error_required());
+    expect(getReportValidationMessage("required")).toBe(
+      m.report_error_required(),
+    );
   });
 
   it("서버 validation.* 키는 사용자 메시지로 변환한다", () => {

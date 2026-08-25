@@ -4,7 +4,8 @@ import {
 } from "react-aria-components";
 import { root, thumb, track } from "./Toggle.css.ts";
 
-export interface ToggleProps extends Omit<AriaSwitchProps, "className" | "children"> {
+export interface ToggleProps
+  extends Omit<AriaSwitchProps, "className" | "children"> {
   className?: string;
 }
 

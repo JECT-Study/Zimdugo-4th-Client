@@ -48,8 +48,7 @@ export function useCurrentLocationFocus({
   );
   const [isCentered, setIsCentered] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
-  const [permission, setPermission] =
-    useState<GeolocationPermission>("prompt");
+  const [permission, setPermission] = useState<GeolocationPermission>("prompt");
 
   const focusCachedLocation = useCallback(() => {
     const didFocus = focusNaverMapOnCoordinates({
