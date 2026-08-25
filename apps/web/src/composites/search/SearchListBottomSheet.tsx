@@ -5,6 +5,7 @@ import { IconFilter14 } from "@repo/ui/tokens/icons";
 import {
   type CSSProperties,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -59,6 +60,15 @@ export type {
   SearchResultItem,
 } from "./search-list-model";
 
+export interface SearchListSheetLiveOffsetState {
+  /** 뷰포트 상단부터 시트 상단까지 거리. `100dvh - offsetPx` 가 시트가 차지하는 높이다. */
+  offsetPx: number;
+  /** 마운트 슬라이드 진행도. 0 이면 시트가 아직 화면 밖, 1 이면 제자리다. */
+  mountProgress: number;
+  /** 오프셋이 목표 스냅에 닿았는지. 스냅 애니메이션 중에는 false 다. */
+  isSettled: boolean;
+}
+
 export interface SearchListBottomSheetProps {
   searchQuery: string;
   items?: SearchResultItem[];
@@ -83,6 +93,11 @@ export interface SearchListBottomSheetProps {
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
   onSnapStageChange?: (nextStage: SearchListSheetSnapStage) => void;
+  /**
+   * 프레임마다 불린다. 지도 컨트롤이 시트 윗변을 따라오게 하는 용도다.
+   * 부모는 identity 가 고정된 콜백을 넘겨야 한다.
+   */
+  onLiveOffsetChange?: (state: SearchListSheetLiveOffsetState) => void;
   snapRequest?: SearchListSheetSnapRequest | null;
   onDismiss?: () => void;
   children?: ReactNode;
@@ -296,6 +311,7 @@ export function SearchListBottomSheet({
   maxSnapPoint,
   onSnapChange,
   onSnapStageChange,
+  onLiveOffsetChange,
   snapRequest,
   onDismiss,
   children,
@@ -398,11 +414,22 @@ export function SearchListBottomSheet({
     });
   };
 
-  const handleLiveOffsetChange = ({
-    expandedProgress,
-  }: BottomSheetLiveOffsetState) => {
-    setExpandedProgress(expandedProgress);
-  };
+  /**
+   * 프레임마다 불린다. identity 가 매 렌더 바뀌면 시트 쪽 구독 effect 가
+   * 그때마다 떼었다 붙으므로 useCallback 으로 고정한다.
+   */
+  const handleLiveOffsetChange = useCallback(
+    ({
+      expandedProgress,
+      mountProgress,
+      offset,
+      isSettled,
+    }: BottomSheetLiveOffsetState) => {
+      setExpandedProgress(expandedProgress);
+      onLiveOffsetChange?.({ offsetPx: offset, mountProgress, isSettled });
+    },
+    [onLiveOffsetChange],
+  );
   const handleSnapChange = (nextSnap: number) => {
     onSnapChange?.(nextSnap);
     onSnapStageChange?.(

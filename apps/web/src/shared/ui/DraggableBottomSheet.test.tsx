@@ -22,6 +22,14 @@ vi.mock("motion/react", () => {
     return {
       get: () => value,
       set: (nextValue: number) => {
+        // 실제 motion 은 값이 그대로면 change 를 띄우지 않는다
+        // (motion-dom MotionValue.updateAndNotify: current !== prev).
+        // 이걸 흉내 내지 않으면 초기 스냅 동기화의 같은 값 set 이 알림을 내서,
+        // 구독 시점 알림이 없어도 부모가 값을 받은 것처럼 보인다.
+        if (Object.is(value, nextValue)) {
+          return;
+        }
+
         value = nextValue;
         listeners.forEach((listener) => {
           listener(nextValue);
@@ -71,6 +79,8 @@ vi.mock("motion/react", () => {
     },
     useMotionTemplate: () => "calc(100dvh - 0px)",
     useMotionValue: createMotionValue,
+    useTransform: (source: TestMotionValue, transform: (v: number) => string) =>
+      transform(source.get()),
   };
 });
 
@@ -276,6 +286,89 @@ describe("resolveBottomSheetDragIntent", () => {
 });
 
 describe("DraggableBottomSheet", () => {
+  it("마운트 직후 현재 오프셋을 한 번 알려 준다", () => {
+    // change 만 듣고 있으면 이 값이 부모에 도달하지 않는다. 초기 스냅 동기화가
+    // 돌긴 하지만 이미 같은 값이라 motion 이 알림을 걸러 버린다. 부모는 첫
+    // 드래그 전까지 시트 위치를 모르고, 그 값으로 자리를 잡는 지도 컨트롤은
+    // 그동안 시트 뒤에 깔린 채 남는다.
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleLiveOffsetChange).toHaveBeenCalled();
+    expect(handleLiveOffsetChange.mock.calls[0][0].offset).toBe(120);
+  });
+
+  it("마운트 슬라이드 중에는 진행도를 0 에서 시작해 함께 알린다", () => {
+    // offset 은 첫 프레임부터 최종 스냅 값이라 시트가 어디까지 올라왔는지 모른다.
+    // 시트 윗변에 붙어 다니는 요소가 허공에 뜨지 않으려면 이 값이 필요하다.
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        animateOnMount
+        snapPoint={120}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleLiveOffsetChange.mock.calls[0][0].mountProgress).toBe(0);
+    // 슬라이드가 끝나면 1 로 올라온다(mock 의 animate 는 즉시 목표값을 넣는다).
+    expect(handleLiveOffsetChange.mock.calls.at(-1)?.[0].mountProgress).toBe(1);
+  });
+
+  it("마운트 애니메이션이 없으면 진행도가 처음부터 1 이다", () => {
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleLiveOffsetChange.mock.calls[0][0].mountProgress).toBe(1);
+  });
+
+  it("스냅 애니메이션이 시작되면 안착 전까지 isSettled 가 false 다", () => {
+    // settleToSnapPoint 는 스프링을 시작하자마자 onSnapChange 를 부른다. 단계로만
+    // 위치를 정하면 시트가 아직 움직이는 중에 따라다니는 요소가 먼저 튄다.
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        maxSnapPoint={600}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleLiveOffsetChange.mock.calls[0][0].isSettled).toBe(true);
+    handleLiveOffsetChange.mockClear();
+
+    // 목표와 다른 오프셋이 흘러 들어오는 동안은 아직 안착이 아니다.
+    fireEvent.pointerDown(screen.getByTestId("sheet-surface"), {
+      clientY: 120,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(window, { clientY: 300, pointerId: 1 });
+
+    expect(handleLiveOffsetChange.mock.calls.at(-1)?.[0].isSettled).toBe(false);
+  });
+
   it("updates live offset from a non-interactive sheet surface", () => {
     const handleLiveOffsetChange = vi.fn();
 

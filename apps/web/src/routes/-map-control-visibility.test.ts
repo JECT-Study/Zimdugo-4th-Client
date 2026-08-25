@@ -78,6 +78,33 @@ describe("shouldShowHomeHeader", () => {
   });
 });
 
+describe("full 시트가 화면을 다 덮지 못할 때", () => {
+  it("위에 자리가 남으면 컨트롤을 시트 위로 올린다", () => {
+    // 콘텐츠가 짧은 보관함은 full 이어도 시트 상단이 400px 에 머문다.
+    // 808 - 400 = 408 을 피하고도 상단 경계(808 - 216 = 592)를 지킬 수 있다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 408,
+        windowHeightPx: 808,
+      }),
+    ).toBe(420);
+  });
+
+  it("자리가 없으면 기본 위치로 되돌리지 않고 숨긴다", () => {
+    // 실시간 카드가 있는 보관함은 full 이 112px 까지 올라간다. 예전에는 full 을
+    // 무조건 null 로 봐서 컨트롤을 기본 70px 에 뒀는데, 그 자리는 시트 뒤라
+    // 보이지도 눌리지도 않았다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 696,
+        windowHeightPx: 808,
+      }),
+    ).toBeNull();
+  });
+});
+
 describe("resolveDetailSheetVisibleHeight", () => {
   it("미니와 하프까지 컨트롤이 따라 올라갈 높이를 준다", () => {
     expect(resolveDetailSheetVisibleHeight("mini")).toBe(111);

@@ -11,13 +11,14 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { motion } from "motion/react";
+import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   resolveDetailSheetVisibleHeight,
   LockerDetailBottomSheet,
+  type LockerDetailSheetLiveOffsetState,
   type LockerDetailSheetSnapStage,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
@@ -60,8 +61,11 @@ import {
   useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
-import { SHEET_SETTLE_SPRING } from "#/shared/ui/DraggableBottomSheet";
-import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
+import {
+  MAP_CONTROL_FALLBACK_BOTTOM_PX,
+  MAP_CONTROL_SHEET_GAP_PX,
+  MAP_CONTROL_TOP_RESERVED_PX,
+} from "#/entities/map/ui/map-control-stack-fallback";
 import {
   clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
@@ -684,6 +688,45 @@ export function IndexPage() {
    * 값을 내므로 하이드레이션도 어긋나지 않는다.
    */
   const [hasMeasuredViewport, setHasMeasuredViewport] = useState(false);
+  /**
+   * 시트 윗변의 라이브 위치. 프레임마다 바뀌므로 state 가 아니라 motion value 다.
+   *
+   * state 로 두면 지도까지 들고 있는 이 컴포넌트가 드래그 내내 초당 60번 리렌더된다.
+   * 시트가 없을 때는 뷰포트 높이를 넣어 "차지하는 높이 0" 으로 만든다.
+   */
+  const sheetLiveOffset = useMotionValue(windowHeight);
+  /**
+   * 시트가 마운트 슬라이드로 올라오는 동안의 진행도. 0 이면 아직 화면 밖이다.
+   *
+   * 라이브 오프셋만 보면 시트가 열리는 첫 프레임부터 최종 스냅 값이 들어와,
+   * 컨트롤이 최종 높이로 먼저 뛰어오른 뒤 시트가 뒤따라 올라온다. 그동안
+   * 버튼이 허공에 떠 보인다. 시트가 실제로 차지한 높이에 이 비율을 곱한다.
+   */
+  const sheetMountProgress = useMotionValue(1);
+  /**
+   * 시트가 목표 스냅에 닿았는지. 프레임마다 바뀌는 값이 아니라 제스처당 두 번만
+   * 뒤집히므로 state 로 둔다.
+   */
+  const [isSheetSettled, setIsSheetSettled] = useState(true);
+  /**
+   * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
+   * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
+   * 계산하므로 React 렌더가 필요 없다.
+   */
+  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc((100dvh - ${sheetLiveOffset}px) * ${sheetMountProgress} + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
+  const handleSheetLiveOffsetChange = useCallback(
+    ({
+      offsetPx,
+      mountProgress,
+      isSettled,
+    }: LockerDetailSheetLiveOffsetState) => {
+      sheetLiveOffset.set(offsetPx);
+      sheetMountProgress.set(mountProgress);
+      setIsSheetSettled(isSettled);
+    },
+    [sheetLiveOffset, sheetMountProgress],
+  );
+
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
@@ -717,6 +760,16 @@ export function IndexPage() {
   } = useSheetSnapRequest<SearchListSheetSnapStage>();
   const [detailSheetSnapStage, setDetailSheetSnapStage] =
     useState<LockerDetailSheetSnapStage>("half");
+  /**
+   * 상세 시트가 지금 단계에서 실제로 차지하는 높이. 시트가 올려 준다.
+   *
+   * full 은 콘텐츠 높이에 따라 자리가 달라져 단계 상수로는 알 수 없다. 실시간
+   * 카드가 있는 보관함은 시트가 더 높이 올라가고, 없는 보관함은 위에 지도가
+   * 남는다. 그 차이를 컨트롤 배치에 반영하려면 실측값이 필요하다.
+   */
+  const [detailSheetVisibleHeight, setDetailSheetVisibleHeight] = useState<
+    number | null
+  >(() => resolveDetailSheetVisibleHeight("half"));
   const {
     snapRequest: detailSheetSnapRequest,
     requestSnap: requestDetailSheetSnap,
@@ -2213,8 +2266,9 @@ export function IndexPage() {
   );
 
   const handleDetailSheetSnapStageChange = useCallback(
-    (nextStage: LockerDetailSheetSnapStage) => {
+    (nextStage: LockerDetailSheetSnapStage, visibleHeightPx: number | null) => {
       setDetailSheetSnapStage(nextStage);
+      setDetailSheetVisibleHeight(visibleHeightPx);
     },
     [],
   );
@@ -3007,10 +3061,13 @@ export function IndexPage() {
     isSearchContextActive: context === "search",
     hasMapError,
   });
+  // 스켈레톤은 하이드레이션 전에도 그려지므로 라이브 오프셋을 쓸 수 없다.
+  // 시트가 아직 없는 단계라 정적 계산이 맞고, 실제 컨트롤로 넘어갈 때는 이미
+  // 시트가 자리를 잡아 두 값이 같은 위치를 가리킨다.
   const sheetVisibleHeight = !hasMeasuredViewport
     ? null
     : sheetMode === "detail"
-      ? resolveDetailSheetVisibleHeight(detailSheetSnapStage)
+      ? detailSheetVisibleHeight
       : sheetMode === "list"
         ? resolveSearchListStageVisibleHeight(listSheetSnapStage, windowHeight)
         : null;
@@ -3019,6 +3076,42 @@ export function IndexPage() {
     sheetVisibleHeightPx: sheetVisibleHeight,
     windowHeightPx: windowHeight,
   });
+
+  /**
+   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 단계가 바뀔 때만 정하고 프레임마다 다시
+   * 계산하지 않는다. 라이브 오프셋으로 판정하면 드래그 중 컨트롤이 깜빡인다.
+   *
+   * full 도 자리가 있으면 밀어 올린다. 상세 시트의 full 은 콘텐츠가 짧으면 화면을
+   * 다 덮지 못해 위에 지도가 남는데, 거기서도 새로고침·내 위치를 쓸 수 있어야 한다.
+   * 자리가 없으면 resolveMapControlBottomPx 가 null 을 줘 숨겨진다.
+   * dismiss 와 filter 시트는 시트 쪽이 null 을 준다.
+   */
+  const isMapControlRaised = sheetVisibleHeight !== null;
+  /**
+   * 시트 윗변을 따라갈지. 밀어 올릴 단계가 아니어도 시트가 아직 움직이는 중이면
+   * 계속 따라간다.
+   *
+   * 시트는 스프링을 시작하자마자 단계를 바꾼다. 단계만 보면 하프에서 full 로
+   * 스냅할 때 컨트롤이 손을 떼는 순간 기본 위치로 툭 떨어지고, 시트는 그 뒤에
+   * 300ms 동안 올라온다. 안착한 뒤에 넘기면 그 구간이 없다.
+   *
+   * 시트가 아예 없는 동안은 따라갈 대상이 없다. 애니메이션 도중에 시트가
+   * 사라져 isSettled 가 false 로 굳는 경우도 여기서 걸러진다.
+   */
+  const isSheetMounted = sheetMode === "detail" || sheetMode === "list";
+  const shouldTrackSheet =
+    isSheetMounted && (isMapControlRaised || !isSheetSettled);
+
+  /**
+   * 시트가 사라진 뒤에도 오프셋이 과거 값에 멈춰 있으면 컨트롤이 없는 시트 위에
+   * 떠 있게 된다. 밀어 올릴 단계가 아니면 "차지하는 높이 0" 으로 되돌린다.
+   */
+  useEffect(() => {
+    if (!shouldTrackSheet) {
+      sheetLiveOffset.set(windowHeight);
+      sheetMountProgress.set(1);
+    }
+  }, [shouldTrackSheet, sheetLiveOffset, sheetMountProgress, windowHeight]);
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3361,8 +3454,11 @@ export function IndexPage() {
         <motion.div
           className={locationControlStack}
           initial={false}
-          animate={{ bottom: mapControlBottom }}
-          transition={SHEET_SETTLE_SPRING}
+          style={{
+            bottom: shouldTrackSheet
+              ? mapControlRaisedBottom
+              : MAP_CONTROL_FALLBACK_BOTTOM_PX,
+          }}
         >
           <RefreshButton
             isRefreshing={isRefreshing}
@@ -3469,6 +3565,7 @@ export function IndexPage() {
           onDismiss={listSheetDismissPress}
           snapRequest={listSheetSnapRequest}
           onSnapStageChange={handleListSheetSnapStageChange}
+          onLiveOffsetChange={handleSheetLiveOffsetChange}
         />
       ) : null}
 
@@ -3500,6 +3597,7 @@ export function IndexPage() {
           animateOnMount={lockerDetailAnimatesOnMount}
           snapRequest={detailSheetSnapRequest}
           onSnapStageChange={handleDetailSheetSnapStageChange}
+          onLiveOffsetChange={handleSheetLiveOffsetChange}
         />
       ) : null}
 
