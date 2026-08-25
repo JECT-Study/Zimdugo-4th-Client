@@ -10,6 +10,7 @@
     "build": "pnpm --filter @repo/i18n build && pnpm --filter \"{apps/*}\" --workspace-concurrency=1 build",
     "preview:web": "pnpm --filter web preview",
     "preview:admin": "pnpm --filter admin preview",
+    "typecheck": "pnpm --filter web typecheck && pnpm --filter admin typecheck",
     "test:web": "pnpm --filter web test",
     "test:admin": "pnpm --filter admin test",
     "format": "biome format",

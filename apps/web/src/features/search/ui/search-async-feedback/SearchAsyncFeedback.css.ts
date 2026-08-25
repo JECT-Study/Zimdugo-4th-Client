@@ -8,7 +8,9 @@ export const root = style({
   justifyContent: "center",
   gap: vars.spacing[12],
   width: "100%",
-  padding: `${vars.spacing[40]} ${vars.spacing[20]}`,
+  // spacing 스케일은 28 까지다. 40 은 없어서 undefined 가 들어갔고, padding
+  // 선언 전체가 무효가 돼 여백이 아예 없는 상태였다. 의도한 값으로 되돌린다.
+  padding: `40px ${vars.spacing[20]}`,
   boxSizing: "border-box",
   textAlign: "center",
 });
