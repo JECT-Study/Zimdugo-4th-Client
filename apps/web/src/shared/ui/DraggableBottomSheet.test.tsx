@@ -22,6 +22,14 @@ vi.mock("motion/react", () => {
     return {
       get: () => value,
       set: (nextValue: number) => {
+        // 실제 motion 은 값이 그대로면 change 를 띄우지 않는다
+        // (motion-dom MotionValue.updateAndNotify: current !== prev).
+        // 이걸 흉내 내지 않으면 초기 스냅 동기화의 같은 값 set 이 알림을 내서,
+        // 구독 시점 알림이 없어도 부모가 값을 받은 것처럼 보인다.
+        if (Object.is(value, nextValue)) {
+          return;
+        }
+
         value = nextValue;
         listeners.forEach((listener) => {
           listener(nextValue);
@@ -277,9 +285,10 @@ describe("resolveBottomSheetDragIntent", () => {
 
 describe("DraggableBottomSheet", () => {
   it("마운트 직후 현재 오프셋을 한 번 알려 준다", () => {
-    // 부모가 이 값으로 자리를 잡으므로 첫 드래그 전에도 알고 있어야 한다.
-    // 지금은 초기 스냅 동기화의 set 이 change 를 띄워 주지만, 그 동작에 기대지
-    // 않도록 구독 시점 알림을 계약으로 못 박는다.
+    // change 만 듣고 있으면 이 값이 부모에 도달하지 않는다. 초기 스냅 동기화가
+    // 돌긴 하지만 이미 같은 값이라 motion 이 알림을 걸러 버린다. 부모는 첫
+    // 드래그 전까지 시트 위치를 모르고, 그 값으로 자리를 잡는 지도 컨트롤은
+    // 그동안 시트 뒤에 깔린 채 남는다.
     const handleLiveOffsetChange = vi.fn();
 
     render(

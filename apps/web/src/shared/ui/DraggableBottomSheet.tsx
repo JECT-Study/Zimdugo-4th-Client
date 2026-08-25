@@ -321,11 +321,12 @@ export function DraggableBottomSheet({
   useEffect(() => {
     // 구독을 걸면서 현재 값을 한 번 흘려 준다.
     //
-    // 지금은 아래 초기 스냅 동기화가 마운트마다 반드시 돌고(lastInitialSnapRef 가
-    // null 로 시작한다) 그때의 set 이 change 를 띄워서 부모도 값을 받는다. 다만
-    // 그건 "같은 값으로 set 해도 알림이 온다" 는 motion 의 현재 동작에 기댄 것이라,
-    // 부모가 첫 값을 못 받으면 그 값으로 자리를 잡는 쪽이 시트 뒤에 깔린 채 남는다.
-    // 구독 시점에 한 번 내보내 그 보장을 이 컴포넌트 안에 둔다.
+    // change 만 듣고 있으면 마운트 시점 값이 부모에 도달하지 않는다. 아래 초기
+    // 스냅 동기화가 돌긴 하지만 sheetOffset 이 이미 그 값으로 만들어져 있어서
+    // 같은 값 set 이 되고, motion 은 값이 그대로면 change 를 띄우지 않는다
+    // (motion-dom MotionValue.updateAndNotify 의 current !== prev 검사).
+    // 그러면 부모는 첫 드래그나 스냅 전환 전까지 시트가 어디 있는지 모르고,
+    // 이 값으로 자리를 잡는 쪽은 그동안 시트 뒤에 깔린 채 남는다.
     notifyLiveOffsetChange(clampSnap(sheetOffset.get()));
 
     return sheetOffset.on("change", (offset) => {
