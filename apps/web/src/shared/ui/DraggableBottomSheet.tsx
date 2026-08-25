@@ -282,7 +282,6 @@ export function DraggableBottomSheet({
   const clampedInitialSnap = clampSnap(resolvedInitialSnap);
   const [_currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
   const sheetOffset = useMotionValue(clampedInitialSnap);
-  const sheetHeight = useMotionTemplate`calc(100dvh - ${sheetOffset}px)`;
   /**
    * 마운트 슬라이드를 값으로 소유한다.
    *
@@ -293,10 +292,6 @@ export function DraggableBottomSheet({
   // 마운트 시점의 값만 본다. 이 prop 은 부모 state 라 나중에 바뀔 수 있는데,
   // 그때 슬라이드를 다시 재생하면 떠 있던 시트가 아래에서 올라온다.
   const animateAtMountRef = useRef(animateOnMount);
-  const mountTranslateY = useTransform(
-    mountProgress,
-    (progress) => `${(1 - progress) * 100}%`,
-  );
   const dragStateRef = useRef<DragState | null>(null);
   const pendingDragStateRef = useRef<PendingDragState | null>(null);
   const activeListenersRef = useRef<{
@@ -316,6 +311,13 @@ export function DraggableBottomSheet({
    * 이펙트로는 막을 수 없다 — 자식 이펙트가 부모보다 먼저 실행되기 때문이다.
    */
   const lastSnapRequestIdRef = useRef<number | null>(snapRequest?.id ?? null);
+  // 파생 값
+  const sheetHeight = useMotionTemplate`calc(100dvh - ${sheetOffset}px)`;
+  const mountTranslateY = useTransform(
+    mountProgress,
+    (progress) => `${(1 - progress) * 100}%`,
+  );
+
   const snapPoints = useMemo(
     () =>
       Array.from(
