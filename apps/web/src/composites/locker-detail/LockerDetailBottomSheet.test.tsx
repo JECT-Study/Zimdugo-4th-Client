@@ -813,7 +813,12 @@ describe("LockerDetailBottomSheet", () => {
     const latestSheetProps = draggableBottomSheetMock.mock.calls.at(-1)?.[0];
     latestSheetProps?.onSnapChange?.(latestSheetProps?.minSnapPoint ?? 112);
 
-    expect(handleSnapStageChange).toHaveBeenCalledWith("full");
+    // 두 번째 인자는 그 단계에서 시트가 실제로 차지하는 높이다. full 은 콘텐츠
+    // 높이에 따라 달라져 상수로 단정할 수 없다.
+    expect(handleSnapStageChange).toHaveBeenCalledWith(
+      "full",
+      expect.any(Number),
+    );
     expect(latestSheetProps?.snapRequest).toEqual({
       id: 1,
       snapPoint: latestSheetProps?.minSnapPoint,

@@ -144,7 +144,14 @@ export interface LockerDetailBottomSheetProps {
   maxSnapPoint?: number;
   animateOnMount?: boolean;
   onSnapChange?: (nextSnap: number) => void;
-  onSnapStageChange?: (nextStage: LockerDetailSheetSnapStage) => void;
+  /**
+   * 두 번째 인자는 그 단계에서 시트가 실제로 차지하는 높이다. full 은 콘텐츠
+   * 높이에 따라 달라지므로 상수로 정할 수 없다. dismiss 면 null 이다.
+   */
+  onSnapStageChange?: (
+    nextStage: LockerDetailSheetSnapStage,
+    visibleHeightPx: number | null,
+  ) => void;
   /**
    * 프레임마다 불린다. 지도 컨트롤이 시트 윗변을 따라오게 하는 용도다.
    *
@@ -166,8 +173,10 @@ const DETAIL_DRAG_SENSITIVITY = 1.2;
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
 
 /**
- * 해당 단계에서 시트가 화면 하단에 차지하는 높이. 지도 컨트롤이 이 위로 올라간다.
- * full·dismiss 는 컨트롤이 시트를 피할 단계가 아니라 null 을 준다.
+ * 단계별 기본 높이. 시트가 아직 자기 스냅을 못 정했을 때 쓰는 초기값이다.
+ *
+ * full 은 콘텐츠 높이에 따라 자리가 달라져 여기서 정할 수 없다. 실제 값은 시트가
+ * onSnapStageChange 로 올려 준다. dismiss 는 사실상 닫힌 상태라 null 이다.
  */
 export const resolveDetailSheetVisibleHeight = (
   stage: LockerDetailSheetSnapStage,
@@ -485,6 +494,55 @@ export function LockerDetailBottomSheet({
     setIsMoreActionsOpen(true);
   };
 
+  /**
+   * 그 단계에서 시트가 화면 하단에 차지하는 높이.
+   *
+   * full 은 콘텐츠가 짧으면 화면을 다 덮지 못한다. 그때 지도 컨트롤을 무조건
+   * 숨기면 시트 위에 남은 지도에서 새로고침·내 위치를 쓸 수 없고, 예전처럼 기본
+   * 위치에 두면 시트 뒤에 깔려 눌리지도 않는다. 실제 높이를 올려 보내 컨트롤
+   * 쪽이 놓을 자리가 있는지 직접 판단하게 한다.
+   */
+  const resolveStageVisibleHeight = (stage: LockerDetailSheetSnapStage) =>
+    stage === "dismiss"
+      ? null
+      : Math.max(
+          0,
+          windowHeight -
+            (stage === "full"
+              ? resolvedMinSnapPoint
+              : stage === "half"
+                ? resolvedSnapPoint
+                : resolvedMiniSnapPoint),
+        );
+
+  /**
+   * 같은 값을 두 번 알리지 않는다.
+   *
+   * 단계가 바뀔 때는 onSnapChange 와 같은 틱에 알려야 해서 handleSnapChange 가
+   * 직접 부르고, 콘텐츠가 측정돼 full 자리만 바뀌는 경우는 아래 이펙트가 부른다.
+   * 두 경로가 겹칠 때 중복 호출을 막는다.
+   */
+  const lastStageNoticeRef = useRef<string | null>(null);
+  const notifySnapStage = useCallback(
+    (stage: LockerDetailSheetSnapStage, visibleHeightPx: number | null) => {
+      const key = `${stage}|${visibleHeightPx}`;
+      if (lastStageNoticeRef.current === key) {
+        return;
+      }
+
+      lastStageNoticeRef.current = key;
+      onSnapStageChange?.(stage, visibleHeightPx);
+    },
+    [onSnapStageChange],
+  );
+
+  useEffect(() => {
+    notifySnapStage(
+      currentSnapStage,
+      resolveStageVisibleHeight(currentSnapStage),
+    );
+  });
+
   const handleSnapChange = (nextSnap: number) => {
     const nextStage = resolveLockerDetailSnapStage({
       maxSnapPoint: resolvedMaxSnapPoint,
@@ -498,7 +556,7 @@ export function LockerDetailBottomSheet({
     snapTargetOffsetRef.current = nextSnap;
     setIsOffsetAtSnapTarget(sheetOffsetValue.get() <= nextSnap);
     onSnapChange?.(nextSnap);
-    onSnapStageChange?.(nextStage);
+    notifySnapStage(nextStage, resolveStageVisibleHeight(nextStage));
   };
 
   /**

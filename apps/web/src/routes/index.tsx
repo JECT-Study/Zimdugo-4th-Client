@@ -760,6 +760,16 @@ export function IndexPage() {
   } = useSheetSnapRequest<SearchListSheetSnapStage>();
   const [detailSheetSnapStage, setDetailSheetSnapStage] =
     useState<LockerDetailSheetSnapStage>("half");
+  /**
+   * 상세 시트가 지금 단계에서 실제로 차지하는 높이. 시트가 올려 준다.
+   *
+   * full 은 콘텐츠 높이에 따라 자리가 달라져 단계 상수로는 알 수 없다. 실시간
+   * 카드가 있는 보관함은 시트가 더 높이 올라가고, 없는 보관함은 위에 지도가
+   * 남는다. 그 차이를 컨트롤 배치에 반영하려면 실측값이 필요하다.
+   */
+  const [detailSheetVisibleHeight, setDetailSheetVisibleHeight] = useState<
+    number | null
+  >(() => resolveDetailSheetVisibleHeight("half"));
   const {
     snapRequest: detailSheetSnapRequest,
     requestSnap: requestDetailSheetSnap,
@@ -2256,8 +2266,9 @@ export function IndexPage() {
   );
 
   const handleDetailSheetSnapStageChange = useCallback(
-    (nextStage: LockerDetailSheetSnapStage) => {
+    (nextStage: LockerDetailSheetSnapStage, visibleHeightPx: number | null) => {
       setDetailSheetSnapStage(nextStage);
+      setDetailSheetVisibleHeight(visibleHeightPx);
     },
     [],
   );
@@ -3056,7 +3067,7 @@ export function IndexPage() {
   const sheetVisibleHeight = !hasMeasuredViewport
     ? null
     : sheetMode === "detail"
-      ? resolveDetailSheetVisibleHeight(detailSheetSnapStage)
+      ? detailSheetVisibleHeight
       : sheetMode === "list"
         ? resolveSearchListStageVisibleHeight(listSheetSnapStage, windowHeight)
         : null;
@@ -3067,9 +3078,13 @@ export function IndexPage() {
   });
 
   /**
-   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 단계로만 정하고 프레임마다 다시 계산하지
-   * 않는다. 라이브 오프셋으로 판정하면 드래그 중 컨트롤이 깜빡인다. full·dismiss 는
-   * 밀어 올릴 자리가 없고, filter 시트는 스냅이 하나뿐이라 같은 범주다.
+   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 단계가 바뀔 때만 정하고 프레임마다 다시
+   * 계산하지 않는다. 라이브 오프셋으로 판정하면 드래그 중 컨트롤이 깜빡인다.
+   *
+   * full 도 자리가 있으면 밀어 올린다. 상세 시트의 full 은 콘텐츠가 짧으면 화면을
+   * 다 덮지 못해 위에 지도가 남는데, 거기서도 새로고침·내 위치를 쓸 수 있어야 한다.
+   * 자리가 없으면 resolveMapControlBottomPx 가 null 을 줘 숨겨진다.
+   * dismiss 와 filter 시트는 시트 쪽이 null 을 준다.
    */
   const isMapControlRaised = sheetVisibleHeight !== null;
   /**
