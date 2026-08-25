@@ -36,6 +36,9 @@ export const SHEET_SETTLE_SPRING = {
   restDelta: 0.5,
 } as const;
 
+/** 오프셋이 목표에 닿았다고 볼 허용 오차 */
+const SETTLED_EPSILON_PX = 0.5;
+
 export interface BottomSheetLiveOffsetState {
   offset: number;
   expandedProgress: number;
@@ -48,6 +51,14 @@ export interface BottomSheetLiveOffsetState {
    * 함께 봐야 올라오는 동안 허공에 뜨지 않는다.
    */
   mountProgress: number;
+  /**
+   * 오프셋이 목표 스냅에 닿았는지.
+   *
+   * settleToSnapPoint 는 스프링을 시작하자마자 onSnapChange 를 부른다. 단계로만
+   * 위치를 정하면 시트가 아직 움직이는 중에 컨트롤이 먼저 최종 자리로 튄다.
+   * 시트 윗변을 따라다니는 요소는 안착까지 이 값을 봐야 한다.
+   */
+  isSettled: boolean;
 }
 
 export interface BottomSheetSnapRequest {
@@ -337,6 +348,10 @@ export function DraggableBottomSheet({
         }),
         snapPoints,
         mountProgress: mountProgress.get(),
+        // 스프링이 끝나면 onComplete 가 목표값을 그대로 넣어 정확히 일치하지만,
+        // 도중 프레임의 부동소수 오차까지 "미안착" 으로 보지 않도록 여유를 둔다.
+        isSettled:
+          Math.abs(offset - currentSnapRef.current) < SETTLED_EPSILON_PX,
       });
     },
     [maxSnapPoint, minSnapPoint, mountProgress, onLiveOffsetChange, snapPoints],

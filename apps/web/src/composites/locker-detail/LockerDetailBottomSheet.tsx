@@ -119,6 +119,8 @@ export interface LockerDetailSheetLiveOffsetState {
   offsetPx: number;
   /** 마운트 슬라이드 진행도. 0 이면 시트가 아직 화면 밖, 1 이면 제자리다. */
   mountProgress: number;
+  /** 오프셋이 목표 스냅에 닿았는지. 스냅 애니메이션 중에는 false 다. */
+  isSettled: boolean;
 }
 
 export interface LockerDetailBottomSheetProps {
@@ -504,10 +506,10 @@ export function LockerDetailBottomSheet({
    * 그때마다 떼었다 붙으므로 useCallback 으로 고정한다.
    */
   const handleLiveOffsetChange = useCallback(
-    ({ offset, mountProgress }: BottomSheetLiveOffsetState) => {
+    ({ offset, mountProgress, isSettled }: BottomSheetLiveOffsetState) => {
       sheetOffsetValue.set(offset);
       setIsOffsetAtSnapTarget(offset <= snapTargetOffsetRef.current);
-      onLiveOffsetChange?.({ offsetPx: offset, mountProgress });
+      onLiveOffsetChange?.({ offsetPx: offset, mountProgress, isSettled });
     },
     [onLiveOffsetChange, sheetOffsetValue],
   );

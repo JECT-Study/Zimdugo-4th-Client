@@ -65,6 +65,8 @@ export interface SearchListSheetLiveOffsetState {
   offsetPx: number;
   /** 마운트 슬라이드 진행도. 0 이면 시트가 아직 화면 밖, 1 이면 제자리다. */
   mountProgress: number;
+  /** 오프셋이 목표 스냅에 닿았는지. 스냅 애니메이션 중에는 false 다. */
+  isSettled: boolean;
 }
 
 export interface SearchListBottomSheetProps {
@@ -421,9 +423,10 @@ export function SearchListBottomSheet({
       expandedProgress,
       mountProgress,
       offset,
+      isSettled,
     }: BottomSheetLiveOffsetState) => {
       setExpandedProgress(expandedProgress);
-      onLiveOffsetChange?.({ offsetPx: offset, mountProgress });
+      onLiveOffsetChange?.({ offsetPx: offset, mountProgress, isSettled });
     },
     [onLiveOffsetChange],
   );

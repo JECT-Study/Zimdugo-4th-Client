@@ -341,6 +341,34 @@ describe("DraggableBottomSheet", () => {
     expect(handleLiveOffsetChange.mock.calls[0][0].mountProgress).toBe(1);
   });
 
+  it("스냅 애니메이션이 시작되면 안착 전까지 isSettled 가 false 다", () => {
+    // settleToSnapPoint 는 스프링을 시작하자마자 onSnapChange 를 부른다. 단계로만
+    // 위치를 정하면 시트가 아직 움직이는 중에 따라다니는 요소가 먼저 튄다.
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        maxSnapPoint={600}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleLiveOffsetChange.mock.calls[0][0].isSettled).toBe(true);
+    handleLiveOffsetChange.mockClear();
+
+    // 목표와 다른 오프셋이 흘러 들어오는 동안은 아직 안착이 아니다.
+    fireEvent.pointerDown(screen.getByTestId("sheet-surface"), {
+      clientY: 120,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(window, { clientY: 300, pointerId: 1 });
+
+    expect(handleLiveOffsetChange.mock.calls.at(-1)?.[0].isSettled).toBe(false);
+  });
+
   it("updates live offset from a non-interactive sheet surface", () => {
     const handleLiveOffsetChange = vi.fn();
 

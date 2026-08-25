@@ -704,15 +704,25 @@ export function IndexPage() {
    */
   const sheetMountProgress = useMotionValue(1);
   /**
+   * 시트가 목표 스냅에 닿았는지. 프레임마다 바뀌는 값이 아니라 제스처당 두 번만
+   * 뒤집히므로 state 로 둔다.
+   */
+  const [isSheetSettled, setIsSheetSettled] = useState(true);
+  /**
    * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
    * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
    * 계산하므로 React 렌더가 필요 없다.
    */
   const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc((100dvh - ${sheetLiveOffset}px) * ${sheetMountProgress} + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
   const handleSheetLiveOffsetChange = useCallback(
-    ({ offsetPx, mountProgress }: LockerDetailSheetLiveOffsetState) => {
+    ({
+      offsetPx,
+      mountProgress,
+      isSettled,
+    }: LockerDetailSheetLiveOffsetState) => {
       sheetLiveOffset.set(offsetPx);
       sheetMountProgress.set(mountProgress);
+      setIsSheetSettled(isSettled);
     },
     [sheetLiveOffset, sheetMountProgress],
   );
@@ -3062,16 +3072,31 @@ export function IndexPage() {
    * 밀어 올릴 자리가 없고, filter 시트는 스냅이 하나뿐이라 같은 범주다.
    */
   const isMapControlRaised = sheetVisibleHeight !== null;
+  /**
+   * 시트 윗변을 따라갈지. 밀어 올릴 단계가 아니어도 시트가 아직 움직이는 중이면
+   * 계속 따라간다.
+   *
+   * 시트는 스프링을 시작하자마자 단계를 바꾼다. 단계만 보면 하프에서 full 로
+   * 스냅할 때 컨트롤이 손을 떼는 순간 기본 위치로 툭 떨어지고, 시트는 그 뒤에
+   * 300ms 동안 올라온다. 안착한 뒤에 넘기면 그 구간이 없다.
+   *
+   * 시트가 아예 없는 동안은 따라갈 대상이 없다. 애니메이션 도중에 시트가
+   * 사라져 isSettled 가 false 로 굳는 경우도 여기서 걸러진다.
+   */
+  const isSheetMounted = sheetMode === "detail" || sheetMode === "list";
+  const shouldTrackSheet =
+    isSheetMounted && (isMapControlRaised || !isSheetSettled);
 
   /**
    * 시트가 사라진 뒤에도 오프셋이 과거 값에 멈춰 있으면 컨트롤이 없는 시트 위에
    * 떠 있게 된다. 밀어 올릴 단계가 아니면 "차지하는 높이 0" 으로 되돌린다.
    */
   useEffect(() => {
-    if (!isMapControlRaised) {
+    if (!shouldTrackSheet) {
       sheetLiveOffset.set(windowHeight);
+      sheetMountProgress.set(1);
     }
-  }, [isMapControlRaised, sheetLiveOffset, windowHeight]);
+  }, [shouldTrackSheet, sheetLiveOffset, sheetMountProgress, windowHeight]);
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3415,7 +3440,7 @@ export function IndexPage() {
           className={locationControlStack}
           initial={false}
           style={{
-            bottom: isMapControlRaised
+            bottom: shouldTrackSheet
               ? mapControlRaisedBottom
               : MAP_CONTROL_FALLBACK_BOTTOM_PX,
           }}
