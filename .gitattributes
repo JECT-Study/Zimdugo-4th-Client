@@ -1,0 +1,21 @@
+# 줄바꿈을 저장소와 체크아웃 양쪽에서 LF 로 고정한다.
+#
+# 이게 없으면 Windows 의 core.autocrlf=true 가 체크아웃할 때 CRLF 로 바꾼다.
+# 저장소에는 LF 로 들어가 있어 diff 는 깨끗한데, 로컬에서 biome 을 돌리면
+# 건드리지도 않은 파일 수십 개가 format 위반으로 잡힌다. CI(Linux)는 LF 라
+# 통과하므로 로컬과 CI 의 결과가 달라진다.
+* text=auto eol=lf
+
+# 이진 파일은 어떤 변환도 하지 않는다.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.mp4 binary

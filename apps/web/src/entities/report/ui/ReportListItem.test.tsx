@@ -39,11 +39,14 @@ describe("ReportListItem", () => {
       />,
     );
 
-    expect(screen.getByText(longTitle).getAttribute("title")).toBe(longTitle);
-    expect(screen.getByText(longAddress).getAttribute("title")).toBe(
-      longAddress,
-    );
-    expect(screen.getByText(longDetail).getAttribute("title")).toBe(longDetail);
+    // 제목은 OverflowMarqueeText 가 감싸고 있어 title 이 바깥 래퍼에 붙는다.
+    // 주소·상세는 텍스트를 담은 span 자신이 들고 있다.
+    const titleOf = (text: string) =>
+      screen.getByText(text).closest("[title]")?.getAttribute("title") ?? null;
+
+    expect(titleOf(longTitle)).toBe(longTitle);
+    expect(titleOf(longAddress)).toBe(longAddress);
+    expect(titleOf(longDetail)).toBe(longDetail);
   });
 
   it("상태 배지를 메타 행과 분리한 상단 오른쪽 행에 표시한다", () => {

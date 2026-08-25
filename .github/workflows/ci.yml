@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+# 같은 브랜치에 새 커밋이 오면 이전 실행을 취소한다.
+# PR 에 연속으로 푸시할 때 오래된 실행이 러너를 붙잡고 있지 않도록.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: lint & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # 포매팅·린트·import 정렬. 로컬에서는 `pnpm check` 와 같다.
+      - name: Biome
+        run: pnpm check
+
+      # 각 앱의 pretest 가 paraglide 메시지를 먼저 컴파일한다.
+      - name: Test (web)
+        run: pnpm test:web
+
+      - name: Test (admin)
+        run: pnpm test:admin
