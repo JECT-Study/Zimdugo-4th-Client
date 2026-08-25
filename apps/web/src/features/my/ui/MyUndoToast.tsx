@@ -12,11 +12,11 @@ export function MyUndoToast({
   onUndo,
 }: MyUndoToastProps) {
   return (
-    <div className={undoToast} role="status" aria-live="polite">
+    <output className={undoToast} aria-live="polite">
       <span className={undoToastMessage}>{message}</span>
       <button type="button" className={undoToastAction} onClick={onUndo}>
         {actionLabel}
       </button>
-    </div>
+    </output>
   );
 }

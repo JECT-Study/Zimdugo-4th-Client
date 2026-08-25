@@ -8,6 +8,7 @@ import {
   Modal,
   ModalOverlay,
 } from "react-aria-components";
+import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   getNavigationPlatformLinks,
   hasNavigationDestination,
@@ -15,7 +16,6 @@ import {
   openNavigationPlatformLinks,
   resolveNavigationOriginForDirections,
 } from "#/features/search/lib/navigation-platform-links";
-import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   cancelButton,
   dialog,

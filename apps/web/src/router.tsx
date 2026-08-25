@@ -15,7 +15,7 @@ export function getRouter() {
     defaultPreloadStaleTime: 0,
     parseSearch: (searchStr) => {
       const params = new URLSearchParams(searchStr);
-      const result: Record<string, any> = {};
+      const result: Record<string, unknown> = {};
       params.forEach((value, key) => {
         try {
           result[key] = JSON.parse(value);

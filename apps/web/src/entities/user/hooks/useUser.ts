@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMeProfile, type MeProfileData } from "#/shared/api/me";
 import {
-  getAuthQueryCacheScope,
   type AuthQueryCacheScope,
+  getAuthQueryCacheScope,
 } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";
 

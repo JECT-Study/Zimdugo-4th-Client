@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   DETAIL_HALF_BOTTOM_INSET_PX,
-  MIN_MAP_BOUNDS_BOTTOM_PADDING_PX,
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
+  MIN_MAP_BOUNDS_BOTTOM_PADDING_PX,
 } from "./map-viewport-policy";
 
 describe("map-viewport-policy", () => {

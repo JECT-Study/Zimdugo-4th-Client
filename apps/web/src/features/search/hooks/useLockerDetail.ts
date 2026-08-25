@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
 import {
-  getLockerDetail,
   type GetLockerDetailParams,
+  getLockerDetail,
 } from "#/shared/api/lockers";
 import { getAuthQueryCacheScope } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";

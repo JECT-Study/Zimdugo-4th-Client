@@ -1,9 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
-import { type LockerVoteType, postLockerVote } from "../api/post-locker-vote";
+import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
 import { useAuthPopupStore } from "#/shared/store/authPopupStore";
 import { useAuthStore } from "#/shared/store/authStore";
+import { type LockerVoteType, postLockerVote } from "../api/post-locker-vote";
 import {
   buildVoteFlushOperations,
   computeVoteDetailAfterFlush,
@@ -14,7 +15,6 @@ import {
   rollbackFailedVoteFlush,
   toggleVotePending,
 } from "./vote-locker-session";
-import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail";
 
 /**
  * @deprecated 보관함 상세 개편에서 vote 런타임 연결을 해제했다.

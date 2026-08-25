@@ -1,10 +1,10 @@
+import { useState } from "react";
 import {
-  Group,
   Input as AriaInput,
+  Group,
   TextField,
   type TextFieldProps,
 } from "react-aria-components";
-import { useState } from "react";
 import {
   IconNormalMapPin24,
   IconNormalSearch24,

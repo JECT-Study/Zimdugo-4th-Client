@@ -16,10 +16,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
-  resolveDetailSheetVisibleHeight,
   LockerDetailBottomSheet,
   type LockerDetailSheetLiveOffsetState,
   type LockerDetailSheetSnapStage,
+  resolveDetailSheetVisibleHeight,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
@@ -62,11 +62,6 @@ import {
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
-  MAP_CONTROL_FALLBACK_BOTTOM_PX,
-  MAP_CONTROL_SHEET_GAP_PX,
-  MAP_CONTROL_TOP_RESERVED_PX,
-} from "#/entities/map/ui/map-control-stack-fallback";
-import {
   clearHomeLocationRequestedInSession,
   hasRequestedHomeLocationInSession,
   markHomeLocationRequestedInSession,
@@ -93,6 +88,11 @@ import {
 } from "#/entities/map/model/useLockerMarkers";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
+import {
+  MAP_CONTROL_FALLBACK_BOTTOM_PX,
+  MAP_CONTROL_SHEET_GAP_PX,
+  MAP_CONTROL_TOP_RESERVED_PX,
+} from "#/entities/map/ui/map-control-stack-fallback";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useUser } from "#/entities/user/hooks/useUser";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
@@ -261,18 +261,34 @@ type SeoHeadLocationContext = {
   };
 };
 
+/** 홈 라우트가 다루는 검색 파라미터. validateSearch 가 이 모양으로 정규화한다. */
+export interface HomeSearchParams {
+  locker?: string;
+  openLockerId?: number;
+  detailSnap?: LockerDetailSnap;
+  focusLat?: number;
+  focusLng?: number;
+  q?: string;
+  searchPlaceId?: number;
+}
+
+/** 보관함 딥링크 파라미터만 걷어 낸다. 열고 나면 주소에 남길 이유가 없다. */
+const withoutLockerParam = ({ locker: _locker, ...rest }: HomeSearchParams) =>
+  rest;
+
+/** openLockerId 계열 딥링크 파라미터를 걷어 낸다. */
+const withoutOpenLockerParams = ({
+  openLockerId: _openLockerId,
+  detailSnap: _detailSnap,
+  focusLat: _focusLat,
+  focusLng: _focusLng,
+  ...rest
+}: HomeSearchParams) => rest;
+
 export const Route = createFileRoute("/")({
   validateSearch: (
     search: Record<string, unknown> | undefined,
-  ): {
-    locker?: string;
-    openLockerId?: number;
-    detailSnap?: LockerDetailSnap;
-    focusLat?: number;
-    focusLng?: number;
-    q?: string;
-    searchPlaceId?: number;
-  } => {
+  ): HomeSearchParams => {
     const safeSearch = search || {};
     const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
     const lockerNum = parseLockerSearchParam(safeSearch.locker);
@@ -298,6 +314,9 @@ export const Route = createFileRoute("/")({
    * 서빙된다. 개인화가 필요하면 클라이언트에서 채우고, SSR 로 다뤄야 한다면
    * 서버가 신원을 확인할 수단을 먼저 만들어야 한다.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TanStack 의 LoaderFnContext 에는
+  // search 가 없다. 이 로더는 타입에 없는 필드를 읽고 있는데, 제대로 고치려면
+  // loaderDeps 로 옮겨야 해서 별도로 다룬다.
   loader: async ({ search }: any) => {
     const lockerParam = search?.locker;
     const lockerId = parseLockerSearchParam(lockerParam);
@@ -310,7 +329,7 @@ export const Route = createFileRoute("/")({
         });
         const detail = toLockerDetailItem(rawDetail);
         return { detail };
-      } catch (error: any) {
+      } catch (error) {
         console.error(
           `Failed to load locker ${lockerId} in root loader:`,
           error,
@@ -533,7 +552,7 @@ const MyLocationButton = memo(function MyLocationButton({
 
 export function IndexPage() {
   const navigate = useNavigate();
-  const search = (useSearch({ strict: false }) || {}) as Record<string, any>;
+  const search = (useSearch({ strict: false }) || {}) as HomeSearchParams;
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: user } = useUser(isAuthenticated);
@@ -2389,18 +2408,11 @@ export function IndexPage() {
       .then(() => {
         void navigate({
           to: ".",
-          search: (prev: any) => {
-            const {
-              openLockerId: _,
-              detailSnap: __,
-              focusLat: ___,
-              focusLng: ____,
-              ...rest
-            } = prev;
-            if (!rest.locker) {
-              rest.locker = String(openLockerId);
-            }
-            return rest as any;
+          search: (prev: HomeSearchParams) => {
+            const rest = withoutOpenLockerParams(prev);
+            return rest.locker
+              ? rest
+              : { ...rest, locker: String(openLockerId) };
           },
           replace: true,
         });
@@ -2411,16 +2423,7 @@ export function IndexPage() {
         setLockerDetailQueryOrigin(null);
         void navigate({
           to: ".",
-          search: (prev: any) => {
-            const {
-              openLockerId: _,
-              detailSnap: __,
-              focusLat: ___,
-              focusLng: ____,
-              ...rest
-            } = prev;
-            return rest as any;
-          },
+          search: withoutOpenLockerParams,
           replace: true,
         });
       });
@@ -2760,10 +2763,7 @@ export function IndexPage() {
         if (search.locker) {
           void navigate({
             to: ".",
-            search: (prev: any) => {
-              const { locker, ...rest } = prev;
-              return rest as any;
-            },
+            search: withoutLockerParam,
           });
         }
         return;
@@ -2773,10 +2773,7 @@ export function IndexPage() {
       if (search.locker) {
         void navigate({
           to: ".",
-          search: (prev: any) => {
-            const { locker, ...rest } = prev;
-            return rest as any;
-          },
+          search: withoutLockerParam,
         });
       }
       return;
@@ -2791,10 +2788,7 @@ export function IndexPage() {
     if (search.locker) {
       void navigate({
         to: ".",
-        search: (prev: any) => {
-          const { locker, ...rest } = prev;
-          return rest as any;
-        },
+        search: withoutLockerParam,
       });
     }
   }, [

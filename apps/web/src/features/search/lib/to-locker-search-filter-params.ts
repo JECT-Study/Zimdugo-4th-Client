@@ -1,10 +1,10 @@
 import type { SearchFilterAppliedState } from "#/composites/search/SearchFilterBottomSheet";
 import { cardsToSizeTypes } from "#/entities/locker/lib/cards-to-size-types";
-import type { LockerType } from "#/shared/types/locker-type";
 import type {
   LockerSearchFilterParams,
   PlaceLockersFilterParams,
 } from "#/shared/api/lockers";
+import type { LockerType } from "#/shared/types/locker-type";
 
 const PLACE_FILTER_TO_LOCKER_TYPE: Record<string, LockerType> = {
   museum: "MUSEUM",

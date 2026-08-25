@@ -10,11 +10,6 @@ import {
   type SearchAutocompleteItemData,
   SearchListRecent,
 } from "#/entities/search";
-import {
-  formatSearchHistoryDateLabel,
-  getSearchHistoryEntryLabel,
-  type SearchHistoryEntry,
-} from "#/features/search/model/search-history";
 import { useLockerSuggest } from "#/features/search/hooks/useSearch";
 import {
   capSearchQueryDraft,
@@ -25,6 +20,11 @@ import {
   SEARCH_QUERY_MAX_LENGTH,
   trimSearchQueryDraft,
 } from "#/features/search/lib/sanitize-search-query";
+import {
+  formatSearchHistoryDateLabel,
+  getSearchHistoryEntryLabel,
+  type SearchHistoryEntry,
+} from "#/features/search/model/search-history";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchSuggestListSkeleton } from "#/features/search/ui/search-skeleton/SearchSuggestListSkeleton";
 import { useDebouncedValue } from "#/shared/hooks/useDebouncedValue";

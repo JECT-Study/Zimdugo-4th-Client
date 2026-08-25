@@ -26,9 +26,11 @@ export const useLoginResultHandler = () => {
             await invalidatePersonalizedQueries(queryClient);
 
             // 성공 시: 즉시 목적지(없으면 메인 "/")로 완전히 이동한 후 팝업 표출
+            // biome-ignore lint/suspicious/noExplicitAny: returnPath 는 런타임에
+            // 정해지는 경로라 라우터의 리터럴 유니온으로 표현할 수 없다.
             await navigate({ to: returnPath as any, replace: true });
             useLoginResultStore.getState().open("success");
-          } catch (error: any) {
+          } catch {
             handleFailure(returnPath, navigate);
           }
         } else if (code === "LOGIN_FAILED") {
@@ -46,7 +48,10 @@ export const useLoginResultHandler = () => {
 };
 
 // ... 외부 헬퍼 함수
-function handleFailure(returnPath: string, navigate: any) {
+function handleFailure(
+  returnPath: string,
+  navigate: ReturnType<typeof useNavigate>,
+) {
   useLoginResultStore.getState().open("failure");
 
   // 실패 시에는 사용자가 다시 로그인할 수 있도록 무조건 로그인 폼을 보여주어야 하므로

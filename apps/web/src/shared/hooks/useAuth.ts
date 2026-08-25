@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { authService } from "../../features/auth/sign-in/api/authService";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
+import { authService } from "../../features/auth/sign-in/api/authService";
 import { useAuthStore } from "../store/authStore";
 
 export const useAuth = () => {

@@ -10,8 +10,8 @@ import {
 
 import {
   DEFAULT_NAVER_MAP_LANGUAGE,
-  normalizeNaverMapLanguage,
   type NaverMapLanguage,
+  normalizeNaverMapLanguage,
 } from "./naver-map-language";
 
 export type NaverMapSdkStatus = "idle" | "loading" | "ready" | "error";

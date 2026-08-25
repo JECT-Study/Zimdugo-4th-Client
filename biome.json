@@ -48,7 +48,8 @@
         }
       },
       "correctness": {
-        "noReactPropAssignments": "error"
+        "noReactPropAssignments": "error",
+        "useExhaustiveDependencies": "warn"
       }
     },
     "domains": {

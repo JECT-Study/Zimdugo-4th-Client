@@ -1,5 +1,5 @@
-import { style } from "@vanilla-extract/css";
 import { vars } from "@repo/ui/vars";
+import { style } from "@vanilla-extract/css";
 
 export const tabItem = style({
   display: "flex",

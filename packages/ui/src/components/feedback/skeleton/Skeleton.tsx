@@ -1,4 +1,4 @@
-import { skeletonBase, circle as circleStyle } from "./Skeleton.css.ts";
+import { circle as circleStyle, skeletonBase } from "./Skeleton.css.ts";
 
 export interface SkeletonProps {
   width?: string | number;

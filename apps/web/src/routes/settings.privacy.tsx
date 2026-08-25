@@ -1,7 +1,7 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import {
-  parseLegalReturnSearch,
   type LegalReturnSearch,
+  parseLegalReturnSearch,
 } from "#/features/settings/legal/model/legal-return-search";
 import { LegalDocumentPage } from "#/features/settings/legal/ui/LegalDocumentPage";
 
