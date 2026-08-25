@@ -4,6 +4,7 @@ import {
   motion,
   useMotionTemplate,
   useMotionValue,
+  useTransform,
 } from "motion/react";
 import {
   type MouseEvent as ReactMouseEvent,
@@ -39,6 +40,14 @@ export interface BottomSheetLiveOffsetState {
   offset: number;
   expandedProgress: number;
   snapPoints: number[];
+  /**
+   * 마운트 슬라이드 진행도. 0 이면 시트가 아직 화면 밖, 1 이면 제자리다.
+   *
+   * offset 은 마운트 첫 프레임부터 최종 스냅 값이라 시트가 실제로 어디까지
+   * 올라왔는지는 알려 주지 못한다. 시트 윗변에 붙어 다니는 요소는 이 값을
+   * 함께 봐야 올라오는 동안 허공에 뜨지 않는다.
+   */
+  mountProgress: number;
 }
 
 export interface BottomSheetSnapRequest {
@@ -263,6 +272,20 @@ export function DraggableBottomSheet({
   const [_currentSnap, setCurrentSnap] = useState(clampedInitialSnap);
   const sheetOffset = useMotionValue(clampedInitialSnap);
   const sheetHeight = useMotionTemplate`calc(100dvh - ${sheetOffset}px)`;
+  /**
+   * 마운트 슬라이드를 값으로 소유한다.
+   *
+   * 예전에는 initial/animate 로 y 를 선언해 두어 진행도를 밖에서 알 수 없었다.
+   * 여기서 파생하면 y 와 진행도가 같은 값에서 나오므로 어긋날 수가 없다.
+   */
+  const mountProgress = useMotionValue(animateOnMount ? 0 : 1);
+  // 마운트 시점의 값만 본다. 이 prop 은 부모 state 라 나중에 바뀔 수 있는데,
+  // 그때 슬라이드를 다시 재생하면 떠 있던 시트가 아래에서 올라온다.
+  const animateAtMountRef = useRef(animateOnMount);
+  const mountTranslateY = useTransform(
+    mountProgress,
+    (progress) => `${(1 - progress) * 100}%`,
+  );
   const dragStateRef = useRef<DragState | null>(null);
   const pendingDragStateRef = useRef<PendingDragState | null>(null);
   const activeListenersRef = useRef<{
@@ -313,9 +336,10 @@ export function DraggableBottomSheet({
           offset,
         }),
         snapPoints,
+        mountProgress: mountProgress.get(),
       });
     },
-    [maxSnapPoint, minSnapPoint, onLiveOffsetChange, snapPoints],
+    [maxSnapPoint, minSnapPoint, mountProgress, onLiveOffsetChange, snapPoints],
   );
 
   useEffect(() => {
@@ -329,10 +353,28 @@ export function DraggableBottomSheet({
     // 이 값으로 자리를 잡는 쪽은 그동안 시트 뒤에 깔린 채 남는다.
     notifyLiveOffsetChange(clampSnap(sheetOffset.get()));
 
-    return sheetOffset.on("change", (offset) => {
+    const unsubscribeOffset = sheetOffset.on("change", (offset) => {
       notifyLiveOffsetChange(clampSnap(offset));
     });
-  }, [clampSnap, notifyLiveOffsetChange, sheetOffset]);
+    const unsubscribeMount = mountProgress.on("change", () => {
+      notifyLiveOffsetChange(clampSnap(sheetOffset.get()));
+    });
+
+    return () => {
+      unsubscribeOffset();
+      unsubscribeMount();
+    };
+  }, [clampSnap, mountProgress, notifyLiveOffsetChange, sheetOffset]);
+
+  useEffect(() => {
+    if (!animateAtMountRef.current) {
+      return;
+    }
+
+    const mountAnimation = animate(mountProgress, 1, SHEET_SETTLE_SPRING);
+
+    return () => mountAnimation.stop();
+  }, [mountProgress]);
 
   useEffect(() => {
     const nextInitialSnap = clampSnap(resolvedInitialSnap);
@@ -585,11 +627,8 @@ export function DraggableBottomSheet({
   return (
     <div className={sheetWrapper}>
       <motion.div
-        animate={{ y: 0 }}
         className={sheetSurface}
-        initial={animateOnMount ? { y: "100%" } : undefined}
-        style={{ height: sheetHeight }}
-        transition={SHEET_SETTLE_SPRING}
+        style={{ height: sheetHeight, y: mountTranslateY }}
       >
         <div
           className={dragHandleZone}

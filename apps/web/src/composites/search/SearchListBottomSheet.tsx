@@ -63,6 +63,8 @@ export type {
 export interface SearchListSheetLiveOffsetState {
   /** 뷰포트 상단부터 시트 상단까지 거리. `100dvh - offsetPx` 가 시트가 차지하는 높이다. */
   offsetPx: number;
+  /** 마운트 슬라이드 진행도. 0 이면 시트가 아직 화면 밖, 1 이면 제자리다. */
+  mountProgress: number;
 }
 
 export interface SearchListBottomSheetProps {
@@ -415,9 +417,13 @@ export function SearchListBottomSheet({
    * 그때마다 떼었다 붙으므로 useCallback 으로 고정한다.
    */
   const handleLiveOffsetChange = useCallback(
-    ({ expandedProgress, offset }: BottomSheetLiveOffsetState) => {
+    ({
+      expandedProgress,
+      mountProgress,
+      offset,
+    }: BottomSheetLiveOffsetState) => {
       setExpandedProgress(expandedProgress);
-      onLiveOffsetChange?.({ offsetPx: offset });
+      onLiveOffsetChange?.({ offsetPx: offset, mountProgress });
     },
     [onLiveOffsetChange],
   );

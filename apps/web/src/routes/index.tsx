@@ -18,6 +18,7 @@ import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   resolveDetailSheetVisibleHeight,
   LockerDetailBottomSheet,
+  type LockerDetailSheetLiveOffsetState,
   type LockerDetailSheetSnapStage,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
@@ -695,16 +696,25 @@ export function IndexPage() {
    */
   const sheetLiveOffset = useMotionValue(windowHeight);
   /**
+   * 시트가 마운트 슬라이드로 올라오는 동안의 진행도. 0 이면 아직 화면 밖이다.
+   *
+   * 라이브 오프셋만 보면 시트가 열리는 첫 프레임부터 최종 스냅 값이 들어와,
+   * 컨트롤이 최종 높이로 먼저 뛰어오른 뒤 시트가 뒤따라 올라온다. 그동안
+   * 버튼이 허공에 떠 보인다. 시트가 실제로 차지한 높이에 이 비율을 곱한다.
+   */
+  const sheetMountProgress = useMotionValue(1);
+  /**
    * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
    * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
    * 계산하므로 React 렌더가 필요 없다.
    */
-  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc(100dvh - ${sheetLiveOffset}px + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
+  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc((100dvh - ${sheetLiveOffset}px) * ${sheetMountProgress} + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
   const handleSheetLiveOffsetChange = useCallback(
-    ({ offsetPx }: { offsetPx: number }) => {
+    ({ offsetPx, mountProgress }: LockerDetailSheetLiveOffsetState) => {
       sheetLiveOffset.set(offsetPx);
+      sheetMountProgress.set(mountProgress);
     },
-    [sheetLiveOffset],
+    [sheetLiveOffset, sheetMountProgress],
   );
 
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
