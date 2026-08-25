@@ -114,7 +114,8 @@ const toNaverBase62 = (value: number): string => {
 
 /** WGS84 경위도를 네이버 웹 지도 길찾기 URL용 단축 좌표 문자열로 변환한다. */
 export const encodeNaverCoordinate = (coordinate: number): string => {
-  const scaled = Math.round(coordinate * NAVER_COORD_SCALE) + NAVER_COORD_OFFSET;
+  const scaled =
+    Math.round(coordinate * NAVER_COORD_SCALE) + NAVER_COORD_OFFSET;
   return toNaverBase62(scaled);
 };
 

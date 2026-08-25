@@ -50,8 +50,9 @@ export const Default: Story = {
   render: (args: React.ComponentProps<typeof ControlChip>) => {
     const [isActive, setIsActive] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
-    const [sortDirection, setSortDirection] =
-      useState<"none" | "asc" | "desc">("none");
+    const [sortDirection, setSortDirection] = useState<"none" | "asc" | "desc">(
+      "none",
+    );
 
     const handlePress = () => {
       if (args.variant === "choice") {

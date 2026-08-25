@@ -60,12 +60,7 @@ export function SearchAsyncFeedback({
       </p>
       {onRetry ? (
         <div className={errorActions}>
-          <Button
-            variant="filled"
-            intent="primary"
-            size="S"
-            onPress={onRetry}
-          >
+          <Button variant="filled" intent="primary" size="S" onPress={onRetry}>
             {m.map_error_retry()}
           </Button>
         </div>

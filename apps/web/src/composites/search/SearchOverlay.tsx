@@ -103,8 +103,7 @@ export function SearchOverlay({
   } = useLockerSuggest(suggestParams);
 
   const isSuggestEligible = isQueryValid;
-  const isDebouncing =
-    isSuggestEligible && validatedQuery !== debouncedQuery;
+  const isDebouncing = isSuggestEligible && validatedQuery !== debouncedQuery;
   const showSuggestLoading = isSuggestEligible && (isDebouncing || isFetching);
   const showSuggestError = isSuggestEligible && isError && !showSuggestLoading;
   const showSuggestEmpty =
@@ -261,9 +260,7 @@ export function SearchOverlay({
         {!hasQuery && (
           <>
             <div className={sectionHeader}>
-              <LabelTitle size="large">
-                {m.search_recent_title()}
-              </LabelTitle>
+              <LabelTitle size="large">{m.search_recent_title()}</LabelTitle>
               {recentEntries.length > 0 && (
                 <button
                   type="button"

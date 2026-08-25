@@ -43,7 +43,8 @@ export function Header({
   children,
 }: HeaderProps) {
   // 뒤로 가기가 필요 없고 titleType이 로고일 때는 좌측 정렬, 나머지 경우는 중앙 정렬
-  const isCentered = leading === "back" || (titleType !== "logo" && titleType !== "custom");
+  const isCentered =
+    leading === "back" || (titleType !== "logo" && titleType !== "custom");
 
   const renderContent = () => {
     switch (titleType) {
@@ -73,11 +74,7 @@ export function Header({
     <header className={[headerRoot, className].filter(Boolean).join(" ")}>
       {/* 1. Leading Area */}
       {leading === "back" ? (
-        <Button
-          className={iconButton}
-          onPress={onBack}
-          aria-label="뒤로가기"
-        >
+        <Button className={iconButton} onPress={onBack} aria-label="뒤로가기">
           <IconChevronLeft13 />
         </Button>
       ) : isCentered ? (

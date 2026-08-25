@@ -76,9 +76,9 @@ describe("map-viewport-bootstrap", () => {
     });
     const farGps = { lat: 37.52, lng: 127.0 };
 
-    expect(
-      haversineDistanceM(cache.center, farGps),
-    ).toBeGreaterThan(MAP_VIEWPORT_STALE_DISTANCE_M);
+    expect(haversineDistanceM(cache.center, farGps)).toBeGreaterThan(
+      MAP_VIEWPORT_STALE_DISTANCE_M,
+    );
 
     expect(
       isMapViewportCacheStale(cache, {

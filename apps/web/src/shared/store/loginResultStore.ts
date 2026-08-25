@@ -19,5 +19,6 @@ export const useLoginResultStore = create<LoginResultState>((set, get) => ({
     set({ isOpen: false, type: null, onCloseCallback: undefined });
     if (onCloseCallback) onCloseCallback();
   },
-  forceClose: () => set({ isOpen: false, type: null, onCloseCallback: undefined }),
+  forceClose: () =>
+    set({ isOpen: false, type: null, onCloseCallback: undefined }),
 }));

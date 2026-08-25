@@ -249,8 +249,7 @@ export const useLockerMarkers = ({
     }
 
     const isSelectedPinVisible =
-      lockers != null &&
-      lockers.some((pin) => getPinId(pin) === selectedPinId);
+      lockers != null && lockers.some((pin) => getPinId(pin) === selectedPinId);
 
     const shouldShowDot =
       selectedPinId != null &&

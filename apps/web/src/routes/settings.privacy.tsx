@@ -11,12 +11,11 @@ export const Route = createFileRoute("/settings/privacy")({
 });
 
 function SettingsPrivacyPage() {
-  const returnSearch = useSearch({ from: "/settings/privacy" }) as LegalReturnSearch;
+  const returnSearch = useSearch({
+    from: "/settings/privacy",
+  }) as LegalReturnSearch;
 
   return (
-    <LegalDocumentPage
-      documentType="PRIVACY"
-      returnSearch={returnSearch}
-    />
+    <LegalDocumentPage documentType="PRIVACY" returnSearch={returnSearch} />
   );
 }

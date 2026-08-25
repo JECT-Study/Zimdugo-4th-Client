@@ -19,12 +19,8 @@ interface PendingFavoriteRemoval {
 export function useFavoriteRemoval() {
   const queryClient = useQueryClient();
   const listQuery = useFavoriteLockerList();
-  const {
-    pending,
-    flush,
-    getEffectiveIsFavorite,
-    toggle,
-  } = useFavoriteLockerSession();
+  const { pending, flush, getEffectiveIsFavorite, toggle } =
+    useFavoriteLockerSession();
   const [hiddenLockerIds, setHiddenLockerIds] = useState<Set<number>>(
     () => new Set(),
   );
@@ -57,8 +53,7 @@ export function useFavoriteRemoval() {
         return;
       }
 
-      const removeSucceeded =
-        getEffectiveIsFavorite(lockerId, true) === false;
+      const removeSucceeded = getEffectiveIsFavorite(lockerId, true) === false;
 
       if (removeSucceeded) {
         await invalidateMyFavoriteQueries();

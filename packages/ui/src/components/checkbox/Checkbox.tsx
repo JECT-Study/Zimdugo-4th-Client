@@ -26,16 +26,16 @@ export interface CheckboxProps extends AriaCheckboxProps {
 }
 
 const CheckIcon = ({ isSelected }: { isSelected: boolean }) => (
-  <svg 
-    viewBox="0 0 12 9" 
-    fill="none" 
-    className={checkSvg} 
+  <svg
+    viewBox="0 0 12 9"
+    fill="none"
+    className={checkSvg}
     aria-hidden="true"
-    style={{ 
+    style={{
       // 아이콘을 항상 렌더링하여 레이아웃 시프트를 막고 즉시 표시
       visibility: isSelected ? "visible" : "hidden",
       opacity: isSelected ? 1 : 0,
-      transition: "none"
+      transition: "none",
     }}
   >
     <path
@@ -79,7 +79,7 @@ export function Checkbox({
       }: CheckboxRenderProps) => {
         const appliedState: keyof typeof boxState = isDisabled
           ? "disabled"
-          : (isPressed || isSelected)
+          : isPressed || isSelected
             ? "pressed"
             : isFocusVisible
               ? "focus"

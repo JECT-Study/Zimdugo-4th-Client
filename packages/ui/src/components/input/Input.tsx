@@ -63,7 +63,7 @@ export function Input({
   ...props
 }: InputProps) {
   const [value, setValue] = useState<string>(
-    String(props.defaultValue ?? props.value ?? "")
+    String(props.defaultValue ?? props.value ?? ""),
   );
   const isControlledValue = props.value !== undefined;
   const currentValue = isControlledValue ? String(props.value ?? "") : value;
@@ -114,7 +114,9 @@ export function Input({
               <div className={labelTitleSlot}>
                 <LabelTitle
                   size={labelTitleSize === "large" ? "large" : "small"}
-                  subtitle={labelTitleSize === "large" ? labelSubtitle : undefined}
+                  subtitle={
+                    labelTitleSize === "large" ? labelSubtitle : undefined
+                  }
                 >
                   {label}
                 </LabelTitle>

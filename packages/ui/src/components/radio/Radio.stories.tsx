@@ -70,7 +70,9 @@ export const AllVariants: Story = {
 
         {STATES.map(({ label, props }) => (
           <React.Fragment key={label}>
-            <span style={{ ...LABEL_STYLE, justifySelf: "start" }}>{label}</span>
+            <span style={{ ...LABEL_STYLE, justifySelf: "start" }}>
+              {label}
+            </span>
             {LAYOUTS.map(({ label: layoutLabel, labelLayout }) => (
               <RadioGroup
                 key={layoutLabel}

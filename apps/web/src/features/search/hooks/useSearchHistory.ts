@@ -1,6 +1,9 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { SEARCH_HISTORY_STORAGE_KEY } from "../model/search-history";
-import type { SearchHistoryEntry, SearchHistoryInput } from "../model/search-history";
+import type {
+  SearchHistoryEntry,
+  SearchHistoryInput,
+} from "../model/search-history";
 import {
   appendSearchHistoryEntry,
   clearSearchHistoryEntries,
@@ -38,7 +41,11 @@ const ensureStorageListener = () => {
 };
 
 const removeStorageListenerIfIdle = () => {
-  if (typeof window === "undefined" || !isStorageListenerRegistered || listeners.size > 0) {
+  if (
+    typeof window === "undefined" ||
+    !isStorageListenerRegistered ||
+    listeners.size > 0
+  ) {
     return;
   }
 
@@ -67,7 +74,11 @@ const commit = () => {
 };
 
 export const useSearchHistory = () => {
-  const entries = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const entries = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   const record = useCallback((input: SearchHistoryInput) => {
     appendSearchHistoryEntry(input);

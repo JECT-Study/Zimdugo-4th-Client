@@ -6,9 +6,7 @@ import {
 
 describe("legal-return-search", () => {
   it("returnTo와 step=2 search를 파싱한다", () => {
-    expect(
-      parseLegalReturnSearch({ returnTo: "/report", step: "2" }),
-    ).toEqual({
+    expect(parseLegalReturnSearch({ returnTo: "/report", step: "2" })).toEqual({
       returnTo: "/report",
       step: 2,
     });

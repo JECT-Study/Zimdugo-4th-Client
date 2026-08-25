@@ -39,7 +39,9 @@ const CURRENT_ORIGIN = {
 
 const WEB_ORIGIN = "https://app.zimdugo.com";
 
-const linkOptions = (navigationOrigin = resolveNavigationOrigin(CURRENT_ORIGIN)) => ({
+const linkOptions = (
+  navigationOrigin = resolveNavigationOrigin(CURRENT_ORIGIN),
+) => ({
   navigationOrigin,
   webOrigin: WEB_ORIGIN,
 });
@@ -50,9 +52,7 @@ describe("navigation-platform-links", () => {
   });
 
   it("이미 알고 있는 위치가 있으면 해당 좌표를 출발지로 사용한다", () => {
-    expect(
-      resolveNavigationOriginForDirections(CURRENT_ORIGIN),
-    ).toEqual({
+    expect(resolveNavigationOriginForDirections(CURRENT_ORIGIN)).toEqual({
       origin: {
         lat: CURRENT_ORIGIN.lat,
         lng: CURRENT_ORIGIN.lng,

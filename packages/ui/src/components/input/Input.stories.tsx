@@ -138,7 +138,9 @@ export const AllVariants: Story = {
 export const WithLabels: Story = {
   name: "Labels",
   render: (args) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 343 }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: 24, width: 343 }}
+    >
       <Input {...args} labelTitleSize="none" />
       <Input {...args} label="Small label" labelTitleSize="small" />
       <Input

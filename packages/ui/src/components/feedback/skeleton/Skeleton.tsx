@@ -27,11 +27,9 @@ export function Skeleton({
 
   return (
     <div
-      className={[
-        skeletonBase,
-        isCircle ? circleStyle : "",
-        className,
-      ].filter(Boolean).join(" ")}
+      className={[skeletonBase, isCircle ? circleStyle : "", className]
+        .filter(Boolean)
+        .join(" ")}
       style={{
         width: width ?? "100%",
         height: height ?? "1em",

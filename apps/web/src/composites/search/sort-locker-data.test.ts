@@ -187,7 +187,9 @@ describe("sortLockerData", () => {
 
     expect(
       sorted
-        .filter((item): item is SearchLockerResultItem => item.itemType === "LOCKER")
+        .filter(
+          (item): item is SearchLockerResultItem => item.itemType === "LOCKER",
+        )
         .map((item) => item.lockerId),
     ).toEqual([203, 204, 202, 201]);
     expect(ITEMS).toEqual(original);

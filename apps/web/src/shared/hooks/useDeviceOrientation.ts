@@ -33,9 +33,9 @@ export function useDeviceOrientation() {
   );
   const lastUpdateRef = useRef(0);
   const hasReceivedValidHeadingRef = useRef(false);
-  const supportDetectionTimerRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+  const supportDetectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const handleOrientation = useCallback((event: DeviceOrientationEvent) => {
     const now = Date.now();
