@@ -1,0 +1,66 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [],
+      "project": []
+    },
+    "apps/web": {
+      "entry": [
+        "src/routes/**/*.{ts,tsx}",
+        "e2e/**/*.spec.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignore": [
+        "src/paraglide/**",
+        "src/routeTree.gen.ts"
+      ]
+    },
+    "apps/admin": {
+      "entry": [
+        "src/routes/**/*.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignore": [
+        "src/paraglide/**",
+        "src/routeTree.gen.ts"
+      ],
+      "ignoreDependencies": [
+        "@repo/libs"
+      ]
+    },
+    "apps/storybook": {
+      "entry": [
+        ".storybook/*.{ts,tsx}"
+      ]
+    },
+    "packages/libs": {
+      "entry": [
+        "src/*.ts"
+      ],
+      "project": [
+        "src/**/*.ts"
+      ]
+    },
+    "packages/ui": {
+      "entry": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ]
+    },
+    "packages/i18n": {
+      "entry": [
+        "src/**/*.ts"
+      ],
+      "project": [
+        "src/**/*.ts"
+      ]
+    }
+  }
+}
