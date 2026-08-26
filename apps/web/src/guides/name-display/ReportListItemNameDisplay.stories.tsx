@@ -1,11 +1,14 @@
-import type { StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
+import type { ComponentProps } from "react";
 import { ReportListItem } from "#/entities/report/ui/ReportListItem";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
 import {
   buildEllipsisBoundaryRows,
+  type EllipsisLocaleSelection,
   NAME_DISPLAY_DEFAULT_VIEWPORT,
   NAME_DISPLAY_VIEWPORTS,
+  type NameDisplayViewport,
 } from "#/shared/storybook/name-display-matrix";
 
 const PLACE_EXAMPLE_NOTE =
@@ -18,6 +21,17 @@ const SHARED_ARGS = {
   imageTitleText: "이미지 없음",
   imageHelperText: "",
 } as const;
+
+/**
+ * 스토리 전용 args.
+ *
+ * viewport·locale 은 컨트롤로만 쓰는 값이라 컴포넌트 props 에 없다. 타입을 주지
+ * 않으면 Storybook 이 component 에서 args 를 추론해 이 둘을 모르는 것으로 본다.
+ */
+type NameDisplayStoryArgs = ComponentProps<typeof ReportListItem> & {
+  viewport: NameDisplayViewport;
+  locale: EllipsisLocaleSelection;
+};
 
 const meta = {
   title: "Product/Guides/Name Display/Report List Item",
@@ -47,11 +61,11 @@ const meta = {
       </div>
     ),
   ],
-};
+} satisfies Meta<NameDisplayStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<NameDisplayStoryArgs>;
 
 export const EllipsisBoundary: Story = {
   render: ({ viewport, locale }) => {

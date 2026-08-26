@@ -57,18 +57,28 @@ function HomeMapChromePreview({
       >
         <HomeHeader profileImageUrl="" onProfilePress={() => undefined} />
         <HomeSearchBar onOpenSearch={() => undefined} />
-        <div className={locationControlStack} style={{ bottom: controlBottom }}>
-          <button
-            type="button"
-            className={locationButton}
-            aria-label="지도 새로고침"
+        {/* null 은 놓을 자리가 없다는 뜻이다. 실제 앱도 이때 렌더하지 않는다. */}
+        {controlBottom !== null && (
+          <div
+            className={locationControlStack}
+            style={{ bottom: controlBottom }}
           >
-            <IconNavigationRefresh24 />
-          </button>
-          <button type="button" className={locationButton} aria-label="내 위치">
-            <IconNavigationCrosshair24 className={myLocationIcon} />
-          </button>
-        </div>
+            <button
+              type="button"
+              className={locationButton}
+              aria-label="지도 새로고침"
+            >
+              <IconNavigationRefresh24 />
+            </button>
+            <button
+              type="button"
+              className={locationButton}
+              aria-label="내 위치"
+            >
+              <IconNavigationCrosshair24 className={myLocationIcon} />
+            </button>
+          </div>
+        )}
       </main>
     </QueryClientProvider>
   );

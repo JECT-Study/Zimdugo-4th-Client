@@ -93,7 +93,7 @@ const verifyNaverMapAuth = async (clientId: string) => {
       .slice(2)}`;
     const script = document.createElement("script");
     const cleanup = () => {
-      delete (window as Record<string, unknown>)[callbackName];
+      delete (window as unknown as Record<string, unknown>)[callbackName];
       script.remove();
     };
     const timeoutId = window.setTimeout(() => {
@@ -101,7 +101,7 @@ const verifyNaverMapAuth = async (clientId: string) => {
       reject(new Error("Naver Maps authentication request timed out."));
     }, 5000);
 
-    (window as Record<string, unknown>)[callbackName] = () => {
+    (window as unknown as Record<string, unknown>)[callbackName] = () => {
       window.clearTimeout(timeoutId);
       cleanup();
       resolve();
@@ -151,7 +151,9 @@ const loadNaverMapSdk = async ({
   await verifyNaverMapAuth(clientId);
 
   removeNaverMapScript();
-  delete window.naver;
+  // 타입 선언상 naver 는 필수라 delete 가 막힌다. 스크립트를 지운 뒤 전역도
+  // 비워야 다음 로드가 새로 붙는다.
+  (window as unknown as Record<string, unknown>).naver = undefined;
 
   await new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");

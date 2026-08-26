@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
-import type { StoryObj } from "@storybook/react";
-import type { ReactNode } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import type { ComponentProps, ReactNode } from "react";
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
 import { NameDisplayMatrix } from "#/shared/storybook/NameDisplayMatrix";
 import { NameDisplaySurface } from "#/shared/storybook/NameDisplaySurface";
@@ -16,6 +16,17 @@ import {
 
 const PLACE_EXAMPLE_NOTE =
   "예: 강남역 교보타워 5층 안내데스크 맞은편 · Gangnam Station Kyobo Tower 5F Info Desk";
+
+/**
+ * 스토리 전용 args.
+ *
+ * viewport·locale 은 컨트롤로만 쓰는 값이라 컴포넌트 props 에 없다. 타입을 주지
+ * 않으면 Storybook 이 component 에서 args 를 추론해 이 둘을 모르는 것으로 본다.
+ */
+type NameDisplayStoryArgs = ComponentProps<typeof SearchResultsHeading> & {
+  viewport: NameDisplayViewport;
+  locale: EllipsisLocaleSelection;
+};
 
 const meta = {
   title: "Product/Guides/Name Display/Results Heading",
@@ -45,11 +56,11 @@ const meta = {
       </div>
     ),
   ],
-};
+} satisfies Meta<NameDisplayStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<NameDisplayStoryArgs>;
 
 function buildHeadingRows(
   viewport: NameDisplayViewport,

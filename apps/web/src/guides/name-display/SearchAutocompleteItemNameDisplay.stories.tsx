@@ -1,4 +1,5 @@
-import type { StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
+import type { ComponentProps } from "react";
 import {
   SearchAutocompleteItem,
   type SearchAutocompleteItemData,
@@ -42,6 +43,20 @@ function createAutocompleteItem(
       };
 }
 
+/**
+ * 스토리 전용 args.
+ *
+ * viewport·locale 은 컨트롤로만 쓰는 값이라 컴포넌트 props 에 없다. 타입을 주지
+ * 않으면 Storybook 이 component 에서 args 를 추론해 이 둘을 모르는 것으로 본다.
+ */
+type NameDisplayStoryArgs = ComponentProps<typeof SearchAutocompleteItem> & {
+  viewport: NameDisplayViewport;
+  locale: EllipsisLocaleSelection;
+  // 컴포넌트에서는 item 안에 들어 있는 값이라 최상위 prop 이 아니다.
+  itemType: "PLACE" | "LOCKER";
+  distanceLabel: string;
+};
+
 const meta = {
   title: "Product/Guides/Name Display/Autocomplete Item",
   component: SearchAutocompleteItem,
@@ -80,11 +95,11 @@ const meta = {
       </div>
     ),
   ],
-};
+} satisfies Meta<NameDisplayStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<NameDisplayStoryArgs>;
 
 function renderMatrix(
   itemType: "PLACE" | "LOCKER",

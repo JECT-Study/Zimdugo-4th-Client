@@ -46,6 +46,10 @@ jobs:
       - name: Biome
         run: pnpm check
 
+      # 각 앱의 pretypecheck 가 paraglide 메시지를 먼저 컴파일한다.
+      - name: Typecheck
+        run: pnpm typecheck
+
       # 각 앱의 pretest 가 paraglide 메시지를 먼저 컴파일한다.
       - name: Test (web)
         run: pnpm test:web

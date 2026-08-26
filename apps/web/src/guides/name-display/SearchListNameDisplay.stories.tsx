@@ -1,5 +1,5 @@
-import type { StoryObj } from "@storybook/react";
-import type { ReactNode } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import type { ComponentProps, ReactNode } from "react";
 import type {
   SearchLockerResultItem,
   SearchPlaceResultItem,
@@ -55,6 +55,17 @@ function createPlace(title: string): SearchPlaceResultItem {
   };
 }
 
+/**
+ * 스토리 전용 args.
+ *
+ * viewport·locale 은 컨트롤로만 쓰는 값이라 컴포넌트 props 에 없다. 타입을 주지
+ * 않으면 Storybook 이 component 에서 args 를 추론해 이 둘을 모르는 것으로 본다.
+ */
+type NameDisplayStoryArgs = ComponentProps<typeof SearchListResult> & {
+  viewport: NameDisplayViewport;
+  locale: EllipsisLocaleSelection;
+};
+
 const meta = {
   title: "Product/Guides/Name Display/Search List",
   component: SearchListResult,
@@ -83,11 +94,11 @@ const meta = {
       </div>
     ),
   ],
-};
+} satisfies Meta<NameDisplayStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<NameDisplayStoryArgs>;
 
 function buildRows(
   viewport: NameDisplayViewport,

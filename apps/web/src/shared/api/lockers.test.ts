@@ -1,3 +1,4 @@
+import { AxiosHeaders, type AxiosResponse } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getLockerPins } from "#/shared/api/lockers";
 import { httpGet } from "#/shared/lib/apiClient";
@@ -6,7 +7,8 @@ vi.mock("#/shared/lib/apiClient", () => ({
   httpGet: vi.fn(),
 }));
 
-const mockPinResponse = (items: unknown[]) => ({
+// httpGet 의 반환 타입이 AxiosResponse 라 data 만으로는 모양이 맞지 않는다.
+const mockPinResponse = (items: unknown[]): AxiosResponse<unknown> => ({
   data: {
     code: "SUCCESS",
     message: "ok",
@@ -14,6 +16,10 @@ const mockPinResponse = (items: unknown[]) => ({
     timestamp: "2026-06-26T00:00:00.000Z",
     data: { items },
   },
+  status: 200,
+  statusText: "OK",
+  headers: {},
+  config: { headers: new AxiosHeaders() },
 });
 
 describe("getLockerPins", () => {
