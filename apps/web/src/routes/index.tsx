@@ -649,7 +649,7 @@ export function IndexPage() {
     (filters: SearchFilterAppliedState) => {
       saveSearchFiltersToSession(filters);
     },
-    [navigate],
+    [],
   );
   const setConfirmedSearchQuery = useCallback(
     (
@@ -1153,6 +1153,9 @@ export function IndexPage() {
     startTracking,
   ]);
 
+  // mapRemountKey 는 본문에서 읽지 않는다. 지도를 다시 마운트할 때 초기
+  // 카메라를 새로 계산하려고 넣은 트리거다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mapRemountKey 는 재계산 트리거다
   const mapBootstrap = useMemo(() => {
     if (lockerIdFromQuery !== undefined && loaderData?.detail) {
       return {
@@ -1493,7 +1496,6 @@ export function IndexPage() {
     requestOrientationPermission,
     startOrientationTracking,
     stopOrientationTracking,
-    setIsOrientationDeniedPopupOpen,
   ]);
 
   const handleDismissLocationRecoveryNotice = useCallback(() => {
@@ -1819,6 +1821,10 @@ export function IndexPage() {
     }
   }, [activePlaceId]);
 
+  // 아래 세 memo 는 lastValidPlaceLockersRef 를 읽는다. ref 는 변경이
+  // 감지되지 않으므로, 그 ref 를 채우는 placeLockersResults 를 트리거로 넣어야
+  // 새 결과가 반영된다. 빼면 이전 장소의 핀이 그대로 남는다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placeLockersResults 는 ref 갱신 트리거다
   const searchResultPins = useMemo(() => {
     if (context === "search" && listKind === "place") {
       if (activePlaceId == null) return [];
@@ -1836,6 +1842,7 @@ export function IndexPage() {
     placeLockersResults,
   ]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placeLockersResults 는 ref 갱신 트리거다
   const mapPlacePins = useMemo(() => {
     if (activePlaceId == null) return [];
     return lastValidPlaceLockersRef.current?.placeId === activePlaceId
@@ -1843,6 +1850,7 @@ export function IndexPage() {
       : [];
   }, [activePlaceId, placeLockersResults]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placeLockersResults 는 ref 갱신 트리거다
   const activePlaceName = useMemo(() => {
     if (context === "map" || listKind === "place") {
       return lastValidPlaceLockersRef.current?.placeId === activePlaceId
@@ -1967,7 +1975,6 @@ export function IndexPage() {
       flushLockerSheetMutations,
       clearPendingLockerDetailOpen,
       setIsSearchOpen,
-      setSheetMode,
       searchCoordinates.lat,
       searchCoordinates.lng,
       syncLockerDetailUrl,
@@ -2011,7 +2018,6 @@ export function IndexPage() {
       searchDraft,
       setConfirmedSearchQuery,
       setIsSearchOpen,
-      setSheetMode,
     ],
   );
 
@@ -2031,7 +2037,7 @@ export function IndexPage() {
       setIsSearchOpen(false);
       setSheetMode("list");
     },
-    [clearPendingLockerDetailOpen, setIsSearchOpen, setSheetMode],
+    [clearPendingLockerDetailOpen, setIsSearchOpen],
   );
 
   const handleSelectSearch = useCallback(
@@ -2062,7 +2068,6 @@ export function IndexPage() {
       clearPendingLockerDetailOpen,
       recordSearchHistory,
       setIsSearchOpen,
-      setSheetMode,
     ],
   );
 
@@ -2632,7 +2637,6 @@ export function IndexPage() {
       searchCoordinates.lat,
       searchCoordinates.lng,
       searchPlaceId,
-      setSheetMode,
       shouldRaiseSelectedPinFromMini,
       suppressNextMapPressForMarkerInteraction,
     ],
@@ -2676,63 +2680,60 @@ export function IndexPage() {
     setIsNavigationPopupOpen(true);
   }, []);
 
-  const handleShareLockerDetail = useCallback(
-    (item: LockerDetailItem) => {
-      if (typeof window === "undefined") {
+  const handleShareLockerDetail = useCallback((item: LockerDetailItem) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const shareUrl = createLockerDeepLinkUrl({
+      origin: window.location.origin,
+      lockerId: item.lockerId,
+      title: item.title,
+    });
+    const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
+    const shareText = createLockerShareText({
+      locale: shareLocale,
+      url: shareUrl,
+      title: item.title,
+      address: item.address,
+    });
+
+    const copyShareUrlToClipboard = () => {
+      if (!navigator.clipboard) {
+        console.error(
+          "Failed to copy locker detail: Clipboard API is not supported",
+        );
         return;
       }
 
-      const shareUrl = createLockerDeepLinkUrl({
-        origin: window.location.origin,
-        lockerId: item.lockerId,
-        title: item.title,
-      });
-      const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
-      const shareText = createLockerShareText({
-        locale: shareLocale,
-        url: shareUrl,
-        title: item.title,
-        address: item.address,
-      });
+      void navigator.clipboard
+        .writeText(shareUrl)
+        .then(() => {
+          setShareCopied(true);
+        })
+        .catch((error) => {
+          console.error("Failed to copy locker detail:", error);
+        });
+    };
 
-      const copyShareUrlToClipboard = () => {
-        if (!navigator.clipboard) {
-          console.error(
-            "Failed to copy locker detail: Clipboard API is not supported",
-          );
-          return;
-        }
+    if (navigator.share) {
+      void navigator
+        .share({
+          title: item.title,
+          text: shareText,
+        })
+        .catch((error) => {
+          if (error instanceof Error && error.name === "AbortError") {
+            return;
+          }
 
-        void navigator.clipboard
-          .writeText(shareUrl)
-          .then(() => {
-            setShareCopied(true);
-          })
-          .catch((error) => {
-            console.error("Failed to copy locker detail:", error);
-          });
-      };
+          console.error("Failed to share locker detail:", error);
+        });
+      return;
+    }
 
-      if (navigator.share) {
-        void navigator
-          .share({
-            title: item.title,
-            text: shareText,
-          })
-          .catch((error) => {
-            if (error instanceof Error && error.name === "AbortError") {
-              return;
-            }
-
-            console.error("Failed to share locker detail:", error);
-          });
-        return;
-      }
-
-      copyShareUrlToClipboard();
-    },
-    [setShareCopied],
-  );
+    copyShareUrlToClipboard();
+  }, []);
 
   const navigationKnownLocation = useMemo(
     () => (permission === "granted" && location ? location : null),
@@ -2797,9 +2798,6 @@ export function IndexPage() {
     mapDetailBack,
     resetMapContext,
     searchDetailBack,
-    setListKind,
-    setSearchPlaceId,
-    setSheetMode,
     search.locker,
     navigate,
   ]);
@@ -2826,7 +2824,7 @@ export function IndexPage() {
 
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
-  }, [setSheetMode]);
+  }, []);
 
   const handleResetSearchFilter = useCallback(() => {
     const defaultFilters = createDefaultSearchFilters();
@@ -2840,7 +2838,7 @@ export function IndexPage() {
       syncSearchFilterSession(filters);
       setSheetMode("list");
     },
-    [setSheetMode, syncSearchFilterSession],
+    [syncSearchFilterSession],
   );
 
   const searchBarBackAction = resolveSearchBarBackAction({
@@ -3243,6 +3241,9 @@ export function IndexPage() {
     context === "search" && listKind === "keyword"
       ? `search-keyword-${effectiveSearchQuery}`
       : `${context}-${listKind ?? "none"}-${activePlaceId ?? "none"}`;
+  // searchListSheetKey 는 본문에서 읽지 않는다. 다른 목록으로 바뀌면 스냅
+  // 단계를 하프로 되돌리려고 넣은 트리거다. 빼면 직전 목록의 단계가 남는다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: searchListSheetKey 는 초기화 트리거다
   useEffect(() => {
     if (sheetMode === "list") {
       setListSheetSnapStage("half");
@@ -3250,6 +3251,9 @@ export function IndexPage() {
     }
   }, [clearListSheetSnapRequest, searchListSheetKey, sheetMode]);
 
+  // activeLockerId 는 본문에서 읽지 않는다. 다른 보관함을 열면 스냅 단계를
+  // 다시 정하려고 넣은 트리거다. 빼면 직전 보관함의 단계로 열린다(#157).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeLockerId 는 초기화 트리거다
   useEffect(() => {
     if (sheetMode === "detail") {
       setDetailSheetSnapStage(lockerDetailOpensFull ? "full" : "half");

@@ -182,6 +182,9 @@ export function NaverMapProvider({
   const naverMapLanguage = normalizeNaverMapLanguage(language);
   const submoduleKey = submodules.join(",");
 
+  // submodules 는 배열이라 매 렌더 새 참조다. 그대로 의존성에 넣으면 지도
+  // SDK 를 끝없이 다시 불러온다. 그래서 join 한 submoduleKey 를 쓴다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: submodules 대신 submoduleKey 를 쓴다
   useEffect(() => {
     let isMounted = true;
 
