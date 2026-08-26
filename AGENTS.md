@@ -130,7 +130,7 @@ Record:
 | Validation | Zod |
 | Styling | vanilla-extract (CSS-in-TS) |
 | Animation | motion |
-| Auth | better-auth |
+| Auth | 자체 구현 (백엔드 OAuth + 액세스 토큰) |
 | Package Manager | pnpm |
 | Linter / Formatter | Biome |
 | Component Dev | Storybook |
