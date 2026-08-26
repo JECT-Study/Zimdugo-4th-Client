@@ -79,6 +79,23 @@ const rectOf = async (locator: Locator) => {
   return box;
 };
 
+/**
+ * 시트가 마운트 슬라이드를 끝내고 목표 높이에 안착할 때까지 기다린다.
+ *
+ * toBeVisible 은 크기가 0 이 아니면 바로 통과하므로 올라오는 도중에도 참이다.
+ * 그 시점에 높이를 재면 82·86 같은 중간값이 나온다.
+ */
+const expectSheetSettledAt = async (page: Page, visibleHeightPx: number) => {
+  const viewportHeight = page.viewportSize()?.height ?? 0;
+
+  await expect
+    .poll(async () => {
+      const box = await sheetSurface(page).boundingBox();
+      return box ? Math.round(viewportHeight - box.y) : null;
+    })
+    .toBe(visibleHeightPx);
+};
+
 /** 컨트롤 아래끝이 시트 윗변보다 위에 있어야 눌린다. */
 const expectControlClearsSheet = async (page: Page) => {
   const control = await rectOf(mapControlStack(page));
@@ -99,14 +116,7 @@ test.describe("상세 시트와 지도 컨트롤", () => {
     await page.goto(`/?locker=${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
-    await expect(sheetSurface(page)).toBeVisible();
-
-    const viewportHeight = page.viewportSize()?.height ?? 0;
-    const sheet = await rectOf(sheetSurface(page));
-    const visibleHeight = viewportHeight - sheet.y;
-
-    // 시트가 하프에 안착했는지 먼저 확인한다.
-    expect(Math.round(visibleHeight)).toBe(DETAIL_HALF_VISIBLE_HEIGHT);
+    await expectSheetSettledAt(page, DETAIL_HALF_VISIBLE_HEIGHT);
 
     const bottom = await mapControlStack(page).evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).bottom),
@@ -122,6 +132,8 @@ test.describe("상세 시트와 지도 컨트롤", () => {
     await page.goto(`/?locker=${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
+    // 올라오는 도중에 끌기 시작하면 시작 좌표가 시트를 벗어난다.
+    await expectSheetSettledAt(page, DETAIL_HALF_VISIBLE_HEIGHT);
 
     const sheet = await rectOf(sheetSurface(page));
     const startX = sheet.x + sheet.width / 2;

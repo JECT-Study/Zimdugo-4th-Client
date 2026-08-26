@@ -50,6 +50,9 @@ export function ProfileImage({
     setHasError(true);
   };
 
+  // src 는 본문에서 읽지 않지만, 이미지가 바뀌면 이전 실패 상태를 지우려고
+  // 일부러 넣은 트리거다. 빼면 다른 이미지로 바뀌어도 깨진 상태가 남는다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: src 는 재실행 트리거다
   useEffect(() => {
     setHasError(false);
   }, [src]);
