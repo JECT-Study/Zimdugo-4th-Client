@@ -104,7 +104,7 @@ pnpm build-storybook  # Storybook 빌드
 | **유효성 검증** | Zod |
 | **스타일링** | vanilla-extract (CSS-in-TS) |
 | **애니메이션** | motion |
-| **인증** | better-auth |
+| **인증** | 자체 구현 (백엔드 OAuth + 액세스 토큰) |
 | **다국어 (i18n)** | Paraglide-JS |
 | **패키지 매니저** | pnpm |
 | **린터 / 포매터** | Biome |
@@ -134,8 +134,6 @@ zimdugo/
 │   ├── libs/             # 공통 라이브러리 설정
 │   │   ├── src/
 │   │   │   ├── axios.ts
-│   │   │   ├── auth.ts
-│   │   │   ├── auth-client.ts
 │   │   │   └── es-toolkit.ts
 │   │   ├── tsconfig.json
 │   │   └── package.json
@@ -182,8 +180,11 @@ zimdugo/
 #### 📂 `packages/libs/`
 여러 앱에서 공유하는 라이브러리 설정 및 re-export 패키지입니다.
 - `axios`: HTTP 클라이언트 설정 및 API 메서드
-- `better-auth`: 인증 설정 (서버/클라이언트)
 - `es-toolkit`: 유틸리티 함수 라이브러리 (lodash 대체)
+
+> 인증은 이 패키지가 아니라 앱 안에 있습니다.
+> `apps/web/src/features/auth/sign-in/` 이 백엔드 OAuth 로 로그인하고
+> 액세스 토큰을 받아 `shared/store/authStore` 에 보관합니다.
 
 #### 📂 `packages/i18n/`
 Paraglide-JS를 이용한 다국어 지원 패키지입니다.
@@ -218,12 +219,6 @@ packages/libs → (외부 의존성만)
 ```typescript
 // axios 사용
 import { apiClient, httpGet, httpPost } from '@repo/libs/axios'
-
-// better-auth 사용 (서버)
-import { auth } from '@repo/libs/auth'
-
-// better-auth 사용 (클라이언트)
-import { authClient } from '@repo/libs/auth-client'
 
 // es-toolkit 사용
 import { debounce, throttle } from '@repo/libs/es-toolkit'
