@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import * as navigationPlatformLinks from "#/features/search/lib/navigation-platform-links";
@@ -40,6 +40,10 @@ describe("NavigationPlatformPopup", () => {
   });
 
   afterEach(() => {
+    // 언마운트하지 않으면 react-aria 다이얼로그가 걸어 둔 타이머가 jsdom 이
+    // 정리된 뒤에 발화해 "document is not defined" 로 터진다. 테스트는 모두
+    // 통과하는데 프로세스만 실패해 CI 가 간헐적으로 빨개졌다.
+    cleanup();
     vi.restoreAllMocks();
   });
 
