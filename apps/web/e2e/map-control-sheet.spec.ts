@@ -67,6 +67,11 @@ const mapControlStack = (page: Page) => page.locator("[data-map-control-stack]")
 
 const sheetSurface = (page: Page) => page.locator("[data-bottom-sheet-surface]");
 
+/** 컨트롤과 무관한 신호로 지도 준비를 기다린다. */
+const waitForMapReady = async (page: Page) => {
+  await expect(page.locator('[data-map-state="ready"]')).toBeAttached();
+};
+
 const rectOf = async (locator: Locator) => {
   const box = await locator.boundingBox();
   if (!box) throw new Error("요소를 찾지 못했다");
@@ -92,7 +97,8 @@ test.beforeEach(async ({ page }) => {
 test.describe("상세 시트와 지도 컨트롤", () => {
   test("하프 시트 위로 밀어 올린다", async ({ page }) => {
     await page.goto(`/?locker=${LOCKER_ID}`);
-    await expect(page.getByRole("button", { name: "내 위치로 이동" })).toBeVisible();
+    await waitForMapReady(page);
+    await expect(mapControlStack(page)).toBeVisible();
     await expect(sheetSurface(page)).toBeVisible();
 
     const viewportHeight = page.viewportSize()?.height ?? 0;
@@ -114,7 +120,8 @@ test.describe("상세 시트와 지도 컨트롤", () => {
     page,
   }) => {
     await page.goto(`/?locker=${LOCKER_ID}`);
-    await expect(page.getByRole("button", { name: "내 위치로 이동" })).toBeVisible();
+    await waitForMapReady(page);
+    await expect(mapControlStack(page)).toBeVisible();
 
     const sheet = await rectOf(sheetSurface(page));
     const startX = sheet.x + sheet.width / 2;
@@ -139,17 +146,18 @@ test.describe("상세 시트와 지도 컨트롤", () => {
     // 하프 시트(191) + 간격(12) + 예약 높이(216) = 419px 부터 놓을 수 있다.
     await page.setViewportSize({ width: 430, height: 418 });
     await page.goto(`/?locker=${LOCKER_ID}`);
+    await waitForMapReady(page);
     await expect(sheetSurface(page)).toBeVisible();
 
-    await expect(
-      page.getByRole("button", { name: "내 위치로 이동" }),
-    ).toHaveCount(0);
+    // 지도가 준비되고 시트도 뜬 뒤라야 "숨겨졌다" 를 단언할 수 있다.
+    await expect(mapControlStack(page)).toHaveCount(0);
   });
 
   test("경계 높이에서는 상단 선에 맞춰 올린다", async ({ page }) => {
     await page.setViewportSize({ width: 430, height: 419 });
     await page.goto(`/?locker=${LOCKER_ID}`);
-    await expect(page.getByRole("button", { name: "내 위치로 이동" })).toBeVisible();
+    await waitForMapReady(page);
+    await expect(mapControlStack(page)).toBeVisible();
 
     const bottom = await mapControlStack(page).evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).bottom),
@@ -163,7 +171,8 @@ test.describe("상세 시트와 지도 컨트롤", () => {
 
   test("시트를 닫으면 기본 자리로 돌아온다", async ({ page }) => {
     await page.goto(`/?locker=${LOCKER_ID}`);
-    await expect(page.getByRole("button", { name: "내 위치로 이동" })).toBeVisible();
+    await waitForMapReady(page);
+    await expect(mapControlStack(page)).toBeVisible();
 
     await page.getByRole("button", { name: "닫기" }).click();
     await expect(sheetSurface(page)).toHaveCount(0);

@@ -53,11 +53,15 @@ const stubApi = async (page: Page) => {
 /** 지도 컨트롤 스택. 프로덕션 빌드는 클래스명이 해시라 전용 앵커로 찾는다. */
 const mapControlStack = (page: Page) => page.locator("[data-map-control-stack]");
 
-/** 지도 SDK 가 붙어 실제 컨트롤이 나올 때까지 기다린다. */
+/**
+ * 지도 SDK 가 붙고 부트스트랩이 끝날 때까지 기다린다.
+ *
+ * 컨트롤 자체를 신호로 쓰면 안 된다. 아직 지도가 준비되지 않아 없는 것인지,
+ * 배치 판정이 잘못돼 숨겨진 것인지 구분하지 못한다. 컨트롤이 "없어야 한다" 를
+ * 단언하는 곳에서는 특히 그렇다.
+ */
 const waitForMapReady = async (page: Page) => {
-  await expect(
-    page.getByRole("button", { name: "지도 새로고침" }),
-  ).toBeVisible();
+  await expect(page.locator('[data-map-state="ready"]')).toBeAttached();
 };
 
 const bottomPxOf = async (page: Page) => {
@@ -85,10 +89,10 @@ test.describe("지도 컨트롤 위치", () => {
     await page.setViewportSize({ width: 430, height: 260 });
     await page.goto("/");
 
-    // 지도는 떠도 컨트롤은 나오지 않아야 한다.
-    await expect(page.getByRole("button", { name: "내 위치로 이동" })).toHaveCount(
-      0,
-    );
+    // 지도가 준비된 뒤에 확인해야 한다. 로딩 중에는 컨트롤이 없는 게 당연해서
+    // 바로 세면 배치 판정이 잘못돼도 통과한다.
+    await waitForMapReady(page);
+    await expect(mapControlStack(page)).toHaveCount(0);
   });
 
   test("경계 높이에서 표시 여부가 갈린다", async ({ page }) => {
