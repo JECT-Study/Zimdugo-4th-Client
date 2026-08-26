@@ -46,10 +46,7 @@ jobs:
       - name: Biome
         run: pnpm check
 
-      # 타입 체크는 paraglide 가 만든 메시지 타입을 필요로 한다.
-      - name: Compile messages
-        run: pnpm --filter web i18n:compile && pnpm --filter admin i18n:compile
-
+      # 각 앱의 pretypecheck 가 paraglide 메시지를 먼저 컴파일한다.
       - name: Typecheck
         run: pnpm typecheck
 
