@@ -3441,6 +3441,8 @@ export function IndexPage() {
         mapControlBottom !== null ? (
         <motion.div
           className={locationControlStack}
+          // E2E 가 위치를 재는 앵커. 스켈레톤과 구분되도록 실제 컨트롤에만 둔다.
+          data-map-control-stack=""
           initial={false}
           style={{
             bottom: shouldTrackSheet

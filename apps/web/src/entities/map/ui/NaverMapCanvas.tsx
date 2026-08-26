@@ -229,7 +229,14 @@ export function NaverMapCanvas({
   }, [hasError]);
 
   return (
-    <section className={root} aria-label={m.map_area_aria()}>
+    <section
+      className={root}
+      aria-label={m.map_area_aria()}
+      // 지도 SDK 가 붙고 부트스트랩까지 끝났는지. E2E 가 컨트롤과 무관한
+      // 신호로 준비 완료를 기다리는 데 쓴다. 컨트롤 자체를 신호로 삼으면
+      // "아직 안 떴을 뿐인 상태" 와 "잘못 숨겨진 상태" 를 구분하지 못한다.
+      data-map-state={hasError ? "error" : isLoading ? "loading" : "ready"}
+    >
       <div ref={containerRef} className={canvas} />
 
       {isLoading && !hasError ? <MapSkeleton /> : null}
