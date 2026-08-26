@@ -8,9 +8,13 @@ export const root = style({
   justifyContent: "center",
   gap: vars.spacing[12],
   width: "100%",
-  // spacing 스케일은 28 까지다. 40 은 없어서 undefined 가 들어갔고, padding
-  // 선언 전체가 무효가 돼 여백이 아예 없는 상태였다. 의도한 값으로 되돌린다.
-  padding: `40px ${vars.spacing[20]}`,
+  // 여백을 두지 않는다.
+  //
+  // 예전에는 `${vars.spacing[40]} ${vars.spacing[20]}` 이었는데 spacing 스케일이
+  // 28 까지라 40 이 undefined 였다. `padding: "undefined 20px"` 는 브라우저가
+  // 선언 전체를 버리므로 실제로는 여백이 0 이었고, 그 모습이 유지하기로 한
+  // 디자인이다. 0 을 명시해 두어야 없는 토큰을 다시 참조하는 일이 없다.
+  padding: 0,
   boxSizing: "border-box",
   textAlign: "center",
 });
