@@ -466,10 +466,27 @@ export function SearchListBottomSheet({
    * 단계가 바뀔 때는 onSnapChange 와 같은 틱에 알려야 해서 handleSnapChange 가
    * 직접 부르고, 화면 높이가 바뀌어 자리만 달라지는 경우는 아래 이펙트가 부른다.
    */
-  // 마지막으로 안착한 스냅 지점. 마운트 직후에는 초기 스냅이다.
-  const [settledSnapPoint, setSettledSnapPoint] = useState(
-    resolvedInitialSnapPoint,
-  );
+  /**
+   * 지금 안착해 있는 단계. 픽셀 오프셋이 아니라 단계를 들고 있어야 한다.
+   *
+   * 첫 렌더의 스냅 지점은 가정 높이(812)로 계산된 값이다. 마운트 뒤 실제 높이가
+   * 들어오면 스냅 지점이 전부 바뀌는데, 그때 예전 오프셋을 새 스냅들과 견주면
+   * 엉뚱한 단계로 분류된다. 667px 화면이면 471 이 half 가 아니라 mini 로 읽혀,
+   * 실제로는 280px 인 시트를 147px 로 알리게 된다.
+   *
+   * 단계는 화면 높이와 무관한 의미 단위라 그대로 두면 된다. 높이는 그때그때
+   * 현재 스냅 지점으로 다시 계산한다.
+   */
+  const [currentSnapStage, setCurrentSnapStage] =
+    useState<SearchListSheetSnapStage>(() =>
+      resolveSearchListSnapStage({
+        maxSnapPoint: resolvedMaxSnapPoint,
+        miniSnapPoint: resolvedMiniSnapPoint,
+        minSnapPoint: resolvedMinSnapPoint,
+        offset: resolvedInitialSnapPoint,
+        snapPoint: resolvedSnapPoint,
+      }),
+    );
   const lastStageNoticeRef = useRef<string | null>(null);
   const notifySnapStage = useCallback(
     (stage: SearchListSheetSnapStage, visibleHeightPx: number | null) => {
@@ -484,17 +501,8 @@ export function SearchListBottomSheet({
     [onSnapStageChange],
   );
 
-  const currentSnapStage = resolveSearchListSnapStage({
-    maxSnapPoint: resolvedMaxSnapPoint,
-    miniSnapPoint: resolvedMiniSnapPoint,
-    minSnapPoint: resolvedMinSnapPoint,
-    offset: settledSnapPoint,
-    snapPoint: resolvedSnapPoint,
-  });
-
   const handleSnapChange = (nextSnap: number) => {
     onSnapChange?.(nextSnap);
-    setSettledSnapPoint(nextSnap);
 
     const nextStage = resolveSearchListSnapStage({
       maxSnapPoint: resolvedMaxSnapPoint,
@@ -504,6 +512,7 @@ export function SearchListBottomSheet({
       snapPoint: resolvedSnapPoint,
     });
 
+    setCurrentSnapStage(nextStage);
     notifySnapStage(nextStage, resolveStageVisibleHeight(nextStage));
   };
 

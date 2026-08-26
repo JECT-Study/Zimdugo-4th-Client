@@ -124,6 +124,35 @@ describe("SearchListBottomSheet", () => {
     expect(handleSnapStageChange).toHaveBeenCalledWith("half", 341);
   });
 
+  it("실제 화면 높이가 들어와도 단계를 잘못 바꾸지 않는다", () => {
+    // 첫 렌더의 스냅 지점은 가정 높이(812)로 계산된다. 마운트 뒤 실제 높이가
+    // 반영되면 스냅 지점이 전부 바뀌는데, 예전 오프셋을 새 스냅들과 견주면
+    // 667px 화면에서 471 이 half 가 아니라 mini 로 읽힌다. 그러면 실제로는
+    // 280px 인 시트를 147px 로 알리게 되고 컨트롤이 시트 뒤에 놓인다.
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 667,
+    });
+
+    const handleSnapStageChange = vi.fn();
+
+    render(
+      <SearchListBottomSheet
+        searchQuery="강남"
+        items={[]}
+        onSnapStageChange={handleSnapStageChange}
+      />,
+    );
+
+    const stages = handleSnapStageChange.mock.calls.map(([stage]) => stage);
+
+    expect(stages).not.toContain("mini");
+    expect(handleSnapStageChange).toHaveBeenLastCalledWith(
+      "half",
+      expect.any(Number),
+    );
+  });
+
   it("passes detail-style snap props to the draggable sheet by default", () => {
     render(<SearchListBottomSheet searchQuery="강남" items={[]} />);
 
