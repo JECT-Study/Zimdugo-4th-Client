@@ -68,6 +68,12 @@ export const Default: Story = {
       args.activeTab ?? "home",
     );
 
+    const handleChangeActiveTab = (
+      event: React.ChangeEvent<HTMLSelectElement>,
+    ) => {
+      setActiveTab(event.target.value as BottomTabKey);
+    };
+
     useEffect(() => {
       if (args.activeTab !== undefined) {
         setActiveTab(args.activeTab);
@@ -115,9 +121,7 @@ export const Default: Story = {
           <select
             id={STATE_CONTROL_ID}
             value={activeTab}
-            onChange={(event) =>
-              setActiveTab(event.target.value as BottomTabKey)
-            }
+            onChange={handleChangeActiveTab}
             style={{
               width: "100%",
               padding: "8px",
