@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { NonSearch, SearchListResults } from "#/entities/search";
@@ -92,7 +93,14 @@ export interface SearchListBottomSheetProps {
   initialSnapPoint?: number;
   maxSnapPoint?: number;
   onSnapChange?: (nextSnap: number) => void;
-  onSnapStageChange?: (nextStage: SearchListSheetSnapStage) => void;
+  /**
+   * 두 번째 인자는 그 단계에서 시트가 실제로 차지하는 높이다. full 은 화면
+   * 높이에 따라 달라지므로 상수로 정할 수 없다. dismiss 면 null 이다.
+   */
+  onSnapStageChange?: (
+    nextStage: SearchListSheetSnapStage,
+    visibleHeightPx: number | null,
+  ) => void;
   /**
    * 프레임마다 불린다. 지도 컨트롤이 시트 윗변을 따라오게 하는 용도다.
    * 부모는 identity 가 고정된 콜백을 넘겨야 한다.
@@ -162,8 +170,10 @@ export const resolveSearchListVisibleHeight = ({
 }) => Math.min(maxVisibleHeight, Math.round(windowHeight * ratio));
 
 /**
- * 해당 단계에서 시트가 화면 하단에 차지하는 높이. 지도 컨트롤이 이 위로 올라간다.
- * full·dismiss 는 컨트롤이 시트를 피할 단계가 아니라 null 을 준다.
+ * 단계별 기본 높이. 시트가 아직 자기 스냅을 못 정했을 때 쓰는 초기값이다.
+ *
+ * full 은 최소 상단 여백까지 올라가므로 여기서 정할 수 없다. 실제 값은 시트가
+ * onSnapStageChange 로 올려 준다. dismiss 는 사실상 닫힌 상태라 null 이다.
  */
 export const resolveSearchListStageVisibleHeight = (
   stage: SearchListSheetSnapStage,
@@ -430,17 +440,57 @@ export function SearchListBottomSheet({
     },
     [onLiveOffsetChange],
   );
+  /**
+   * 그 단계에서 시트가 화면 하단에 차지하는 높이.
+   *
+   * full 을 단계 상수로만 보면 컨트롤 쪽이 "밀어 올릴 자리가 없다" 로만 알고
+   * 기본 위치로 되돌린다. 그 자리는 시트 뒤라 보이지도 눌리지도 않는다.
+   * 실제 높이를 올려 보내 컨트롤 쪽이 직접 판단하게 한다. 상세 시트와 같다.
+   */
+  const resolveStageVisibleHeight = (stage: SearchListSheetSnapStage) =>
+    stage === "dismiss"
+      ? null
+      : Math.max(
+          0,
+          windowHeight -
+            (stage === "full"
+              ? resolvedMinSnapPoint
+              : stage === "half"
+                ? resolvedSnapPoint
+                : resolvedMiniSnapPoint),
+        );
+
+  /**
+   * 같은 값을 두 번 알리지 않는다.
+   *
+   * 단계가 바뀔 때는 onSnapChange 와 같은 틱에 알려야 해서 handleSnapChange 가
+   * 직접 부르고, 화면 높이가 바뀌어 자리만 달라지는 경우는 아래 이펙트가 부른다.
+   */
+  const lastStageNoticeRef = useRef<string | null>(null);
+  const notifySnapStage = useCallback(
+    (stage: SearchListSheetSnapStage, visibleHeightPx: number | null) => {
+      const key = `${stage}|${visibleHeightPx}`;
+      if (lastStageNoticeRef.current === key) {
+        return;
+      }
+
+      lastStageNoticeRef.current = key;
+      onSnapStageChange?.(stage, visibleHeightPx);
+    },
+    [onSnapStageChange],
+  );
+
   const handleSnapChange = (nextSnap: number) => {
     onSnapChange?.(nextSnap);
-    onSnapStageChange?.(
-      resolveSearchListSnapStage({
-        maxSnapPoint: resolvedMaxSnapPoint,
-        miniSnapPoint: resolvedMiniSnapPoint,
-        minSnapPoint: resolvedMinSnapPoint,
-        offset: nextSnap,
-        snapPoint: resolvedSnapPoint,
-      }),
-    );
+    const nextStage = resolveSearchListSnapStage({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      miniSnapPoint: resolvedMiniSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      offset: nextSnap,
+      snapPoint: resolvedSnapPoint,
+    });
+
+    notifySnapStage(nextStage, resolveStageVisibleHeight(nextStage));
   };
 
   useEffect(() => {

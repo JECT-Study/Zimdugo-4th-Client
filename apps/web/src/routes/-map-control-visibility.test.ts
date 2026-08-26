@@ -78,6 +78,31 @@ describe("shouldShowHomeHeader", () => {
   });
 });
 
+describe("두 시트가 같은 규칙을 따른다", () => {
+  it("full 은 실측 높이로 판정해 양쪽 다 숨긴다", () => {
+    // 예전에는 목록만 단계 상수가 null 을 줘서 기본 위치(70px)로 되돌아갔고,
+    // 그 자리는 시트 뒤라 보이지도 눌리지도 않았다. 상세는 실측 높이를 보고해
+    // 정상적으로 숨겨졌다. 같은 화면에서 두 시트의 동작이 갈렸다.
+    const 상세full = 622;
+    const 목록full = 696;
+
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 상세full,
+        windowHeightPx: 808,
+      }),
+    ).toBeNull();
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 목록full,
+        windowHeightPx: 808,
+      }),
+    ).toBeNull();
+  });
+});
+
 describe("full 시트가 화면을 다 덮지 못할 때", () => {
   it("위에 자리가 남으면 컨트롤을 시트 위로 올린다", () => {
     // 콘텐츠가 짧은 보관함은 full 이어도 시트 상단이 400px 에 머문다.
