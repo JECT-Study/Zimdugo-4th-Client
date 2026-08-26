@@ -143,13 +143,14 @@ test.describe("상세 시트와 지도 컨트롤", () => {
   test("놓을 자리가 없는 높이에서는 시트가 떠 있어도 숨긴다", async ({
     page,
   }) => {
+    // 넉넉한 화면에서 시트와 컨트롤이 모두 뜬 것을 먼저 확인한다. 곧장 낮은
+    // 화면으로 열고 "0개" 를 세면 아직 안 그려진 것과 구분되지 않는다.
+    await page.goto(`/?locker=${LOCKER_ID}`);
+    await expect(sheetSurface(page)).toBeVisible();
+    await expect(mapControlStack(page)).toBeVisible();
+
     // 하프 시트(191) + 간격(12) + 예약 높이(216) = 419px 부터 놓을 수 있다.
     await page.setViewportSize({ width: 430, height: 418 });
-    await page.goto(`/?locker=${LOCKER_ID}`);
-    await waitForMapReady(page);
-    await expect(sheetSurface(page)).toBeVisible();
-
-    // 지도가 준비되고 시트도 뜬 뒤라야 "숨겨졌다" 를 단언할 수 있다.
     await expect(mapControlStack(page)).toHaveCount(0);
   });
 

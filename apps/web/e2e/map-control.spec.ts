@@ -85,13 +85,17 @@ test.describe("지도 컨트롤 위치", () => {
   });
 
   test("스택을 놓을 자리가 없는 화면에서는 숨긴다", async ({ page }) => {
+    // 넉넉한 화면에서 먼저 띄운다.
+    //
+    // 낮은 화면으로 곧장 열고 "0개" 를 세면, 숨겨져서 0개인지 아직 안 그려져서
+    // 0개인지 구분할 수 없다. 지도 준비 신호는 자식이 쓰고 컨트롤은 부모가
+    // 그 소식을 듣고 그리므로 그 사이 한 박자 동안은 배치 로직과 무관하게
+    // 0개다. 보이는 것을 확인한 뒤 사라지는 것을 보면 그 틈이 없다.
+    await page.goto("/");
+    await expect(mapControlStack(page)).toBeVisible();
+
     // 상단 경계(120) + 스택(96) + 기본 하단(70) = 286px 이 최소 높이다.
     await page.setViewportSize({ width: 430, height: 260 });
-    await page.goto("/");
-
-    // 지도가 준비된 뒤에 확인해야 한다. 로딩 중에는 컨트롤이 없는 게 당연해서
-    // 바로 세면 배치 판정이 잘못돼도 통과한다.
-    await waitForMapReady(page);
     await expect(mapControlStack(page)).toHaveCount(0);
   });
 
