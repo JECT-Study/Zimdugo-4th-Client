@@ -33,3 +33,7 @@ docs/ai-workflow.md
 docs/context/*
 !docs/context/.gitkeep
 docs/troubleshooting/*
+
+# Playwright
+/apps/web/test-results
+/apps/web/playwright-report

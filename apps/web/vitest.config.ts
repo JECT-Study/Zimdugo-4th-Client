@@ -25,6 +25,9 @@ export default defineConfig({
   ],
   test: {
     environment: "jsdom",
+    // e2e/ 는 Playwright 가 돌린다. vitest 가 수집하면 @playwright/test 를
+    // 불러오다 실패한다.
+    exclude: ["**/node_modules/**", "**/dist/**", "e2e/**"],
     server: {
       deps: {
         inline: ["motion", "@repo/ui"],

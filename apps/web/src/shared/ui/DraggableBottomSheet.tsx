@@ -645,6 +645,9 @@ export function DraggableBottomSheet({
     <div className={sheetWrapper}>
       <motion.div
         className={sheetSurface}
+        // E2E 가 시트 윗변을 재는 앵커. 프로덕션 빌드는 클래스명이 해시라
+        // 구조로 찾으면 다른 요소를 먼저 집는다.
+        data-bottom-sheet-surface=""
         style={{ height: sheetHeight, y: mountTranslateY }}
       >
         <div
