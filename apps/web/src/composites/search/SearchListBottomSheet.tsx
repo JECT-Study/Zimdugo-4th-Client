@@ -466,6 +466,10 @@ export function SearchListBottomSheet({
    * 단계가 바뀔 때는 onSnapChange 와 같은 틱에 알려야 해서 handleSnapChange 가
    * 직접 부르고, 화면 높이가 바뀌어 자리만 달라지는 경우는 아래 이펙트가 부른다.
    */
+  // 마지막으로 안착한 스냅 지점. 마운트 직후에는 초기 스냅이다.
+  const [settledSnapPoint, setSettledSnapPoint] = useState(
+    resolvedInitialSnapPoint,
+  );
   const lastStageNoticeRef = useRef<string | null>(null);
   const notifySnapStage = useCallback(
     (stage: SearchListSheetSnapStage, visibleHeightPx: number | null) => {
@@ -480,8 +484,18 @@ export function SearchListBottomSheet({
     [onSnapStageChange],
   );
 
+  const currentSnapStage = resolveSearchListSnapStage({
+    maxSnapPoint: resolvedMaxSnapPoint,
+    miniSnapPoint: resolvedMiniSnapPoint,
+    minSnapPoint: resolvedMinSnapPoint,
+    offset: settledSnapPoint,
+    snapPoint: resolvedSnapPoint,
+  });
+
   const handleSnapChange = (nextSnap: number) => {
     onSnapChange?.(nextSnap);
+    setSettledSnapPoint(nextSnap);
+
     const nextStage = resolveSearchListSnapStage({
       maxSnapPoint: resolvedMaxSnapPoint,
       miniSnapPoint: resolvedMiniSnapPoint,
@@ -492,6 +506,20 @@ export function SearchListBottomSheet({
 
     notifySnapStage(nextStage, resolveStageVisibleHeight(nextStage));
   };
+
+  /**
+   * 마운트 시점과 화면 높이가 바뀔 때도 알린다.
+   *
+   * DraggableBottomSheet 는 마운트할 때 onSnapChange 를 부르지 않는다. 목록을
+   * full 로 둔 채 상세로 갔다 돌아오면 시트는 half 로 다시 마운트되는데, 알림이
+   * 없으면 부모는 직전 높이를 그대로 들고 있어 컨트롤이 엉뚱한 자리에 놓인다.
+   */
+  useEffect(() => {
+    notifySnapStage(
+      currentSnapStage,
+      resolveStageVisibleHeight(currentSnapStage),
+    );
+  });
 
   useEffect(() => {
     setExpandedProgress(

@@ -106,6 +106,24 @@ describe("SearchListBottomSheet", () => {
     ).toEqual(resolveLegacySearchListSnapPoints({ windowHeight: 812 }));
   });
 
+  it("마운트 시점에도 단계와 실제 높이를 알린다", () => {
+    // DraggableBottomSheet 는 마운트할 때 onSnapChange 를 부르지 않는다. 알림이
+    // 없으면 부모는 직전 시트의 높이를 그대로 들고 있어 컨트롤이 엉뚱한 자리에
+    // 놓인다. 목록을 full 로 둔 채 상세로 갔다 돌아오는 경로에서 걸린다.
+    const handleSnapStageChange = vi.fn();
+
+    render(
+      <SearchListBottomSheet
+        searchQuery="강남"
+        items={[]}
+        onSnapStageChange={handleSnapStageChange}
+      />,
+    );
+
+    // 기본 스냅은 half 다. 812 - 471 = 341.
+    expect(handleSnapStageChange).toHaveBeenCalledWith("half", 341);
+  });
+
   it("passes detail-style snap props to the draggable sheet by default", () => {
     render(<SearchListBottomSheet searchQuery="강남" items={[]} />);
 
