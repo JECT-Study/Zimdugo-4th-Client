@@ -768,6 +768,15 @@ export function IndexPage() {
   });
   const [listSheetSnapStage, setListSheetSnapStage] =
     useState<SearchListSheetSnapStage>("half");
+  /**
+   * 목록 시트가 지금 단계에서 실제로 차지하는 높이. 시트가 올려 준다.
+   *
+   * full 은 최소 상단 여백까지 올라가므로 단계 상수로는 알 수 없다. 상세 시트와
+   * 같은 규칙을 따라야 컨트롤 배치가 두 시트에서 갈리지 않는다.
+   */
+  const [listSheetVisibleHeight, setListSheetVisibleHeight] = useState<
+    number | null
+  >(() => resolveSearchListStageVisibleHeight("half", SSR_WINDOW_HEIGHT_PX));
   const {
     snapRequest: listSheetSnapRequest,
     requestSnap: requestListSheetSnap,
@@ -2271,8 +2280,9 @@ export function IndexPage() {
   );
 
   const handleListSheetSnapStageChange = useCallback(
-    (nextStage: SearchListSheetSnapStage) => {
+    (nextStage: SearchListSheetSnapStage, visibleHeightPx: number | null) => {
       setListSheetSnapStage(nextStage);
+      setListSheetVisibleHeight(visibleHeightPx);
     },
     [],
   );
@@ -3055,7 +3065,7 @@ export function IndexPage() {
     : sheetMode === "detail"
       ? detailSheetVisibleHeight
       : sheetMode === "list"
-        ? resolveSearchListStageVisibleHeight(listSheetSnapStage, windowHeight)
+        ? listSheetVisibleHeight
         : null;
   const mapControlBottom = resolveMapControlBottomPx({
     baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
