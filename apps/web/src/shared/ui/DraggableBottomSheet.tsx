@@ -424,6 +424,13 @@ export function DraggableBottomSheet({
         ...SHEET_SETTLE_SPRING,
         onComplete: () => {
           sheetOffset.set(clampedNextSnap);
+          // 안착을 직접 알린다.
+          //
+          // 위 set 은 값이 이미 목표와 같으면 change 를 띄우지 않는다(motion 은
+          // 같은 값 갱신을 거른다). 놓은 자리가 마침 스냅 지점이면 애니메이션이
+          // 곧바로 끝나면서 알림이 하나도 나가지 않아, 부모는 드래그 중에 받은
+          // "아직 안착 전" 을 마지막 상태로 들고 있게 된다.
+          notifyLiveOffsetChange(clampedNextSnap);
         },
       });
 
@@ -439,7 +446,14 @@ export function DraggableBottomSheet({
         onDismiss?.();
       }
     },
-    [clampSnap, onDismiss, onSnapChange, resolvedDismissSnapPoint, sheetOffset],
+    [
+      clampSnap,
+      notifyLiveOffsetChange,
+      onDismiss,
+      onSnapChange,
+      resolvedDismissSnapPoint,
+      sheetOffset,
+    ],
   );
 
   const settleToNextSnap = useCallback(

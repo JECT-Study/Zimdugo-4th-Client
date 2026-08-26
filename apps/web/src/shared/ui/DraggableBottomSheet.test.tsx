@@ -58,9 +58,16 @@ vi.mock("motion/react", () => {
     typeof value === "object" && value != null && "get" in value;
 
   return {
-    animate: (motionValue: TestMotionValue, targetValue: number) => {
+    animate: (
+      motionValue: TestMotionValue,
+      targetValue: number,
+      options?: { onComplete?: () => void },
+    ) => {
       animateTargets.push(targetValue);
       motionValue.set(targetValue);
+      // 실제 motion 은 애니메이션이 끝나면 onComplete 를 부른다. 흉내 내지
+      // 않으면 그 안에서만 도는 코드가 테스트에서 아예 실행되지 않는다.
+      options?.onComplete?.();
       return { stop: animationStop };
     },
     motion: {
@@ -367,6 +374,38 @@ describe("DraggableBottomSheet", () => {
     fireEvent.pointerMove(window, { clientY: 300, pointerId: 1 });
 
     expect(handleLiveOffsetChange.mock.calls.at(-1)?.[0].isSettled).toBe(false);
+  });
+
+  it("놓은 자리가 이미 스냅 지점이어도 안착을 알린다", () => {
+    // 드래그를 스냅 지점에서 놓으면 애니메이션이 곧바로 끝난다. 그때 onComplete
+    // 의 set 은 값이 그대로라 change 가 나가지 않으므로, 따로 알리지 않으면
+    // 부모는 드래그 중에 받은 "아직 안착 전" 을 마지막 상태로 들고 있게 된다.
+    const handleLiveOffsetChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet
+        snapPoint={120}
+        maxSnapPoint={600}
+        onLiveOffsetChange={handleLiveOffsetChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    // 스냅 지점(120)에 정확히 놓는다. 드래그로 오프셋을 한 번 움직였다가
+    // 제자리로 돌려놓아야, 놓는 순간 animate 의 목표가 현재 값과 같아진다.
+    fireEvent.pointerDown(screen.getByTestId("sheet-surface"), {
+      clientY: 120,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(window, { clientY: 200, pointerId: 1 });
+    fireEvent.pointerMove(window, { clientY: 120, pointerId: 1 });
+    handleLiveOffsetChange.mockClear();
+    fireEvent.pointerUp(window, { clientY: 120, pointerId: 1 });
+
+    const last = handleLiveOffsetChange.mock.calls.at(-1)?.[0];
+
+    expect(last?.isSettled).toBe(true);
   });
 
   it("updates live offset from a non-interactive sheet surface", () => {
