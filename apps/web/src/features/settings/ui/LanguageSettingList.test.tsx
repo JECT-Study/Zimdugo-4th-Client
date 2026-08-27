@@ -1,30 +1,29 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import { LanguageSettingList } from "./LanguageSettingList";
 
 describe("LanguageSettingList", () => {
   afterEach(cleanup);
 
-  it("현재 언어를 표시하고 선택한 언어를 전달한다", () => {
-    const handleSelectLanguage = vi.fn();
-
+  it("현재 언어를 표시하고 각 언어를 링크로 건다", () => {
     render(
       <LanguageSettingList
         currentLanguage="ko"
-        onSelectLanguage={handleSelectLanguage}
+        getLanguageHref={(language) => `/switch/${language}`}
       />,
     );
 
     expect(
-      screen
-        .getByRole("button", { name: "한국어" })
-        .getAttribute("aria-pressed"),
+      screen.getByRole("link", { name: "한국어" }).getAttribute("aria-current"),
     ).toBe("true");
 
-    fireEvent.click(screen.getByRole("button", { name: "English" }));
-
-    expect(handleSelectLanguage).toHaveBeenCalledWith("en");
+    // 버튼이 아니라 링크여야 한다. 하이드레이션 전 클릭은 핸들러가 없어
+    // 사라지지만, 링크는 브라우저가 처리한다.
+    expect(
+      screen.getByRole("link", { name: "English" }).getAttribute("href"),
+    ).toBe("/switch/en");
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });

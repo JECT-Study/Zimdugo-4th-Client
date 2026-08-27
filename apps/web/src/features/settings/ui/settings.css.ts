@@ -220,6 +220,13 @@ export const languageSettingRow = style({
   backgroundColor: vars.color.bg.default,
 });
 
+/** 행이 <a> 라서 브라우저 기본 밑줄과 링크 색을 지워야 버튼과 같아 보인다. */
+export const languageSettingLink = style({
+  textDecoration: "none",
+  color: "inherit",
+  cursor: "pointer",
+});
+
 export const languageSettingRowLabel = style({
   display: "inline-flex",
   alignItems: "center",

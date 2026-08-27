@@ -1,10 +1,13 @@
 import {
   type AppLocale,
   BASE_LOCALE,
+  LOCALE_CHOICE_PATH,
+  LOCALE_COOKIE_MAX_AGE,
   LOCALE_COOKIE_NAME,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
   parsePathLocale,
+  stripLocalePathPrefix,
   UNSUPPORTED_LOCALE_FALLBACK,
 } from "#/shared/i18n/locales";
 
@@ -134,6 +137,51 @@ const getLocaleRedirectResponse = (
   });
 };
 
+/**
+ * 언어 선택 경로를 읽는다. `/set-language/en/settings` -> en 과 /settings.
+ *
+ * 알 수 없는 로케일이면 선택으로 보지 않는다. 남이 만든 링크로 남의 로케일이
+ * 사용자 선호로 굳어지면 안 되므로 아는 로케일만 통과시킨다.
+ */
+const getLocaleChoice = (
+  url: URL,
+): { locale: AppLocale; pathname: string } | null => {
+  if (
+    url.pathname !== LOCALE_CHOICE_PATH &&
+    !url.pathname.startsWith(`${LOCALE_CHOICE_PATH}/`)
+  ) {
+    return null;
+  }
+
+  const rest = url.pathname.slice(LOCALE_CHOICE_PATH.length);
+  const [, localeSegment = "", ...pathSegments] = rest.split("/");
+  const locale = normalizeLocale(localeSegment);
+
+  if (!locale) return null;
+
+  return { locale, pathname: `/${pathSegments.join("/")}` };
+};
+
+/**
+ * 선택을 기록하고, 고른 로케일의 자리로 돌려보낸다.
+ *
+ * 돌아갈 자리는 경로에 담겨 온 것뿐이라 항상 이 사이트 안이다. 바깥 주소로
+ * 튕겨 보낼 여지가 없다.
+ */
+const getLocaleChoiceResponse = (
+  url: URL,
+  { locale, pathname }: { locale: AppLocale; pathname: string },
+): Response => {
+  const target = new URL(url);
+  target.pathname = stripLocalePathPrefix(pathname);
+
+  return getLocaleRedirectResponse(getLocalizedPath(target, locale), {
+    "Set-Cookie": `${LOCALE_COOKIE_NAME}=${locale};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`,
+    // 쿠키를 심는 응답이라 한 사람 것이다. 공용 캐시에 남으면 안 된다.
+    "Cache-Control": "no-store",
+  });
+};
+
 export type LocaleGuardResult =
   | { kind: "redirect"; response: Response }
   | {
@@ -145,6 +193,17 @@ export type LocaleGuardResult =
 export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
   const url = new URL(req.url);
   const pathLocale = getPathLocale(url.pathname);
+
+  // 언어 선택이 가장 먼저다. 로케일 정규화나 선호 리다이렉트를 먼저 태우면
+  // 선택 경로가 그 판정에 휘말리고, 기본 로케일을 고른 경우에는 아직 낡은
+  // 쿠키가 살아 있어 방금 고른 것과 다른 곳으로 끌려간다.
+  const localeChoice = isDocumentRequest(req) ? getLocaleChoice(url) : null;
+  if (localeChoice) {
+    return {
+      kind: "redirect",
+      response: getLocaleChoiceResponse(url, localeChoice),
+    };
+  }
 
   if (pathLocale) {
     const canonicalPath = getCanonicalLocalePath(url, pathLocale);

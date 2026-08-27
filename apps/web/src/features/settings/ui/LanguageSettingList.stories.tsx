@@ -1,6 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { useState } from "react";
-import type { AppLanguage } from "#/shared/store/language";
 import { LanguageSettingList } from "./LanguageSettingList";
 
 const meta = {
@@ -21,9 +19,9 @@ const meta = {
   parameters: { layout: "centered" },
   args: {
     currentLanguage: "ko",
-    onSelectLanguage: () => undefined,
+    getLanguageHref: (language) =>
+      `/set-language/${language}/settings/language`,
   },
-  render: (args) => <LanguageSettingListStory {...args} />,
 } satisfies Meta<typeof LanguageSettingList>;
 
 export default meta;
@@ -31,19 +29,3 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
-
-function LanguageSettingListStory({
-  currentLanguage: initialLanguage,
-}: {
-  currentLanguage: AppLanguage;
-}) {
-  const [currentLanguage, setCurrentLanguage] =
-    useState<AppLanguage>(initialLanguage);
-
-  return (
-    <LanguageSettingList
-      currentLanguage={currentLanguage}
-      onSelectLanguage={setCurrentLanguage}
-    />
-  );
-}

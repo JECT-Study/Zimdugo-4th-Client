@@ -7,24 +7,28 @@ import {
 } from "#/shared/store/language";
 import {
   languageGroup,
+  languageSettingLink,
   languageSettingRow,
   languageSettingRowCheck,
   languageSettingRowLabel,
-  rowButton,
   settingRowSelected,
   settingRowText,
 } from "./settings.css";
 
 interface LanguageSettingListProps {
   currentLanguage: AppLanguage;
-  onSelectLanguage: (language: AppLanguage) => void;
+  /**
+   * 각 언어로 가는 주소. 링크라서 하이드레이션 전에 눌러도 동작한다.
+   * 선호 기록은 서버가 맡으므로 여기에 클릭 핸들러가 필요 없다.
+   */
+  getLanguageHref: (language: AppLanguage) => string;
   groupFallbackStyle?: CSSProperties;
   rowFallbackStyle?: CSSProperties;
 }
 
 export function LanguageSettingList({
   currentLanguage,
-  onSelectLanguage,
+  getLanguageHref,
   groupFallbackStyle,
   rowFallbackStyle,
 }: LanguageSettingListProps) {
@@ -34,19 +38,18 @@ export function LanguageSettingList({
         const isCurrent = language === currentLanguage;
 
         return (
-          <button
+          <a
             key={language}
-            type="button"
+            href={getLanguageHref(language)}
             className={[
-              rowButton,
+              languageSettingLink,
               languageSettingRow,
               isCurrent ? settingRowSelected : "",
             ]
               .filter(Boolean)
               .join(" ")}
             style={rowFallbackStyle}
-            aria-pressed={isCurrent}
-            onClick={() => onSelectLanguage(language)}
+            aria-current={isCurrent ? true : undefined}
           >
             <span className={languageSettingRowLabel}>
               <LanguageFlagIcon language={language} />
@@ -59,7 +62,7 @@ export function LanguageSettingList({
                 <IconCheck24 />
               </span>
             ) : null}
-          </button>
+          </a>
         );
       })}
     </section>

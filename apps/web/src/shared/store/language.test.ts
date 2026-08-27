@@ -1,6 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getLocalizedHref, setAppLanguage } from "./language";
+import {
+  getLanguageSwitchHref,
+  getLocalizedHref,
+  switchAppLanguage,
+} from "./language";
 
 const LOCALE_COOKIE_NAME = "PARAGLIDE_LOCALE";
 
@@ -55,27 +59,84 @@ describe("getLocalizedHref", () => {
   });
 });
 
-describe("setAppLanguage", () => {
+describe("getLanguageSwitchHref", () => {
+  it("고른 로케일과 돌아갈 자리를 전용 경로에 담는다", () => {
+    expect(getLanguageSwitchHref("/settings/language", "en")).toBe(
+      "/set-language/en/settings/language",
+    );
+    expect(getLanguageSwitchHref("/en/settings/language", "ja")).toBe(
+      "/set-language/ja/settings/language",
+    );
+  });
+
+  it("기본 로케일도 같은 경로를 쓴다", () => {
+    // 프리렌더된 자리로 곧장 보내면 정적 파일이 먼저 응답해 선택이 기록되지
+    // 않는다. 기본 로케일이야말로 프리렌더 대상이라 예외를 둘 수 없다.
+    expect(getLanguageSwitchHref("/en/settings/language", "ko")).toBe(
+      "/set-language/ko/settings/language",
+    );
+  });
+
+  it("홈에서도 자리를 잃지 않는다", () => {
+    expect(getLanguageSwitchHref("/", "en")).toBe("/set-language/en/");
+    expect(getLanguageSwitchHref("/ja", "en")).toBe("/set-language/en");
+  });
+
+  it("원래 쿼리와 해시를 그대로 들고 간다", () => {
+    expect(getLanguageSwitchHref("/settings?tab=language#now", "en")).toBe(
+      "/set-language/en/settings?tab=language#now",
+    );
+  });
+});
+
+describe("switchAppLanguage", () => {
   beforeEach(() => {
     clearLocaleCookie();
   });
 
-  it("writes the selected language to the locale cookie", () => {
-    setAppLanguage("en");
+  it("선택 주소로 이동한다", () => {
+    const assign = vi.fn();
+    vi.spyOn(window, "location", "get").mockReturnValue({
+      pathname: "/en/settings/language",
+      search: "",
+      hash: "",
+      assign,
+    } as unknown as Location);
 
-    expect(readLocaleCookie()).toBe("en");
+    switchAppLanguage("ja");
+
+    expect(assign).toHaveBeenCalledWith("/set-language/ja/settings/language");
+    vi.restoreAllMocks();
   });
 
-  it("overwrites a previously stored preference", () => {
-    setAppLanguage("en");
-    setAppLanguage("zh-TW");
+  it("선호 쿠키를 여기서 쓰지 않는다", () => {
+    // 기록은 서버 한 곳에서만 한다. 링크로 눌리면 이 코드가 아예 안 돈다.
+    const assign = vi.fn();
+    vi.spyOn(window, "location", "get").mockReturnValue({
+      pathname: "/settings/language",
+      search: "",
+      hash: "",
+      assign,
+    } as unknown as Location);
 
-    expect(readLocaleCookie()).toBe("zh-TW");
-  });
-
-  it("ignores values outside the supported locales", () => {
-    setAppLanguage("fr" as never);
+    switchAppLanguage("en");
 
     expect(readLocaleCookie()).toBeNull();
+    vi.restoreAllMocks();
+  });
+
+  it("모르는 값이면 아무것도 하지 않는다", () => {
+    const assign = vi.fn();
+    vi.spyOn(window, "location", "get").mockReturnValue({
+      pathname: "/settings/language",
+      search: "",
+      hash: "",
+      assign,
+    } as unknown as Location);
+
+    switchAppLanguage("fr" as never);
+
+    expect(assign).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 });

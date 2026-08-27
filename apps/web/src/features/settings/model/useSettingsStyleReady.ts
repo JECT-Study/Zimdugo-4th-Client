@@ -26,7 +26,9 @@ const SETTINGS_STYLE_PROBES: StyleReadyProbe[] = [
   {
     className: languageSettingRow,
     isReady: isSettingsRowStyleReady,
-    tagName: "button",
+    // 언어 행은 <a> 다. 프로브가 재는 건 클래스가 주는 계산 스타일이라 태그가
+    // 달라도 결과는 같지만, 실제와 다른 태그를 적어 두면 다음 사람이 헷갈린다.
+    tagName: "a",
   },
 ];
 

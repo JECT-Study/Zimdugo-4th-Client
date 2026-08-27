@@ -100,6 +100,91 @@ describe("resolveLocaleRequest", () => {
     expect(result.pathLocale).toBeNull();
   });
 
+  it("기록한다: 언어 선택 경로로 들어온 요청", () => {
+    const result = resolveLocaleRequest(
+      createDocumentRequest(
+        "https://zimdugo.com/set-language/ja/settings/language",
+      ),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe(
+      "/ja/settings/language",
+    );
+    expect(result.response.headers.get("Set-Cookie")).toContain(
+      "PARAGLIDE_LOCALE=ja",
+    );
+    // 쿠키를 심는 응답이라 한 사람 것이다.
+    expect(result.response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("기본 로케일을 골라도 기록하고, 낡은 쿠키에 끌려가지 않는다", () => {
+    // 선택을 먼저 처리하지 않으면 여기서 사고가 난다. 쿠키가 아직 en 이라
+    // 선호 리다이렉트가 사용자를 /en 으로 도로 데려간다.
+    const result = resolveLocaleRequest(
+      createDocumentRequest(
+        "https://zimdugo.com/set-language/ko/settings/language",
+        { Cookie: "PARAGLIDE_LOCALE=en" },
+      ),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/settings/language");
+    expect(result.response.headers.get("Set-Cookie")).toContain(
+      "PARAGLIDE_LOCALE=ko",
+    );
+  });
+
+  it("쿼리를 들고 원래 자리로 돌려보낸다", () => {
+    const result = resolveLocaleRequest(
+      createDocumentRequest(
+        "https://zimdugo.com/set-language/ja/settings?tab=1",
+      ),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/ja/settings?tab=1");
+  });
+
+  it("홈으로 돌아가는 선택도 자리를 잃지 않는다", () => {
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/set-language/en"),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/en");
+  });
+
+  it("모르는 로케일이면 선택으로 보지 않는다", () => {
+    // 남이 만든 링크로 남의 로케일이 선호로 굳으면 안 된다.
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/set-language/fr/settings"),
+    );
+
+    expect(result.kind).toBe("continue");
+    if (result.kind !== "continue") return;
+
+    expect(result.middlewareRequest.url).toBe(
+      "https://zimdugo.com/set-language/fr/settings",
+    );
+  });
+
+  it("문서 요청이 아니면 선택 경로를 보지 않는다", () => {
+    const result = resolveLocaleRequest(
+      new Request("https://zimdugo.com/set-language/ja/settings"),
+    );
+
+    expect(result.kind).toBe("continue");
+  });
+
   it("normalizes locale casing for non-document requests too", () => {
     const result = resolveLocaleRequest(
       new Request("https://zimdugo.com/zh-tw/settings"),

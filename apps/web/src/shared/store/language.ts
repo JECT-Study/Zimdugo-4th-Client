@@ -1,10 +1,8 @@
-import { languageTag } from "@repo/i18n";
 import {
   APP_LOCALES,
   type AppLocale,
   BASE_LOCALE,
-  LOCALE_COOKIE_MAX_AGE,
-  LOCALE_COOKIE_NAME,
+  LOCALE_CHOICE_PATH,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
 } from "#/shared/i18n/locales";
@@ -48,38 +46,37 @@ export const getLocalizedHref = (
 };
 
 /**
- * 현재 로케일은 URL 이 정하고(paraglide url 전략), 사용자 선호는 이 쿠키가 정한다.
- * 서버의 로케일 가드가 prefix 없는 문서 요청을 판정할 때 이 값을 가장 먼저 본다.
+ * 언어 선택 링크의 주소.
+ *
+ * 고른 로케일과 돌아갈 자리를 전용 경로에 담는다. 서버가 선호 쿠키를 기록한
+ * 뒤 그 자리로 돌려보낸다.
+ *
+ * 쿠키를 여기서 쓰지 않는 이유가 있다. 이 주소는 <a href> 로도 쓰이는데,
+ * 그 클릭은 하이드레이션 전에도 일어난다. 그때는 우리 스크립트가 아직 없다.
+ * 기록을 서버 한 곳에 두면 링크로 눌리든 스크립트로 이동하든 결과가 같다.
  */
-export const setAppLanguage = (language: AppLanguage) => {
-  if (!APP_LANGUAGES.includes(language) || typeof document === "undefined") {
-    return;
-  }
+export const getLanguageSwitchHref = (
+  href: string,
+  language: AppLanguage,
+): string => {
+  const url = new URL(href, HREF_PARSE_BASE_ORIGIN);
+  const basePathname = url.pathname.replace(LOCALE_PATH_PREFIX, "");
 
-  document.cookie = `${LOCALE_COOKIE_NAME}=${language};path=/;max-age=${LOCALE_COOKIE_MAX_AGE};SameSite=Lax`;
+  return `${LOCALE_CHOICE_PATH}/${language}${basePathname}${url.search}${url.hash}`;
 };
 
 /**
- * 언어 전환은 선호 쿠키를 쓰고 로케일이 적용된 주소로 이동하는 것이 전부다.
- * 현재 로케일은 URL 이 정하므로 런타임을 제자리에서 바꾸지 않고 페이지를 다시 띄운다.
+ * 스크립트로 언어를 바꾸는 경로. 링크와 같은 주소로 이동할 뿐이다.
+ * 현재 로케일은 URL 이 정하므로 런타임을 제자리에서 바꾸지 않고 다시 띄운다.
  */
 export const switchAppLanguage = (language: AppLanguage) => {
-  setAppLanguage(language);
-
-  const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-  const localizedHref = getLocalizedHref(currentHref, language);
-
-  if (localizedHref !== currentHref) {
-    window.location.assign(localizedHref);
+  if (!APP_LANGUAGES.includes(language)) {
     return;
   }
 
-  const currentLanguage =
-    normalizeLanguage(languageTag()) ?? DEFAULT_APP_LANGUAGE;
+  const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
 
-  if (currentLanguage !== language) {
-    window.location.reload();
-  }
+  window.location.assign(getLanguageSwitchHref(currentHref, language));
 };
 
 export const appLanguageLabelMap: Record<AppLanguage, string> = {
