@@ -320,16 +320,6 @@ export function LockerDetailBottomSheet({
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
-  /**
-   * 로드에 실패한 이미지 URL.
-   *
-   * 아래 DraggableBottomSheet 는 측정 높이에서 나온 스냅 지점을 key 에 쓰므로,
-   * 이미지가 사라져 높이가 바뀌면 하위 트리가 리마운트된다. 실패 기록을 그 안에
-   * 두면 매번 지워져 깨진 URL을 다시 요청하게 되어, 리마운트 경계 위인 여기서 든다.
-   */
-  const [failedImageUrls, setFailedImageUrls] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
   const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
@@ -498,17 +488,6 @@ export function LockerDetailBottomSheet({
     setIsMoreActionsOpen(true);
   };
 
-  const handleImageError = (imageUrl: string) => {
-    setFailedImageUrls((current) =>
-      current.has(imageUrl) ? current : new Set(current).add(imageUrl),
-    );
-  };
-
-  // 깨진 이미지는 없는 이미지로 취급한다. 전부 실패하면 영역째 사라진다.
-  const detailImages = (locker.images ?? []).filter(
-    (imageUrl) => !failedImageUrls.has(imageUrl),
-  );
-
   /**
    * 그 단계에서 시트가 화면 하단에 차지하는 높이.
    *
@@ -593,12 +572,6 @@ export function LockerDetailBottomSheet({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // 다른 보관함으로 넘어가면 이전 보관함의 실패 기록은 버린다.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: lockerId 는 재실행 트리거다
-  useEffect(() => {
-    setFailedImageUrls(new Set());
-  }, [locker.lockerId]);
 
   useEffect(() => {
     if (loadState !== "ready") {
@@ -698,8 +671,7 @@ export function LockerDetailBottomSheet({
           ) : (
             <FullDetailContent
               locker={locker}
-              images={detailImages}
-              onImageError={handleImageError}
+              images={locker.images ?? []}
               detailHelpText={detailHelpText}
               onClose={handleBack}
               onMoreActionsOpen={handleOpenMoreActions}
@@ -844,7 +816,6 @@ function LockerDetailErrorContent({
 function FullDetailContent({
   locker,
   images,
-  onImageError,
   detailHelpText,
   onClose,
   onMoreActionsOpen,
@@ -857,7 +828,6 @@ function FullDetailContent({
 }: {
   locker: LockerDetailItem;
   images: string[];
-  onImageError: (imageUrl: string) => void;
   detailHelpText: string;
   onClose: () => void;
   onMoreActionsOpen: () => void;
@@ -965,7 +935,6 @@ function FullDetailContent({
         </div>
         <LockerDetailImageStrip
           images={images}
-          onImageError={onImageError}
           onOpenPreview={handleOpenImagePreview}
         />
         {/*
@@ -982,11 +951,11 @@ function FullDetailContent({
         <OriginalImagePreview
           images={images}
           initialIndex={previewIndex}
-          onImageError={onImageError}
           navigationLabels={{
             previous: m.locker_detail_image_previous(),
             next: m.locker_detail_image_next(),
           }}
+          loadFailedLabel={m.locker_detail_image_load_failed()}
           alt={m.report_section_photo()}
           closeLabel={m.search_close_aria()}
           onClose={handleCloseImagePreview}

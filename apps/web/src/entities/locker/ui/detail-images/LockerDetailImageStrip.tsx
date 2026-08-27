@@ -1,7 +1,10 @@
 import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
+import { IconCamera24 } from "@repo/ui/tokens/icons";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 import {
+  failureBox,
+  failureText,
   IMAGE_HEIGHT_PX,
   image,
   imagePlaceholder,
@@ -16,20 +19,12 @@ import {
 } from "./LockerDetailImageStrip.css.ts";
 
 export interface LockerDetailImageStripProps {
-  /** 실패한 URL은 부모가 걸러서 넘긴다. 아래 onImageError 참고. */
   images: string[];
-  /**
-   * 로드에 실패한 URL을 알린다.
-   *
-   * 실패 기록을 이 컴포넌트가 들고 있으면 안 된다. 마지막 이미지가 깨져 스트립이
-   * 사라지면 시트의 측정 높이가 바뀌고, 그 높이가 DraggableBottomSheet 의 key 에
-   * 들어가 있어 하위 트리가 통째로 리마운트된다. 기록이 지워진 채 깨진 URL을 다시
-   * 요청하고 또 실패하는 순환이 되므로, 리마운트 경계 위에서 보관한다.
-   */
-  onImageError?: (imageUrl: string) => void;
   /** 두 번째 인자는 미리보기를 연 버튼이다. 닫을 때 포커스를 되돌리는 데 쓴다. */
   onOpenPreview?: (index: number, trigger: HTMLButtonElement) => void;
 }
+
+type ImageStatus = "loading" | "loaded" | "failed";
 
 interface LockerDetailImageItemProps {
   imageUrl: string;
@@ -37,9 +32,8 @@ interface LockerDetailImageItemProps {
   totalCount: number;
   isSingle: boolean;
   shouldLoad: boolean;
-  isLoaded: boolean;
-  onImageLoad: (imageUrl: string) => void;
-  onImageError: (imageUrl: string) => void;
+  status: ImageStatus;
+  onStatusChange: (imageUrl: string, status: ImageStatus) => void;
   onOpenPreview: (index: number, trigger: HTMLButtonElement) => void;
 }
 
@@ -49,9 +43,8 @@ function LockerDetailImageItem({
   totalCount,
   isSingle,
   shouldLoad,
-  isLoaded,
-  onImageLoad,
-  onImageError,
+  status,
+  onStatusChange,
   onOpenPreview,
 }: LockerDetailImageItemProps) {
   const handleOpenPreview = (event: MouseEvent<HTMLButtonElement>) => {
@@ -59,25 +52,40 @@ function LockerDetailImageItem({
   };
 
   const handleImageLoad = () => {
-    onImageLoad(imageUrl);
+    onStatusChange(imageUrl, "loaded");
   };
 
   const handleImageError = () => {
-    onImageError(imageUrl);
+    onStatusChange(imageUrl, "failed");
   };
 
   // 캐시된 이미지는 onLoad 가 붙기 전에 끝나 있을 수 있다.
   const handleImageRef = (node: HTMLImageElement | null) => {
     if (node?.complete && node.naturalWidth > 0) {
-      onImageLoad(imageUrl);
+      onStatusChange(imageUrl, "loaded");
     }
   };
 
+  const itemClassName = [item, isSingle ? singleItem : ""]
+    .filter(Boolean)
+    .join(" ");
+
+  // 깨진 사진은 열어 봐야 볼 게 없다. 자리만 지키고 누를 수는 없게 둔다.
+  if (status === "failed") {
+    return (
+      <li data-image-index={index} className={itemClassName}>
+        <span className={failureBox}>
+          <IconCamera24 />
+          <span className={failureText}>
+            {m.locker_detail_image_load_failed()}
+          </span>
+        </span>
+      </li>
+    );
+  }
+
   return (
-    <li
-      data-image-index={index}
-      className={[item, isSingle ? singleItem : ""].filter(Boolean).join(" ")}
-    >
+    <li data-image-index={index} className={itemClassName}>
       <button
         type="button"
         className={itemButton}
@@ -87,7 +95,7 @@ function LockerDetailImageItem({
           total: totalCount,
         })}
       >
-        {isLoaded ? null : (
+        {status === "loaded" ? null : (
           <Skeleton className={imagePlaceholder} height={IMAGE_HEIGHT_PX} />
         )}
         {shouldLoad ? (
@@ -116,15 +124,22 @@ function LockerDetailImageItem({
  */
 export function LockerDetailImageStrip({
   images,
-  onImageError,
   onOpenPreview,
 }: LockerDetailImageStripProps) {
   const stripRef = useRef<HTMLUListElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [furthestIndex, setFurthestIndex] = useState(0);
-  const [loadedUrls, setLoadedUrls] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  /**
+   * URL별 로드 상태.
+   *
+   * 실패해도 목록에서 빼지 않는다. 빼면 시트의 측정 높이가 바뀌고, 그 높이가
+   * DraggableBottomSheet 의 key 에 들어가 있어 하위 트리가 리마운트된다. 목록이
+   * 줄면 보고 있던 사진의 위치와 포커스 대상도 함께 어긋난다. 자리를 지키면
+   * 이 문제들이 애초에 생기지 않는다.
+   */
+  const [statusByUrl, setStatusByUrl] = useState<
+    ReadonlyMap<string, ImageStatus>
+  >(() => new Map());
 
   const totalCount = images.length;
   const isSingle = totalCount === 1;
@@ -187,20 +202,18 @@ export function LockerDetailImageStrip({
   }
 
   /**
-   * 이미 담긴 URL이면 같은 Set을 그대로 돌려준다.
+   * 상태가 그대로면 같은 Map을 돌려준다.
    *
-   * 새 Set을 만들면 상태가 매번 바뀐 것으로 보여 리렌더가 일어나고, 그때마다
+   * 새 Map을 만들면 상태가 매번 바뀐 것으로 보여 리렌더가 일어나고, 그때마다
    * img 의 ref 콜백이 다시 붙어 로드 완료를 또 알린다. 이 순환이 곧
    * `Maximum update depth exceeded` 다.
    */
-  const handleImageLoad = (imageUrl: string) => {
-    setLoadedUrls((current) =>
-      current.has(imageUrl) ? current : new Set(current).add(imageUrl),
+  const handleStatusChange = (imageUrl: string, status: ImageStatus) => {
+    setStatusByUrl((current) =>
+      current.get(imageUrl) === status
+        ? current
+        : new Map(current).set(imageUrl, status),
     );
-  };
-
-  const handleImageError = (imageUrl: string) => {
-    onImageError?.(imageUrl);
   };
 
   const handleOpenPreview = (index: number, trigger: HTMLButtonElement) => {
@@ -222,9 +235,8 @@ export function LockerDetailImageStrip({
             totalCount={totalCount}
             isSingle={isSingle}
             shouldLoad={index <= furthestIndex + 1}
-            isLoaded={loadedUrls.has(imageUrl)}
-            onImageLoad={handleImageLoad}
-            onImageError={handleImageError}
+            status={statusByUrl.get(imageUrl) ?? "loading"}
+            onStatusChange={handleStatusChange}
             onOpenPreview={handleOpenPreview}
           />
         ))}

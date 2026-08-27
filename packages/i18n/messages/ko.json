@@ -356,6 +356,7 @@
   "locker_detail_image_item_aria": "보관함 사진 {index} / {total}",
   "locker_detail_image_previous": "이전 사진",
   "locker_detail_image_next": "다음 사진",
+  "locker_detail_image_load_failed": "사진을 불러오지 못했어요",
   "locker_detail_no_image_helper": "제보하기를 통해 등록할 수 있어요!",
   "navigation_platform_dialog_aria": "길찾기 플랫폼 선택",
   "navigation_platform_title": "어떤 지도로 길찾기 할까요?",

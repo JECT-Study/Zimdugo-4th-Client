@@ -98,61 +98,15 @@ describe("OriginalImagePreview", () => {
     expect(getSrc()).toBe("https://example.com/b.jpg");
   });
 
-  it("보고 있던 사진이 깨지면 목록에서 빼고 이웃으로 옮긴다", () => {
-    const { dialog, getSrc } = renderGallery();
-
-    fireEvent.error(within(dialog).getByRole("img"));
-
-    expect(getSrc()).toBe("https://example.com/c.jpg");
-    expect(dialog.textContent).toContain("2 / 2");
-  });
-
-  it("앞선 사진이 목록에서 빠져도 보고 있던 사진을 그대로 둔다", () => {
-    const { rerender } = render(
-      <OriginalImagePreview
-        images={GALLERY}
-        initialIndex={1}
-        alt="원본 사진"
-        closeLabel="닫기"
-        navigationLabels={{ previous: "이전 사진", next: "다음 사진" }}
-        onClose={vi.fn()}
-      />,
-    );
-
-    const getSrc = () =>
-      within(screen.getByRole("dialog", { name: "원본 사진" }))
-        .getByRole("img")
-        .getAttribute("src");
-
-    expect(getSrc()).toBe("https://example.com/b.jpg");
-
-    // 스트립에서 첫 사진이 뒤늦게 실패해 부모가 목록에서 뺀 상황
-    rerender(
-      <OriginalImagePreview
-        images={[GALLERY[1], GALLERY[2]]}
-        initialIndex={1}
-        alt="원본 사진"
-        closeLabel="닫기"
-        navigationLabels={{ previous: "이전 사진", next: "다음 사진" }}
-        onClose={vi.fn()}
-      />,
-    );
-
-    expect(getSrc()).toBe("https://example.com/b.jpg");
-    expect(
-      screen.getByRole("dialog", { name: "원본 사진" }).textContent,
-    ).toContain("1 / 2");
-  });
-
-  it("사진이 깨지면 부모에게도 알린다", () => {
-    const onImageError = vi.fn();
+  it("사진이 깨져도 자리를 지키고 실패 문구를 보여 준다", () => {
     render(
       <OriginalImagePreview
         images={GALLERY}
         initialIndex={1}
         alt="원본 사진"
         closeLabel="닫기"
-        onImageError={onImageError}
+        loadFailedLabel="사진을 불러오지 못했어요"
+        navigationLabels={{ previous: "이전 사진", next: "다음 사진" }}
         onClose={vi.fn()}
       />,
     );
@@ -160,7 +114,15 @@ describe("OriginalImagePreview", () => {
     const dialog = screen.getByRole("dialog", { name: "원본 사진" });
     fireEvent.error(within(dialog).getByRole("img"));
 
-    expect(onImageError).toHaveBeenCalledWith("https://example.com/b.jpg");
+    expect(within(dialog).queryByRole("img")).toBeNull();
+    expect(within(dialog).getByText("사진을 불러오지 못했어요")).toBeTruthy();
+    // 위치와 카운터는 그대로다.
+    expect(dialog.textContent).toContain("2 / 3");
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "다음 사진" }));
+    expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
+      "https://example.com/c.jpg",
+    );
   });
 
   it("한 장뿐이면 좌우 버튼과 카운터를 두지 않는다", () => {
@@ -179,22 +141,5 @@ describe("OriginalImagePreview", () => {
       within(dialog).queryByRole("button", { name: "다음 사진" }),
     ).toBeNull();
     expect(dialog.textContent).not.toContain("1 / 1");
-  });
-
-  it("모든 사진이 깨지면 모달을 닫는다", () => {
-    const handleClose = vi.fn();
-    render(
-      <OriginalImagePreview
-        images={["https://example.com/a.jpg"]}
-        alt="원본 사진"
-        closeLabel="닫기"
-        onClose={handleClose}
-      />,
-    );
-
-    const dialog = screen.getByRole("dialog", { name: "원본 사진" });
-    fireEvent.error(within(dialog).getByRole("img"));
-
-    expect(handleClose).toHaveBeenCalled();
   });
 });

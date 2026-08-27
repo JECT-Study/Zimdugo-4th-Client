@@ -31,6 +31,22 @@ export const image = style({
   borderRadius: vars.radius[6],
 });
 
+/** 사진을 못 불러왔을 때 자리를 지키는 상자. */
+export const failureBox = style({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: vars.spacing[12],
+  padding: vars.spacing[24],
+  borderRadius: vars.radius[6],
+  backgroundColor: "rgba(255, 255, 255, 0.08)",
+  color: vars.color.palette.gray[100],
+  fontSize: vars.typography.fontSize[14],
+  lineHeight: "20px",
+  textAlign: "center",
+});
+
 export const counter = style({
   position: "absolute",
   bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",

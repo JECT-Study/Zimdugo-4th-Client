@@ -100,10 +100,27 @@ describe("LockerDetailImageStrip", () => {
     expect(container.querySelectorAll("span")).toHaveLength(0);
   });
 
-  it("로드에 실패하면 해당 URL을 부모에게 알린다", () => {
-    const onImageError = vi.fn();
+  it("로드에 실패해도 자리를 지키고 실패 문구를 보여 준다", () => {
+    render(<LockerDetailImageStrip images={IMAGES} />);
+
+    const firstImage = document.querySelector("img");
+    if (!firstImage) {
+      throw new Error("이미지가 렌더링되지 않았다");
+    }
+    fireEvent.error(firstImage);
+
+    // 목록 길이와 나머지 사진의 번호는 그대로다.
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.getByText("사진을 불러오지 못했어요")).toBeTruthy();
+    expect(getImageButtons()[0]?.getAttribute("aria-label")).toBe(
+      "보관함 사진 2 / 3",
+    );
+  });
+
+  it("실패한 사진은 눌러도 미리보기가 열리지 않는다", () => {
+    const onOpenPreview = vi.fn();
     render(
-      <LockerDetailImageStrip images={IMAGES} onImageError={onImageError} />,
+      <LockerDetailImageStrip images={IMAGES} onOpenPreview={onOpenPreview} />,
     );
 
     const firstImage = document.querySelector("img");
@@ -112,15 +129,9 @@ describe("LockerDetailImageStrip", () => {
     }
     fireEvent.error(firstImage);
 
-    expect(onImageError).toHaveBeenCalledWith("https://example.com/a.jpg");
-  });
-
-  it("부모가 걸러낸 목록만 그린다", () => {
-    render(<LockerDetailImageStrip images={[IMAGES[1], IMAGES[2]]} />);
-
-    const buttons = getImageButtons();
-    expect(buttons).toHaveLength(2);
-    expect(buttons[0]?.getAttribute("aria-label")).toBe("보관함 사진 1 / 2");
+    expect(
+      screen.queryByRole("button", { name: "보관함 사진 1 / 3" }),
+    ).toBeNull();
   });
 
   it("보여 줄 이미지가 없으면 섹션 자체를 렌더링하지 않는다", () => {

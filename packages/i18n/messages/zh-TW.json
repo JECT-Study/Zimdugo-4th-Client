@@ -356,6 +356,7 @@
   "locker_detail_image_item_aria": "置物櫃照片 {index} / {total}",
   "locker_detail_image_previous": "上一張照片",
   "locker_detail_image_next": "下一張照片",
+  "locker_detail_image_load_failed": "無法載入這張照片",
   "locker_detail_no_image_helper": "可通過上報來添加！",
   "navigation_platform_dialog_aria": "選擇地圖應用",
   "navigation_platform_title": "要用哪個地圖導航？",

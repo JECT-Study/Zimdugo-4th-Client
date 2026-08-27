@@ -1,4 +1,8 @@
-import { IconChevronLeft13, IconX24 } from "@repo/ui/tokens/icons";
+import {
+  IconCamera24,
+  IconChevronLeft13,
+  IconX24,
+} from "@repo/ui/tokens/icons";
 import {
   type MouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -12,6 +16,7 @@ import {
   closeButton,
   counter,
   dialog,
+  failureBox,
   image,
   navButton,
   nextButton,
@@ -28,8 +33,8 @@ export interface OriginalImagePreviewProps {
   closeLabel: string;
   /** 두 장 이상일 때만 쓴다. 없으면 좌우 버튼을 그리지 않고 스와이프·방향키만 남는다. */
   navigationLabels?: { previous: string; next: string };
-  /** 로드에 실패한 URL을 알린다. 부모가 목록에서 빼면 여기서도 함께 사라진다. */
-  onImageError?: (imageUrl: string) => void;
+  /** 사진을 못 불러왔을 때 자리에 띄울 문구. */
+  loadFailedLabel?: string;
   portalContainer?: Element | null;
   onClose: () => void;
 }
@@ -43,7 +48,7 @@ export function OriginalImagePreview({
   alt,
   closeLabel,
   navigationLabels,
-  onImageError,
+  loadFailedLabel,
   portalContainer,
   onClose,
 }: OriginalImagePreviewProps) {
@@ -53,42 +58,23 @@ export function OriginalImagePreview({
   const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  /**
-   * 보고 있는 사진을 위치가 아니라 URL로 기억한다.
-   *
-   * 위치로 들면, 스트립에서 앞선 사진이 뒤늦게 실패해 목록이 줄어들 때 같은
-   * 위치가 다음 사진을 가리키게 되어 사용자가 아무것도 안 했는데 화면이 넘어간다.
-   */
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(
-    () => images[initialIndex] ?? images[0],
-  );
+  const [index, setIndex] = useState(initialIndex);
 
-  // 스트립과 같은 규칙이다. 열어 본 이미지가 깨지면 목록에서 빼고 이웃으로 옮긴다.
-  const visibleImages = images.filter((imageUrl) => !failedUrls.has(imageUrl));
-  const totalCount = visibleImages.length;
-  const selectedIndex = selectedImage
-    ? visibleImages.indexOf(selectedImage)
-    : -1;
-  const activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
-  const currentImage = visibleImages[activeIndex];
+  const totalCount = images.length;
+  const activeIndex = Math.min(index, Math.max(totalCount - 1, 0));
+  const currentImage = images[activeIndex];
   const hasPrevious = activeIndex > 0;
   const hasNext = activeIndex < totalCount - 1;
+  // 실패해도 목록에서 빼지 않는다. 자리를 지켜야 위치와 카운터가 흔들리지 않는다.
+  const hasCurrentFailed = currentImage ? failedUrls.has(currentImage) : false;
 
   const goPrevious = () => {
-    if (hasPrevious) {
-      setSelectedImage(visibleImages[activeIndex - 1]);
-    }
+    setIndex((current) => Math.max(current - 1, 0));
   };
 
   const goNext = () => {
-    if (hasNext) {
-      setSelectedImage(visibleImages[activeIndex + 1]);
-    }
+    setIndex((current) => Math.min(current + 1, totalCount - 1));
   };
-
-  // 방향키 리스너가 매 렌더 다시 붙지 않도록 최신 이동 함수만 갈아 끼운다.
-  const navigateRef = useRef({ goPrevious, goNext });
-  navigateRef.current = { goPrevious, goNext };
 
   const handlePreviousClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -105,17 +91,9 @@ export function OriginalImagePreview({
       return;
     }
 
-    const remainingImages = visibleImages.filter(
-      (imageUrl) => imageUrl !== currentImage,
-    );
-
     setFailedUrls((current) =>
       current.has(currentImage) ? current : new Set(current).add(currentImage),
     );
-    setSelectedImage(
-      remainingImages[Math.min(activeIndex, remainingImages.length - 1)],
-    );
-    onImageError?.(currentImage);
   };
 
   const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
@@ -203,26 +181,19 @@ export function OriginalImagePreview({
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        navigateRef.current.goPrevious();
+        setIndex((current) => Math.max(current - 1, 0));
         return;
       }
 
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        navigateRef.current.goNext();
+        setIndex((current) => Math.min(current + 1, totalCount - 1));
       }
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [onClose]);
-
-  // 마지막 한 장까지 깨지면 볼 게 없다. 빈 모달을 남기지 않고 닫는다.
-  useEffect(() => {
-    if (totalCount === 0) {
-      onClose();
-    }
-  }, [totalCount, onClose]);
+  }, [onClose, totalCount]);
 
   if (typeof document === "undefined" || !currentImage) {
     return null;
@@ -241,12 +212,19 @@ export function OriginalImagePreview({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <img
-          className={image}
-          src={currentImage}
-          alt={alt}
-          onError={handleImageError}
-        />
+        {hasCurrentFailed ? (
+          <span className={failureBox}>
+            <IconCamera24 />
+            {loadFailedLabel ? <span>{loadFailedLabel}</span> : null}
+          </span>
+        ) : (
+          <img
+            className={image}
+            src={currentImage}
+            alt={alt}
+            onError={handleImageError}
+          />
+        )}
         <button
           ref={closeButtonRef}
           type="button"

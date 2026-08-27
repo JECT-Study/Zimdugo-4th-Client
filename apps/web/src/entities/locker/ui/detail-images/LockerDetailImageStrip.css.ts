@@ -84,6 +84,30 @@ export const imagePlaceholder = style({
   boxSizing: "border-box",
 });
 
+/** 로드에 실패해도 자리는 그대로 둔다. 크기는 image 와 같아야 한다. */
+export const failureBox = style({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: vars.spacing[8],
+  width: "100%",
+  height: `${IMAGE_HEIGHT_PX}px`,
+  padding: vars.spacing[12],
+  boxSizing: "border-box",
+  borderRadius: vars.radius[6],
+  border: `1px solid ${vars.color.border.default}`,
+  backgroundColor: vars.color.bg.surface,
+  color: vars.color.text.surface,
+});
+
+export const failureText = style({
+  fontSize: vars.typography.fontSize[12],
+  fontWeight: vars.typography.fontWeight.Medium,
+  lineHeight: "18px",
+  textAlign: "center",
+});
+
 export const indicatorRow = style({
   display: "flex",
   justifyContent: "center",
