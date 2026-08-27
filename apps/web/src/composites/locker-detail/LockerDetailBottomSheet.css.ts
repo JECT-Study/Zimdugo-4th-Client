@@ -241,14 +241,6 @@ export const distanceRow = style({
   color: vars.color.text.surface,
 });
 
-export const addressText = style({
-  minWidth: 0,
-  overflow: "hidden",
-  color: vars.color.text.surface,
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
-});
-
 export const metaDot = style({
   width: "2px",
   height: "2px",

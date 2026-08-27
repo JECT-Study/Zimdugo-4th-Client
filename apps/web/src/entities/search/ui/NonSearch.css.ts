@@ -44,8 +44,6 @@ export const inputTextDisplay = style({
   textWrap: "balance",
 });
 
-export const inputTextSubBlock = style({});
-
 export const textTitle = style({
   margin: 0,
   fontSize: vars.typography.fontSize[14],

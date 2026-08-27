@@ -69,12 +69,6 @@ export function ReportLocationSection({
         <span className={requiredMark}>*</span>
       </ReportSectionTitleRow>
       <div className={photoSectionContent}>
-        {/*
-        <button type="button" className={locationMapArea}>
-          지도 프레임 영역은 QA 중 임시 비활성화합니다.
-        </button>
-        */}
-
         <button
           type="button"
           className={locationTextButton}
