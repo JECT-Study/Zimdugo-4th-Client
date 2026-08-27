@@ -81,7 +81,7 @@ const getDefaultLabels = (): Record<BottomTabKey, string> => ({
   settings: m.nav_settings(),
 });
 
-export type BottomTabLinks = Record<BottomTabKey, string>;
+type BottomTabLinks = Record<BottomTabKey, string>;
 
 export interface BottomTabBarProps {
   /**
@@ -139,14 +139,6 @@ function BottomTabBarComponent({
 }
 
 export const BottomTabBar = memo(BottomTabBarComponent);
-
-export function BottomTabBarSkeleton({ className }: { className?: string }) {
-  return (
-    <BottomBarFrame className={className}>
-      <BottomTabBarSkeletonItems />
-    </BottomBarFrame>
-  );
-}
 
 function BottomTabBarSkeletonItems() {
   return TAB_ORDER.map((tabKey) => (

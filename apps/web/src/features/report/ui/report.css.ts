@@ -131,8 +131,6 @@ export const disabledSection = style({
   opacity: 0.5,
 });
 
-export const locationSection = section;
-
 export const classificationSection = style({
   display: "flex",
   flexDirection: "column",
@@ -189,13 +187,6 @@ export const sectionErrorReserve = style({
   flexShrink: 0,
 });
 
-/** @deprecated 롤백용 — `sectionErrorTextBottom` 또는 `sectionErrorTextInline` 사용 */
-export const sectionErrorText = sectionErrorTextBottom;
-
-export const sectionGap24 = style({
-  marginTop: vars.spacing[24],
-});
-
 export const placeType = style({
   marginTop: 0,
 });
@@ -227,23 +218,6 @@ export const photoSectionContent = style({
   margin: "0 auto",
 });
 
-export const emptyMapState = style({
-  width: "100%",
-  height: "100%",
-  backgroundColor: vars.color.palette.gray[200],
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: vars.spacing[12],
-});
-
-export const emptyMapIcon = style({
-  width: "48px",
-  height: "48px",
-  color: vars.color.palette.gray[600],
-});
-
 export const locationTextButton = style({
   width: "100%",
   padding: `${vars.spacing[16]} ${vars.spacing[12]}`,
@@ -260,10 +234,6 @@ export const locationTextButton = style({
       cursor: "default",
     },
   },
-});
-
-export const floorDropdown = style({
-  flex: 1,
 });
 
 export const floorControlRow = style({
@@ -311,22 +281,6 @@ export const pickerTriggerButtonLabel = style({
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
-});
-
-export const dialContainer = style({
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: "10px 16px",
-  backgroundColor: vars.color.palette.gray[100], // #F8F9FA와 유사
-  borderRadius: vars.radius[12],
-  gap: vars.spacing[4],
-});
-
-export const dialSeparator = style({
-  width: "1px",
-  height: "40px",
-  backgroundColor: vars.color.palette.gray[300],
 });
 
 export const sizeGuideBox = style({
@@ -417,24 +371,6 @@ export const reportTextareaCounter = style({
   color: vars.color.text.surface,
 });
 
-export const textareaClearButton = style({
-  position: "absolute",
-  top: "10px",
-  right: "10px",
-  background: "none",
-  border: "none",
-  color: vars.color.palette.gray[500],
-  fontSize: vars.typography.fontSize[12],
-  cursor: "pointer",
-  padding: vars.spacing[4],
-  zIndex: 2,
-  selectors: {
-    "&:hover": {
-      color: vars.color.palette.gray[700],
-    },
-  },
-});
-
 export const reportTextareaIcon = style({
   position: "absolute",
   right: "16px",
@@ -485,17 +421,9 @@ const baseUploadArea = style({
   },
 });
 
-export const locationMapArea = style([
-  baseUploadArea,
-  {
-    width: "280px",
-    margin: "0 auto",
-  },
-]);
-
 /** 제보 사진 업로드·미리보기 공통 치수 */
-export const REPORT_PHOTO_TILE_WIDTH = "min(343px, 100%)";
-export const REPORT_PHOTO_TILE_HEIGHT = "200px";
+const REPORT_PHOTO_TILE_WIDTH = "min(343px, 100%)";
+const REPORT_PHOTO_TILE_HEIGHT = "200px";
 
 const reportPhotoTileBase = style({
   flexShrink: 0,
@@ -655,45 +583,6 @@ export const photoPreviewUploadSpinner = style({
   backgroundColor: "rgba(255, 255, 255, 0.78)",
 });
 
-export const miniMapContainer = style({
-  width: "100%",
-  height: "100%",
-});
-
-export const floatingCameraButton = style({
-  position: "absolute",
-  right: vars.spacing[12],
-  bottom: vars.spacing[12],
-  width: "40px",
-  height: "40px",
-  borderRadius: "20px",
-  backgroundColor: "rgba(255, 255, 255, 0.9)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  boxShadow: vars.shadow[1],
-  zIndex: 5,
-  cursor: "pointer",
-});
-
-export const uploadIcon = style({
-  width: "40px",
-  height: "40px",
-  color: vars.color.palette.gray[600],
-});
-
-export const uploadText = style({
-  fontSize: vars.typography.fontSize[14],
-  color: vars.color.palette.gray[600],
-  textAlign: "center",
-  lineHeight: vars.typography.lineHeight.normal,
-});
-
-export const guideText = style({
-  color: vars.color.palette.gray[600],
-  fontSize: "14px",
-});
-
 export const agreementSection = style({
   display: "flex",
   flexDirection: "column",
@@ -763,29 +652,6 @@ export const submitActionFrame = style({
   width: "100%",
 });
 
-export const submitSubButton = style({
-  margin: 0,
-  width: "auto",
-  minHeight: "auto",
-  padding: 0,
-  color: "#8E8E8E",
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: "1.2",
-  letterSpacing: 0,
-  textAlign: "center",
-  textDecorationLine: "underline",
-  textUnderlinePosition: "from-font",
-  whiteSpace: "nowrap",
-  backgroundColor: "transparent",
-  selectors: {
-    "&[data-disabled]": {
-      opacity: 0.5,
-      cursor: "not-allowed",
-    },
-  },
-});
-
 export const priceRow = style({
   width: "100%",
 });
@@ -831,11 +697,6 @@ export const priceInputRow = style({
   columnGap: vars.spacing[8],
   alignItems: "center",
   width: "100%",
-});
-
-export const priceInputItem = style({
-  flex: 1,
-  minWidth: 0,
 });
 
 export const timeRow = style({

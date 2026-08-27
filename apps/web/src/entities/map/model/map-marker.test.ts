@@ -27,7 +27,7 @@ vi.mock("@repo/ui/vars", () => ({
   },
 }));
 
-import { createLockerMarkerIcon, syncLockerMarkers } from "./map-marker";
+import { createMapPinIcon, syncLockerMarkers } from "./map-marker";
 
 class FakeLatLng {
   constructor(
@@ -227,9 +227,9 @@ const expectMarkerAnchorToMatch = (
 const getMarkerItemClass = (content: string): string =>
   content.match(/class="map-marker-item ([^"]+)"/)?.[1] ?? "";
 
-describe("createLockerMarkerIcon", () => {
+describe("createMapPinIcon", () => {
   it("renders the default locker map pin asset", () => {
-    const icon = createLockerMarkerIcon(createLockerPin());
+    const icon = createMapPinIcon(createLockerPin());
 
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain('data-map-pin-variant="default"');
@@ -242,7 +242,7 @@ describe("createLockerMarkerIcon", () => {
   });
 
   it("renders the favorite locker map pin asset only when isFavorite is true", () => {
-    const icon = createLockerMarkerIcon(createLockerPin({ isFavorite: true }));
+    const icon = createMapPinIcon(createLockerPin({ isFavorite: true }));
 
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain('data-map-pin-variant="save"');
@@ -252,7 +252,7 @@ describe("createLockerMarkerIcon", () => {
   });
 
   it("keeps the default locker asset when the locker is selected", () => {
-    const icon = createLockerMarkerIcon(createLockerPin(), true);
+    const icon = createMapPinIcon(createLockerPin(), true);
 
     expect(icon).toContain('data-type="LOCKER"');
     expect(icon).toContain('data-map-pin-variant="default"');
@@ -260,7 +260,7 @@ describe("createLockerMarkerIcon", () => {
   });
 
   it("renders inactive locker markers in gray", () => {
-    const icon = createLockerMarkerIcon(
+    const icon = createMapPinIcon(
       createLockerPin({ markerStatus: "inactive" }),
       true,
     );
@@ -273,7 +273,7 @@ describe("createLockerMarkerIcon", () => {
   });
 
   it("renders place markers with the default map pin and a count badge", () => {
-    const icon = createLockerMarkerIcon(createPlacePin({ lockerCount: 12 }));
+    const icon = createMapPinIcon(createPlacePin({ lockerCount: 12 }));
 
     expect(icon).toContain('data-type="PLACE"');
     expect(icon).toContain('data-map-pin-variant="cluster"');
@@ -289,7 +289,7 @@ describe("createLockerMarkerIcon", () => {
   });
 
   it("renders inactive place markers in gray", () => {
-    const icon = createLockerMarkerIcon(
+    const icon = createMapPinIcon(
       createPlacePin({ markerStatus: "inactive", lockerCount: 12 }),
     );
 
@@ -303,7 +303,7 @@ describe("createLockerMarkerIcon", () => {
   });
 
   it("renders cluster markers for count < 10 (S size)", () => {
-    const icon = createLockerMarkerIcon(createClusterPin({ pinCount: 5 }));
+    const icon = createMapPinIcon(createClusterPin({ pinCount: 5 }));
 
     expect(icon).toContain('data-type="CLUSTER"');
     expect(icon).toContain('data-map-pin-variant="cluster"');
@@ -315,7 +315,7 @@ describe("createLockerMarkerIcon", () => {
   });
 
   it("renders cluster markers for count >= 10 (L size)", () => {
-    const icon = createLockerMarkerIcon(createClusterPin({ pinCount: 15 }));
+    const icon = createMapPinIcon(createClusterPin({ pinCount: 15 }));
 
     expect(icon).toContain('data-type="CLUSTER"');
     expect(icon).toContain('data-map-pin-variant="cluster"');

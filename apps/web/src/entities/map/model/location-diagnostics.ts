@@ -30,7 +30,7 @@ const getLocationDiagnosticId = () => {
   return diagnosticId;
 };
 
-export const isLocationDiagnosticsEnabled = () => {
+const isLocationDiagnosticsEnabled = () => {
   if (typeof window === "undefined") return false;
 
   try {

@@ -186,7 +186,7 @@ export const resolveDetailSheetVisibleHeight = (
   return null;
 };
 
-export interface LockerDetailSheetSnapRequest {
+interface LockerDetailSheetSnapRequest {
   id: number;
   stage: LockerDetailSheetSnapStage;
 }
@@ -199,7 +199,7 @@ interface ResolveLockerDetailSnapPointsOptions {
   fullContentHeight?: number | null;
 }
 
-export const resolveLockerDetailSnapOffset = ({
+const resolveLockerDetailSnapOffset = ({
   maxSnapPoint,
   minSnapPoint,
   visibleHeight,
@@ -212,7 +212,7 @@ export const resolveLockerDetailSnapOffset = ({
 }) =>
   Math.min(maxSnapPoint, Math.max(minSnapPoint, windowHeight - visibleHeight));
 
-export const resolveLockerDetailSnapStage = ({
+const resolveLockerDetailSnapStage = ({
   maxSnapPoint,
   miniSnapPoint,
   minSnapPoint,

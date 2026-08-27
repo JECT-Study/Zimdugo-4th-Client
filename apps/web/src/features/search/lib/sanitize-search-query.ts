@@ -98,7 +98,7 @@ export const getValidatedSearchQuery = (raw: string): string | null => {
   return trimmed;
 };
 
-export type SearchQuerySubmitRejectReason = SearchQueryIssue;
+type SearchQuerySubmitRejectReason = SearchQueryIssue;
 
 export type SearchQuerySubmitAttempt =
   | { ok: true; query: string }

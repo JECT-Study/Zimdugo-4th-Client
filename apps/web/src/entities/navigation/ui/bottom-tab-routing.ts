@@ -34,20 +34,3 @@ export const getActiveBottomTab = (pathname: string): BottomTabKey => {
 
   return "home";
 };
-
-/**
- * Bottom tab is hidden on full-screen flows that own the entire viewport.
- */
-export const shouldShowBottomTab = (pathname: string): boolean => {
-  const normalizedPath = stripLocale(pathname);
-
-  if (normalizedPath === "/login" || normalizedPath.startsWith("/login/")) {
-    return false;
-  }
-
-  if (normalizedPath === "/report" || normalizedPath.startsWith("/report/")) {
-    return false;
-  }
-
-  return true;
-};

@@ -7,7 +7,7 @@ import {
 } from "#/shared/lib/locker-detail-labels";
 import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 
-export interface ReportViewerField {
+interface ReportViewerField {
   label: string;
   value: string;
 }
@@ -100,88 +100,6 @@ const formatAdditionalInfoLabel = (additionalInfo: string | null): string => {
   const trimmed = additionalInfo?.trim();
   return trimmed ? trimmed : "-";
 };
-
-export const formatReportViewerSections = (
-  detail: MyLockerReportDetail,
-): ReportViewerSection[] => [
-  {
-    title: m.report_section_location(),
-    fields: [
-      {
-        label: m.report_location_selected_label(),
-        value: detail.roadAddress,
-      },
-    ],
-  },
-  {
-    title: m.report_section_indoor_outdoor(),
-    fields: [
-      {
-        label: m.report_section_indoor_outdoor(),
-        value: formatIndoorOutdoorLabel(detail.indoorOutdoorType),
-      },
-    ],
-  },
-  {
-    title: m.report_section_type(),
-    fields: [
-      {
-        label: m.my_history_item_type(),
-        value: getLockerTypeLabel(detail.lockerType ?? undefined) || "-",
-      },
-    ],
-  },
-  {
-    title: m.report_section_floor(),
-    fields: [
-      {
-        label: m.my_history_item_floor(),
-        value: formatFloorLabel(detail),
-      },
-    ],
-  },
-  {
-    title: m.report_section_size(),
-    fields: [
-      {
-        label: m.report_section_size(),
-        value: formatSizeTypesLabel(detail.sizeTypes),
-      },
-    ],
-  },
-  {
-    title: m.report_section_photo(),
-    imageUrl: detail.imageUrl,
-    fields: [],
-  },
-  {
-    title: m.report_section_price(),
-    fields: [
-      {
-        label: m.my_history_item_price(),
-        value: formatPriceLabel(detail),
-      },
-    ],
-  },
-  {
-    title: m.report_section_time(),
-    fields: [
-      {
-        label: m.report_section_time(),
-        value: formatOperatingTimeLabel(detail),
-      },
-    ],
-  },
-  {
-    title: m.report_section_additional(),
-    fields: [
-      {
-        label: m.report_section_additional(),
-        value: formatAdditionalInfoLabel(detail.additionalInfo),
-      },
-    ],
-  },
-];
 
 export const formatReportViewerInformationGroups = (
   detail: MyLockerReportDetail,

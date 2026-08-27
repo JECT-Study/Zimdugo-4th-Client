@@ -1,17 +1,12 @@
 import { apiClient } from "#/shared/lib/apiClient";
 import type { BackendResponse } from "./lockers";
 
-export type MyLockerReportPriceType = "FREE" | "PAID" | "UNKNOWN";
+type MyLockerReportPriceType = "FREE" | "PAID" | "UNKNOWN";
 
-export type MyLockerReportOperatingTimeType =
+type MyLockerReportOperatingTimeType =
   | "OPEN_24_HOURS"
   | "TIME_RANGE"
   | "UNKNOWN";
-
-export interface MyPageSummaryData {
-  favoriteLockerCount: number;
-  lockerReportCount: number;
-}
 
 export interface FavoriteLockerListItem {
   lockerId: number;
@@ -69,7 +64,7 @@ export interface MyLockerReportDetail {
   reportStatus?: string | null;
 }
 
-export interface MyListLocationParams {
+interface MyListLocationParams {
   lat: number;
   lng: number;
 }
@@ -86,16 +81,6 @@ const unwrapBackendData = <T>(response: BackendResponse<T> | undefined): T => {
   }
 
   return response.data;
-};
-
-export const getMyPageSummary = async (
-  signal?: AbortSignal,
-): Promise<MyPageSummaryData> => {
-  const { data: response } = await apiClient.get<
-    BackendResponse<MyPageSummaryData>
-  >("/api/v1/me/summary", { signal });
-
-  return unwrapBackendData(response);
 };
 
 export const getFavoriteLockerList = async (

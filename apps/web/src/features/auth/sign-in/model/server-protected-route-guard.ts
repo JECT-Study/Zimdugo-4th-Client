@@ -12,7 +12,7 @@ import { isProtectedPath } from "#/shared/model/protected-paths";
  * `/my` 는 `/settings` 로 보내는 호환용 리디렉션일 뿐이고 비로그인도 설정을 볼 수
  * 있으므로 그 목록에 없다.
  */
-export const isProtectedDocumentRequest = (req: Request): boolean => {
+const isProtectedDocumentRequest = (req: Request): boolean => {
   if (!isDocumentRequest(req)) return false;
 
   const url = new URL(req.url);

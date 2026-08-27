@@ -1,4 +1,4 @@
-export interface LockerOperatingHours {
+interface LockerOperatingHours {
   open: string;
   close: string;
 }

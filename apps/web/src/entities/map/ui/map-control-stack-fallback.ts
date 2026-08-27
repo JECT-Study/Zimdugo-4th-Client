@@ -5,12 +5,11 @@ import type { CSSProperties } from "react";
 export const MAP_CONTROL_BOTTOM = "70px";
 
 export const MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX = 430;
-export const MAP_CONTROL_FALLBACK_SIDE_INSET_PX = 16;
 export const MAP_CONTROL_FALLBACK_SIDE_INSET =
   "max(16px, env(safe-area-inset-right, 0px))";
 export const MAP_CONTROL_FALLBACK_MAX_WIDTH = appShellMaxWidth;
 export const MAP_CONTROL_FALLBACK_GAP_PX = 12;
-export const MAP_CONTROL_FALLBACK_Z_INDEX = 20;
+const MAP_CONTROL_FALLBACK_Z_INDEX = 20;
 
 export const MAP_CONTROL_FALLBACK_BOTTOM_PX = 70;
 
@@ -18,13 +17,13 @@ export const MAP_CONTROL_FALLBACK_BOTTOM_PX = 70;
 export const MAP_CONTROL_SHEET_GAP_PX = 12;
 
 /** 새로고침·내 위치 버튼과 그 사이 간격을 합한 스택 높이 */
-export const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
+const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
 
 /**
  * 컨트롤 스택 상단이 넘어서면 안 되는 경계.
  * 검색 바 하단(safe-area + 60 + 48)에 간격 12 를 더한 값이다.
  */
-export const MAP_CONTROL_TOP_LIMIT_PX = 120;
+const MAP_CONTROL_TOP_LIMIT_PX = 120;
 
 /** 스택과 상단 경계가 함께 요구하는 세로 공간 */
 export const MAP_CONTROL_TOP_RESERVED_PX =

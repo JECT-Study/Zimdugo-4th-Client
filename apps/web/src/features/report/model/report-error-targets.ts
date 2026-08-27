@@ -5,11 +5,9 @@ import {
   type AggregateValidationField,
   type ReportFormValues,
   type ReportSectionId,
-  STEP_1_FIELDS,
-  STEP_2_FIELDS,
 } from "./report-types";
 
-export type ValidationErrorTargetKind = "field" | "aggregate" | "unknown";
+type ValidationErrorTargetKind = "field" | "aggregate" | "unknown";
 
 export type ValidationErrorTarget = {
   kind: ValidationErrorTargetKind;
@@ -246,18 +244,6 @@ export function applyValidationErrors(
     firstSectionId,
     agreementConsentRequired,
   };
-}
-
-export function isStep1Field(
-  field: keyof ReportFormValues,
-): field is (typeof STEP_1_FIELDS)[number] {
-  return (STEP_1_FIELDS as readonly string[]).includes(field);
-}
-
-export function isStep2Field(
-  field: keyof ReportFormValues,
-): field is (typeof STEP_2_FIELDS)[number] {
-  return (STEP_2_FIELDS as readonly string[]).includes(field);
 }
 
 export type ClientValidationIssue = {

@@ -5,8 +5,7 @@ export interface SearchSelectionState {
   searchQuery: string;
 }
 
-export const trimSearchDraft = (draft: string): string =>
-  capSearchQueryDraft(draft);
+const trimSearchDraft = (draft: string): string => capSearchQueryDraft(draft);
 
 const createUnifiedSearchSelection = (input: string): SearchSelectionState => {
   const query = capSearchQueryDraft(input);

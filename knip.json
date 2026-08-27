@@ -46,6 +46,11 @@
     "packages/i18n": {
       "project": [
         "src/**/*.ts"
+      ],
+      "ignoreUnresolved": [
+        "./paraglide/messages.js",
+        "./paraglide/runtime.js",
+        "./paraglide/server.js"
       ]
     }
   }

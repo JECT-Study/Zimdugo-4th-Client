@@ -1,5 +1,4 @@
 import { m } from "@repo/i18n";
-// import { ControlChip } from "@repo/ui/components/control-chip";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import { SearchField } from "@repo/ui/components/search-field";
 import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
@@ -32,8 +31,6 @@ import {
   autocompleteList,
   backButton,
   backIcon,
-  // chipContainer,
-  // chipViewport,
   content,
   deleteAllButton,
   header,
@@ -202,24 +199,6 @@ export function SearchOverlay({
     setQuery(trimSearchQueryDraft(initialQuery));
   }, [initialQuery]);
 
-  /* const popularKeywords = [
-    "코엑스",
-    "강남역",
-    "여의도",
-    "잠실",
-    "성수",
-    "홍대",
-    "이태원",
-    "한남동",
-    "가로수길",
-    "판교",
-    "분당",
-    "수원",
-    "인천공항",
-    "김포공항",
-    "부산역",
-  ]; */
-
   const hasQuery = query.length > 0;
 
   return (
@@ -271,19 +250,6 @@ export function SearchOverlay({
                 </button>
               )}
             </div>
-
-            {/* <div className={chipViewport}>
-              <div className={chipContainer}>
-                {popularKeywords.map((keyword) => (
-                  <ControlChip
-                    key={keyword}
-                    variant="choice"
-                    label={keyword}
-                    onPress={() => handleSelect(keyword)}
-                  />
-                ))}
-              </div>
-            </div> */}
 
             <div className={recentList}>
               {recentEntries.length > 0 ? (

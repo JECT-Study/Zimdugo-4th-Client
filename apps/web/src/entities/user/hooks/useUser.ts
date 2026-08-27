@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMeProfile, type MeProfileData } from "#/shared/api/me";
+import { getMeProfile } from "#/shared/api/me";
 import {
   type AuthQueryCacheScope,
   getAuthQueryCacheScope,
 } from "#/shared/lib/auth-query-cache-scope";
 import { useAuthStore } from "#/shared/store/authStore";
-
-export type { MeProfileData };
 
 export const userProfileQueryKeyPrefix = ["me", "profile"] as const;
 

@@ -57,10 +57,10 @@ jobs:
       - name: Test (admin)
         run: pnpm test:admin
 
-      # 죽은 파일과 안 쓰는 의존성만 막는다. export 단위는 아직 정리 중이라
-      # 여기서 보지 않는다. 다 정리되면 --include 를 지우고 전체로 넓힌다.
-      - name: Knip (files & dependencies)
-        run: pnpm knip --include files,dependencies
+      # 죽은 파일·의존성·export·타입·중복 export 를 모두 막는다.
+      # 범위를 좁히는 --include 는 없다. 새로 생긴 죽은 코드는 여기서 걸린다.
+      - name: Knip
+        run: pnpm knip
 
   e2e:
     name: e2e

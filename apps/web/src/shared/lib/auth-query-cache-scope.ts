@@ -1,4 +1,4 @@
-export const AUTH_QUERY_CACHE_ANONYMOUS = "anonymous" as const;
+const AUTH_QUERY_CACHE_ANONYMOUS = "anonymous" as const;
 
 export type AuthQueryCacheScope =
   | typeof AUTH_QUERY_CACHE_ANONYMOUS

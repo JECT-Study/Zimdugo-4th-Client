@@ -1,6 +1,6 @@
 import type { LockerBoundsRaw } from "#/shared/api/lockers";
 
-export const SEARCH_MAP_TOP_PADDING_PX = 72;
+const SEARCH_MAP_TOP_PADDING_PX = 72;
 export const CLUSTER_FIT_BOUNDS_TOP_PADDING_PX = 144;
 export const CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX = 56;
 export const CLUSTER_FIT_BOUNDS_BOTTOM_PADDING_PX = 144;
@@ -214,5 +214,3 @@ export const focusNaverMapOnClusterBounds = ({
 
   return false;
 };
-
-export const focusNaverMapOnBoundsCenter = focusNaverMapOnClusterBounds;

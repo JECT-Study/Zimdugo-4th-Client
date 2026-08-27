@@ -255,21 +255,6 @@ export const settingRowValue = style({
   lineHeight: vars.typography.lineHeight.normal,
 });
 
-export const settingRowValueText = style({
-  marginLeft: "auto",
-  fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: vars.typography.lineHeight.normal,
-  color: vars.color.text.title,
-});
-
-export const languageList = style({
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: vars.spacing[8],
-  marginTop: vars.spacing[12],
-});
-
 export const versionText = style({
   marginTop: vars.spacing[16],
   paddingLeft: vars.spacing[16],

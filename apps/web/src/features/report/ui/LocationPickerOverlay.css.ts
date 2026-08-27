@@ -39,22 +39,6 @@ export const overlayContainer = style({
   },
 });
 
-export const header = style({
-  position: "absolute",
-  top: "calc(env(safe-area-inset-top, 0px) + 8px)",
-  left: vars.layout.sidePadding,
-  right: vars.layout.sidePadding,
-  backgroundColor: vars.color.bg.default,
-  borderRadius: vars.radius[12],
-  boxShadow: vars.shadow[2],
-  display: "flex",
-  alignItems: "center",
-  paddingRight: vars.spacing[4],
-  zIndex: 30,
-  height: "48px",
-  overflow: "hidden",
-});
-
 export const backButton = style({
   position: "absolute",
   top: "calc(env(safe-area-inset-top, 0px) + 16px)",
@@ -77,14 +61,6 @@ export const backButton = style({
 
 export const backIcon = style({
   flexShrink: 0,
-});
-
-export const searchFieldSlot = style({
-  flex: 1,
-});
-
-export const searchContainer = style({
-  display: "none", // 헤더로 통합됨
 });
 
 export const mapWrapper = style({
@@ -185,52 +161,4 @@ export const addressText = style({
 
 export const confirmButton = style({
   width: "100%",
-});
-
-export const searchResultsOverlay = style({
-  position: "absolute",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  backgroundColor: "white",
-  zIndex: 25,
-  display: "flex",
-  flexDirection: "column",
-  paddingTop: "calc(64px + env(safe-area-inset-top, 0px))", // Floating Bar 높이(48px) + 상단 여백(8px + 8px) 고려
-});
-
-export const searchResultsContent = style({
-  flex: 1,
-  overflowY: "auto",
-  overflowX: "hidden", // 가로 스크롤 방지
-  display: "flex",
-  flexDirection: "column",
-  width: "100%", // 너비 고정
-});
-
-export const searchResultHeader = style({
-  padding: `${vars.spacing[16]} ${vars.layout.sidePadding}`,
-  borderBottom: `1px solid ${vars.color.palette.gray[100]}`,
-});
-
-export const searchResultHeaderText = style({
-  fontSize: vars.typography.fontSize[14],
-  color: vars.color.text.content,
-});
-
-export const searchResultKeyword = style({
-  color: vars.color.brand.primary,
-  fontWeight: vars.typography.fontWeight.Bold,
-});
-
-export const emptyResult = style({
-  flex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: `0 ${vars.layout.sidePadding}`,
-  textAlign: "center",
-  color: vars.color.palette.gray[500],
-  fontSize: vars.typography.fontSize[14],
 });

@@ -2,7 +2,7 @@
 
 export type IndoorOutdoorType = "INDOOR" | "OUTDOOR";
 
-export type FloorType = "ABOVE_GROUND" | "UNDERGROUND";
+type FloorType = "ABOVE_GROUND" | "UNDERGROUND";
 
 export type LockerType =
   | "MUSEUM"
@@ -15,13 +15,6 @@ export type LockerType =
   | "ETC";
 
 export type SizeType = "SMALL" | "MEDIUM" | "LARGE";
-
-export type ReportPriceType = "FREE" | "PAID" | "UNKNOWN";
-
-export type ReportOperatingTimeType =
-  | "OPEN_24_HOURS"
-  | "TIME_RANGE"
-  | "UNKNOWN";
 
 export type ReportFormValues = {
   roadAddress: string;
@@ -84,20 +77,6 @@ export const STEP_1_FIELDS = [
   "sizeTypes",
 ] as const satisfies readonly (keyof ReportFormValues)[];
 
-export const STEP_2_FIELDS = [
-  "locationConsentAgreed",
-  "isFree",
-  "minPrice",
-  "maxPrice",
-  "startTime",
-  "endTime",
-  "additionalInfo",
-  "imageUrl",
-] as const satisfies readonly (keyof ReportFormValues)[];
-
-export type ReportStep1Field = (typeof STEP_1_FIELDS)[number];
-export type ReportStep2Field = (typeof STEP_2_FIELDS)[number];
-
 export const MAX_REPORT_PHOTOS = 1;
 export const MAX_REPORT_ADDITIONAL_INFO_LENGTH = 255;
 
@@ -140,11 +119,11 @@ export type RestResponse<T> = {
   data: T;
 };
 
-export type ValidationErrorItem = {
+interface ValidationErrorItem {
   field: string;
   message: string;
   rejectedValue: unknown;
-};
+}
 
 export type ValidationErrorResponse = {
   code: "VALIDATION_FAILED" | "COMMON-400-1";

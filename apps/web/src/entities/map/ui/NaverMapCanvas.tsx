@@ -35,7 +35,7 @@ const getMapErrorMessage = (message?: string) => {
   return isAuthOrSdkError ? m.map_error_default_message() : message;
 };
 
-export interface MapCanvasCoordinates {
+interface MapCanvasCoordinates {
   lat: number;
   lng: number;
 }

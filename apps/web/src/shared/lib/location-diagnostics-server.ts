@@ -44,7 +44,7 @@ const shouldLogLocationDiagnostic = (
   );
 };
 
-export const isLocationDiagnosticsServerEnabled = (env: RuntimeEnvironment) => {
+const isLocationDiagnosticsServerEnabled = (env: RuntimeEnvironment) => {
   return (
     env.VERCEL_ENV === "preview" || env.LOCATION_DIAGNOSTICS_ENABLED === "true"
   );

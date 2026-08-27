@@ -132,7 +132,7 @@ const toTopLevelLockerResultItem = (
   };
 };
 
-export const toSearchKeywordItems = (
+const toSearchKeywordItems = (
   items: LockerSearchItemRaw[],
 ): SearchResultItem[] =>
   items
@@ -165,7 +165,7 @@ export const toPlaceLockersViewModel = (
   lockers: payload.lockers.map(toSearchLockerResultItem),
 });
 
-export const toSearchAutocompleteItem = (
+const toSearchAutocompleteItem = (
   raw: LockerSuggestItemRaw,
 ): SearchAutocompleteItemData | null => {
   if (raw.type === "PLACE") {

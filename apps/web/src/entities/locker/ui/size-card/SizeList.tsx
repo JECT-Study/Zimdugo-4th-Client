@@ -1,7 +1,7 @@
 import { SizeCard, type SizeCardType } from "./SizeCard.tsx";
 import { root } from "./SizeList.css.ts";
 
-export interface SizeListLabels {
+interface SizeListLabels {
   S: string;
   M: string;
   L: string;

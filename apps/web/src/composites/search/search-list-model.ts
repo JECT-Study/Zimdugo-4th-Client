@@ -1,7 +1,5 @@
 export type SearchSortKey = "distance" | "updatedAt" | "price";
 export type SearchSortDirection = "asc" | "desc";
-export type SearchItemType = "PLACE" | "LOCKER";
-
 export interface OperatingHours {
   open: string;
   close: string;

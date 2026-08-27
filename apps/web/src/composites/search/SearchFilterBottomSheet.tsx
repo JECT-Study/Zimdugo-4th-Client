@@ -54,8 +54,8 @@ const SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT = 24;
 const SEARCH_FILTER_DRAG_SENSITIVITY = 1.2;
 const SEARCH_FILTER_SHEET_TOP_PADDING = 16;
 
-export type SearchBottomSheetSnapBehavior = "detail" | "legacy";
-export const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
+type SearchBottomSheetSnapBehavior = "detail" | "legacy";
+const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
   "detail";
 
 interface ResolveSearchFilterSnapPointsOptions {

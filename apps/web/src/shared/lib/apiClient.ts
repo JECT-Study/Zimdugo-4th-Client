@@ -116,5 +116,4 @@ apiClient.interceptors.response.use(
   },
 );
 
-export const { httpGet, httpPost, httpPut, httpPatch, httpDelete } =
-  createApiMethods(apiClient);
+export const { httpGet } = createApiMethods(apiClient);

@@ -96,27 +96,6 @@ export const deleteAllButton = style({
   whiteSpace: "nowrap",
 });
 
-export const chipViewport = style({
-  margin: `0 ${vars.spacing[20]}`,
-  overflow: "hidden",
-  marginBottom: vars.spacing[20], // 리스트 아이템 패딩(4px) 합쳐서 섹션 간 24px 형성
-});
-
-export const chipContainer = style({
-  display: "flex",
-  gap: vars.spacing[8],
-  overflowX: "auto",
-  whiteSpace: "nowrap",
-  paddingBottom: vars.spacing[8],
-  msOverflowStyle: "none",
-  scrollbarWidth: "none",
-  selectors: {
-    "&::-webkit-scrollbar": {
-      display: "none",
-    },
-  },
-});
-
 export const recentList = style({
   display: "flex",
   flexDirection: "column",

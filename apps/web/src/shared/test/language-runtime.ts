@@ -26,7 +26,7 @@ const installedRuntimes = new Map<LanguageRuntime, InstalledRuntime>();
  * `vi.resetModules()` 를 쓰는 테스트는 런타임 인스턴스가 새로 만들어진다.
  * 그 경우 새 인스턴스를 넘겨서 같은 처리를 적용한다.
  */
-export const installTestLanguage = (
+const installTestLanguage = (
   runtime: LanguageRuntime,
   locale: AppLocale = BASE_LOCALE,
 ) => {
@@ -55,7 +55,7 @@ export const setTestLanguage = (locale: AppLocale) => {
   installTestLanguage(defaultLanguageRuntime as LanguageRuntime, locale);
 };
 
-export const restoreTestLanguage = () => {
+const restoreTestLanguage = () => {
   for (const [runtime, state] of installedRuntimes) {
     runtime.overwriteGetLocale(state.originalGetLocale);
     runtime.overwriteSetLocale(state.originalSetLocale);

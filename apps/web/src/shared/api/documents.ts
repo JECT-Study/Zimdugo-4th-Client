@@ -3,7 +3,7 @@ import type { BackendResponse } from "./lockers";
 
 export type DocumentType = "NOTICE" | "TERMS" | "PRIVACY";
 
-export interface SectionResponse {
+interface SectionResponse {
   subtitle: string;
   content: string;
 }

@@ -5,11 +5,10 @@ import {
   REPORT_PRICE_MAX,
   REPORT_PRICE_MIN,
   type ReportFormValues,
-  reportDefaultValues,
   SIZE_TYPES,
 } from "./report-types";
 
-export const timeToMinutes = (time: string): number => {
+const timeToMinutes = (time: string): number => {
   const [hour = "0", minute = "0"] = time.split(":");
   return Number.parseInt(hour, 10) * 60 + Number.parseInt(minute, 10);
 };
@@ -232,9 +231,5 @@ export const reportSchema = z
     }
   });
 
-export type ReportFormInput = z.infer<typeof reportSchema>;
-
 export const parseReportForm = (values: ReportFormValues) =>
   reportSchema.safeParse(values);
-
-export { reportDefaultValues };
