@@ -119,11 +119,11 @@ export type RestResponse<T> = {
   data: T;
 };
 
-type ValidationErrorItem = {
+interface ValidationErrorItem {
   field: string;
   message: string;
   rejectedValue: unknown;
-};
+}
 
 export type ValidationErrorResponse = {
   code: "VALIDATION_FAILED" | "COMMON-400-1";
