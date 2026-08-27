@@ -924,7 +924,12 @@ function FullDetailContent({
       </div>
       {preview ? (
         <OriginalImagePreview
-          imageUrl={preview.images[preview.index]}
+          images={preview.images}
+          initialIndex={preview.index}
+          navigationLabels={{
+            previous: m.locker_detail_image_previous(),
+            next: m.locker_detail_image_next(),
+          }}
           alt={m.report_section_photo()}
           closeLabel={m.search_close_aria()}
           onClose={handleCloseImagePreview}

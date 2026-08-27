@@ -120,7 +120,7 @@ function SettingsPageStory(args: SettingsPageViewProps) {
       />
       {previewImageUrl ? (
         <OriginalImagePreview
-          imageUrl={previewImageUrl}
+          images={[previewImageUrl]}
           alt={m.my_profile_image_alt()}
           closeLabel={m.search_close_aria()}
           onClose={() => setPreviewImageUrl(null)}

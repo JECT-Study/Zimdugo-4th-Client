@@ -1,35 +1,107 @@
-import { IconX24 } from "@repo/ui/tokens/icons";
+import { IconChevronLeft13, IconX24 } from "@repo/ui/tokens/icons";
 import {
   type MouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  type TouchEvent as ReactTouchEvent,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { createPortal } from "react-dom";
 import {
   closeButton,
+  counter,
   dialog,
   image,
+  navButton,
+  nextButton,
+  nextIcon,
   overlay,
+  prevButton,
 } from "./OriginalImagePreview.css";
 
 export interface OriginalImagePreviewProps {
-  imageUrl: string;
+  /** 한 장만 볼 때도 배열로 넘긴다. */
+  images: string[];
+  initialIndex?: number;
   alt: string;
   closeLabel: string;
+  /** 두 장 이상일 때만 쓴다. 없으면 좌우 버튼을 그리지 않고 스와이프·방향키만 남는다. */
+  navigationLabels?: { previous: string; next: string };
   portalContainer?: Element | null;
   onClose: () => void;
 }
 
+/** 이 거리 이상 가로로 밀어야 다음 장으로 넘어간다. */
+const SWIPE_THRESHOLD_PX = 48;
+
 export function OriginalImagePreview({
-  imageUrl,
+  images,
+  initialIndex = 0,
   alt,
   closeLabel,
+  navigationLabels,
   portalContainer,
   onClose,
 }: OriginalImagePreviewProps) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [index, setIndex] = useState(initialIndex);
+
+  // 스트립과 같은 규칙이다. 열어 본 이미지가 깨지면 목록에서 빼고 이웃으로 옮긴다.
+  const visibleImages = images.filter((imageUrl) => !failedUrls.has(imageUrl));
+  const totalCount = visibleImages.length;
+  const activeIndex = Math.min(index, Math.max(totalCount - 1, 0));
+  const currentImage = visibleImages[activeIndex];
+  const hasPrevious = activeIndex > 0;
+  const hasNext = activeIndex < totalCount - 1;
+
+  const goPrevious = () => {
+    setIndex((current) => Math.max(current - 1, 0));
+  };
+
+  const goNext = () => {
+    setIndex((current) => Math.min(current + 1, totalCount - 1));
+  };
+
+  const handleImageError = () => {
+    if (!currentImage) {
+      return;
+    }
+
+    setFailedUrls((current) => new Set(current).add(currentImage));
+    setIndex((current) => Math.max(Math.min(current, totalCount - 2), 0));
+  };
+
+  const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = event.touches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event: ReactTouchEvent<HTMLDivElement>) => {
+    const startX = touchStartXRef.current;
+    touchStartXRef.current = null;
+
+    const endX = event.changedTouches[0]?.clientX;
+    if (startX == null || endX == null) {
+      return;
+    }
+
+    const deltaX = endX - startX;
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) {
+      return;
+    }
+
+    if (deltaX > 0) {
+      goPrevious();
+      return;
+    }
+
+    goNext();
+  };
 
   const handleDialogKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Tab") {
@@ -81,20 +153,37 @@ export function OriginalImagePreview({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
-      onClose();
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setIndex((current) => Math.max(current - 1, 0));
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setIndex((current) => Math.min(current + 1, totalCount - 1));
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [onClose]);
+  }, [onClose, totalCount]);
 
-  if (typeof document === "undefined") {
+  // 마지막 한 장까지 깨지면 볼 게 없다. 빈 모달을 남기지 않고 닫는다.
+  useEffect(() => {
+    if (totalCount === 0) {
+      onClose();
+    }
+  }, [totalCount, onClose]);
+
+  if (typeof document === "undefined" || !currentImage) {
     return null;
   }
 
@@ -108,8 +197,15 @@ export function OriginalImagePreview({
         aria-label={alt}
         onClick={handleDialogClick}
         onKeyDown={handleDialogKeyDown}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        <img className={image} src={imageUrl} alt={alt} />
+        <img
+          className={image}
+          src={currentImage}
+          alt={alt}
+          onError={handleImageError}
+        />
         <button
           ref={closeButtonRef}
           type="button"
@@ -119,6 +215,39 @@ export function OriginalImagePreview({
         >
           <IconX24 />
         </button>
+        {totalCount > 1 ? (
+          <span className={counter}>
+            {activeIndex + 1} / {totalCount}
+          </span>
+        ) : null}
+        {totalCount > 1 && navigationLabels ? (
+          <>
+            <button
+              type="button"
+              className={[navButton, prevButton].join(" ")}
+              onClick={(event) => {
+                event.stopPropagation();
+                goPrevious();
+              }}
+              disabled={!hasPrevious}
+              aria-label={navigationLabels.previous}
+            >
+              <IconChevronLeft13 />
+            </button>
+            <button
+              type="button"
+              className={[navButton, nextButton].join(" ")}
+              onClick={(event) => {
+                event.stopPropagation();
+                goNext();
+              }}
+              disabled={!hasNext}
+              aria-label={navigationLabels.next}
+            >
+              <IconChevronLeft13 className={nextIcon} />
+            </button>
+          </>
+        ) : null}
       </div>
     </div>,
     portalContainer ?? document.body,

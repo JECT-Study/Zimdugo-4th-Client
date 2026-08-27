@@ -354,6 +354,8 @@
   "locker_detail_no_image_title": "まだ画像がありません。",
   "locker_detail_image_list_aria": "ロッカー写真一覧",
   "locker_detail_image_item_aria": "ロッカー写真 {index} / {total}",
+  "locker_detail_image_previous": "前の写真",
+  "locker_detail_image_next": "次の写真",
   "locker_detail_no_image_helper": "報告から登録できます！",
   "navigation_platform_dialog_aria": "地図アプリを選択",
   "navigation_platform_title": "どの地図でルートを案内しますか？",
