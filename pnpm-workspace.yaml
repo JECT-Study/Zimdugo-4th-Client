@@ -31,6 +31,10 @@ overrides:
   postcss: ^8.5.23
   seroval: ^1.5.3
   shell-quote: ^1.9.0
+  # uuid 10 은 10.0.0 하나뿐이라 그 줄기에는 고칠 버전이 없다. 소비자인
+  # @lix-js/sdk 가 ^10.0.0 을 선언하고 있어 메이저를 넘기는 셈인데, 쓰는 건
+  # v4·v7·validate 뿐이고 11 에서도 같은 이름으로 그대로 있다. 실제로 불러
+  # 확인했고 paraglide compile 도 통과한다.
   uuid@10: ^11.1.1
   uuid@13: ^13.0.1
   # vitest 가 vite 7.3.1 을 따로 붙잡아 vite 가 두 벌 깔린다. 그러면 플러그인
