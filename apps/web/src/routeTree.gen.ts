@@ -9,39 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ReportRouteImport } from './routes/report'
-import { Route as NoticesRouteImport } from './routes/notices'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as NoticesRouteImport } from './routes/notices'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as MyIndexRouteImport } from './routes/my.index'
-import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
-import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
-import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
-import { Route as SettingsLanguageRouteImport } from './routes/settings.language'
-import { Route as NoticesNoticeIdRouteImport } from './routes/notices.$noticeId'
-import { Route as MyReportsRouteImport } from './routes/my.reports'
 import { Route as MyFavoritesRouteImport } from './routes/my.favorites'
+import { Route as MyReportsRouteImport } from './routes/my.reports'
+import { Route as NoticesNoticeIdRouteImport } from './routes/notices.$noticeId'
+import { Route as SettingsLanguageRouteImport } from './routes/settings.language'
+import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
+import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
+import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportRoute = ReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NoticesRoute = NoticesRouteImport.update({
-  id: '/notices',
-  path: '/notices',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -49,9 +34,24 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const NoticesRoute = NoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyIndexRoute = MyIndexRouteImport.update({
@@ -59,14 +59,24 @@ const MyIndexRoute = MyIndexRouteImport.update({
   path: '/my/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsTermsRoute = SettingsTermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => SettingsRoute,
+const MyFavoritesRoute = MyFavoritesRouteImport.update({
+  id: '/my/favorites',
+  path: '/my/favorites',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsPrivacyRoute = SettingsPrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
+const MyReportsRoute = MyReportsRouteImport.update({
+  id: '/my/reports',
+  path: '/my/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
+  id: '/$noticeId',
+  path: '/$noticeId',
+  getParentRoute: () => NoticesRoute,
+} as any)
+const SettingsLanguageRoute = SettingsLanguageRouteImport.update({
+  id: '/language',
+  path: '/language',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsNoticesRoute = SettingsNoticesRouteImport.update({
@@ -74,25 +84,15 @@ const SettingsNoticesRoute = SettingsNoticesRouteImport.update({
   path: '/notices',
   getParentRoute: () => SettingsRoute,
 } as any)
-const SettingsLanguageRoute = SettingsLanguageRouteImport.update({
-  id: '/language',
-  path: '/language',
+const SettingsPrivacyRoute = SettingsPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => SettingsRoute,
 } as any)
-const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
-  id: '/$noticeId',
-  path: '/$noticeId',
-  getParentRoute: () => NoticesRoute,
-} as any)
-const MyReportsRoute = MyReportsRouteImport.update({
-  id: '/my/reports',
-  path: '/my/reports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MyFavoritesRoute = MyFavoritesRouteImport.update({
-  id: '/my/favorites',
-  path: '/my/favorites',
-  getParentRoute: () => rootRouteImport,
+const SettingsTermsRoute = SettingsTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => SettingsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -209,32 +209,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/report': {
-      id: '/report'
-      path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof ReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notices': {
-      id: '/notices'
-      path: '/notices'
-      fullPath: '/notices'
-      preLoaderRoute: typeof NoticesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -244,11 +223,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/notices': {
+      id: '/notices'
+      path: '/notices'
+      fullPath: '/notices'
+      preLoaderRoute: typeof NoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my/': {
@@ -258,18 +258,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/terms': {
-      id: '/settings/terms'
-      path: '/terms'
-      fullPath: '/settings/terms'
-      preLoaderRoute: typeof SettingsTermsRouteImport
-      parentRoute: typeof SettingsRoute
+    '/my/favorites': {
+      id: '/my/favorites'
+      path: '/my/favorites'
+      fullPath: '/my/favorites'
+      preLoaderRoute: typeof MyFavoritesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/settings/privacy': {
-      id: '/settings/privacy'
-      path: '/privacy'
-      fullPath: '/settings/privacy'
-      preLoaderRoute: typeof SettingsPrivacyRouteImport
+    '/my/reports': {
+      id: '/my/reports'
+      path: '/my/reports'
+      fullPath: '/my/reports'
+      preLoaderRoute: typeof MyReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notices/$noticeId': {
+      id: '/notices/$noticeId'
+      path: '/$noticeId'
+      fullPath: '/notices/$noticeId'
+      preLoaderRoute: typeof NoticesNoticeIdRouteImport
+      parentRoute: typeof NoticesRoute
+    }
+    '/settings/language': {
+      id: '/settings/language'
+      path: '/language'
+      fullPath: '/settings/language'
+      preLoaderRoute: typeof SettingsLanguageRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/notices': {
@@ -279,33 +293,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsNoticesRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/settings/language': {
-      id: '/settings/language'
-      path: '/language'
-      fullPath: '/settings/language'
-      preLoaderRoute: typeof SettingsLanguageRouteImport
+    '/settings/privacy': {
+      id: '/settings/privacy'
+      path: '/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof SettingsPrivacyRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/notices/$noticeId': {
-      id: '/notices/$noticeId'
-      path: '/$noticeId'
-      fullPath: '/notices/$noticeId'
-      preLoaderRoute: typeof NoticesNoticeIdRouteImport
-      parentRoute: typeof NoticesRoute
-    }
-    '/my/reports': {
-      id: '/my/reports'
-      path: '/my/reports'
-      fullPath: '/my/reports'
-      preLoaderRoute: typeof MyReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/my/favorites': {
-      id: '/my/favorites'
-      path: '/my/favorites'
-      fullPath: '/my/favorites'
-      preLoaderRoute: typeof MyFavoritesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/settings/terms': {
+      id: '/settings/terms'
+      path: '/terms'
+      fullPath: '/settings/terms'
+      preLoaderRoute: typeof SettingsTermsRouteImport
+      parentRoute: typeof SettingsRoute
     }
   }
 }
