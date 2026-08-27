@@ -11,7 +11,6 @@ import { useAuthStore } from "#/shared/store/authStore";
 import {
   getLockerPinQueryFromViewport,
   isLockerPinQueryWithinCapacity,
-  type LockerPinQueryViewport,
 } from "./locker-pin-query";
 import type { MapViewport } from "./map-idle-controller";
 import { subscribeMapIdle } from "./map-idle-controller";
@@ -24,8 +23,6 @@ import {
 } from "./map-marker";
 
 export const LOCKER_PINS_QUERY_KEY = "lockerPins";
-export { getLockerPinQueryFromViewport, isLockerPinQueryWithinCapacity };
-export type { LockerPinQueryViewport };
 
 export const getLockerPinSearchSignature = (
   searchParams?: LockerPinSearchParams | null,

@@ -243,15 +243,6 @@ export const createMapPinIcon = (
     ${createPlaceClusterMapPinSvg(badgeLabel, getMarkerFill(pin))}
   </div>`;
 };
-/** @deprecated Use createMapPinIcon */
-export const createLockerMarkerIcon = createMapPinIcon;
-
-/** 지도 LOCKER 마커 아이콘 SVG */
-export const createMapLockerPinIcon = createMapPinIcon;
-
-/** 지도 PLACE 마커 아이콘 SVG */
-export const createMapPlacePinIcon = createMapPinIcon;
-
 interface SyncLockerMarkersOptions {
   map: naver.maps.Map;
   maps: typeof naver.maps;
@@ -562,7 +553,7 @@ const createMarkerIconOptions = (
     content: `<div class="map-marker-offset-wrapper"${offsetAttributes} style="width: ${markerSize.width}px; height: ${markerSize.height}px;">
       <div class="map-marker-item ${animationState} ${spreadClass}" style="width: 100%; height: 100%; ${spreadStyle}">
         <div class="map-marker-visual ${favoriteAnimationClass}">
-          ${createLockerMarkerIcon(pin, isSelected)}
+          ${createMapPinIcon(pin, isSelected)}
         </div>
       </div>
     </div>`,

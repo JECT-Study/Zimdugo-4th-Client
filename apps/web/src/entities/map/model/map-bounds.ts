@@ -214,5 +214,3 @@ export const focusNaverMapOnClusterBounds = ({
 
   return false;
 };
-
-export const focusNaverMapOnBoundsCenter = focusNaverMapOnClusterBounds;

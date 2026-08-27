@@ -131,8 +131,6 @@ export const disabledSection = style({
   opacity: 0.5,
 });
 
-export const locationSection = section;
-
 export const classificationSection = style({
   display: "flex",
   flexDirection: "column",
@@ -188,9 +186,6 @@ export const sectionErrorReserve = style({
   minHeight: vars.typography.lineHeight.normal,
   flexShrink: 0,
 });
-
-/** @deprecated 롤백용 — `sectionErrorTextBottom` 또는 `sectionErrorTextInline` 사용 */
-export const sectionErrorText = sectionErrorTextBottom;
 
 export const sectionGap24 = style({
   marginTop: vars.spacing[24],

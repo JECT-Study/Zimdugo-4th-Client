@@ -1275,8 +1275,6 @@ export function getMenuGroupIcons(
   };
 }
 
-export const BottomTabBarIcon = BottomMenuIcon;
-
 export function IconShare24({ className }: { className?: string }) {
   return (
     <svg
