@@ -16,16 +16,19 @@ import {
 } from "./LockerDetailImageStrip.css.ts";
 
 export interface LockerDetailImageStripProps {
+  /** 실패한 URL은 부모가 걸러서 넘긴다. 아래 onImageError 참고. */
   images: string[];
   /**
-   * 실패한 이미지를 걸러낸 목록과 그 안에서의 위치를 함께 넘긴다.
-   * 세 번째 인자는 미리보기를 연 버튼이다. 닫을 때 포커스를 되돌리는 데 쓴다.
+   * 로드에 실패한 URL을 알린다.
+   *
+   * 실패 기록을 이 컴포넌트가 들고 있으면 안 된다. 마지막 이미지가 깨져 스트립이
+   * 사라지면 시트의 측정 높이가 바뀌고, 그 높이가 DraggableBottomSheet 의 key 에
+   * 들어가 있어 하위 트리가 통째로 리마운트된다. 기록이 지워진 채 깨진 URL을 다시
+   * 요청하고 또 실패하는 순환이 되므로, 리마운트 경계 위에서 보관한다.
    */
-  onOpenPreview?: (
-    images: string[],
-    index: number,
-    trigger: HTMLButtonElement,
-  ) => void;
+  onImageError?: (imageUrl: string) => void;
+  /** 두 번째 인자는 미리보기를 연 버튼이다. 닫을 때 포커스를 되돌리는 데 쓴다. */
+  onOpenPreview?: (index: number, trigger: HTMLButtonElement) => void;
 }
 
 interface LockerDetailImageItemProps {
@@ -113,22 +116,25 @@ function LockerDetailImageItem({
  */
 export function LockerDetailImageStrip({
   images,
+  onImageError,
   onOpenPreview,
 }: LockerDetailImageStripProps) {
   const stripRef = useRef<HTMLUListElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [furthestIndex, setFurthestIndex] = useState(0);
-  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
   const [loadedUrls, setLoadedUrls] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
 
-  // 실패한 이미지는 없는 이미지로 취급한다. 전부 실패하면 섹션째 사라진다.
-  const visibleImages = images.filter((imageUrl) => !failedUrls.has(imageUrl));
-  const totalCount = visibleImages.length;
+  const totalCount = images.length;
   const isSingle = totalCount === 1;
+  /**
+   * 관찰 대상을 다시 등록할지 판단하는 기준.
+   *
+   * key 가 URL 이라 목록이 같은 길이로 교체되면 li 노드는 새로 만들어진다.
+   * 개수만 보면 effect 가 다시 돌지 않아 옵저버가 떨어져 나간 옛 노드만 붙들게 된다.
+   */
+  const imageListKey = images.join("|");
 
   useEffect(() => {
     setActiveIndex((current) => Math.min(current, Math.max(totalCount - 1, 0)));
@@ -138,11 +144,12 @@ export function LockerDetailImageStrip({
     setFurthestIndex((current) => Math.max(current, activeIndex));
   }, [activeIndex]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: imageListKey 는 재관찰 트리거다
   useEffect(() => {
     const stripElement = stripRef.current;
     if (
       !stripElement ||
-      totalCount <= 1 ||
+      stripElement.children.length <= 1 ||
       typeof IntersectionObserver === "undefined"
     ) {
       return;
@@ -173,7 +180,7 @@ export function LockerDetailImageStrip({
     }
 
     return () => observer.disconnect();
-  }, [totalCount]);
+  }, [imageListKey]);
 
   if (totalCount === 0) {
     return null;
@@ -186,22 +193,18 @@ export function LockerDetailImageStrip({
    * img 의 ref 콜백이 다시 붙어 로드 완료를 또 알린다. 이 순환이 곧
    * `Maximum update depth exceeded` 다.
    */
-  const addUrl = (
-    current: ReadonlySet<string>,
-    imageUrl: string,
-  ): ReadonlySet<string> =>
-    current.has(imageUrl) ? current : new Set(current).add(imageUrl);
-
-  const handleImageError = (imageUrl: string) => {
-    setFailedUrls((current) => addUrl(current, imageUrl));
+  const handleImageLoad = (imageUrl: string) => {
+    setLoadedUrls((current) =>
+      current.has(imageUrl) ? current : new Set(current).add(imageUrl),
+    );
   };
 
-  const handleImageLoad = (imageUrl: string) => {
-    setLoadedUrls((current) => addUrl(current, imageUrl));
+  const handleImageError = (imageUrl: string) => {
+    onImageError?.(imageUrl);
   };
 
   const handleOpenPreview = (index: number, trigger: HTMLButtonElement) => {
-    onOpenPreview?.(visibleImages, index, trigger);
+    onOpenPreview?.(index, trigger);
   };
 
   return (
@@ -211,7 +214,7 @@ export function LockerDetailImageStrip({
         className={strip}
         aria-label={m.locker_detail_image_list_aria()}
       >
-        {visibleImages.map((imageUrl, index) => (
+        {images.map((imageUrl, index) => (
           <LockerDetailImageItem
             key={imageUrl}
             imageUrl={imageUrl}
@@ -228,7 +231,7 @@ export function LockerDetailImageStrip({
       </ul>
       {isSingle ? null : (
         <div className={indicatorRow} aria-hidden="true">
-          {visibleImages.map((imageUrl, index) => (
+          {images.map((imageUrl, index) => (
             <span
               key={imageUrl}
               className={[

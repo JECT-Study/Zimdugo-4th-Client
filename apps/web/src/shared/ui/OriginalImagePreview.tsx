@@ -28,6 +28,8 @@ export interface OriginalImagePreviewProps {
   closeLabel: string;
   /** 두 장 이상일 때만 쓴다. 없으면 좌우 버튼을 그리지 않고 스와이프·방향키만 남는다. */
   navigationLabels?: { previous: string; next: string };
+  /** 로드에 실패한 URL을 알린다. 부모가 목록에서 빼면 여기서도 함께 사라진다. */
+  onImageError?: (imageUrl: string) => void;
   portalContainer?: Element | null;
   onClose: () => void;
 }
@@ -41,6 +43,7 @@ export function OriginalImagePreview({
   alt,
   closeLabel,
   navigationLabels,
+  onImageError,
   portalContainer,
   onClose,
 }: OriginalImagePreviewProps) {
@@ -83,8 +86,11 @@ export function OriginalImagePreview({
       return;
     }
 
-    setFailedUrls((current) => new Set(current).add(currentImage));
+    setFailedUrls((current) =>
+      current.has(currentImage) ? current : new Set(current).add(currentImage),
+    );
     setIndex((current) => Math.max(Math.min(current, totalCount - 2), 0));
+    onImageError?.(currentImage);
   };
 
   const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {

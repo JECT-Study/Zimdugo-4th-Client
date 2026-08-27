@@ -221,6 +221,46 @@ describe("LockerDetailBottomSheet", () => {
     ).toHaveLength(1);
   });
 
+  it("시트가 리마운트돼도 깨진 이미지를 다시 요청하지 않는다", () => {
+    const locker = {
+      ...LOCKER_DETAIL,
+      images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
+    };
+    const { rerender } = render(
+      <LockerDetailBottomSheet
+        locker={locker}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const stripImages = () =>
+      Array.from(getSheetRoot().getByRole("list").querySelectorAll("img"));
+
+    const firstImage = stripImages()[0];
+    if (!firstImage) {
+      throw new Error("이미지가 렌더링되지 않았다");
+    }
+    fireEvent.error(firstImage);
+
+    expect(
+      getSheetRoot().queryByRole("button", { name: "보관함 사진 1 / 1" }),
+    ).toBeTruthy();
+
+    // 스냅 지점이 바뀌면 DraggableBottomSheet 의 key 가 바뀌어 하위가 리마운트된다.
+    rerender(
+      <LockerDetailBottomSheet
+        locker={locker}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET + 88}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const sources = stripImages().map((image) => image.getAttribute("src"));
+    expect(sources).not.toContain("https://example.com/a.jpg");
+    expect(sources).toContain("https://example.com/b.jpg");
+  });
+
   it("미리보기를 닫으면 열었던 사진 버튼으로 포커스를 되돌린다", () => {
     render(
       <LockerDetailBottomSheet

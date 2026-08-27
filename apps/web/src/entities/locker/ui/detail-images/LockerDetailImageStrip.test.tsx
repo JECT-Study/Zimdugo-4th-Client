@@ -78,8 +78,11 @@ describe("LockerDetailImageStrip", () => {
     expect(container.querySelectorAll("span")).toHaveLength(0);
   });
 
-  it("로드에 실패한 이미지는 목록에서 빼고 나머지는 그대로 보여 준다", () => {
-    render(<LockerDetailImageStrip images={IMAGES} />);
+  it("로드에 실패하면 해당 URL을 부모에게 알린다", () => {
+    const onImageError = vi.fn();
+    render(
+      <LockerDetailImageStrip images={IMAGES} onImageError={onImageError} />,
+    );
 
     const firstImage = document.querySelector("img");
     if (!firstImage) {
@@ -87,43 +90,32 @@ describe("LockerDetailImageStrip", () => {
     }
     fireEvent.error(firstImage);
 
+    expect(onImageError).toHaveBeenCalledWith("https://example.com/a.jpg");
+  });
+
+  it("부모가 걸러낸 목록만 그린다", () => {
+    render(<LockerDetailImageStrip images={[IMAGES[1], IMAGES[2]]} />);
+
     const buttons = getImageButtons();
     expect(buttons).toHaveLength(2);
     expect(buttons[0]?.getAttribute("aria-label")).toBe("보관함 사진 1 / 2");
-    expect(getRenderedImages()).not.toContain("https://example.com/a.jpg");
   });
 
-  it("모든 이미지가 실패하면 섹션 자체를 렌더링하지 않는다", () => {
-    const { container } = render(
-      <LockerDetailImageStrip images={[IMAGES[0]]} />,
-    );
-
-    const onlyImage = document.querySelector("img");
-    if (!onlyImage) {
-      throw new Error("이미지가 렌더링되지 않았다");
-    }
-    fireEvent.error(onlyImage);
+  it("보여 줄 이미지가 없으면 섹션 자체를 렌더링하지 않는다", () => {
+    const { container } = render(<LockerDetailImageStrip images={[]} />);
 
     expect(container.firstChild).toBeNull();
   });
 
-  it("사진을 누르면 살아 있는 목록과 그 안에서의 위치를 넘긴다", () => {
+  it("사진을 누르면 위치와 누른 버튼을 넘긴다", () => {
     const onOpenPreview = vi.fn();
     render(
       <LockerDetailImageStrip images={IMAGES} onOpenPreview={onOpenPreview} />,
     );
 
-    const firstImage = document.querySelector("img");
-    if (!firstImage) {
-      throw new Error("이미지가 렌더링되지 않았다");
-    }
-    fireEvent.error(firstImage);
-    fireEvent.click(getImageButtons()[0]);
+    const buttons = getImageButtons();
+    fireEvent.click(buttons[1]);
 
-    expect(onOpenPreview).toHaveBeenCalledWith(
-      ["https://example.com/b.jpg", "https://example.com/c.jpg"],
-      0,
-      getImageButtons()[0],
-    );
+    expect(onOpenPreview).toHaveBeenCalledWith(1, buttons[1]);
   });
 });
