@@ -288,43 +288,6 @@ export const summaryActions = style({
   flexShrink: 0,
 });
 
-export const imageReportCard = style({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: vars.spacing[12],
-  width: "100%",
-  height: "160px",
-  padding: vars.spacing[24],
-  boxSizing: "border-box",
-  border: `1px dashed ${vars.color.border.hover}`,
-  borderRadius: vars.radius[6],
-  backgroundColor: vars.color.bg.surface,
-  color: vars.color.text.surface,
-});
-
-export const fullImageReportCard = style({
-  height: "160px",
-  flexShrink: 0,
-});
-
-globalStyle(`${imageReportCard} svg path`, {
-  stroke: vars.color.text.surface,
-});
-
-export const imageReportText = style({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "2px",
-  color: vars.color.text.surface,
-  fontSize: vars.typography.fontSize[12],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: "18px",
-  textAlign: "center",
-});
-
 export const lockerImage = style({
   width: "100%",
   height: "160px",

@@ -2,7 +2,6 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import {
-  IconCamera24,
   IconCaution24,
   IconChevronLeft13,
   IconDistanceRoute24,
@@ -72,11 +71,8 @@ import {
   fullContentScroll,
   fullContentScrollEnabled,
   fullDetailList,
-  fullImageReportCard,
   fullLockerImage,
   fullPrimaryActionButton,
-  imageReportCard,
-  imageReportText,
   loadingActionRow,
   loadingContent,
   loadingDetailList,
@@ -1223,36 +1219,25 @@ function ImageReportCard({
   imageUrl?: string;
   onOpenPreview?: (imageUrl: string) => void;
 }) {
-  if (imageUrl) {
-    return (
-      <button
-        type="button"
-        className={[lockerImageButton, isFull ? fullLockerImage : ""]
-          .filter(Boolean)
-          .join(" ")}
-        onClick={() => onOpenPreview?.(imageUrl)}
-        aria-label={m.report_section_photo()}
-      >
-        <img
-          className={lockerImage}
-          src={imageUrl}
-          alt={m.report_section_photo()}
-        />
-      </button>
-    );
+  // 이미지가 없으면 빈 상태를 두지 않고 섹션을 통째로 감춘다.
+  if (!imageUrl) {
+    return null;
   }
 
   return (
-    <div
-      className={[imageReportCard, isFull ? fullImageReportCard : ""]
+    <button
+      type="button"
+      className={[lockerImageButton, isFull ? fullLockerImage : ""]
         .filter(Boolean)
         .join(" ")}
+      onClick={() => onOpenPreview?.(imageUrl)}
+      aria-label={m.report_section_photo()}
     >
-      <IconCamera24 />
-      <div className={imageReportText}>
-        <span>{m.locker_detail_no_image_title()}</span>
-        <span>{m.locker_detail_no_image_helper()}</span>
-      </div>
-    </div>
+      <img
+        className={lockerImage}
+        src={imageUrl}
+        alt={m.report_section_photo()}
+      />
+    </button>
   );
 }

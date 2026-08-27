@@ -174,8 +174,6 @@ describe("LockerDetailBottomSheet", () => {
     );
     const sheet = getSheetRoot();
 
-    expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
-    expect(sheet.getByText("제보하기를 통해 등록할 수 있어요!")).toBeTruthy();
     expect(sheet.queryByText("최근 업데이트 2026-05-16 16:25")).toBeNull();
     expect(sheet.getByText(LOCKER_DETAIL.title)).toBeTruthy();
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
@@ -749,7 +747,21 @@ describe("LockerDetailBottomSheet", () => {
     const image = sheet.getByRole("img");
 
     expect(image.getAttribute("src")).toBe("https://example.com/locker.jpg");
-    expect(sheet.queryByText("아직 이미지가 없어요.")).toBeNull();
+  });
+
+  it("이미지가 없으면 이미지 영역을 아예 렌더링하지 않는다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, images: [] }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.queryByRole("img")).toBeNull();
+    expect(
+      sheet.queryByRole("button", { name: m.report_section_photo() }),
+    ).toBeNull();
   });
 
   it("상세 이미지를 누르면 원본 미리보기를 연다", () => {
