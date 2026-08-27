@@ -17,10 +17,12 @@
     "lint": "biome lint",
     "check": "biome check",
     "storybook": "pnpm --filter storybook dev",
-    "build-storybook": "pnpm --filter storybook build"
+    "build-storybook": "pnpm --filter storybook build",
+    "knip": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
+    "knip": "^6.32.2",
     "typescript": "^5.7.2"
   }
 }

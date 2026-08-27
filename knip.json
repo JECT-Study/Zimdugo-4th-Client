@@ -1,0 +1,52 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [],
+      "project": []
+    },
+    "apps/web": {
+      "entry": [
+        "src/routes/**/*.{ts,tsx}",
+        "e2e/**/*.spec.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ]
+    },
+    "apps/admin": {
+      "entry": [
+        "src/routes/**/*.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignoreDependencies": [
+        "@repo/libs"
+      ]
+    },
+    "apps/storybook": {
+      "entry": [
+        ".storybook/*.{ts,tsx}"
+      ]
+    },
+    "packages/libs": {
+      "project": [
+        "src/**/*.ts"
+      ]
+    },
+    "packages/ui": {
+      "entry": [
+        "src/**/*.stories.tsx"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ]
+    },
+    "packages/i18n": {
+      "project": [
+        "src/**/*.ts"
+      ]
+    }
+  }
+}
