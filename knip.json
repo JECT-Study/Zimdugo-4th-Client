@@ -12,10 +12,6 @@
       ],
       "project": [
         "src/**/*.{ts,tsx}"
-      ],
-      "ignore": [
-        "src/paraglide/**",
-        "src/routeTree.gen.ts"
       ]
     },
     "apps/admin": {
@@ -24,10 +20,6 @@
       ],
       "project": [
         "src/**/*.{ts,tsx}"
-      ],
-      "ignore": [
-        "src/paraglide/**",
-        "src/routeTree.gen.ts"
       ],
       "ignoreDependencies": [
         "@repo/libs"
@@ -48,16 +40,13 @@
     },
     "packages/ui": {
       "entry": [
-        "src/**/*.{ts,tsx}"
+        "src/**/*.stories.tsx"
       ],
       "project": [
         "src/**/*.{ts,tsx}"
       ]
     },
     "packages/i18n": {
-      "entry": [
-        "src/**/*.ts"
-      ],
       "project": [
         "src/**/*.ts"
       ]
