@@ -32,7 +32,8 @@ const getBaseUrl = (): string => {
   });
 };
 
-export const apiClient = createApiClient(getBaseUrl());
+// 인스턴스는 내보내지 않는다. 바깥은 아래 http* 래퍼로만 요청을 보낸다.
+const apiClient = createApiClient(getBaseUrl());
 apiClient.defaults.withCredentials = true;
 
 const getRequestUrl = (config: InternalAxiosRequestConfig): string => {
@@ -116,4 +117,5 @@ apiClient.interceptors.response.use(
   },
 );
 
-export const { httpGet } = createApiMethods(apiClient);
+export const { httpGet, httpPost, httpPatch, httpDelete } =
+  createApiMethods(apiClient);

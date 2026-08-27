@@ -1,4 +1,4 @@
-import { apiClient } from "#/shared/lib/apiClient";
+import { httpGet, httpPatch } from "#/shared/lib/apiClient";
 import type { BackendResponse } from "./lockers";
 
 export interface MeProfileData {
@@ -26,9 +26,9 @@ const unwrapBackendData = <T>(response: BackendResponse<T> | undefined): T => {
 export const getMeProfile = async (
   signal?: AbortSignal,
 ): Promise<MeProfileData> => {
-  const { data: response } = await apiClient.get<
-    BackendResponse<MeProfileData>
-  >("/api/v1/me", { signal });
+  const response = await httpGet<BackendResponse<MeProfileData>>("/api/v1/me", {
+    signal,
+  });
 
   return unwrapBackendData(response);
 };
@@ -37,8 +37,9 @@ export const patchMeProfile = async (
   body: PatchMeProfileBody,
   signal?: AbortSignal,
 ): Promise<MeProfileData> => {
-  const { data: response } = await apiClient.patch<
-    BackendResponse<MeProfileData>
+  const response = await httpPatch<
+    BackendResponse<MeProfileData>,
+    PatchMeProfileBody
   >("/api/v1/me", body, { signal });
 
   return unwrapBackendData(response);

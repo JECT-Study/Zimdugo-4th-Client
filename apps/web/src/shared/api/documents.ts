@@ -22,9 +22,10 @@ export const getDocuments = async (
   type: DocumentType,
   signal?: AbortSignal,
 ): Promise<ClientDocumentResponse[]> => {
-  const { data: response } = await httpGet<
-    BackendResponse<ClientDocumentResponse[]>
-  >("/api/v1/documents", { params: { type }, signal });
+  const response = await httpGet<BackendResponse<ClientDocumentResponse[]>>(
+    "/api/v1/documents",
+    { params: { type }, signal },
+  );
 
   if (!response?.data) {
     throw new Error(response?.message ?? "API response data is missing.");

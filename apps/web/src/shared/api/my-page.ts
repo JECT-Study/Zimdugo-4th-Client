@@ -1,4 +1,4 @@
-import { apiClient } from "#/shared/lib/apiClient";
+import { httpGet } from "#/shared/lib/apiClient";
 import type { BackendResponse } from "./lockers";
 
 type MyLockerReportPriceType = "FREE" | "PAID" | "UNKNOWN";
@@ -87,7 +87,7 @@ export const getFavoriteLockerList = async (
   params: MyPaginatedListParams,
 ): Promise<PaginatedListData<FavoriteLockerListItem>> => {
   const { signal, ...queryParams } = params;
-  const { data: response } = await apiClient.get<
+  const response = await httpGet<
     BackendResponse<PaginatedListData<FavoriteLockerListItem>>
   >("/api/v1/me/favorite-lockers", { params: queryParams, signal });
 
@@ -98,7 +98,7 @@ export const getMyLockerReportHistory = async (
   params: MyPaginatedListParams,
 ): Promise<PaginatedListData<MyLockerReportHistoryItem>> => {
   const { signal, ...queryParams } = params;
-  const { data: response } = await apiClient.get<
+  const response = await httpGet<
     BackendResponse<PaginatedListData<MyLockerReportHistoryItem>>
   >("/api/v1/me/locker-reports", { params: queryParams, signal });
 
@@ -109,9 +109,10 @@ export const getMyLockerReportDetail = async (
   reportId: number,
   signal?: AbortSignal,
 ): Promise<MyLockerReportDetail> => {
-  const { data: response } = await apiClient.get<
-    BackendResponse<MyLockerReportDetail>
-  >(`/api/v1/me/locker-reports/${reportId}`, { signal });
+  const response = await httpGet<BackendResponse<MyLockerReportDetail>>(
+    `/api/v1/me/locker-reports/${reportId}`,
+    { signal },
+  );
 
   return unwrapBackendData(response);
 };

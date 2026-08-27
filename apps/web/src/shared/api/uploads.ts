@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiClient } from "#/shared/lib/apiClient";
+import { httpPost } from "#/shared/lib/apiClient";
 import type {
   UploadCreateData,
   UploadCreateRequest,
@@ -26,12 +26,12 @@ export class InvalidUploadCreateResponseError extends Error {
 export async function postUploadUrl(
   payload: UploadCreateRequest,
 ): Promise<UploadCreateData> {
-  const response = await apiClient.post<RestResponse<UploadCreateData>>(
-    "/api/v1/uploads",
-    payload,
-  );
+  const response = await httpPost<
+    RestResponse<UploadCreateData>,
+    UploadCreateRequest
+  >("/api/v1/uploads", payload);
 
-  const parsed = uploadCreateDataSchema.safeParse(response.data.data);
+  const parsed = uploadCreateDataSchema.safeParse(response.data);
   if (!parsed.success) {
     throw new InvalidUploadCreateResponseError();
   }

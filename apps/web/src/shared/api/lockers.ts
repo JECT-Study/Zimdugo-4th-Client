@@ -357,7 +357,7 @@ export const getLockerPins = async (
   params: GetLockerPinsParams,
 ): Promise<LockerPinItemResponse[]> => {
   const { signal, ...queryParams } = params;
-  const { data: response } = await httpGet<BackendResponse<LockerPinData>>(
+  const response = await httpGet<BackendResponse<LockerPinData>>(
     "/api/v1/lockers/pins",
     { params: queryParams, signal },
   );
@@ -376,9 +376,10 @@ export const getLockerSearch = async (
   params: GetLockerSearchParams,
 ): Promise<LockerSearchDataRaw> => {
   const { signal, ...queryParams } = params;
-  const { data: response } = await httpGet<
-    BackendResponse<LockerSearchDataRaw>
-  >("/api/v1/lockers/search", { params: queryParams, signal });
+  const response = await httpGet<BackendResponse<LockerSearchDataRaw>>(
+    "/api/v1/lockers/search",
+    { params: queryParams, signal },
+  );
 
   return unwrapBackendData(response);
 };
@@ -387,9 +388,10 @@ export const getLockerSuggest = async (
   params: GetLockerSuggestParams,
 ): Promise<LockerSuggestDataRaw> => {
   const { signal, ...queryParams } = params;
-  const { data: response } = await httpGet<
-    BackendResponse<LockerSuggestDataRaw>
-  >("/api/v1/lockers/suggest", { params: queryParams, signal });
+  const response = await httpGet<BackendResponse<LockerSuggestDataRaw>>(
+    "/api/v1/lockers/suggest",
+    { params: queryParams, signal },
+  );
 
   return unwrapBackendData(response);
 };
@@ -398,9 +400,10 @@ export const getPlaceLockers = async (
   params: GetPlaceLockersParams,
 ): Promise<PlaceLockersDataRaw> => {
   const { placeId, signal, ...queryParams } = params;
-  const { data: response } = await httpGet<
-    BackendResponse<PlaceLockersDataRaw>
-  >(`/api/v1/places/${placeId}`, { params: queryParams, signal });
+  const response = await httpGet<BackendResponse<PlaceLockersDataRaw>>(
+    `/api/v1/places/${placeId}`,
+    { params: queryParams, signal },
+  );
 
   return unwrapBackendData(response);
 };
@@ -409,7 +412,7 @@ export const getLockerDetail = async (
   params: GetLockerDetailParams,
 ): Promise<LockerDetailRaw> => {
   const { lockerId, signal, ...queryParams } = params;
-  const { data: response } = await httpGet<BackendResponse<LockerDetailRaw>>(
+  const response = await httpGet<BackendResponse<LockerDetailRaw>>(
     `/api/v1/lockers/${lockerId}`,
     { params: queryParams, signal },
   );
@@ -436,9 +439,10 @@ interface SeoLockerResponseData {
 export const getSeoLockers = async (
   signal?: AbortSignal,
 ): Promise<SeoLockerItem[]> => {
-  const { data: response } = await httpGet<
-    BackendResponse<SeoLockerResponseData>
-  >("/api/v1/lockers/seo-list", { signal });
+  const response = await httpGet<BackendResponse<SeoLockerResponseData>>(
+    "/api/v1/lockers/seo-list",
+    { signal },
+  );
 
   const data = unwrapBackendData(response);
   return data.lockers || [];

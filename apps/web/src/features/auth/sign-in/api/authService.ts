@@ -1,4 +1,4 @@
-import { apiClient } from "#/shared/lib/apiClient";
+import { httpPost } from "#/shared/lib/apiClient";
 import { useAuthStore } from "#/shared/store/authStore";
 
 interface RefreshedAuthData {
@@ -79,8 +79,8 @@ export const authService = {
 
     refreshPromise = (async () => {
       try {
-        const response = await apiClient.post("/api/auth/refresh");
-        const authData = getRefreshResponseData(response.data);
+        const response = await httpPost("/api/auth/refresh");
+        const authData = getRefreshResponseData(response);
         const accessToken = authData.accessToken;
 
         if (!accessToken) {
@@ -124,13 +124,13 @@ export const authService = {
   },
 
   logout: async () => {
-    await apiClient.post("/api/auth/logout");
+    await httpPost("/api/auth/logout");
     useAuthStore.getState().clearAuth();
   },
 
   withdraw: async () => {
     try {
-      await apiClient.post("/api/auth/withdraw");
+      await httpPost("/api/auth/withdraw");
     } catch (error: unknown) {
       if (!isAlreadyWithdrawnError(error)) {
         throw error;

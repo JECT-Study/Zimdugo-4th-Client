@@ -63,7 +63,8 @@ export const createApiClient = (baseURL = "/api") => {
 /**
  * API 메서드 팩토리 함수
  * - 주입된 axios 인스턴스를 기반으로 타입 안전한 HTTP 메서드 생성
- * - 제네릭을 통해 요청/응답 타입 지정 가능
+ * - 응답 body 를 그대로 돌려준다. AxiosResponse 껍질은 여기서 벗겨지므로
+ *   호출부가 axios 를 알 필요가 없다.
  *
  * @param client - axios 인스턴스
  * @returns HTTP 메서드 객체 (get, post, put, patch, delete)
@@ -72,53 +73,58 @@ export const createApiMethods = (client: AxiosInstance) => {
   return {
     /**
      * GET 요청
-     * @template T - 응답 데이터 타입
+     * @template T - 응답 body 타입
      */
     httpGet: async <T>(url: string, config?: AxiosRequestConfig) => {
-      return client.get<T>(url, config);
+      const { data } = await client.get<T>(url, config);
+      return data;
     },
     /**
      * POST 요청
-     * @template T - 응답 데이터 타입
+     * @template T - 응답 body 타입
      * @template D - 요청 body 타입
      */
-    httpPost: <T, D = unknown>(
+    httpPost: async <T, D = unknown>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig,
     ) => {
-      return client.post<T>(url, data, config);
+      const response = await client.post<T>(url, data, config);
+      return response.data;
     },
     /**
      * PUT 요청
-     * @template T - 응답 데이터 타입
+     * @template T - 응답 body 타입
      * @template D - 요청 body 타입
      */
-    httpPut: <T, D = unknown>(
+    httpPut: async <T, D = unknown>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig,
     ) => {
-      return client.put<T>(url, data, config);
+      const response = await client.put<T>(url, data, config);
+      return response.data;
     },
     /**
      * PATCH 요청
-     * @template T - 응답 데이터 타입
+     * @template T - 응답 body 타입
      * @template D - 요청 body 타입
      */
-    httpPatch: <T, D = unknown>(
+    httpPatch: async <T, D = unknown>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig,
     ) => {
-      return client.patch<T>(url, data, config);
+      const response = await client.patch<T>(url, data, config);
+      return response.data;
     },
     /**
      * DELETE 요청
-     * @template T - 응답 데이터 타입
+     * @template T - 응답 body 타입
      */
-    httpDelete: <T>(url: string, config?: AxiosRequestConfig) => {
-      return client.delete<T>(url, config);
+    httpDelete: async <T>(url: string, config?: AxiosRequestConfig) => {
+      const { data } = await client.delete<T>(url, config);
+      return data;
     },
   };
 };
