@@ -1,16 +1,16 @@
 import type { CSSProperties } from "react";
 
 /** `-login.css.ts` page·logo·loginStack와 동기화 */
-export const LOGIN_PAGE_BG = "#FFFFFF";
-export const LOGIN_LOGO_TOP_PX = 80;
-export const LOGIN_LOGO_WIDTH_PX = 158;
-export const LOGIN_LOGO_GAP_PX = 20;
-export const LOGIN_STACK_MAX_WIDTH_PX = 313;
-export const LOGIN_STACK_HORIZONTAL_INSET_PX = 40;
-export const LOGIN_STACK_BOTTOM_PX = 60;
-export const LOGIN_BUTTON_HEIGHT_PX = 48;
-export const LOGIN_STACK_GAP_PX = 12;
-export const LOGIN_BUTTON_RADIUS_PX = 8;
+const LOGIN_PAGE_BG = "#FFFFFF";
+const LOGIN_LOGO_TOP_PX = 80;
+const LOGIN_LOGO_WIDTH_PX = 158;
+const LOGIN_LOGO_GAP_PX = 20;
+const LOGIN_STACK_MAX_WIDTH_PX = 313;
+const LOGIN_STACK_HORIZONTAL_INSET_PX = 40;
+const LOGIN_STACK_BOTTOM_PX = 60;
+const LOGIN_BUTTON_HEIGHT_PX = 48;
+const LOGIN_STACK_GAP_PX = 12;
+const LOGIN_BUTTON_RADIUS_PX = 8;
 
 export const loginPageInlineFallbackStyle: CSSProperties = {
   width: "100%",
@@ -85,9 +85,9 @@ export const isSubgridSupported = () =>
   typeof CSS.supports === "function" &&
   CSS.supports("grid-template-columns", "subgrid");
 
-export const LOGIN_BACK_BUTTON_TOP_PX = 20;
-export const LOGIN_BACK_BUTTON_LEFT_PX = 16;
-export const LOGIN_BACK_BUTTON_SIZE_PX = 24;
+const LOGIN_BACK_BUTTON_TOP_PX = 20;
+const LOGIN_BACK_BUTTON_LEFT_PX = 16;
+const LOGIN_BACK_BUTTON_SIZE_PX = 24;
 
 /** `-login.css.ts` backButton과 동기화 */
 export const loginBackButtonInlineFallbackStyle: CSSProperties = {

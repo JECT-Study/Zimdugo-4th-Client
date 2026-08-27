@@ -10,7 +10,7 @@ import {
   title,
 } from "./SearchAsyncFeedback.css.ts";
 
-export type SearchAsyncFeedbackVariant =
+type SearchAsyncFeedbackVariant =
   | "suggest-invalid-format"
   | "suggest-empty"
   | "suggest-error"

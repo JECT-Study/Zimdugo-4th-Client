@@ -4,9 +4,9 @@ import {
 } from "../lib/sanitize-search-query";
 
 export const SEARCH_HISTORY_STORAGE_KEY = "search_history";
-export const SEARCH_HISTORY_MAX_ENTRIES = 20;
+const SEARCH_HISTORY_MAX_ENTRIES = 20;
 
-export interface SearchHistoryKeywordEntry {
+interface SearchHistoryKeywordEntry {
   kind: "keyword";
   id: string;
   query: string;

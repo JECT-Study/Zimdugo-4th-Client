@@ -114,12 +114,12 @@ const toLockerPinItem = (
   return null;
 };
 
-export interface LockerPinData {
+interface LockerPinData {
   count: number;
   items: LockerPinItemRaw[];
 }
 
-export interface BackendValidationError {
+interface BackendValidationError {
   field: string;
   message: string;
   rejectedValue?: unknown;
@@ -136,7 +136,7 @@ export interface BackendResponse<T> {
   validationErrors?: BackendValidationError[];
 }
 
-export type LockerItemType = "PLACE" | "LOCKER";
+type LockerItemType = "PLACE" | "LOCKER";
 
 export interface LockerBoundsRaw {
   swLat: number;
@@ -219,7 +219,7 @@ export interface LockerOperatingHoursRaw {
   close: string;
 }
 
-export interface LockerRealtimeAvailabilityRaw {
+interface LockerRealtimeAvailabilityRaw {
   isAvailable: boolean;
   smallAvailableCount: number;
   mediumAvailableCount: number;
@@ -269,7 +269,7 @@ export interface LockerDetailRaw {
   inaccurateCount?: number;
 }
 
-export interface LockerSearchLocationParams {
+interface LockerSearchLocationParams {
   lat: number;
   lng: number;
 }
@@ -348,7 +348,7 @@ export interface GetLockerDetailParams extends LockerSearchLocationParams {
 /**
  * @deprecated bounds 기반 API로 전환됨. 호환성을 위해 유지.
  */
-export const ZOOM_TO_RADIUS_MAP: Record<number, number> = {
+const ZOOM_TO_RADIUS_MAP: Record<number, number> = {
   10: 1000,
   11: 1000,
   12: 1000,
@@ -456,7 +456,7 @@ export interface SeoLockerItem {
   };
 }
 
-export interface SeoLockerResponseData {
+interface SeoLockerResponseData {
   lockers: SeoLockerItem[];
 }
 

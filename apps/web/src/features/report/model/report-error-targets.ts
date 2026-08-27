@@ -9,7 +9,7 @@ import {
   STEP_2_FIELDS,
 } from "./report-types";
 
-export type ValidationErrorTargetKind = "field" | "aggregate" | "unknown";
+type ValidationErrorTargetKind = "field" | "aggregate" | "unknown";
 
 export type ValidationErrorTarget = {
   kind: ValidationErrorTargetKind;

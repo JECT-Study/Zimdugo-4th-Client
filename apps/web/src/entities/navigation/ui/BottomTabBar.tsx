@@ -81,7 +81,7 @@ const getDefaultLabels = (): Record<BottomTabKey, string> => ({
   settings: m.nav_settings(),
 });
 
-export type BottomTabLinks = Record<BottomTabKey, string>;
+type BottomTabLinks = Record<BottomTabKey, string>;
 
 export interface BottomTabBarProps {
   /**

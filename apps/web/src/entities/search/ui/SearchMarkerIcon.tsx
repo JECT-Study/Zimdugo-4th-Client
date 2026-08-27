@@ -1,6 +1,6 @@
 import { vars } from "@repo/ui/vars";
 
-export type SearchMarkerIconKind = "locker" | "place";
+type SearchMarkerIconKind = "locker" | "place";
 export type SearchMarkerIconTone = "brand" | "muted";
 
 interface SearchMarkerIconProps {
@@ -9,7 +9,7 @@ interface SearchMarkerIconProps {
   size?: number;
 }
 
-export const SEARCH_MARKER_ICON_SIZE = {
+const SEARCH_MARKER_ICON_SIZE = {
   locker: 40,
   place: 40,
 } as const;

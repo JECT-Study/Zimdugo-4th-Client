@@ -18,13 +18,13 @@ const isPermissionDeniedError = (
   "code" in error &&
   error.code === 1;
 
-export interface UseCurrentLocationFocusOptions {
+interface UseCurrentLocationFocusOptions {
   map?: naver.maps.Map | null;
   maps?: typeof naver.maps | null;
   positionOptions?: PositionOptions;
 }
 
-export interface UseCurrentLocationFocusResult {
+interface UseCurrentLocationFocusResult {
   coordinates: MapCoordinates | null;
   error: GeolocationPositionError | Error | null;
   isCentered: boolean;

@@ -489,8 +489,8 @@ export const locationMapArea = style([
 ]);
 
 /** 제보 사진 업로드·미리보기 공통 치수 */
-export const REPORT_PHOTO_TILE_WIDTH = "min(343px, 100%)";
-export const REPORT_PHOTO_TILE_HEIGHT = "200px";
+const REPORT_PHOTO_TILE_WIDTH = "min(343px, 100%)";
+const REPORT_PHOTO_TILE_HEIGHT = "200px";
 
 const reportPhotoTileBase = style({
   flexShrink: 0,

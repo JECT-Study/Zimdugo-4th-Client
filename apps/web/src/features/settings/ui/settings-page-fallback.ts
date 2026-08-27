@@ -7,14 +7,14 @@ import type { CSSProperties } from "react";
 /**
  * `settings.css.ts` vars와 동기화 — vanilla-extract CSS 청크 도착 전·timeout 인라인 스타일에만 사용한다.
  */
-export const SETTINGS_PAGE_BG = color.bg.default;
-export const SETTINGS_ROW_BG = color.bg.default;
-export const SETTINGS_ROW_BORDER = color.border.default;
-export const SETTINGS_ROW_MIN_HEIGHT = layoutScale.touchTarget;
-export const SETTINGS_ROW_PADDING_X = spacing.scale[16];
-export const SETTINGS_ROW_BORDER_RADIUS = radius.scale[6];
-export const SETTINGS_HEADER_HEIGHT = layoutScale.header;
-export const SETTINGS_CONTENT_MAX_WIDTH = layoutScale.appMaxWidth;
+const SETTINGS_PAGE_BG = color.bg.default;
+const SETTINGS_ROW_BG = color.bg.default;
+const SETTINGS_ROW_BORDER = color.border.default;
+const SETTINGS_ROW_MIN_HEIGHT = layoutScale.touchTarget;
+const SETTINGS_ROW_PADDING_X = spacing.scale[16];
+const SETTINGS_ROW_BORDER_RADIUS = radius.scale[6];
+const SETTINGS_HEADER_HEIGHT = layoutScale.header;
+const SETTINGS_CONTENT_MAX_WIDTH = layoutScale.appMaxWidth;
 
 const settingsContentLayoutFallbackStyle: CSSProperties = {
   width: "100%",
@@ -35,7 +35,7 @@ export const settingsPageSkeletonInlineFallbackStyle: CSSProperties = {
   pointerEvents: "none",
 };
 
-export const settingsContentInlineFallbackStyle: CSSProperties = {
+const settingsContentInlineFallbackStyle: CSSProperties = {
   ...settingsContentLayoutFallbackStyle,
   padding: "32px 16px 24px",
 };

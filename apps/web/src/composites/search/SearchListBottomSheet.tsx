@@ -55,13 +55,7 @@ import {
   sortLockerData,
 } from "./sort-locker-data";
 
-export type {
-  SearchLockerResultItem,
-  SearchPlaceResultItem,
-  SearchResultItem,
-} from "./search-list-model";
-
-export interface SearchListSheetLiveOffsetState {
+interface SearchListSheetLiveOffsetState {
   /** 뷰포트 상단부터 시트 상단까지 거리. `100dvh - offsetPx` 가 시트가 차지하는 높이다. */
   offsetPx: number;
   /** 마운트 슬라이드 진행도. 0 이면 시트가 아직 화면 밖, 1 이면 제자리다. */
@@ -127,15 +121,15 @@ const LEGACY_SEARCH_LIST_MIN_TOP_OFFSET = 0;
 const LEGACY_SEARCH_LIST_MAX_TOP_OFFSET = 44;
 const LEGACY_SEARCH_LIST_DEFAULT_SNAP_POINT = 331;
 
-export type SearchBottomSheetSnapBehavior = "detail" | "legacy";
+type SearchBottomSheetSnapBehavior = "detail" | "legacy";
 export type SearchListSheetSnapStage = "full" | "half" | "mini" | "dismiss";
 
-export interface SearchListSheetSnapRequest {
+interface SearchListSheetSnapRequest {
   id: number;
   stage: SearchListSheetSnapStage;
 }
 
-export const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
+const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
   "detail";
 
 interface ResolveSearchListSnapPointsOptions {
@@ -146,7 +140,7 @@ interface ResolveSearchListSnapPointsOptions {
   maxSnapPoint?: number;
 }
 
-export const resolveSearchListSnapOffset = ({
+const resolveSearchListSnapOffset = ({
   maxSnapPoint,
   minSnapPoint,
   visibleHeight,

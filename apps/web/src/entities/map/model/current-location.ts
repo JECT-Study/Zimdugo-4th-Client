@@ -19,7 +19,7 @@ export const DEFAULT_CURRENT_LOCATION_OPTIONS: PositionOptions = {
   timeout: 2_000,
 };
 
-export const isGeolocationSupported = () =>
+const isGeolocationSupported = () =>
   typeof navigator !== "undefined" && "geolocation" in navigator;
 
 export const getCurrentMapCoordinates = (

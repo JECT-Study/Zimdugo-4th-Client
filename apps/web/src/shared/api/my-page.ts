@@ -1,9 +1,9 @@
 import { apiClient } from "#/shared/lib/apiClient";
 import type { BackendResponse } from "./lockers";
 
-export type MyLockerReportPriceType = "FREE" | "PAID" | "UNKNOWN";
+type MyLockerReportPriceType = "FREE" | "PAID" | "UNKNOWN";
 
-export type MyLockerReportOperatingTimeType =
+type MyLockerReportOperatingTimeType =
   | "OPEN_24_HOURS"
   | "TIME_RANGE"
   | "UNKNOWN";
@@ -69,7 +69,7 @@ export interface MyLockerReportDetail {
   reportStatus?: string | null;
 }
 
-export interface MyListLocationParams {
+interface MyListLocationParams {
   lat: number;
   lng: number;
 }

@@ -7,7 +7,7 @@ import {
 } from "#/shared/lib/locker-detail-labels";
 import { getLockerTypeLabel } from "#/shared/lib/locker-type-label";
 
-export interface ReportViewerField {
+interface ReportViewerField {
   label: string;
   value: string;
 }

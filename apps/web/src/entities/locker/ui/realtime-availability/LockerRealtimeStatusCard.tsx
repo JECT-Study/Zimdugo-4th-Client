@@ -17,7 +17,7 @@ import {
 } from "./LockerRealtimeStatusCard.css";
 import liveIndicatorUrl from "./live-indicator.svg";
 
-export type LockerRealtimeStatusCardVariant = "floating" | "inline";
+type LockerRealtimeStatusCardVariant = "floating" | "inline";
 
 export interface LockerRealtimeStatusCardProps {
   availability: LockerRealtimeAvailability;

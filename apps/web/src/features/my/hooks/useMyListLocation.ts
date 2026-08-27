@@ -7,7 +7,7 @@ import {
 
 const DEFAULT_COORDINATES = { lat: 37.498095, lng: 127.02761 };
 
-export const MY_LIST_LOCATION_QUERY_KEY = "my-list-location";
+const MY_LIST_LOCATION_QUERY_KEY = "my-list-location";
 
 export function useMyListLocation() {
   return useQuery({

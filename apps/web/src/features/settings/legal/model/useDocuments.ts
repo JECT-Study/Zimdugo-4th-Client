@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type DocumentType, getDocuments } from "#/shared/api/documents";
 
-export const DOCUMENTS_QUERY_KEY = "documents";
+const DOCUMENTS_QUERY_KEY = "documents";
 
 export function useDocuments(type: DocumentType) {
   return useQuery({

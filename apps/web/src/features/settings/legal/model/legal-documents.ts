@@ -1,6 +1,6 @@
 import type { ClientDocumentResponse } from "#/shared/api/documents";
 
-export interface LegalDocumentSection {
+interface LegalDocumentSection {
   subtitle: string;
   content: string;
 }

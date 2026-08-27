@@ -1,4 +1,4 @@
-export const MIN_MAP_CONTAINER_DIMENSION_PX = 1;
+const MIN_MAP_CONTAINER_DIMENSION_PX = 1;
 
 export interface MapContainerSize {
   width: number;

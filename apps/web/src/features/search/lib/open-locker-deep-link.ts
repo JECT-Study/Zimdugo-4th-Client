@@ -45,7 +45,7 @@ const parsePositiveInt = (raw: unknown): number | undefined => {
     : undefined;
 };
 
-export const parseFocusCoordinate = (raw: unknown): number | undefined => {
+const parseFocusCoordinate = (raw: unknown): number | undefined => {
   const parsed =
     typeof raw === "number"
       ? raw

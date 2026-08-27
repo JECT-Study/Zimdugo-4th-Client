@@ -1,4 +1,4 @@
-export const DEFAULT_RETURN_PATH = "/";
+const DEFAULT_RETURN_PATH = "/";
 
 /**
  * 로그인 완료 후 되돌아갈 경로를 안전한 내부 경로로 정규화합니다.

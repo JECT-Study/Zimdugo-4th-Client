@@ -7,7 +7,7 @@ import {
   textLine,
 } from "./LockerImageReportFrame.css.ts";
 
-export type LockerImageReportFrameSize = "compact" | "half" | "full";
+type LockerImageReportFrameSize = "compact" | "half" | "full";
 
 export interface LockerImageReportFrameProps {
   size?: LockerImageReportFrameSize;

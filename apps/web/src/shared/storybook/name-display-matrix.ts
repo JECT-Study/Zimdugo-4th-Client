@@ -14,7 +14,7 @@ export const NAME_DISPLAY_VIEWPORT_LABELS: Record<NameDisplayViewport, string> =
     480: "태블릿 shell",
   };
 
-export type EllipsisLocale = "ko" | "en";
+type EllipsisLocale = "ko" | "en";
 
 export type EllipsisLocaleSelection = EllipsisLocale | "all";
 
@@ -43,7 +43,7 @@ type SlotAnchorConfig = Record<EllipsisLocale, ViewportAnchors>;
  * 실제 CSS의 padding, marker, trailing action, card chrome을 기준으로 320/375 값을
  * 보정하고 현재 shell 폭 정책(360/390/430/480)으로 확장한 초기값이다.
  */
-export const ELLIPSIS_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
+const ELLIPSIS_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
   "search-autocomplete-120m": {
     ko: { 320: 14, 360: 15, 375: 16, 390: 17, 430: 18, 480: 20 },
     en: { 320: 23, 360: 26, 375: 27, 390: 28, 430: 31, 480: 34 },
@@ -91,7 +91,7 @@ export const ELLIPSIS_ANCHORS: Record<NameDisplaySlotId, SlotAnchorConfig> = {
 };
 
 /** 경계 앞뒤로 포함할 글자 수(총 2*radius+1개) */
-export const ELLIPSIS_BOUNDARY_RADIUS = 5;
+const ELLIPSIS_BOUNDARY_RADIUS = 5;
 
 const KO_PLACE_SEGMENTS = [
   "강남역",
@@ -157,17 +157,17 @@ function buildPlaceStyleText(
 }
 
 /** 공백만 남아 행이 Matrix에서 중복되는 경우를 제외한다. */
-export function isMeaningfulBoundaryText(text: string): boolean {
+function isMeaningfulBoundaryText(text: string): boolean {
   return text.length > 0 && !text.endsWith(" ");
 }
 
-export function resolveEllipsisLocales(
+function resolveEllipsisLocales(
   locale: EllipsisLocaleSelection,
 ): EllipsisLocale[] {
   return locale === "all" ? ["ko", "en"] : [locale];
 }
 
-export function buildBoundaryText(
+function buildBoundaryText(
   locale: EllipsisLocale,
   length: number,
   kind: BoundaryTextKind = "place",
@@ -182,7 +182,7 @@ export function buildBoundaryText(
   return buildPlaceStyleText(segments, length);
 }
 
-export function buildEllipsisBoundaryLengths(
+function buildEllipsisBoundaryLengths(
   anchor: number,
   radius = ELLIPSIS_BOUNDARY_RADIUS,
 ): number[] {

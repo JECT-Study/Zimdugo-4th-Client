@@ -7,7 +7,7 @@ import { getNameDisplayContentWidth } from "./NameDisplaySurface";
 import type { NameDisplayViewport } from "./name-display-matrix";
 import { NAME_DISPLAY_VIEWPORT_LABELS } from "./name-display-matrix";
 
-export interface NameDisplayMatrixRow {
+interface NameDisplayMatrixRow {
   key: string;
   label: string;
   node: ReactNode;

@@ -2,7 +2,7 @@
 
 export type IndoorOutdoorType = "INDOOR" | "OUTDOOR";
 
-export type FloorType = "ABOVE_GROUND" | "UNDERGROUND";
+type FloorType = "ABOVE_GROUND" | "UNDERGROUND";
 
 export type LockerType =
   | "MUSEUM"
@@ -140,7 +140,7 @@ export type RestResponse<T> = {
   data: T;
 };
 
-export type ValidationErrorItem = {
+type ValidationErrorItem = {
   field: string;
   message: string;
   rejectedValue: unknown;

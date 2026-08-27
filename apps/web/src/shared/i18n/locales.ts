@@ -11,7 +11,7 @@ export const LOCALE_PATH_PREFIX = /^\/(?:ko|en|ja|zh-tw|zh)(?=\/|$)/i;
 
 export type AppLocale = (typeof APP_LOCALES)[number];
 
-export const LOCALE_NORMALIZATION_GROUPS = [
+const LOCALE_NORMALIZATION_GROUPS = [
   { locale: "ko", prefixes: ["ko"] },
   { locale: "en", prefixes: ["en"] },
   { locale: "ja", prefixes: ["ja"] },

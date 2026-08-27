@@ -18,12 +18,12 @@ export interface MapViewportCoord {
   lng: number;
 }
 
-export interface MapViewportBounds {
+interface MapViewportBounds {
   northEast: MapViewportCoord;
   southWest: MapViewportCoord;
 }
 
-export interface MapViewportSize {
+interface MapViewportSize {
   width: number;
   height: number;
 }
