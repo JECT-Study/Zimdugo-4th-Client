@@ -53,6 +53,24 @@ export const normalizeLocale = (value?: string | null): AppLocale | null => {
 export const isAppLocale = (value: string): value is AppLocale =>
   APP_LOCALES.includes(value as AppLocale);
 
+/**
+ * URL 경로 조각을 로케일로 읽는다. 표기 차이(zh-tw)만 받아 주고 그 외에는
+ * 정확히 일치해야 한다.
+ *
+ * normalizeLocale 을 쓰면 안 된다. 그쪽은 Accept-Language 의 en-US 같은
+ * 태그를 받으려고 접두사 일치를 쓰는데, 경로에 대고 쓰면 english 가 en 으로,
+ * javascript 가 ja 로 통과해 버린다.
+ */
+export const parseLocaleSegment = (
+  segment?: string | null,
+): AppLocale | null => {
+  if (!segment) return null;
+
+  const lower = segment.toLowerCase();
+
+  return APP_LOCALES.find((locale) => locale.toLowerCase() === lower) ?? null;
+};
+
 export const stripLocalePathPrefix = (pathname: string): string =>
   pathname.replace(LOCALE_PATH_PREFIX, "") || "/";
 

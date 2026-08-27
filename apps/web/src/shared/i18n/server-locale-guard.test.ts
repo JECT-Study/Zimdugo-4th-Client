@@ -177,6 +177,31 @@ describe("resolveLocaleRequest", () => {
     );
   });
 
+  it("로케일처럼 시작하는 낱말은 선택으로 보지 않는다", () => {
+    // normalizeLocale 은 Accept-Language 의 en-US 를 받으려고 접두사 일치를
+    // 쓴다. 그걸 경로에 그대로 대면 아래가 전부 통과해 버린다.
+    for (const segment of ["english", "javascript", "korean", "zhuge"]) {
+      const result = resolveLocaleRequest(
+        createDocumentRequest(
+          `https://zimdugo.com/set-language/${segment}/settings`,
+        ),
+      );
+
+      expect(result.kind).toBe("continue");
+    }
+  });
+
+  it("표기만 다른 로케일 조각은 받아 준다", () => {
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/set-language/zh-tw/settings"),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/zh-TW/settings");
+  });
+
   it("문서 요청이 아니면 선택 경로를 보지 않는다", () => {
     const result = resolveLocaleRequest(
       new Request("https://zimdugo.com/set-language/ja/settings"),

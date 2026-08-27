@@ -6,6 +6,7 @@ import {
   LOCALE_COOKIE_NAME,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
+  parseLocaleSegment,
   parsePathLocale,
   stripLocalePathPrefix,
   UNSUPPORTED_LOCALE_FALLBACK,
@@ -141,7 +142,9 @@ const getLocaleRedirectResponse = (
  * 언어 선택 경로를 읽는다. `/set-language/en/settings` -> en 과 /settings.
  *
  * 알 수 없는 로케일이면 선택으로 보지 않는다. 남이 만든 링크로 남의 로케일이
- * 사용자 선호로 굳어지면 안 되므로 아는 로케일만 통과시킨다.
+ * 사용자 선호로 굳어지면 안 되므로 아는 로케일만 통과시킨다. 판정은
+ * parseLocaleSegment 가 한다. normalizeLocale 은 접두사 일치라 경로에 쓰면
+ * english 나 javascript 까지 통과한다.
  */
 const getLocaleChoice = (
   url: URL,
@@ -155,7 +158,7 @@ const getLocaleChoice = (
 
   const rest = url.pathname.slice(LOCALE_CHOICE_PATH.length);
   const [, localeSegment = "", ...pathSegments] = rest.split("/");
-  const locale = normalizeLocale(localeSegment);
+  const locale = parseLocaleSegment(localeSegment);
 
   if (!locale) return null;
 

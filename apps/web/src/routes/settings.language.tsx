@@ -45,15 +45,18 @@ export const Route = createFileRoute("/settings/language")({
 function SettingsLanguagePage() {
   const navigate = useNavigate();
   const { isStyleReady } = useSettingsStyleReady();
+  // 라우터가 주는 위치라 서버와 클라이언트가 같은 주소를 만든다. window 를
+  // 보면 SSR 에서 값이 없어 하이드레이션 때 href 가 어긋난다.
+  // 해시까지 담아야 언어를 바꾼 뒤에도 보던 자리에 그대로 남는다.
+  const currentHref = useRouterState({
+    select: (state) =>
+      `${state.location.pathname}${state.location.searchStr}${state.location.hash ? `#${state.location.hash}` : ""}`,
+  });
+
   // 스타일이 확인되기 전에는 인라인 폴백으로 그린다. 폴백은 클래스와 같은
   // 배치를 담고 있어서 스켈레톤 없이도 화면이 튀지 않는다.
   const applyFallbackStyle = !isStyleReady;
   const currentLanguage = normalizeLanguage(languageTag()) ?? BASE_LOCALE;
-  // 라우터가 주는 위치라 서버와 클라이언트가 같은 주소를 만든다. window 를
-  // 보면 SSR 에서 값이 없어 하이드레이션 때 href 가 어긋난다.
-  const currentHref = useRouterState({
-    select: (state) => `${state.location.pathname}${state.location.searchStr}`,
-  });
 
   const getLanguageHref = (language: AppLanguage) =>
     getLanguageSwitchHref(currentHref, language);

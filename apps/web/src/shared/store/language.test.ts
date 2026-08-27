@@ -83,8 +83,12 @@ describe("getLanguageSwitchHref", () => {
   });
 
   it("원래 쿼리와 해시를 그대로 들고 간다", () => {
+    // 해시를 흘리면 언어를 바꾼 뒤 보던 자리를 잃는다.
     expect(getLanguageSwitchHref("/settings?tab=language#now", "en")).toBe(
       "/set-language/en/settings?tab=language#now",
+    );
+    expect(getLanguageSwitchHref("/ja/notices/1#body", "ko")).toBe(
+      "/set-language/ko/notices/1#body",
     );
   });
 });
