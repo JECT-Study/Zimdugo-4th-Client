@@ -19,6 +19,18 @@ const getRenderedImages = () =>
     image.getAttribute("src"),
   );
 
+const restoreDescriptor = (
+  property: "complete" | "naturalWidth",
+  descriptor: PropertyDescriptor | undefined,
+) => {
+  if (descriptor) {
+    Object.defineProperty(HTMLImageElement.prototype, property, descriptor);
+    return;
+  }
+
+  Reflect.deleteProperty(HTMLImageElement.prototype, property);
+};
+
 describe("LockerDetailImageStrip", () => {
   beforeEach(() => {
     setTestLanguage("ko");
@@ -49,6 +61,15 @@ describe("LockerDetailImageStrip", () => {
   it("이미 로드가 끝난 이미지를 만나도 렌더 루프에 빠지지 않는다", () => {
     // jsdom 은 이미지를 실제로 받지 않아 complete 가 늘 false 다.
     // 캐시 적중처럼 보이게 만들어 ref 콜백이 로드 완료를 알리는 경로를 태운다.
+    const completeDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLImageElement.prototype,
+      "complete",
+    );
+    const naturalWidthDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLImageElement.prototype,
+      "naturalWidth",
+    );
+
     Object.defineProperty(HTMLImageElement.prototype, "complete", {
       configurable: true,
       get: () => true,
@@ -64,8 +85,9 @@ describe("LockerDetailImageStrip", () => {
       ).not.toThrow();
       expect(getImageButtons()).toHaveLength(3);
     } finally {
-      Reflect.deleteProperty(HTMLImageElement.prototype, "complete");
-      Reflect.deleteProperty(HTMLImageElement.prototype, "naturalWidth");
+      // jsdom 의 원래 구현을 지우면 뒤따르는 테스트가 망가진다. 디스크립터를 되돌린다.
+      restoreDescriptor("complete", completeDescriptor);
+      restoreDescriptor("naturalWidth", naturalWidthDescriptor);
     }
   });
 

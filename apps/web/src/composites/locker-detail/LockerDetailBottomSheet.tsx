@@ -870,6 +870,7 @@ function FullDetailContent({
 }) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const contentRootRef = useRef<HTMLDivElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
 
@@ -882,14 +883,30 @@ function FullDetailContent({
   };
 
   const handleCloseImagePreview = () => {
-    setPreviewIndex(null);
-    // 미리보기를 연 사진 버튼으로 포커스를 돌려 준다.
-    previewTriggerRef.current?.focus();
+    const trigger = previewTriggerRef.current;
     previewTriggerRef.current = null;
+    setPreviewIndex(null);
+
+    // 미리보기를 연 사진 버튼으로 포커스를 돌려 준다.
+    if (trigger?.isConnected) {
+      trigger.focus();
+      return;
+    }
+
+    /**
+     * 그 사진이 깨졌거나 시트가 리마운트돼 버튼이 사라졌을 수 있다. 분리된 노드에
+     * focus() 해도 포커스는 body 로 빠지므로, 남아 있는 첫 사진으로 옮기고
+     * 사진이 하나도 없으면 시트에 항상 있는 더보기 버튼으로 되돌린다.
+     */
+    const fallback = contentRootRef.current?.querySelector<HTMLButtonElement>(
+      "[data-image-index] button",
+    );
+    (fallback ?? moreActionsButtonRef.current)?.focus();
   };
 
   return (
     <div
+      ref={contentRootRef}
       className={[
         fullContentScroll,
         isScrollEnabled ? fullContentScrollEnabled : "",

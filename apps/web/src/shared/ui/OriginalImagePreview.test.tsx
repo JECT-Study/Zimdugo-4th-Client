@@ -107,6 +107,62 @@ describe("OriginalImagePreview", () => {
     expect(dialog.textContent).toContain("2 / 2");
   });
 
+  it("앞선 사진이 목록에서 빠져도 보고 있던 사진을 그대로 둔다", () => {
+    const { rerender } = render(
+      <OriginalImagePreview
+        images={GALLERY}
+        initialIndex={1}
+        alt="원본 사진"
+        closeLabel="닫기"
+        navigationLabels={{ previous: "이전 사진", next: "다음 사진" }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const getSrc = () =>
+      within(screen.getByRole("dialog", { name: "원본 사진" }))
+        .getByRole("img")
+        .getAttribute("src");
+
+    expect(getSrc()).toBe("https://example.com/b.jpg");
+
+    // 스트립에서 첫 사진이 뒤늦게 실패해 부모가 목록에서 뺀 상황
+    rerender(
+      <OriginalImagePreview
+        images={[GALLERY[1], GALLERY[2]]}
+        initialIndex={1}
+        alt="원본 사진"
+        closeLabel="닫기"
+        navigationLabels={{ previous: "이전 사진", next: "다음 사진" }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(getSrc()).toBe("https://example.com/b.jpg");
+    expect(
+      screen.getByRole("dialog", { name: "원본 사진" }).textContent,
+    ).toContain("1 / 2");
+  });
+
+  it("사진이 깨지면 부모에게도 알린다", () => {
+    const onImageError = vi.fn();
+    render(
+      <OriginalImagePreview
+        images={GALLERY}
+        initialIndex={1}
+        alt="원본 사진"
+        closeLabel="닫기"
+        onImageError={onImageError}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "원본 사진" });
+    fireEvent.error(within(dialog).getByRole("img"));
+
+    expect(onImageError).toHaveBeenCalledWith("https://example.com/b.jpg");
+  });
+
   it("한 장뿐이면 좌우 버튼과 카운터를 두지 않는다", () => {
     render(
       <OriginalImagePreview

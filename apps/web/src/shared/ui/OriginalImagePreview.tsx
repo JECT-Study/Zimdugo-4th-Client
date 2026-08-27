@@ -53,23 +53,42 @@ export function OriginalImagePreview({
   const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const [index, setIndex] = useState(initialIndex);
+  /**
+   * 보고 있는 사진을 위치가 아니라 URL로 기억한다.
+   *
+   * 위치로 들면, 스트립에서 앞선 사진이 뒤늦게 실패해 목록이 줄어들 때 같은
+   * 위치가 다음 사진을 가리키게 되어 사용자가 아무것도 안 했는데 화면이 넘어간다.
+   */
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(
+    () => images[initialIndex] ?? images[0],
+  );
 
   // 스트립과 같은 규칙이다. 열어 본 이미지가 깨지면 목록에서 빼고 이웃으로 옮긴다.
   const visibleImages = images.filter((imageUrl) => !failedUrls.has(imageUrl));
   const totalCount = visibleImages.length;
-  const activeIndex = Math.min(index, Math.max(totalCount - 1, 0));
+  const selectedIndex = selectedImage
+    ? visibleImages.indexOf(selectedImage)
+    : -1;
+  const activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const currentImage = visibleImages[activeIndex];
   const hasPrevious = activeIndex > 0;
   const hasNext = activeIndex < totalCount - 1;
 
   const goPrevious = () => {
-    setIndex((current) => Math.max(current - 1, 0));
+    if (hasPrevious) {
+      setSelectedImage(visibleImages[activeIndex - 1]);
+    }
   };
 
   const goNext = () => {
-    setIndex((current) => Math.min(current + 1, totalCount - 1));
+    if (hasNext) {
+      setSelectedImage(visibleImages[activeIndex + 1]);
+    }
   };
+
+  // 방향키 리스너가 매 렌더 다시 붙지 않도록 최신 이동 함수만 갈아 끼운다.
+  const navigateRef = useRef({ goPrevious, goNext });
+  navigateRef.current = { goPrevious, goNext };
 
   const handlePreviousClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -86,10 +105,16 @@ export function OriginalImagePreview({
       return;
     }
 
+    const remainingImages = visibleImages.filter(
+      (imageUrl) => imageUrl !== currentImage,
+    );
+
     setFailedUrls((current) =>
       current.has(currentImage) ? current : new Set(current).add(currentImage),
     );
-    setIndex((current) => Math.max(Math.min(current, totalCount - 2), 0));
+    setSelectedImage(
+      remainingImages[Math.min(activeIndex, remainingImages.length - 1)],
+    );
     onImageError?.(currentImage);
   };
 
@@ -178,19 +203,19 @@ export function OriginalImagePreview({
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        setIndex((current) => Math.max(current - 1, 0));
+        navigateRef.current.goPrevious();
         return;
       }
 
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        setIndex((current) => Math.min(current + 1, totalCount - 1));
+        navigateRef.current.goNext();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [onClose, totalCount]);
+  }, [onClose]);
 
   // 마지막 한 장까지 깨지면 볼 게 없다. 빈 모달을 남기지 않고 닫는다.
   useEffect(() => {

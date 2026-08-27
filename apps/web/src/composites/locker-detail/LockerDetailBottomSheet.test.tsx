@@ -285,6 +285,31 @@ describe("LockerDetailBottomSheet", () => {
     expect(document.activeElement).toBe(imageButton);
   });
 
+  it("열었던 사진이 깨져 버튼이 사라지면 남은 사진으로 포커스를 옮긴다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "보관함 사진 1 / 2" }));
+
+    const dialog = screen.getByRole("dialog", {
+      name: m.report_section_photo(),
+    });
+    // 미리보기에서 열어 본 사진이 깨지면 부모 목록에서 빠져 그 버튼도 사라진다.
+    fireEvent.error(within(dialog).getByRole("img"));
+    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "보관함 사진 1 / 1" }),
+    );
+  });
+
   it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", async () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
