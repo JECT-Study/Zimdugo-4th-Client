@@ -5,7 +5,6 @@ import type { CSSProperties } from "react";
 export const MAP_CONTROL_BOTTOM = "70px";
 
 export const MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX = 430;
-export const MAP_CONTROL_FALLBACK_SIDE_INSET_PX = 16;
 export const MAP_CONTROL_FALLBACK_SIDE_INSET =
   "max(16px, env(safe-area-inset-right, 0px))";
 export const MAP_CONTROL_FALLBACK_MAX_WIDTH = appShellMaxWidth;

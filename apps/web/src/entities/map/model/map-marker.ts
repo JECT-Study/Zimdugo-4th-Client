@@ -4,8 +4,6 @@ import type {
   LockerPinItemResponse,
 } from "#/shared/api/lockers";
 
-export type LockerMarkerStatus = "active" | "inactive";
-
 export interface LockerMarkerOffset {
   offsetX: number;
   offsetY: number;

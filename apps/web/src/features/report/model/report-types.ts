@@ -16,13 +16,6 @@ export type LockerType =
 
 export type SizeType = "SMALL" | "MEDIUM" | "LARGE";
 
-export type ReportPriceType = "FREE" | "PAID" | "UNKNOWN";
-
-export type ReportOperatingTimeType =
-  | "OPEN_24_HOURS"
-  | "TIME_RANGE"
-  | "UNKNOWN";
-
 export type ReportFormValues = {
   roadAddress: string;
   latitude: number | null;
@@ -83,20 +76,6 @@ export const STEP_1_FIELDS = [
   "lockerType",
   "sizeTypes",
 ] as const satisfies readonly (keyof ReportFormValues)[];
-
-export const STEP_2_FIELDS = [
-  "locationConsentAgreed",
-  "isFree",
-  "minPrice",
-  "maxPrice",
-  "startTime",
-  "endTime",
-  "additionalInfo",
-  "imageUrl",
-] as const satisfies readonly (keyof ReportFormValues)[];
-
-export type ReportStep1Field = (typeof STEP_1_FIELDS)[number];
-export type ReportStep2Field = (typeof STEP_2_FIELDS)[number];
 
 export const MAX_REPORT_PHOTOS = 1;
 export const MAX_REPORT_ADDITIONAL_INFO_LENGTH = 255;

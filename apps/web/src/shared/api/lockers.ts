@@ -345,33 +345,6 @@ export interface GetLockerDetailParams extends LockerSearchLocationParams {
   signal?: AbortSignal;
 }
 
-/**
- * @deprecated bounds 기반 API로 전환됨. 호환성을 위해 유지.
- */
-const ZOOM_TO_RADIUS_MAP: Record<number, number> = {
-  10: 1000,
-  11: 1000,
-  12: 1000,
-  13: 1000,
-  14: 1000,
-  15: 750,
-  16: 500,
-  17: 250,
-  18: 100,
-  19: 50,
-  20: 25,
-  21: 10,
-};
-
-/**
- * @deprecated bounds 기반 API로 전환됨. 호환성을 위해 유지.
- */
-export const getRadiusFromZoom = (zoom: number): number => {
-  if (zoom < 10) return 1000;
-  if (zoom > 21) return 10;
-  return ZOOM_TO_RADIUS_MAP[zoom] ?? 500;
-};
-
 const unwrapBackendData = <T>(response: BackendResponse<T> | undefined): T => {
   if (!response?.data) {
     throw new Error(response?.message ?? "API response data is missing.");

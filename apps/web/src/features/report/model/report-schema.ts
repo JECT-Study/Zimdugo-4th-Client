@@ -231,7 +231,5 @@ export const reportSchema = z
     }
   });
 
-export type ReportFormInput = z.infer<typeof reportSchema>;
-
 export const parseReportForm = (values: ReportFormValues) =>
   reportSchema.safeParse(values);

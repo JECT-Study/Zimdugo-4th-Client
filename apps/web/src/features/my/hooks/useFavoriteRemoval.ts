@@ -6,8 +6,8 @@ import {
   FAVORITE_LOCKER_LIST_QUERY_KEY,
   useFavoriteLockerList,
 } from "./useFavoriteLockerList";
-import { MY_PAGE_SUMMARY_QUERY_KEY } from "./useMyPageSummary";
 
+const MY_PAGE_SUMMARY_QUERY_KEY = "my-page-summary";
 const UNDO_TIMEOUT_MS = 5_000;
 
 interface PendingFavoriteRemoval {

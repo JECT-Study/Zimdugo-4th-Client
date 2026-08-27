@@ -45,15 +45,6 @@ export const settingsLanguageContentInlineFallbackStyle: CSSProperties = {
   padding: "40px 16px 24px",
 };
 
-export const settingsGroupInlineFallbackStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-};
-
-export const settingsGroupGapInlineFallbackStyle: CSSProperties = {
-  marginTop: "32px",
-};
-
 export const settingsLanguageGroupInlineFallbackStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",

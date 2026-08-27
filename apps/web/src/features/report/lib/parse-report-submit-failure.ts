@@ -5,8 +5,6 @@ const VALIDATION_ERROR_CODES = new Set<ValidationErrorResponse["code"]>([
   "COMMON-400-1",
 ]);
 
-export type ReportSubmitFailureKind = "validation" | "auth" | "server";
-
 export type ReportSubmitFailure =
   | {
       kind: "validation";
