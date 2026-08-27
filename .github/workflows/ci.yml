@@ -57,6 +57,11 @@ jobs:
       - name: Test (admin)
         run: pnpm test:admin
 
+      # 죽은 파일과 안 쓰는 의존성만 막는다. export 단위는 아직 정리 중이라
+      # 여기서 보지 않는다. 다 정리되면 --include 를 지우고 전체로 넓힌다.
+      - name: Knip (files & dependencies)
+        run: pnpm knip --include files,dependencies
+
   e2e:
     name: e2e
     runs-on: ubuntu-latest
