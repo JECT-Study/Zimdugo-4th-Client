@@ -221,6 +221,30 @@ describe("LockerDetailBottomSheet", () => {
     ).toHaveLength(1);
   });
 
+  it("미리보기를 닫으면 열었던 사진 버튼으로 포커스를 되돌린다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          images: ["https://example.com/locker.jpg"],
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const imageButton = screen.getByRole("button", {
+      name: "보관함 사진 1 / 1",
+    });
+    fireEvent.click(imageButton);
+
+    const dialog = screen.getByRole("dialog", {
+      name: m.report_section_photo(),
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+
+    expect(document.activeElement).toBe(imageButton);
+  });
+
   it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", async () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
@@ -763,7 +787,7 @@ describe("LockerDetailBottomSheet", () => {
     const sheet = getSheetRoot();
 
     expect(
-      sheet.queryByRole("group", { name: m.locker_detail_image_list_aria() }),
+      sheet.queryByRole("list", { name: m.locker_detail_image_list_aria() }),
     ).toBeNull();
   });
 

@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
-import { useEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import {
   IMAGE_HEIGHT_PX,
   image,
@@ -17,8 +17,91 @@ import {
 
 export interface LockerDetailImageStripProps {
   images: string[];
-  /** 실패한 이미지를 걸러낸 목록과 그 안에서의 위치를 함께 넘긴다. */
-  onOpenPreview?: (images: string[], index: number) => void;
+  /**
+   * 실패한 이미지를 걸러낸 목록과 그 안에서의 위치를 함께 넘긴다.
+   * 세 번째 인자는 미리보기를 연 버튼이다. 닫을 때 포커스를 되돌리는 데 쓴다.
+   */
+  onOpenPreview?: (
+    images: string[],
+    index: number,
+    trigger: HTMLButtonElement,
+  ) => void;
+}
+
+interface LockerDetailImageItemProps {
+  imageUrl: string;
+  index: number;
+  totalCount: number;
+  isSingle: boolean;
+  shouldLoad: boolean;
+  isLoaded: boolean;
+  onImageLoad: (imageUrl: string) => void;
+  onImageError: (imageUrl: string) => void;
+  onOpenPreview: (index: number, trigger: HTMLButtonElement) => void;
+}
+
+function LockerDetailImageItem({
+  imageUrl,
+  index,
+  totalCount,
+  isSingle,
+  shouldLoad,
+  isLoaded,
+  onImageLoad,
+  onImageError,
+  onOpenPreview,
+}: LockerDetailImageItemProps) {
+  const handleOpenPreview = (event: MouseEvent<HTMLButtonElement>) => {
+    onOpenPreview(index, event.currentTarget);
+  };
+
+  const handleImageLoad = () => {
+    onImageLoad(imageUrl);
+  };
+
+  const handleImageError = () => {
+    onImageError(imageUrl);
+  };
+
+  // 캐시된 이미지는 onLoad 가 붙기 전에 끝나 있을 수 있다.
+  const handleImageRef = (node: HTMLImageElement | null) => {
+    if (node?.complete && node.naturalWidth > 0) {
+      onImageLoad(imageUrl);
+    }
+  };
+
+  return (
+    <li
+      data-image-index={index}
+      className={[item, isSingle ? singleItem : ""].filter(Boolean).join(" ")}
+    >
+      <button
+        type="button"
+        className={itemButton}
+        onClick={handleOpenPreview}
+        aria-label={m.locker_detail_image_item_aria({
+          index: index + 1,
+          total: totalCount,
+        })}
+      >
+        {isLoaded ? null : (
+          <Skeleton className={imagePlaceholder} height={IMAGE_HEIGHT_PX} />
+        )}
+        {shouldLoad ? (
+          <img
+            ref={handleImageRef}
+            className={image}
+            src={imageUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        ) : null}
+      </button>
+    </li>
+  );
 }
 
 /**
@@ -96,12 +179,29 @@ export function LockerDetailImageStrip({
     return null;
   }
 
+  /**
+   * 이미 담긴 URL이면 같은 Set을 그대로 돌려준다.
+   *
+   * 새 Set을 만들면 상태가 매번 바뀐 것으로 보여 리렌더가 일어나고, 그때마다
+   * img 의 ref 콜백이 다시 붙어 로드 완료를 또 알린다. 이 순환이 곧
+   * `Maximum update depth exceeded` 다.
+   */
+  const addUrl = (
+    current: ReadonlySet<string>,
+    imageUrl: string,
+  ): ReadonlySet<string> =>
+    current.has(imageUrl) ? current : new Set(current).add(imageUrl);
+
   const handleImageError = (imageUrl: string) => {
-    setFailedUrls((current) => new Set(current).add(imageUrl));
+    setFailedUrls((current) => addUrl(current, imageUrl));
   };
 
   const handleImageLoad = (imageUrl: string) => {
-    setLoadedUrls((current) => new Set(current).add(imageUrl));
+    setLoadedUrls((current) => addUrl(current, imageUrl));
+  };
+
+  const handleOpenPreview = (index: number, trigger: HTMLButtonElement) => {
+    onOpenPreview?.(visibleImages, index, trigger);
   };
 
   return (
@@ -111,54 +211,20 @@ export function LockerDetailImageStrip({
         className={strip}
         aria-label={m.locker_detail_image_list_aria()}
       >
-        {visibleImages.map((imageUrl, index) => {
-          const shouldLoad = index <= furthestIndex + 1;
-          const isLoaded = loadedUrls.has(imageUrl);
-
-          return (
-            <li
-              key={imageUrl}
-              data-image-index={index}
-              className={[item, isSingle ? singleItem : ""]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              <button
-                type="button"
-                className={itemButton}
-                onClick={() => onOpenPreview?.(visibleImages, index)}
-                aria-label={m.locker_detail_image_item_aria({
-                  index: index + 1,
-                  total: totalCount,
-                })}
-              >
-                {isLoaded ? null : (
-                  <Skeleton
-                    className={imagePlaceholder}
-                    height={IMAGE_HEIGHT_PX}
-                  />
-                )}
-                {shouldLoad ? (
-                  <img
-                    ref={(node) => {
-                      // 캐시된 이미지는 onLoad 가 붙기 전에 끝나 있을 수 있다.
-                      if (node?.complete && node.naturalWidth > 0) {
-                        handleImageLoad(imageUrl);
-                      }
-                    }}
-                    className={image}
-                    src={imageUrl}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    onLoad={() => handleImageLoad(imageUrl)}
-                    onError={() => handleImageError(imageUrl)}
-                  />
-                ) : null}
-              </button>
-            </li>
-          );
-        })}
+        {visibleImages.map((imageUrl, index) => (
+          <LockerDetailImageItem
+            key={imageUrl}
+            imageUrl={imageUrl}
+            index={index}
+            totalCount={totalCount}
+            isSingle={isSingle}
+            shouldLoad={index <= furthestIndex + 1}
+            isLoaded={loadedUrls.has(imageUrl)}
+            onImageLoad={handleImageLoad}
+            onImageError={handleImageError}
+            onOpenPreview={handleOpenPreview}
+          />
+        ))}
       </ul>
       {isSingle ? null : (
         <div className={indicatorRow} aria-hidden="true">

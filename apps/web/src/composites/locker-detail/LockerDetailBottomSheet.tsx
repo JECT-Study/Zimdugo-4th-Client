@@ -839,15 +839,24 @@ function FullDetailContent({
     images: string[];
     index: number;
   } | null>(null);
+  const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
 
-  const handleOpenImagePreview = (images: string[], index: number) => {
+  const handleOpenImagePreview = (
+    images: string[],
+    index: number,
+    trigger: HTMLButtonElement,
+  ) => {
+    previewTriggerRef.current = trigger;
     setPreview({ images, index });
   };
 
   const handleCloseImagePreview = () => {
     setPreview(null);
+    // 미리보기를 연 사진 버튼으로 포커스를 돌려 준다.
+    previewTriggerRef.current?.focus();
+    previewTriggerRef.current = null;
   };
 
   return (

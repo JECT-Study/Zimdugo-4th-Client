@@ -46,6 +46,29 @@ describe("LockerDetailImageStrip", () => {
     ]);
   });
 
+  it("이미 로드가 끝난 이미지를 만나도 렌더 루프에 빠지지 않는다", () => {
+    // jsdom 은 이미지를 실제로 받지 않아 complete 가 늘 false 다.
+    // 캐시 적중처럼 보이게 만들어 ref 콜백이 로드 완료를 알리는 경로를 태운다.
+    Object.defineProperty(HTMLImageElement.prototype, "complete", {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", {
+      configurable: true,
+      get: () => 100,
+    });
+
+    try {
+      expect(() =>
+        render(<LockerDetailImageStrip images={IMAGES} />),
+      ).not.toThrow();
+      expect(getImageButtons()).toHaveLength(3);
+    } finally {
+      Reflect.deleteProperty(HTMLImageElement.prototype, "complete");
+      Reflect.deleteProperty(HTMLImageElement.prototype, "naturalWidth");
+    }
+  });
+
   it("이미지가 한 장뿐이면 인디케이터를 두지 않는다", () => {
     const { container } = render(
       <LockerDetailImageStrip images={[IMAGES[0]]} />,
@@ -100,6 +123,7 @@ describe("LockerDetailImageStrip", () => {
     expect(onOpenPreview).toHaveBeenCalledWith(
       ["https://example.com/b.jpg", "https://example.com/c.jpg"],
       0,
+      getImageButtons()[0],
     );
   });
 });

@@ -68,6 +68,16 @@ export function OriginalImagePreview({
     setIndex((current) => Math.min(current + 1, totalCount - 1));
   };
 
+  const handlePreviousClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    goPrevious();
+  };
+
+  const handleNextClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    goNext();
+  };
+
   const handleImageError = () => {
     if (!currentImage) {
       return;
@@ -225,10 +235,7 @@ export function OriginalImagePreview({
             <button
               type="button"
               className={[navButton, prevButton].join(" ")}
-              onClick={(event) => {
-                event.stopPropagation();
-                goPrevious();
-              }}
+              onClick={handlePreviousClick}
               disabled={!hasPrevious}
               aria-label={navigationLabels.previous}
             >
@@ -237,10 +244,7 @@ export function OriginalImagePreview({
             <button
               type="button"
               className={[navButton, nextButton].join(" ")}
-              onClick={(event) => {
-                event.stopPropagation();
-                goNext();
-              }}
+              onClick={handleNextClick}
               disabled={!hasNext}
               aria-label={navigationLabels.next}
             >
