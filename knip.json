@@ -31,9 +31,6 @@
       ]
     },
     "packages/libs": {
-      "entry": [
-        "src/*.ts"
-      ],
       "project": [
         "src/**/*.ts"
       ]
