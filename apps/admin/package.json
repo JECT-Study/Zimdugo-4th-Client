@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@repo/i18n": "workspace:*",
-    "@repo/libs": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.66.5",
     "@tanstack/react-query-devtools": "^5.84.2",

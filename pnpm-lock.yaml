@@ -23,9 +23,6 @@ importers:
       '@repo/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
-      '@repo/libs':
-        specifier: workspace:*
-        version: link:../../packages/libs
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
