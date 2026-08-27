@@ -3,14 +3,13 @@ import type {
   LockerReportCreateResponse,
   RestResponse,
 } from "#/features/report/model/report-types";
-import { apiClient } from "#/shared/lib/apiClient";
+import { httpPost } from "#/shared/lib/apiClient";
 
 export async function postLockerReport(
   payload: LockerReportCreateRequest,
 ): Promise<RestResponse<LockerReportCreateResponse>> {
-  const response = await apiClient.post<
-    RestResponse<LockerReportCreateResponse>
+  return httpPost<
+    RestResponse<LockerReportCreateResponse>,
+    LockerReportCreateRequest
   >("/api/v1/locker-reports", payload);
-
-  return response.data;
 }

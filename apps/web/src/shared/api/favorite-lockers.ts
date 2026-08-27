@@ -1,9 +1,9 @@
-import { apiClient } from "#/shared/lib/apiClient";
+import { httpDelete, httpPost } from "#/shared/lib/apiClient";
 
 export async function addFavoriteLocker(lockerId: number): Promise<void> {
-  await apiClient.post(`/api/v1/me/favorite-lockers/${lockerId}`, null);
+  await httpPost(`/api/v1/me/favorite-lockers/${lockerId}`, null);
 }
 
 export async function removeFavoriteLocker(lockerId: number): Promise<void> {
-  await apiClient.delete(`/api/v1/me/favorite-lockers/${lockerId}`);
+  await httpDelete(`/api/v1/me/favorite-lockers/${lockerId}`);
 }
