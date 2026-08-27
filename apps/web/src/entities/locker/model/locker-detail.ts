@@ -45,7 +45,7 @@ export interface LockerDetailItem extends LockerSummaryItem {
   /** @deprecated 상세 화면에서 vote 기능 노출을 중단했다. 롤백 호환용으로만 유지한다. */
   isInaccurateVoted?: boolean;
   lastUpdatedLabel?: string;
-  imageUrl?: string;
+  images?: string[];
   realtimeAvailability?: LockerRealtimeAvailability | null;
 }
 

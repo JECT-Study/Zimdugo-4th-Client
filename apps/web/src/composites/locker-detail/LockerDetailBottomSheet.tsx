@@ -913,7 +913,7 @@ function FullDetailContent({
         </div>
         <ImageReportCard
           isFull
-          imageUrl={locker.imageUrl}
+          imageUrl={locker.images?.[0]}
           onOpenPreview={handleOpenImagePreview}
         />
         {/*

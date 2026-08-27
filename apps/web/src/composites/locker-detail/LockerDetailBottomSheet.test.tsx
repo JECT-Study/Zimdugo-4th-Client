@@ -735,12 +735,12 @@ describe("LockerDetailBottomSheet", () => {
     ).toBeTruthy();
   });
 
-  it("renders detail image when imageUrl exists", () => {
+  it("이미지가 있으면 상세 이미지를 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{
           ...LOCKER_DETAIL,
-          imageUrl: "https://example.com/locker.jpg",
+          images: ["https://example.com/locker.jpg"],
         }}
         onReport={vi.fn()}
       />,
@@ -752,12 +752,12 @@ describe("LockerDetailBottomSheet", () => {
     expect(sheet.queryByText("아직 이미지가 없어요.")).toBeNull();
   });
 
-  it("opens original image preview when detail image is clicked", () => {
+  it("상세 이미지를 누르면 원본 미리보기를 연다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{
           ...LOCKER_DETAIL,
-          imageUrl: "https://example.com/locker.jpg",
+          images: ["https://example.com/locker.jpg"],
         }}
         onReport={vi.fn()}
       />,
