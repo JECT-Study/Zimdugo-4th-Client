@@ -744,9 +744,13 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
     const sheet = getSheetRoot();
-    const image = sheet.getByRole("img");
+    const imageButton = sheet.getByRole("button", {
+      name: "보관함 사진 1 / 1",
+    });
 
-    expect(image.getAttribute("src")).toBe("https://example.com/locker.jpg");
+    expect(imageButton.querySelector("img")?.getAttribute("src")).toBe(
+      "https://example.com/locker.jpg",
+    );
   });
 
   it("이미지가 없으면 이미지 영역을 아예 렌더링하지 않는다", () => {
@@ -758,9 +762,8 @@ describe("LockerDetailBottomSheet", () => {
     );
     const sheet = getSheetRoot();
 
-    expect(sheet.queryByRole("img")).toBeNull();
     expect(
-      sheet.queryByRole("button", { name: m.report_section_photo() }),
+      sheet.queryByRole("group", { name: m.locker_detail_image_list_aria() }),
     ).toBeNull();
   });
 
@@ -775,9 +778,7 @@ describe("LockerDetailBottomSheet", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: m.report_section_photo() }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "보관함 사진 1 / 1" }));
 
     const dialog = screen.getByRole("dialog", {
       name: m.report_section_photo(),

@@ -288,36 +288,6 @@ export const summaryActions = style({
   flexShrink: 0,
 });
 
-export const lockerImage = style({
-  width: "100%",
-  height: "160px",
-  objectFit: "cover",
-  borderRadius: vars.radius[6],
-  border: `1px solid ${vars.color.border.default}`,
-  boxSizing: "border-box",
-  backgroundColor: vars.color.bg.surface,
-});
-
-export const lockerImageButton = style({
-  display: "block",
-  width: "100%",
-  padding: 0,
-  border: 0,
-  background: "transparent",
-  cursor: "pointer",
-  borderRadius: vars.radius[6],
-  selectors: {
-    "&:focus-visible": {
-      outline: `2px solid ${vars.color.focus}`,
-      outlineOffset: "2px",
-    },
-  },
-});
-
-export const fullLockerImage = style({
-  flexShrink: 0,
-});
-
 export const actionRow = style({
   display: "flex",
   alignItems: "center",

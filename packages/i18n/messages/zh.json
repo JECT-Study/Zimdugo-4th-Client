@@ -352,6 +352,8 @@
   "locker_correction_close_aria": "关闭举报",
   "locker_detail_navigate": "路线",
   "locker_detail_no_image_title": "还没有图片。",
+  "locker_detail_image_list_aria": "储物柜照片列表",
+  "locker_detail_image_item_aria": "储物柜照片 {index} / {total}",
   "locker_detail_no_image_helper": "可通过上报来添加！",
   "navigation_platform_dialog_aria": "选择地图应用",
   "navigation_platform_title": "要用哪个地图导航？",

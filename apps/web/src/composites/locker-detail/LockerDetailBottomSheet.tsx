@@ -26,6 +26,7 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
+import { LockerDetailImageStrip } from "#/entities/locker/ui/detail-images";
 import {
   LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX,
   LockerRealtimeStatusCard,
@@ -71,7 +72,6 @@ import {
   fullContentScroll,
   fullContentScrollEnabled,
   fullDetailList,
-  fullLockerImage,
   fullPrimaryActionButton,
   loadingActionRow,
   loadingContent,
@@ -79,8 +79,6 @@ import {
   loadingDetailRow,
   loadingSummary,
   loadingTextStack,
-  lockerImage,
-  lockerImageButton,
   lockerTitle,
   lockerTitleExpanded,
   metaDot,
@@ -837,16 +835,19 @@ function FullDetailContent({
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
 
-  const handleOpenImagePreview = (imageUrl: string) => {
-    setPreviewImageUrl(imageUrl);
+  const handleOpenImagePreview = (images: string[], index: number) => {
+    setPreview({ images, index });
   };
 
   const handleCloseImagePreview = () => {
-    setPreviewImageUrl(null);
+    setPreview(null);
   };
 
   return (
@@ -907,9 +908,8 @@ function FullDetailContent({
             descriptionClassName={detailDescriptionMultiline}
           />
         </div>
-        <ImageReportCard
-          isFull
-          imageUrl={locker.images?.[0]}
+        <LockerDetailImageStrip
+          images={locker.images ?? []}
           onOpenPreview={handleOpenImagePreview}
         />
         {/*
@@ -922,9 +922,9 @@ function FullDetailContent({
           <ActionRow isFull onNavigate={onNavigate} />
         </div>
       </div>
-      {previewImageUrl ? (
+      {preview ? (
         <OriginalImagePreview
-          imageUrl={previewImageUrl}
+          imageUrl={preview.images[preview.index]}
           alt={m.report_section_photo()}
           closeLabel={m.search_close_aria()}
           onClose={handleCloseImagePreview}
@@ -1207,37 +1207,5 @@ function InlineMeta({
       ) : null}
       {right}
     </div>
-  );
-}
-
-function ImageReportCard({
-  isFull = false,
-  imageUrl,
-  onOpenPreview,
-}: {
-  isFull?: boolean;
-  imageUrl?: string;
-  onOpenPreview?: (imageUrl: string) => void;
-}) {
-  // 이미지가 없으면 빈 상태를 두지 않고 섹션을 통째로 감춘다.
-  if (!imageUrl) {
-    return null;
-  }
-
-  return (
-    <button
-      type="button"
-      className={[lockerImageButton, isFull ? fullLockerImage : ""]
-        .filter(Boolean)
-        .join(" ")}
-      onClick={() => onOpenPreview?.(imageUrl)}
-      aria-label={m.report_section_photo()}
-    >
-      <img
-        className={lockerImage}
-        src={imageUrl}
-        alt={m.report_section_photo()}
-      />
-    </button>
   );
 }
