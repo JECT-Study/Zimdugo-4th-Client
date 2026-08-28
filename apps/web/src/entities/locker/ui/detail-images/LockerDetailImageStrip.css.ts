@@ -1,7 +1,8 @@
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
 
-export const IMAGE_HEIGHT_PX = 160;
+/** 사진 비율. 세로로 긴 보관함 사진이 많아 가로로 눌리지 않게 4:3 으로 둔다. */
+const IMAGE_ASPECT_RATIO = "4 / 3";
 
 /** 한 장일 때는 꽉 채우고, 여러 장일 때는 다음 장 가장자리를 남겨 스와이프를 알린다. */
 const PEEK_ITEM_WIDTH = "85%";
@@ -33,7 +34,7 @@ export const strip = style({
 
 export const item = style({
   position: "relative",
-  height: `${IMAGE_HEIGHT_PX}px`,
+  aspectRatio: IMAGE_ASPECT_RATIO,
   flex: `0 0 ${PEEK_ITEM_WIDTH}`,
   scrollSnapAlign: "start",
 });
@@ -63,7 +64,7 @@ export const image = style({
   display: "block",
   position: "relative",
   width: "100%",
-  height: `${IMAGE_HEIGHT_PX}px`,
+  height: "100%",
   objectFit: "cover",
   borderRadius: vars.radius[6],
   border: `1px solid ${vars.color.border.default}`,
@@ -78,7 +79,7 @@ export const imagePlaceholder = style({
   position: "absolute",
   inset: 0,
   width: "100%",
-  height: `${IMAGE_HEIGHT_PX}px`,
+  height: "100%",
   borderRadius: vars.radius[6],
   border: `1px solid ${vars.color.border.default}`,
   boxSizing: "border-box",
@@ -92,7 +93,7 @@ export const failureBox = style({
   justifyContent: "center",
   gap: vars.spacing[8],
   width: "100%",
-  height: `${IMAGE_HEIGHT_PX}px`,
+  height: "100%",
   padding: vars.spacing[12],
   boxSizing: "border-box",
   borderRadius: vars.radius[6],

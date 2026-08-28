@@ -1,6 +1,6 @@
 import {
-  IconCamera24,
   IconChevronLeft13,
+  IconImageUnavailable24,
   IconX24,
 } from "@repo/ui/tokens/icons";
 import {
@@ -214,7 +214,7 @@ export function OriginalImagePreview({
       >
         {hasCurrentFailed ? (
           <span className={failureBox}>
-            <IconCamera24 />
+            <IconImageUnavailable24 />
             {loadFailedLabel ? <span>{loadFailedLabel}</span> : null}
           </span>
         ) : (

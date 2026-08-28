@@ -1,11 +1,10 @@
 import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
-import { IconCamera24 } from "@repo/ui/tokens/icons";
+import { IconImageUnavailable24 } from "@repo/ui/tokens/icons";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 import {
   failureBox,
   failureText,
-  IMAGE_HEIGHT_PX,
   image,
   imagePlaceholder,
   indicatorDot,
@@ -75,7 +74,7 @@ function LockerDetailImageItem({
     return (
       <li data-image-index={index} className={itemClassName}>
         <span className={failureBox}>
-          <IconCamera24 />
+          <IconImageUnavailable24 />
           <span className={failureText}>
             {m.locker_detail_image_load_failed()}
           </span>
@@ -96,7 +95,7 @@ function LockerDetailImageItem({
         })}
       >
         {status === "loaded" ? null : (
-          <Skeleton className={imagePlaceholder} height={IMAGE_HEIGHT_PX} />
+          <Skeleton className={imagePlaceholder} height="100%" />
         )}
         {shouldLoad ? (
           <img
