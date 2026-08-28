@@ -2,9 +2,12 @@ import {
   type AppLocale,
   BASE_LOCALE,
   LOCALE_COOKIE_NAME,
+  LOCALE_INTENT_COOKIE_MAX_AGE,
+  LOCALE_INTENT_COOKIE_NAME,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
   parsePathLocale,
+  stripLocalePathPrefix,
   UNSUPPORTED_LOCALE_FALLBACK,
 } from "#/shared/i18n/locales";
 
@@ -93,6 +96,189 @@ const resolvePreferredDocumentLocale = (req: Request): AppLocale => {
   return BASE_LOCALE;
 };
 
+const getRequestPath = (url: URL): string => `${url.pathname}${url.search}`;
+
+const LOCALE_INTENT_COOKIE_PREFIX = `${LOCALE_INTENT_COOKIE_NAME}_`;
+
+/**
+ * 마커 이름은 리다이렉트마다 다르다. 목적지로만 이름을 지으면 같은 /ko/a 를
+ * 두 탭에서 열 때 두 리다이렉트가 같은 쿠키를 쓰게 되고, 먼저 소비한 쪽의
+ * 삭제(Max-Age=0)가 아직 쓰이지 않은 다른 탭의 마커까지 지운다.
+ */
+const createLocaleIntentCookieName = (): string =>
+  `${LOCALE_INTENT_COOKIE_PREFIX}${crypto.randomUUID().replace(/-/g, "")}`;
+
+/**
+ * 마커 값은 목적지 자체가 아니라 고정 크기 해시다.
+ *
+ * `/login?returnPath=...` 처럼 목적지가 길면 경로를 그대로 담은 쿠키가 브라우저
+ * 쿠키 크기 제한(약 4KiB)을 넘겨 아예 저장되지 않는다. 넘지 않더라도 그동안
+ * 같은 출처의 모든 요청에 큰 쿠키가 실린다.
+ */
+const hashTarget = (target: string): string => {
+  let low = 0x811c9dc5;
+  let high = 0x01000193;
+
+  for (let index = 0; index < target.length; index += 1) {
+    const code = target.charCodeAt(index);
+    low = Math.imul(low ^ code, 0x01000193);
+    high = Math.imul(high ^ code, 0x85ebca6b);
+  }
+
+  return `${(low >>> 0).toString(36)}${(high >>> 0).toString(36)}`;
+};
+
+/**
+ * 이 목적지 앞으로 남겨진 마커의 이름. 이름은 nonce 라 목적지 해시를 담은 값으로
+ * 찾는다. 마커는 Path=/ 쿠키라 값을 대조하지 않으면 동시에 진행되는 다른
+ * 무접두 탐색이 집어삼킬 수 있다. 소비한 응답은 찾은 이름만 지운다.
+ */
+const findLocaleIntentCookieName = (
+  cookieHeader: string | null,
+  target: string,
+): string | null => {
+  if (!cookieHeader) return null;
+
+  const expectedValue = hashTarget(target);
+
+  for (const cookie of cookieHeader.split(";")) {
+    const [name, ...valueParts] = cookie.trim().split("=");
+    if (!name.startsWith(LOCALE_INTENT_COOKIE_PREFIX)) continue;
+    if (valueParts.join("=") === expectedValue) return name;
+  }
+
+  return null;
+};
+
+const buildLocaleIntentCookie = (
+  url: URL,
+  name: string,
+  target: string | null,
+): string => {
+  const value = target === null ? "" : hashTarget(target);
+  const maxAge = target === null ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
+  const secure = url.protocol === "https:" ? "; Secure" : "";
+
+  return `${name}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax; HttpOnly${secure}`;
+};
+
+/**
+ * 기존 Vary 토큰을 지우지 않고 필요한 것만 더한다. 하위 핸들러가 이미
+ * Accept-Encoding 같은 값을 걸어뒀을 수 있는데, 덮어쓰면 공용 캐시가 원래
+ * 구분해야 할 응답 변형을 하나로 취급한다. `*` 는 이미 최대치라 그대로 둔다.
+ */
+const mergeVary = (headers: Headers, added: readonly string[]): void => {
+  const existing = headers.get("Vary");
+  if (existing?.trim() === "*") return;
+
+  const tokens = existing
+    ? existing
+        .split(",")
+        .map((token) => token.trim())
+        .filter(Boolean)
+    : [];
+
+  for (const token of added) {
+    const isPresent = tokens.some(
+      (existingToken) => existingToken.toLowerCase() === token.toLowerCase(),
+    );
+    if (!isPresent) tokens.push(token);
+  }
+
+  headers.set("Vary", tokens.join(", "));
+};
+
+/**
+ * 마커를 소비한 응답에서 마커를 지운다. 이 응답은 마커 유무에 따라 내용이
+ * 달라지므로 공용 캐시가 섞지 않도록 Vary 도 함께 붙인다.
+ */
+export const withConsumedLocaleIntentHeaders = (
+  req: Request,
+  response: Response,
+): Response => {
+  const url = new URL(req.url);
+  const consumedName = findLocaleIntentCookieName(
+    req.headers.get("Cookie"),
+    getRequestPath(url),
+  );
+  if (!consumedName) return response;
+
+  const headers = new Headers(response.headers);
+  headers.append(
+    "Set-Cookie",
+    buildLocaleIntentCookie(url, consumedName, null),
+  );
+  mergeVary(headers, ["Cookie", "Accept-Language"]);
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+/**
+ * 마커를 소비한 요청의 응답을 마무리한다. 리다이렉트면 목적지 앞으로 의도를
+ * 이어주고, 아니면 소비한 마커만 지운다.
+ *
+ * 마커를 소비한 요청은 URL 에 접두사가 없어, 그 요청이 만든 리다이렉트 목적지도
+ * 무접두가 된다. 그대로 두면 목적지 요청이 다시 Accept-Language 로 넘어가
+ * /ko/report 가 /en/ 으로, /ko/my 가 /en/settings 로 끝난다. 인증 가드의 조기
+ * 리다이렉트와 라우터가 만든 리다이렉트가 모두 같은 경로를 탄다.
+ */
+export const withForwardedLocaleIntent = (
+  req: Request,
+  response: Response,
+): Response => {
+  const location = response.headers.get("Location");
+  if (!location) return withConsumedLocaleIntentHeaders(req, response);
+
+  const url = new URL(req.url);
+
+  let destination: URL;
+  try {
+    destination = new URL(location, url);
+  } catch {
+    return withConsumedLocaleIntentHeaders(req, response);
+  }
+
+  // 출처를 벗어나거나 이미 로케일을 담은 목적지에는 마커를 붙이지 않는다.
+  // 후자는 URL 이 이미 의도를 나른다.
+  if (
+    destination.origin !== url.origin ||
+    parsePathLocale(destination.pathname)
+  ) {
+    return withConsumedLocaleIntentHeaders(req, response);
+  }
+
+  const cleared = withConsumedLocaleIntentHeaders(req, response);
+  const headers = new Headers(cleared.headers);
+  headers.append(
+    "Set-Cookie",
+    buildLocaleIntentCookie(
+      url,
+      createLocaleIntentCookieName(),
+      getRequestPath(destination),
+    ),
+  );
+
+  return new Response(cleared.body, {
+    status: cleared.status,
+    statusText: cleared.statusText,
+    headers,
+  });
+};
+
+/**
+ * base locale 의 정규 주소. 접두사를 떼어낸 경로다.
+ *
+ * `/ko//evil.example/x` 처럼 접두사 뒤가 슬래시로 시작하면 결과가
+ * `//evil.example/x` 가 되고, Location 에 넣는 순간 프로토콜 상대 URL 로
+ * 해석돼 외부 호스트로 나가는 오픈 리다이렉트가 된다. 슬래시를 하나로 접는다.
+ */
+const getBaseLocalePath = (url: URL): string =>
+  `${stripLocalePathPrefix(url.pathname).replace(/^\/+/, "/")}${url.search}`;
+
 const getLocalizedPath = (url: URL, locale: AppLocale): string => {
   if (locale === BASE_LOCALE) {
     return `${url.pathname}${url.search}`;
@@ -140,11 +326,34 @@ export type LocaleGuardResult =
       kind: "continue";
       middlewareRequest: Request;
       pathLocale: AppLocale | null;
+      /** 마커를 읽었으니 응답에서 지워야 한다는 표시. */
+      consumedLocaleIntent: boolean;
     };
 
 export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
   const url = new URL(req.url);
   const pathLocale = getPathLocale(url.pathname);
+
+  if (pathLocale === BASE_LOCALE && isDocumentRequest(req)) {
+    /**
+     * base locale 은 무접두가 정규 주소다. 접두사를 그대로 두면 paraglide 가
+     * 떼어내는데, 그 순간 "URL 이 로케일을 명시했다"는 사실이 사라져 다음
+     * 요청이 Accept-Language 로 넘어간다. 여기서 직접 떼면서 의도를 일회용
+     * 마커에 실어 보내면 리다이렉트도 한 번으로 줄고 의도도 살아남는다.
+     */
+    const baseLocalePath = getBaseLocalePath(url);
+
+    return {
+      kind: "redirect",
+      response: getLocaleRedirectResponse(baseLocalePath, {
+        "Set-Cookie": buildLocaleIntentCookie(
+          url,
+          createLocaleIntentCookieName(),
+          baseLocalePath,
+        ),
+      }),
+    };
+  }
 
   if (pathLocale) {
     const canonicalPath = getCanonicalLocalePath(url, pathLocale);
@@ -157,6 +366,21 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
       };
     }
   } else if (isDocumentRequest(req)) {
+    const intentCookieName = findLocaleIntentCookieName(
+      req.headers.get("Cookie"),
+      getRequestPath(url),
+    );
+
+    if (intentCookieName) {
+      // 방금 /ko 를 떼고 온 요청이다. 선호 감지를 건너뛰고 base locale 로 둔다.
+      return {
+        kind: "continue",
+        middlewareRequest: req,
+        pathLocale: BASE_LOCALE,
+        consumedLocaleIntent: true,
+      };
+    }
+
     const preferredLocale = resolvePreferredDocumentLocale(req);
 
     if (preferredLocale !== BASE_LOCALE) {
@@ -176,5 +400,6 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
     kind: "continue",
     middlewareRequest: req,
     pathLocale,
+    consumedLocaleIntent: false,
   };
 };
