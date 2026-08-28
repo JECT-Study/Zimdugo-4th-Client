@@ -173,19 +173,20 @@ export const withConsumedLocaleIntentHeaders = (
 };
 
 /**
- * 가드 뒤에서 곧장 돌아가는 리다이렉트에 base locale 의도를 이어붙인다.
+ * 마커를 소비한 요청의 응답을 마무리한다. 리다이렉트면 목적지 앞으로 의도를
+ * 이어주고, 아니면 소비한 마커만 지운다.
  *
- * 인증 가드들은 `Location` 을 요청 경로의 로케일 접두사로 만드는데, 마커를
- * 소비한 요청은 접두사가 없어 목적지도 무접두가 된다. 그대로 두면 그 목적지
- * 요청이 다시 Accept-Language 로 넘어가 /ko/report 가 /en/ 으로 끝난다.
- * 소비한 마커는 지우고 목적지 앞으로 새 마커를 남긴다.
+ * 마커를 소비한 요청은 URL 에 접두사가 없어, 그 요청이 만든 리다이렉트 목적지도
+ * 무접두가 된다. 그대로 두면 목적지 요청이 다시 Accept-Language 로 넘어가
+ * /ko/report 가 /en/ 으로, /ko/my 가 /en/settings 로 끝난다. 인증 가드의 조기
+ * 리다이렉트와 라우터가 만든 리다이렉트가 모두 같은 경로를 탄다.
  */
 export const withForwardedLocaleIntent = (
   req: Request,
   response: Response,
 ): Response => {
   const location = response.headers.get("Location");
-  if (!location) return response;
+  if (!location) return withConsumedLocaleIntentHeaders(req, response);
 
   const url = new URL(req.url);
 
@@ -193,13 +194,17 @@ export const withForwardedLocaleIntent = (
   try {
     destination = new URL(location, url);
   } catch {
-    return response;
+    return withConsumedLocaleIntentHeaders(req, response);
   }
 
-  // 출처를 벗어나는 목적지에는 마커를 붙이지 않는다.
-  if (destination.origin !== url.origin) return response;
-  // 목적지가 이미 로케일을 담고 있으면 URL 이 의도를 나른다.
-  if (parsePathLocale(destination.pathname)) return response;
+  // 출처를 벗어나거나 이미 로케일을 담은 목적지에는 마커를 붙이지 않는다.
+  // 후자는 URL 이 이미 의도를 나른다.
+  if (
+    destination.origin !== url.origin ||
+    parsePathLocale(destination.pathname)
+  ) {
+    return withConsumedLocaleIntentHeaders(req, response);
+  }
 
   const cleared = withConsumedLocaleIntentHeaders(req, response);
   const headers = new Headers(cleared.headers);

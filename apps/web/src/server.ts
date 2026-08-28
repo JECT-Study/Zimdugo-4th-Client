@@ -7,7 +7,6 @@ import {
 } from "#/features/auth/sign-in/model/server-protected-route-guard";
 import {
   resolveLocaleRequest,
-  withConsumedLocaleIntentHeaders,
   withForwardedLocaleIntent,
 } from "#/shared/i18n/server-locale-guard";
 
@@ -49,10 +48,11 @@ export default {
       handler.fetch(middlewareRequest),
     );
 
-    const localeResponse = guard.consumedLocaleIntent
-      ? withConsumedLocaleIntentHeaders(middlewareRequest, response)
-      : response;
-
-    return withProtectedDocumentHeaders(middlewareRequest, localeResponse);
+    // 라우터도 리다이렉트를 돌려준다(/my → /settings 등). 인증 가드와 같은
+    // 이유로 목적지에 의도를 이어줘야 한다.
+    return withProtectedDocumentHeaders(
+      middlewareRequest,
+      forwardLocaleIntent(response),
+    );
   },
 };

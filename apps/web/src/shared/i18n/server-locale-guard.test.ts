@@ -353,7 +353,13 @@ describe("withForwardedLocaleIntent", () => {
 
     const response = withForwardedLocaleIntent(req, createAuthRedirect("/ja"));
 
-    expect(response.headers.getSetCookie()).toEqual([]);
+    // 소비한 마커는 지우되 새 마커는 남기지 않는다. 목적지 URL 이 이미 ja 다.
+    expect(
+      response.headers.getSetCookie().some((c) => c.includes("Max-Age=10")),
+    ).toBe(false);
+    expect(
+      response.headers.getSetCookie().some((c) => c.includes("Max-Age=0")),
+    ).toBe(true);
   });
 
   it("never marks a destination outside the origin", () => {
@@ -366,6 +372,54 @@ describe("withForwardedLocaleIntent", () => {
       createAuthRedirect("https://evil.example/x"),
     );
 
-    expect(response.headers.getSetCookie()).toEqual([]);
+    expect(
+      response.headers.getSetCookie().some((c) => c.includes("Max-Age=10")),
+    ).toBe(false);
+  });
+});
+
+describe("withForwardedLocaleIntent on router redirects", () => {
+  it("carries the intent through a route-level redirect", () => {
+    // /ko/my → /my 로 마커를 받은 뒤, 라우터가 /settings 로 다시 보낸다.
+    const req = createDocumentRequest("https://zimdugo.com/my", {
+      Cookie: issueIntentCookie("https://zimdugo.com/ko/my"),
+    });
+
+    const response = withForwardedLocaleIntent(
+      req,
+      new Response(null, { status: 302, headers: { Location: "/settings" } }),
+    );
+
+    const forwarded = response.headers
+      .getSetCookie()
+      .find((cookie) => cookie.includes("Max-Age=10"));
+
+    expect(forwarded).toContain(encodeURIComponent("/settings"));
+
+    const next = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/settings", {
+        "Accept-Language": "en-US,en;q=0.9",
+        Cookie: (forwarded ?? "").split(";")[0],
+      }),
+    );
+
+    expect(next.kind).toBe("continue");
+    if (next.kind !== "continue") return;
+
+    expect(next.pathLocale).toBe("ko");
+  });
+
+  it("clears the marker on a plain rendered response", () => {
+    const req = createDocumentRequest("https://zimdugo.com/settings", {
+      Cookie: issueIntentCookie("https://zimdugo.com/ko/settings"),
+    });
+
+    const response = withForwardedLocaleIntent(
+      req,
+      new Response("ok", { status: 200 }),
+    );
+
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    expect(response.headers.get("Vary")).toBe("Cookie, Accept-Language");
   });
 });
