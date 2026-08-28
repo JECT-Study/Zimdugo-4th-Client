@@ -128,7 +128,7 @@ export interface LockerDetailBottomSheetProps {
   onCorrectionSubmit?: (
     item: LockerDetailItem,
     request: LockerCorrectionRequest,
-  ) => void;
+  ) => Promise<void> | void;
   onNavigate?: (item: LockerDetailItem) => void;
   isFavoriteActionVisible?: boolean;
   minSnapPoint?: number;
@@ -488,9 +488,11 @@ export function LockerDetailBottomSheet({
     onReport?.(locker);
   };
 
-  const handleCorrectionSubmit = (request: LockerCorrectionRequest) => {
-    onCorrectionSubmit?.(locker, request);
-  };
+  // 부모가 제출 핸들러를 넘기지 않았으면 흐름에도 넘기지 않는다. 그래야
+  // 요청 없이 성공 팝업이 열리는 일이 없다.
+  const handleCorrectionSubmit = onCorrectionSubmit
+    ? (request: LockerCorrectionRequest) => onCorrectionSubmit(locker, request)
+    : undefined;
 
   const handleNavigate = () => {
     onNavigate?.(locker);

@@ -106,10 +106,34 @@ export const detailsField = style({
 
 export const submitButton = style({
   width: "calc(100% + 3px)",
-  marginTop: "22px",
+  marginTop: "2px",
 });
 
 globalStyle(`${submitButton}${submitButton}[data-disabled]`, {
   backgroundColor: vars.color.bg.disable,
   color: vars.color.text.white,
+});
+
+/**
+ * 에러 문구 자리. 문구가 없을 때도 한 줄을 차지해, 실패 순간 버튼이
+ * 밀려 내려가며 오조작을 유발하지 않게 한다.
+ */
+export const submitError = style({
+  margin: 0,
+  marginTop: vars.spacing[8],
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: vars.typography.fontSize[12],
+  lineHeight: vars.typography.lineHeight.normal,
+  // 두 줄까지 미리 잡아둔다. 한 줄만 잡으면 en/ja 처럼 긴 문구가 좁은
+  // 화면에서 감길 때 버튼이 밀려 내려간다.
+  height: "40px",
+  color: vars.color.palette.red[300],
+  textAlign: "center",
+});
+
+/** 펜 아이콘을 뺀 자리만큼 글자수 표시를 오른쪽으로 붙이되, 모서리에 닿지 않게 둔다. */
+globalStyle(`${detailsField} > span`, {
+  right: vars.spacing[8],
 });

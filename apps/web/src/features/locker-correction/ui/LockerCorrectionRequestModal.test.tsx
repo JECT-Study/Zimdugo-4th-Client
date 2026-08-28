@@ -104,7 +104,7 @@ describe("LockerCorrectionRequestModal", () => {
     ).toBeTruthy();
 
     const detailsField = screen.getByRole("textbox", {
-      name: "상세 내용을 입력해주세요 (선택).",
+      name: "상세 내용을 입력해주세요.",
     });
     fireEvent.change(detailsField, {
       target: { value: "가".repeat(MAX_LOCKER_CORRECTION_DETAILS_LENGTH + 1) },
@@ -121,6 +121,26 @@ describe("LockerCorrectionRequestModal", () => {
         `${MAX_LOCKER_CORRECTION_DETAILS_LENGTH}/${MAX_LOCKER_CORRECTION_DETAILS_LENGTH}`,
       ),
     ).toBeTruthy();
+  });
+
+  it("기타 문제는 상세 내용을 입력하기 전까지 완료 버튼을 비활성화한다", () => {
+    render(<ControlledModal onSubmit={() => undefined} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /신고 유형 선택/ }));
+    fireEvent.click(screen.getByRole("option", { name: "기타 문제가 있어요" }));
+
+    const submitButton = screen.getByRole("button", { name: "완료" });
+    const detailsField = screen.getByRole("textbox", {
+      name: "상세 내용을 입력해주세요.",
+    });
+
+    expect(submitButton.hasAttribute("disabled")).toBe(true);
+
+    fireEvent.change(detailsField, { target: { value: "   " } });
+    expect(submitButton.hasAttribute("disabled")).toBe(true);
+
+    fireEvent.change(detailsField, { target: { value: "기타 사유" } });
+    expect(submitButton.hasAttribute("disabled")).toBe(false);
   });
 
   it("닫기 버튼으로 모달을 닫는다", () => {

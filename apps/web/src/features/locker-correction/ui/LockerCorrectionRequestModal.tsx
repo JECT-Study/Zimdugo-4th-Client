@@ -2,7 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Dropdown, type DropdownOption } from "@repo/ui/components/dropdown";
 import { TextareaField } from "@repo/ui/components/textarea-field";
-import { IconPencil24, IconX24 } from "@repo/ui/tokens/icons";
+import { IconX24 } from "@repo/ui/tokens/icons";
 import type { Key } from "react";
 import {
   Button as AriaButton,
@@ -30,6 +30,7 @@ import {
   modal,
   overlay,
   submitButton,
+  submitError,
   title,
 } from "./LockerCorrectionRequestModal.css.ts";
 
@@ -66,6 +67,8 @@ export interface LockerCorrectionRequestModalProps {
   details: string;
   onDetailsChange: (details: string) => void;
   onSubmit: (request: LockerCorrectionRequest) => void;
+  /** 제출 실패 안내. 없으면 자리만 유지한다. */
+  errorMessage?: string;
   isSubmitting?: boolean;
   isReasonMenuOpen?: boolean;
   onReasonMenuOpenChange?: (isOpen: boolean) => void;
@@ -79,12 +82,19 @@ export function LockerCorrectionRequestModal({
   details,
   onDetailsChange,
   onSubmit,
+  errorMessage,
   isSubmitting = false,
   isReasonMenuOpen,
   onReasonMenuOpenChange,
 }: LockerCorrectionRequestModalProps) {
   const reasonOptions = getReasonOptions();
-  const isSubmitDisabled = reason === null || isSubmitting;
+  const isOtherReason = reason === LOCKER_CORRECTION_REASON.Other;
+  const hasDetails = details.trim().length > 0;
+  const isSubmitDisabled =
+    reason === null || isSubmitting || (isOtherReason && !hasDetails);
+  const detailsPlaceholder = isOtherReason
+    ? m.locker_correction_details_required_placeholder()
+    : m.locker_correction_details_placeholder();
 
   const handleReasonChange = (key: Key | null) => {
     if (key === null) {
@@ -153,11 +163,18 @@ export function LockerCorrectionRequestModal({
                   value={details}
                   onChange={onDetailsChange}
                   maxLength={MAX_LOCKER_CORRECTION_DETAILS_LENGTH}
-                  placeholder={m.locker_correction_details_placeholder()}
-                  aria-label={m.locker_correction_details_placeholder()}
-                  trailingIcon={<IconPencil24 />}
+                  placeholder={detailsPlaceholder}
+                  aria-label={detailsPlaceholder}
                 />
               ) : null}
+
+              <p
+                className={submitError}
+                role={errorMessage ? "alert" : undefined}
+                aria-hidden={errorMessage ? undefined : true}
+              >
+                {errorMessage ?? "\u00A0"}
+              </p>
 
               <Button
                 className={submitButton}
