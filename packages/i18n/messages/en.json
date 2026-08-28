@@ -390,6 +390,7 @@
   "settings_document_retry": "Try again",
   "settings_document_loading_aria": "Loading document",
   "settings_notice_empty": "No notices available.",
+  "settings_notice_not_found": "This notice could not be found.",
   "seo_locker_detail_title": "{name} | Zimdugo Luggage Storage",
   "seo_locker_detail_description": "Find detailed information about {name} luggage storage including location({address}), {priceText}, and operating hours easily on Zimdugo.",
   "seo_locker_detail_price_text": "minimum price {price} KRW",

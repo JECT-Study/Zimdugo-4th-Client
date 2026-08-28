@@ -144,7 +144,7 @@ function NoticeDetailRoutePage() {
           className={content}
           style={{ textAlign: "center", paddingTop: 64 }}
         >
-          <p className={introText}>{m.settings_notice_empty()}</p>
+          <p className={introText}>{m.settings_notice_not_found()}</p>
         </main>
       </div>
     );

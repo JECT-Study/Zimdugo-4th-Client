@@ -390,6 +390,7 @@
   "settings_document_retry": "再試行",
   "settings_document_loading_aria": "ドキュメントを読み込み中",
   "settings_notice_empty": "お知らせはまだありません。",
+  "settings_notice_not_found": "選択したお知らせが見つかりませんでした。",
   "seo_locker_detail_title": "{name} | Zimdugo コインロッカー",
   "seo_locker_detail_description": "{name} コインロッカーの位置（{address}）、{priceText}、営業時間などの詳細情報をZimdugoで簡単かつ迅速に確認してください。",
   "seo_locker_detail_price_text": "最低料金 {price}ウォン",
