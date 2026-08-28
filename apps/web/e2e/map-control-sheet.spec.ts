@@ -199,3 +199,46 @@ test.describe("상세 시트와 지도 컨트롤", () => {
       .toBe(BASE_BOTTOM_PX);
   });
 });
+
+/**
+ * 시트가 사라지면 컨트롤도 따라 내려와야 한다.
+ *
+ * 단계(sheetMode)는 그대로인데 시트만 사라지는 상태가 있다. 검색 오버레이가
+ * 덮을 때가 그렇다. 컨트롤 배치가 단계만 보던 시절에는 이때 컨트롤이 없는 시트
+ * 윗변에 그대로 떠 있었고, 라이브 오프셋을 되돌리는 이펙트도 돌지 않아 화면
+ * 한복판에 버튼만 남았다.
+ */
+test.describe("시트가 사라진 상태의 지도 컨트롤", () => {
+  const bottomPxOf = (page: Page) =>
+    mapControlStack(page).evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).bottom),
+    );
+
+  test("검색 오버레이가 시트를 덮으면 기본 자리로 돌아온다", async ({
+    page,
+  }) => {
+    await page.goto(`/?locker=${LOCKER_ID}`);
+    await waitForMapReady(page);
+    await expectSheetSettledAt(page, DETAIL_HALF_VISIBLE_HEIGHT);
+    expect(await bottomPxOf(page)).toBe(
+      DETAIL_HALF_VISIBLE_HEIGHT + SHEET_GAP_PX,
+    );
+
+    await page.getByRole("button", { name: "검색어 입력" }).first().click();
+    await expect(sheetSurface(page)).toHaveCount(0);
+
+    await expect.poll(async () => bottomPxOf(page)).toBe(BASE_BOTTOM_PX);
+  });
+
+  test("검색 컨텍스트를 벗어나면 기본 자리로 돌아온다", async ({ page }) => {
+    await page.goto("/?q=서울역");
+    await waitForMapReady(page);
+    await expect(sheetSurface(page)).toBeVisible();
+    await expect(mapControlStack(page)).toBeVisible();
+
+    await page.getByRole("button", { name: "홈으로 돌아가기" }).click();
+    await expect(sheetSurface(page)).toHaveCount(0);
+
+    await expect.poll(async () => bottomPxOf(page)).toBe(BASE_BOTTOM_PX);
+  });
+});
