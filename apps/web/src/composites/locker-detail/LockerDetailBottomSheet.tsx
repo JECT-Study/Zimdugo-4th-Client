@@ -163,6 +163,8 @@ const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 const DETAIL_HALF_VISIBLE_HEIGHT = 191;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
+/** 창을 못 읽는 서버 렌더에서만 쓰는 값. 클라이언트는 첫 렌더부터 실제 높이를 쓴다. */
+const FALLBACK_WINDOW_HEIGHT = 812;
 
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
 
@@ -314,7 +316,9 @@ export function LockerDetailBottomSheet({
   onLiveOffsetChange,
   snapRequest,
 }: LockerDetailBottomSheetProps) {
-  const [windowHeight, setWindowHeight] = useState(812);
+  const [windowHeight, setWindowHeight] = useState(() =>
+    typeof window === "undefined" ? FALLBACK_WINDOW_HEIGHT : window.innerHeight,
+  );
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
@@ -413,10 +417,19 @@ export function LockerDetailBottomSheet({
    * resolvedInitialSnapPoint 는 거기에 clamp 까지 걸려 주소창이 접히기만 해도 변한다.
    * 그래서 "어느 단계로 열라는 요청이 있었는가" 만 본다.
    */
-  const sheetSessionKey = `${locker.lockerId}-${
-    initialSnapPoint === undefined ? "auto" : "requested"
-  }`;
+  const requestedSnapStage =
+    initialSnapPoint === undefined
+      ? "auto"
+      : resolveLockerDetailSnapStage({
+          maxSnapPoint: resolvedMaxSnapPoint,
+          miniSnapPoint: resolvedMiniSnapPoint,
+          minSnapPoint: resolvedMinSnapPoint,
+          offset: resolvedInitialSnapPoint,
+          snapPoint: resolvedSnapPoint,
+        });
+  const sheetSessionKey = `${locker.lockerId}-${requestedSnapStage}`;
   const sheetSessionKeyRef = useRef(sheetSessionKey);
+
   /**
    * 시트에 실제로 넘기는 초기 스냅. 세션이 바뀔 때만 다시 잡는다.
    *
@@ -424,10 +437,26 @@ export function LockerDetailBottomSheet({
    * clamp 된 값을 넘기면 주소창이 접히기만 해도 사용자가 올려 둔 시트가 내려간다.
    * 세션 동안 고정해 두면 경계가 바뀌어도 시트는 있던 자리에 머물고, 자식은
    * 범위를 벗어난 경우에만 스스로 clamp 한다.
+   *
+   * effect 가 아니라 렌더 중에 잡는다. 세션이 바뀌면 시트도 같은 렌더에서 새로
+   * 마운트되는데, effect 로 미루면 그 마운트가 직전 세션의 값을 초기값으로 읽는다.
    */
-  const [sessionInitialSnapPoint, setSessionInitialSnapPoint] = useState(
-    resolvedInitialSnapPoint,
-  );
+  const [sessionSnapshot, setSessionSnapshot] = useState({
+    key: sheetSessionKey,
+    initialSnapPoint: resolvedInitialSnapPoint,
+  });
+
+  if (sessionSnapshot.key !== sheetSessionKey) {
+    setSessionSnapshot({
+      key: sheetSessionKey,
+      initialSnapPoint: resolvedInitialSnapPoint,
+    });
+  }
+
+  const sessionInitialSnapPoint =
+    sessionSnapshot.key === sheetSessionKey
+      ? sessionSnapshot.initialSnapPoint
+      : resolvedInitialSnapPoint;
 
   /**
    * 스냅 애니메이션이 진행되는 동안의 실제 시트 오프셋.
@@ -628,7 +657,6 @@ export function LockerDetailBottomSheet({
     }
 
     sheetSessionKeyRef.current = sheetSessionKey;
-    setSessionInitialSnapPoint(resolvedInitialSnapPoint);
     sheetOffsetValue.set(resolvedInitialSnapPoint);
     snapTargetOffsetRef.current = resolvedInitialSnapPoint;
     setIsOffsetAtSnapTarget(true);

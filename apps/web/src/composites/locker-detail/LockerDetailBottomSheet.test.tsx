@@ -303,6 +303,31 @@ describe("LockerDetailBottomSheet", () => {
     expect(initialSnapProp()).toBe(558);
   });
 
+  it("같은 보관함이라도 열 단계가 바뀌면 새 초기 스냅을 넘긴다", () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
+        onReport={vi.fn()}
+      />,
+    );
+    const initialSnapProp = () =>
+      draggableBottomSheetMock.mock.lastCall?.[0].initialSnapPoint;
+
+    expect(initialSnapProp()).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
+
+    // full 에서 mini 로. 픽셀 값만 보면 둘 다 "명시된 요청" 이라 구분되지 않는다.
+    rerender(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        initialSnapPoint={701}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(initialSnapProp()).toBe(701);
+  });
+
   it("다른 보관함을 열면 시트를 새로 마운트한다", () => {
     const { rerender } = render(
       <LockerDetailBottomSheet
