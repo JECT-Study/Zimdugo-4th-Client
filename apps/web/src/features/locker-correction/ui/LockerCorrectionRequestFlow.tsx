@@ -12,7 +12,7 @@ import { LockerCorrectionRequestModal } from "./LockerCorrectionRequestModal";
 export interface LockerCorrectionRequestFlowProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onConfirm?: (request: LockerCorrectionRequest) => void;
+  onConfirm?: (request: LockerCorrectionRequest) => Promise<void> | void;
 }
 
 export function LockerCorrectionRequestFlow({
@@ -25,6 +25,7 @@ export function LockerCorrectionRequestFlow({
   const [pendingRequest, setPendingRequest] =
     useState<LockerCorrectionRequest | null>(null);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOpenChange = (nextIsOpen: boolean) => {
     onOpenChange(nextIsOpen);
@@ -34,15 +35,22 @@ export function LockerCorrectionRequestFlow({
     setPendingRequest(request);
   };
 
-  const handleConfirm = () => {
-    if (!pendingRequest) {
+  const handleConfirm = async () => {
+    if (!pendingRequest || isSubmitting) {
       return;
     }
 
-    onConfirm?.(pendingRequest);
-    setPendingRequest(null);
-    onOpenChange(false);
-    setIsSuccessOpen(true);
+    setIsSubmitting(true);
+    try {
+      await onConfirm?.(pendingRequest);
+      setPendingRequest(null);
+      onOpenChange(false);
+      setIsSuccessOpen(true);
+    } catch {
+      return;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancelConfirm = () => {
@@ -79,6 +87,7 @@ export function LockerCorrectionRequestFlow({
         details={details}
         onDetailsChange={setDetails}
         onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
       />
       <Popup
         isOpen={pendingRequest !== null}

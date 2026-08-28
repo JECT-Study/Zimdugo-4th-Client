@@ -95,6 +95,10 @@ import {
 } from "#/entities/map/ui/map-control-stack-fallback";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useUser } from "#/entities/user/hooks/useUser";
+import {
+  postLockerIssueReport,
+  toLockerIssueReportRequest,
+} from "#/features/locker-correction/api/create-locker-issue-report";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -3590,6 +3594,12 @@ export function IndexPage() {
           onBack={handleBackFromDetail}
           onShare={handleShareLockerDetail}
           onNavigate={handleOpenNavigationPopup}
+          onCorrectionSubmit={async (locker, request) => {
+            await postLockerIssueReport(
+              locker.lockerId,
+              toLockerIssueReportRequest(request),
+            );
+          }}
           isFavoriteActionVisible={isAuthenticated}
           initialSnapPoint={
             lockerDetailOpensFull ? LOCKER_DETAIL_FULL_TOP_OFFSET : undefined

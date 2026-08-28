@@ -128,7 +128,7 @@ export interface LockerDetailBottomSheetProps {
   onCorrectionSubmit?: (
     item: LockerDetailItem,
     request: LockerCorrectionRequest,
-  ) => void;
+  ) => Promise<void> | void;
   onNavigate?: (item: LockerDetailItem) => void;
   isFavoriteActionVisible?: boolean;
   minSnapPoint?: number;
@@ -489,7 +489,7 @@ export function LockerDetailBottomSheet({
   };
 
   const handleCorrectionSubmit = (request: LockerCorrectionRequest) => {
-    onCorrectionSubmit?.(locker, request);
+    return onCorrectionSubmit?.(locker, request);
   };
 
   const handleNavigate = () => {
