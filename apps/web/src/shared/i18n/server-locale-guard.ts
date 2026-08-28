@@ -109,7 +109,27 @@ const createLocaleIntentCookieName = (): string =>
   `${LOCALE_INTENT_COOKIE_PREFIX}${crypto.randomUUID().replace(/-/g, "")}`;
 
 /**
- * 이 목적지 앞으로 남겨진 마커의 이름. 이름은 nonce 라 목적지를 담은 값으로
+ * 마커 값은 목적지 자체가 아니라 고정 크기 해시다.
+ *
+ * `/login?returnPath=...` 처럼 목적지가 길면 경로를 그대로 담은 쿠키가 브라우저
+ * 쿠키 크기 제한(약 4KiB)을 넘겨 아예 저장되지 않는다. 넘지 않더라도 그동안
+ * 같은 출처의 모든 요청에 큰 쿠키가 실린다.
+ */
+const hashTarget = (target: string): string => {
+  let low = 0x811c9dc5;
+  let high = 0x01000193;
+
+  for (let index = 0; index < target.length; index += 1) {
+    const code = target.charCodeAt(index);
+    low = Math.imul(low ^ code, 0x01000193);
+    high = Math.imul(high ^ code, 0x85ebca6b);
+  }
+
+  return `${(low >>> 0).toString(36)}${(high >>> 0).toString(36)}`;
+};
+
+/**
+ * 이 목적지 앞으로 남겨진 마커의 이름. 이름은 nonce 라 목적지 해시를 담은 값으로
  * 찾는다. 마커는 Path=/ 쿠키라 값을 대조하지 않으면 동시에 진행되는 다른
  * 무접두 탐색이 집어삼킬 수 있다. 소비한 응답은 찾은 이름만 지운다.
  */
@@ -119,13 +139,12 @@ const findLocaleIntentCookieName = (
 ): string | null => {
   if (!cookieHeader) return null;
 
+  const expectedValue = hashTarget(target);
+
   for (const cookie of cookieHeader.split(";")) {
     const [name, ...valueParts] = cookie.trim().split("=");
     if (!name.startsWith(LOCALE_INTENT_COOKIE_PREFIX)) continue;
-
-    try {
-      if (decodeURIComponent(valueParts.join("=")) === target) return name;
-    } catch {}
+    if (valueParts.join("=") === expectedValue) return name;
   }
 
   return null;
@@ -136,11 +155,37 @@ const buildLocaleIntentCookie = (
   name: string,
   target: string | null,
 ): string => {
-  const value = target === null ? "" : encodeURIComponent(target);
+  const value = target === null ? "" : hashTarget(target);
   const maxAge = target === null ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
   const secure = url.protocol === "https:" ? "; Secure" : "";
 
   return `${name}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax; HttpOnly${secure}`;
+};
+
+/**
+ * 기존 Vary 토큰을 지우지 않고 필요한 것만 더한다. 하위 핸들러가 이미
+ * Accept-Encoding 같은 값을 걸어뒀을 수 있는데, 덮어쓰면 공용 캐시가 원래
+ * 구분해야 할 응답 변형을 하나로 취급한다. `*` 는 이미 최대치라 그대로 둔다.
+ */
+const mergeVary = (headers: Headers, added: readonly string[]): void => {
+  const existing = headers.get("Vary");
+  if (existing?.trim() === "*") return;
+
+  const tokens = existing
+    ? existing
+        .split(",")
+        .map((token) => token.trim())
+        .filter(Boolean)
+    : [];
+
+  for (const token of added) {
+    const isPresent = tokens.some(
+      (existingToken) => existingToken.toLowerCase() === token.toLowerCase(),
+    );
+    if (!isPresent) tokens.push(token);
+  }
+
+  headers.set("Vary", tokens.join(", "));
 };
 
 /**
@@ -163,7 +208,7 @@ export const withConsumedLocaleIntentHeaders = (
     "Set-Cookie",
     buildLocaleIntentCookie(url, consumedName, null),
   );
-  headers.set("Vary", "Cookie, Accept-Language");
+  mergeVary(headers, ["Cookie", "Accept-Language"]);
 
   return new Response(response.body, {
     status: response.status,
