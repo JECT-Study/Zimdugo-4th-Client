@@ -96,38 +96,68 @@ const resolvePreferredDocumentLocale = (req: Request): AppLocale => {
   return BASE_LOCALE;
 };
 
+const getRequestPath = (url: URL): string => `${url.pathname}${url.search}`;
+
 /**
- * 마커가 가리키는 목적지. 마커는 Path=/ 쿠키라 이름만 보고 소비하면, 같은
- * 브라우저에서 동시에 진행되는 다른 무접두 탐색이 먼저 집어삼킬 수 있다.
- * 값에 목적지를 담아 그 요청에서만 소비되게 묶는다.
+ * FNV-1a. 마커 이름을 목적지마다 다르게 만드는 용도라 분산만 있으면 된다.
+ * 충돌해도 값 비교가 한 번 더 막는다.
  */
-const getLocaleIntentTarget = (cookieHeader: string | null): string | null => {
-  if (!cookieHeader) return null;
+const hashTarget = (target: string): string => {
+  let hash = 0x811c9dc5;
+
+  for (let index = 0; index < target.length; index += 1) {
+    hash ^= target.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+
+  return (hash >>> 0).toString(36);
+};
+
+/**
+ * 마커 이름은 목적지마다 다르다. 이름이 하나면 탭 두 개에서 /ko/a 와 /ko/b 를
+ * 동시에 열 때 나중 응답이 앞선 마커를 덮어써, 덮인 쪽이 선호 감지로 넘어간다.
+ */
+const getLocaleIntentCookieName = (target: string): string =>
+  `${LOCALE_INTENT_COOKIE_NAME}_${hashTarget(target)}`;
+
+/**
+ * 이 목적지 앞으로 남겨진 마커인지. 이름은 해시라 충돌할 수 있으므로 값에
+ * 담긴 목적지까지 일치해야 소비한다. 마커는 Path=/ 쿠키라 이름만 믿으면
+ * 동시에 진행되는 다른 무접두 탐색이 집어삼킬 수 있다.
+ */
+const hasLocaleIntentFor = (
+  cookieHeader: string | null,
+  target: string,
+): boolean => {
+  if (!cookieHeader) return false;
+
+  const expectedName = getLocaleIntentCookieName(target);
 
   for (const cookie of cookieHeader.split(";")) {
     const [name, ...valueParts] = cookie.trim().split("=");
-    if (name !== LOCALE_INTENT_COOKIE_NAME) continue;
-
-    const value = valueParts.join("=");
-    if (!value) return null;
+    if (name !== expectedName) continue;
 
     try {
-      return decodeURIComponent(value);
+      return decodeURIComponent(valueParts.join("=")) === target;
     } catch {
-      return null;
+      return false;
     }
   }
 
-  return null;
+  return false;
 };
 
-const getRequestPath = (url: URL): string => `${url.pathname}${url.search}`;
-
-const buildLocaleIntentCookie = (url: URL, value: string): string => {
-  const maxAge = value === "" ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
+const buildLocaleIntentCookie = (
+  url: URL,
+  target: string,
+  { clear = false }: { clear?: boolean } = {},
+): string => {
+  const name = getLocaleIntentCookieName(target);
+  const value = clear ? "" : encodeURIComponent(target);
+  const maxAge = clear ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
   const secure = url.protocol === "https:" ? "; Secure" : "";
 
-  return `${LOCALE_INTENT_COOKIE_NAME}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax; HttpOnly${secure}`;
+  return `${name}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax; HttpOnly${secure}`;
 };
 
 /**
@@ -138,8 +168,12 @@ export const withConsumedLocaleIntentHeaders = (
   req: Request,
   response: Response,
 ): Response => {
+  const url = new URL(req.url);
   const headers = new Headers(response.headers);
-  headers.append("Set-Cookie", buildLocaleIntentCookie(new URL(req.url), ""));
+  headers.append(
+    "Set-Cookie",
+    buildLocaleIntentCookie(url, getRequestPath(url), { clear: true }),
+  );
   headers.set("Vary", "Cookie, Accept-Language");
 
   return new Response(response.body, {
@@ -226,10 +260,7 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
     return {
       kind: "redirect",
       response: getLocaleRedirectResponse(baseLocalePath, {
-        "Set-Cookie": buildLocaleIntentCookie(
-          url,
-          encodeURIComponent(baseLocalePath),
-        ),
+        "Set-Cookie": buildLocaleIntentCookie(url, baseLocalePath),
       }),
     };
   }
@@ -245,9 +276,7 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
       };
     }
   } else if (isDocumentRequest(req)) {
-    const intentTarget = getLocaleIntentTarget(req.headers.get("Cookie"));
-
-    if (intentTarget !== null && intentTarget === getRequestPath(url)) {
+    if (hasLocaleIntentFor(req.headers.get("Cookie"), getRequestPath(url))) {
       // 방금 /ko 를 떼고 온 요청이다. 선호 감지를 건너뛰고 base locale 로 둔다.
       return {
         kind: "continue",
