@@ -144,6 +144,40 @@ describe("OriginalImagePreview", () => {
     expect(document.activeElement).toBe(closeButton);
   });
 
+  it("재조회로 앞에 사진이 끼어도 보고 있던 사진을 그대로 둔다", () => {
+    const { rerender } = render(
+      <OriginalImagePreview
+        images={GALLERY}
+        initialIndex={1}
+        alt="원본 사진"
+        closeLabel="닫기"
+        onClose={vi.fn()}
+      />,
+    );
+
+    const getSrc = () =>
+      within(screen.getByRole("dialog", { name: "원본 사진" }))
+        .getByRole("img")
+        .getAttribute("src");
+
+    expect(getSrc()).toBe("https://example.com/b.jpg");
+
+    rerender(
+      <OriginalImagePreview
+        images={["https://example.com/new.jpg", ...GALLERY]}
+        initialIndex={1}
+        alt="원본 사진"
+        closeLabel="닫기"
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(getSrc()).toBe("https://example.com/b.jpg");
+    expect(
+      screen.getByRole("dialog", { name: "원본 사진" }).textContent,
+    ).toContain("3 / 4");
+  });
+
   it("목록이 비면 닫기 콜백을 부른다", () => {
     const handleClose = vi.fn();
     const { rerender } = render(

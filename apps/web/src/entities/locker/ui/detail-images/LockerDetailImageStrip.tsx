@@ -32,7 +32,11 @@ interface LockerDetailImageItemProps {
   isSingle: boolean;
   shouldLoad: boolean;
   status: ImageStatus;
-  onStatusChange: (imageUrl: string, status: ImageStatus) => void;
+  onStatusChange: (
+    imageUrl: string,
+    status: ImageStatus,
+    focusedIndex?: number,
+  ) => void;
   onOpenPreview: (index: number, trigger: HTMLButtonElement) => void;
 }
 
@@ -46,6 +50,8 @@ function LockerDetailImageItem({
   onStatusChange,
   onOpenPreview,
 }: LockerDetailImageItemProps) {
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
   const handleOpenPreview = (event: MouseEvent<HTMLButtonElement>) => {
     onOpenPreview(index, event.currentTarget);
   };
@@ -55,7 +61,9 @@ function LockerDetailImageItem({
   };
 
   const handleImageError = () => {
-    onStatusChange(imageUrl, "failed");
+    // 실패하면 이 버튼이 span 으로 바뀌어 사라진다. 포커스가 있었는지 함께 알린다.
+    const hadFocus = document.activeElement === buttonRef.current;
+    onStatusChange(imageUrl, "failed", hadFocus ? index : undefined);
   };
 
   /**
@@ -94,6 +102,7 @@ function LockerDetailImageItem({
   return (
     <li data-image-index={index} className={itemClassName}>
       <button
+        ref={buttonRef}
         type="button"
         className={itemButton}
         onClick={handleOpenPreview}
@@ -133,7 +142,10 @@ export function LockerDetailImageStrip({
   images,
   onOpenPreview,
 }: LockerDetailImageStripProps) {
+  const sectionRef = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<HTMLUListElement | null>(null);
+  /** 포커스를 쥔 채 실패한 사진의 위치. 복원이 끝나면 비운다. */
+  const focusRecoveryIndexRef = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [furthestIndex, setFurthestIndex] = useState(0);
   /**
@@ -204,6 +216,31 @@ export function LockerDetailImageStrip({
     return () => observer.disconnect();
   }, [imageListKey]);
 
+  /**
+   * 포커스를 쥔 사진이 실패하면 그 button 이 span 으로 바뀌어 사라지고 포커스가
+   * body 로 빠진다. 뒤쪽 사진부터 찾아 옮기고, 남은 사진이 없으면 섹션에라도 둬서
+   * 시트 밖으로 나가지 않게 한다.
+   */
+  useEffect(() => {
+    const failedIndex = focusRecoveryIndexRef.current;
+    if (failedIndex === null) {
+      return;
+    }
+    focusRecoveryIndexRef.current = null;
+
+    const items = Array.from(stripRef.current?.children ?? []);
+    const findButton = (candidates: Element[]) =>
+      candidates
+        .map((li) => li.querySelector<HTMLButtonElement>("button"))
+        .find((button) => button !== null);
+
+    const nextButton =
+      findButton(items.slice(failedIndex + 1)) ??
+      findButton(items.slice(0, failedIndex).reverse());
+
+    (nextButton ?? sectionRef.current)?.focus();
+  });
+
   if (totalCount === 0) {
     return null;
   }
@@ -215,12 +252,20 @@ export function LockerDetailImageStrip({
    * img 의 ref 콜백이 다시 붙어 로드 완료를 또 알린다. 이 순환이 곧
    * `Maximum update depth exceeded` 다.
    */
-  const handleStatusChange = (imageUrl: string, status: ImageStatus) => {
+  const handleStatusChange = (
+    imageUrl: string,
+    status: ImageStatus,
+    focusedIndex?: number,
+  ) => {
     setStatusByUrl((current) =>
       current.get(imageUrl) === status
         ? current
         : new Map(current).set(imageUrl, status),
     );
+
+    if (focusedIndex !== undefined) {
+      focusRecoveryIndexRef.current = focusedIndex;
+    }
   };
 
   const handleOpenPreview = (index: number, trigger: HTMLButtonElement) => {
@@ -228,7 +273,7 @@ export function LockerDetailImageStrip({
   };
 
   return (
-    <div className={section}>
+    <div ref={sectionRef} className={section} tabIndex={-1}>
       <ul
         ref={stripRef}
         className={strip}

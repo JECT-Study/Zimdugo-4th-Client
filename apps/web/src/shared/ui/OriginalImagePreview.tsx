@@ -60,10 +60,26 @@ export function OriginalImagePreview({
   const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const [index, setIndex] = useState(initialIndex);
+  /**
+   * 보고 있는 사진을 위치가 아니라 URL로 기억한다.
+   *
+   * 미리보기가 열린 동안에도 상세 쿼리가 다시 돌아 images prop 자체가 갈릴 수 있다.
+   * 앞쪽에 사진이 끼거나 빠지면 같은 위치가 다른 사진을 가리켜, 사용자가 아무것도
+   * 안 했는데 화면이 넘어간다.
+   */
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(
+    () => images[initialIndex] ?? images[0],
+  );
 
   const totalCount = images.length;
-  const activeIndex = Math.min(index, Math.max(totalCount - 1, 0));
+  const selectedIndex = selectedImage ? images.indexOf(selectedImage) : -1;
+  // 보던 사진이 목록에서 사라졌으면 그 자리라도 지킨다.
+  const lastIndexRef = useRef(initialIndex);
+  const activeIndex =
+    selectedIndex >= 0
+      ? selectedIndex
+      : Math.min(lastIndexRef.current, Math.max(totalCount - 1, 0));
+  lastIndexRef.current = activeIndex;
   const currentImage = images[activeIndex];
   const hasPrevious = activeIndex > 0;
   const hasNext = activeIndex < totalCount - 1;
@@ -84,7 +100,7 @@ export function OriginalImagePreview({
       Math.max(activeIndex + delta, 0),
       Math.max(totalCount - 1, 0),
     );
-    setIndex(nextIndex);
+    setSelectedImage(images[nextIndex]);
 
     const movedButton =
       delta === 1 ? nextButtonRef.current : previousButtonRef.current;

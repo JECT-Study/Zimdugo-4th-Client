@@ -122,6 +122,18 @@ describe("LockerDetailImageStrip", () => {
     }
   });
 
+  it("포커스를 쥔 사진이 실패하면 남은 사진으로 포커스를 옮긴다", () => {
+    render(<LockerDetailImageStrip images={IMAGES} />);
+
+    const buttons = getImageButtons();
+    buttons[0].focus();
+    fireEvent.error(buttons[0].querySelector("img") as HTMLImageElement);
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "보관함 사진 2 / 3" }),
+    );
+  });
+
   it("이미지가 한 장뿐이면 인디케이터를 두지 않는다", () => {
     const { container } = render(
       <LockerDetailImageStrip images={[IMAGES[0]]} />,
