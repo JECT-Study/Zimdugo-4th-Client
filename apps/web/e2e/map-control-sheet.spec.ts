@@ -209,6 +209,17 @@ test.describe("상세 시트와 지도 컨트롤", () => {
  * 한복판에 버튼만 남았다.
  */
 test.describe("시트가 사라진 상태의 지도 컨트롤", () => {
+  /**
+   * 위치 권한을 미리 준다.
+   *
+   * 검색 컨텍스트는 거리 계산을 위해 위치를 요청한다. 권한이 없으면 "위치 권한이
+   * 필요합니다" 팝업이 뜨고, 그 딤이 화면 전체를 덮어 검색 바를 누를 수 없다.
+   */
+  test.use({
+    permissions: ["geolocation"],
+    geolocation: { latitude: 37.4979, longitude: 127.0276 },
+  });
+
   const bottomPxOf = (page: Page) =>
     mapControlStack(page).evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).bottom),
@@ -224,7 +235,8 @@ test.describe("시트가 사라진 상태의 지도 컨트롤", () => {
       DETAIL_HALF_VISIBLE_HEIGHT + SHEET_GAP_PX,
     );
 
-    await page.getByRole("button", { name: "검색어 입력" }).first().click();
+    // 검색 바는 읽기 전용 입력이라 포커스가 곧 오버레이 열기다.
+    await page.getByLabel("검색어 입력").click();
     await expect(sheetSurface(page)).toHaveCount(0);
 
     await expect.poll(async () => bottomPxOf(page)).toBe(BASE_BOTTOM_PX);
