@@ -3,6 +3,7 @@ import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/Lock
 import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchListBottomSheet";
 import {
   resolveMapControlBottomPx,
+  resolveVisibleSheetKind,
   shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
@@ -257,5 +258,85 @@ describe("shouldShowHomeHeader 지도 오류", () => {
     expect(
       shouldShowHomeHeader({ isSearchContextActive: true, hasMapError: true }),
     ).toBe(true);
+  });
+});
+
+describe("resolveVisibleSheetKind", () => {
+  const base = {
+    sheetMode: "list",
+    isMapLoading: false,
+    isSearchOpen: false,
+    hasDetailContent: false,
+  } as const;
+
+  it("목록 단계면 목록 시트를 본다", () => {
+    expect(resolveVisibleSheetKind(base)).toBe("list");
+  });
+
+  it("상세 단계에 그릴 내용이 있으면 상세 시트를 본다", () => {
+    expect(
+      resolveVisibleSheetKind({
+        ...base,
+        sheetMode: "detail",
+        hasDetailContent: true,
+      }),
+    ).toBe("detail");
+  });
+
+  it("상세 단계여도 그릴 내용이 없으면 시트가 없다", () => {
+    // 조회 실패·삭제된 보관함. 시트는 안 뜨는데 단계만 detail 로 남는다.
+    expect(
+      resolveVisibleSheetKind({
+        ...base,
+        sheetMode: "detail",
+        hasDetailContent: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("검색 오버레이가 덮으면 시트가 없다", () => {
+    expect(resolveVisibleSheetKind({ ...base, isSearchOpen: true })).toBeNull();
+    expect(
+      resolveVisibleSheetKind({
+        ...base,
+        sheetMode: "detail",
+        hasDetailContent: true,
+        isSearchOpen: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("지도가 로딩 중이면 시트가 없다", () => {
+    expect(resolveVisibleSheetKind({ ...base, isMapLoading: true })).toBeNull();
+  });
+
+  it("시트를 띄우지 않는 단계는 시트가 없다", () => {
+    expect(resolveVisibleSheetKind({ ...base, sheetMode: "idle" })).toBeNull();
+    expect(
+      resolveVisibleSheetKind({ ...base, sheetMode: "filter" }),
+    ).toBeNull();
+    expect(
+      resolveVisibleSheetKind({ ...base, sheetMode: "addressList" }),
+    ).toBeNull();
+  });
+
+  it("시트가 없으면 컨트롤은 기본 자리로 돌아온다", () => {
+    // 실측 높이 state 는 시트가 사라져도 남아 있다. 시트가 보이지 않으면 그 값을
+    // 쓰지 않는다는 것이 이 조합의 핵심이다.
+    const visibleSheetKind = resolveVisibleSheetKind({
+      ...base,
+      isSearchOpen: true,
+    });
+
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx:
+          visibleSheetKind === null
+            ? null
+            : resolveSearchListStageVisibleHeight("half", 812),
+        windowHeightPx: 812,
+      }),
+    ).toBe(70);
   });
 });

@@ -199,3 +199,87 @@ test.describe("상세 시트와 지도 컨트롤", () => {
       .toBe(BASE_BOTTOM_PX);
   });
 });
+
+/**
+ * 시트가 사라지면 컨트롤도 따라 내려와야 한다.
+ *
+ * 단계(sheetMode)는 그대로인데 시트만 사라지는 상태가 있다. 검색 오버레이가
+ * 덮을 때가 그렇다. 컨트롤 배치가 단계만 보던 시절에는 이때 컨트롤이 없는 시트
+ * 윗변에 그대로 떠 있었고, 라이브 오프셋을 되돌리는 이펙트도 돌지 않아 화면
+ * 한복판에 버튼만 남았다.
+ */
+test.describe("시트가 사라진 상태의 지도 컨트롤", () => {
+  /**
+   * 위치 권한을 미리 준다.
+   *
+   * 검색 컨텍스트는 거리 계산을 위해 위치를 요청한다. 권한이 없으면 "위치 권한이
+   * 필요합니다" 팝업이 뜨고, 그 딤이 화면 전체를 덮어 검색 바를 누를 수 없다.
+   */
+  test.use({
+    permissions: ["geolocation"],
+    geolocation: { latitude: 37.4979, longitude: 127.0276 },
+  });
+
+  const bottomPxOf = (page: Page) =>
+    mapControlStack(page).evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).bottom),
+    );
+
+  /** 시트가 지금 화면에서 차지하는 높이 */
+  const sheetVisibleHeightOf = async (page: Page) => {
+    const box = await rectOf(sheetSurface(page));
+
+    return Math.round((page.viewportSize()?.height ?? 0) - box.y);
+  };
+
+  /**
+   * 시트가 안착해 컨트롤이 그 위 간격만큼에 놓일 때까지 기다린다.
+   *
+   * 마운트 슬라이드 중에는 컨트롤이 시트가 올라온 비율만큼만 따라오므로 차이가
+   * 간격보다 작다. 두 값의 차이가 간격과 같아지는 순간이 곧 안착이다.
+   */
+  const expectControlRaisedOverSheet = async (page: Page) => {
+    await expect
+      .poll(async () => {
+        const bottom = await bottomPxOf(page);
+
+        return bottom - (await sheetVisibleHeightOf(page));
+      })
+      .toBe(SHEET_GAP_PX);
+  };
+
+  test("검색 컨텍스트에서 오버레이가 목록 시트를 덮으면 기본 자리로 돌아온다", async ({
+    page,
+  }) => {
+    // 검색 컨텍스트에서 열어야 회귀를 잡는다. 상세 딥링크(map 컨텍스트)로 열면
+    // 검색 바를 누르는 순간 handleOpenSearch 가 resetMapContext 로 sheetMode 를
+    // idle 로 되돌려, 단계만 보던 예전 구현에서도 컨트롤이 제자리로 돌아온다.
+    // 검색 컨텍스트에서는 그 리셋이 없어 sheetMode 가 list 로 남는다.
+    await page.goto("/?q=서울역");
+    await waitForMapReady(page);
+    await expect(sheetSurface(page)).toBeVisible();
+    await expectControlRaisedOverSheet(page);
+
+    // 검색 바는 읽기 전용 입력이라 포커스가 곧 오버레이 열기다.
+    await page.getByLabel("검색어 입력").click();
+    await expect(sheetSurface(page)).toHaveCount(0);
+
+    // 시트가 사라졌으니 컨트롤도 내려와야 한다. 예전 구현은 sheetMode 가 list 로
+    // 남아 사라진 시트의 윗변을 계속 따라갔다.
+    await expect.poll(async () => bottomPxOf(page)).toBe(BASE_BOTTOM_PX);
+  });
+
+  // 이 경로는 시트와 함께 sheetMode 도 idle 이 되므로 예전 구현에서도 통과한다.
+  // 회귀를 잡는 스펙이 아니라 "시트가 없으면 기본 자리" 계약을 고정하는 쪽이다.
+  test("검색 컨텍스트를 벗어나면 기본 자리로 돌아온다", async ({ page }) => {
+    await page.goto("/?q=서울역");
+    await waitForMapReady(page);
+    await expect(sheetSurface(page)).toBeVisible();
+    await expect(mapControlStack(page)).toBeVisible();
+
+    await page.getByRole("button", { name: "홈으로 돌아가기" }).click();
+    await expect(sheetSurface(page)).toHaveCount(0);
+
+    await expect.poll(async () => bottomPxOf(page)).toBe(BASE_BOTTOM_PX);
+  });
+});

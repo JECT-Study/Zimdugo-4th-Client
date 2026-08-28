@@ -2,6 +2,7 @@ import {
   MAP_CONTROL_SHEET_GAP_PX,
   MAP_CONTROL_TOP_RESERVED_PX,
 } from "#/entities/map/ui/map-control-stack-fallback";
+import type { SheetModeForContext } from "#/features/search/model/sheet-session";
 
 interface ShouldShowMapControlsOptions {
   isMapLoading: boolean;
@@ -111,4 +112,47 @@ export const resolveMapControlBottomPx = ({
   }
 
   return Math.max(baseBottomPx, raisedBottomPx);
+};
+
+interface ResolveVisibleSheetKindOptions {
+  sheetMode: SheetModeForContext;
+  isMapLoading: boolean;
+  isSearchOpen: boolean;
+  /** 상세 시트에 그릴 내용이 있는지. 목록 시트에는 해당 없다 */
+  hasDetailContent: boolean;
+}
+
+/**
+ * 지금 화면에 실제로 떠 있는 시트.
+ *
+ * sheetMode 는 "어느 시트를 띄울 단계인가" 일 뿐이라 이것만으로는 시트가 보이는지
+ * 알 수 없다. 검색 오버레이가 덮거나, 지도가 아직 로딩 중이거나, 상세에 그릴
+ * 내용이 없으면 단계는 그대로인 채 시트만 사라진다.
+ *
+ * 컨트롤 배치가 sheetMode 만 보던 시절에는 그 상태에서 컨트롤이 없는 시트 윗변에
+ * 그대로 떠 있었다. 라이브 오프셋을 되돌리는 이펙트도 "밀어 올릴 단계가 아닐 때"
+ * 만 돌아서 영영 실행되지 않았다.
+ *
+ * 시트 렌더 조건과 컨트롤 배치가 같은 함수를 보게 해서, 게이트가 늘어나도 두 곳이
+ * 갈리지 않게 한다.
+ */
+export const resolveVisibleSheetKind = ({
+  sheetMode,
+  isMapLoading,
+  isSearchOpen,
+  hasDetailContent,
+}: ResolveVisibleSheetKindOptions): "list" | "detail" | null => {
+  if (isMapLoading || isSearchOpen) {
+    return null;
+  }
+
+  if (sheetMode === "list") {
+    return "list";
+  }
+
+  if (sheetMode === "detail") {
+    return hasDetailContent ? "detail" : null;
+  }
+
+  return null;
 };
