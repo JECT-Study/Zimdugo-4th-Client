@@ -2,7 +2,6 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import {
-  IconCamera24,
   IconCaution24,
   IconChevronLeft13,
   IconDistanceRoute24,
@@ -27,6 +26,7 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
+import { LockerDetailImageStrip } from "#/entities/locker/ui/detail-images";
 import {
   LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX,
   LockerRealtimeStatusCard,
@@ -72,19 +72,13 @@ import {
   fullContentScroll,
   fullContentScrollEnabled,
   fullDetailList,
-  fullImageReportCard,
-  fullLockerImage,
   fullPrimaryActionButton,
-  imageReportCard,
-  imageReportText,
   loadingActionRow,
   loadingContent,
   loadingDetailList,
   loadingDetailRow,
   loadingSummary,
   loadingTextStack,
-  lockerImage,
-  lockerImageButton,
   lockerTitle,
   lockerTitleExpanded,
   metaDot,
@@ -677,6 +671,7 @@ export function LockerDetailBottomSheet({
           ) : (
             <FullDetailContent
               locker={locker}
+              images={locker.images ?? []}
               detailHelpText={detailHelpText}
               onClose={handleBack}
               onMoreActionsOpen={handleOpenMoreActions}
@@ -820,6 +815,7 @@ function LockerDetailErrorContent({
 
 function FullDetailContent({
   locker,
+  images,
   detailHelpText,
   onClose,
   onMoreActionsOpen,
@@ -831,6 +827,7 @@ function FullDetailContent({
   contentRef,
 }: {
   locker: LockerDetailItem;
+  images: string[];
   detailHelpText: string;
   onClose: () => void;
   onMoreActionsOpen: () => void;
@@ -841,20 +838,45 @@ function FullDetailContent({
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
 }) {
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const contentRootRef = useRef<HTMLDivElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
 
-  const handleOpenImagePreview = (imageUrl: string) => {
-    setPreviewImageUrl(imageUrl);
+  const handleOpenImagePreview = (
+    index: number,
+    trigger: HTMLButtonElement,
+  ) => {
+    previewTriggerRef.current = trigger;
+    setPreviewIndex(index);
   };
 
   const handleCloseImagePreview = () => {
-    setPreviewImageUrl(null);
+    const trigger = previewTriggerRef.current;
+    previewTriggerRef.current = null;
+    setPreviewIndex(null);
+
+    // 미리보기를 연 사진 버튼으로 포커스를 돌려 준다.
+    if (trigger?.isConnected) {
+      trigger.focus();
+      return;
+    }
+
+    /**
+     * 그 사진이 깨졌거나 시트가 리마운트돼 버튼이 사라졌을 수 있다. 분리된 노드에
+     * focus() 해도 포커스는 body 로 빠지므로, 남아 있는 첫 사진으로 옮기고
+     * 사진이 하나도 없으면 시트에 항상 있는 더보기 버튼으로 되돌린다.
+     */
+    const fallback = contentRootRef.current?.querySelector<HTMLButtonElement>(
+      "[data-image-index] button",
+    );
+    (fallback ?? moreActionsButtonRef.current)?.focus();
   };
 
   return (
     <div
+      ref={contentRootRef}
       className={[
         fullContentScroll,
         isScrollEnabled ? fullContentScrollEnabled : "",
@@ -911,9 +933,8 @@ function FullDetailContent({
             descriptionClassName={detailDescriptionMultiline}
           />
         </div>
-        <ImageReportCard
-          isFull
-          imageUrl={locker.imageUrl}
+        <LockerDetailImageStrip
+          images={images}
           onOpenPreview={handleOpenImagePreview}
         />
         {/*
@@ -926,14 +947,20 @@ function FullDetailContent({
           <ActionRow isFull onNavigate={onNavigate} />
         </div>
       </div>
-      {previewImageUrl ? (
+      {previewIndex === null ? null : (
         <OriginalImagePreview
-          imageUrl={previewImageUrl}
+          images={images}
+          initialIndex={previewIndex}
+          navigationLabels={{
+            previous: m.locker_detail_image_previous(),
+            next: m.locker_detail_image_next(),
+          }}
+          loadFailedLabel={m.locker_detail_image_load_failed()}
           alt={m.report_section_photo()}
           closeLabel={m.search_close_aria()}
           onClose={handleCloseImagePreview}
         />
-      ) : null}
+      )}
     </div>
   );
 }
@@ -1210,49 +1237,6 @@ function InlineMeta({
         <span className={metaDot} aria-hidden="true" />
       ) : null}
       {right}
-    </div>
-  );
-}
-
-function ImageReportCard({
-  isFull = false,
-  imageUrl,
-  onOpenPreview,
-}: {
-  isFull?: boolean;
-  imageUrl?: string;
-  onOpenPreview?: (imageUrl: string) => void;
-}) {
-  if (imageUrl) {
-    return (
-      <button
-        type="button"
-        className={[lockerImageButton, isFull ? fullLockerImage : ""]
-          .filter(Boolean)
-          .join(" ")}
-        onClick={() => onOpenPreview?.(imageUrl)}
-        aria-label={m.report_section_photo()}
-      >
-        <img
-          className={lockerImage}
-          src={imageUrl}
-          alt={m.report_section_photo()}
-        />
-      </button>
-    );
-  }
-
-  return (
-    <div
-      className={[imageReportCard, isFull ? fullImageReportCard : ""]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <IconCamera24 />
-      <div className={imageReportText}>
-        <span>{m.locker_detail_no_image_title()}</span>
-        <span>{m.locker_detail_no_image_helper()}</span>
-      </div>
     </div>
   );
 }

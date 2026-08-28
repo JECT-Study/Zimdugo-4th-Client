@@ -225,21 +225,71 @@ describe("locker-adapters", () => {
     expect(detail.priceLabel).toBe("미제공");
   });
 
-  it("maps locker detail imageUrl", () => {
-    const detail = toLockerDetailItem({
-      lockerId: 1,
-      lockerName: "Locker",
-      roadAddress: "Seoul",
-      lockerType: "SUBWAY_STATION",
-      latitude: 37.5,
-      longitude: 127.0,
-      distanceMeters: 0,
-      imageUrl: " https://example.com/locker.jpg ",
-      realtimeAvailability: null,
-    });
+  const createDetailRaw = (
+    overrides: Partial<LockerDetailRaw> = {},
+  ): LockerDetailRaw => ({
+    lockerId: 1,
+    lockerName: "테스트 보관함",
+    roadAddress: "서울",
+    lockerType: "SUBWAY_STATION",
+    latitude: 37.5,
+    longitude: 127.0,
+    distanceMeters: 0,
+    realtimeAvailability: null,
+    ...overrides,
+  });
 
-    expect(detail.imageUrl).toBe("https://example.com/locker.jpg");
+  it("상세 이미지 목록을 서버가 준 순서 그대로 옮긴다", () => {
+    const detail = toLockerDetailItem(
+      createDetailRaw({
+        imageUrls: [
+          "https://example.com/a.jpg",
+          "https://example.com/b.jpg",
+          "https://example.com/c.jpg",
+        ],
+      }),
+    );
+
+    expect(detail.images).toEqual([
+      "https://example.com/a.jpg",
+      "https://example.com/b.jpg",
+      "https://example.com/c.jpg",
+    ]);
     expect(detail.realtimeAvailability).toBeNull();
+  });
+
+  it("imageUrls가 없거나 비어 있으면 빈 배열이 된다", () => {
+    expect(toLockerDetailItem(createDetailRaw()).images).toEqual([]);
+    expect(
+      toLockerDetailItem(createDetailRaw({ imageUrls: [] })).images,
+    ).toEqual([]);
+  });
+
+  it("이미지 URL의 앞뒤 공백을 다듬고 빈 값은 버린다", () => {
+    const detail = toLockerDetailItem(
+      createDetailRaw({
+        imageUrls: [" https://example.com/locker.jpg ", "   ", ""],
+      }),
+    );
+
+    expect(detail.images).toEqual(["https://example.com/locker.jpg"]);
+  });
+
+  it("중복된 이미지 URL은 처음 것만 남긴다", () => {
+    const detail = toLockerDetailItem(
+      createDetailRaw({
+        imageUrls: [
+          "https://example.com/a.jpg",
+          "https://example.com/b.jpg",
+          "https://example.com/a.jpg",
+        ],
+      }),
+    );
+
+    expect(detail.images).toEqual([
+      "https://example.com/a.jpg",
+      "https://example.com/b.jpg",
+    ]);
   });
 
   it("normalizes Swagger HH:mm:ss operating hours for keyword results", () => {

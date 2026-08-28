@@ -248,7 +248,7 @@ export interface LockerDetailRaw {
   startTime?: string;
   endTime?: string;
   detailInfo?: string;
-  imageUrl?: string;
+  imageUrls?: string[];
   accurateVoteCount?: number;
   inaccurateVoteCount?: number;
   createdAt?: string;

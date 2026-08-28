@@ -154,7 +154,7 @@ export function SettingsPage() {
 
       {previewImageUrl ? (
         <OriginalImagePreview
-          imageUrl={previewImageUrl}
+          images={[previewImageUrl]}
           alt={m.my_profile_image_alt()}
           closeLabel={m.my_report_detail_close()}
           onClose={handleCloseImagePreview}

@@ -28,6 +28,25 @@ const formatOperatingHoursLabel = (raw: LockerDetailRaw): string => {
   return formatLockerOperatingHoursLabel();
 };
 
+/** 서버 순서를 그대로 두고 빈 문자열과 중복만 걷어낸다. */
+const normalizeImageUrls = (imageUrls: string[] | undefined): string[] => {
+  if (!imageUrls) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+
+  return imageUrls.reduce<string[]>((acc, imageUrl) => {
+    const trimmed = imageUrl?.trim();
+    if (trimmed && !seen.has(trimmed)) {
+      seen.add(trimmed);
+      acc.push(trimmed);
+    }
+
+    return acc;
+  }, []);
+};
+
 export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   itemType: "LOCKER",
   lockerId: raw.lockerId,
@@ -53,7 +72,7 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
     raw.lockerSizes && raw.lockerSizes.length > 0
       ? formatLockerSizeTypesLabel(raw.lockerSizes)
       : raw.sizeLabel,
-  imageUrl: raw.imageUrl?.trim() || undefined,
+  images: normalizeImageUrls(raw.imageUrls),
   detailHelpText: raw.detailInfo ?? raw.detailHelpText,
   accurateCount: raw.accurateVoteCount ?? raw.accurateCount,
   inaccurateCount: raw.inaccurateVoteCount ?? raw.inaccurateCount,

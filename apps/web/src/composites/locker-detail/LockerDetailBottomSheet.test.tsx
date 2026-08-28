@@ -174,8 +174,6 @@ describe("LockerDetailBottomSheet", () => {
     );
     const sheet = getSheetRoot();
 
-    expect(sheet.getByText("아직 이미지가 없어요.")).toBeTruthy();
-    expect(sheet.getByText("제보하기를 통해 등록할 수 있어요!")).toBeTruthy();
     expect(sheet.queryByText("최근 업데이트 2026-05-16 16:25")).toBeNull();
     expect(sheet.getByText(LOCKER_DETAIL.title)).toBeTruthy();
     expect(sheet.getAllByText("가격").length).toBeGreaterThan(0);
@@ -221,6 +219,59 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       screen.queryAllByRole("region", { name: "실시간 이용 가능" }),
     ).toHaveLength(1);
+  });
+
+  it("미리보기를 닫으면 열었던 사진 버튼으로 포커스를 되돌린다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          images: ["https://example.com/locker.jpg"],
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const imageButton = screen.getByRole("button", {
+      name: "보관함 사진 1 / 1",
+    });
+    fireEvent.click(imageButton);
+
+    const dialog = screen.getByRole("dialog", {
+      name: m.report_section_photo(),
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+
+    expect(document.activeElement).toBe(imageButton);
+  });
+
+  it("열었던 사진이 깨져 버튼이 사라지면 남은 사진으로 포커스를 옮긴다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    const stripImages = () =>
+      Array.from(getSheetRoot().getByRole("list").querySelectorAll("img"));
+
+    fireEvent.click(screen.getByRole("button", { name: "보관함 사진 1 / 2" }));
+
+    // 미리보기를 연 사이 그 사진이 깨지면 스트립의 버튼이 실패 자리로 바뀐다.
+    fireEvent.error(stripImages()[0]);
+
+    const dialog = screen.getByRole("dialog", {
+      name: m.report_section_photo(),
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "보관함 사진 2 / 2" }),
+    );
   });
 
   it("스냅 애니메이션 중에는 라이브 오프셋을 따라 오버레이 카드가 움직인다", async () => {
@@ -735,37 +786,52 @@ describe("LockerDetailBottomSheet", () => {
     ).toBeTruthy();
   });
 
-  it("renders detail image when imageUrl exists", () => {
+  it("이미지가 있으면 상세 이미지를 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{
           ...LOCKER_DETAIL,
-          imageUrl: "https://example.com/locker.jpg",
+          images: ["https://example.com/locker.jpg"],
         }}
         onReport={vi.fn()}
       />,
     );
     const sheet = getSheetRoot();
-    const image = sheet.getByRole("img");
+    const imageButton = sheet.getByRole("button", {
+      name: "보관함 사진 1 / 1",
+    });
 
-    expect(image.getAttribute("src")).toBe("https://example.com/locker.jpg");
-    expect(sheet.queryByText("아직 이미지가 없어요.")).toBeNull();
+    expect(imageButton.querySelector("img")?.getAttribute("src")).toBe(
+      "https://example.com/locker.jpg",
+    );
   });
 
-  it("opens original image preview when detail image is clicked", () => {
+  it("이미지가 없으면 이미지 영역을 아예 렌더링하지 않는다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, images: [] }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(
+      sheet.queryByRole("list", { name: m.locker_detail_image_list_aria() }),
+    ).toBeNull();
+  });
+
+  it("상세 이미지를 누르면 원본 미리보기를 연다", () => {
     render(
       <LockerDetailBottomSheet
         locker={{
           ...LOCKER_DETAIL,
-          imageUrl: "https://example.com/locker.jpg",
+          images: ["https://example.com/locker.jpg"],
         }}
         onReport={vi.fn()}
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: m.report_section_photo() }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "보관함 사진 1 / 1" }));
 
     const dialog = screen.getByRole("dialog", {
       name: m.report_section_photo(),

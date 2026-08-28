@@ -230,7 +230,7 @@ export function ReportDetailViewerModal({
         </DraggableBottomSheet>
         {previewImageUrl ? (
           <OriginalImagePreview
-            imageUrl={previewImageUrl}
+            images={[previewImageUrl]}
             alt={m.report_section_photo()}
             closeLabel={m.my_report_detail_close()}
             portalContainer={modalRef.current}

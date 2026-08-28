@@ -1099,6 +1099,38 @@ export function IconCamera24({ className }: { className?: string }) {
   );
 }
 
+/**
+ * 사진을 보여 줄 수 없는 자리에 두는 아이콘.
+ *
+ * 배지는 원본 도안의 + 를 중심점 기준으로 45° 돌린 것이다. 좌표를 다시 딴 게
+ * 아니라 회전만 준 것이라 획 두께와 길이가 + 와 정확히 같다. 사진 틀이 배지
+ * 자리를 파낸 반경 안에 그대로 들어가므로 잘리지 않는다.
+ */
+export function IconImageUnavailable24({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+    >
+      <path
+        d="M21 15V18H24V20H21V23H19V20H16V18H19V15H21Z"
+        transform="rotate(45 20 19)"
+        fill={color.palette.gray[600]}
+      />
+      <path
+        d="M21.0082 3C21.556 3 22 3.44495 22 3.9934L22.0007 13.3417C21.3749 13.1204 20.7015 13 20 13V5H4L4.001 19L13.2929 9.70715C13.6528 9.34604 14.22 9.31823 14.6123 9.62322L14.7065 9.70772L18.2521 13.2586C15.791 14.0069 14 16.2943 14 19C14 19.7015 14.1204 20.3749 14.3417 21.0007L2.9918 21C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H21.0082ZM8 7C9.10457 7 10 7.89543 10 9C10 10.1046 9.10457 11 8 11C6.89543 11 6 10.1046 6 9C6 7.89543 6.89543 7 8 7Z"
+        fill={color.palette.gray[600]}
+      />
+    </svg>
+  );
+}
+
 function IconMenuHome({
   isActive,
   className,
