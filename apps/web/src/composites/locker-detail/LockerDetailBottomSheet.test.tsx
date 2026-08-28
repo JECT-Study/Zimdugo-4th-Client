@@ -243,14 +243,21 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("호출부가 뷰포트에 맞춰 initialSnapPoint 를 다시 계산해도 마운트를 유지한다", () => {
-    const { rerender } = render(
+    // clamp 범위(112~760) 안의 값이라야 resolvedInitialSnapPoint 가 실제로 달라진다.
+    // 둘 다 경계 밖이면 같은 값으로 눌려, 옛 key 로도 이 테스트가 통과해 버린다.
+    const renderAt = (snapPoint: number) => (
       <LockerDetailBottomSheet
         locker={{ ...LOCKER_DETAIL, images: ["https://example.com/a.jpg"] }}
-        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
+        initialSnapPoint={snapPoint}
         onReport={vi.fn()}
-      />,
+      />
     );
+    const { rerender } = render(renderAt(400));
     const before = getSheetRoot().getByRole("list");
+
+    expect(draggableBottomSheetMock.mock.lastCall?.[0].initialSnapPoint).toBe(
+      400,
+    );
 
     act(() => {
       Object.defineProperty(window, "innerHeight", {
@@ -259,15 +266,12 @@ describe("LockerDetailBottomSheet", () => {
       });
       window.dispatchEvent(new Event("resize"));
     });
-    // 같은 단계인데 픽셀 값만 달라진 경우다.
-    rerender(
-      <LockerDetailBottomSheet
-        locker={{ ...LOCKER_DETAIL, images: ["https://example.com/a.jpg"] }}
-        initialSnapPoint={90}
-        onReport={vi.fn()}
-      />,
-    );
+    // 같은 단계인데 뷰포트에 맞춰 픽셀 값만 달라진 경우다.
+    rerender(renderAt(300));
 
+    expect(draggableBottomSheetMock.mock.lastCall?.[0].initialSnapPoint).toBe(
+      300,
+    );
     expect(getSheetRoot().getByRole("list")).toBe(before);
   });
 
