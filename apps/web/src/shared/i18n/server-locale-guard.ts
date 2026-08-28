@@ -96,15 +96,32 @@ const resolvePreferredDocumentLocale = (req: Request): AppLocale => {
   return BASE_LOCALE;
 };
 
-const hasLocaleIntentCookie = (cookieHeader: string | null): boolean => {
-  if (!cookieHeader) return false;
+/**
+ * 마커가 가리키는 목적지. 마커는 Path=/ 쿠키라 이름만 보고 소비하면, 같은
+ * 브라우저에서 동시에 진행되는 다른 무접두 탐색이 먼저 집어삼킬 수 있다.
+ * 값에 목적지를 담아 그 요청에서만 소비되게 묶는다.
+ */
+const getLocaleIntentTarget = (cookieHeader: string | null): string | null => {
+  if (!cookieHeader) return null;
 
-  return cookieHeader
-    .split(";")
-    .some(
-      (cookie) => cookie.trim().split("=")[0] === LOCALE_INTENT_COOKIE_NAME,
-    );
+  for (const cookie of cookieHeader.split(";")) {
+    const [name, ...valueParts] = cookie.trim().split("=");
+    if (name !== LOCALE_INTENT_COOKIE_NAME) continue;
+
+    const value = valueParts.join("=");
+    if (!value) return null;
+
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 };
+
+const getRequestPath = (url: URL): string => `${url.pathname}${url.search}`;
 
 const buildLocaleIntentCookie = (url: URL, value: string): string => {
   const maxAge = value === "" ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
@@ -132,9 +149,15 @@ export const withConsumedLocaleIntentHeaders = (
   });
 };
 
-/** base locale 의 정규 주소. 접두사를 떼어낸 경로다. */
+/**
+ * base locale 의 정규 주소. 접두사를 떼어낸 경로다.
+ *
+ * `/ko//evil.example/x` 처럼 접두사 뒤가 슬래시로 시작하면 결과가
+ * `//evil.example/x` 가 되고, Location 에 넣는 순간 프로토콜 상대 URL 로
+ * 해석돼 외부 호스트로 나가는 오픈 리다이렉트가 된다. 슬래시를 하나로 접는다.
+ */
 const getBaseLocalePath = (url: URL): string =>
-  `${stripLocalePathPrefix(url.pathname)}${url.search}`;
+  `${stripLocalePathPrefix(url.pathname).replace(/^\/+/, "/")}${url.search}`;
 
 const getLocalizedPath = (url: URL, locale: AppLocale): string => {
   if (locale === BASE_LOCALE) {
@@ -198,10 +221,15 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
      * 요청이 Accept-Language 로 넘어간다. 여기서 직접 떼면서 의도를 일회용
      * 마커에 실어 보내면 리다이렉트도 한 번으로 줄고 의도도 살아남는다.
      */
+    const baseLocalePath = getBaseLocalePath(url);
+
     return {
       kind: "redirect",
-      response: getLocaleRedirectResponse(getBaseLocalePath(url), {
-        "Set-Cookie": buildLocaleIntentCookie(url, "1"),
+      response: getLocaleRedirectResponse(baseLocalePath, {
+        "Set-Cookie": buildLocaleIntentCookie(
+          url,
+          encodeURIComponent(baseLocalePath),
+        ),
       }),
     };
   }
@@ -217,7 +245,9 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
       };
     }
   } else if (isDocumentRequest(req)) {
-    if (hasLocaleIntentCookie(req.headers.get("Cookie"))) {
+    const intentTarget = getLocaleIntentTarget(req.headers.get("Cookie"));
+
+    if (intentTarget !== null && intentTarget === getRequestPath(url)) {
       // 방금 /ko 를 떼고 온 요청이다. 선호 감지를 건너뛰고 base locale 로 둔다.
       return {
         kind: "continue",

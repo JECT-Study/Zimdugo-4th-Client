@@ -124,7 +124,10 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/settings?tab=1");
 
     const setCookie = result.response.headers.get("Set-Cookie");
-    expect(setCookie).toContain("ZIMDUGO_LOCALE_INTENT=1");
+    // 마커는 목적지에 묶여 그 요청에서만 소비된다.
+    expect(setCookie).toContain(
+      `ZIMDUGO_LOCALE_INTENT=${encodeURIComponent("/settings?tab=1")}`,
+    );
     expect(setCookie).toContain("Max-Age=10");
     expect(setCookie).toContain("HttpOnly");
     expect(setCookie).toContain("Secure");
@@ -143,12 +146,24 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/settings");
   });
 
+  it("collapses leading slashes so the redirect cannot leave the origin", () => {
+    // 접두사를 떼면 //evil.example/x 가 되어 프로토콜 상대 URL 로 해석된다.
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/ko//evil.example/x"),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/evil.example/x");
+  });
+
   it("keeps the base locale when the intent marker survived the redirect", () => {
     // Accept-Language 만 보면 en 이지만, 사용자가 /ko 링크로 들어왔다.
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/settings", {
         "Accept-Language": "en-US,en;q=0.9",
-        Cookie: "ZIMDUGO_LOCALE_INTENT=1",
+        Cookie: `ZIMDUGO_LOCALE_INTENT=${encodeURIComponent("/settings")}`,
       }),
     );
 
@@ -157,6 +172,23 @@ describe("resolveLocaleRequest", () => {
 
     expect(result.pathLocale).toBe("ko");
     expect(result.consumedLocaleIntent).toBe(true);
+  });
+
+  it("ignores a marker left for a different destination", () => {
+    // 같은 브라우저에서 /ko/settings 리다이렉트와 /my 탐색이 겹친 상황.
+    // /my 가 남의 마커를 삼키면 한국어로 렌더되고, 마커가 지워져 원래
+    // /settings 요청은 다시 Accept-Language 로 끌려간다.
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/my", {
+        "Accept-Language": "en-US,en;q=0.9",
+        Cookie: `ZIMDUGO_LOCALE_INTENT=${encodeURIComponent("/settings")}`,
+      }),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/en/my");
   });
 
   it("still applies Accept-Language once the marker is gone", () => {
