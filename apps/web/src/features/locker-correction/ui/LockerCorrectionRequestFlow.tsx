@@ -3,11 +3,26 @@ import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import {
+  type LockerIssueReportFailure,
+  parseLockerIssueReportFailure,
+} from "../lib/parse-locker-issue-report-failure";
 import type {
   LockerCorrectionReason,
   LockerCorrectionRequest,
 } from "../model/locker-correction-types";
 import { LockerCorrectionRequestModal } from "./LockerCorrectionRequestModal";
+
+const getFailureMessage = (failure: LockerIssueReportFailure): string => {
+  switch (failure) {
+    case "not-found":
+      return m.locker_correction_submit_error_not_found();
+    case "invalid":
+      return m.locker_correction_submit_error_invalid();
+    case "server":
+      return m.locker_correction_submit_error();
+  }
+};
 
 export interface LockerCorrectionRequestFlowProps {
   isOpen: boolean;
@@ -26,6 +41,7 @@ export function LockerCorrectionRequestFlow({
     useState<LockerCorrectionRequest | null>(null);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [failure, setFailure] = useState<LockerIssueReportFailure | null>(null);
 
   const handleOpenChange = (nextIsOpen: boolean) => {
     onOpenChange(nextIsOpen);
@@ -33,6 +49,17 @@ export function LockerCorrectionRequestFlow({
 
   const handleSubmit = (request: LockerCorrectionRequest) => {
     setPendingRequest(request);
+  };
+
+  // 입력을 고치는 순간 이전 실패 안내는 더 이상 그 입력을 가리키지 않는다.
+  const handleReasonChange = (nextReason: LockerCorrectionReason) => {
+    setFailure(null);
+    setReason(nextReason);
+  };
+
+  const handleDetailsChange = (nextDetails: string) => {
+    setFailure(null);
+    setDetails(nextDetails);
   };
 
   const handleConfirm = async () => {
@@ -43,13 +70,17 @@ export function LockerCorrectionRequestFlow({
     }
 
     setIsSubmitting(true);
+    setFailure(null);
     try {
       await onConfirm(pendingRequest);
       setPendingRequest(null);
       onOpenChange(false);
       setIsSuccessOpen(true);
-    } catch {
-      return;
+    } catch (error) {
+      // 확인 팝업만 닫고 신고 다이얼로그는 열어둔다. 입력이 남아 있어야
+      // 사용자가 안내를 읽고 그 자리에서 다시 시도할 수 있다.
+      setPendingRequest(null);
+      setFailure(parseLockerIssueReportFailure(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -77,6 +108,7 @@ export function LockerCorrectionRequestFlow({
     setReason(null);
     setDetails("");
     setPendingRequest(null);
+    setFailure(null);
   }, [isOpen]);
 
   return (
@@ -85,10 +117,11 @@ export function LockerCorrectionRequestFlow({
         isOpen={isOpen}
         onOpenChange={handleOpenChange}
         reason={reason}
-        onReasonChange={setReason}
+        onReasonChange={handleReasonChange}
         details={details}
-        onDetailsChange={setDetails}
+        onDetailsChange={handleDetailsChange}
         onSubmit={handleSubmit}
+        errorMessage={failure ? getFailureMessage(failure) : undefined}
         isSubmitting={isSubmitting}
       />
       <Popup

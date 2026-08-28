@@ -30,6 +30,7 @@ import {
   modal,
   overlay,
   submitButton,
+  submitError,
   title,
 } from "./LockerCorrectionRequestModal.css.ts";
 
@@ -66,6 +67,8 @@ export interface LockerCorrectionRequestModalProps {
   details: string;
   onDetailsChange: (details: string) => void;
   onSubmit: (request: LockerCorrectionRequest) => void;
+  /** 제출 실패 안내. 없으면 자리만 유지한다. */
+  errorMessage?: string;
   isSubmitting?: boolean;
   isReasonMenuOpen?: boolean;
   onReasonMenuOpenChange?: (isOpen: boolean) => void;
@@ -79,6 +82,7 @@ export function LockerCorrectionRequestModal({
   details,
   onDetailsChange,
   onSubmit,
+  errorMessage,
   isSubmitting = false,
   isReasonMenuOpen,
   onReasonMenuOpenChange,
@@ -164,6 +168,14 @@ export function LockerCorrectionRequestModal({
                   trailingIcon={<IconPencil24 />}
                 />
               ) : null}
+
+              <p
+                className={submitError}
+                role={errorMessage ? "alert" : undefined}
+                aria-hidden={errorMessage ? undefined : true}
+              >
+                {errorMessage ?? "\u00A0"}
+              </p>
 
               <Button
                 className={submitButton}

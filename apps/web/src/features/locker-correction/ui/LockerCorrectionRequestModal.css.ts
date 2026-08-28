@@ -106,10 +106,24 @@ export const detailsField = style({
 
 export const submitButton = style({
   width: "calc(100% + 3px)",
-  marginTop: "22px",
+  // 에러 자리(20px)와 합쳐 기존 22px 간격을 유지한다.
+  marginTop: "2px",
 });
 
 globalStyle(`${submitButton}${submitButton}[data-disabled]`, {
   backgroundColor: vars.color.bg.disable,
   color: vars.color.text.white,
+});
+
+/**
+ * 에러 문구 자리. 문구가 없을 때도 한 줄을 차지해, 실패 순간 버튼이
+ * 밀려 내려가며 오조작을 유발하지 않게 한다.
+ */
+export const submitError = style({
+  margin: 0,
+  fontSize: vars.typography.fontSize[12],
+  lineHeight: vars.typography.lineHeight.normal,
+  minHeight: vars.typography.lineHeight.normal,
+  color: vars.color.palette.red[300],
+  textAlign: "center",
 });
