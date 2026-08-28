@@ -221,6 +221,50 @@ describe("LockerDetailBottomSheet", () => {
     ).toHaveLength(1);
   });
 
+  it("뷰포트 높이가 바뀌어도 시트 하위 트리를 다시 마운트하지 않는다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, images: ["https://example.com/a.jpg"] }}
+        onReport={vi.fn()}
+      />,
+    );
+    const before = getSheetRoot().getByRole("list");
+
+    // 주소창이 접히는 상황. 스냅 지점은 바뀌지만 시트를 새로 연 것은 아니다.
+    act(() => {
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 600,
+      });
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    expect(getSheetRoot().getByRole("list")).toBe(before);
+  });
+
+  it("다른 보관함을 열면 시트를 새로 마운트한다", () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, images: ["https://example.com/a.jpg"] }}
+        onReport={vi.fn()}
+      />,
+    );
+    const before = getSheetRoot().getByRole("list");
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          lockerId: 99,
+          images: ["https://example.com/a.jpg"],
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(getSheetRoot().getByRole("list")).not.toBe(before);
+  });
+
   it("미리보기를 닫으면 열었던 사진 버튼으로 포커스를 되돌린다", () => {
     render(
       <LockerDetailBottomSheet
