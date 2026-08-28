@@ -84,7 +84,13 @@ export function LockerCorrectionRequestModal({
   onReasonMenuOpenChange,
 }: LockerCorrectionRequestModalProps) {
   const reasonOptions = getReasonOptions();
-  const isSubmitDisabled = reason === null || isSubmitting;
+  const isOtherReason = reason === LOCKER_CORRECTION_REASON.Other;
+  const hasDetails = details.trim().length > 0;
+  const isSubmitDisabled =
+    reason === null || isSubmitting || (isOtherReason && !hasDetails);
+  const detailsPlaceholder = isOtherReason
+    ? m.locker_correction_details_required_placeholder()
+    : m.locker_correction_details_placeholder();
 
   const handleReasonChange = (key: Key | null) => {
     if (key === null) {
@@ -153,8 +159,8 @@ export function LockerCorrectionRequestModal({
                   value={details}
                   onChange={onDetailsChange}
                   maxLength={MAX_LOCKER_CORRECTION_DETAILS_LENGTH}
-                  placeholder={m.locker_correction_details_placeholder()}
-                  aria-label={m.locker_correction_details_placeholder()}
+                  placeholder={detailsPlaceholder}
+                  aria-label={detailsPlaceholder}
                   trailingIcon={<IconPencil24 />}
                 />
               ) : null}

@@ -344,6 +344,7 @@
   "locker_correction_reason_price": "가격 정보가 달라요",
   "locker_correction_reason_other": "기타 문제가 있어요",
   "locker_correction_details_placeholder": "상세 내용을 입력해주세요 (선택).",
+  "locker_correction_details_required_placeholder": "상세 내용을 입력해주세요.",
   "locker_correction_submit": "완료",
   "locker_correction_confirm_title": "정말 제출하시겠어요?",
   "locker_correction_submit_success_title": "신고 접수됨",

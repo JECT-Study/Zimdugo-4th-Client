@@ -344,6 +344,7 @@
   "locker_correction_reason_price": "The price information is different",
   "locker_correction_reason_other": "There's another problem",
   "locker_correction_details_placeholder": "Enter details (optional).",
+  "locker_correction_details_required_placeholder": "Enter details.",
   "locker_correction_submit": "Done",
   "locker_correction_confirm_title": "Are you sure you want to submit?",
   "locker_correction_submit_success_title": "Report received",

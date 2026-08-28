@@ -344,6 +344,7 @@
   "locker_correction_reason_price": "價格資訊不正確",
   "locker_correction_reason_other": "有其他問題",
   "locker_correction_details_placeholder": "請輸入詳細內容（選填）。",
+  "locker_correction_details_required_placeholder": "請輸入詳細內容。",
   "locker_correction_submit": "完成",
   "locker_correction_confirm_title": "確定要提交嗎？",
   "locker_correction_submit_success_title": "檢舉已受理",

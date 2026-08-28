@@ -344,6 +344,7 @@
   "locker_correction_reason_price": "料金情報が異なります",
   "locker_correction_reason_other": "その他の問題があります",
   "locker_correction_details_placeholder": "詳細を入力してください（任意）。",
+  "locker_correction_details_required_placeholder": "詳細を入力してください。",
   "locker_correction_submit": "完了",
   "locker_correction_confirm_title": "本当に送信しますか？",
   "locker_correction_submit_success_title": "報告を受け付けました",

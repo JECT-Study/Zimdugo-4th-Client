@@ -344,6 +344,7 @@
   "locker_correction_reason_price": "价格信息不正确",
   "locker_correction_reason_other": "有其他问题",
   "locker_correction_details_placeholder": "请输入详细内容（选填）。",
+  "locker_correction_details_required_placeholder": "请输入详细内容。",
   "locker_correction_submit": "完成",
   "locker_correction_confirm_title": "确定要提交吗？",
   "locker_correction_submit_success_title": "举报已受理",
