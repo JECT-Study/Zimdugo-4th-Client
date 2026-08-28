@@ -133,7 +133,7 @@ export const submitError = style({
   textAlign: "center",
 });
 
-/** 펜 아이콘을 뺀 자리만큼 글자수 표시를 오른쪽으로 붙인다. */
+/** 펜 아이콘을 뺀 자리만큼 글자수 표시를 오른쪽으로 붙이되, 모서리에 닿지 않게 둔다. */
 globalStyle(`${detailsField} > span`, {
-  right: vars.spacing[4],
+  right: vars.spacing[8],
 });
