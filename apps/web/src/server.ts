@@ -5,7 +5,10 @@ import {
   resolveProtectedRequest,
   withProtectedDocumentHeaders,
 } from "#/features/auth/sign-in/model/server-protected-route-guard";
-import { resolveLocaleRequest } from "#/shared/i18n/server-locale-guard";
+import {
+  resolveLocaleRequest,
+  withConsumedLocaleIntentHeaders,
+} from "#/shared/i18n/server-locale-guard";
 
 import { handleLocationDiagnosticRequest } from "#/shared/lib/location-diagnostics-server";
 
@@ -38,6 +41,10 @@ export default {
       handler.fetch(middlewareRequest),
     );
 
-    return withProtectedDocumentHeaders(middlewareRequest, response);
+    const localeResponse = guard.consumedLocaleIntent
+      ? withConsumedLocaleIntentHeaders(middlewareRequest, response)
+      : response;
+
+    return withProtectedDocumentHeaders(middlewareRequest, localeResponse);
   },
 };

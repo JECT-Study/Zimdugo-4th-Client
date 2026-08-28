@@ -6,6 +6,15 @@ export const LOCALE_COOKIE_NAME = "PARAGLIDE_LOCALE";
 
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
+/**
+ * base locale 은 무접두가 정규 주소라 /ko 를 떼는 순간 "URL 이 로케일을
+ * 명시했다"는 사실이 사라진다. 그 한 번의 리다이렉트 동안만 의도를 나르는
+ * 일회용 마커이고, 선호 채널인 LOCALE_COOKIE_NAME 과는 별개다.
+ */
+export const LOCALE_INTENT_COOKIE_NAME = "ZIMDUGO_LOCALE_INTENT";
+
+export const LOCALE_INTENT_COOKIE_MAX_AGE = 10;
+
 /** Match /zh-TW before /zh so hyphenated locale is not truncated. */
 export const LOCALE_PATH_PREFIX = /^\/(?:ko|en|ja|zh-tw|zh)(?=\/|$)/i;
 

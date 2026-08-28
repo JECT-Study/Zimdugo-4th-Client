@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveLocaleRequest } from "./server-locale-guard";
+import {
+  resolveLocaleRequest,
+  withConsumedLocaleIntentHeaders,
+} from "./server-locale-guard";
 
 const createDocumentRequest = (
   url: string,
@@ -106,5 +109,93 @@ describe("resolveLocaleRequest", () => {
     );
 
     expect(result.kind).toBe("redirect");
+  });
+
+  it("strips the base locale prefix and carries the intent marker", () => {
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/ko/settings?tab=1", {
+        "Accept-Language": "en-US,en;q=0.9",
+      }),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/settings?tab=1");
+
+    const setCookie = result.response.headers.get("Set-Cookie");
+    expect(setCookie).toContain("ZIMDUGO_LOCALE_INTENT=1");
+    expect(setCookie).toContain("Max-Age=10");
+    expect(setCookie).toContain("HttpOnly");
+    expect(setCookie).toContain("Secure");
+    // 마커는 선호 채널이 아니다.
+    expect(setCookie).not.toContain("PARAGLIDE_LOCALE=");
+  });
+
+  it("normalizes base locale casing in the same redirect", () => {
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/KO/settings"),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/settings");
+  });
+
+  it("keeps the base locale when the intent marker survived the redirect", () => {
+    // Accept-Language 만 보면 en 이지만, 사용자가 /ko 링크로 들어왔다.
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/settings", {
+        "Accept-Language": "en-US,en;q=0.9",
+        Cookie: "ZIMDUGO_LOCALE_INTENT=1",
+      }),
+    );
+
+    expect(result.kind).toBe("continue");
+    if (result.kind !== "continue") return;
+
+    expect(result.pathLocale).toBe("ko");
+    expect(result.consumedLocaleIntent).toBe(true);
+  });
+
+  it("still applies Accept-Language once the marker is gone", () => {
+    const result = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/settings", {
+        "Accept-Language": "en-US,en;q=0.9",
+      }),
+    );
+
+    expect(result.kind).toBe("redirect");
+    if (result.kind !== "redirect") return;
+
+    expect(result.response.headers.get("Location")).toBe("/en/settings");
+  });
+
+  it("leaves the base locale prefix alone for non-document requests", () => {
+    // 문서 요청이 아니면 브라우저 주소가 바뀌지 않아 마커를 소비할 기회가 없다.
+    const result = resolveLocaleRequest(
+      new Request("https://zimdugo.com/ko/settings"),
+    );
+
+    expect(result.kind).toBe("continue");
+    if (result.kind !== "continue") return;
+
+    expect(result.pathLocale).toBe("ko");
+    expect(result.consumedLocaleIntent).toBe(false);
+  });
+});
+
+describe("withConsumedLocaleIntentHeaders", () => {
+  it("clears the marker and varies on the channels that decided the locale", () => {
+    const response = withConsumedLocaleIntentHeaders(
+      createDocumentRequest("https://zimdugo.com/settings"),
+      new Response("ok", { status: 200 }),
+    );
+
+    const setCookie = response.headers.get("Set-Cookie");
+    expect(setCookie).toContain("ZIMDUGO_LOCALE_INTENT=;");
+    expect(setCookie).toContain("Max-Age=0");
+    expect(response.headers.get("Vary")).toBe("Cookie, Accept-Language");
   });
 });

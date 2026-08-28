@@ -2,9 +2,12 @@ import {
   type AppLocale,
   BASE_LOCALE,
   LOCALE_COOKIE_NAME,
+  LOCALE_INTENT_COOKIE_MAX_AGE,
+  LOCALE_INTENT_COOKIE_NAME,
   LOCALE_PATH_PREFIX,
   normalizeLocale,
   parsePathLocale,
+  stripLocalePathPrefix,
   UNSUPPORTED_LOCALE_FALLBACK,
 } from "#/shared/i18n/locales";
 
@@ -93,6 +96,46 @@ const resolvePreferredDocumentLocale = (req: Request): AppLocale => {
   return BASE_LOCALE;
 };
 
+const hasLocaleIntentCookie = (cookieHeader: string | null): boolean => {
+  if (!cookieHeader) return false;
+
+  return cookieHeader
+    .split(";")
+    .some(
+      (cookie) => cookie.trim().split("=")[0] === LOCALE_INTENT_COOKIE_NAME,
+    );
+};
+
+const buildLocaleIntentCookie = (url: URL, value: string): string => {
+  const maxAge = value === "" ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
+  const secure = url.protocol === "https:" ? "; Secure" : "";
+
+  return `${LOCALE_INTENT_COOKIE_NAME}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax; HttpOnly${secure}`;
+};
+
+/**
+ * 마커를 소비한 응답에서 마커를 지운다. 이 응답은 마커 유무에 따라 내용이
+ * 달라지므로 공용 캐시가 섞지 않도록 Vary 도 함께 붙인다.
+ */
+export const withConsumedLocaleIntentHeaders = (
+  req: Request,
+  response: Response,
+): Response => {
+  const headers = new Headers(response.headers);
+  headers.append("Set-Cookie", buildLocaleIntentCookie(new URL(req.url), ""));
+  headers.set("Vary", "Cookie, Accept-Language");
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+/** base locale 의 정규 주소. 접두사를 떼어낸 경로다. */
+const getBaseLocalePath = (url: URL): string =>
+  `${stripLocalePathPrefix(url.pathname)}${url.search}`;
+
 const getLocalizedPath = (url: URL, locale: AppLocale): string => {
   if (locale === BASE_LOCALE) {
     return `${url.pathname}${url.search}`;
@@ -140,11 +183,28 @@ export type LocaleGuardResult =
       kind: "continue";
       middlewareRequest: Request;
       pathLocale: AppLocale | null;
+      /** 마커를 읽었으니 응답에서 지워야 한다는 표시. */
+      consumedLocaleIntent: boolean;
     };
 
 export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
   const url = new URL(req.url);
   const pathLocale = getPathLocale(url.pathname);
+
+  if (pathLocale === BASE_LOCALE && isDocumentRequest(req)) {
+    /**
+     * base locale 은 무접두가 정규 주소다. 접두사를 그대로 두면 paraglide 가
+     * 떼어내는데, 그 순간 "URL 이 로케일을 명시했다"는 사실이 사라져 다음
+     * 요청이 Accept-Language 로 넘어간다. 여기서 직접 떼면서 의도를 일회용
+     * 마커에 실어 보내면 리다이렉트도 한 번으로 줄고 의도도 살아남는다.
+     */
+    return {
+      kind: "redirect",
+      response: getLocaleRedirectResponse(getBaseLocalePath(url), {
+        "Set-Cookie": buildLocaleIntentCookie(url, "1"),
+      }),
+    };
+  }
 
   if (pathLocale) {
     const canonicalPath = getCanonicalLocalePath(url, pathLocale);
@@ -157,6 +217,16 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
       };
     }
   } else if (isDocumentRequest(req)) {
+    if (hasLocaleIntentCookie(req.headers.get("Cookie"))) {
+      // 방금 /ko 를 떼고 온 요청이다. 선호 감지를 건너뛰고 base locale 로 둔다.
+      return {
+        kind: "continue",
+        middlewareRequest: req,
+        pathLocale: BASE_LOCALE,
+        consumedLocaleIntent: true,
+      };
+    }
+
     const preferredLocale = resolvePreferredDocumentLocale(req);
 
     if (preferredLocale !== BASE_LOCALE) {
@@ -176,5 +246,6 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
     kind: "continue",
     middlewareRequest: req,
     pathLocale,
+    consumedLocaleIntent: false,
   };
 };
