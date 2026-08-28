@@ -225,23 +225,52 @@ test.describe("시트가 사라진 상태의 지도 컨트롤", () => {
       Number.parseFloat(getComputedStyle(element).bottom),
     );
 
-  test("검색 오버레이가 시트를 덮으면 기본 자리로 돌아온다", async ({
+  /** 시트가 지금 화면에서 차지하는 높이 */
+  const sheetVisibleHeightOf = async (page: Page) => {
+    const box = await rectOf(sheetSurface(page));
+
+    return Math.round((page.viewportSize()?.height ?? 0) - box.y);
+  };
+
+  /**
+   * 시트가 안착해 컨트롤이 그 위 간격만큼에 놓일 때까지 기다린다.
+   *
+   * 마운트 슬라이드 중에는 컨트롤이 시트가 올라온 비율만큼만 따라오므로 차이가
+   * 간격보다 작다. 두 값의 차이가 간격과 같아지는 순간이 곧 안착이다.
+   */
+  const expectControlRaisedOverSheet = async (page: Page) => {
+    await expect
+      .poll(async () => {
+        const bottom = await bottomPxOf(page);
+
+        return bottom - (await sheetVisibleHeightOf(page));
+      })
+      .toBe(SHEET_GAP_PX);
+  };
+
+  test("검색 컨텍스트에서 오버레이가 목록 시트를 덮으면 기본 자리로 돌아온다", async ({
     page,
   }) => {
-    await page.goto(`/?locker=${LOCKER_ID}`);
+    // 검색 컨텍스트에서 열어야 회귀를 잡는다. 상세 딥링크(map 컨텍스트)로 열면
+    // 검색 바를 누르는 순간 handleOpenSearch 가 resetMapContext 로 sheetMode 를
+    // idle 로 되돌려, 단계만 보던 예전 구현에서도 컨트롤이 제자리로 돌아온다.
+    // 검색 컨텍스트에서는 그 리셋이 없어 sheetMode 가 list 로 남는다.
+    await page.goto("/?q=서울역");
     await waitForMapReady(page);
-    await expectSheetSettledAt(page, DETAIL_HALF_VISIBLE_HEIGHT);
-    expect(await bottomPxOf(page)).toBe(
-      DETAIL_HALF_VISIBLE_HEIGHT + SHEET_GAP_PX,
-    );
+    await expect(sheetSurface(page)).toBeVisible();
+    await expectControlRaisedOverSheet(page);
 
     // 검색 바는 읽기 전용 입력이라 포커스가 곧 오버레이 열기다.
     await page.getByLabel("검색어 입력").click();
     await expect(sheetSurface(page)).toHaveCount(0);
 
+    // 시트가 사라졌으니 컨트롤도 내려와야 한다. 예전 구현은 sheetMode 가 list 로
+    // 남아 사라진 시트의 윗변을 계속 따라갔다.
     await expect.poll(async () => bottomPxOf(page)).toBe(BASE_BOTTOM_PX);
   });
 
+  // 이 경로는 시트와 함께 sheetMode 도 idle 이 되므로 예전 구현에서도 통과한다.
+  // 회귀를 잡는 스펙이 아니라 "시트가 없으면 기본 자리" 계약을 고정하는 쪽이다.
   test("검색 컨텍스트를 벗어나면 기본 자리로 돌아온다", async ({ page }) => {
     await page.goto("/?q=서울역");
     await waitForMapReady(page);
