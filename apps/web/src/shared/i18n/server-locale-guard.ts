@@ -173,6 +173,53 @@ export const withConsumedLocaleIntentHeaders = (
 };
 
 /**
+ * 가드 뒤에서 곧장 돌아가는 리다이렉트에 base locale 의도를 이어붙인다.
+ *
+ * 인증 가드들은 `Location` 을 요청 경로의 로케일 접두사로 만드는데, 마커를
+ * 소비한 요청은 접두사가 없어 목적지도 무접두가 된다. 그대로 두면 그 목적지
+ * 요청이 다시 Accept-Language 로 넘어가 /ko/report 가 /en/ 으로 끝난다.
+ * 소비한 마커는 지우고 목적지 앞으로 새 마커를 남긴다.
+ */
+export const withForwardedLocaleIntent = (
+  req: Request,
+  response: Response,
+): Response => {
+  const location = response.headers.get("Location");
+  if (!location) return response;
+
+  const url = new URL(req.url);
+
+  let destination: URL;
+  try {
+    destination = new URL(location, url);
+  } catch {
+    return response;
+  }
+
+  // 출처를 벗어나는 목적지에는 마커를 붙이지 않는다.
+  if (destination.origin !== url.origin) return response;
+  // 목적지가 이미 로케일을 담고 있으면 URL 이 의도를 나른다.
+  if (parsePathLocale(destination.pathname)) return response;
+
+  const cleared = withConsumedLocaleIntentHeaders(req, response);
+  const headers = new Headers(cleared.headers);
+  headers.append(
+    "Set-Cookie",
+    buildLocaleIntentCookie(
+      url,
+      createLocaleIntentCookieName(),
+      getRequestPath(destination),
+    ),
+  );
+
+  return new Response(cleared.body, {
+    status: cleared.status,
+    statusText: cleared.statusText,
+    headers,
+  });
+};
+
+/**
  * base locale 의 정규 주소. 접두사를 떼어낸 경로다.
  *
  * `/ko//evil.example/x` 처럼 접두사 뒤가 슬래시로 시작하면 결과가

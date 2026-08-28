@@ -8,6 +8,7 @@ import {
 import {
   resolveLocaleRequest,
   withConsumedLocaleIntentHeaders,
+  withForwardedLocaleIntent,
 } from "#/shared/i18n/server-locale-guard";
 
 import { handleLocationDiagnosticRequest } from "#/shared/lib/location-diagnostics-server";
@@ -27,14 +28,21 @@ export default {
     const { middlewareRequest } = guard;
 
     // 로케일 정규화가 끝난 요청으로 판단해야 리다이렉트 주소에 로케일이 유지된다.
+    // 다만 base locale 은 접두사가 URL 에 남지 않으므로, 마커를 소비한 요청이면
+    // 여기서 돌아가는 리다이렉트에도 의도를 다시 실어 보낸다.
+    const forwardLocaleIntent = (redirect: Response): Response =>
+      guard.consumedLocaleIntent
+        ? withForwardedLocaleIntent(middlewareRequest, redirect)
+        : redirect;
+
     const loginRedirect = resolveLoginRequest(middlewareRequest);
     if (loginRedirect) {
-      return loginRedirect;
+      return forwardLocaleIntent(loginRedirect);
     }
 
     const protectedRedirect = resolveProtectedRequest(middlewareRequest);
     if (protectedRedirect) {
-      return protectedRedirect;
+      return forwardLocaleIntent(protectedRedirect);
     }
 
     const response = await paraglideMiddleware(middlewareRequest, () =>

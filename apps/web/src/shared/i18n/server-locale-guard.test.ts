@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   resolveLocaleRequest,
   withConsumedLocaleIntentHeaders,
+  withForwardedLocaleIntent,
 } from "./server-locale-guard";
 
 const createDocumentRequest = (
@@ -307,5 +308,64 @@ describe("withConsumedLocaleIntentHeaders", () => {
     expect(setCookie).toMatch(/^ZIMDUGO_LOCALE_INTENT_[0-9a-f]{32}=;/);
     expect(setCookie).toContain("Max-Age=0");
     expect(response.headers.get("Vary")).toBe("Cookie, Accept-Language");
+  });
+});
+
+describe("withForwardedLocaleIntent", () => {
+  const createAuthRedirect = (location: string) =>
+    new Response(null, { status: 302, headers: { Location: location } });
+
+  it("carries the intent to the auth guard's destination", () => {
+    // /ko/report 를 비로그인으로 열면 보호 가드가 "/" 로 돌려보낸다. 마커를
+    // 이어주지 않으면 그 "/" 요청이 다시 Accept-Language 로 넘어간다.
+    const req = createDocumentRequest("https://zimdugo.com/report", {
+      Cookie: issueIntentCookie("https://zimdugo.com/ko/report"),
+    });
+
+    const response = withForwardedLocaleIntent(req, createAuthRedirect("/"));
+    const cookies = response.headers.getSetCookie();
+
+    // 소비한 마커는 지우고, 목적지 앞으로 새 마커를 남긴다.
+    expect(cookies.some((cookie) => cookie.includes("Max-Age=0"))).toBe(true);
+
+    const forwarded = cookies.find((cookie) => cookie.includes("Max-Age=10"));
+    expect(forwarded).toBeDefined();
+    expect(forwarded).toContain(encodeURIComponent("/"));
+
+    // 목적지 요청은 영어 브라우저에서도 한국어로 이어진다.
+    const next = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/", {
+        "Accept-Language": "en-US,en;q=0.9",
+        Cookie: (forwarded ?? "").split(";")[0],
+      }),
+    );
+
+    expect(next.kind).toBe("continue");
+    if (next.kind !== "continue") return;
+
+    expect(next.pathLocale).toBe("ko");
+  });
+
+  it("leaves a destination that already carries a locale alone", () => {
+    const req = createDocumentRequest("https://zimdugo.com/report", {
+      Cookie: issueIntentCookie("https://zimdugo.com/ko/report"),
+    });
+
+    const response = withForwardedLocaleIntent(req, createAuthRedirect("/ja"));
+
+    expect(response.headers.getSetCookie()).toEqual([]);
+  });
+
+  it("never marks a destination outside the origin", () => {
+    const req = createDocumentRequest("https://zimdugo.com/report", {
+      Cookie: issueIntentCookie("https://zimdugo.com/ko/report"),
+    });
+
+    const response = withForwardedLocaleIntent(
+      req,
+      createAuthRedirect("https://evil.example/x"),
+    );
+
+    expect(response.headers.getSetCookie()).toEqual([]);
   });
 });
