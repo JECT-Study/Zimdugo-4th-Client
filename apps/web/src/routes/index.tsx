@@ -242,6 +242,14 @@ export const DETAIL_FOCUS_ZOOM = 17;
  * 클라이언트 첫 렌더도 이 값으로 시작해야 하이드레이션이 어긋나지 않는다.
  */
 const SSR_WINDOW_HEIGHT_PX = 800;
+/**
+ * 시트가 없을 때 라이브 오프셋에 넣는 값.
+ *
+ * 어떤 뷰포트에서도 "시트가 차지하는 높이 0" 보다 아래를 가리켜, 컨트롤 위치
+ * 식이 늘 기본 자리(clamp 하한)로 평가되게 한다. 뷰포트 높이를 쓰면 그 값이
+ * 실제 화면보다 작을 때(측정 전 가정값 등) 컨트롤이 잠깐 떠오른다.
+ */
+const SHEET_OFFSET_NONE_PX = 1_000_000;
 
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
@@ -713,9 +721,9 @@ export function IndexPage() {
    * 시트 윗변의 라이브 위치. 프레임마다 바뀌므로 state 가 아니라 motion value 다.
    *
    * state 로 두면 지도까지 들고 있는 이 컴포넌트가 드래그 내내 초당 60번 리렌더된다.
-   * 시트가 없을 때는 뷰포트 높이를 넣어 "차지하는 높이 0" 으로 만든다.
+   * 시트가 없을 때는 SHEET_OFFSET_NONE_PX 를 넣어 "차지하는 높이 0" 으로 만든다.
    */
-  const sheetLiveOffset = useMotionValue(windowHeight);
+  const sheetLiveOffset = useMotionValue(SHEET_OFFSET_NONE_PX);
   /**
    * 시트가 마운트 슬라이드로 올라오는 동안의 진행도. 0 이면 아직 화면 밖이다.
    *
@@ -730,6 +738,13 @@ export function IndexPage() {
    */
   const [isSheetSettled, setIsSheetSettled] = useState(true);
   /**
+   * 지금 화면에 떠 있는 시트 종류의 최신값.
+   *
+   * 시트 콜백은 렌더 밖에서 도착하므로 클로저에 갇힌 값 대신 이 ref 를 본다.
+   * 값은 아래에서 visibleSheetKind 를 정한 직후 렌더 중에 갱신한다.
+   */
+  const visibleSheetKindRef = useRef<"list" | "detail" | null>(null);
+  /**
    * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
    * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
    * 계산하므로 React 렌더가 필요 없다.
@@ -741,6 +756,12 @@ export function IndexPage() {
       mountProgress,
       isSettled,
     }: LockerDetailSheetLiveOffsetState) => {
+      // 화면에서 사라진 시트가 마지막으로 흘린 프레임은 버린다. 받아 두면
+      // 오프셋이 되살아나 컨트롤이 없는 시트의 윗변으로 다시 올라간다.
+      if (visibleSheetKindRef.current === null) {
+        return;
+      }
+
       sheetLiveOffset.set(offsetPx);
       sheetMountProgress.set(mountProgress);
       setIsSheetSettled(isSettled);
@@ -3136,6 +3157,7 @@ export function IndexPage() {
     isSearchOpen,
     hasDetailContent: displayedLockerDetail !== null,
   });
+  visibleSheetKindRef.current = visibleSheetKind;
   // 스켈레톤은 하이드레이션 전에도 그려지므로 라이브 오프셋을 쓸 수 없다.
   // 시트가 아직 없는 단계라 정적 계산이 맞고, 실제 컨트롤로 넘어갈 때는 이미
   // 시트가 자리를 잡아 두 값이 같은 위치를 가리킨다.
@@ -3179,13 +3201,17 @@ export function IndexPage() {
   /**
    * 시트가 사라진 뒤에도 오프셋이 과거 값에 멈춰 있으면 컨트롤이 없는 시트 위에
    * 떠 있게 된다. 밀어 올릴 단계가 아니면 "차지하는 높이 0" 으로 되돌린다.
+   *
+   * 안착 여부도 함께 되돌린다. 시트가 애니메이션 도중에 사라지면 마지막으로 받은
+   * false 가 그대로 굳어, 다음에 시트가 없는 동안에도 추적이 켜진 것으로 남는다.
    */
   useEffect(() => {
     if (!shouldTrackSheet) {
-      sheetLiveOffset.set(windowHeight);
+      sheetLiveOffset.set(SHEET_OFFSET_NONE_PX);
       sheetMountProgress.set(1);
+      setIsSheetSettled(true);
     }
-  }, [shouldTrackSheet, sheetLiveOffset, sheetMountProgress, windowHeight]);
+  }, [shouldTrackSheet, sheetLiveOffset, sheetMountProgress]);
 
   /**
    * 시트가 사라지면 실측 높이도 시트와 함께 버린다.
@@ -3505,11 +3531,15 @@ export function IndexPage() {
           // E2E 가 위치를 재는 앵커. 스켈레톤과 구분되도록 실제 컨트롤에만 둔다.
           data-map-control-stack=""
           initial={false}
-          style={{
-            bottom: shouldTrackSheet
-              ? mapControlRaisedBottom
-              : MAP_CONTROL_FALLBACK_BOTTOM_PX,
-          }}
+          /*
+            바닥 위치는 늘 같은 모션 값이 쥔다. 시트가 없으면 그 값이 기본 자리를
+            가리키므로 따로 갈아끼울 필요가 없다.
+
+            모션 값과 정적 값을 오가게 두면, 전환하는 순간 DOM 에 남은 인라인
+            스타일이 갱신되지 않고 굳는 경우가 있었다. 시트가 사라졌는데 컨트롤만
+            시트 윗변에 남는 화면이 그것이다. 한쪽만 쓰면 그 틈이 없다.
+          */
+          style={{ bottom: mapControlRaisedBottom }}
         >
           <RefreshButton
             isRefreshing={isRefreshing}
