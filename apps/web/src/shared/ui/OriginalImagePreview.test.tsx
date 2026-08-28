@@ -98,6 +98,25 @@ describe("OriginalImagePreview", () => {
     expect(getSrc()).toBe("https://example.com/b.jpg");
   });
 
+  it("끝에 닿아 버튼이 비활성화되면 반대쪽 버튼으로 포커스를 옮긴다", () => {
+    const { dialog } = renderGallery();
+    const previousButton = within(dialog).getByRole("button", {
+      name: "이전 사진",
+    });
+    const nextButton = within(dialog).getByRole("button", {
+      name: "다음 사진",
+    });
+
+    fireEvent.click(nextButton);
+    expect(nextButton.hasAttribute("disabled")).toBe(true);
+    expect(document.activeElement).toBe(previousButton);
+
+    fireEvent.click(previousButton);
+    fireEvent.click(previousButton);
+    expect(previousButton.hasAttribute("disabled")).toBe(true);
+    expect(document.activeElement).toBe(nextButton);
+  });
+
   it("사진이 깨져도 자리를 지키고 실패 문구를 보여 준다", () => {
     render(
       <OriginalImagePreview

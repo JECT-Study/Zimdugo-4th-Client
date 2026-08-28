@@ -53,6 +53,8 @@ export function OriginalImagePreview({
   onClose,
 }: OriginalImagePreviewProps) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousButtonRef = useRef<HTMLButtonElement | null>(null);
+  const nextButtonRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
@@ -76,14 +78,27 @@ export function OriginalImagePreview({
     setIndex((current) => Math.min(current + 1, totalCount - 1));
   };
 
+  /**
+   * 끝에 닿으면 방금 누른 버튼이 disabled 로 바뀐다. 그대로 두면 포커스가 body 로
+   * 빠지고, 포커스 트랩도 disabled 버튼을 건너뛰어 Tab 이 다이얼로그 밖으로 새어 나간다.
+   * 반대쪽 버튼으로 옮긴다. 두 장 이상일 때만 그려지는 버튼이라 반대쪽은 항상 살아 있다.
+   */
   const handlePreviousClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     goPrevious();
+
+    if (activeIndex - 1 <= 0) {
+      nextButtonRef.current?.focus();
+    }
   };
 
   const handleNextClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     goNext();
+
+    if (activeIndex + 1 >= totalCount - 1) {
+      previousButtonRef.current?.focus();
+    }
   };
 
   const handleImageError = () => {
@@ -242,6 +257,7 @@ export function OriginalImagePreview({
         {totalCount > 1 && navigationLabels ? (
           <>
             <button
+              ref={previousButtonRef}
               type="button"
               className={[navButton, prevButton].join(" ")}
               onClick={handlePreviousClick}
@@ -251,6 +267,7 @@ export function OriginalImagePreview({
               <IconChevronLeft13 />
             </button>
             <button
+              ref={nextButtonRef}
               type="button"
               className={[navButton, nextButton].join(" ")}
               onClick={handleNextClick}

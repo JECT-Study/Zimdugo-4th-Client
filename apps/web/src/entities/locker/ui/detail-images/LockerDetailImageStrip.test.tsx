@@ -91,6 +91,37 @@ describe("LockerDetailImageStrip", () => {
     }
   });
 
+  it("핸들러가 붙기 전에 이미 실패한 이미지도 실패로 표시한다", () => {
+    const completeDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLImageElement.prototype,
+      "complete",
+    );
+    const naturalWidthDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLImageElement.prototype,
+      "naturalWidth",
+    );
+
+    // 캐시에서 곧바로 실패한 상태: 요청은 끝났는데(complete) 그려진 게 없다.
+    Object.defineProperty(HTMLImageElement.prototype, "complete", {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", {
+      configurable: true,
+      get: () => 0,
+    });
+
+    try {
+      render(<LockerDetailImageStrip images={[IMAGES[0]]} />);
+
+      expect(screen.getByText("사진을 불러오지 못했어요")).toBeTruthy();
+      expect(getImageButtons()).toHaveLength(0);
+    } finally {
+      restoreDescriptor("complete", completeDescriptor);
+      restoreDescriptor("naturalWidth", naturalWidthDescriptor);
+    }
+  });
+
   it("이미지가 한 장뿐이면 인디케이터를 두지 않는다", () => {
     const { container } = render(
       <LockerDetailImageStrip images={[IMAGES[0]]} />,

@@ -58,11 +58,19 @@ function LockerDetailImageItem({
     onStatusChange(imageUrl, "failed");
   };
 
-  // 캐시된 이미지는 onLoad 가 붙기 전에 끝나 있을 수 있다.
+  /**
+   * 캐시나 하이드레이션 때문에 onLoad·onError 가 붙기 전에 이미 끝나 있을 수 있다.
+   *
+   * 성공만 보면 그때 실패한 이미지는 이벤트가 다시 오지 않아 영영 스켈레톤으로
+   * 남는다. src 를 항상 주므로 complete 는 곧 "요청이 끝났다" 는 뜻이고,
+   * 그때 naturalWidth 가 0 이면 실패다.
+   */
   const handleImageRef = (node: HTMLImageElement | null) => {
-    if (node?.complete && node.naturalWidth > 0) {
-      onStatusChange(imageUrl, "loaded");
+    if (!node?.complete) {
+      return;
     }
+
+    onStatusChange(imageUrl, node.naturalWidth > 0 ? "loaded" : "failed");
   };
 
   const itemClassName = [item, isSingle ? singleItem : ""]
