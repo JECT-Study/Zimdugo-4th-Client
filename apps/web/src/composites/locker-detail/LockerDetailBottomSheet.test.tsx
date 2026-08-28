@@ -271,61 +271,27 @@ describe("LockerDetailBottomSheet", () => {
     expect(getSheetRoot().getByRole("list")).toBe(before);
   });
 
-  it("주소창이 접혀도 시트에 넘기는 초기 스냅을 바꾸지 않는다", () => {
-    const { rerender } = render(
+  it("리사이즈로 스냅 지점이 바뀌면 라이브 오프셋도 새 위치로 맞춘다", async () => {
+    render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
-    const initialSnapProp = () =>
-      draggableBottomSheetMock.mock.lastCall?.[0].initialSnapPoint;
-    const opened = initialSnapProp();
+    const overlay = () =>
+      screen.getByRole("region", { name: "실시간 이용 가능" }).parentElement;
 
-    expect(opened).toBe(621);
+    expect(overlay()?.style.bottom).toBe(overlayBottomAt(621));
 
     act(() => {
       Object.defineProperty(window, "innerHeight", {
         configurable: true,
-        value: 749,
+        value: 600,
       });
       window.dispatchEvent(new Event("resize"));
     });
 
-    // 이 값이 바뀌면 시트가 사용자가 둔 자리에서 초기 스냅으로 되돌아간다.
-    expect(initialSnapProp()).toBe(opened);
-
-    // 다른 보관함을 열면 그때는 새 값으로 다시 잡아야 한다.
-    rerender(
-      <LockerDetailBottomSheet
-        locker={{ ...LOCKER_DETAIL, lockerId: 99 }}
-        onReport={vi.fn()}
-      />,
-    );
-
-    expect(initialSnapProp()).toBe(558);
-  });
-
-  it("같은 보관함이라도 열 단계가 바뀌면 새 초기 스냅을 넘긴다", () => {
-    const { rerender } = render(
-      <LockerDetailBottomSheet
-        locker={LOCKER_DETAIL}
-        initialSnapPoint={LOCKER_DETAIL_FULL_TOP_OFFSET}
-        onReport={vi.fn()}
-      />,
-    );
-    const initialSnapProp = () =>
-      draggableBottomSheetMock.mock.lastCall?.[0].initialSnapPoint;
-
-    expect(initialSnapProp()).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
-
-    // full 에서 mini 로. 픽셀 값만 보면 둘 다 "명시된 요청" 이라 구분되지 않는다.
-    rerender(
-      <LockerDetailBottomSheet
-        locker={LOCKER_DETAIL}
-        initialSnapPoint={701}
-        onReport={vi.fn()}
-      />,
-    );
-
-    expect(initialSnapProp()).toBe(701);
+    // 리마운트는 없지만 시트가 옮겨 갈 자리에 라이브 상태를 맞춰야 한다.
+    await waitFor(() => {
+      expect(overlay()?.style.bottom).toBe(overlayBottomAt(409));
+    });
   });
 
   it("다른 보관함을 열면 시트를 새로 마운트한다", () => {

@@ -163,8 +163,6 @@ const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 const DETAIL_HALF_VISIBLE_HEIGHT = 191;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
-/** 창을 못 읽는 서버 렌더에서만 쓰는 값. 클라이언트는 첫 렌더부터 실제 높이를 쓴다. */
-const FALLBACK_WINDOW_HEIGHT = 812;
 
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
 
@@ -316,9 +314,7 @@ export function LockerDetailBottomSheet({
   onLiveOffsetChange,
   snapRequest,
 }: LockerDetailBottomSheetProps) {
-  const [windowHeight, setWindowHeight] = useState(() =>
-    typeof window === "undefined" ? FALLBACK_WINDOW_HEIGHT : window.innerHeight,
-  );
+  const [windowHeight, setWindowHeight] = useState(812);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
@@ -417,46 +413,11 @@ export function LockerDetailBottomSheet({
    * resolvedInitialSnapPoint 는 거기에 clamp 까지 걸려 주소창이 접히기만 해도 변한다.
    * 그래서 "어느 단계로 열라는 요청이 있었는가" 만 본다.
    */
-  const requestedSnapStage =
-    initialSnapPoint === undefined
-      ? "auto"
-      : resolveLockerDetailSnapStage({
-          maxSnapPoint: resolvedMaxSnapPoint,
-          miniSnapPoint: resolvedMiniSnapPoint,
-          minSnapPoint: resolvedMinSnapPoint,
-          offset: resolvedInitialSnapPoint,
-          snapPoint: resolvedSnapPoint,
-        });
-  const sheetSessionKey = `${locker.lockerId}-${requestedSnapStage}`;
+  const sheetSessionKey = `${locker.lockerId}-${
+    initialSnapPoint === undefined ? "auto" : "requested"
+  }`;
   const sheetSessionKeyRef = useRef(sheetSessionKey);
-
-  /**
-   * 시트에 실제로 넘기는 초기 스냅. 세션이 바뀔 때만 다시 잡는다.
-   *
-   * DraggableBottomSheet 는 이 값이 바뀌면 시트를 그 자리로 되돌린다. 매 렌더
-   * clamp 된 값을 넘기면 주소창이 접히기만 해도 사용자가 올려 둔 시트가 내려간다.
-   * 세션 동안 고정해 두면 경계가 바뀌어도 시트는 있던 자리에 머물고, 자식은
-   * 범위를 벗어난 경우에만 스스로 clamp 한다.
-   *
-   * effect 가 아니라 렌더 중에 잡는다. 세션이 바뀌면 시트도 같은 렌더에서 새로
-   * 마운트되는데, effect 로 미루면 그 마운트가 직전 세션의 값을 초기값으로 읽는다.
-   */
-  const [sessionSnapshot, setSessionSnapshot] = useState({
-    key: sheetSessionKey,
-    initialSnapPoint: resolvedInitialSnapPoint,
-  });
-
-  if (sessionSnapshot.key !== sheetSessionKey) {
-    setSessionSnapshot({
-      key: sheetSessionKey,
-      initialSnapPoint: resolvedInitialSnapPoint,
-    });
-  }
-
-  const sessionInitialSnapPoint =
-    sessionSnapshot.key === sheetSessionKey
-      ? sessionSnapshot.initialSnapPoint
-      : resolvedInitialSnapPoint;
+  const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
 
   /**
    * 스냅 애니메이션이 진행되는 동안의 실제 시트 오프셋.
@@ -652,10 +613,14 @@ export function LockerDetailBottomSheet({
    * 오버레이 대신 시트 안 카드가 나왔다. 안쪽 key 와 같은 기준으로 초기화한다.
    */
   useEffect(() => {
-    if (sheetSessionKeyRef.current === sheetSessionKey) {
+    if (
+      initialSnapPointRef.current === resolvedInitialSnapPoint &&
+      sheetSessionKeyRef.current === sheetSessionKey
+    ) {
       return;
     }
 
+    initialSnapPointRef.current = resolvedInitialSnapPoint;
     sheetSessionKeyRef.current = sheetSessionKey;
     sheetOffsetValue.set(resolvedInitialSnapPoint);
     snapTargetOffsetRef.current = resolvedInitialSnapPoint;
@@ -679,40 +644,6 @@ export function LockerDetailBottomSheet({
     sheetOffsetValue.set,
   ]);
 
-  /**
-   * 스냅 지점이 다시 계산되면 단계를 다시 읽는다.
-   *
-   * 시트는 있던 자리에 그대로 있지만, 경계가 움직이면 그 자리가 속하는 단계는
-   * 달라질 수 있다. 기준은 시트가 안착한 자리(snapTargetOffsetRef)다. 라이브
-   * 오프셋은 자식이 알려 줄 때만 갱신돼 아직 한 번도 안 온 시점에는 옛 값이다.
-   */
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 스냅 경계 변화가 재계산 트리거다
-  useEffect(() => {
-    // 자식은 안착 지점이 새 경계를 벗어나면 스스로 끌어당긴다. 같은 계산을 해 둔다.
-    const settledOffset = Math.min(
-      resolvedMaxSnapPoint,
-      Math.max(resolvedMinSnapPoint, snapTargetOffsetRef.current),
-    );
-    snapTargetOffsetRef.current = settledOffset;
-
-    const nextStage = resolveLockerDetailSnapStage({
-      maxSnapPoint: resolvedMaxSnapPoint,
-      miniSnapPoint: resolvedMiniSnapPoint,
-      minSnapPoint: resolvedMinSnapPoint,
-      offset: settledOffset,
-      snapPoint: resolvedSnapPoint,
-    });
-
-    setCurrentSnapStage((current) =>
-      current === nextStage ? current : nextStage,
-    );
-  }, [
-    resolvedMaxSnapPoint,
-    resolvedMiniSnapPoint,
-    resolvedMinSnapPoint,
-    resolvedSnapPoint,
-  ]);
-
   return (
     <>
       {isRealtimeOverlayVisible ? (
@@ -732,7 +663,7 @@ export function LockerDetailBottomSheet({
       <DraggableBottomSheet
         key={sheetSessionKey}
         snapPoint={resolvedSnapPoint}
-        initialSnapPoint={sessionInitialSnapPoint}
+        initialSnapPoint={resolvedInitialSnapPoint}
         minSnapPoint={resolvedMinSnapPoint}
         miniSnapPoint={resolvedMiniSnapPoint}
         maxSnapPoint={resolvedMaxSnapPoint}
