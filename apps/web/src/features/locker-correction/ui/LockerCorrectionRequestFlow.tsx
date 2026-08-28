@@ -2,7 +2,7 @@ import { m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   type LockerIssueReportFailure,
   parseLockerIssueReportFailure,
@@ -42,6 +42,12 @@ export function LockerCorrectionRequestFlow({
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [failure, setFailure] = useState<LockerIssueReportFailure | null>(null);
+  /**
+   * 제출 한 건을 가리키는 표. 대기 중에 흐름이 닫히면 값을 올려 무효화한다.
+   * 그러지 않으면 닫은 뒤 도착한 응답이 성공 팝업을 다시 열거나, 다음에 열
+   * 때까지 남는 오류를 심는다.
+   */
+  const submitSessionRef = useRef(0);
 
   const handleOpenChange = (nextIsOpen: boolean) => {
     onOpenChange(nextIsOpen);
@@ -69,20 +75,27 @@ export function LockerCorrectionRequestFlow({
       return;
     }
 
+    const session = submitSessionRef.current;
     setIsSubmitting(true);
     setFailure(null);
     try {
       await onConfirm(pendingRequest);
+      if (submitSessionRef.current !== session) return;
+
       setPendingRequest(null);
       onOpenChange(false);
       setIsSuccessOpen(true);
     } catch (error) {
+      if (submitSessionRef.current !== session) return;
+
       // 확인 팝업만 닫고 신고 다이얼로그는 열어둔다. 입력이 남아 있어야
       // 사용자가 안내를 읽고 그 자리에서 다시 시도할 수 있다.
       setPendingRequest(null);
       setFailure(parseLockerIssueReportFailure(error));
     } finally {
-      setIsSubmitting(false);
+      if (submitSessionRef.current === session) {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -105,10 +118,12 @@ export function LockerCorrectionRequestFlow({
       return;
     }
 
+    submitSessionRef.current += 1;
     setReason(null);
     setDetails("");
     setPendingRequest(null);
     setFailure(null);
+    setIsSubmitting(false);
   }, [isOpen]);
 
   return (

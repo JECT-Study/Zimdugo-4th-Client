@@ -2,7 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Dropdown, type DropdownOption } from "@repo/ui/components/dropdown";
 import { TextareaField } from "@repo/ui/components/textarea-field";
-import { IconPencil24, IconX24 } from "@repo/ui/tokens/icons";
+import { IconX24 } from "@repo/ui/tokens/icons";
 import type { Key } from "react";
 import {
   Button as AriaButton,
@@ -165,7 +165,6 @@ export function LockerCorrectionRequestModal({
                   maxLength={MAX_LOCKER_CORRECTION_DETAILS_LENGTH}
                   placeholder={detailsPlaceholder}
                   aria-label={detailsPlaceholder}
-                  trailingIcon={<IconPencil24 />}
                 />
               ) : null}
 

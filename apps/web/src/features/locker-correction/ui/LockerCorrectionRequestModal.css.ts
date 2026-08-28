@@ -106,7 +106,6 @@ export const detailsField = style({
 
 export const submitButton = style({
   width: "calc(100% + 3px)",
-  // 에러 자리(20px)와 합쳐 기존 22px 간격을 유지한다.
   marginTop: "2px",
 });
 
@@ -121,9 +120,20 @@ globalStyle(`${submitButton}${submitButton}[data-disabled]`, {
  */
 export const submitError = style({
   margin: 0,
+  marginTop: vars.spacing[8],
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   fontSize: vars.typography.fontSize[12],
   lineHeight: vars.typography.lineHeight.normal,
-  minHeight: vars.typography.lineHeight.normal,
+  // 두 줄까지 미리 잡아둔다. 한 줄만 잡으면 en/ja 처럼 긴 문구가 좁은
+  // 화면에서 감길 때 버튼이 밀려 내려간다.
+  height: "40px",
   color: vars.color.palette.red[300],
   textAlign: "center",
+});
+
+/** 펜 아이콘을 뺀 자리만큼 글자수 표시를 오른쪽으로 붙인다. */
+globalStyle(`${detailsField} > span`, {
+  right: vars.spacing[4],
 });

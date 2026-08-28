@@ -20,11 +20,21 @@ function OpenFlow({
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <LockerCorrectionRequestFlow
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      onConfirm={onConfirm}
-    />
+    <>
+      {/* 제출 중에는 모달의 닫기 버튼이 잠기므로, 부모가 내리는 경우를 흉내낸다. */}
+      <button
+        type="button"
+        data-testid="parent-close"
+        onClick={() => setIsOpen(false)}
+      >
+        부모가 닫기
+      </button>
+      <LockerCorrectionRequestFlow
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        onConfirm={onConfirm}
+      />
+    </>
   );
 }
 
@@ -101,6 +111,51 @@ describe("LockerCorrectionRequestFlow 제출 실패 안내", () => {
     fireEvent.click(screen.getByRole("option", { name: "가격 정보가 달라요" }));
 
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("대기 중에 닫으면 뒤늦게 도착한 결과를 반영하지 않는다", async () => {
+    let settleSubmit:
+      | { resolve: () => void; reject: (reason: unknown) => void }
+      | undefined;
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          settleSubmit = { resolve, reject };
+        }),
+    );
+
+    render(<OpenFlow onConfirm={onConfirm} />);
+    submitWithReason("위치가 잘못되었어요");
+
+    // 응답을 기다리는 동안 흐름이 닫힌다.
+    // 모달이 열리면 바깥은 aria-hidden 이라 role 조회가 닿지 않는다.
+    fireEvent.click(screen.getByTestId("parent-close"));
+
+    await act(async () => settleSubmit?.reject({ response: { status: 500 } }));
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "신고하기" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();
+  });
+
+  it("대기 중에 닫으면 뒤늦은 성공도 팝업을 열지 않는다", async () => {
+    let settleSubmit: (() => void) | undefined;
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          settleSubmit = resolve;
+        }),
+    );
+
+    render(<OpenFlow onConfirm={onConfirm} />);
+    submitWithReason("위치가 잘못되었어요");
+
+    // 모달이 열리면 바깥은 aria-hidden 이라 role 조회가 닿지 않는다.
+    fireEvent.click(screen.getByTestId("parent-close"));
+
+    await act(async () => settleSubmit?.());
+
+    expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();
   });
 
   it("안내 자리는 평소에도 비워둔 채 유지한다", () => {
