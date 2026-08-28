@@ -404,8 +404,20 @@ export function LockerDetailBottomSheet({
         snapPoint: resolvedSnapPoint,
       }),
     );
+  /**
+   * 시트를 새로 열었다고 볼 기준.
+   *
+   * 보관함이 바뀌거나, 어느 단계로 열지에 대한 "요청" 이 바뀔 때만 달라진다.
+   * initialSnapPoint 는 단계가 아니라 픽셀 오프셋이라 호출부가 뷰포트마다 다시 계산할 수
+   * 있다. 값 자체를 기준에 넣으면 같은 단계로 여는데도 시트가 다시 마운트된다.
+   * resolvedInitialSnapPoint 는 거기에 clamp 까지 걸려 주소창이 접히기만 해도 변한다.
+   * 그래서 "어느 단계로 열라는 요청이 있었는가" 만 본다.
+   */
+  const sheetSessionKey = `${locker.lockerId}-${
+    initialSnapPoint === undefined ? "auto" : "requested"
+  }`;
+  const sheetSessionKeyRef = useRef(sheetSessionKey);
   const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
-  const lockerIdRef = useRef(locker.lockerId);
 
   /**
    * 스냅 애니메이션이 진행되는 동안의 실제 시트 오프셋.
@@ -603,13 +615,13 @@ export function LockerDetailBottomSheet({
   useEffect(() => {
     if (
       initialSnapPointRef.current === resolvedInitialSnapPoint &&
-      lockerIdRef.current === locker.lockerId
+      sheetSessionKeyRef.current === sheetSessionKey
     ) {
       return;
     }
 
     initialSnapPointRef.current = resolvedInitialSnapPoint;
-    lockerIdRef.current = locker.lockerId;
+    sheetSessionKeyRef.current = sheetSessionKey;
     sheetOffsetValue.set(resolvedInitialSnapPoint);
     snapTargetOffsetRef.current = resolvedInitialSnapPoint;
     setIsOffsetAtSnapTarget(true);
@@ -623,7 +635,7 @@ export function LockerDetailBottomSheet({
       }),
     );
   }, [
-    locker.lockerId,
+    sheetSessionKey,
     resolvedInitialSnapPoint,
     resolvedMaxSnapPoint,
     resolvedMiniSnapPoint,
@@ -649,7 +661,7 @@ export function LockerDetailBottomSheet({
         </motion.div>
       ) : null}
       <DraggableBottomSheet
-        key={`${locker.lockerId}-${resolvedInitialSnapPoint}`}
+        key={sheetSessionKey}
         snapPoint={resolvedSnapPoint}
         initialSnapPoint={resolvedInitialSnapPoint}
         minSnapPoint={resolvedMinSnapPoint}

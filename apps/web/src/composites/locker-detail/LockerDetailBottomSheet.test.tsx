@@ -221,6 +221,106 @@ describe("LockerDetailBottomSheet", () => {
     ).toHaveLength(1);
   });
 
+  it("뷰포트 높이가 바뀌어도 시트 하위 트리를 다시 마운트하지 않는다", () => {
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, images: ["https://example.com/a.jpg"] }}
+        onReport={vi.fn()}
+      />,
+    );
+    const before = getSheetRoot().getByRole("list");
+
+    // 주소창이 접히는 상황. 스냅 지점은 바뀌지만 시트를 새로 연 것은 아니다.
+    act(() => {
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 600,
+      });
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    expect(getSheetRoot().getByRole("list")).toBe(before);
+  });
+
+  it("호출부가 뷰포트에 맞춰 initialSnapPoint 를 다시 계산해도 마운트를 유지한다", () => {
+    // clamp 범위(112~760) 안의 값이라야 resolvedInitialSnapPoint 가 실제로 달라진다.
+    // 둘 다 경계 밖이면 같은 값으로 눌려, 옛 key 로도 이 테스트가 통과해 버린다.
+    const renderAt = (snapPoint: number) => (
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, images: ["https://example.com/a.jpg"] }}
+        initialSnapPoint={snapPoint}
+        onReport={vi.fn()}
+      />
+    );
+    const { rerender } = render(renderAt(400));
+    const before = getSheetRoot().getByRole("list");
+
+    expect(draggableBottomSheetMock.mock.lastCall?.[0].initialSnapPoint).toBe(
+      400,
+    );
+
+    act(() => {
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 600,
+      });
+      window.dispatchEvent(new Event("resize"));
+    });
+    // 같은 단계인데 뷰포트에 맞춰 픽셀 값만 달라진 경우다.
+    rerender(renderAt(300));
+
+    expect(draggableBottomSheetMock.mock.lastCall?.[0].initialSnapPoint).toBe(
+      300,
+    );
+    expect(getSheetRoot().getByRole("list")).toBe(before);
+  });
+
+  it("리사이즈로 스냅 지점이 바뀌면 라이브 오프셋도 새 위치로 맞춘다", async () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+    const overlay = () =>
+      screen.getByRole("region", { name: "실시간 이용 가능" }).parentElement;
+
+    expect(overlay()?.style.bottom).toBe(overlayBottomAt(621));
+
+    act(() => {
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 600,
+      });
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    // 리마운트는 없지만 시트가 옮겨 갈 자리에 라이브 상태를 맞춰야 한다.
+    await waitFor(() => {
+      expect(overlay()?.style.bottom).toBe(overlayBottomAt(409));
+    });
+  });
+
+  it("다른 보관함을 열면 시트를 새로 마운트한다", () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, images: ["https://example.com/a.jpg"] }}
+        onReport={vi.fn()}
+      />,
+    );
+    const before = getSheetRoot().getByRole("list");
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={{
+          ...LOCKER_DETAIL,
+          lockerId: 99,
+          images: ["https://example.com/a.jpg"],
+        }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    expect(getSheetRoot().getByRole("list")).not.toBe(before);
+  });
+
   it("미리보기를 닫으면 열었던 사진 버튼으로 포커스를 되돌린다", () => {
     render(
       <LockerDetailBottomSheet
