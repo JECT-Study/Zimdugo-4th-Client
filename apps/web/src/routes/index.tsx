@@ -230,6 +230,7 @@ import {
 } from "./-index.css";
 import {
   resolveMapControlBottomPx,
+  resolveVisibleSheetKind,
   shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
@@ -3072,57 +3073,6 @@ export function IndexPage() {
     isSearchContextActive: context === "search",
     hasMapError,
   });
-  // 스켈레톤은 하이드레이션 전에도 그려지므로 라이브 오프셋을 쓸 수 없다.
-  // 시트가 아직 없는 단계라 정적 계산이 맞고, 실제 컨트롤로 넘어갈 때는 이미
-  // 시트가 자리를 잡아 두 값이 같은 위치를 가리킨다.
-  const sheetVisibleHeight = !hasMeasuredViewport
-    ? null
-    : sheetMode === "detail"
-      ? detailSheetVisibleHeight
-      : sheetMode === "list"
-        ? listSheetVisibleHeight
-        : null;
-  const mapControlBottom = resolveMapControlBottomPx({
-    baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
-    sheetVisibleHeightPx: sheetVisibleHeight,
-    windowHeightPx: windowHeight,
-  });
-
-  /**
-   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 단계가 바뀔 때만 정하고 프레임마다 다시
-   * 계산하지 않는다. 라이브 오프셋으로 판정하면 드래그 중 컨트롤이 깜빡인다.
-   *
-   * full 도 자리가 있으면 밀어 올린다. 상세 시트의 full 은 콘텐츠가 짧으면 화면을
-   * 다 덮지 못해 위에 지도가 남는데, 거기서도 새로고침·내 위치를 쓸 수 있어야 한다.
-   * 자리가 없으면 resolveMapControlBottomPx 가 null 을 줘 숨겨진다.
-   * dismiss 와 filter 시트는 시트 쪽이 null 을 준다.
-   */
-  const isMapControlRaised = sheetVisibleHeight !== null;
-  /**
-   * 시트 윗변을 따라갈지. 밀어 올릴 단계가 아니어도 시트가 아직 움직이는 중이면
-   * 계속 따라간다.
-   *
-   * 시트는 스프링을 시작하자마자 단계를 바꾼다. 단계만 보면 하프에서 full 로
-   * 스냅할 때 컨트롤이 손을 떼는 순간 기본 위치로 툭 떨어지고, 시트는 그 뒤에
-   * 300ms 동안 올라온다. 안착한 뒤에 넘기면 그 구간이 없다.
-   *
-   * 시트가 아예 없는 동안은 따라갈 대상이 없다. 애니메이션 도중에 시트가
-   * 사라져 isSettled 가 false 로 굳는 경우도 여기서 걸러진다.
-   */
-  const isSheetMounted = sheetMode === "detail" || sheetMode === "list";
-  const shouldTrackSheet =
-    isSheetMounted && (isMapControlRaised || !isSheetSettled);
-
-  /**
-   * 시트가 사라진 뒤에도 오프셋이 과거 값에 멈춰 있으면 컨트롤이 없는 시트 위에
-   * 떠 있게 된다. 밀어 올릴 단계가 아니면 "차지하는 높이 0" 으로 되돌린다.
-   */
-  useEffect(() => {
-    if (!shouldTrackSheet) {
-      sheetLiveOffset.set(windowHeight);
-      sheetMountProgress.set(1);
-    }
-  }, [shouldTrackSheet, sheetLiveOffset, sheetMountProgress, windowHeight]);
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3173,6 +3123,88 @@ export function IndexPage() {
     lockerDetail,
     selectedLockerDetail,
   ]);
+
+  /**
+   * 지금 화면에 실제로 떠 있는 시트. 시트 렌더 조건과 같은 함수를 쓴다.
+   *
+   * sheetMode 만 보면 검색 오버레이가 덮거나 상세에 그릴 내용이 없어 시트가
+   * 사라진 동안에도 컨트롤이 없는 시트 윗변에 그대로 떠 있었다.
+   */
+  const visibleSheetKind = resolveVisibleSheetKind({
+    sheetMode,
+    isMapLoading,
+    isSearchOpen,
+    hasDetailContent: displayedLockerDetail !== null,
+  });
+  // 스켈레톤은 하이드레이션 전에도 그려지므로 라이브 오프셋을 쓸 수 없다.
+  // 시트가 아직 없는 단계라 정적 계산이 맞고, 실제 컨트롤로 넘어갈 때는 이미
+  // 시트가 자리를 잡아 두 값이 같은 위치를 가리킨다.
+  const sheetVisibleHeight = !hasMeasuredViewport
+    ? null
+    : visibleSheetKind === "detail"
+      ? detailSheetVisibleHeight
+      : visibleSheetKind === "list"
+        ? listSheetVisibleHeight
+        : null;
+  const mapControlBottom = resolveMapControlBottomPx({
+    baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
+    sheetVisibleHeightPx: sheetVisibleHeight,
+    windowHeightPx: windowHeight,
+  });
+
+  /**
+   * 컨트롤을 시트 위로 밀어 올릴 단계인지. 단계가 바뀔 때만 정하고 프레임마다 다시
+   * 계산하지 않는다. 라이브 오프셋으로 판정하면 드래그 중 컨트롤이 깜빡인다.
+   *
+   * full 도 자리가 있으면 밀어 올린다. 상세 시트의 full 은 콘텐츠가 짧으면 화면을
+   * 다 덮지 못해 위에 지도가 남는데, 거기서도 새로고침·내 위치를 쓸 수 있어야 한다.
+   * 자리가 없으면 resolveMapControlBottomPx 가 null 을 줘 숨겨진다.
+   * dismiss 와 filter 시트는 시트 쪽이 null 을 준다.
+   */
+  const isMapControlRaised = sheetVisibleHeight !== null;
+  /**
+   * 시트 윗변을 따라갈지. 밀어 올릴 단계가 아니어도 시트가 아직 움직이는 중이면
+   * 계속 따라간다.
+   *
+   * 시트는 스프링을 시작하자마자 단계를 바꾼다. 단계만 보면 하프에서 full 로
+   * 스냅할 때 컨트롤이 손을 떼는 순간 기본 위치로 툭 떨어지고, 시트는 그 뒤에
+   * 300ms 동안 올라온다. 안착한 뒤에 넘기면 그 구간이 없다.
+   *
+   * 시트가 아예 없는 동안은 따라갈 대상이 없다. 애니메이션 도중에 시트가
+   * 사라져 isSettled 가 false 로 굳는 경우도 여기서 걸러진다.
+   */
+  const shouldTrackSheet =
+    visibleSheetKind !== null && (isMapControlRaised || !isSheetSettled);
+
+  /**
+   * 시트가 사라진 뒤에도 오프셋이 과거 값에 멈춰 있으면 컨트롤이 없는 시트 위에
+   * 떠 있게 된다. 밀어 올릴 단계가 아니면 "차지하는 높이 0" 으로 되돌린다.
+   */
+  useEffect(() => {
+    if (!shouldTrackSheet) {
+      sheetLiveOffset.set(windowHeight);
+      sheetMountProgress.set(1);
+    }
+  }, [shouldTrackSheet, sheetLiveOffset, sheetMountProgress, windowHeight]);
+
+  /**
+   * 시트가 사라지면 실측 높이도 시트와 함께 버린다.
+   *
+   * 이 값은 시트가 콜백으로 올려 주는 것이라 시트가 없는 동안에는 갱신될 길이
+   * 없다. 남겨 두면 다음에 시트가 뜰 때 지난 단계의 높이로 컨트롤이 먼저
+   * 뛰어오른다. 마운트 첫 프레임에 기본 위치로 튀지 않도록 null 이 아니라 각
+   * 시트의 하프 높이로 되돌린다.
+   */
+  useEffect(() => {
+    if (visibleSheetKind !== null) {
+      return;
+    }
+
+    setListSheetVisibleHeight(
+      resolveSearchListStageVisibleHeight("half", windowHeight),
+    );
+    setDetailSheetVisibleHeight(resolveDetailSheetVisibleHeight("half"));
+  }, [visibleSheetKind, windowHeight]);
 
   const isSearchListLoading = shouldShowSearchListLoading({
     isPlaceListScope,
@@ -3560,7 +3592,7 @@ export function IndexPage() {
         }}
       />
 
-      {!isMapLoading && sheetMode === "list" && !isSearchOpen ? (
+      {visibleSheetKind === "list" ? (
         <SearchListBottomSheet
           key={searchListSheetKey}
           searchQuery={effectiveSearchQuery}
@@ -3584,10 +3616,7 @@ export function IndexPage() {
         />
       ) : null}
 
-      {!isMapLoading &&
-      sheetMode === "detail" &&
-      !isSearchOpen &&
-      displayedLockerDetail ? (
+      {visibleSheetKind === "detail" && displayedLockerDetail ? (
         <LockerDetailBottomSheet
           locker={displayedLockerDetail}
           loadState={lockerDetailLoadState}
