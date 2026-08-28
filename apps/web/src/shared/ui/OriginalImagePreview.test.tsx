@@ -107,6 +107,7 @@ describe("OriginalImagePreview", () => {
       name: "다음 사진",
     });
 
+    nextButton.focus();
     fireEvent.click(nextButton);
     expect(nextButton.hasAttribute("disabled")).toBe(true);
     expect(document.activeElement).toBe(previousButton);
@@ -115,6 +116,56 @@ describe("OriginalImagePreview", () => {
     fireEvent.click(previousButton);
     expect(previousButton.hasAttribute("disabled")).toBe(true);
     expect(document.activeElement).toBe(nextButton);
+  });
+
+  it("방향키로 끝에 닿을 때도 포커스를 반대쪽으로 옮긴다", () => {
+    const { dialog } = renderGallery();
+    const previousButton = within(dialog).getByRole("button", {
+      name: "이전 사진",
+    });
+    const nextButton = within(dialog).getByRole("button", {
+      name: "다음 사진",
+    });
+
+    nextButton.focus();
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+
+    expect(nextButton.hasAttribute("disabled")).toBe(true);
+    expect(document.activeElement).toBe(previousButton);
+  });
+
+  it("버튼에 포커스가 없으면 이동해도 포커스를 빼앗지 않는다", () => {
+    const { dialog } = renderGallery();
+    const closeButton = within(dialog).getByRole("button", { name: "닫기" });
+
+    closeButton.focus();
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+
+    expect(document.activeElement).toBe(closeButton);
+  });
+
+  it("목록이 비면 닫기 콜백을 부른다", () => {
+    const handleClose = vi.fn();
+    const { rerender } = render(
+      <OriginalImagePreview
+        images={GALLERY}
+        alt="원본 사진"
+        closeLabel="닫기"
+        onClose={handleClose}
+      />,
+    );
+
+    rerender(
+      <OriginalImagePreview
+        images={[]}
+        alt="원본 사진"
+        closeLabel="닫기"
+        onClose={handleClose}
+      />,
+    );
+
+    expect(handleClose).toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "원본 사진" })).toBeNull();
   });
 
   it("사진이 깨져도 자리를 지키고 실패 문구를 보여 준다", () => {

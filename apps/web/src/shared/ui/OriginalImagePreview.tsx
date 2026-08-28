@@ -70,35 +70,46 @@ export function OriginalImagePreview({
   // 실패해도 목록에서 빼지 않는다. 자리를 지켜야 위치와 카운터가 흔들리지 않는다.
   const hasCurrentFailed = currentImage ? failedUrls.has(currentImage) : false;
 
-  const goPrevious = () => {
-    setIndex((current) => Math.max(current - 1, 0));
-  };
-
-  const goNext = () => {
-    setIndex((current) => Math.min(current + 1, totalCount - 1));
-  };
-
   /**
-   * 끝에 닿으면 방금 누른 버튼이 disabled 로 바뀐다. 그대로 두면 포커스가 body 로
-   * 빠지고, 포커스 트랩도 disabled 버튼을 건너뛰어 Tab 이 다이얼로그 밖으로 새어 나간다.
-   * 반대쪽 버튼으로 옮긴다. 두 장 이상일 때만 그려지는 버튼이라 반대쪽은 항상 살아 있다.
+   * 사진 이동은 전부 여기를 지난다. 버튼·방향키·스와이프가 각자 인덱스를 만지면
+   * 아래 포커스 처리를 우회하는 경로가 생긴다.
+   *
+   * 끝에 닿으면 방금 누른 버튼이 그 자리에서 disabled 가 된다. 그대로 두면 포커스가
+   * body 로 빠지고, 포커스 트랩이 disabled 버튼을 건너뛰어 Tab 이 다이얼로그 밖으로
+   * 새어 나간다. 그 버튼에 포커스가 있었을 때만 반대쪽으로 옮긴다. 좌우 버튼은 두 장
+   * 이상일 때만 그려지므로 반대쪽은 항상 살아 있다.
    */
+  const navigate = (delta: -1 | 1) => {
+    const nextIndex = Math.min(
+      Math.max(activeIndex + delta, 0),
+      Math.max(totalCount - 1, 0),
+    );
+    setIndex(nextIndex);
+
+    const movedButton =
+      delta === 1 ? nextButtonRef.current : previousButtonRef.current;
+    const oppositeButton =
+      delta === 1 ? previousButtonRef.current : nextButtonRef.current;
+    const reachedEdge =
+      delta === 1 ? nextIndex >= totalCount - 1 : nextIndex <= 0;
+
+    if (reachedEdge && document.activeElement === movedButton) {
+      oppositeButton?.focus();
+    }
+  };
+
+  // 방향키 리스너가 목록이 바뀔 때마다 다시 붙지 않도록 최신 이동 함수만 갈아 끼운다.
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
   const handlePreviousClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    goPrevious();
-
-    if (activeIndex - 1 <= 0) {
-      nextButtonRef.current?.focus();
-    }
+    navigate(-1);
   };
 
   const handleNextClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    goNext();
-
-    if (activeIndex + 1 >= totalCount - 1) {
-      previousButtonRef.current?.focus();
-    }
+    navigate(1);
   };
 
   const handleImageError = () => {
@@ -129,12 +140,7 @@ export function OriginalImagePreview({
       return;
     }
 
-    if (deltaX > 0) {
-      goPrevious();
-      return;
-    }
-
-    goNext();
+    navigate(deltaX > 0 ? -1 : 1);
   };
 
   const handleDialogKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -196,19 +202,29 @@ export function OriginalImagePreview({
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        setIndex((current) => Math.max(current - 1, 0));
+        navigateRef.current(-1);
         return;
       }
 
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        setIndex((current) => Math.min(current + 1, totalCount - 1));
+        navigateRef.current(1);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [onClose, totalCount]);
+  }, [onClose]);
+
+  /**
+   * 목록이 비면 포털만 조용히 사라지고 부모는 계속 "열려 있다" 고 안다. 포커스가
+   * 복원되지 않고, 나중에 이미지가 다시 생기면 누른 적 없는 미리보기가 되살아난다.
+   */
+  useEffect(() => {
+    if (totalCount === 0) {
+      onClose();
+    }
+  }, [totalCount, onClose]);
 
   if (typeof document === "undefined" || !currentImage) {
     return null;
