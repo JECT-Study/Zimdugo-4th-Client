@@ -135,10 +135,10 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/settings?tab=1");
 
     const setCookie = result.response.headers.get("Set-Cookie");
-    // 마커는 목적지에 묶여 그 요청에서만 소비된다. 이름도 목적지마다 다르다.
+    // 마커는 목적지에 묶여 그 요청에서만 소비된다. 이름은 리다이렉트별 nonce 다.
     expect(setCookie).toMatch(
       new RegExp(
-        `^ZIMDUGO_LOCALE_INTENT_[a-z0-9]+=${encodeURIComponent("/settings?tab=1").replace(/[?]/g, "\\?")}`,
+        `^ZIMDUGO_LOCALE_INTENT_[0-9a-f]{32}=${encodeURIComponent("/settings?tab=1").replace(/[?]/g, "\\?")}`,
       ),
     );
     expect(setCookie).toContain("Max-Age=10");
@@ -204,15 +204,49 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/en/my");
   });
 
-  it("keeps concurrent markers from overwriting each other", () => {
-    // 탭 두 개에서 /ko/a 와 /ko/b 를 동시에 여는 상황. 마커 이름이 하나면
-    // 나중 응답이 앞선 마커를 덮어써 덮인 쪽이 Accept-Language 로 끌려간다.
+  it("gives every redirect its own marker, same destination included", () => {
+    // 같은 /ko/a 를 두 탭에서 열어도 마커가 겹치면 안 된다. 겹치면 먼저
+    // 소비한 쪽의 Max-Age=0 이 아직 쓰이지 않은 다른 탭의 마커까지 지운다.
+    const first = issueIntentCookie("https://zimdugo.com/ko/a");
+    const second = issueIntentCookie("https://zimdugo.com/ko/a");
+
+    expect(first.split("=")[0]).not.toBe(second.split("=")[0]);
+
+    // 소비 응답은 자기가 찾은 마커 하나만 지운다.
+    const response = withConsumedLocaleIntentHeaders(
+      createDocumentRequest("https://zimdugo.com/a", {
+        Cookie: [first, second].join("; "),
+      }),
+      new Response("ok", { status: 200 }),
+    );
+
+    const cleared = response.headers.get("Set-Cookie") ?? "";
+    const clearedName = cleared.split("=")[0];
+
+    expect([first.split("=")[0], second.split("=")[0]]).toContain(clearedName);
+    expect(cleared).toContain("Max-Age=0");
+    // 남은 마커는 그대로라 두 번째 탭도 한국어를 받는다.
+    const survivor = [first, second].find(
+      (cookie) => cookie.split("=")[0] !== clearedName,
+    );
+    const secondTab = resolveLocaleRequest(
+      createDocumentRequest("https://zimdugo.com/a", {
+        "Accept-Language": "en-US,en;q=0.9",
+        Cookie: survivor ?? "",
+      }),
+    );
+
+    expect(secondTab.kind).toBe("continue");
+    if (secondTab.kind !== "continue") return;
+
+    expect(secondTab.pathLocale).toBe("ko");
+  });
+
+  it("keeps markers for different destinations independent", () => {
     const cookies = [
       issueIntentCookie("https://zimdugo.com/ko/a"),
       issueIntentCookie("https://zimdugo.com/ko/b"),
     ];
-
-    expect(cookies[0].split("=")[0]).not.toBe(cookies[1].split("=")[0]);
 
     const browserCookie = cookies.join("; ");
 
@@ -262,13 +296,15 @@ describe("resolveLocaleRequest", () => {
 describe("withConsumedLocaleIntentHeaders", () => {
   it("clears the marker and varies on the channels that decided the locale", () => {
     const response = withConsumedLocaleIntentHeaders(
-      createDocumentRequest("https://zimdugo.com/settings"),
+      createDocumentRequest("https://zimdugo.com/settings", {
+        Cookie: issueIntentCookie("https://zimdugo.com/ko/settings"),
+      }),
       new Response("ok", { status: 200 }),
     );
 
     const setCookie = response.headers.get("Set-Cookie");
-    // 소비한 목적지의 마커만 지운다.
-    expect(setCookie).toMatch(/^ZIMDUGO_LOCALE_INTENT_[a-z0-9]+=;/);
+    // 소비한 마커만 지운다.
+    expect(setCookie).toMatch(/^ZIMDUGO_LOCALE_INTENT_[0-9a-f]{32}=;/);
     expect(setCookie).toContain("Max-Age=0");
     expect(response.headers.get("Vary")).toBe("Cookie, Accept-Language");
   });

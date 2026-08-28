@@ -98,63 +98,46 @@ const resolvePreferredDocumentLocale = (req: Request): AppLocale => {
 
 const getRequestPath = (url: URL): string => `${url.pathname}${url.search}`;
 
-/**
- * FNV-1a. 마커 이름을 목적지마다 다르게 만드는 용도라 분산만 있으면 된다.
- * 충돌해도 값 비교가 한 번 더 막는다.
- */
-const hashTarget = (target: string): string => {
-  let hash = 0x811c9dc5;
-
-  for (let index = 0; index < target.length; index += 1) {
-    hash ^= target.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-
-  return (hash >>> 0).toString(36);
-};
+const LOCALE_INTENT_COOKIE_PREFIX = `${LOCALE_INTENT_COOKIE_NAME}_`;
 
 /**
- * 마커 이름은 목적지마다 다르다. 이름이 하나면 탭 두 개에서 /ko/a 와 /ko/b 를
- * 동시에 열 때 나중 응답이 앞선 마커를 덮어써, 덮인 쪽이 선호 감지로 넘어간다.
+ * 마커 이름은 리다이렉트마다 다르다. 목적지로만 이름을 지으면 같은 /ko/a 를
+ * 두 탭에서 열 때 두 리다이렉트가 같은 쿠키를 쓰게 되고, 먼저 소비한 쪽의
+ * 삭제(Max-Age=0)가 아직 쓰이지 않은 다른 탭의 마커까지 지운다.
  */
-const getLocaleIntentCookieName = (target: string): string =>
-  `${LOCALE_INTENT_COOKIE_NAME}_${hashTarget(target)}`;
+const createLocaleIntentCookieName = (): string =>
+  `${LOCALE_INTENT_COOKIE_PREFIX}${crypto.randomUUID().replace(/-/g, "")}`;
 
 /**
- * 이 목적지 앞으로 남겨진 마커인지. 이름은 해시라 충돌할 수 있으므로 값에
- * 담긴 목적지까지 일치해야 소비한다. 마커는 Path=/ 쿠키라 이름만 믿으면
- * 동시에 진행되는 다른 무접두 탐색이 집어삼킬 수 있다.
+ * 이 목적지 앞으로 남겨진 마커의 이름. 이름은 nonce 라 목적지를 담은 값으로
+ * 찾는다. 마커는 Path=/ 쿠키라 값을 대조하지 않으면 동시에 진행되는 다른
+ * 무접두 탐색이 집어삼킬 수 있다. 소비한 응답은 찾은 이름만 지운다.
  */
-const hasLocaleIntentFor = (
+const findLocaleIntentCookieName = (
   cookieHeader: string | null,
   target: string,
-): boolean => {
-  if (!cookieHeader) return false;
-
-  const expectedName = getLocaleIntentCookieName(target);
+): string | null => {
+  if (!cookieHeader) return null;
 
   for (const cookie of cookieHeader.split(";")) {
     const [name, ...valueParts] = cookie.trim().split("=");
-    if (name !== expectedName) continue;
+    if (!name.startsWith(LOCALE_INTENT_COOKIE_PREFIX)) continue;
 
     try {
-      return decodeURIComponent(valueParts.join("=")) === target;
-    } catch {
-      return false;
-    }
+      if (decodeURIComponent(valueParts.join("=")) === target) return name;
+    } catch {}
   }
 
-  return false;
+  return null;
 };
 
 const buildLocaleIntentCookie = (
   url: URL,
-  target: string,
-  { clear = false }: { clear?: boolean } = {},
+  name: string,
+  target: string | null,
 ): string => {
-  const name = getLocaleIntentCookieName(target);
-  const value = clear ? "" : encodeURIComponent(target);
-  const maxAge = clear ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
+  const value = target === null ? "" : encodeURIComponent(target);
+  const maxAge = target === null ? 0 : LOCALE_INTENT_COOKIE_MAX_AGE;
   const secure = url.protocol === "https:" ? "; Secure" : "";
 
   return `${name}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax; HttpOnly${secure}`;
@@ -169,10 +152,16 @@ export const withConsumedLocaleIntentHeaders = (
   response: Response,
 ): Response => {
   const url = new URL(req.url);
+  const consumedName = findLocaleIntentCookieName(
+    req.headers.get("Cookie"),
+    getRequestPath(url),
+  );
+  if (!consumedName) return response;
+
   const headers = new Headers(response.headers);
   headers.append(
     "Set-Cookie",
-    buildLocaleIntentCookie(url, getRequestPath(url), { clear: true }),
+    buildLocaleIntentCookie(url, consumedName, null),
   );
   headers.set("Vary", "Cookie, Accept-Language");
 
@@ -260,7 +249,11 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
     return {
       kind: "redirect",
       response: getLocaleRedirectResponse(baseLocalePath, {
-        "Set-Cookie": buildLocaleIntentCookie(url, baseLocalePath),
+        "Set-Cookie": buildLocaleIntentCookie(
+          url,
+          createLocaleIntentCookieName(),
+          baseLocalePath,
+        ),
       }),
     };
   }
@@ -276,7 +269,12 @@ export const resolveLocaleRequest = (req: Request): LocaleGuardResult => {
       };
     }
   } else if (isDocumentRequest(req)) {
-    if (hasLocaleIntentFor(req.headers.get("Cookie"), getRequestPath(url))) {
+    const intentCookieName = findLocaleIntentCookieName(
+      req.headers.get("Cookie"),
+      getRequestPath(url),
+    );
+
+    if (intentCookieName) {
       // 방금 /ko 를 떼고 온 요청이다. 선호 감지를 건너뛰고 base locale 로 둔다.
       return {
         kind: "continue",
