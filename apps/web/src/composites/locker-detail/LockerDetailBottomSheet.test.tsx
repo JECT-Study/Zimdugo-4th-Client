@@ -835,7 +835,15 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("신고 요청이 실패하면 성공 팝업을 열지 않는다", async () => {
-    const handleCorrectionSubmit = vi.fn().mockRejectedValue(new Error());
+    // waitFor 는 콜백을 즉시 한 번 실행한다. 거부가 처리되기 전 상태에서도
+    // 두 단언이 모두 참이라 그냥 통과해버리므로, 거부 시점을 직접 잡는다.
+    let rejectSubmit: ((reason: Error) => void) | undefined;
+    const handleCorrectionSubmit = vi.fn(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejectSubmit = reject;
+        }),
+    );
 
     render(
       <LockerDetailBottomSheet
@@ -854,10 +862,29 @@ describe("LockerDetailBottomSheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "완료" }));
     fireEvent.click(screen.getByRole("button", { name: "예" }));
 
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();
-      expect(screen.getByRole("dialog", { name: "신고하기" })).toBeTruthy();
-    });
+    expect(handleCorrectionSubmit).toHaveBeenCalledOnce();
+
+    await act(async () => rejectSubmit?.(new Error()));
+
+    expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "신고하기" })).toBeTruthy();
+  });
+
+  it("제출 핸들러가 없으면 성공 팝업을 열지 않는다", () => {
+    // 요청이 나가지 않았는데 접수됐다고 말하면 안 된다.
+    render(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    const sheet = getSheetRoot();
+
+    fireEvent.click(sheet.getByRole("button", { name: "더보기 메뉴 열기" }));
+    fireEvent.click(screen.getByRole("button", { name: "신고하기" }));
+    fireEvent.click(screen.getByRole("button", { name: /신고 유형 선택/ }));
+    fireEvent.click(
+      screen.getByRole("option", { name: "위치가 잘못되었어요" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "완료" }));
+    fireEvent.click(screen.getByRole("button", { name: "예" }));
+
+    expect(screen.queryByRole("dialog", { name: "신고 접수됨" })).toBeNull();
   });
 
   it("deprecated 정확성 투표 액션을 노출하지 않는다", () => {

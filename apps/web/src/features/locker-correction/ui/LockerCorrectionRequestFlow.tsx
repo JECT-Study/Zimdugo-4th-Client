@@ -36,13 +36,15 @@ export function LockerCorrectionRequestFlow({
   };
 
   const handleConfirm = async () => {
-    if (!pendingRequest || isSubmitting) {
+    // onConfirm 이 없으면 요청도 나가지 않는다. await undefined 는 그대로
+    // 통과하므로, 막지 않으면 아무것도 보내지 않고 "접수됨"을 띄운다.
+    if (!pendingRequest || isSubmitting || !onConfirm) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onConfirm?.(pendingRequest);
+      await onConfirm(pendingRequest);
       setPendingRequest(null);
       onOpenChange(false);
       setIsSuccessOpen(true);
