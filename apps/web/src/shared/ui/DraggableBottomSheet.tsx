@@ -23,8 +23,15 @@ import {
   sheetWrapper,
 } from "./DraggableBottomSheet.css.ts";
 
-const INTERACTIVE_DRAG_EXCLUSION_SELECTOR =
-  'button, a, input, textarea, select, [role="button"], [contenteditable="true"]';
+/**
+ * 이 표식이 붙은 요소 안에서 시작한 눌림은 시트를 끌지 않는다.
+ *
+ * 시트 위에 덮이는 모달은 포털로 document.body 에 그려도 React 트리를 따라
+ * 이벤트가 시트까지 올라온다. 화면은 가려져 있는데 뒤의 시트가 끌리는 일을 막는다.
+ */
+export const SHEET_DRAG_IGNORE_ATTRIBUTE = "data-sheet-drag-ignore";
+
+const INTERACTIVE_DRAG_EXCLUSION_SELECTOR = `button, a, input, textarea, select, [role="button"], [contenteditable="true"], [${SHEET_DRAG_IGNORE_ATTRIBUTE}]`;
 
 const DRAG_START_THRESHOLD_PX = 6;
 /** 시트가 스냅 지점으로 안착할 때 쓰는 스프링. 시트를 따라 움직이는 UI 도 같은 값을 쓴다. */

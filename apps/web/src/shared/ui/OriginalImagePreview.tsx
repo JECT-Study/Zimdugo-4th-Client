@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { SHEET_DRAG_IGNORE_ATTRIBUTE } from "./DraggableBottomSheet";
 import {
   closeButton,
   counter,
@@ -247,7 +248,8 @@ export function OriginalImagePreview({
   }
 
   return createPortal(
-    <div className={overlay}>
+    // 시트 안에서 열려도 뒤의 시트가 끌리지 않게 한다.
+    <div className={overlay} {...{ [SHEET_DRAG_IGNORE_ATTRIBUTE]: "" }}>
       <div
         ref={dialogRef}
         className={dialog}

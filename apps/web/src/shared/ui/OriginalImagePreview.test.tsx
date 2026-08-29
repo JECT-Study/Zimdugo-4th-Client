@@ -8,6 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { SHEET_DRAG_IGNORE_ATTRIBUTE } from "./DraggableBottomSheet";
 import { OriginalImagePreview } from "./OriginalImagePreview";
 
 describe("OriginalImagePreview", () => {
@@ -245,5 +246,21 @@ describe("OriginalImagePreview", () => {
       within(dialog).queryByRole("button", { name: "다음 사진" }),
     ).toBeNull();
     expect(dialog.textContent).not.toContain("1 / 1");
+  });
+
+  it("뒤의 바텀 시트가 끌리지 않도록 표식을 단다", () => {
+    render(
+      <OriginalImagePreview
+        images={["https://example.com/original.jpg"]}
+        alt="원본 사진"
+        closeLabel="닫기"
+        onClose={vi.fn()}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "원본 사진" });
+
+    // 시트는 눌린 지점에서 위로 올라가며 이 표식을 찾는다.
+    expect(dialog.closest(`[${SHEET_DRAG_IGNORE_ATTRIBUTE}]`)).not.toBeNull();
   });
 });
