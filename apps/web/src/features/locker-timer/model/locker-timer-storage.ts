@@ -48,12 +48,18 @@ export const getActiveLockerTimer = (): ActiveLockerTimer | null => {
 
   const activeTimers: ActiveLockerTimer[] = [];
 
-  const storageKeys = Array.from(
-    { length: window.localStorage.length },
-    (_, index) => window.localStorage.key(index),
-  ).filter((key): key is string =>
-    key?.startsWith(LOCKER_TIMER_STORAGE_PREFIX),
-  );
+  let storageKeys: string[];
+  try {
+    // 저장소가 막힌 환경에서는 length 를 읽는 것만으로도 예외가 난다.
+    storageKeys = Array.from(
+      { length: window.localStorage.length },
+      (_, index) => window.localStorage.key(index),
+    ).filter((key): key is string =>
+      key?.startsWith(LOCKER_TIMER_STORAGE_PREFIX),
+    );
+  } catch {
+    return null;
+  }
 
   for (const storageKey of storageKeys) {
     const lockerId = Number(

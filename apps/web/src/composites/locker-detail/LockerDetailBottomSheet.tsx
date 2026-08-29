@@ -36,6 +36,7 @@ import {
 } from "#/entities/locker/ui/realtime-availability";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
+import { getRemainingTimeParts } from "#/features/locker-timer/model/locker-timer-format";
 import {
   getStoredLockerTimer,
   type LockerTimerSession,
@@ -129,8 +130,7 @@ const formatTimerEndTime = (endAt: number) => {
 };
 
 const formatRemainingTime = (remainingTimeInSeconds: number) => {
-  const hours = Math.floor(remainingTimeInSeconds / 3600);
-  const minutes = Math.floor((remainingTimeInSeconds % 3600) / 60);
+  const { hours, minutes } = getRemainingTimeParts(remainingTimeInSeconds);
   return `${String(hours).padStart(2, "0")} : ${String(minutes).padStart(2, "0")}`;
 };
 

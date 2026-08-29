@@ -1,6 +1,7 @@
 import { m } from "@repo/i18n";
 import { IconNavigationClock24 } from "@repo/ui/tokens/icons";
 import { useEffect, useState } from "react";
+import { getRemainingTimeParts } from "../model/locker-timer-format";
 import {
   type ActiveLockerTimer,
   getActiveLockerTimer,
@@ -18,14 +19,12 @@ const formatEndTime = (endAt: number) => {
 };
 
 const formatRemainingTime = (remainingTimeInSeconds: number) => {
-  const hours = Math.floor(remainingTimeInSeconds / 3600);
-  const minutes = Math.floor((remainingTimeInSeconds % 3600) / 60);
+  const { hours, minutes } = getRemainingTimeParts(remainingTimeInSeconds);
   return `${String(hours).padStart(2, "0")} : ${String(minutes).padStart(2, "0")}`;
 };
 
 const formatRemainingBadge = (remainingTimeInSeconds: number) => {
-  const hours = Math.floor(remainingTimeInSeconds / 3600);
-  const minutes = Math.ceil((remainingTimeInSeconds % 3600) / 60);
+  const { hours, minutes } = getRemainingTimeParts(remainingTimeInSeconds);
 
   return hours > 0
     ? m.locker_timer_remaining_hours_minutes({ hours, minutes })

@@ -280,18 +280,24 @@ export function DialPicker({
           "--popup-picker-selection-height": `${selectionHeight}px`,
           "--popup-picker-selection-top": `${selectionTop}px`,
           "--popup-picker-column-template": columnTemplate,
-          "--popup-picker-accessory-left": centerAccessoryLeft
-            ? `${centerAccessoryLeft}px`
-            : undefined,
-          "--popup-picker-accessory-top": centerAccessoryTop
-            ? `${centerAccessoryTop}px`
-            : undefined,
-          "--popup-picker-accessory-height": centerAccessoryHeight
-            ? `${centerAccessoryHeight}px`
-            : undefined,
-          "--popup-picker-selected-font-size": selectedFontSize
-            ? `${selectedFontSize}px`
-            : undefined,
+          // 0 도 유효한 값이라 값의 유무로만 판단한다. 참/거짓으로 보면 0 이
+          // 넘어와도 CSS 기본값으로 되돌아간다.
+          "--popup-picker-accessory-left":
+            centerAccessoryLeft !== undefined
+              ? `${centerAccessoryLeft}px`
+              : undefined,
+          "--popup-picker-accessory-top":
+            centerAccessoryTop !== undefined
+              ? `${centerAccessoryTop}px`
+              : undefined,
+          "--popup-picker-accessory-height":
+            centerAccessoryHeight !== undefined
+              ? `${centerAccessoryHeight}px`
+              : undefined,
+          "--popup-picker-selected-font-size":
+            selectedFontSize !== undefined
+              ? `${selectedFontSize}px`
+              : undefined,
         } as CSSProperties
       }
     >
