@@ -376,14 +376,14 @@ function Cell({
   children: ReactNode;
   style?: CSSProperties;
   spanColumns?: 1 | 2;
-  ingredients?: string[];
+  ingredients?: readonly string[];
   probeTarget?: "svg" | "root";
 }) {
   const computedWidth =
     spanColumns === 2 ? CELL_WIDTH * 2 + CELL_GAP : CELL_WIDTH;
   const [isHovered, setIsHovered] = useState(false);
   const [summary, setSummary] = useState("");
-  const [materialList, setMaterialList] = useState<string[]>([]);
+  const [materialList, setMaterialList] = useState<readonly string[]>([]);
   const [tooltipPos, setTooltipPos] = useState({ left: 0, top: 0 });
   const rootRef = useRef<HTMLButtonElement | null>(null);
   const iconAreaRef = useRef<HTMLDivElement | null>(null);
@@ -589,7 +589,7 @@ interface IconEntry {
   name: string;
   render: () => ReactNode;
   spanColumns?: 1 | 2;
-  ingredients?: string[];
+  ingredients?: readonly string[];
   probeTarget?: "svg" | "root";
   style?: CSSProperties;
 }
@@ -597,7 +597,7 @@ interface IconEntry {
 interface IconCategory {
   id: string;
   storyName: string;
-  entries: IconEntry[];
+  entries: readonly IconEntry[];
 }
 
 /**
@@ -607,7 +607,7 @@ interface IconCategory {
  * 나열해서, 아이콘을 더할 때 한쪽만 고치면 조용히 어긋났다. 실제로 갤러리에 6개가
  * 빠져 있었고 사이즈 셀은 이름이 서로 달랐다.
  */
-const ICON_CATALOG: IconCategory[] = [
+const ICON_CATALOG = [
   {
     id: "Navigation",
     storyName: "icon.navigation",
@@ -1278,15 +1278,13 @@ const ICON_CATALOG: IconCategory[] = [
       },
     ],
   },
-];
+] as const satisfies readonly IconCategory[];
 
-const categoryOf = (id: string) => {
-  const found = ICON_CATALOG.find((category) => category.id === id);
-  if (!found) {
-    throw new Error(`알 수 없는 아이콘 카테고리: ${id}`);
-  }
-  return found;
-};
+/** 카탈로그에 실제로 있는 id 만 받는다. 오타는 타입 검사에서 걸린다. */
+type IconCategoryId = (typeof ICON_CATALOG)[number]["id"];
+
+const categoryOf = (id: IconCategoryId) =>
+  ICON_CATALOG.find((category) => category.id === id) as IconCategory;
 
 const renderEntry = (entry: IconEntry, key: string) => (
   <Cell
@@ -1301,7 +1299,7 @@ const renderEntry = (entry: IconEntry, key: string) => (
   </Cell>
 );
 
-const gridStory = (id: string): Story => ({
+const gridStory = (id: IconCategoryId): Story => ({
   name: categoryOf(id).storyName,
   render: () => (
     <div style={grid}>
