@@ -2,10 +2,9 @@ import { m } from "@repo/i18n";
 import { IconImageUnavailable24 } from "@repo/ui/assets/icons";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
+import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
 import { useDragScroll } from "#/shared/hooks/useDragScroll";
 import {
-  failureBox,
-  failureText,
   image,
   imagePlaceholder,
   indicatorDot,
@@ -90,12 +89,7 @@ function LockerDetailImageItem({
   if (status === "failed") {
     return (
       <li data-image-index={index} className={itemClassName}>
-        <span className={failureBox}>
-          <IconImageUnavailable24 />
-          <span className={failureText}>
-            {m.locker_detail_image_load_failed()}
-          </span>
-        </span>
+        <LockerImageReportFrame state="failed" size="fill" />
       </li>
     );
   }
