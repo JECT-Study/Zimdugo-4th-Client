@@ -587,6 +587,10 @@ describe("LockerDetailBottomSheet", () => {
   it("카드가 빠진 단계에서도 full 스냅 위치는 카드를 포함한 높이로 유지한다", () => {
     const FULL_CONTENT_HEIGHT = 400;
     const REALTIME_CARD_BLOCK_HEIGHT = 58 + 8;
+    // 액션 영역은 스크롤 밖이라 콘텐츠 높이에 안 잡힌다. full 스냅은 이 몫을
+    // 따로 더해야 버튼이 화면 밖으로 밀리지 않는다. jsdom 은 레이아웃이 없어
+    // 재지 못하므로 기본값이 그대로 쓰인다.
+    const ACTION_FOOTER_HEIGHT = 79;
     // 카드를 빼면 콘텐츠가 그만큼 줄어드는 실제 상황을 흉내 낸다.
     Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
       configurable: true,
@@ -607,7 +611,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       getSheetRoot().queryByRole("region", { name: "실시간 이용 가능" }),
     ).toBeNull();
-    expect(halfMinSnapPoint).toBe(812 - (FULL_CONTENT_HEIGHT + 8 + 24));
+    expect(halfMinSnapPoint).toBe(
+      812 - (FULL_CONTENT_HEIGHT + ACTION_FOOTER_HEIGHT + 8 + 24),
+    );
 
     rerender(
       <LockerDetailBottomSheet

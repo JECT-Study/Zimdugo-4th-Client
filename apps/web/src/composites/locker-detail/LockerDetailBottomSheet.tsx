@@ -200,21 +200,30 @@ const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 
 /**
- * 액션 영역이 세로로 차지하는 길이.
+ * 액션 영역 높이의 기본값.
  *
- * 구분선 1 + 위 간격 16 + 버튼 한 줄 46 + 아래 패딩 16. 세이프 에어리어는 기기마다
- * 달라 여기에 넣지 않는다. 스냅 높이를 잡는 기준값이라 명목값으로 충분하다.
+ * 구분선 1 + 위 간격 16 + 버튼 한 줄 46 + 아래 패딩 16. 실제 높이는 홈 인디케이터를
+ * 피하는 세이프 에어리어만큼 더 크므로, 그려진 뒤에는 잰 값으로 갈아 끼운다.
+ * 이 값은 재기 전 첫 렌더에만 쓴다.
  */
 const DETAIL_ACTION_FOOTER_HEIGHT = 79;
 
 /**
- * 하프에서 보이는 높이.
+ * 하프에서 콘텐츠가 쓰는 높이.
  *
- * 액션 영역이 스크롤 밖으로 나오면서 이만큼을 먼저 가져간다. 191 로 두면 핸들
- * 24 와 패딩 8 을 빼고 남는 159 중 79 를 액션이 쓰고 80 만 남아, 요약(약 79)
- * 하나로 꽉 차고 그 아래 정보가 전부 잘린다. 하프가 미니와 구분되지 않는다.
+ * 액션 영역이 스크롤 밖으로 나오면서 자기 높이를 먼저 가져간다. 이 몫을 안 더하면
+ * 핸들 24 와 패딩 8 을 뺀 159 중 79 를 액션이 쓰고 80 만 남아, 요약(약 79) 하나로
+ * 꽉 차고 그 아래 정보가 전부 잘린다. 하프가 미니와 구분되지 않는다.
  */
 const DETAIL_HALF_CONTENT_HEIGHT = 191;
+
+/**
+ * 하프에서 보이는 높이.
+ *
+ * 액션 영역 높이를 재기 전까지 쓰는 값이다. 세이프 에어리어가 있는 기기에서는
+ * 실제 액션 영역이 더 높아, 잰 값을 받으면 그만큼 하프도 함께 커져야 한다.
+ * 하프는 스크롤이 없어서 모자란 만큼이 그대로 잘린다.
+ */
 const DETAIL_HALF_VISIBLE_HEIGHT =
   DETAIL_HALF_CONTENT_HEIGHT + DETAIL_ACTION_FOOTER_HEIGHT;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
@@ -246,6 +255,8 @@ interface ResolveLockerDetailSnapPointsOptions {
   snapPoint?: number;
   maxSnapPoint?: number;
   fullContentHeight?: number | null;
+  /** 잰 액션 영역 높이. 생략하면 세이프 에어리어를 뺀 기본값을 쓴다. */
+  actionFooterHeightPx?: number;
 }
 
 const resolveLockerDetailSnapOffset = ({
@@ -315,6 +326,7 @@ export const resolveLockerDetailSnapPoints = ({
   minSnapPoint,
   snapPoint,
   windowHeight,
+  actionFooterHeightPx = DETAIL_ACTION_FOOTER_HEIGHT,
 }: ResolveLockerDetailSnapPointsOptions) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
@@ -330,7 +342,7 @@ export const resolveLockerDetailSnapPoints = ({
     resolveLockerDetailSnapOffset({
       maxSnapPoint: resolvedMaxSnapPoint,
       minSnapPoint: resolvedMinSnapPoint,
-      visibleHeight: DETAIL_HALF_VISIBLE_HEIGHT,
+      visibleHeight: DETAIL_HALF_CONTENT_HEIGHT + actionFooterHeightPx,
       windowHeight,
     });
   const resolvedMiniSnapPoint = resolveLockerDetailSnapOffset({
@@ -395,7 +407,10 @@ export function LockerDetailBottomSheet({
    * 미니에서는 이 영역이 DOM 에서 빠지는데, 그때 0 으로 재면 full 스냅이 그만큼
    * 낮아진다. 실시간 카드와 같은 이유로 마지막 값을 들고 있는다.
    */
-  const actionFooterHeightRef = useRef(0);
+  const actionFooterHeightRef = useRef(DETAIL_ACTION_FOOTER_HEIGHT);
+  const [actionFooterHeight, setActionFooterHeight] = useState(
+    DETAIL_ACTION_FOOTER_HEIGHT,
+  );
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
@@ -428,6 +443,7 @@ export function LockerDetailBottomSheet({
     const measuredFooterHeight = actionFooterMeasureRef.current?.offsetHeight;
     if (measuredFooterHeight) {
       actionFooterHeightRef.current = measuredFooterHeight;
+      setActionFooterHeight(measuredFooterHeight);
     }
     const footerHeight = actionFooterHeightRef.current;
 
@@ -466,6 +482,7 @@ export function LockerDetailBottomSheet({
     snapPoint,
     windowHeight,
     fullContentHeight,
+    actionFooterHeightPx: actionFooterHeight,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined
