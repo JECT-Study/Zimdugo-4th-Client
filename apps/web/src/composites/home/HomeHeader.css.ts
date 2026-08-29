@@ -5,6 +5,9 @@ import {
 import { vars } from "@repo/ui/vars";
 import { globalStyle, style } from "@vanilla-extract/css";
 
+/** 헤더 높이. 로고 버튼이 세로로 이만큼 눌리도록 같은 값을 쓴다. */
+const HEADER_HEIGHT = "48px";
+
 export const header = style({
   position: "absolute",
   top: "env(safe-area-inset-top, 0px)",
@@ -18,7 +21,7 @@ export const header = style({
   justifyContent: "space-between",
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,
-  height: "48px",
+  height: HEADER_HEIGHT,
   margin: "0 auto",
   padding: `0 ${vars.spacing[16]} 0 30px`,
   boxSizing: "border-box",
@@ -39,6 +42,8 @@ export const logoButton = style({
   display: "inline-flex",
   alignItems: "center",
   flexShrink: 0,
+  // 로고 svg 는 16px 라, 높이를 안 주면 누를 수 있는 곳도 16px 로 좁아진다.
+  height: HEADER_HEIGHT,
   padding: 0,
   border: "none",
   background: "none",
