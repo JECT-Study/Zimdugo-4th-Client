@@ -437,11 +437,23 @@ export const detailTrailing = style({
   whiteSpace: "nowrap",
 });
 
-export const actionSection = style({
+/**
+ * 스크롤 밖에 고정되는 액션 영역.
+ *
+ * `sheetColumn` 의 아래 패딩이 0 이라 홈 인디케이터에 버튼이 물렸다. 여기서
+ * 세이프 에어리어를 확보한다.
+ *
+ * 시트는 전체 높이를 갖고 아래로 밀려 있는 구조라, 이 영역은 시트 아랫변이 곧
+ * 화면 아랫변인 full 에서만 보인다. 하프·미니에서도 보이게 하려면 스냅 높이를
+ * 함께 바꿔야 해서 별도로 다룬다.
+ */
+export const actionFooter = style({
   display: "flex",
   flexDirection: "column",
   gap: vars.spacing[16],
+  flexShrink: 0,
   width: "100%",
+  paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
 });
 
 export const actionDivider = style({

@@ -1,13 +1,25 @@
 import { vars } from "@repo/ui/vars";
 import { style, styleVariants } from "@vanilla-extract/css";
 
+/** 다이얼로그 설계 폭. 내부가 전부 절대 위치라 이 값에서 줄어들면 잘린다. */
+const DIALOG_WIDTH_PX = 328;
+
+/*
+ * 화면이 작으면 오버레이가 스크롤된다.
+ *
+ * 예전에는 다이얼로그가 고정 높이인 채 가운데 정렬만 되어 있어, 뷰포트가 낮으면
+ * 위아래가 잘려 나가고 닫기 버튼에 손이 닿지 않았다. 가로도 폭이 줄면 내부의
+ * 절대 위치 요소들이 overflow: hidden 에 잘려 버튼이 사라졌다.
+ *
+ * 가운데 정렬을 align/justify 가 아니라 자식의 margin: auto 로 한다. 넘칠 때
+ * align-items: center 는 시작 쪽으로 스크롤할 수 없어 위쪽이 영영 가려진다.
+ */
 export const overlay = style({
   position: "fixed",
   inset: 0,
   display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: vars.spacing[24],
+  overflow: "auto",
+  padding: vars.spacing[12],
   backgroundColor: "rgba(10, 13, 15, 0.38)",
   backdropFilter: "blur(2px)",
   zIndex: vars.zIndex.modal,
@@ -15,8 +27,9 @@ export const overlay = style({
 
 export const dialog = style({
   position: "relative",
-  width: "100%",
-  maxWidth: "328px",
+  width: `${DIALOG_WIDTH_PX}px`,
+  flex: "none",
+  margin: "auto",
   overflow: "hidden",
   borderRadius: "20px",
   backgroundColor: vars.color.bg.default,

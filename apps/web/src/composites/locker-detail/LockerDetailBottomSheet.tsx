@@ -61,8 +61,8 @@ import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
+  actionFooter,
   actionIcon,
-  actionSection,
   backButton,
   backIcon,
   CONTENT_STACK_GAP_PX,
@@ -366,6 +366,7 @@ export function LockerDetailBottomSheet({
     null,
   );
   const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
+  const actionFooterMeasureRef = useRef<HTMLDivElement | null>(null);
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
@@ -391,9 +392,16 @@ export function LockerDetailBottomSheet({
         ? LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX
         : 0;
 
+    /*
+     * 액션 영역은 스크롤 밖에 있어 콘텐츠 높이에 잡히지 않는다. 빼고 재면 full
+     * 스냅이 그 높이만큼 낮게 잡혀 버튼이 화면 밖으로 밀린다.
+     */
+    const footerHeight = actionFooterMeasureRef.current?.offsetHeight ?? 0;
+
     setFullContentHeight(
       Math.ceil(
         element.scrollHeight +
+          footerHeight +
           missingRealtimeCardHeight +
           DETAIL_CONTENT_TOP_PADDING +
           DETAIL_CONTENT_BOTTOM_PADDING,
@@ -403,6 +411,13 @@ export function LockerDetailBottomSheet({
   const handleFullContentMeasureRef = useCallback(
     (element: HTMLDivElement | null) => {
       fullContentMeasureRef.current = element;
+      updateFullContentHeight();
+    },
+    [updateFullContentHeight],
+  );
+  const handleActionFooterMeasureRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      actionFooterMeasureRef.current = element;
       updateFullContentHeight();
     },
     [updateFullContentHeight],
@@ -834,6 +849,7 @@ export function LockerDetailBottomSheet({
               isRealtimeCardVisible={isSheetAtFullOffset}
               isScrollEnabled={currentSnapStage === "full"}
               contentRef={handleFullContentMeasureRef}
+              footerRef={handleActionFooterMeasureRef}
             />
           )}
         </div>
@@ -1015,6 +1031,7 @@ function FullDetailContent({
   isRealtimeCardVisible,
   isScrollEnabled,
   contentRef,
+  footerRef,
 }: {
   locker: LockerDetailItem;
   images: string[];
@@ -1030,6 +1047,7 @@ function FullDetailContent({
   isRealtimeCardVisible: boolean;
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
+  footerRef?: (element: HTMLDivElement | null) => void;
 }) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -1068,83 +1086,89 @@ function FullDetailContent({
   };
 
   return (
-    <div
-      ref={contentRootRef}
-      className={[
-        fullContentScroll,
-        isScrollEnabled ? fullContentScrollEnabled : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      data-scroll-enabled={isScrollEnabled ? "true" : "false"}
-    >
-      <div ref={contentRef} className={contentStack}>
-        <SummarySection
-          locker={locker}
-          isTimerRunning={isTimerRunning}
-          onClose={onClose}
-          onMoreActionsOpen={onMoreActionsOpen}
-          moreActionsButtonRef={moreActionsButtonRef}
-          snapStage={snapStage}
-          canExpandTitle={isScrollEnabled}
-        />
-        {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
-        {isRealtimeAvailable && isRealtimeCardVisible ? (
-          <div data-realtime-status-card="">
-            <LockerRealtimeStatusCard
-              availability={realtimeAvailability}
-              variant="inline"
-            />
-          </div>
-        ) : null}
-        <hr className={realtimeAvailabilityDivider} />
-        <div className={fullDetailList}>
-          <DetailInfoRow
-            icon={<IconLockerDetailMapPin24 />}
-            title={locker.address}
-            description={locker.floorLabel}
-            titleClassName={detailTitleMultiline}
+    <>
+      <div
+        ref={contentRootRef}
+        className={[
+          fullContentScroll,
+          isScrollEnabled ? fullContentScrollEnabled : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-scroll-enabled={isScrollEnabled ? "true" : "false"}
+      >
+        <div ref={contentRef} className={contentStack}>
+          <SummarySection
+            locker={locker}
+            isTimerRunning={isTimerRunning}
+            onClose={onClose}
+            onMoreActionsOpen={onMoreActionsOpen}
+            moreActionsButtonRef={moreActionsButtonRef}
+            snapStage={snapStage}
+            canExpandTitle={isScrollEnabled}
           />
-          <DetailInfoRow
-            icon={<IconLockerDetailWallet24 />}
-            title={m.locker_detail_price_section()}
-            description={locker.priceLabel ?? formatLockerPriceLabel()}
-            iconTone="neutral"
-          />
-          {locker.sizeLabel ? (
+          {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
+          {isRealtimeAvailable && isRealtimeCardVisible ? (
+            <div data-realtime-status-card="">
+              <LockerRealtimeStatusCard
+                availability={realtimeAvailability}
+                variant="inline"
+              />
+            </div>
+          ) : null}
+          <hr className={realtimeAvailabilityDivider} />
+          <div className={fullDetailList}>
             <DetailInfoRow
-              icon={<IconLockerDetailCapacity24 />}
-              title={m.locker_detail_size_section()}
-              description={locker.sizeLabel}
+              icon={<IconLockerDetailMapPin24 />}
+              title={locker.address}
+              description={locker.floorLabel}
+              titleClassName={detailTitleMultiline}
+            />
+            <DetailInfoRow
+              icon={<IconLockerDetailWallet24 />}
+              title={m.locker_detail_price_section()}
+              description={locker.priceLabel ?? formatLockerPriceLabel()}
               iconTone="neutral"
             />
-          ) : null}
-          <DetailInfoRow
-            icon={<IconCaution24 />}
-            title={m.locker_detail_info_section()}
-            description={detailHelpText}
-            iconTone="neutral"
-            descriptionClassName={detailDescriptionMultiline}
+            {locker.sizeLabel ? (
+              <DetailInfoRow
+                icon={<IconLockerDetailCapacity24 />}
+                title={m.locker_detail_size_section()}
+                description={locker.sizeLabel}
+                iconTone="neutral"
+              />
+            ) : null}
+            <DetailInfoRow
+              icon={<IconCaution24 />}
+              title={m.locker_detail_info_section()}
+              description={detailHelpText}
+              iconTone="neutral"
+              descriptionClassName={detailDescriptionMultiline}
+            />
+          </div>
+          <LockerDetailImageStrip
+            images={images}
+            onOpenPreview={handleOpenImagePreview}
           />
-        </div>
-        <LockerDetailImageStrip
-          images={images}
-          onOpenPreview={handleOpenImagePreview}
-        />
-        {/*
+          {/*
           @deprecated 정확성 vote UI는 상세 화면 개편에서 노출을 중단했다.
           롤백 시 features/vote의 훅·모델·API를 다시 연결하고,
           이 위치에 기존 액션 영역을 복원한다.
         */}
-        <div className={actionSection}>
-          <div className={actionDivider} />
-          <ActionRow
-            onNavigate={onNavigate}
-            onTimerOpen={onTimerOpen}
-            isTimerRunning={isTimerRunning}
-            timerEndTimeLabel={timerEndTimeLabel}
-          />
         </div>
+      </div>
+      {/*
+        액션 영역은 스크롤 밖에 둔다. 안에 두면 콘텐츠가 길 때 접힘 아래로 내려가
+        길찾기 버튼이 보이지 않는다. 시트 아래 여백은 홈 인디케이터를 피한다.
+      */}
+      <div ref={footerRef} className={actionFooter}>
+        <div className={actionDivider} />
+        <ActionRow
+          onNavigate={onNavigate}
+          onTimerOpen={onTimerOpen}
+          isTimerRunning={isTimerRunning}
+          timerEndTimeLabel={timerEndTimeLabel}
+        />
       </div>
       {previewIndex === null ? null : (
         <OriginalImagePreview
@@ -1160,7 +1184,7 @@ function FullDetailContent({
           onClose={handleCloseImagePreview}
         />
       )}
-    </div>
+    </>
   );
 }
 
