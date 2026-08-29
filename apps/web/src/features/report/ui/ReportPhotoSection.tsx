@@ -1,5 +1,5 @@
 import { m } from "@repo/i18n";
-import { IconX16 } from "@repo/ui/assets/icons";
+import { IconNavigationRefresh24, IconX16 } from "@repo/ui/assets/icons";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { useNavigate } from "@tanstack/react-router";
 import type { ChangeEvent, RefObject } from "react";
@@ -18,6 +18,7 @@ import {
   imageWrapper,
   photoAgreementGroup,
   photoErrorIconCircle,
+  photoErrorRefreshIcon,
   photoPreviewErrorOverlay,
   photoPreviewUploadOverlay,
   photoPreviewUploadSpinner,
@@ -41,24 +42,6 @@ interface ReportPhotoSectionProps {
   isAgreed: boolean;
   setIsAgreed: (val: boolean) => void;
   onPrivacyPolicyNavigate?: () => void;
-}
-
-function PhotoErrorRefreshIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      aria-hidden="true"
-    >
-      <path
-        d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
 }
 
 export function ReportPhotoSection({
@@ -133,7 +116,9 @@ export function ReportPhotoSection({
               {photoError ? (
                 <>
                   <span className={photoErrorIconCircle} aria-hidden="true">
-                    <PhotoErrorRefreshIcon />
+                    <IconNavigationRefresh24
+                      className={photoErrorRefreshIcon}
+                    />
                   </span>
                   <span className={photoUploadErrorMessage}>
                     {m.report_photo_upload_failed_card()}
@@ -189,7 +174,9 @@ export function ReportPhotoSection({
               {photoError && !isPhotoUploading ? (
                 <div className={photoPreviewErrorOverlay}>
                   <span className={photoErrorIconCircle} aria-hidden="true">
-                    <PhotoErrorRefreshIcon />
+                    <IconNavigationRefresh24
+                      className={photoErrorRefreshIcon}
+                    />
                   </span>
                   <span className={photoUploadErrorMessage}>
                     {m.report_photo_upload_failed_card()}

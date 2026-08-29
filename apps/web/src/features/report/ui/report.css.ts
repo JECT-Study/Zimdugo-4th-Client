@@ -483,6 +483,17 @@ export const photoErrorIconCircle = style({
   color: vars.color.text.error,
 });
 
+/**
+ * 실패 안내 아이콘이 원의 글자색(빨강)을 따르게 한다.
+ *
+ * 아이콘은 fill 을 속성으로 박아 두는데, 속성은 CSS 보다 우선순위가 낮아 여기서 덮인다.
+ */
+export const photoErrorRefreshIcon = style({});
+
+globalStyle(`${photoErrorRefreshIcon} path`, {
+  fill: "currentColor",
+});
+
 export const photoUploadErrorMessage = style({
   color: vars.color.text.error,
   fontSize: vars.typography.fontSize[14],
