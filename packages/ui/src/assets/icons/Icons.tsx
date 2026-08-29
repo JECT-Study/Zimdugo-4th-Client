@@ -2015,26 +2015,12 @@ export function IconNavigationRefresh24({
   className?: string;
   state?: "refresh" | "refreshActive";
 }) {
-  const fill =
-    state === "refreshActive"
-      ? color.palette.gray[800]
-      : color.palette.gray[500];
   return (
-    <svg
-      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
-    >
-      <path
-        d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
-        fill={fill}
-      />
-    </svg>
+    <IconNavigationRefresh
+      className={className}
+      size={24}
+      state={state === "refreshActive" ? "active" : "default"}
+    />
   );
 }
 
@@ -2045,10 +2031,6 @@ export function IconCircleboxRefresh48({
   className?: string;
   state?: "refresh" | "refreshActive";
 }) {
-  const fill =
-    state === "refreshActive"
-      ? color.palette.gray[800]
-      : color.palette.gray[500];
   return (
     <CircleBox
       size={48}
@@ -2059,20 +2041,10 @@ export function IconCircleboxRefresh48({
       }}
     >
       <CircleBoxGlyph size={20} offsetX={1} offsetY={1}>
-        <svg
-          className={iconSvgFixed}
-          viewBox="0 0 20 20"
-          width={20}
-          height={20}
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
-            fill={fill}
-          />
-        </svg>
+        <IconNavigationRefresh
+          size={20}
+          state={state === "refreshActive" ? "active" : "default"}
+        />
       </CircleBoxGlyph>
     </CircleBox>
   );
