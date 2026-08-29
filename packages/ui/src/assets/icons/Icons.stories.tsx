@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { color } from "../color/color.css.ts";
+import { color } from "../../tokens/color/color.css.ts";
 import {
   BottomMenuIcon,
   BrandSymbolIcon,
@@ -96,14 +96,21 @@ import {
 } from "./Icons.tsx";
 import { LanguageFlagIcon } from "./LanguageFlagIcon";
 
+// 번들러 타입 선언 없이 에셋을 참조하려고 URL 로 푼다.
+const saveMapPin = new URL("../images/save-map-pin.png", import.meta.url).href;
+const selectedMapPin = new URL(
+  "../images/selected-map-pin.png",
+  import.meta.url,
+).href;
+
 const meta = {
-  title: "Design System/Tokens/Icons",
+  title: "Design System/Assets/Icons",
   parameters: {
     layout: "padded",
     docs: {
       description: {
         component:
-          "Figma `137:118` 분류(네비게이션/노말/브랜드/소셜/메뉴/사이즈) 기반 아이콘 스토리.",
+          "쓰임새로 묶은 아이콘 목록. 제품 코드에서 쓰지 않는 것은 지우지 않고 archived 로 모아 둔다.",
       },
     },
   },
@@ -116,7 +123,29 @@ const grid: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
   gap: 16,
+  width: "100%",
+  justifyItems: "center",
+};
+
+const categoryColumn: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
   maxWidth: 980,
+  margin: "0 auto",
+};
+
+const categoryTitle: CSSProperties = {
+  fontSize: 12,
+  color: "#8e8e8e",
+};
+
+const galleryColumn: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+  maxWidth: 1020,
+  margin: "0 auto",
 };
 
 const CELL_WIDTH = 120;
@@ -535,6 +564,22 @@ function Cell({
   );
 }
 
+/**
+ * 컴포넌트가 아닌 정적 이미지 에셋.
+ *
+ * favicon 처럼 파일로만 존재하는 것들이다. Storybook 이 web 의 public 을 / 로
+ * 서빙하므로 절대 경로로 그대로 부른다.
+ */
+function StaticAsset({ name, src }: { name: string; src: string }) {
+  return (
+    <img
+      src={src}
+      alt={name}
+      style={{ maxWidth: 56, maxHeight: 56, objectFit: "contain" }}
+    />
+  );
+}
+
 function IconSlot({ children }: { children: ReactNode }) {
   return (
     <div
@@ -596,7 +641,7 @@ interface IconEntry {
 
 interface IconCategory {
   id: string;
-  storyName: string;
+  label: string;
   entries: readonly IconEntry[];
 }
 
@@ -604,130 +649,16 @@ interface IconCategory {
  * 아이콘 목록의 단일 출처.
  *
  * 카테고리 스토리와 전체 갤러리가 같은 배열을 읽는다. 예전에는 둘이 각자 JSX 를
- * 나열해서, 아이콘을 더할 때 한쪽만 고치면 조용히 어긋났다. 실제로 갤러리에 6개가
- * 빠져 있었고 사이즈 셀은 이름이 서로 달랐다.
+ * 나열해서, 아이콘을 더할 때 한쪽만 고치면 조용히 어긋났다.
+ *
+ * 소속은 생김새가 아니라 쓰임새로 잡는다. circlebox 처럼 모양으로 묶으면 같은 화면에
+ * 쓰이는 아이콘이 흩어져, 어디에 쓰는 아이콘인지 찾기 어렵다.
  */
 const ICON_CATALOG = [
   {
-    id: "Navigation",
-    storyName: "icon.navigation",
+    id: "common",
+    label: "공통",
     entries: [
-      {
-        name: "search",
-        render: () => <IconNavigationSearch24 tone="default" />,
-      },
-      {
-        name: "searchFill",
-        render: () => <IconNavigationSearch24 tone="active" />,
-      },
-      {
-        name: "star",
-        render: () => <IconStarOutline24 size={24} />,
-      },
-      {
-        name: "starFill",
-        render: () => <IconStarFilled24 size={24} />,
-      },
-      {
-        name: "mapPinActive",
-        render: () => <IconNavigationMapPin24 />,
-      },
-      {
-        name: "mapPinFill",
-        render: () => <IconNavigationMapPin24Fill />,
-      },
-      {
-        name: "navigate",
-        render: () => <IconNavigationNavigate24 state="default" />,
-      },
-      {
-        name: "navigateFill",
-        render: () => <IconNavigationNavigate24 state="active" />,
-      },
-      {
-        name: "distanceRoute",
-        render: () => <IconDistanceRoute24 />,
-      },
-      {
-        name: "pin40",
-        render: () => <IconNavigationPin40 />,
-      },
-      {
-        name: "clock",
-        render: () => <IconNavigationClock24 state="default" />,
-      },
-      {
-        name: "clockFill",
-        render: () => <IconNavigationClock24 state="active" />,
-      },
-      {
-        name: "pushPin",
-        render: () => <IconNavigationPushPin24 state="default" />,
-      },
-      {
-        name: "pushPinFill",
-        render: () => <IconNavigationPushPin24 state="active" />,
-      },
-      {
-        name: "crosshair",
-        render: () => <IconNavigationCrosshair24 state="default" />,
-      },
-      {
-        name: "crosshairActive",
-        render: () => <IconNavigationCrosshair24 state="active" />,
-      },
-      {
-        name: "crosshairDenied",
-        render: () => <IconNavigationCrosshair24 state="denied" />,
-      },
-      {
-        name: "refresh20",
-        render: () => <IconNavigationRefresh20 state="default" />,
-      },
-      {
-        name: "refresh20Active",
-        render: () => <IconNavigationRefresh20 state="active" />,
-      },
-      {
-        name: "refresh",
-        render: () => <IconNavigationRefresh24 state="refresh" />,
-      },
-      {
-        name: "refreshActive",
-        render: () => <IconNavigationRefresh24 state="refreshActive" />,
-      },
-      {
-        name: "nav pin",
-        ingredients: ["BrandSymbolIcon"],
-        render: () => <IconNavigatePin />,
-      },
-      {
-        name: "nav marker",
-        ingredients: ["IconMarker22"],
-        render: () => <IconNavigateMarker />,
-      },
-      {
-        name: "nav location",
-        render: () => <IconNavigateLocation />,
-      },
-    ],
-  },
-  {
-    id: "Normal",
-    storyName: "icon.normal",
-    entries: [
-      {
-        name: "search",
-        render: () => <IconNormalSearch24 size={20} />,
-      },
-      {
-        name: "searchActive",
-        render: () => <IconNormalSearch24 size={20} tone="active" />,
-      },
-      {
-        name: "filter",
-        render: () => <IconFilter20 />,
-      },
       {
         name: "x",
         render: () => <IconX16 />,
@@ -741,52 +672,12 @@ const ICON_CATALOG = [
         render: () => <IconMore24 />,
       },
       {
-        name: "report",
-        render: () => <IconReport24 />,
-      },
-      {
-        name: "filter14",
-        render: () => <IconFilter14 />,
-      },
-      {
-        name: "marker",
-        render: () => <IconMarker22 />,
-      },
-      {
         name: "chevronLeft",
         render: () => <IconChevronLeft13 />,
       },
       {
         name: "check",
         render: () => <IconCheck24 />,
-      },
-      {
-        name: "camera",
-        render: () => <IconCamera24 />,
-      },
-      {
-        name: "share",
-        render: () => <IconShare24 />,
-      },
-      {
-        name: "wallet",
-        render: () => <IconNormalWallet24 />,
-      },
-      {
-        name: "capacity",
-        render: () => <IconNormalCapacity24 />,
-      },
-      {
-        name: "globe",
-        render: () => <IconNormalGlobe32 />,
-      },
-      {
-        name: "thumbUp",
-        render: () => <IconThumbUp24 />,
-      },
-      {
-        name: "thumbDown",
-        render: () => <IconThumbDown24 />,
       },
       {
         name: "arrowLeft",
@@ -817,31 +708,407 @@ const ICON_CATALOG = [
         render: () => <IconPencil24 />,
       },
       {
+        name: "copy",
+        render: () => <IconCopy16 />,
+      },
+      {
+        name: "check",
+        probeTarget: "root",
+        ingredients: ["IconCheck24"],
+        render: () => <IconCircleboxCheck32 />,
+      },
+    ],
+  },
+  {
+    id: "brand",
+    label: "브랜드",
+    entries: [
+      {
+        name: "symbol",
+        render: () => (
+          <div style={{ width: 80, height: 80 }}>
+            <BrandSymbolIcon />
+          </div>
+        ),
+      },
+      {
+        name: "large",
+        spanColumns: 2,
+        style: { gridColumn: "span 2" },
+        render: () => (
+          <div style={{ width: 158, height: 28 }}>
+            <BrandTextLogoLarge />
+          </div>
+        ),
+      },
+      {
+        name: "small",
+        spanColumns: 2,
+        style: { gridColumn: "span 2" },
+        render: () => <BrandTextLogoSmall />,
+      },
+    ],
+  },
+  {
+    id: "app",
+    label: "앱 아이콘",
+    entries: [
+      {
+        name: "favicon.svg",
+        probeTarget: "root",
+        render: () => <StaticAsset name="favicon.svg" src="/favicon.svg" />,
+      },
+      {
+        name: "favicon.ico",
+        probeTarget: "root",
+        render: () => <StaticAsset name="favicon.ico" src="/favicon.ico" />,
+      },
+      {
+        name: "favicon 16",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="favicon 16" src="/icons/favicon-16x16.png" />
+        ),
+      },
+      {
+        name: "favicon 32",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="favicon 32" src="/icons/favicon-32x32.png" />
+        ),
+      },
+      {
+        name: "apple touch 180",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="apple touch 180"
+            src="/icons/apple-touch-icon-180x180.png"
+          />
+        ),
+      },
+      {
+        name: "android chrome 192",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="android chrome 192"
+            src="/icons/android-chrome-192x192.png"
+          />
+        ),
+      },
+      {
+        name: "android chrome 512",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="android chrome 512"
+            src="/icons/android-chrome-512x512.png"
+          />
+        ),
+      },
+      {
+        name: "maskable 512",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="maskable 512" src="/icons/maskable-512x512.png" />
+        ),
+      },
+      {
+        name: "badge 96",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="badge 96" src="/icons/badge-96x96.png" />
+        ),
+      },
+      {
+        name: "tanstack circle",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="tanstack circle" src="/tanstack-circle-logo.png" />
+        ),
+      },
+      {
+        name: "tanstack word",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="tanstack word"
+            src="/tanstack-word-logo-white.svg"
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "auth",
+    label: "로그인",
+    entries: [
+      {
+        name: "naver",
+        render: () => (
+          <SocialBadge provider="naver">
+            <IconNaver19 />
+          </SocialBadge>
+        ),
+      },
+      {
+        name: "kakao",
+        render: () => (
+          <SocialBadge provider="kakao">
+            <IconKakao24 />
+          </SocialBadge>
+        ),
+      },
+      {
+        name: "google",
+        render: () => (
+          <SocialBadge provider="google">
+            <IconGoogle24 />
+          </SocialBadge>
+        ),
+      },
+      {
+        name: "provider.google",
+        probeTarget: "root",
+        render: () => <IconSocialProvider18 provider="google" />,
+      },
+      {
+        name: "provider.naver",
+        probeTarget: "root",
+        render: () => <IconSocialProvider18 provider="naver" />,
+      },
+      {
+        name: "provider.kakao",
+        probeTarget: "root",
+        render: () => <IconSocialProvider18 provider="kakao" />,
+      },
+    ],
+  },
+  {
+    id: "map",
+    label: "지도",
+    entries: [
+      {
+        name: "내 위치 마커",
+        render: () => <IconNavigateLocation />,
+      },
+      {
+        name: "pin40",
+        render: () => <IconNavigationPin40 />,
+      },
+      {
+        name: "crosshair",
+        render: () => <IconNavigationCrosshair24 state="default" />,
+      },
+      {
+        name: "crosshairActive",
+        render: () => <IconNavigationCrosshair24 state="active" />,
+      },
+      {
+        name: "crosshairDenied",
+        render: () => <IconNavigationCrosshair24 state="denied" />,
+      },
+      {
+        name: "refresh",
+        render: () => <IconNavigationRefresh24 state="refresh" />,
+      },
+      {
+        name: "refreshActive",
+        render: () => <IconNavigationRefresh24 state="refreshActive" />,
+      },
+      {
         name: "mapPin",
         render: () => <IconNormalMapPin24 />,
       },
       {
-        name: "addBox",
-        render: () => <IconAddBox18 />,
+        name: "crosshair",
+        probeTarget: "root",
+        ingredients: ["IconNavigationCrosshair24"],
+        render: () => <IconCircleboxCrosshair48 />,
       },
       {
-        name: "minusBox",
-        render: () => <IconMinusBox18 />,
+        name: "crosshairActive",
+        probeTarget: "root",
+        ingredients: ["IconNavigationCrosshair24(active)"],
+        render: () => <IconCircleboxCrosshair48 state="active" />,
       },
       {
-        name: "copy",
-        render: () => <IconCopy16 />,
+        name: "crosshairDenied",
+        probeTarget: "root",
+        ingredients: ["IconNavigationCrosshair24(denied)"],
+        render: () => <IconCircleboxCrosshair48 state="denied" />,
+      },
+    ],
+  },
+  {
+    id: "search",
+    label: "검색",
+    entries: [
+      {
+        name: "search",
+        render: () => <IconNormalSearch24 size={20} />,
+      },
+      {
+        name: "searchActive",
+        render: () => <IconNormalSearch24 size={20} tone="active" />,
+      },
+      {
+        name: "filter14",
+        render: () => <IconFilter14 />,
+      },
+    ],
+  },
+  {
+    id: "locker",
+    label: "보관함",
+    entries: [
+      {
+        name: "distanceRoute",
+        render: () => <IconDistanceRoute24 />,
+      },
+      {
+        name: "clock",
+        render: () => <IconNavigationClock24 state="default" />,
+      },
+      {
+        name: "clockFill",
+        render: () => <IconNavigationClock24 state="active" />,
+      },
+      {
+        name: "report",
+        render: () => <IconReport24 />,
+      },
+      {
+        name: "share",
+        render: () => <IconShare24 />,
+      },
+      {
+        name: "mapPin",
+        render: () => <IconLockerDetailMapPin24 />,
+      },
+      {
+        name: "wallet",
+        render: () => <IconLockerDetailWallet24 />,
+      },
+      {
+        name: "capacity",
+        render: () => <IconLockerDetailCapacity24 />,
+      },
+      {
+        name: "timerStart",
+        render: () => <IconTimerStart20 />,
+      },
+      {
+        name: "timerStop",
+        probeTarget: "root",
+        render: () => <IconTimerStop20 />,
+      },
+      {
+        name: "route",
+        probeTarget: "root",
+        render: () => <IconRoute20 />,
+      },
+      {
+        name: "timerPreview",
+        probeTarget: "root",
+        render: () => <IconTimerPreview24 />,
+      },
+      {
+        name: "timerEnd",
+        probeTarget: "root",
+        render: () => <IconTimerEnd28 />,
+      },
+      {
+        name: "timerClose",
+        probeTarget: "root",
+        render: () => <IconLockerTimerClose28 />,
+      },
+      {
+        name: "timerLarge",
+        probeTarget: "root",
+        render: () => <IconLockerTimerLarge />,
+      },
+      {
+        name: "camera",
+        render: () => <IconCamera24 />,
       },
       {
         name: "imageUnavailable",
         render: () => <IconImageUnavailable24 />,
       },
+      {
+        name: "size.s / default",
+        render: () => <IconSizeS state="default" />,
+      },
+      {
+        name: "size.s / selected",
+        render: () => <IconSizeS state="selected" />,
+      },
+      {
+        name: "size.s / disabled",
+        render: () => <IconSizeS state="disabled" />,
+      },
+      {
+        name: "size.m / default",
+        render: () => <IconSizeM state="default" />,
+      },
+      {
+        name: "size.m / selected",
+        render: () => <IconSizeM state="selected" />,
+      },
+      {
+        name: "size.m / disabled",
+        render: () => <IconSizeM state="disabled" />,
+      },
+      {
+        name: "size.l / default",
+        render: () => <IconSizeL state="default" />,
+      },
+      {
+        name: "size.l / selected",
+        render: () => <IconSizeL state="selected" />,
+      },
+      {
+        name: "size.l / disabled",
+        render: () => <IconSizeL state="disabled" />,
+      },
+      {
+        name: "star",
+        render: () => <IconStarOutline24 size={24} />,
+      },
+      {
+        name: "starFill",
+        render: () => <IconStarFilled24 size={24} />,
+      },
     ],
   },
   {
-    id: "Language",
-    storyName: "icon.language",
+    id: "user",
+    label: "사용자",
     entries: [
+      {
+        name: "profile-22",
+        probeTarget: "root",
+        ingredients: ["IconProfile22"],
+        render: () => <IconProfile22 />,
+      },
+      {
+        name: "home-profile-32",
+        probeTarget: "root",
+        ingredients: ["IconHomeProfile32", "Profile / My Page"],
+        render: () => <IconHomeProfile32 />,
+      },
+      {
+        name: "pencil",
+        probeTarget: "root",
+        ingredients: ["IconPencil24"],
+        render: () => <IconCircleboxPencil32 />,
+      },
+      {
+        name: "globe",
+        render: () => <IconNormalGlobe32 />,
+      },
       {
         name: "korea",
         probeTarget: "root",
@@ -895,9 +1162,120 @@ const ICON_CATALOG = [
     ],
   },
   {
-    id: "Search",
-    storyName: "icon.search",
+    id: "navigation",
+    label: "하단 내비게이션",
+    entries: (["home", "report", "my", "settings"] as const).flatMap((tab) => [
+      {
+        name: tab,
+        render: () => (
+          <IconSlot>
+            <BottomMenuIcon tab={tab} isActive={false} />
+          </IconSlot>
+        ),
+      },
+      {
+        name: `${tab}Active`,
+        render: () => (
+          <IconSlot>
+            <BottomMenuIcon tab={tab} isActive />
+          </IconSlot>
+        ),
+      },
+    ]),
+  },
+  /**
+   * 제품 코드 어디에도 그려지지 않는 아이콘을 모아 둔다.
+   *
+   * 소속은 import 여부가 아니라 "화면에 도안이 뜨는가" 로 가른다.
+   * 지도 마커처럼 React 를 못 쓰는 자리는 컴포넌트 대신 같은 에셋 파일을
+   * 불러 쓰기 때문에, import 만 세면 살아 있는 아이콘을 놓친다.
+   */
+  {
+    id: "archived",
+    label: "제품에서 쓰지 않음",
     entries: [
+      {
+        name: "search",
+        render: () => <IconNavigationSearch24 tone="default" />,
+      },
+      {
+        name: "searchFill",
+        render: () => <IconNavigationSearch24 tone="active" />,
+      },
+      {
+        name: "mapPinActive",
+        render: () => <IconNavigationMapPin24 />,
+      },
+      {
+        name: "mapPinFill",
+        render: () => <IconNavigationMapPin24Fill />,
+      },
+      {
+        name: "navigate",
+        render: () => <IconNavigationNavigate24 state="default" />,
+      },
+      {
+        name: "navigateFill",
+        render: () => <IconNavigationNavigate24 state="active" />,
+      },
+      {
+        name: "pushPin",
+        render: () => <IconNavigationPushPin24 state="default" />,
+      },
+      {
+        name: "pushPinFill",
+        render: () => <IconNavigationPushPin24 state="active" />,
+      },
+      {
+        name: "refresh20",
+        render: () => <IconNavigationRefresh20 state="default" />,
+      },
+      {
+        name: "refresh20Active",
+        render: () => <IconNavigationRefresh20 state="active" />,
+      },
+      {
+        name: "nav pin",
+        ingredients: ["BrandSymbolIcon"],
+        render: () => <IconNavigatePin />,
+      },
+      {
+        name: "nav marker",
+        ingredients: ["IconMarker22"],
+        render: () => <IconNavigateMarker />,
+      },
+      {
+        name: "filter",
+        render: () => <IconFilter20 />,
+      },
+      {
+        name: "marker",
+        render: () => <IconMarker22 />,
+      },
+      {
+        name: "wallet",
+        render: () => <IconNormalWallet24 />,
+      },
+      {
+        name: "capacity",
+        render: () => <IconNormalCapacity24 />,
+      },
+      {
+        name: "thumbUp",
+        render: () => <IconThumbUp24 />,
+      },
+      {
+        name: "thumbDown",
+        render: () => <IconThumbDown24 />,
+      },
+      {
+        name: "addBox",
+        render: () => <IconAddBox18 />,
+      },
+      {
+        name: "minusBox",
+        render: () => <IconMinusBox18 />,
+      },
       {
         name: "search.place.row",
         render: () => <IconSearchPlaceRow14 />,
@@ -926,110 +1304,11 @@ const ICON_CATALOG = [
         name: "recent.item",
         render: () => <IconSearchRecentItem24 />,
       },
-    ],
-  },
-  {
-    id: "LockerDetail",
-    storyName: "icon.locker-detail",
-    entries: [
       {
         name: "header",
         probeTarget: "root",
         render: () => <IconLockerDetailHeader24 />,
       },
-      {
-        name: "mapPin",
-        render: () => <IconLockerDetailMapPin24 />,
-      },
-      {
-        name: "wallet",
-        render: () => <IconLockerDetailWallet24 />,
-      },
-      {
-        name: "capacity",
-        render: () => <IconLockerDetailCapacity24 />,
-      },
-    ],
-  },
-  {
-    id: "Brand",
-    storyName: "icon.brand",
-    entries: [
-      {
-        name: "symbol",
-        render: () => (
-          <div style={{ width: 80, height: 80 }}>
-            <BrandSymbolIcon />
-          </div>
-        ),
-      },
-      {
-        name: "large",
-        spanColumns: 2,
-        style: { gridColumn: "span 2" },
-        render: () => (
-          <div style={{ width: 158, height: 28 }}>
-            <BrandTextLogoLarge />
-          </div>
-        ),
-      },
-      {
-        name: "small",
-        spanColumns: 2,
-        style: { gridColumn: "span 2" },
-        render: () => <BrandTextLogoSmall />,
-      },
-    ],
-  },
-  {
-    id: "Social",
-    storyName: "icon.social",
-    entries: [
-      {
-        name: "naver",
-        render: () => (
-          <SocialBadge provider="naver">
-            <IconNaver19 />
-          </SocialBadge>
-        ),
-      },
-      {
-        name: "kakao",
-        render: () => (
-          <SocialBadge provider="kakao">
-            <IconKakao24 />
-          </SocialBadge>
-        ),
-      },
-      {
-        name: "google",
-        render: () => (
-          <SocialBadge provider="google">
-            <IconGoogle24 />
-          </SocialBadge>
-        ),
-      },
-      {
-        name: "provider.google",
-        probeTarget: "root",
-        render: () => <IconSocialProvider18 provider="google" />,
-      },
-      {
-        name: "provider.naver",
-        probeTarget: "root",
-        render: () => <IconSocialProvider18 provider="naver" />,
-      },
-      {
-        name: "provider.kakao",
-        probeTarget: "root",
-        render: () => <IconSocialProvider18 provider="kakao" />,
-      },
-    ],
-  },
-  {
-    id: "Circlebox",
-    storyName: "icon.circlebox",
-    entries: [
       {
         name: "thumbnail",
         probeTarget: "root",
@@ -1043,22 +1322,10 @@ const ICON_CATALOG = [
         render: () => <IconNormalProfile />,
       },
       {
-        name: "profile-22",
-        probeTarget: "root",
-        ingredients: ["IconProfile22"],
-        render: () => <IconProfile22 />,
-      },
-      {
         name: "profile-32",
         probeTarget: "root",
         ingredients: ["IconProfile32", "IconProfile22"],
         render: () => <IconProfile32 />,
-      },
-      {
-        name: "home-profile-32",
-        probeTarget: "root",
-        ingredients: ["IconHomeProfile32", "Profile / My Page"],
-        render: () => <IconHomeProfile32 />,
       },
       {
         name: "clock",
@@ -1073,12 +1340,6 @@ const ICON_CATALOG = [
         render: () => <IconCircleboxMore32 />,
       },
       {
-        name: "pencil",
-        probeTarget: "root",
-        ingredients: ["IconPencil24"],
-        render: () => <IconCircleboxPencil32 />,
-      },
-      {
         name: "close",
         probeTarget: "root",
         ingredients: ["IconX24"],
@@ -1089,12 +1350,6 @@ const ICON_CATALOG = [
         probeTarget: "root",
         ingredients: ["IconNavigationPushPin24"],
         render: () => <IconCircleboxMike32 />,
-      },
-      {
-        name: "check",
-        probeTarget: "root",
-        ingredients: ["IconCheck24"],
-        render: () => <IconCircleboxCheck32 />,
       },
       {
         name: "chevron",
@@ -1139,24 +1394,6 @@ const ICON_CATALOG = [
         render: () => <IconCircleboxThumbDown32 />,
       },
       {
-        name: "crosshair",
-        probeTarget: "root",
-        ingredients: ["IconNavigationCrosshair24"],
-        render: () => <IconCircleboxCrosshair48 />,
-      },
-      {
-        name: "crosshairActive",
-        probeTarget: "root",
-        ingredients: ["IconNavigationCrosshair24(active)"],
-        render: () => <IconCircleboxCrosshair48 state="active" />,
-      },
-      {
-        name: "crosshairDenied",
-        probeTarget: "root",
-        ingredients: ["IconNavigationCrosshair24(denied)"],
-        render: () => <IconCircleboxCrosshair48 state="denied" />,
-      },
-      {
         name: "crosshairActiveDeprecated",
         probeTarget: "root",
         ingredients: ["IconCircleboxCrosshair48(active)"],
@@ -1172,109 +1409,17 @@ const ICON_CATALOG = [
         probeTarget: "root",
         render: () => <IconCircleboxRefresh48 state="refreshActive" />,
       },
-    ],
-  },
-  {
-    id: "LockerTimer",
-    storyName: "icon.locker-timer",
-    entries: [
       {
-        name: "timerStart",
-        render: () => <IconTimerStart20 />,
-      },
-      {
-        name: "timerStop",
+        name: "save-map-pin.png",
         probeTarget: "root",
-        render: () => <IconTimerStop20 />,
+        render: () => <StaticAsset name="save-map-pin" src={saveMapPin} />,
       },
       {
-        name: "route",
+        name: "selected-map-pin.png",
         probeTarget: "root",
-        render: () => <IconRoute20 />,
-      },
-      {
-        name: "timerPreview",
-        probeTarget: "root",
-        render: () => <IconTimerPreview24 />,
-      },
-      {
-        name: "timerEnd",
-        probeTarget: "root",
-        render: () => <IconTimerEnd28 />,
-      },
-      {
-        name: "timerClose",
-        probeTarget: "root",
-        render: () => <IconLockerTimerClose28 />,
-      },
-      {
-        name: "timerLarge",
-        probeTarget: "root",
-        render: () => <IconLockerTimerLarge />,
-      },
-    ],
-  },
-  {
-    id: "BottomsheetMenuIcons",
-    storyName: "icon.bottomsheet.menu",
-    entries: (["home", "report", "my", "settings"] as const).flatMap((tab) => [
-      {
-        name: tab,
         render: () => (
-          <IconSlot>
-            <BottomMenuIcon tab={tab} isActive={false} />
-          </IconSlot>
+          <StaticAsset name="selected-map-pin" src={selectedMapPin} />
         ),
-      },
-      {
-        name: `${tab}Active`,
-        render: () => (
-          <IconSlot>
-            <BottomMenuIcon tab={tab} isActive />
-          </IconSlot>
-        ),
-      },
-    ]),
-  },
-  {
-    id: "SizeSet",
-    storyName: "icon.size.s/m/l",
-    entries: [
-      {
-        name: "size.s / default",
-        render: () => <IconSizeS state="default" />,
-      },
-      {
-        name: "size.s / selected",
-        render: () => <IconSizeS state="selected" />,
-      },
-      {
-        name: "size.s / disabled",
-        render: () => <IconSizeS state="disabled" />,
-      },
-      {
-        name: "size.m / default",
-        render: () => <IconSizeM state="default" />,
-      },
-      {
-        name: "size.m / selected",
-        render: () => <IconSizeM state="selected" />,
-      },
-      {
-        name: "size.m / disabled",
-        render: () => <IconSizeM state="disabled" />,
-      },
-      {
-        name: "size.l / default",
-        render: () => <IconSizeL state="default" />,
-      },
-      {
-        name: "size.l / selected",
-        render: () => <IconSizeL state="selected" />,
-      },
-      {
-        name: "size.l / disabled",
-        render: () => <IconSizeL state="disabled" />,
       },
     ],
   },
@@ -1299,53 +1444,54 @@ const renderEntry = (entry: IconEntry, key: string) => (
   </Cell>
 );
 
-const gridStory = (id: IconCategoryId): Story => ({
-  name: categoryOf(id).storyName,
+/**
+ * 카테고리 하나를 그린다.
+ *
+ * 격자는 그대로 두고 화면 가운데에 놓는다. all 은 카테고리가 여럿이라 가로로
+ * 늘어놓지만, 개별 카테고리는 격자로 보는 편이 한눈에 들어온다.
+ *
+ * 사이드바 이름은 export 이름을 그대로 쓴다. Storybook 인덱서는 소스를 정적으로
+ * 읽어서, 헬퍼가 돌려주는 객체의 name 은 보지 못한다.
+ */
+const categoryStory = (id: IconCategoryId): Story => ({
   render: () => (
-    <div style={grid}>
-      {categoryOf(id).entries.map((entry, index) =>
-        renderEntry(entry, `${id}-${index}`),
-      )}
+    <div style={categoryColumn}>
+      <div style={categoryTitle}>{categoryOf(id).label}</div>
+      <div style={grid}>
+        {categoryOf(id).entries.map((entry, index) =>
+          renderEntry(entry, `${id}-${index}`),
+        )}
+      </div>
     </div>
   ),
 });
 
-export const Navigation: Story = gridStory("Navigation");
+export const Common: Story = categoryStory("common");
 
-export const Normal: Story = gridStory("Normal");
+export const Brand: Story = categoryStory("brand");
 
-export const Language: Story = gridStory("Language");
+export const AppIcon: Story = categoryStory("app");
 
-export const Search: Story = gridStory("Search");
+export const Auth: Story = categoryStory("auth");
 
-export const LockerDetail: Story = gridStory("LockerDetail");
+export const MapIcons: Story = categoryStory("map");
 
-export const Brand: Story = gridStory("Brand");
+export const Search: Story = categoryStory("search");
 
-export const Social: Story = gridStory("Social");
+export const Locker: Story = categoryStory("locker");
 
-export const Circlebox: Story = gridStory("Circlebox");
+export const User: Story = categoryStory("user");
 
-export const LockerTimer: Story = gridStory("LockerTimer");
+export const BottomNavigation: Story = categoryStory("navigation");
 
-export const BottomsheetMenuIcons: Story = gridStory("BottomsheetMenuIcons");
-
-export const SizeSet: Story = gridStory("SizeSet");
+export const Archived: Story = categoryStory("archived");
 
 export const Gallery: Story = {
   name: "all",
   render: () => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-        maxWidth: 1020,
-        margin: "0 auto",
-      }}
-    >
+    <div style={galleryColumn}>
       {ICON_CATALOG.map((category) => (
-        <RowSection key={category.id} title={category.storyName}>
+        <RowSection key={category.id} title={category.label}>
           {category.entries.map((entry, index) =>
             renderEntry(entry, `${category.id}-${index}`),
           )}

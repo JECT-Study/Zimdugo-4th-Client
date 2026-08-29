@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
+import { IconChevronLeft13 } from "@repo/ui/assets/icons";
 import { LabelTitle } from "@repo/ui/components/label-title";
 import { SearchField } from "@repo/ui/components/search-field";
-import { IconChevronLeft13 } from "@repo/ui/tokens/icons";
 import { useEffect, useMemo, useState } from "react";
 import {
   getSearchAutocompleteItemKey,

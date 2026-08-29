@@ -103,11 +103,12 @@
     "./components/feedback/skeleton/theme": {
       "import": "./src/components/feedback/skeleton/skeleton-theme.ts"
     },
-    "./tokens/icons": {
-      "import": "./src/tokens/icons/Icons.tsx"
+    "./assets/icons": {
+      "import": "./src/assets/icons/Icons.tsx"
     }
   },
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "lint": "biome lint",
     "format": "biome format"
   },

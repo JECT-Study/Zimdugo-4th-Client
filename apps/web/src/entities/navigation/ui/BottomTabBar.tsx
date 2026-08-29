@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
+import { BottomMenuIcon, type BottomTabKey } from "@repo/ui/assets/icons";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { BottomBarFrame } from "@repo/ui/components/layout/bottom-bar-frame";
-import { BottomMenuIcon, type BottomTabKey } from "@repo/ui/tokens/icons";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type CSSProperties, memo, useEffect } from "react";
 import { SKELETON_SURFACE_STYLE } from "@/shared/ui/skeleton-style.ts";

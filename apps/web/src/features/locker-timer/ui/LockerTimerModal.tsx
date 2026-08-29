@@ -1,9 +1,4 @@
 import { m } from "@repo/i18n";
-import { Button } from "@repo/ui/components/button";
-import {
-  DialPicker,
-  type DialPickerColumn,
-} from "@repo/ui/components/popup-picker";
 import {
   IconLockerTimerClose28,
   IconLockerTimerLarge,
@@ -11,7 +6,12 @@ import {
   IconTimerPreview24,
   IconTimerStart20,
   IconTimerStop20,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/assets/icons";
+import { Button } from "@repo/ui/components/button";
+import {
+  DialPicker,
+  type DialPickerColumn,
+} from "@repo/ui/components/popup-picker";
 import { motion, useReducedMotion } from "motion/react";
 import { useId } from "react";
 import {

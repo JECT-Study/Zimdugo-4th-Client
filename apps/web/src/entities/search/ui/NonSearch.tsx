@@ -1,5 +1,5 @@
 import { m } from "@repo/i18n";
-import { IconNormalSearch24 } from "@repo/ui/tokens/icons";
+import { IconNormalSearch24 } from "@repo/ui/assets/icons";
 import type { ReactNode } from "react";
 import {
   description,

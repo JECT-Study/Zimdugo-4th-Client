@@ -3,7 +3,7 @@ import {
   IconNormalArrow24,
   IconStarFilled24,
   IconStarOutline24,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/assets/icons";
 import { useState } from "react";
 import { Button } from "react-aria-components";
 import type {

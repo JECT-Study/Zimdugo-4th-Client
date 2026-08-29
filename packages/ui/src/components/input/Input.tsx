@@ -8,7 +8,7 @@ import {
 import {
   IconNormalMapPin24,
   IconNormalSearch24,
-} from "../../tokens/icons/Icons.tsx";
+} from "../../assets/icons/Icons.tsx";
 import { LabelTitle } from "../label-title/LabelTitle.tsx";
 import {
   field,

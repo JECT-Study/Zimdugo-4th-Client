@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
+import { IconImageUnavailable24 } from "@repo/ui/assets/icons";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
-import { IconImageUnavailable24 } from "@repo/ui/tokens/icons";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { useDragScroll } from "#/shared/hooks/useDragScroll";
 import {

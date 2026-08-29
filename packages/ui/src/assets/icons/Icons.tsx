@@ -1,11 +1,6 @@
-import {
-  type CSSProperties,
-  type ReactElement,
-  type ReactNode,
-  useId,
-} from "react";
-import { color } from "../color/color.css.ts";
-import { typography } from "../typography/typography.css.ts";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
+import { color } from "../../tokens/color/color.css.ts";
+import { typography } from "../../tokens/typography/typography.css.ts";
 import {
   brandSymbolBase,
   brandSymbolRoot,
@@ -36,6 +31,16 @@ const timerPreview24Url = new URL(
 const timerEnd28Url = new URL("./assets/icon-timer-end-28.svg", import.meta.url)
   .href;
 const route20Url = new URL("./assets/icon-route-20.svg", import.meta.url).href;
+/**
+ * 내 위치 마커 도안.
+ *
+ * 네이버 지도 마커는 DOM 을 직접 만들어 꽂는 자리라 React 컴포넌트를 넣을 수 없다.
+ * 도안을 파일 하나로 두고 컴포넌트와 마커가 같은 것을 부른다.
+ */
+export const MY_LOCATION_MARKER_ICON_URL = new URL(
+  "./assets/icon-my-location-41.svg",
+  import.meta.url,
+).href;
 
 export type { FlagCountry } from "./IconFlagCircle24";
 export { IconFlagCircle24 } from "./IconFlagCircle24";
@@ -210,53 +215,15 @@ export function IconNavigateMarker({ className }: { className?: string }) {
 }
 
 export function IconNavigateLocation({ className }: { className?: string }) {
-  const blurId = useId();
-
   return (
-    <svg
+    <img
+      src={MY_LOCATION_MARKER_ICON_URL}
+      alt=""
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
-      xmlns="http://www.w3.org/2000/svg"
       width={41}
       height={41}
-      viewBox="0 0 41 41"
-      fill="none"
       aria-hidden="true"
-    >
-      <g filter={`url(#${blurId})`}>
-        <circle cx="20.5" cy="20.5" r="8.5" fill={color.palette.blue[300]} />
-      </g>
-      <circle
-        cx="20.5"
-        cy="20.5"
-        r="6.5"
-        fill={color.palette.blue[300]}
-        stroke={color.palette.gray[100]}
-        strokeWidth="2"
-      />
-      <defs>
-        <filter
-          id={blurId}
-          x="0"
-          y="0"
-          width="41"
-          height="41"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
-          <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feBlend
-            mode="normal"
-            in="SourceGraphic"
-            in2="BackgroundImageFix"
-            result="shape"
-          />
-          <feGaussianBlur
-            stdDeviation="6"
-            result="effect1_foregroundBlur_1197_305"
-          />
-        </filter>
-      </defs>
-    </svg>
+    />
   );
 }
 
@@ -2048,26 +2015,12 @@ export function IconNavigationRefresh24({
   className?: string;
   state?: "refresh" | "refreshActive";
 }) {
-  const fill =
-    state === "refreshActive"
-      ? color.palette.gray[800]
-      : color.palette.gray[500];
   return (
-    <svg
-      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
-      preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
-    >
-      <path
-        d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
-        fill={fill}
-      />
-    </svg>
+    <IconNavigationRefresh
+      className={className}
+      size={24}
+      state={state === "refreshActive" ? "active" : "default"}
+    />
   );
 }
 
@@ -2078,10 +2031,6 @@ export function IconCircleboxRefresh48({
   className?: string;
   state?: "refresh" | "refreshActive";
 }) {
-  const fill =
-    state === "refreshActive"
-      ? color.palette.gray[800]
-      : color.palette.gray[500];
   return (
     <CircleBox
       size={48}
@@ -2092,20 +2041,10 @@ export function IconCircleboxRefresh48({
       }}
     >
       <CircleBoxGlyph size={20} offsetX={1} offsetY={1}>
-        <svg
-          className={iconSvgFixed}
-          viewBox="0 0 20 20"
-          width={20}
-          height={20}
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M20 10C20 15.5228 15.5228 20 10 20C6.72774 20 3.82382 18.4286 2 16.001V18.5H0V12.5H6V14.5H3.38477C4.82543 16.6137 7.25151 18 10 18C14.4183 18 18 14.4183 18 10H20ZM10 0C13.2723 0 16.1762 1.57144 18 3.99902V1.5H20V7.5H14V5.5H16.6152C15.1746 3.38634 12.7485 2 10 2C5.58172 2 2 5.58172 2 10H0C0 4.47715 4.47715 0 10 0Z"
-            fill={fill}
-          />
-        </svg>
+        <IconNavigationRefresh
+          size={20}
+          state={state === "refreshActive" ? "active" : "default"}
+        />
       </CircleBoxGlyph>
     </CircleBox>
   );

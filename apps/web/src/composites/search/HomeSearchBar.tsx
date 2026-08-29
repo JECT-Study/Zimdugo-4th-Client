@@ -1,11 +1,11 @@
 import { m } from "@repo/i18n";
-import { Skeleton } from "@repo/ui/components/feedback/skeleton";
-import { SearchField } from "@repo/ui/components/search-field";
 import {
   IconChevronLeft13,
   IconNormalSearch24,
   IconX24,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/assets/icons";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
+import { SearchField } from "@repo/ui/components/search-field";
 import {
   type CSSProperties,
   type MouseEvent,

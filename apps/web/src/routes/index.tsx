@@ -1,10 +1,10 @@
 import { languageTag, m } from "@repo/i18n";
-import { Popup } from "@repo/ui/components/popup";
 import {
   IconNavigationCrosshair24,
   IconNavigationRefresh24,
   IconX24,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/assets/icons";
+import { Popup } from "@repo/ui/components/popup";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
