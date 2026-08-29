@@ -2,8 +2,6 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { color } from "../../tokens/color/color.css.ts";
-import saveMapPin from "../images/save-map-pin.png";
-import selectedMapPin from "../images/selected-map-pin.png";
 import {
   BottomMenuIcon,
   BrandSymbolIcon,
@@ -97,6 +95,13 @@ import {
   IconX24,
 } from "./Icons.tsx";
 import { LanguageFlagIcon } from "./LanguageFlagIcon";
+
+// 번들러 타입 선언 없이 에셋을 참조하려고 URL 로 푼다.
+const saveMapPin = new URL("../images/save-map-pin.png", import.meta.url).href;
+const selectedMapPin = new URL(
+  "../images/selected-map-pin.png",
+  import.meta.url,
+).href;
 
 const meta = {
   title: "Design System/Assets/Icons",
