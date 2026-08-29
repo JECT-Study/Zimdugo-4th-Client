@@ -1,5 +1,5 @@
 import { Button } from "react-aria-components";
-import { IconChevronLeft13 } from "../../../tokens/icons/Icons";
+import { IconChevronLeft13 } from "../../../tokens/icons/Icons.tsx";
 import {
   centerContainer,
   ghostBox,

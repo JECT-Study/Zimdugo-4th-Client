@@ -62,7 +62,9 @@ describe("SettingsPageView", () => {
     expect(
       document.querySelector('[data-social-provider="google"]'),
     ).toBeTruthy();
-    expect(screen.getByTitle("수정")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "프로필 사진 변경" }),
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: "즐겨찾기" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "제보 히스토리" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "언어 설정" })).toBeTruthy();
@@ -99,7 +101,9 @@ describe("SettingsPageView", () => {
     expect(
       screen.getByRole("textbox", { name: "이메일" }).getAttribute("value"),
     ).toBe("게스트");
-    expect(screen.queryByTitle("수정")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "프로필 사진 변경" }),
+    ).toBeNull();
     expect(document.querySelector("[data-social-provider]")).toBeNull();
     expect(screen.queryByRole("button", { name: "즐겨찾기" })).toBeNull();
     expect(screen.queryByRole("button", { name: "제보 히스토리" })).toBeNull();
