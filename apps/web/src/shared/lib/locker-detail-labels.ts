@@ -101,3 +101,13 @@ export const formatLockerPriceLabel = (
 
   return maxLabel ?? m.locker_detail_price_not_provided();
 };
+
+/**
+ * 보관함 사이즈 안내.
+ *
+ * 값이 없어도 행을 비우지 않는다. 가격·운영시간과 달리 사이즈만 사라지면 정보가
+ * 아직 안 들어온 것인지 이 보관함에 원래 없는 것인지 구분되지 않고, 행 개수가
+ * 보관함마다 달라져 목록에서 상세로 옮겨 다닐 때 자리가 흔들린다.
+ */
+export const formatLockerSizeLabel = (sizeLabel?: string): string =>
+  sizeLabel?.trim() ? sizeLabel : m.locker_detail_size_not_provided();

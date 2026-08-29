@@ -423,6 +423,38 @@ export const detailDescriptionMultiline = style({
   overflowWrap: "anywhere",
 });
 
+/** 제목과 그 옆 동작을 한 줄에 둔다. 주소가 여러 줄이어도 버튼은 첫 줄에 붙는다. */
+export const detailTitleRow = style({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: vars.spacing[4],
+  minWidth: 0,
+});
+
+export const detailCopyButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "20px",
+  height: "20px",
+  padding: 0,
+  flexShrink: 0,
+  border: 0,
+  borderRadius: vars.radius[4],
+  background: "transparent",
+  color: vars.color.text.disable,
+  cursor: "pointer",
+  selectors: {
+    "&:hover": {
+      color: vars.color.text.title,
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "1px",
+    },
+  },
+});
+
 export const detailTrailing = style({
   display: "flex",
   flexDirection: "column",
@@ -437,11 +469,23 @@ export const detailTrailing = style({
   whiteSpace: "nowrap",
 });
 
-export const actionSection = style({
+/**
+ * 스크롤 밖에 고정되는 액션 영역.
+ *
+ * `sheetColumn` 의 아래 패딩이 0 이라 홈 인디케이터에 버튼이 물렸다. 여기서
+ * 세이프 에어리어를 확보한다.
+ *
+ * 시트는 전체 높이를 갖고 아래로 밀려 있는 구조라, 이 영역은 시트 아랫변이 곧
+ * 화면 아랫변인 full 에서만 보인다. 하프·미니에서도 보이게 하려면 스냅 높이를
+ * 함께 바꿔야 해서 별도로 다룬다.
+ */
+export const actionFooter = style({
   display: "flex",
   flexDirection: "column",
   gap: vars.spacing[16],
+  flexShrink: 0,
   width: "100%",
+  paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${vars.spacing[16]})`,
 });
 
 export const actionDivider = style({
@@ -465,27 +509,27 @@ export const actionDivider = style({
   },
 });
 
-export const fullActionRow = style({
+/** 타이머와 길찾기를 나란히 놓는다. 세로로 쌓으면 하프 시트에 들어가지 않는다. */
+export const actionRow = style({
   display: "flex",
-  flexDirection: "column",
   alignItems: "center",
   gap: vars.spacing[12],
   width: "100%",
 });
 
 export const fullPrimaryActionButton = style({
-  width: "100%",
   height: "46px",
-  flex: "none",
+  flex: 1,
+  minWidth: 0,
   gap: vars.spacing[8],
   borderRadius: vars.radius[8],
   fontSize: "15px",
 });
 
 export const timerActionButton = style({
-  width: "100%",
   height: "46px",
-  flex: "none",
+  flex: 1,
+  minWidth: 0,
   gap: vars.spacing[8],
   borderWidth: "1.5px",
   borderRadius: vars.radius[8],

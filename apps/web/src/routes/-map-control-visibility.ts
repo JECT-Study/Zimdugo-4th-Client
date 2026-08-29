@@ -1,6 +1,6 @@
 import {
   MAP_CONTROL_SHEET_GAP_PX,
-  MAP_CONTROL_TOP_RESERVED_PX,
+  resolveMapControlTopReservedPx,
 } from "#/entities/map/ui/map-control-stack-fallback";
 import type { SheetModeForContext } from "#/features/search/model/sheet-session";
 
@@ -57,6 +57,12 @@ interface ResolveMapControlBottomOptions {
   sheetVisibleHeightPx: number | null;
   /** 상단 경계를 계산할 뷰포트 높이 */
   windowHeightPx: number;
+  /**
+   * 조건부로 붙는 컨트롤이 더 차지하는 높이. 보관 타이머 버튼 등.
+   *
+   * 스택 간격은 이 값에서 계산하므로 버튼 자체 높이만 넘긴다.
+   */
+  extraStackHeightPx?: number;
 }
 
 /**
@@ -88,8 +94,10 @@ export const resolveMapControlBottomPx = ({
   baseBottomPx,
   sheetVisibleHeightPx,
   windowHeightPx,
+  extraStackHeightPx = 0,
 }: ResolveMapControlBottomOptions): number | null => {
-  const topLimitedBottomPx = windowHeightPx - MAP_CONTROL_TOP_RESERVED_PX;
+  const topLimitedBottomPx =
+    windowHeightPx - resolveMapControlTopReservedPx(extraStackHeightPx);
 
   // 상단 경계는 시트 단계와 무관하게 먼저 본다. 밀어 올릴 단계가 아니어도 화면이
   // 낮으면 기본 위치의 스택이 그대로 검색 바를 덮기 때문이다. 예전에는 이 검사가

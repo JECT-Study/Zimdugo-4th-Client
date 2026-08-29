@@ -443,6 +443,38 @@ export function IconX16({ className }: { className?: string }) {
   );
 }
 
+/** 주소 등 짧은 글을 복사하는 버튼용. 글자색을 따른다. */
+export function IconCopy16({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={16}
+      height={16}
+      aria-hidden
+    >
+      <title>복사</title>
+      <rect
+        x="5.75"
+        y="5.75"
+        width="8.5"
+        height="8.5"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M10.5 3.5A1.75 1.75 0 0 0 8.75 1.75h-5A1.75 1.75 0 0 0 2 3.5v5c0 .966.784 1.75 1.75 1.75"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function IconX24({ className }: { className?: string }) {
   return (
     <svg

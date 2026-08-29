@@ -138,7 +138,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 760,
       miniSnapPoint: 701,
       minSnapPoint: 112,
-      snapPoint: 621,
+      snapPoint: 542,
     });
   });
 
@@ -147,7 +147,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 948,
       miniSnapPoint: 889,
       minSnapPoint: 112,
-      snapPoint: 809,
+      snapPoint: 730,
     });
   });
 
@@ -170,6 +170,21 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
   });
 
+  it("사이즈가 없어도 행을 비우지 않고 미제공으로 알린다", () => {
+    // 행이 통째로 사라지면 정보가 아직 안 들어온 것인지 이 보관함에 원래 없는
+    // 것인지 구분되지 않고, 보관함마다 행 개수가 달라 자리가 흔들린다.
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, sizeLabel: undefined }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.getByText("사이즈")).toBeTruthy();
+    expect(sheet.getByText("미제공")).toBeTruthy();
+  });
+
   it("하프 시트에서는 실시간 카드를 시트 바깥에 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
@@ -188,7 +203,7 @@ describe("LockerDetailBottomSheet", () => {
       name: "실시간 이용 가능",
     });
     expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
-      overlayBottomAt(621),
+      overlayBottomAt(542),
     );
     expect(within(realtimeStatusCard).getByText("소형")).toBeTruthy();
     expect(within(realtimeStatusCard).getByText("12")).toBeTruthy();
@@ -326,7 +341,7 @@ describe("LockerDetailBottomSheet", () => {
     const overlay = () =>
       screen.getByRole("region", { name: "실시간 이용 가능" }).parentElement;
 
-    expect(overlay()?.style.bottom).toBe(overlayBottomAt(621));
+    expect(overlay()?.style.bottom).toBe(overlayBottomAt(542));
 
     act(() => {
       Object.defineProperty(window, "innerHeight", {
@@ -338,7 +353,7 @@ describe("LockerDetailBottomSheet", () => {
 
     // 리마운트는 없지만 시트가 옮겨 갈 자리에 라이브 상태를 맞춰야 한다.
     await waitFor(() => {
-      expect(overlay()?.style.bottom).toBe(overlayBottomAt(409));
+      expect(overlay()?.style.bottom).toBe(overlayBottomAt(330));
     });
   });
 
@@ -474,8 +489,8 @@ describe("LockerDetailBottomSheet", () => {
     );
     const renderCountBefore = draggableBottomSheetMock.mock.calls.length;
 
-    // 하프(621)에서 위로 끌어올리는 중. 타깃을 넘지 않아 판정은 그대로다.
-    for (const offset of [600, 580, 560, 540, 520]) {
+    // 하프(542)에서 위로 끌어올리는 중. 타깃을 넘지 않아 판정은 그대로다.
+    for (const offset of [540, 520, 500, 480, 460]) {
       act(() => {
         draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
           offset,
@@ -500,7 +515,7 @@ describe("LockerDetailBottomSheet", () => {
     );
     const renderCountBefore = draggableBottomSheetMock.mock.calls.length;
 
-    for (const offset of [600, 560, 520]) {
+    for (const offset of [540, 500, 460]) {
       act(() => {
         draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
           offset,
@@ -512,9 +527,9 @@ describe("LockerDetailBottomSheet", () => {
 
     // 지도 컨트롤이 시트 윗변을 따라오려면 이 값이 프레임마다 올라와야 한다.
     expect(handleLiveOffsetChange.mock.calls.map(([state]) => state)).toEqual([
-      { offsetPx: 600 },
-      { offsetPx: 560 },
-      { offsetPx: 520 },
+      { offsetPx: 540 },
+      { offsetPx: 500 },
+      { offsetPx: 460 },
     ]);
     // 부모가 motion value 로 받으므로 시트는 여전히 리렌더되지 않는다.
     expect(draggableBottomSheetMock.mock.calls.length).toBe(renderCountBefore);
@@ -587,6 +602,10 @@ describe("LockerDetailBottomSheet", () => {
   it("카드가 빠진 단계에서도 full 스냅 위치는 카드를 포함한 높이로 유지한다", () => {
     const FULL_CONTENT_HEIGHT = 400;
     const REALTIME_CARD_BLOCK_HEIGHT = 58 + 8;
+    // 액션 영역은 스크롤 밖이라 콘텐츠 높이에 안 잡힌다. full 스냅은 이 몫을
+    // 따로 더해야 버튼이 화면 밖으로 밀리지 않는다. jsdom 은 레이아웃이 없어
+    // 재지 못하므로 기본값이 그대로 쓰인다.
+    const ACTION_FOOTER_HEIGHT = 79;
     // 카드를 빼면 콘텐츠가 그만큼 줄어드는 실제 상황을 흉내 낸다.
     Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
       configurable: true,
@@ -607,7 +626,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       getSheetRoot().queryByRole("region", { name: "실시간 이용 가능" }),
     ).toBeNull();
-    expect(halfMinSnapPoint).toBe(812 - (FULL_CONTENT_HEIGHT + 8 + 24));
+    expect(halfMinSnapPoint).toBe(
+      812 - (FULL_CONTENT_HEIGHT + ACTION_FOOTER_HEIGHT + 8 + 24),
+    );
 
     rerender(
       <LockerDetailBottomSheet
@@ -664,7 +685,7 @@ describe("LockerDetailBottomSheet", () => {
     );
 
     await waitFor(() => {
-      expect(getOverlayBottom()).toBe(overlayBottomAt(621));
+      expect(getOverlayBottom()).toBe(overlayBottomAt(542));
     });
   });
 

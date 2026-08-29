@@ -15,6 +15,7 @@ import {
   selection,
   title,
 } from "./PopupPicker.css.ts";
+import { useDialDrag } from "./useDialDrag.ts";
 
 const DEFAULT_DIAL_ITEM_HEIGHT = 32;
 const DEFAULT_DIAL_VIEWPORT_HEIGHT = 96;
@@ -103,6 +104,7 @@ function DialPickerColumnView({
   onChange,
 }: DialPickerColumnViewProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  useDialDrag(listRef);
   const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRecenteringRef = useRef(false);
   const shouldSkipValueScrollRef = useRef(false);

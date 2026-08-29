@@ -91,7 +91,7 @@ import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import {
   MAP_CONTROL_FALLBACK_BOTTOM_PX,
   MAP_CONTROL_SHEET_GAP_PX,
-  MAP_CONTROL_TOP_RESERVED_PX,
+  resolveMapControlTopReservedPx,
 } from "#/entities/map/ui/map-control-stack-fallback";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useUser } from "#/entities/user/hooks/useUser";
@@ -100,7 +100,9 @@ import {
   toLockerIssueReportRequest,
 } from "#/features/locker-correction/api/create-locker-issue-report";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
+import { useHasActiveLockerTimer } from "#/features/locker-timer/hooks/useActiveLockerTimer";
 import { LockerTimerMapControl } from "#/features/locker-timer/ui/LockerTimerMapControl";
+import { LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX } from "#/features/locker-timer/ui/LockerTimerMapControl.css";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -724,6 +726,19 @@ export function IndexPage() {
    * state 로 두면 지도까지 들고 있는 이 컴포넌트가 드래그 내내 초당 60번 리렌더된다.
    * 시트가 없을 때는 SHEET_OFFSET_NONE_PX 를 넣어 "차지하는 높이 0" 으로 만든다.
    */
+  /*
+   * 타이머 버튼은 있을 때만 서고 배지 때문에 버튼 지름보다 높다. 스택을 놓을
+   * 자리가 있는지 판단하는 쪽이 이 높이를 알아야 낮은 화면에서 검색 바를 덮지
+   * 않는다.
+   */
+  const isLockerTimerControlVisible = useHasActiveLockerTimer();
+  const mapControlExtraStackHeight = isLockerTimerControlVisible
+    ? LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX
+    : 0;
+  const mapControlTopReserved = resolveMapControlTopReservedPx(
+    mapControlExtraStackHeight,
+  );
+
   const sheetLiveOffset = useMotionValue(SHEET_OFFSET_NONE_PX);
   /**
    * 시트가 마운트 슬라이드로 올라오는 동안의 진행도. 0 이면 아직 화면 밖이다.
@@ -750,7 +765,7 @@ export function IndexPage() {
    * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
    * 계산하므로 React 렌더가 필요 없다.
    */
-  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc((100dvh - ${sheetLiveOffset}px) * ${sheetMountProgress} + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
+  const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc((100dvh - ${sheetLiveOffset}px) * ${sheetMountProgress} + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${mapControlTopReserved}px))`;
   /**
    * 시트가 보고한 프레임을 컨트롤 위치에 반영한다.
    *
@@ -3205,6 +3220,7 @@ export function IndexPage() {
     baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
     sheetVisibleHeightPx: sheetVisibleHeight,
     windowHeightPx: windowHeight,
+    extraStackHeightPx: mapControlExtraStackHeight,
   });
 
   /**

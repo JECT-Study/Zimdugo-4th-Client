@@ -8,6 +8,16 @@ const BADGE_OVERLAP_PX = 7;
 const BADGE_OVERHANG_PX = BADGE_HEIGHT_PX - BADGE_OVERLAP_PX;
 const BADGE_MIN_WIDTH_PX = 58;
 
+/**
+ * 이 컨트롤이 지도 컨트롤 스택에서 차지하는 세로 길이.
+ *
+ * 배지가 버튼 밖으로 나온 만큼을 여백으로 돌려주고 있어 버튼 지름보다 크다.
+ * 스택을 놓을 자리가 있는지 판단하는 쪽이 이 값을 더해야 낮은 화면에서 스택이
+ * 검색 바를 덮지 않는다.
+ */
+export const LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX =
+  BUTTON_SIZE_PX + BADGE_OVERHANG_PX;
+
 export const control = style({
   /*
    * 크기를 따로 잡지 않는다. 지도 컨트롤 스택은 오른쪽 정렬이라 옆 버튼들과

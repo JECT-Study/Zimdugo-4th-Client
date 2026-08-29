@@ -5,6 +5,7 @@ import { Popup } from "@repo/ui/components/popup";
 import {
   IconCaution24,
   IconChevronLeft13,
+  IconCopy16,
   IconDistanceRoute24,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
@@ -49,6 +50,7 @@ import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
+  formatLockerSizeLabel,
 } from "#/shared/lib/locker-detail-labels";
 import {
   type BottomSheetLiveOffsetState,
@@ -61,12 +63,14 @@ import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
+  actionFooter,
   actionIcon,
-  actionSection,
+  actionRow,
   backButton,
   backIcon,
   CONTENT_STACK_GAP_PX,
   contentStack,
+  detailCopyButton,
   detailDescription,
   detailDescriptionMultiline,
   detailHeader,
@@ -78,9 +82,9 @@ import {
   detailTextColumn,
   detailTitle,
   detailTitleMultiline,
+  detailTitleRow,
   detailTrailing,
   distanceRow,
-  fullActionRow,
   fullContentScroll,
   fullContentScrollEnabled,
   fullDetailList,
@@ -195,7 +199,34 @@ const DETAIL_CONTENT_TOP_PADDING = 8;
 const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
-const DETAIL_HALF_VISIBLE_HEIGHT = 191;
+
+/**
+ * 액션 영역 높이의 기본값.
+ *
+ * 구분선 1 + 위 간격 16 + 버튼 한 줄 46 + 아래 패딩 16. 실제 높이는 홈 인디케이터를
+ * 피하는 세이프 에어리어만큼 더 크므로, 그려진 뒤에는 잰 값으로 갈아 끼운다.
+ * 이 값은 재기 전 첫 렌더에만 쓴다.
+ */
+const DETAIL_ACTION_FOOTER_HEIGHT = 79;
+
+/**
+ * 하프에서 콘텐츠가 쓰는 높이.
+ *
+ * 액션 영역이 스크롤 밖으로 나오면서 자기 높이를 먼저 가져간다. 이 몫을 안 더하면
+ * 핸들 24 와 패딩 8 을 뺀 159 중 79 를 액션이 쓰고 80 만 남아, 요약(약 79) 하나로
+ * 꽉 차고 그 아래 정보가 전부 잘린다. 하프가 미니와 구분되지 않는다.
+ */
+const DETAIL_HALF_CONTENT_HEIGHT = 191;
+
+/**
+ * 하프에서 보이는 높이.
+ *
+ * 액션 영역 높이를 재기 전까지 쓰는 값이다. 세이프 에어리어가 있는 기기에서는
+ * 실제 액션 영역이 더 높아, 잰 값을 받으면 그만큼 하프도 함께 커져야 한다.
+ * 하프는 스크롤이 없어서 모자란 만큼이 그대로 잘린다.
+ */
+const DETAIL_HALF_VISIBLE_HEIGHT =
+  DETAIL_HALF_CONTENT_HEIGHT + DETAIL_ACTION_FOOTER_HEIGHT;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";
@@ -225,6 +256,8 @@ interface ResolveLockerDetailSnapPointsOptions {
   snapPoint?: number;
   maxSnapPoint?: number;
   fullContentHeight?: number | null;
+  /** 잰 액션 영역 높이. 생략하면 세이프 에어리어를 뺀 기본값을 쓴다. */
+  actionFooterHeightPx?: number;
 }
 
 const resolveLockerDetailSnapOffset = ({
@@ -294,6 +327,7 @@ export const resolveLockerDetailSnapPoints = ({
   minSnapPoint,
   snapPoint,
   windowHeight,
+  actionFooterHeightPx = DETAIL_ACTION_FOOTER_HEIGHT,
 }: ResolveLockerDetailSnapPointsOptions) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
@@ -309,7 +343,7 @@ export const resolveLockerDetailSnapPoints = ({
     resolveLockerDetailSnapOffset({
       maxSnapPoint: resolvedMaxSnapPoint,
       minSnapPoint: resolvedMinSnapPoint,
-      visibleHeight: DETAIL_HALF_VISIBLE_HEIGHT,
+      visibleHeight: DETAIL_HALF_CONTENT_HEIGHT + actionFooterHeightPx,
       windowHeight,
     });
   const resolvedMiniSnapPoint = resolveLockerDetailSnapOffset({
@@ -356,6 +390,7 @@ export function LockerDetailBottomSheet({
   const [isTimerOpen, setIsTimerOpen] = useState(false);
   const [isTimerStartConfirmationOpen, setIsTimerStartConfirmationOpen] =
     useState(false);
+  const [isAddressCopied, setIsAddressCopied] = useState(false);
   const [timerHours, setTimerHours] = useState("00");
   const [timerMinutes, setTimerMinutes] = useState("00");
   const [timerSession, setTimerSession] = useState<LockerTimerSession | null>(
@@ -366,6 +401,17 @@ export function LockerDetailBottomSheet({
     null,
   );
   const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
+  const actionFooterMeasureRef = useRef<HTMLDivElement | null>(null);
+  /**
+   * 마지막으로 잰 액션 영역 높이.
+   *
+   * 미니에서는 이 영역이 DOM 에서 빠지는데, 그때 0 으로 재면 full 스냅이 그만큼
+   * 낮아진다. 실시간 카드와 같은 이유로 마지막 값을 들고 있는다.
+   */
+  const actionFooterHeightRef = useRef(DETAIL_ACTION_FOOTER_HEIGHT);
+  const [actionFooterHeight, setActionFooterHeight] = useState(
+    DETAIL_ACTION_FOOTER_HEIGHT,
+  );
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
@@ -391,9 +437,21 @@ export function LockerDetailBottomSheet({
         ? LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX
         : 0;
 
+    /*
+     * 액션 영역은 스크롤 밖에 있어 콘텐츠 높이에 잡히지 않는다. 빼고 재면 full
+     * 스냅이 그 높이만큼 낮게 잡혀 버튼이 화면 밖으로 밀린다.
+     */
+    const measuredFooterHeight = actionFooterMeasureRef.current?.offsetHeight;
+    if (measuredFooterHeight) {
+      actionFooterHeightRef.current = measuredFooterHeight;
+      setActionFooterHeight(measuredFooterHeight);
+    }
+    const footerHeight = actionFooterHeightRef.current;
+
     setFullContentHeight(
       Math.ceil(
         element.scrollHeight +
+          footerHeight +
           missingRealtimeCardHeight +
           DETAIL_CONTENT_TOP_PADDING +
           DETAIL_CONTENT_BOTTOM_PADDING,
@@ -403,6 +461,13 @@ export function LockerDetailBottomSheet({
   const handleFullContentMeasureRef = useCallback(
     (element: HTMLDivElement | null) => {
       fullContentMeasureRef.current = element;
+      updateFullContentHeight();
+    },
+    [updateFullContentHeight],
+  );
+  const handleActionFooterMeasureRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      actionFooterMeasureRef.current = element;
       updateFullContentHeight();
     },
     [updateFullContentHeight],
@@ -418,6 +483,7 @@ export function LockerDetailBottomSheet({
     snapPoint,
     windowHeight,
     fullContentHeight,
+    actionFooterHeightPx: actionFooterHeight,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined
@@ -557,6 +623,26 @@ export function LockerDetailBottomSheet({
 
   const handleTimerStartRequest = () => {
     setIsTimerStartConfirmationOpen(true);
+  };
+
+  /**
+   * 주소를 클립보드에 담는다.
+   *
+   * 길찾기까지 가지 않고 주소만 다른 앱에 옮겨 적는 경우가 많다. 실패해도 조용히
+   * 두면 눌렀는지조차 알 수 없어, 성공했을 때만 알림을 띄운다.
+   */
+  const handleAddressCopy = (address: string) => {
+    if (!navigator.clipboard) {
+      console.error("주소 복사 실패: Clipboard API 미지원");
+      return;
+    }
+
+    void navigator.clipboard
+      .writeText(address)
+      .then(() => setIsAddressCopied(true))
+      .catch((error) => {
+        console.error("주소 복사 실패:", error);
+      });
   };
 
   const handleTimerStartConfirm = () => {
@@ -828,12 +914,14 @@ export function LockerDetailBottomSheet({
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
               onTimerOpen={() => setIsTimerOpen(true)}
+              onAddressCopy={handleAddressCopy}
               isTimerRunning={isTimerRunning}
               timerEndTimeLabel={timerEndTimeLabel}
               snapStage={currentSnapStage}
               isRealtimeCardVisible={isSheetAtFullOffset}
               isScrollEnabled={currentSnapStage === "full"}
               contentRef={handleFullContentMeasureRef}
+              footerRef={handleActionFooterMeasureRef}
             />
           )}
         </div>
@@ -886,6 +974,17 @@ export function LockerDetailBottomSheet({
         secondaryAction={{
           label: m.common_no(),
           onPress: () => setIsTimerStartConfirmationOpen(false),
+        }}
+      />
+      <Popup
+        isOpen={isAddressCopied}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setIsAddressCopied(false);
+        }}
+        titleText={m.locker_detail_share_copied()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsAddressCopied(false),
         }}
       />
     </>
@@ -1009,12 +1108,14 @@ function FullDetailContent({
   moreActionsButtonRef,
   onNavigate,
   onTimerOpen,
+  onAddressCopy,
   isTimerRunning,
   timerEndTimeLabel,
   snapStage,
   isRealtimeCardVisible,
   isScrollEnabled,
   contentRef,
+  footerRef,
 }: {
   locker: LockerDetailItem;
   images: string[];
@@ -1024,13 +1125,16 @@ function FullDetailContent({
   moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   onNavigate: () => void;
   onTimerOpen: () => void;
+  onAddressCopy: (address: string) => void;
   isTimerRunning: boolean;
   timerEndTimeLabel: string;
   snapStage: LockerDetailSheetSnapStage;
   isRealtimeCardVisible: boolean;
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
+  footerRef?: (element: HTMLDivElement | null) => void;
 }) {
+  const isActionFooterVisible = snapStage === "full" || snapStage === "half";
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);
@@ -1068,75 +1172,94 @@ function FullDetailContent({
   };
 
   return (
-    <div
-      ref={contentRootRef}
-      className={[
-        fullContentScroll,
-        isScrollEnabled ? fullContentScrollEnabled : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      data-scroll-enabled={isScrollEnabled ? "true" : "false"}
-    >
-      <div ref={contentRef} className={contentStack}>
-        <SummarySection
-          locker={locker}
-          isTimerRunning={isTimerRunning}
-          onClose={onClose}
-          onMoreActionsOpen={onMoreActionsOpen}
-          moreActionsButtonRef={moreActionsButtonRef}
-          snapStage={snapStage}
-          canExpandTitle={isScrollEnabled}
-        />
-        {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
-        {isRealtimeAvailable && isRealtimeCardVisible ? (
-          <div data-realtime-status-card="">
-            <LockerRealtimeStatusCard
-              availability={realtimeAvailability}
-              variant="inline"
+    <>
+      <div
+        ref={contentRootRef}
+        className={[
+          fullContentScroll,
+          isScrollEnabled ? fullContentScrollEnabled : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-scroll-enabled={isScrollEnabled ? "true" : "false"}
+      >
+        <div ref={contentRef} className={contentStack}>
+          <SummarySection
+            locker={locker}
+            isTimerRunning={isTimerRunning}
+            onClose={onClose}
+            onMoreActionsOpen={onMoreActionsOpen}
+            moreActionsButtonRef={moreActionsButtonRef}
+            snapStage={snapStage}
+            canExpandTitle={isScrollEnabled}
+          />
+          {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
+          {isRealtimeAvailable && isRealtimeCardVisible ? (
+            <div data-realtime-status-card="">
+              <LockerRealtimeStatusCard
+                availability={realtimeAvailability}
+                variant="inline"
+              />
+            </div>
+          ) : null}
+          <hr className={realtimeAvailabilityDivider} />
+          <div className={fullDetailList}>
+            <DetailInfoRow
+              icon={<IconLockerDetailMapPin24 />}
+              title={locker.address}
+              description={locker.floorLabel}
+              titleClassName={detailTitleMultiline}
+              titleAction={
+                <button
+                  type="button"
+                  className={detailCopyButton}
+                  onClick={() => onAddressCopy(locker.address)}
+                  aria-label={m.locker_detail_address_copy_aria()}
+                >
+                  <IconCopy16 />
+                </button>
+              }
             />
-          </div>
-        ) : null}
-        <hr className={realtimeAvailabilityDivider} />
-        <div className={fullDetailList}>
-          <DetailInfoRow
-            icon={<IconLockerDetailMapPin24 />}
-            title={locker.address}
-            description={locker.floorLabel}
-            titleClassName={detailTitleMultiline}
-          />
-          <DetailInfoRow
-            icon={<IconLockerDetailWallet24 />}
-            title={m.locker_detail_price_section()}
-            description={locker.priceLabel ?? formatLockerPriceLabel()}
-            iconTone="neutral"
-          />
-          {locker.sizeLabel ? (
+            <DetailInfoRow
+              icon={<IconLockerDetailWallet24 />}
+              title={m.locker_detail_price_section()}
+              description={locker.priceLabel ?? formatLockerPriceLabel()}
+              iconTone="neutral"
+            />
             <DetailInfoRow
               icon={<IconLockerDetailCapacity24 />}
               title={m.locker_detail_size_section()}
-              description={locker.sizeLabel}
+              description={formatLockerSizeLabel(locker.sizeLabel)}
               iconTone="neutral"
             />
-          ) : null}
-          <DetailInfoRow
-            icon={<IconCaution24 />}
-            title={m.locker_detail_info_section()}
-            description={detailHelpText}
-            iconTone="neutral"
-            descriptionClassName={detailDescriptionMultiline}
+            <DetailInfoRow
+              icon={<IconCaution24 />}
+              title={m.locker_detail_info_section()}
+              description={detailHelpText}
+              iconTone="neutral"
+              descriptionClassName={detailDescriptionMultiline}
+            />
+          </div>
+          <LockerDetailImageStrip
+            images={images}
+            onOpenPreview={handleOpenImagePreview}
           />
-        </div>
-        <LockerDetailImageStrip
-          images={images}
-          onOpenPreview={handleOpenImagePreview}
-        />
-        {/*
+          {/*
           @deprecated 정확성 vote UI는 상세 화면 개편에서 노출을 중단했다.
           롤백 시 features/vote의 훅·모델·API를 다시 연결하고,
           이 위치에 기존 액션 영역을 복원한다.
         */}
-        <div className={actionSection}>
+        </div>
+      </div>
+      {/*
+        액션 영역은 스크롤 밖에 둔다. 안에 두면 콘텐츠가 길 때 접힘 아래로 내려가
+        길찾기 버튼이 보이지 않는다. 시트 아래 여백은 홈 인디케이터를 피한다.
+
+        시트 높이가 곧 보이는 높이라 여기 두면 하프에서도 화면 안에 들어온다.
+        미니(111px)에서는 요약만으로 자리가 차서 내린다.
+      */}
+      {isActionFooterVisible ? (
+        <div ref={footerRef} className={actionFooter}>
           <div className={actionDivider} />
           <ActionRow
             onNavigate={onNavigate}
@@ -1145,7 +1268,7 @@ function FullDetailContent({
             timerEndTimeLabel={timerEndTimeLabel}
           />
         </div>
-      </div>
+      ) : null}
       {previewIndex === null ? null : (
         <OriginalImagePreview
           images={images}
@@ -1160,7 +1283,7 @@ function FullDetailContent({
           onClose={handleCloseImagePreview}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -1339,6 +1462,7 @@ function DetailInfoRow({
   title,
   description,
   trailing,
+  titleAction,
   iconTone = "brand",
   titleClassName,
   descriptionClassName,
@@ -1347,6 +1471,8 @@ function DetailInfoRow({
   title: string;
   description?: string;
   trailing?: [string, string];
+  /** 제목 옆에 붙는 동작. 지금은 주소 복사 하나뿐이다. */
+  titleAction?: ReactNode;
   iconTone?: "brand" | "neutral";
   titleClassName?: string;
   descriptionClassName?: string;
@@ -1366,12 +1492,15 @@ function DetailInfoRow({
             {icon}
           </span>
           <div className={detailTextColumn}>
-            <span
-              className={[detailTitle, titleClassName]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {title}
+            <span className={detailTitleRow}>
+              <span
+                className={[detailTitle, titleClassName]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {title}
+              </span>
+              {titleAction}
             </span>
             {description ? (
               <span
@@ -1398,8 +1527,8 @@ function DetailInfoRow({
 /**
  * full 콘텐츠 맨 아래 액션 영역.
  *
- * 하프·미니 스냅에서는 요약만 보여서 여기까지 오지 않는다. 예전에 있던 가로 배치
- * 변형은 호출되는 곳이 없어 걷어냈다.
+ * 타이머와 길찾기를 나란히 놓는다. 세로로 쌓으면 두 버튼과 간격만 116px 이라
+ * 하프 시트(191px)에서 요약을 밀어낸다.
  */
 function ActionRow({
   onNavigate,
@@ -1413,7 +1542,7 @@ function ActionRow({
   timerEndTimeLabel: string;
 }) {
   return (
-    <div className={fullActionRow}>
+    <div className={actionRow}>
       <Button
         variant="outline"
         intent="primary"

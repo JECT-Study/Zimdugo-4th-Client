@@ -110,6 +110,12 @@ export const dialList = style({
   scrollSnapType: "y mandatory",
   scrollbarWidth: "none",
   msOverflowStyle: "none",
+  "@media": {
+    // 스크롤바를 감춰 둔 터라 마우스 사용자에게는 돌릴 수 있다는 표시가 필요하다.
+    "(pointer: fine)": {
+      cursor: "grab",
+    },
+  },
   selectors: {
     "&::-webkit-scrollbar": {
       display: "none",
