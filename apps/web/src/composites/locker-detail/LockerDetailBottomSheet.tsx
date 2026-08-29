@@ -109,6 +109,7 @@ import {
   summarySection,
   summaryTextColumn,
   timerActionButton,
+  timerActionButtonRunning,
   timerInUseBadge,
   titleControlRow,
   titleExpandButton,
@@ -1384,7 +1385,12 @@ function ActionRow({
         variant="outline"
         intent="primary"
         size="L"
-        className={timerActionButton}
+        className={[
+          timerActionButton,
+          isTimerRunning ? timerActionButtonRunning : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         onPress={onTimerOpen}
       >
         <IconTimerStart20 className={actionIcon} />

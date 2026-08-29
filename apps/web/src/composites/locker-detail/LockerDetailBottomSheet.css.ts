@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 export const sheetColumn = style({
   display: "flex",
@@ -153,7 +153,19 @@ export const summaryTextColumn = style({
   paddingRight: 0,
 });
 
+/** 타이머를 걸면 배지가 새로 생긴다. 갑자기 나타나면 바뀐 줄 모르고 지나친다. */
+const timerBadgeAppear = keyframes({
+  from: { opacity: 0, transform: "translateY(2px) scale(0.94)" },
+  to: { opacity: 1, transform: "none" },
+});
+
 export const timerInUseBadge = style({
+  animation: `${timerBadgeAppear} 0.24s ease-out`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      animation: "none",
+    },
+  },
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -499,6 +511,27 @@ export const timerActionButton = style({
       borderColor: vars.color.palette.green[700],
       backgroundColor: vars.color.palette.green[200],
       color: vars.color.palette.green[700],
+    },
+  },
+});
+
+/**
+ * 타이머가 걸린 직후 버튼에서 한 번 번지는 고리.
+ *
+ * 반복하지 않는다. 시트에 계속 떠 있는 요소라 무한히 움직이면 읽기를 방해한다.
+ * 상태가 바뀐 순간에만 눈길을 끌면 된다.
+ */
+const timerRunningPulse = keyframes({
+  "0%": { boxShadow: "0 0 0 0 rgba(13, 163, 69, 0.32)" },
+  "70%": { boxShadow: "0 0 0 8px rgba(13, 163, 69, 0)" },
+  "100%": { boxShadow: "0 0 0 0 rgba(13, 163, 69, 0)" },
+});
+
+export const timerActionButtonRunning = style({
+  animation: `${timerRunningPulse} 1.4s ease-out 2`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      animation: "none",
     },
   },
 });

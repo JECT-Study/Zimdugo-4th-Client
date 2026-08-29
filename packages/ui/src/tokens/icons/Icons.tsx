@@ -17,10 +17,6 @@ import {
   iconSvgFixed,
 } from "./Icons.css.ts";
 
-const timerStart20Url = new URL(
-  "./assets/icon-timer-start-20.svg",
-  import.meta.url,
-).href;
 const timerStop20Url = new URL(
   "./assets/icon-timer-stop-20.svg",
   import.meta.url,
@@ -831,16 +827,29 @@ export function IconNavigationClock24({
   );
 }
 
+/**
+ * 원본 에셋이 흰색으로 고정돼 있어 채운 버튼에서만 보였다. 인라인으로 바꿔
+ * currentColor 를 쓰면 테두리 버튼처럼 배경이 밝은 곳에서도 글자와 같은 색이 된다.
+ */
 export function IconTimerStart20({ className }: { className?: string }) {
   return (
-    <img
-      src={timerStart20Url}
-      alt=""
+    <svg
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
       width={20}
       height={20}
-      aria-hidden="true"
-    />
+      aria-hidden
+    >
+      <title>타이머 시작</title>
+      <path
+        d="M10 17.5C14.1421 17.5 17.5 14.1421 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path d="M8.3 6.8L13.3 10L8.3 13.2V6.8Z" fill="currentColor" />
+    </svg>
   );
 }
 
