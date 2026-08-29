@@ -477,27 +477,27 @@ export const actionDivider = style({
   },
 });
 
-export const fullActionRow = style({
+/** 타이머와 길찾기를 나란히 놓는다. 세로로 쌓으면 하프 시트에 들어가지 않는다. */
+export const actionRow = style({
   display: "flex",
-  flexDirection: "column",
   alignItems: "center",
   gap: vars.spacing[12],
   width: "100%",
 });
 
 export const fullPrimaryActionButton = style({
-  width: "100%",
   height: "46px",
-  flex: "none",
+  flex: 1,
+  minWidth: 0,
   gap: vars.spacing[8],
   borderRadius: vars.radius[8],
   fontSize: "15px",
 });
 
 export const timerActionButton = style({
-  width: "100%",
   height: "46px",
-  flex: "none",
+  flex: 1,
+  minWidth: 0,
   gap: vars.spacing[8],
   borderWidth: "1.5px",
   borderRadius: vars.radius[8],

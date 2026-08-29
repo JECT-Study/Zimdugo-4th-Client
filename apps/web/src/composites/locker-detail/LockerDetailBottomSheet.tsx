@@ -63,6 +63,7 @@ import {
   actionDivider,
   actionFooter,
   actionIcon,
+  actionRow,
   backButton,
   backIcon,
   CONTENT_STACK_GAP_PX,
@@ -80,7 +81,6 @@ import {
   detailTitleMultiline,
   detailTrailing,
   distanceRow,
-  fullActionRow,
   fullContentScroll,
   fullContentScrollEnabled,
   fullDetailList,
@@ -367,6 +367,13 @@ export function LockerDetailBottomSheet({
   );
   const fullContentMeasureRef = useRef<HTMLDivElement | null>(null);
   const actionFooterMeasureRef = useRef<HTMLDivElement | null>(null);
+  /**
+   * 마지막으로 잰 액션 영역 높이.
+   *
+   * 미니에서는 이 영역이 DOM 에서 빠지는데, 그때 0 으로 재면 full 스냅이 그만큼
+   * 낮아진다. 실시간 카드와 같은 이유로 마지막 값을 들고 있는다.
+   */
+  const actionFooterHeightRef = useRef(0);
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
   const realtimeAvailability = locker.realtimeAvailability;
   const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
@@ -396,7 +403,11 @@ export function LockerDetailBottomSheet({
      * 액션 영역은 스크롤 밖에 있어 콘텐츠 높이에 잡히지 않는다. 빼고 재면 full
      * 스냅이 그 높이만큼 낮게 잡혀 버튼이 화면 밖으로 밀린다.
      */
-    const footerHeight = actionFooterMeasureRef.current?.offsetHeight ?? 0;
+    const measuredFooterHeight = actionFooterMeasureRef.current?.offsetHeight;
+    if (measuredFooterHeight) {
+      actionFooterHeightRef.current = measuredFooterHeight;
+    }
+    const footerHeight = actionFooterHeightRef.current;
 
     setFullContentHeight(
       Math.ceil(
@@ -1049,6 +1060,7 @@ function FullDetailContent({
   contentRef?: (element: HTMLDivElement | null) => void;
   footerRef?: (element: HTMLDivElement | null) => void;
 }) {
+  const isActionFooterVisible = snapStage === "full" || snapStage === "half";
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);
@@ -1160,16 +1172,21 @@ function FullDetailContent({
       {/*
         액션 영역은 스크롤 밖에 둔다. 안에 두면 콘텐츠가 길 때 접힘 아래로 내려가
         길찾기 버튼이 보이지 않는다. 시트 아래 여백은 홈 인디케이터를 피한다.
+
+        시트 높이가 곧 보이는 높이라 여기 두면 하프에서도 화면 안에 들어온다.
+        미니(111px)에서는 요약만으로 자리가 차서 내린다.
       */}
-      <div ref={footerRef} className={actionFooter}>
-        <div className={actionDivider} />
-        <ActionRow
-          onNavigate={onNavigate}
-          onTimerOpen={onTimerOpen}
-          isTimerRunning={isTimerRunning}
-          timerEndTimeLabel={timerEndTimeLabel}
-        />
-      </div>
+      {isActionFooterVisible ? (
+        <div ref={footerRef} className={actionFooter}>
+          <div className={actionDivider} />
+          <ActionRow
+            onNavigate={onNavigate}
+            onTimerOpen={onTimerOpen}
+            isTimerRunning={isTimerRunning}
+            timerEndTimeLabel={timerEndTimeLabel}
+          />
+        </div>
+      ) : null}
       {previewIndex === null ? null : (
         <OriginalImagePreview
           images={images}
@@ -1422,8 +1439,8 @@ function DetailInfoRow({
 /**
  * full 콘텐츠 맨 아래 액션 영역.
  *
- * 하프·미니 스냅에서는 요약만 보여서 여기까지 오지 않는다. 예전에 있던 가로 배치
- * 변형은 호출되는 곳이 없어 걷어냈다.
+ * 타이머와 길찾기를 나란히 놓는다. 세로로 쌓으면 두 버튼과 간격만 116px 이라
+ * 하프 시트(191px)에서 요약을 밀어낸다.
  */
 function ActionRow({
   onNavigate,
@@ -1437,7 +1454,7 @@ function ActionRow({
   timerEndTimeLabel: string;
 }) {
   return (
-    <div className={fullActionRow}>
+    <div className={actionRow}>
       <Button
         variant="outline"
         intent="primary"
