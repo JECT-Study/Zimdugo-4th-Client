@@ -1,5 +1,4 @@
 import { m } from "@repo/i18n";
-import { IconImageUnavailable24 } from "@repo/ui/assets/icons";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
