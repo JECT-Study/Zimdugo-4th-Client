@@ -320,7 +320,7 @@ export const actionRow = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: vars.spacing[8],
+  gap: vars.spacing[12],
   width: "100%",
 });
 
@@ -477,7 +477,8 @@ export const fullActionRow = style({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: vars.spacing[12],
+  // 12px 의 1.5 배. spacing 스케일에 18 이 없어 값을 직접 쓴다.
+  gap: "18px",
   width: "100%",
 });
 

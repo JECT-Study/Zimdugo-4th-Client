@@ -2040,7 +2040,9 @@ export function IndexPage() {
   const handleTimerControlSelect = useCallback(
     (lockerId: number) => {
       setTimerAutoOpenLockerId(lockerId);
-      void openLockerDetailById(lockerId);
+      // 즐겨찾기에서 들어올 때와 같이 full 로 연다. 목적지를 이미 정하고 누른
+      // 진입이라 하프에서 다시 끌어올릴 이유가 없다.
+      void openLockerDetailById(lockerId, undefined, { detailSnap: "full" });
     },
     [openLockerDetailById],
   );

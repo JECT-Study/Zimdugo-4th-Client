@@ -59,16 +59,18 @@ export const header = style({
   justifyContent: "flex-end",
 });
 
+/** 신고 모달의 닫기 버튼과 같은 규격. 두 모달이 같은 흐름에서 이어진다. */
 export const closeButton = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "32px",
-  height: "32px",
+  width: "28px",
+  height: "28px",
   padding: 0,
   border: 0,
   borderRadius: vars.radius.max,
   background: "transparent",
+  color: vars.color.icon.default,
   cursor: "pointer",
 });
 
