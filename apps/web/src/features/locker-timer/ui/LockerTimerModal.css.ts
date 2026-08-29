@@ -44,13 +44,21 @@ export const title = style({
   lineHeight: "normal",
 });
 
+/*
+ * 줄바꿈을 허용한다. 한 줄로 재면 영어 296px, 일본어 310px 이라 264px 을 넘기고,
+ * 다이얼로그의 overflow: hidden 에 뒷부분이 잘려 나갔다.
+ *
+ * 헤더 아래 요소들이 전부 절대 위치라 이 문단이 길어져도 밀리지 않는다. 대신
+ * 겹칠 수 있으므로 두 줄까지가 예산이다. 헤더 32px + 제목 약 24px + 여백 5px 에
+ * 두 줄 29px 이면 약 90px 이고, 설정 화면에서 다음 요소가 96px 에서 시작한다.
+ * 현재 다섯 언어는 최대 두 줄이며, 문구를 고칠 때 세 줄이 되지 않아야 한다.
+ */
 export const helper = style({
   margin: "5px 0 0",
   color: "#7A8085",
   fontSize: "10px",
   fontWeight: vars.typography.fontWeight.Regular,
   lineHeight: 1.45,
-  whiteSpace: "nowrap",
 });
 
 export const closeButton = style({
