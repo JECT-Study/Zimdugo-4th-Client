@@ -9,7 +9,8 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
  */
 
 const LOCKER_ID = 500;
-const DETAIL_HALF_VISIBLE_HEIGHT = 191;
+/** 액션 영역이 스크롤 밖으로 나오면서 콘텐츠 몫 191 에 79 가 더해졌다. */
+const DETAIL_HALF_VISIBLE_HEIGHT = 270;
 const SHEET_GAP_PX = 12;
 const BASE_BOTTOM_PX = 70;
 /** 상단 경계(120) + 스택 높이(96) */
@@ -161,13 +162,13 @@ test.describe("상세 시트와 지도 컨트롤", () => {
     await expect(sheetSurface(page)).toBeVisible();
     await expect(mapControlStack(page)).toBeVisible();
 
-    // 하프 시트(191) + 간격(12) + 예약 높이(216) = 419px 부터 놓을 수 있다.
-    await page.setViewportSize({ width: 430, height: 418 });
+    // 하프 시트(270) + 간격(12) + 예약 높이(216) = 498px 부터 놓을 수 있다.
+    await page.setViewportSize({ width: 430, height: 497 });
     await expect(mapControlStack(page)).toHaveCount(0);
   });
 
   test("경계 높이에서는 상단 선에 맞춰 올린다", async ({ page }) => {
-    await page.setViewportSize({ width: 430, height: 419 });
+    await page.setViewportSize({ width: 430, height: 498 });
     await page.goto(`/?locker=${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
@@ -176,8 +177,8 @@ test.describe("상세 시트와 지도 컨트롤", () => {
       Number.parseFloat(getComputedStyle(element).bottom),
     );
 
-    // 419 - 216 = 203. 하프 시트를 피한 값(191 + 12)과 정확히 같다.
-    expect(bottom).toBe(419 - TOP_RESERVED_PX);
+    // 498 - 216 = 282. 하프 시트를 피한 값(270 + 12)과 정확히 같다.
+    expect(bottom).toBe(498 - TOP_RESERVED_PX);
     expect(bottom).toBe(DETAIL_HALF_VISIBLE_HEIGHT + SHEET_GAP_PX);
     await expectControlClearsSheet(page);
   });

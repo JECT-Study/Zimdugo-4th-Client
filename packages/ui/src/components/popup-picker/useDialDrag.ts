@@ -21,7 +21,15 @@ export const useDialDrag = (ref: RefObject<HTMLElement | null>) => {
 
     let activePointerId: number | null = null;
     let startClientY = 0;
-    let startScrollTop = 0;
+    /**
+     * 직전 이동 지점.
+     *
+     * 누른 자리에서의 총 이동량으로 위치를 정하면 안 된다. 순환 다이얼은 손을
+     * 잠깐 멈춘 사이 목록을 가운데 복사본으로 되돌리는데, 그 뒤 총 이동량으로
+     * 다시 쓰면 되돌린 것을 무르고 끌기가 경계에서 멎는다. 매번 늘어난 만큼만
+     * 더하면 그 사이 누가 위치를 바꿔 놓아도 이어서 끌린다.
+     */
+    let lastClientY = 0;
     let hasDragged = false;
     let previousSnapType = "";
     let previousCursor = "";
@@ -44,7 +52,7 @@ export const useDialDrag = (ref: RefObject<HTMLElement | null>) => {
 
       activePointerId = event.pointerId;
       startClientY = event.clientY;
-      startScrollTop = element.scrollTop;
+      lastClientY = event.clientY;
       hasDragged = false;
 
       previousSnapType = element.style.scrollSnapType;
@@ -55,9 +63,9 @@ export const useDialDrag = (ref: RefObject<HTMLElement | null>) => {
     const handlePointerMove = (event: PointerEvent) => {
       if (activePointerId !== event.pointerId) return;
 
-      const movedY = event.clientY - startClientY;
+      if (!hasDragged) {
+        if (Math.abs(event.clientY - startClientY) < DRAG_THRESHOLD_PX) return;
 
-      if (!hasDragged && Math.abs(movedY) >= DRAG_THRESHOLD_PX) {
         hasDragged = true;
         element.style.cursor = "grabbing";
 
@@ -66,11 +74,14 @@ export const useDialDrag = (ref: RefObject<HTMLElement | null>) => {
          * 실제로 눌린 요소가 아니라 잡은 요소로 전달된다.
          */
         element.setPointerCapture?.(event.pointerId);
+
+        // 판정까지 움직인 만큼도 버리지 않고 한 번에 반영한다.
+        lastClientY = startClientY;
       }
 
-      if (!hasDragged) return;
-
-      element.scrollTop = startScrollTop - movedY;
+      const movedY = event.clientY - lastClientY;
+      lastClientY = event.clientY;
+      element.scrollTop -= movedY;
     };
 
     const handlePointerEnd = (event: PointerEvent) => {
