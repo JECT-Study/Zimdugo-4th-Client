@@ -100,7 +100,7 @@ import {
   toLockerIssueReportRequest,
 } from "#/features/locker-correction/api/create-locker-issue-report";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
-import { useActiveLockerTimer } from "#/features/locker-timer/hooks/useActiveLockerTimer";
+import { useHasActiveLockerTimer } from "#/features/locker-timer/hooks/useActiveLockerTimer";
 import { LockerTimerMapControl } from "#/features/locker-timer/ui/LockerTimerMapControl";
 import { LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX } from "#/features/locker-timer/ui/LockerTimerMapControl.css";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
@@ -731,7 +731,7 @@ export function IndexPage() {
    * 자리가 있는지 판단하는 쪽이 이 높이를 알아야 낮은 화면에서 검색 바를 덮지
    * 않는다.
    */
-  const { isVisible: isLockerTimerControlVisible } = useActiveLockerTimer();
+  const isLockerTimerControlVisible = useHasActiveLockerTimer();
   const mapControlExtraStackHeight = isLockerTimerControlVisible
     ? LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX
     : 0;
