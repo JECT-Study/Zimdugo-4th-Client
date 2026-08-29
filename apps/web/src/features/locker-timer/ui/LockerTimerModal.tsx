@@ -92,6 +92,16 @@ const getEndTimeLabel = (currentTime: Date, hours: string, minutes: string) => {
 const GAUGE_PATH =
   "M51.374 259C30.1862 238.355 15.757 212.052 9.91123 183.417C4.06542 154.782 7.06552 125.101 18.5321 98.1271C29.9988 71.1534 49.4169 48.0986 74.331 31.878C99.245 15.6575 128.536 6.99982 158.5 6.99982C188.464 6.99982 217.755 15.6575 242.669 31.878C267.583 48.0986 287.001 71.1534 298.468 98.1271C309.934 125.101 312.935 154.782 307.089 183.417C301.243 212.052 286.814 238.355 265.626 259";
 
+/** 원호의 중심. 그라데이션을 이 점 기준으로 돌린다. */
+const GAUGE_CENTER = "158.5 158.5";
+
+/**
+ * 원래 viewBox 는 배경 스트로크(10px) 기준이라 오른쪽 끝이 315 였다. 진행
+ * 스트로크는 14px 이라 317 까지 나가서 2px 이 잘렸다. 스트로크 두께를 포함한
+ * 실제 범위 0~317, 0~266 에 여유 1px 을 둔 값이다.
+ */
+const GAUGE_VIEW_BOX = "-1 -1 319 268";
+
 const getProgressRatio = (
   remainingTimeInSeconds: number,
   configuredTimeInSeconds: number,
@@ -114,7 +124,7 @@ function LockerTimerGauge({ progress }: { progress: number }) {
   return (
     <svg
       className={progressGauge}
-      viewBox="0 0 315 265.638"
+      viewBox={GAUGE_VIEW_BOX}
       fill="none"
       aria-hidden="true"
     >
@@ -144,7 +154,18 @@ function LockerTimerGauge({ progress }: { progress: number }) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="#3BD569" />
+          {/* 두 색이 가까워 회전만으로는 움직임이 안 보인다. 밝은 중간 색이 훑고 지나가야 눈에 띈다. */}
+          <stop offset="0.5" stopColor="#6FE596" />
           <stop offset="1" stopColor="#21C95A" />
+          {isReducedMotion ? null : (
+            <animateTransform
+              attributeName="gradientTransform"
+              type="rotate"
+              values={`0 ${GAUGE_CENTER};360 ${GAUGE_CENTER}`}
+              dur="6s"
+              repeatCount="indefinite"
+            />
+          )}
         </linearGradient>
       </defs>
     </svg>
