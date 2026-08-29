@@ -2,7 +2,7 @@ import {
   IconLockerTimerLarge,
   IconTimerStart20,
   IconTimerStop20,
-} from "@repo/ui/icons";
+} from "@repo/ui/assets/icons";
 import type { Meta, StoryObj } from "@storybook/react";
 
 function LockerTimerIcons() {

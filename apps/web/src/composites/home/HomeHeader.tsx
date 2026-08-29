@@ -1,11 +1,11 @@
 import { languageTag, m } from "@repo/i18n";
-import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import {
   BrandTextLogoSmall,
   IconCheck24,
   IconFlagCircle24,
   IconHomeProfile32,
-} from "@repo/ui/icons";
+} from "@repo/ui/assets/icons";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { AnimatePresence, motion } from "motion/react";
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";

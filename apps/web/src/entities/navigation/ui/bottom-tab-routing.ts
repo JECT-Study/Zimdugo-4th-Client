@@ -1,4 +1,4 @@
-import type { BottomTabKey } from "@repo/ui/icons";
+import type { BottomTabKey } from "@repo/ui/assets/icons";
 import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 
 /**

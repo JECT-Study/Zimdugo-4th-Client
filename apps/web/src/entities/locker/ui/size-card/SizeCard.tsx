@@ -1,5 +1,5 @@
+import { IconSizeL, IconSizeM, IconSizeS } from "@repo/ui/assets/icons";
 import { Checkbox } from "@repo/ui/components/checkbox";
-import { IconSizeL, IconSizeM, IconSizeS } from "@repo/ui/icons";
 import { useState } from "react";
 import { useLockerSettings } from "../../hooks/useLockerSettings.ts";
 import { root } from "./SizeCard.css.ts";

@@ -1,11 +1,11 @@
 import { m } from "@repo/i18n";
-import { Button } from "@repo/ui/components/button";
-import { Popup } from "@repo/ui/components/popup";
 import {
   IconChevronLeft13,
   IconCircleboxCrosshair48,
   IconNavigationPin40,
-} from "@repo/ui/icons";
+} from "@repo/ui/assets/icons";
+import { Button } from "@repo/ui/components/button";
+import { Popup } from "@repo/ui/components/popup";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";

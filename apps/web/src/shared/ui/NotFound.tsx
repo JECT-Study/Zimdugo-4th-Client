@@ -1,4 +1,4 @@
-import { IconCaution24 } from "@repo/ui/icons";
+import { IconCaution24 } from "@repo/ui/assets/icons";
 import { vars } from "@repo/ui/vars";
 import { Link } from "@tanstack/react-router";
 

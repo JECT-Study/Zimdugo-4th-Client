@@ -1,4 +1,4 @@
-import { IconCircleboxMore32 } from "@repo/ui/icons";
+import { IconCircleboxMore32 } from "@repo/ui/assets/icons";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useRef, useState } from "react";
 import { LockerDetailMoreActionsModal } from "./LockerDetailMoreActionsModal";

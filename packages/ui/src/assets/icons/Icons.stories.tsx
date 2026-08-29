@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { color } from "../tokens/color/color.css.ts";
+import { color } from "../../tokens/color/color.css.ts";
 import {
   BottomMenuIcon,
   BrandSymbolIcon,
@@ -97,7 +97,7 @@ import {
 import { LanguageFlagIcon } from "./LanguageFlagIcon";
 
 const meta = {
-  title: "Design System/Icons",
+  title: "Design System/Assets/Icons",
   parameters: {
     layout: "padded",
     docs: {
@@ -111,6 +111,27 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+const grid: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+  gap: 16,
+  width: "100%",
+  justifyItems: "center",
+};
+
+const categoryColumn: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  maxWidth: 980,
+  margin: "0 auto",
+};
+
+const categoryTitle: CSSProperties = {
+  fontSize: 12,
+  color: "#8e8e8e",
+};
 
 const galleryColumn: CSSProperties = {
   display: "flex",
@@ -1320,16 +1341,24 @@ const renderEntry = (entry: IconEntry, key: string) => (
   </Cell>
 );
 
-/** 카테고리 하나를 all 스토리와 같은 가운데 정렬로 그린다. */
+/**
+ * 카테고리 하나를 그린다.
+ *
+ * 격자는 그대로 두고 화면 가운데에 놓는다. all 은 카테고리가 여럿이라 가로로
+ * 늘어놓지만, 개별 카테고리는 격자로 보는 편이 한눈에 들어온다.
+ *
+ * 사이드바 이름은 export 이름을 그대로 쓴다. Storybook 인덱서는 소스를 정적으로
+ * 읽어서, 헬퍼가 돌려주는 객체의 name 은 보지 못한다.
+ */
 const categoryStory = (id: IconCategoryId): Story => ({
-  name: id,
   render: () => (
-    <div style={galleryColumn}>
-      <RowSection title={categoryOf(id).label}>
+    <div style={categoryColumn}>
+      <div style={categoryTitle}>{categoryOf(id).label}</div>
+      <div style={grid}>
         {categoryOf(id).entries.map((entry, index) =>
           renderEntry(entry, `${id}-${index}`),
         )}
-      </RowSection>
+      </div>
     </div>
   ),
 });

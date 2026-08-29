@@ -8,7 +8,7 @@ import {
   DialogTrigger,
   type DialogTriggerProps,
 } from "react-aria-components";
-import { IconX16 } from "../../icons/Icons.tsx";
+import { IconX16 } from "../../assets/icons/Icons.tsx";
 import { Button } from "../button/Button.tsx";
 import {
   actionButton,

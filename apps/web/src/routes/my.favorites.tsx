@@ -1,9 +1,9 @@
 import { languageTag, m } from "@repo/i18n";
+import { IconStarOutline24 } from "@repo/ui/assets/icons";
 import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
-import { IconStarOutline24 } from "@repo/ui/icons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { FavoriteListItem } from "#/entities/favorite";

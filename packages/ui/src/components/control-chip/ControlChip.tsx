@@ -3,7 +3,7 @@ import {
   Button as AriaButton,
   type ButtonProps as AriaButtonProps,
 } from "react-aria-components";
-import { IconNormalArrow24 } from "../../icons/Icons.tsx";
+import { IconNormalArrow24 } from "../../assets/icons/Icons.tsx";
 import {
   controlChip,
   controlChipIcon,

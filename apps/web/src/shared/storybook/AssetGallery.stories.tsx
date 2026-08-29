@@ -2,9 +2,16 @@ import type { Meta, StoryObj } from "@storybook/react";
 import saveMapPin from "#/entities/map/assets/save-map-pin.png";
 import selectedMapPin from "#/entities/map/assets/selected-map-pin.png";
 
-const PUBLIC_IMAGE_ASSETS = [
+/** 브라우저 탭·홈 화면에 쓰는 앱 아이콘. 크기별로 같은 도안이 반복된다. */
+const APP_ICON_ASSETS = [
   { name: "favicon.svg", src: "/favicon.svg" },
   { name: "favicon.ico", src: "/favicon.ico" },
+  { name: "favicon-16x16.png", src: "/icons/favicon-16x16.png" },
+  { name: "favicon-32x32.png", src: "/icons/favicon-32x32.png" },
+  {
+    name: "apple-touch-icon-180x180.png",
+    src: "/icons/apple-touch-icon-180x180.png",
+  },
   {
     name: "android-chrome-192x192.png",
     src: "/icons/android-chrome-192x192.png",
@@ -15,26 +22,25 @@ const PUBLIC_IMAGE_ASSETS = [
   },
   { name: "maskable-512x512.png", src: "/icons/maskable-512x512.png" },
   { name: "badge-96x96.png", src: "/icons/badge-96x96.png" },
-  { name: "tanstack-circle-logo.png", src: "/tanstack-circle-logo.png" },
-  {
-    name: "tanstack-word-logo-white.svg",
-    src: "/tanstack-word-logo-white.svg",
-  },
-  { name: "favicon-16x16.png", src: "/icons/favicon-16x16.png" },
-  { name: "favicon-32x32.png", src: "/icons/favicon-32x32.png" },
-  {
-    name: "apple-touch-icon-180x180.png",
-    src: "/icons/apple-touch-icon-180x180.png",
-  },
 ] as const;
 
+/** 지도 위에 얹는 핀. 컴포넌트 아이콘이 아니라 이미지다. */
 const MAP_IMAGE_ASSETS = [
   { name: "selected-map-pin.png", src: selectedMapPin },
   { name: "save-map-pin.png", src: saveMapPin },
 ] as const;
 
+/** 우리 것이 아닌 로고. 기술 스택 표기에 쓴다. */
+const THIRD_PARTY_ASSETS = [
+  { name: "tanstack-circle-logo.png", src: "/tanstack-circle-logo.png" },
+  {
+    name: "tanstack-word-logo-white.svg",
+    src: "/tanstack-word-logo-white.svg",
+  },
+] as const;
+
 const meta = {
-  title: "Product/Assets/Gallery",
+  title: "Design System/Assets/Images",
   parameters: {
     layout: "padded",
   },
@@ -121,9 +127,10 @@ function AssetSection({
 
 export const Images: Story = {
   render: () => (
-    <div style={{ display: "grid", gap: 24 }}>
-      <AssetSection title="public" assets={PUBLIC_IMAGE_ASSETS} />
+    <div style={{ display: "grid", gap: 24, maxWidth: 980, margin: "0 auto" }}>
+      <AssetSection title="app icon" assets={APP_ICON_ASSETS} />
       <AssetSection title="map" assets={MAP_IMAGE_ASSETS} />
+      <AssetSection title="third party" assets={THIRD_PARTY_ASSETS} />
     </div>
   ),
 };

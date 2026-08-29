@@ -1,5 +1,5 @@
 ﻿import { m } from "@repo/i18n";
-import { IconCamera24 } from "@repo/ui/icons";
+import { IconCamera24 } from "@repo/ui/assets/icons";
 import {
   frame,
   frameSizeVariants,

@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
+import { IconCircleboxCheck32 } from "@repo/ui/assets/icons";
 import { Popup } from "@repo/ui/components/popup";
-import { IconCircleboxCheck32 } from "@repo/ui/icons";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import {

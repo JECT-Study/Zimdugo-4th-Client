@@ -9,7 +9,7 @@ import {
   type SelectProps,
   SelectValue,
 } from "react-aria-components";
-import { IconNormalArrow24 } from "../../icons/Icons.tsx";
+import { IconNormalArrow24 } from "../../assets/icons/Icons.tsx";
 import {
   button,
   chevronRecipe,

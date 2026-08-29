@@ -1,4 +1,4 @@
-import type { SocialProvider } from "@repo/ui/icons";
+import type { SocialProvider } from "@repo/ui/assets/icons";
 
 const SUPPORTED_SOCIAL_PROVIDERS = new Set<string>([
   "google",

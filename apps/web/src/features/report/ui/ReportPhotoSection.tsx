@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
+import { IconX16 } from "@repo/ui/assets/icons";
 import { Checkbox } from "@repo/ui/components/checkbox";
-import { IconX16 } from "@repo/ui/icons";
 import { useNavigate } from "@tanstack/react-router";
 import type { ChangeEvent, RefObject } from "react";
 import { useReportSectionError } from "#/features/report/model/useReportSectionError";

@@ -1,7 +1,7 @@
 import {
   IconNavigationCrosshair24,
   IconNavigationRefresh24,
-} from "@repo/ui/icons";
+} from "@repo/ui/assets/icons";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";

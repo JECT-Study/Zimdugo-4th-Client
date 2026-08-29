@@ -1,7 +1,4 @@
 import { m } from "@repo/i18n";
-import { Button } from "@repo/ui/components/button";
-import { Skeleton } from "@repo/ui/components/feedback/skeleton";
-import { Popup } from "@repo/ui/components/popup";
 import {
   IconCaution24,
   IconChevronLeft13,
@@ -15,7 +12,10 @@ import {
   IconRoute20,
   IconTimerStart20,
   IconX24,
-} from "@repo/ui/icons";
+} from "@repo/ui/assets/icons";
+import { Button } from "@repo/ui/components/button";
+import { Skeleton } from "@repo/ui/components/feedback/skeleton";
+import { Popup } from "@repo/ui/components/popup";
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import {
   type CSSProperties,

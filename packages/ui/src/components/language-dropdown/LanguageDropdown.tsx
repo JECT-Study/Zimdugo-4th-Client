@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { IconCheck24, IconNormalGlobe32 } from "../../icons/Icons.tsx";
+import { IconCheck24, IconNormalGlobe32 } from "../../assets/icons/Icons.tsx";
 import {
   checkIcon,
   chevron,
