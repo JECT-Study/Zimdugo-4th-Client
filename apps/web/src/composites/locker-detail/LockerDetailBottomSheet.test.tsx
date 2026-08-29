@@ -109,6 +109,8 @@ const overlayBottomAt = (sheetOffset: number) =>
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setTestLanguage("ko");
+    window.localStorage.clear();
+    Element.prototype.scrollTo = vi.fn();
     Object.defineProperty(window, "innerHeight", {
       configurable: true,
       value: 812,
@@ -196,6 +198,48 @@ describe("LockerDetailBottomSheet", () => {
       sheet.getByRole("button", { name: "더보기 메뉴 열기" }),
     ).toBeTruthy();
     expect(sheet.getByRole("button", { name: "길찾기" })).toBeTruthy();
+    expect(
+      sheet.getByRole("button", { name: "보관 타이머 설정" }),
+    ).toBeTruthy();
+    expect(sheet.queryByText("이용중")).toBeNull();
+  });
+
+  it("상세 시트의 타이머 버튼에서 설정 모달을 연다", () => {
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+
+    expect(screen.getByRole("dialog", { name: "보관 타이머" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "타이머 켜기" })).toBeTruthy();
+  });
+
+  it("이 기기에 저장된 실행 중 타이머를 상세 시트에 복원한다", async () => {
+    window.localStorage.setItem(
+      `zimdugo:locker-timer:${LOCKER_DETAIL.lockerId}`,
+      JSON.stringify({
+        configuredTimeInSeconds: 3600,
+        endAt: Date.now() + 3600 * 1000,
+      }),
+    );
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    const timerButton = await screen.findByRole("button", {
+      name: /이용 종료/,
+    });
+    expect(getSheetRoot().getByText("이용중")).toBeTruthy();
+    fireEvent.click(timerButton);
+
+    expect(
+      screen.getByRole("progressbar", { name: "보관 타이머" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "타이머 끄기" })).toBeTruthy();
   });
 
   it("풀 시트에서는 실시간 카드를 시트 내부에 렌더링한다", () => {

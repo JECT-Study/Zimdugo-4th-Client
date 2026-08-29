@@ -1,9 +1,9 @@
 import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import {
-  IconCircleboxClose32,
   IconNavigationCrosshair24,
   IconNavigationRefresh24,
+  IconX24,
 } from "@repo/ui/tokens/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -100,6 +100,7 @@ import {
   toLockerIssueReportRequest,
 } from "#/features/locker-correction/api/create-locker-issue-report";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
+import { LockerTimerMapControl } from "#/features/locker-timer/ui/LockerTimerMapControl";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -778,6 +779,10 @@ export function IndexPage() {
   );
 
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
+  /** 지도 타이머 컨트롤로 연 보관함. 시트가 타이머 모달까지 열면 비운다. */
+  const [timerAutoOpenLockerId, setTimerAutoOpenLockerId] = useState<
+    number | null
+  >(null);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
   const didLogHomeLocationSessionSkipRef = useRef(false);
@@ -2024,6 +2029,27 @@ export function IndexPage() {
       syncLockerDetailUrl,
     ],
   );
+
+  /**
+   * 지도의 타이머 컨트롤을 눌렀을 때. 해당 보관함 상세를 열고 타이머 모달까지
+   * 이어서 띄운다.
+   *
+   * 요청은 시트가 처리한 뒤 곧바로 지운다. 남겨 두면 나중에 같은 보관함을 마커로
+   * 열 때도 모달이 따라 열린다.
+   */
+  const handleTimerControlSelect = useCallback(
+    (lockerId: number) => {
+      setTimerAutoOpenLockerId(lockerId);
+      // 즐겨찾기에서 들어올 때와 같이 full 로 연다. 목적지를 이미 정하고 누른
+      // 진입이라 하프에서 다시 끌어올릴 이유가 없다.
+      void openLockerDetailById(lockerId, undefined, { detailSnap: "full" });
+    },
+    [openLockerDetailById],
+  );
+
+  const handleTimerAutoOpenHandled = useCallback(() => {
+    setTimerAutoOpenLockerId(null);
+  }, []);
 
   const openSearchPlaceList = useCallback(
     (
@@ -3578,6 +3604,10 @@ export function IndexPage() {
           */
           style={{ bottom: mapControlRaisedBottom }}
         >
+          <LockerTimerMapControl
+            buttonClassName={locationButton}
+            onSelect={handleTimerControlSelect}
+          />
           <RefreshButton
             isRefreshing={isRefreshing}
             isMapReady={!!mapInstance}
@@ -3616,7 +3646,7 @@ export function IndexPage() {
               aria-label={m.home_location_interrupted_notice_close_aria()}
               onClick={handleDismissLocationRecoveryNotice}
             >
-              <IconCircleboxClose32 />
+              <IconX24 />
             </button>
           </div>
         </div>
@@ -3710,6 +3740,10 @@ export function IndexPage() {
           snapRequest={detailSheetSnapRequest}
           onSnapStageChange={handleDetailSheetSnapStageChange}
           onLiveOffsetChange={handleDetailSheetLiveOffsetChange}
+          shouldOpenTimer={
+            timerAutoOpenLockerId === displayedLockerDetail.lockerId
+          }
+          onTimerAutoOpenHandled={handleTimerAutoOpenHandled}
         />
       ) : null}
 

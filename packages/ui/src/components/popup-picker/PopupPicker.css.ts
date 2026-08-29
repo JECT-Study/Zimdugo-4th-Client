@@ -48,19 +48,19 @@ export const title = style({
 export const pickerFrame = style({
   position: "relative",
   width: "100%",
-  height: "96px",
+  height: "var(--popup-picker-viewport-height, 96px)",
   marginTop: "18px",
   display: "grid",
   gridTemplateColumns:
-    "repeat(var(--popup-picker-column-count), minmax(0, 1fr))",
+    "var(--popup-picker-column-template, repeat(var(--popup-picker-column-count), minmax(0, 1fr)))",
 });
 
 export const selection = style({
   position: "absolute",
-  top: "24px",
+  top: "var(--popup-picker-selection-top, 24px)",
   left: 0,
   right: 0,
-  height: "40px",
+  height: "var(--popup-picker-selection-height, 40px)",
   border: `1px solid ${vars.color.border.default}`,
   borderRadius: vars.radius[4],
   pointerEvents: "none",
@@ -68,10 +68,10 @@ export const selection = style({
 
 export const pickerCenterAccessory = style({
   position: "absolute",
-  top: "24px",
-  left: "50%",
+  top: "var(--popup-picker-accessory-top, 24px)",
+  left: "var(--popup-picker-accessory-left, 50%)",
   zIndex: 2,
-  height: "40px",
+  height: "var(--popup-picker-accessory-height, 40px)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -104,7 +104,7 @@ export const columnDivider = style({
 });
 
 export const dialList = style({
-  height: "96px",
+  height: "var(--popup-picker-viewport-height, 96px)",
   width: "100%",
   overflowY: "auto",
   scrollSnapType: "y mandatory",
@@ -123,7 +123,7 @@ export const dialList = style({
 });
 
 export const dialItem = style({
-  height: "32px",
+  height: "var(--popup-picker-item-height, 32px)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -138,7 +138,7 @@ export const dialItem = style({
   transition: "color 0.16s ease, font-size 0.16s ease",
   selectors: {
     "&[data-selected]": {
-      fontSize: vars.typography.fontSize[16],
+      fontSize: "var(--popup-picker-selected-font-size, 16px)",
       color: vars.color.text.title,
     },
   },

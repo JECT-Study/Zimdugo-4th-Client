@@ -1,5 +1,5 @@
 import { vars } from "@repo/ui/vars";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 export const sheetColumn = style({
   display: "flex",
@@ -153,6 +153,34 @@ export const summaryTextColumn = style({
   paddingRight: 0,
 });
 
+/** 타이머를 걸면 배지가 새로 생긴다. 갑자기 나타나면 바뀐 줄 모르고 지나친다. */
+const timerBadgeAppear = keyframes({
+  from: { opacity: 0, transform: "translateY(2px) scale(0.94)" },
+  to: { opacity: 1, transform: "none" },
+});
+
+export const timerInUseBadge = style({
+  animation: `${timerBadgeAppear} 0.24s ease-out`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      animation: "none",
+    },
+  },
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  alignSelf: "flex-start",
+  height: "18px",
+  padding: `0 ${vars.spacing[8]}`,
+  borderRadius: vars.radius[4],
+  backgroundColor: vars.color.palette.red[100],
+  color: vars.color.palette.red[400],
+  fontSize: "10px",
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: 1,
+  whiteSpace: "nowrap",
+});
+
 export const titleControlRow = style({
   display: "flex",
   alignItems: "flex-start",
@@ -284,16 +312,8 @@ export const summaryIconButton = style({
 export const summaryActions = style({
   display: "inline-flex",
   alignItems: "center",
-  gap: vars.spacing[8],
+  gap: vars.spacing[12],
   flexShrink: 0,
-});
-
-export const actionRow = style({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: vars.spacing[8],
-  width: "100%",
 });
 
 export const primaryActionButton = style({
@@ -420,7 +440,7 @@ export const detailTrailing = style({
 export const actionSection = style({
   display: "flex",
   flexDirection: "column",
-  gap: "20px",
+  gap: vars.spacing[16],
   width: "100%",
 });
 
@@ -447,12 +467,69 @@ export const actionDivider = style({
 
 export const fullActionRow = style({
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
-  gap: vars.spacing[8],
+  gap: vars.spacing[12],
   width: "100%",
 });
 
 export const fullPrimaryActionButton = style({
-  height: "40px",
-  fontSize: vars.typography.fontSize[18],
+  width: "100%",
+  height: "46px",
+  flex: "none",
+  gap: vars.spacing[8],
+  borderRadius: vars.radius[8],
+  fontSize: "15px",
+});
+
+export const timerActionButton = style({
+  width: "100%",
+  height: "46px",
+  flex: "none",
+  gap: vars.spacing[8],
+  borderWidth: "1.5px",
+  borderRadius: vars.radius[8],
+  borderColor: "#0DA345",
+  backgroundColor: vars.color.bg.default,
+  color: "#0A8C38",
+  fontSize: vars.typography.fontSize[14],
+  selectors: {
+    "&[data-hovered]": {
+      borderColor: vars.color.palette.green[600],
+      backgroundColor: vars.color.palette.green[100],
+      color: vars.color.palette.green[700],
+    },
+    "&[data-pressed]": {
+      borderColor: vars.color.palette.green[700],
+      backgroundColor: vars.color.palette.green[200],
+      color: vars.color.palette.green[700],
+    },
+  },
+});
+
+/**
+ * 타이머가 걸린 직후 버튼에서 한 번 번지는 고리.
+ *
+ * 반복하지 않는다. 시트에 계속 떠 있는 요소라 무한히 움직이면 읽기를 방해한다.
+ * 상태가 바뀐 순간에만 눈길을 끌면 된다.
+ */
+const timerRunningPulse = keyframes({
+  "0%": { boxShadow: "0 0 0 0 rgba(13, 163, 69, 0.32)" },
+  "70%": { boxShadow: "0 0 0 8px rgba(13, 163, 69, 0)" },
+  "100%": { boxShadow: "0 0 0 0 rgba(13, 163, 69, 0)" },
+});
+
+export const timerActionButtonRunning = style({
+  animation: `${timerRunningPulse} 1.4s ease-out 2`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      animation: "none",
+    },
+  },
+});
+
+export const actionIcon = style({
+  width: "20px",
+  height: "20px",
+  flexShrink: 0,
 });

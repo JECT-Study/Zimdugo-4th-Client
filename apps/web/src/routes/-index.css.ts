@@ -193,17 +193,24 @@ export const locationRecoveryNoticeAction = style({
   },
 });
 
+/**
+ * 상세 시트의 모달들과 같은 닫기 규격.
+ *
+ * 동그라미가 없는 x 라 카드 밖으로 걸치면 지도 위에 맨 아이콘만 떠서 잘 안 보인다.
+ * 카드가 오른쪽에 비워 둔 36px 안으로 들여 세운다.
+ */
 export const locationRecoveryNoticeClose = style({
   position: "absolute",
-  top: 0,
-  right: 0,
-  transform: "translate(50%, -50%)",
-  width: "40px",
-  height: "40px",
+  top: "50%",
+  right: vars.spacing[8],
+  transform: "translateY(-50%)",
+  width: "28px",
+  height: "28px",
   padding: 0,
   border: 0,
   borderRadius: vars.radius.max,
   background: "transparent",
+  color: vars.color.icon.default,
   cursor: "pointer",
   WebkitTapHighlightColor: "transparent",
   touchAction: "manipulation",

@@ -183,6 +183,24 @@ describe("LockerDetailImageStrip", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("빈 목록으로 먼저 그려졌다가 사진이 도착해도 끌기 리스너가 붙는다", () => {
+    const { rerender } = render(<LockerDetailImageStrip images={[]} />);
+
+    rerender(<LockerDetailImageStrip images={IMAGES} />);
+
+    const strip = document.querySelector("ul");
+    expect(strip).not.toBeNull();
+
+    // 기본 끌기를 막는 것은 훅이 붙었을 때만 일어난다.
+    const dragStart = new Event("dragstart", {
+      bubbles: true,
+      cancelable: true,
+    });
+    strip?.dispatchEvent(dragStart);
+
+    expect(dragStart.defaultPrevented).toBe(true);
+  });
+
   it("사진을 누르면 위치와 누른 버튼을 넘긴다", () => {
     const onOpenPreview = vi.fn();
     render(
@@ -193,5 +211,21 @@ describe("LockerDetailImageStrip", () => {
     fireEvent.click(buttons[1]);
 
     expect(onOpenPreview).toHaveBeenCalledWith(1, buttons[1]);
+  });
+
+  it("끌지 않고 눌렀다 떼면 미리보기가 열린다", () => {
+    const onOpenPreview = vi.fn();
+    render(
+      <LockerDetailImageStrip images={IMAGES} onOpenPreview={onOpenPreview} />,
+    );
+
+    const button = getImageButtons()[1];
+
+    // 끌기 훅이 포인터를 가로채면 이 클릭이 사진 버튼까지 오지 않는다.
+    fireEvent.pointerDown(button, { pointerId: 1, button: 0, clientX: 100 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 100 });
+    fireEvent.click(button);
+
+    expect(onOpenPreview).toHaveBeenCalledWith(1, button);
   });
 });

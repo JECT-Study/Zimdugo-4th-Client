@@ -16,7 +16,11 @@ import {
   title,
 } from "./PopupPicker.css.ts";
 
-const DIAL_ITEM_HEIGHT = 32;
+const DEFAULT_DIAL_ITEM_HEIGHT = 32;
+const DEFAULT_DIAL_VIEWPORT_HEIGHT = 96;
+const DEFAULT_DIAL_SELECTION_HEIGHT = 40;
+const DEFAULT_DIAL_SELECTION_TOP = 24;
+const DEFAULT_DIAL_EDGE_SPACER_HEIGHT = 32;
 
 export interface DialPickerOption {
   value: string;
@@ -36,6 +40,16 @@ export interface DialPickerProps {
   onColumnChange: (columnId: string, value: string) => void;
   className?: string;
   centerAccessory?: ReactNode;
+  itemHeight?: number;
+  viewportHeight?: number;
+  selectionHeight?: number;
+  selectionTop?: number;
+  edgeSpacerHeight?: number;
+  columnTemplate?: string;
+  centerAccessoryLeft?: number;
+  centerAccessoryTop?: number;
+  centerAccessoryHeight?: number;
+  selectedFontSize?: number;
 }
 
 export type PopupPickerOption = DialPickerOption;
@@ -76,12 +90,16 @@ const getCircularIndex = (index: number, length: number) => {
 interface DialPickerColumnViewProps {
   column: DialPickerColumn;
   hasDivider: boolean;
+  itemHeight: number;
+  edgeSpacerHeight: number;
   onChange: (columnId: string, value: string) => void;
 }
 
 function DialPickerColumnView({
   column: pickerColumn,
   hasDivider,
+  itemHeight,
+  edgeSpacerHeight,
   onChange,
 }: DialPickerColumnViewProps) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -133,7 +151,7 @@ function DialPickerColumnView({
     if (!listElement) return;
 
     isRecenteringRef.current = true;
-    listElement.scrollTop = middleIndex * DIAL_ITEM_HEIGHT;
+    listElement.scrollTop = middleIndex * itemHeight;
     requestAnimationFrame(() => {
       isRecenteringRef.current = false;
     });
@@ -151,7 +169,7 @@ function DialPickerColumnView({
 
       if (!listElement) return;
 
-      const visibleIndex = Math.round(listElement.scrollTop / DIAL_ITEM_HEIGHT);
+      const visibleIndex = Math.round(listElement.scrollTop / itemHeight);
       commitIndex(visibleIndex, { skipValueScroll: true });
       recenterCircularIndex(visibleIndex);
     }, 120);
@@ -180,10 +198,10 @@ function DialPickerColumnView({
     }
 
     listElement.scrollTo({
-      top: selectedVisibleIndex * DIAL_ITEM_HEIGHT,
+      top: selectedVisibleIndex * itemHeight,
       behavior: isCircular ? "auto" : "smooth",
     });
-  }, [isCircular, selectedVisibleIndex]);
+  }, [isCircular, itemHeight, selectedVisibleIndex]);
 
   useEffect(() => {
     return () => {
@@ -206,7 +224,7 @@ function DialPickerColumnView({
         onScroll={handleScroll}
         onKeyDown={handleKeyDown}
       >
-        <div style={{ height: DIAL_ITEM_HEIGHT }} aria-hidden="true" />
+        <div style={{ height: edgeSpacerHeight }} aria-hidden="true" />
         {visibleOptions.map((option, visibleIndex) => {
           const isSelected =
             option.value === pickerColumn.value &&
@@ -221,12 +239,13 @@ function DialPickerColumnView({
               aria-selected={isSelected}
               tabIndex={-1}
               data-selected={isSelected || undefined}
+              style={{ height: itemHeight }}
             >
               {option.label}
             </div>
           );
         })}
-        <div style={{ height: DIAL_ITEM_HEIGHT }} aria-hidden="true" />
+        <div style={{ height: edgeSpacerHeight }} aria-hidden="true" />
       </div>
     </fieldset>
   );
@@ -237,6 +256,16 @@ export function DialPicker({
   onColumnChange,
   className,
   centerAccessory,
+  itemHeight = DEFAULT_DIAL_ITEM_HEIGHT,
+  viewportHeight = DEFAULT_DIAL_VIEWPORT_HEIGHT,
+  selectionHeight = DEFAULT_DIAL_SELECTION_HEIGHT,
+  selectionTop = DEFAULT_DIAL_SELECTION_TOP,
+  edgeSpacerHeight = DEFAULT_DIAL_EDGE_SPACER_HEIGHT,
+  columnTemplate,
+  centerAccessoryLeft,
+  centerAccessoryTop,
+  centerAccessoryHeight,
+  selectedFontSize,
 }: DialPickerProps) {
   const shouldShowColumnDividers = !centerAccessory;
 
@@ -246,6 +275,29 @@ export function DialPicker({
       style={
         {
           "--popup-picker-column-count": String(columns.length),
+          "--popup-picker-item-height": `${itemHeight}px`,
+          "--popup-picker-viewport-height": `${viewportHeight}px`,
+          "--popup-picker-selection-height": `${selectionHeight}px`,
+          "--popup-picker-selection-top": `${selectionTop}px`,
+          "--popup-picker-column-template": columnTemplate,
+          // 0 도 유효한 값이라 값의 유무로만 판단한다. 참/거짓으로 보면 0 이
+          // 넘어와도 CSS 기본값으로 되돌아간다.
+          "--popup-picker-accessory-left":
+            centerAccessoryLeft !== undefined
+              ? `${centerAccessoryLeft}px`
+              : undefined,
+          "--popup-picker-accessory-top":
+            centerAccessoryTop !== undefined
+              ? `${centerAccessoryTop}px`
+              : undefined,
+          "--popup-picker-accessory-height":
+            centerAccessoryHeight !== undefined
+              ? `${centerAccessoryHeight}px`
+              : undefined,
+          "--popup-picker-selected-font-size":
+            selectedFontSize !== undefined
+              ? `${selectedFontSize}px`
+              : undefined,
         } as CSSProperties
       }
     >
@@ -260,6 +312,8 @@ export function DialPicker({
           key={pickerColumn.id}
           column={pickerColumn}
           hasDivider={shouldShowColumnDividers && index > 0}
+          itemHeight={itemHeight}
+          edgeSpacerHeight={edgeSpacerHeight}
           onChange={onColumnChange}
         />
       ))}

@@ -158,6 +158,20 @@ describe("shouldStartBottomSheetDrag", () => {
 
     expect(shouldStartBottomSheetDrag(row, boundary)).toBe(false);
   });
+
+  it("does not start dragging from an overlay portalled outside the sheet", () => {
+    const boundary = document.createElement("div");
+    // 포털로 띄운 모달은 DOM 상 시트 밖이지만 React 트리를 따라 이벤트가 올라온다.
+    const overlay = document.createElement("div");
+    const image = document.createElement("div");
+    overlay.append(image);
+    document.body.append(boundary, overlay);
+
+    expect(shouldStartBottomSheetDrag(image, boundary)).toBe(false);
+
+    boundary.remove();
+    overlay.remove();
+  });
 });
 
 describe("resolveBottomSheetExpandedProgress", () => {

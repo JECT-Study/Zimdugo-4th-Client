@@ -1,10 +1,10 @@
 import { m } from "@repo/i18n";
 import {
-  IconCircleboxClose32,
   IconReport24,
   IconShare24,
   IconStarFilled24,
   IconStarOutline24,
+  IconX24,
 } from "@repo/ui/tokens/icons";
 import {
   type CSSProperties,
@@ -134,7 +134,7 @@ export function LockerDetailMoreActionsModal({
               onPress={() => handleOpenChange(false)}
               aria-label={m.locker_detail_more_actions_close_aria()}
             >
-              <IconCircleboxClose32 />
+              <IconX24 />
             </AriaButton>
           </div>
 

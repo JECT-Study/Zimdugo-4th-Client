@@ -17,6 +17,26 @@ import {
   iconSvgFixed,
 } from "./Icons.css.ts";
 
+const timerStop20Url = new URL(
+  "./assets/icon-timer-stop-20.svg",
+  import.meta.url,
+).href;
+const lockerTimerLargeUrl = new URL(
+  "./assets/icon-locker-timer-48.svg",
+  import.meta.url,
+).href;
+const lockerTimerClose28Url = new URL(
+  "./assets/icon-locker-timer-close-28.svg",
+  import.meta.url,
+).href;
+const timerPreview24Url = new URL(
+  "./assets/icon-timer-preview-24.svg",
+  import.meta.url,
+).href;
+const timerEnd28Url = new URL("./assets/icon-timer-end-28.svg", import.meta.url)
+  .href;
+const route20Url = new URL("./assets/icon-route-20.svg", import.meta.url).href;
+
 export type { FlagCountry } from "./IconFlagCircle24";
 export { IconFlagCircle24 } from "./IconFlagCircle24";
 export { IconHomeProfile32 } from "./IconHomeProfile32";
@@ -804,6 +824,110 @@ export function IconNavigationClock24({
         fill={fill}
       />
     </svg>
+  );
+}
+
+/**
+ * 원본 에셋이 흰색으로 고정돼 있어 채운 버튼에서만 보였다. 인라인으로 바꿔
+ * currentColor 를 쓰면 테두리 버튼처럼 배경이 밝은 곳에서도 글자와 같은 색이 된다.
+ */
+export function IconTimerStart20({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      aria-hidden
+    >
+      <title>타이머 시작</title>
+      <path
+        d="M10 17.5C14.1421 17.5 17.5 14.1421 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path d="M8.3 6.8L13.3 10L8.3 13.2V6.8Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function IconRoute20({ className }: { className?: string }) {
+  return (
+    <img
+      src={route20Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={20}
+      height={20}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconTimerPreview24({ className }: { className?: string }) {
+  return (
+    <img
+      src={timerPreview24Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={24}
+      height={24}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconTimerEnd28({ className }: { className?: string }) {
+  return (
+    <img
+      src={timerEnd28Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={28}
+      height={28}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconLockerTimerClose28({ className }: { className?: string }) {
+  return (
+    <img
+      src={lockerTimerClose28Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={28}
+      height={28}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconTimerStop20({ className }: { className?: string }) {
+  return (
+    <img
+      src={timerStop20Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={20}
+      height={20}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconLockerTimerLarge({ className }: { className?: string }) {
+  return (
+    <img
+      src={lockerTimerLargeUrl}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={49}
+      height={69}
+      aria-hidden="true"
+    />
   );
 }
 
