@@ -1,9 +1,9 @@
 import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import {
-  IconCircleboxClose32,
   IconNavigationCrosshair24,
   IconNavigationRefresh24,
+  IconX24,
 } from "@repo/ui/tokens/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -3646,7 +3646,7 @@ export function IndexPage() {
               aria-label={m.home_location_interrupted_notice_close_aria()}
               onClick={handleDismissLocationRecoveryNotice}
             >
-              <IconCircleboxClose32 />
+              <IconX24 />
             </button>
           </div>
         </div>

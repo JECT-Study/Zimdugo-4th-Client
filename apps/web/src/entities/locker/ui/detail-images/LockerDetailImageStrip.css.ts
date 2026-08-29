@@ -30,6 +30,12 @@ export const strip = style({
       display: "none",
     },
   },
+  "@media": {
+    // 스크롤바를 감춰 둔 터라 마우스 사용자에게는 끌 수 있다는 표시가 필요하다.
+    "(pointer: fine)": {
+      cursor: "grab",
+    },
+  },
 });
 
 export const item = style({
