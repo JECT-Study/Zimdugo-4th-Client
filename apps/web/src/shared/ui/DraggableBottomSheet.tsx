@@ -23,15 +23,7 @@ import {
   sheetWrapper,
 } from "./DraggableBottomSheet.css.ts";
 
-/**
- * 이 표식이 붙은 요소 안에서 시작한 눌림은 시트를 끌지 않는다.
- *
- * 시트 위에 덮이는 모달은 포털로 document.body 에 그려도 React 트리를 따라
- * 이벤트가 시트까지 올라온다. 화면은 가려져 있는데 뒤의 시트가 끌리는 일을 막는다.
- */
-export const SHEET_DRAG_IGNORE_ATTRIBUTE = "data-sheet-drag-ignore";
-
-const INTERACTIVE_DRAG_EXCLUSION_SELECTOR = `button, a, input, textarea, select, [role="button"], [contenteditable="true"], [${SHEET_DRAG_IGNORE_ATTRIBUTE}]`;
+const INTERACTIVE_DRAG_EXCLUSION_SELECTOR = `button, a, input, textarea, select, [role="button"], [contenteditable="true"]`;
 
 const DRAG_START_THRESHOLD_PX = 6;
 /** 시트가 스냅 지점으로 안착할 때 쓰는 스프링. 시트를 따라 움직이는 UI 도 같은 값을 쓴다. */
@@ -120,10 +112,29 @@ export const resolveBottomSheetExpandedProgress = ({
   return Math.min(1, Math.max(0, rawProgress));
 };
 
+/**
+ * 시트 밖에서 시작한 눌림인지.
+ *
+ * 시트 위에 덮이는 모달은 포털로 `document.body` 에 그려도 React 트리를 따라
+ * 이벤트가 시트까지 올라온다. 화면은 가려져 있는데 뒤의 시트가 끌리게 된다.
+ *
+ * 모달마다 표식을 다는 대신 여기서 한 번에 거른다. 포털로 띄운 것은 무엇이든
+ * DOM 상 시트 밖에 있고, 시트를 끌 만한 요소는 전부 안에 있다.
+ *
+ * 오버레이에서 전파를 끊는 방법은 통하지 않는다. 시트가 캡처 단계에서 듣고 있어
+ * 조상인 시트 쪽이 먼저 실행된다.
+ */
+const isOutsideBoundary = (target: EventTarget | null, boundary: HTMLElement) =>
+  target instanceof Node && !boundary.contains(target);
+
 export const shouldStartBottomSheetDrag = (
   target: EventTarget | null,
   boundary: HTMLElement,
 ) => {
+  if (isOutsideBoundary(target, boundary)) {
+    return false;
+  }
+
   if (!(target instanceof HTMLElement)) {
     return true;
   }
@@ -576,6 +587,10 @@ export function DraggableBottomSheet({
     pointerId?: number;
     target: EventTarget | null;
   }) => {
+    if (isOutsideBoundary(target, boundary)) {
+      return;
+    }
+
     if (target instanceof HTMLElement) {
       const isInteractive = target.closest(INTERACTIVE_DRAG_EXCLUSION_SELECTOR);
       if (isInteractive) {
