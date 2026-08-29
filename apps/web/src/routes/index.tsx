@@ -234,7 +234,6 @@ import {
 import {
   resolveMapControlBottomPx,
   resolveVisibleSheetKind,
-  shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -3139,10 +3138,6 @@ export function IndexPage() {
     hasMapInstance: !!mapInstance,
   });
   const shouldRenderHomeSearchBar = shouldShowHomeSearchBar({ hasMapError });
-  const shouldRenderHomeHeader = shouldShowHomeHeader({
-    isSearchContextActive: context === "search",
-    hasMapError,
-  });
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3501,12 +3496,10 @@ export function IndexPage() {
 
   return (
     <main className={pageWrapper}>
-      {shouldRenderHomeHeader ? (
-        <HomeHeader
-          profileImageUrl={user?.profileImageUrl ?? ""}
-          onProfilePress={() => navigate({ to: "/settings" })}
-        />
-      ) : null}
+      <HomeHeader
+        profileImageUrl={user?.profileImageUrl ?? ""}
+        onProfilePress={() => navigate({ to: "/settings" })}
+      />
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
           onOpenSearch={handleOpenSearch}

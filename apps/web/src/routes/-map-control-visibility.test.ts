@@ -4,7 +4,6 @@ import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchL
 import {
   resolveMapControlBottomPx,
   resolveVisibleSheetKind,
-  shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -57,25 +56,6 @@ describe("resolveMapControlBottomPx", () => {
         windowHeightPx: 812,
       }),
     ).toBe(70);
-  });
-});
-
-describe("shouldShowHomeHeader", () => {
-  it("지도 오류에도 헤더를 유지한다", () => {
-    // 오류 화면에는 재시도 버튼뿐이고 하단 탭도 없어서, 헤더가 사라지면
-    // 설정·프로필·언어로 갈 방법이 없다.
-    expect(
-      shouldShowHomeHeader({
-        isSearchContextActive: false,
-        hasMapError: false,
-      }),
-    ).toBe(true);
-  });
-
-  it("검색 컨텍스트에서는 헤더를 숨긴다", () => {
-    expect(
-      shouldShowHomeHeader({ isSearchContextActive: true, hasMapError: false }),
-    ).toBe(false);
   });
 });
 
@@ -281,16 +261,6 @@ describe("로딩 스켈레톤과 실제 컨트롤의 위치 일치", () => {
         windowHeightPx: 260,
       }),
     ).toBeNull();
-  });
-});
-
-describe("shouldShowHomeHeader 지도 오류", () => {
-  it("검색 컨텍스트여도 지도 오류 중에는 헤더를 유지한다", () => {
-    // /?q=... 딥링크는 첫 컨텍스트가 검색이라, 오류와 겹치면 검색 바도 헤더도
-    // 사라져 설정·언어로 갈 방법이 없어진다.
-    expect(
-      shouldShowHomeHeader({ isSearchContextActive: true, hasMapError: true }),
-    ).toBe(true);
   });
 });
 

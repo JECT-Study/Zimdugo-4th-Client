@@ -7,7 +7,8 @@ import { globalStyle, style } from "@vanilla-extract/css";
 
 export const searchBarLayer = style({
   position: "absolute",
-  top: "calc(env(safe-area-inset-top, 0px) + 8px)",
+  // 헤더(높이 48px) 바로 아래. 헤더는 검색 여부와 상관없이 늘 서 있다.
+  top: "calc(env(safe-area-inset-top, 0px) + 60px)",
   left: vars.spacing[16],
   right: vars.spacing[16],
   zIndex: vars.zIndex.ui,
@@ -27,10 +28,6 @@ export const searchBarLayer = style({
       maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
     },
   },
-});
-
-export const searchBarLayerHome = style({
-  top: "calc(env(safe-area-inset-top, 0px) + 60px)",
 });
 
 export const searchInputFrame = style({
