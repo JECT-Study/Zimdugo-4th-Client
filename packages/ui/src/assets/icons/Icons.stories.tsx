@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { color } from "../../tokens/color/color.css.ts";
+import saveMapPin from "../images/save-map-pin.png";
+import selectedMapPin from "../images/selected-map-pin.png";
 import {
   BottomMenuIcon,
   BrandSymbolIcon,
@@ -557,6 +559,22 @@ function Cell({
   );
 }
 
+/**
+ * 컴포넌트가 아닌 정적 이미지 에셋.
+ *
+ * favicon 처럼 파일로만 존재하는 것들이다. Storybook 이 web 의 public 을 / 로
+ * 서빙하므로 절대 경로로 그대로 부른다.
+ */
+function StaticAsset({ name, src }: { name: string; src: string }) {
+  return (
+    <img
+      src={src}
+      alt={name}
+      style={{ maxWidth: 56, maxHeight: 56, objectFit: "contain" }}
+    />
+  );
+}
+
 function IconSlot({ children }: { children: ReactNode }) {
   return (
     <div
@@ -727,8 +745,99 @@ const ICON_CATALOG = [
     ],
   },
   {
-    id: "social",
-    label: "소셜 로그인",
+    id: "app",
+    label: "앱 아이콘",
+    entries: [
+      {
+        name: "favicon.svg",
+        probeTarget: "root",
+        render: () => <StaticAsset name="favicon.svg" src="/favicon.svg" />,
+      },
+      {
+        name: "favicon.ico",
+        probeTarget: "root",
+        render: () => <StaticAsset name="favicon.ico" src="/favicon.ico" />,
+      },
+      {
+        name: "favicon 16",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="favicon 16" src="/icons/favicon-16x16.png" />
+        ),
+      },
+      {
+        name: "favicon 32",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="favicon 32" src="/icons/favicon-32x32.png" />
+        ),
+      },
+      {
+        name: "apple touch 180",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="apple touch 180"
+            src="/icons/apple-touch-icon-180x180.png"
+          />
+        ),
+      },
+      {
+        name: "android chrome 192",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="android chrome 192"
+            src="/icons/android-chrome-192x192.png"
+          />
+        ),
+      },
+      {
+        name: "android chrome 512",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="android chrome 512"
+            src="/icons/android-chrome-512x512.png"
+          />
+        ),
+      },
+      {
+        name: "maskable 512",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="maskable 512" src="/icons/maskable-512x512.png" />
+        ),
+      },
+      {
+        name: "badge 96",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="badge 96" src="/icons/badge-96x96.png" />
+        ),
+      },
+      {
+        name: "tanstack circle",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="tanstack circle" src="/tanstack-circle-logo.png" />
+        ),
+      },
+      {
+        name: "tanstack word",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset
+            name="tanstack word"
+            src="/tanstack-word-logo-white.svg"
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "auth",
+    label: "로그인",
     entries: [
       {
         name: "naver",
@@ -842,8 +951,8 @@ const ICON_CATALOG = [
     ],
   },
   {
-    id: "locker-detail",
-    label: "보관함 상세",
+    id: "locker",
+    label: "보관함",
     entries: [
       {
         name: "distanceRoute",
@@ -877,12 +986,6 @@ const ICON_CATALOG = [
         name: "capacity",
         render: () => <IconLockerDetailCapacity24 />,
       },
-    ],
-  },
-  {
-    id: "locker-timer",
-    label: "보관 타이머",
-    entries: [
       {
         name: "timerStart",
         render: () => <IconTimerStart20 />,
@@ -917,12 +1020,6 @@ const ICON_CATALOG = [
         probeTarget: "root",
         render: () => <IconLockerTimerLarge />,
       },
-    ],
-  },
-  {
-    id: "locker-image",
-    label: "보관함 사진",
-    entries: [
       {
         name: "camera",
         render: () => <IconCamera24 />,
@@ -931,12 +1028,6 @@ const ICON_CATALOG = [
         name: "imageUnavailable",
         render: () => <IconImageUnavailable24 />,
       },
-    ],
-  },
-  {
-    id: "locker-size",
-    label: "보관함 크기",
-    entries: [
       {
         name: "size.s / default",
         render: () => <IconSizeS state="default" />,
@@ -973,12 +1064,6 @@ const ICON_CATALOG = [
         name: "size.l / disabled",
         render: () => <IconSizeL state="disabled" />,
       },
-    ],
-  },
-  {
-    id: "favorite",
-    label: "즐겨찾기",
-    entries: [
       {
         name: "star",
         render: () => <IconStarOutline24 size={24} />,
@@ -990,8 +1075,8 @@ const ICON_CATALOG = [
     ],
   },
   {
-    id: "profile",
-    label: "프로필",
+    id: "user",
+    label: "사용자",
     entries: [
       {
         name: "profile-22",
@@ -1011,12 +1096,6 @@ const ICON_CATALOG = [
         ingredients: ["IconPencil24"],
         render: () => <IconCircleboxPencil32 />,
       },
-    ],
-  },
-  {
-    id: "language",
-    label: "언어",
-    entries: [
       {
         name: "globe",
         render: () => <IconNormalGlobe32 />,
@@ -1074,7 +1153,7 @@ const ICON_CATALOG = [
     ],
   },
   {
-    id: "bottom-navigation",
+    id: "navigation",
     label: "하단 내비게이션",
     entries: (["home", "report", "my", "settings"] as const).flatMap((tab) => [
       {
@@ -1318,6 +1397,18 @@ const ICON_CATALOG = [
         probeTarget: "root",
         render: () => <IconCircleboxRefresh48 state="refreshActive" />,
       },
+      {
+        name: "save-map-pin.png",
+        probeTarget: "root",
+        render: () => <StaticAsset name="save-map-pin" src={saveMapPin} />,
+      },
+      {
+        name: "selected-map-pin.png",
+        probeTarget: "root",
+        render: () => (
+          <StaticAsset name="selected-map-pin" src={selectedMapPin} />
+        ),
+      },
     ],
   },
 ] as const satisfies readonly IconCategory[];
@@ -1367,27 +1458,19 @@ export const Common: Story = categoryStory("common");
 
 export const Brand: Story = categoryStory("brand");
 
-export const Social: Story = categoryStory("social");
+export const AppIcon: Story = categoryStory("app");
+
+export const Auth: Story = categoryStory("auth");
 
 export const MapIcons: Story = categoryStory("map");
 
 export const Search: Story = categoryStory("search");
 
-export const LockerDetail: Story = categoryStory("locker-detail");
+export const Locker: Story = categoryStory("locker");
 
-export const LockerTimer: Story = categoryStory("locker-timer");
+export const User: Story = categoryStory("user");
 
-export const LockerImage: Story = categoryStory("locker-image");
-
-export const LockerSize: Story = categoryStory("locker-size");
-
-export const Favorite: Story = categoryStory("favorite");
-
-export const Profile: Story = categoryStory("profile");
-
-export const Language: Story = categoryStory("language");
-
-export const BottomNavigation: Story = categoryStory("bottom-navigation");
+export const BottomNavigation: Story = categoryStory("navigation");
 
 export const Archived: Story = categoryStory("archived");
 
