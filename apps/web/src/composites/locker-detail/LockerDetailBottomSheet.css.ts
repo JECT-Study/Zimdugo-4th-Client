@@ -316,14 +316,6 @@ export const summaryActions = style({
   flexShrink: 0,
 });
 
-export const actionRow = style({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: vars.spacing[12],
-  width: "100%",
-});
-
 export const primaryActionButton = style({
   display: "inline-flex",
   alignItems: "center",
@@ -477,8 +469,12 @@ export const fullActionRow = style({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  // 12px 의 1.5 배. spacing 스케일에 18 이 없어 값을 직접 쓴다.
-  gap: "18px",
+  /*
+   * 감싸는 actionSection 의 간격이 16px 이다. 18px 로는 구분선과 버튼 사이보다
+   * 2px 넓을 뿐이라 버튼끼리 더 떨어져 보이지 않았다. 주변보다 확실히 넓어야
+   * 두 버튼이 한 덩어리에서 갈라져 읽힌다.
+   */
+  gap: vars.spacing[24],
   width: "100%",
 });
 

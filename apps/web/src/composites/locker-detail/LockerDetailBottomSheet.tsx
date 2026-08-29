@@ -62,7 +62,6 @@ import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
   actionIcon,
-  actionRow,
   actionSection,
   backButton,
   backIcon,
@@ -1126,7 +1125,6 @@ function FullDetailContent({
         <div className={actionSection}>
           <div className={actionDivider} />
           <ActionRow
-            isFull
             onNavigate={onNavigate}
             onTimerOpen={onTimerOpen}
             isTimerRunning={isTimerRunning}
@@ -1383,21 +1381,25 @@ function DetailInfoRow({
   );
 }
 
+/**
+ * full 콘텐츠 맨 아래 액션 영역.
+ *
+ * 하프·미니 스냅에서는 요약만 보여서 여기까지 오지 않는다. 예전에 있던 가로 배치
+ * 변형은 호출되는 곳이 없어 걷어냈다.
+ */
 function ActionRow({
-  isFull = false,
   onNavigate,
   onTimerOpen,
   isTimerRunning,
   timerEndTimeLabel,
 }: {
-  isFull?: boolean;
   onNavigate: () => void;
   onTimerOpen: () => void;
   isTimerRunning: boolean;
   timerEndTimeLabel: string;
 }) {
   return (
-    <div className={isFull ? fullActionRow : actionRow}>
+    <div className={fullActionRow}>
       <Button
         variant="outline"
         intent="primary"
@@ -1418,11 +1420,8 @@ function ActionRow({
       <Button
         variant="filled"
         intent="primary"
-        size={isFull ? "L" : "S"}
-        className={[
-          primaryActionButton,
-          isFull ? fullPrimaryActionButton : "",
-        ].join(" ")}
+        size="L"
+        className={[primaryActionButton, fullPrimaryActionButton].join(" ")}
         onPress={onNavigate}
       >
         <IconRoute20 className={actionIcon} />
