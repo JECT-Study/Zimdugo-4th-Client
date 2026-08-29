@@ -54,8 +54,10 @@ export const getActiveLockerTimer = (): ActiveLockerTimer | null => {
     storageKeys = Array.from(
       { length: window.localStorage.length },
       (_, index) => window.localStorage.key(index),
-    ).filter((key): key is string =>
-      key?.startsWith(LOCKER_TIMER_STORAGE_PREFIX),
+    ).filter(
+      // 옵셔널 체인만 쓰면 undefined 가 섞여 타입 술어의 boolean 과 안 맞는다.
+      (key): key is string =>
+        key?.startsWith(LOCKER_TIMER_STORAGE_PREFIX) ?? false,
     );
   } catch {
     return null;
