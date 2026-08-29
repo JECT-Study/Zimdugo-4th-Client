@@ -253,11 +253,15 @@ export function HomeHeader({
         svg 가 role="img" 과 aria-label 을 들고 있어, 버튼에 이름을 주지 않으면 접근성
         이름이 "ZimDUGO 텍스트 로고 (소)" 로 잡힌다. 무슨 일이 일어나는지가 아니라
         무엇이 그려졌는지를 읽어 주는 셈이라 버튼 쪽에 이름을 명시한다.
+
+        검색 바 뒤로가기와는 다른 이름을 쓴다. 뒤로가기는 단계별로 한 칸씩 돌아가고
+        이 버튼은 홈까지 간다. 검색 컨텍스트에서 둘이 함께 서므로 이름이 같으면
+        무엇을 누르는지 구분할 수 없다.
       */}
       <button
         type="button"
         className={styles.logoButton}
-        aria-label={m.home_search_back_aria()}
+        aria-label={m.home_logo_aria()}
         onClick={onLogoPress}
       >
         <BrandTextLogoSmall className={styles.logo} />

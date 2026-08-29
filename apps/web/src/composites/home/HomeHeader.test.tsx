@@ -158,7 +158,7 @@ describe("HomeHeader", () => {
     // "ZimDUGO 텍스트 로고 (소)" 로 잡혀 무슨 일이 일어나는지 읽히지 않는다.
     const { onLogoPress } = renderStyledHeader();
     const logoButton = screen.getByRole("button", {
-      name: m.home_search_back_aria(),
+      name: m.home_logo_aria(),
     });
 
     fireEvent.click(logoButton);
