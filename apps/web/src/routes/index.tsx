@@ -3499,6 +3499,7 @@ export function IndexPage() {
       <HomeHeader
         profileImageUrl={user?.profileImageUrl ?? ""}
         onProfilePress={() => navigate({ to: "/settings" })}
+        onLogoPress={resetSearchContext}
       />
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar

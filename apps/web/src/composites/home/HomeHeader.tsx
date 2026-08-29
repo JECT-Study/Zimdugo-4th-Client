@@ -26,6 +26,8 @@ import * as styles from "./HomeHeader.css";
 export interface HomeHeaderProps {
   profileImageUrl?: string;
   onProfilePress: () => void;
+  /** 로고를 눌렀을 때. 홈 화면에서는 검색 컨텍스트를 되돌리는 것이 "홈으로" 다. */
+  onLogoPress: () => void;
 }
 
 const LANGUAGE_DROPDOWN_TRANSITION = {
@@ -158,6 +160,7 @@ function HomeHeaderSkeletonContent() {
 export function HomeHeader({
   profileImageUrl = "",
   onProfilePress,
+  onLogoPress,
 }: HomeHeaderProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const languageTriggerRef = useRef<HTMLButtonElement>(null);
@@ -244,8 +247,21 @@ export function HomeHeader({
         .join(" ")}
       style={headerStyle}
     >
-      {/* 로고 svg 는 width/height 속성을 갖고 있어 CSS 없이도 크기가 유지된다. */}
-      <BrandTextLogoSmall className={styles.logo} />
+      {/*
+        로고 svg 는 width/height 속성을 갖고 있어 CSS 없이도 크기가 유지된다.
+
+        svg 가 role="img" 과 aria-label 을 들고 있어, 버튼에 이름을 주지 않으면 접근성
+        이름이 "ZimDUGO 텍스트 로고 (소)" 로 잡힌다. 무슨 일이 일어나는지가 아니라
+        무엇이 그려졌는지를 읽어 주는 셈이라 버튼 쪽에 이름을 명시한다.
+      */}
+      <button
+        type="button"
+        className={styles.logoButton}
+        aria-label={m.home_search_back_aria()}
+        onClick={onLogoPress}
+      >
+        <BrandTextLogoSmall className={styles.logo} />
+      </button>
       <div
         className={styles.actions}
         style={fallbackStyle(actionsFallbackStyle)}

@@ -35,6 +35,16 @@ export const header = style({
   },
 });
 
+export const logoButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  flexShrink: 0,
+  padding: 0,
+  border: "none",
+  background: "none",
+  cursor: "pointer",
+});
+
 export const logo = style({
   width: "78px",
   height: "16px",
