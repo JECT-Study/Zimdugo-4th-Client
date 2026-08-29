@@ -420,7 +420,7 @@ export const detailTrailing = style({
 export const actionSection = style({
   display: "flex",
   flexDirection: "column",
-  gap: "20px",
+  gap: vars.spacing[16],
   width: "100%",
 });
 
@@ -447,12 +447,33 @@ export const actionDivider = style({
 
 export const fullActionRow = style({
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
-  gap: vars.spacing[8],
+  gap: vars.spacing[12],
   width: "100%",
 });
 
 export const fullPrimaryActionButton = style({
-  height: "40px",
-  fontSize: vars.typography.fontSize[18],
+  width: "100%",
+  height: "46px",
+  flex: "none",
+  gap: vars.spacing[8],
+  borderRadius: vars.radius[8],
+  fontSize: "15px",
+});
+
+export const timerActionButton = style({
+  width: "100%",
+  height: "46px",
+  flex: "none",
+  gap: vars.spacing[8],
+  borderWidth: "1.5px",
+  borderRadius: vars.radius[8],
+  fontSize: vars.typography.fontSize[14],
+});
+
+export const actionIcon = style({
+  width: "20px",
+  height: "20px",
+  flexShrink: 0,
 });

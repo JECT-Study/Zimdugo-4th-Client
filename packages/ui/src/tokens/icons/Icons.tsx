@@ -17,6 +17,30 @@ import {
   iconSvgFixed,
 } from "./Icons.css.ts";
 
+const timerStart20Url = new URL(
+  "./assets/icon-timer-start-20.svg",
+  import.meta.url,
+).href;
+const timerStop20Url = new URL(
+  "./assets/icon-timer-stop-20.svg",
+  import.meta.url,
+).href;
+const lockerTimerLargeUrl = new URL(
+  "./assets/icon-locker-timer-48.svg",
+  import.meta.url,
+).href;
+const lockerTimerClose28Url = new URL(
+  "./assets/icon-locker-timer-close-28.svg",
+  import.meta.url,
+).href;
+const timerPreview24Url = new URL(
+  "./assets/icon-timer-preview-24.svg",
+  import.meta.url,
+).href;
+const timerEnd28Url = new URL("./assets/icon-timer-end-28.svg", import.meta.url)
+  .href;
+const route20Url = new URL("./assets/icon-route-20.svg", import.meta.url).href;
+
 export type { FlagCountry } from "./IconFlagCircle24";
 export { IconFlagCircle24 } from "./IconFlagCircle24";
 export { IconHomeProfile32 } from "./IconHomeProfile32";
@@ -804,6 +828,97 @@ export function IconNavigationClock24({
         fill={fill}
       />
     </svg>
+  );
+}
+
+export function IconTimerStart20({ className }: { className?: string }) {
+  return (
+    <img
+      src={timerStart20Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={20}
+      height={20}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconRoute20({ className }: { className?: string }) {
+  return (
+    <img
+      src={route20Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={20}
+      height={20}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconTimerPreview24({ className }: { className?: string }) {
+  return (
+    <img
+      src={timerPreview24Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={24}
+      height={24}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconTimerEnd28({ className }: { className?: string }) {
+  return (
+    <img
+      src={timerEnd28Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={28}
+      height={28}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconLockerTimerClose28({ className }: { className?: string }) {
+  return (
+    <img
+      src={lockerTimerClose28Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={28}
+      height={28}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconTimerStop20({ className }: { className?: string }) {
+  return (
+    <img
+      src={timerStop20Url}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={20}
+      height={20}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function IconLockerTimerLarge({ className }: { className?: string }) {
+  return (
+    <img
+      src={lockerTimerLargeUrl}
+      alt=""
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      width={49}
+      height={69}
+      aria-hidden="true"
+    />
   );
 }
 

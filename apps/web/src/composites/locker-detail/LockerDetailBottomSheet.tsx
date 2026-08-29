@@ -1,6 +1,7 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
+import { Popup } from "@repo/ui/components/popup";
 import {
   IconCaution24,
   IconChevronLeft13,
@@ -10,6 +11,8 @@ import {
   IconLockerDetailWallet24,
   IconMore24,
   IconNavigationClock24,
+  IconRoute20,
+  IconTimerStart20,
   IconX24,
 } from "@repo/ui/tokens/icons";
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
@@ -33,6 +36,7 @@ import {
 } from "#/entities/locker/ui/realtime-availability";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
+import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import {
   formatLockerOperatingHoursLabel,
@@ -49,6 +53,7 @@ import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionDivider,
+  actionIcon,
   actionRow,
   actionSection,
   backButton,
@@ -95,6 +100,7 @@ import {
   summaryRow,
   summarySection,
   summaryTextColumn,
+  timerActionButton,
   titleControlRow,
   titleExpandButton,
   titleExpandIcon,
@@ -107,6 +113,54 @@ const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
 const REALTIME_STATUS_CARD_OVERLAY_GAP = 14;
 /** full 콘텐츠 측정 시 실시간 카드가 DOM 에 들어 있는지 확인하는 표식 */
 const REALTIME_CARD_MEASURE_SELECTOR = "[data-realtime-status-card]";
+const LOCKER_TIMER_STORAGE_PREFIX = "zimdugo:locker-timer:";
+
+interface LockerTimerSession {
+  configuredTimeInSeconds: number;
+  endAt: number;
+}
+
+const getLockerTimerStorageKey = (lockerId: number) =>
+  `${LOCKER_TIMER_STORAGE_PREFIX}${lockerId}`;
+
+const getStoredLockerTimer = (lockerId: number): LockerTimerSession | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const storedValue = window.localStorage.getItem(
+      getLockerTimerStorageKey(lockerId),
+    );
+    if (!storedValue) return null;
+
+    const session = JSON.parse(storedValue) as LockerTimerSession;
+    if (
+      !Number.isFinite(session.endAt) ||
+      !Number.isFinite(session.configuredTimeInSeconds) ||
+      session.endAt <= Date.now() ||
+      session.configuredTimeInSeconds <= 0
+    ) {
+      window.localStorage.removeItem(getLockerTimerStorageKey(lockerId));
+      return null;
+    }
+
+    return session;
+  } catch {
+    return null;
+  }
+};
+
+const formatTimerEndTime = (endAt: number) => {
+  const endTime = new Date(endAt);
+  return `${String(endTime.getHours()).padStart(2, "0")}:${String(
+    endTime.getMinutes(),
+  ).padStart(2, "0")}`;
+};
+
+const formatRemainingTime = (remainingTimeInSeconds: number) => {
+  const hours = Math.floor(remainingTimeInSeconds / 3600);
+  const minutes = Math.floor((remainingTimeInSeconds % 3600) / 60);
+  return `${String(hours).padStart(2, "0")} : ${String(minutes).padStart(2, "0")}`;
+};
 
 export interface LockerDetailSheetLiveOffsetState {
   /** 뷰포트 상단부터 시트 상단까지 거리. `100dvh - offsetPx` 가 시트가 차지하는 높이다. */
@@ -317,6 +371,15 @@ export function LockerDetailBottomSheet({
   const [windowHeight, setWindowHeight] = useState(812);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
+  const [isTimerOpen, setIsTimerOpen] = useState(false);
+  const [isTimerStartConfirmationOpen, setIsTimerStartConfirmationOpen] =
+    useState(false);
+  const [timerHours, setTimerHours] = useState("00");
+  const [timerMinutes, setTimerMinutes] = useState("00");
+  const [timerSession, setTimerSession] = useState<LockerTimerSession | null>(
+    null,
+  );
+  const [timerNow, setTimerNow] = useState(() => Date.now());
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
@@ -466,6 +529,13 @@ export function LockerDetailBottomSheet({
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
+  const remainingTimeInSeconds = timerSession
+    ? Math.max(0, Math.ceil((timerSession.endAt - timerNow) / 1000))
+    : 0;
+  const isTimerRunning = timerSession !== null && remainingTimeInSeconds > 0;
+  const timerEndTimeLabel = timerSession
+    ? formatTimerEndTime(timerSession.endAt)
+    : "";
 
   const handleFavoritePress = () => {
     if (!canFavorite) {
@@ -496,6 +566,51 @@ export function LockerDetailBottomSheet({
 
   const handleNavigate = () => {
     onNavigate?.(locker);
+  };
+
+  const handleTimerDurationChange = (hours: string, minutes: string) => {
+    setTimerHours(hours);
+    setTimerMinutes(minutes);
+  };
+
+  const handleTimerStartRequest = () => {
+    setIsTimerStartConfirmationOpen(true);
+  };
+
+  const handleTimerStartConfirm = () => {
+    const configuredTimeInSeconds =
+      (Number(timerHours) * 60 + Number(timerMinutes)) * 60;
+    if (configuredTimeInSeconds <= 0) return;
+
+    const nextSession = {
+      configuredTimeInSeconds,
+      endAt: Date.now() + configuredTimeInSeconds * 1000,
+    };
+    setTimerSession(nextSession);
+    setTimerNow(Date.now());
+    setIsTimerStartConfirmationOpen(false);
+
+    try {
+      window.localStorage.setItem(
+        getLockerTimerStorageKey(locker.lockerId),
+        JSON.stringify(nextSession),
+      );
+    } catch {
+      // 저장소를 사용할 수 없는 환경에서도 현재 세션 타이머는 동작한다.
+    }
+  };
+
+  const handleTimerStop = () => {
+    setTimerSession(null);
+    setTimerHours("00");
+    setTimerMinutes("00");
+    setIsTimerOpen(false);
+
+    try {
+      window.localStorage.removeItem(getLockerTimerStorageKey(locker.lockerId));
+    } catch {
+      // 저장소를 사용할 수 없는 환경에서는 메모리 상태만 정리한다.
+    }
   };
 
   const handleOpenMoreActions = () => {
@@ -586,6 +701,37 @@ export function LockerDetailBottomSheet({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    setTimerSession(getStoredLockerTimer(locker.lockerId));
+    setTimerNow(Date.now());
+    setIsTimerOpen(false);
+    setIsTimerStartConfirmationOpen(false);
+    setTimerHours("00");
+    setTimerMinutes("00");
+  }, [locker.lockerId]);
+
+  useEffect(() => {
+    if (!timerSession) return;
+
+    const intervalId = window.setInterval(() => {
+      const nextNow = Date.now();
+      setTimerNow(nextNow);
+
+      if (timerSession.endAt <= nextNow) {
+        setTimerSession(null);
+        try {
+          window.localStorage.removeItem(
+            getLockerTimerStorageKey(locker.lockerId),
+          );
+        } catch {
+          // 저장소 접근이 제한돼도 화면의 타이머 종료 처리는 유지한다.
+        }
+      }
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [locker.lockerId, timerSession]);
 
   useEffect(() => {
     if (loadState !== "ready") {
@@ -691,6 +837,9 @@ export function LockerDetailBottomSheet({
               onMoreActionsOpen={handleOpenMoreActions}
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
+              onTimerOpen={() => setIsTimerOpen(true)}
+              isTimerRunning={isTimerRunning}
+              timerEndTimeLabel={timerEndTimeLabel}
               snapStage={currentSnapStage}
               isRealtimeCardVisible={isSheetAtFullOffset}
               isScrollEnabled={currentSnapStage === "full"}
@@ -714,6 +863,39 @@ export function LockerDetailBottomSheet({
         isOpen={isCorrectionOpen}
         onOpenChange={setIsCorrectionOpen}
         onConfirm={handleCorrectionSubmit}
+      />
+      <LockerTimerModal
+        isOpen={isTimerOpen}
+        onOpenChange={setIsTimerOpen}
+        {...(isTimerRunning && timerSession
+          ? {
+              mode: "running" as const,
+              remainingTimeLabel: formatRemainingTime(remainingTimeInSeconds),
+              endTimeLabel: timerEndTimeLabel,
+              remainingTimeInSeconds,
+              configuredTimeInSeconds: timerSession.configuredTimeInSeconds,
+              onStop: handleTimerStop,
+            }
+          : {
+              mode: "setup" as const,
+              hours: timerHours,
+              minutes: timerMinutes,
+              onDurationChange: handleTimerDurationChange,
+              onStart: handleTimerStartRequest,
+            })}
+      />
+      <Popup
+        isOpen={isTimerStartConfirmationOpen}
+        onOpenChange={setIsTimerStartConfirmationOpen}
+        titleText={m.locker_timer_start_confirm()}
+        primaryAction={{
+          label: m.common_yes(),
+          onPress: handleTimerStartConfirm,
+        }}
+        secondaryAction={{
+          label: m.common_no(),
+          onPress: () => setIsTimerStartConfirmationOpen(false),
+        }}
       />
     </>
   );
@@ -835,6 +1017,9 @@ function FullDetailContent({
   onMoreActionsOpen,
   moreActionsButtonRef,
   onNavigate,
+  onTimerOpen,
+  isTimerRunning,
+  timerEndTimeLabel,
   snapStage,
   isRealtimeCardVisible,
   isScrollEnabled,
@@ -847,6 +1032,9 @@ function FullDetailContent({
   onMoreActionsOpen: () => void;
   moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   onNavigate: () => void;
+  onTimerOpen: () => void;
+  isTimerRunning: boolean;
+  timerEndTimeLabel: string;
   snapStage: LockerDetailSheetSnapStage;
   isRealtimeCardVisible: boolean;
   isScrollEnabled: boolean;
@@ -958,7 +1146,13 @@ function FullDetailContent({
         */}
         <div className={actionSection}>
           <div className={actionDivider} />
-          <ActionRow isFull onNavigate={onNavigate} />
+          <ActionRow
+            isFull
+            onNavigate={onNavigate}
+            onTimerOpen={onTimerOpen}
+            isTimerRunning={isTimerRunning}
+            timerEndTimeLabel={timerEndTimeLabel}
+          />
         </div>
       </div>
       {previewIndex === null ? null : (
@@ -1208,12 +1402,30 @@ function DetailInfoRow({
 function ActionRow({
   isFull = false,
   onNavigate,
+  onTimerOpen,
+  isTimerRunning,
+  timerEndTimeLabel,
 }: {
   isFull?: boolean;
   onNavigate: () => void;
+  onTimerOpen: () => void;
+  isTimerRunning: boolean;
+  timerEndTimeLabel: string;
 }) {
   return (
     <div className={isFull ? fullActionRow : actionRow}>
+      <Button
+        variant="outline"
+        intent="primary"
+        size="L"
+        className={timerActionButton}
+        onPress={onTimerOpen}
+      >
+        <IconTimerStart20 className={actionIcon} />
+        {isTimerRunning
+          ? m.locker_timer_end({ time: timerEndTimeLabel })
+          : m.locker_timer_set()}
+      </Button>
       <Button
         variant="filled"
         intent="primary"
@@ -1224,6 +1436,7 @@ function ActionRow({
         ].join(" ")}
         onPress={onNavigate}
       >
+        <IconRoute20 className={actionIcon} />
         {m.locker_detail_navigate()}
       </Button>
     </div>
