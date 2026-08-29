@@ -36,6 +36,13 @@ import {
 } from "#/entities/locker/ui/realtime-availability";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
+import {
+  getStoredLockerTimer,
+  type LockerTimerSession,
+  removeLockerTimer,
+  saveLockerTimer,
+  subscribeLockerTimerStorage,
+} from "#/features/locker-timer/model/locker-timer-storage";
 import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import {
@@ -114,42 +121,6 @@ const LOCKER_DETAIL_SKELETON_ROWS = ["address", "price", "size", "info"];
 const REALTIME_STATUS_CARD_OVERLAY_GAP = 14;
 /** full 콘텐츠 측정 시 실시간 카드가 DOM 에 들어 있는지 확인하는 표식 */
 const REALTIME_CARD_MEASURE_SELECTOR = "[data-realtime-status-card]";
-const LOCKER_TIMER_STORAGE_PREFIX = "zimdugo:locker-timer:";
-
-interface LockerTimerSession {
-  configuredTimeInSeconds: number;
-  endAt: number;
-}
-
-const getLockerTimerStorageKey = (lockerId: number) =>
-  `${LOCKER_TIMER_STORAGE_PREFIX}${lockerId}`;
-
-const getStoredLockerTimer = (lockerId: number): LockerTimerSession | null => {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const storedValue = window.localStorage.getItem(
-      getLockerTimerStorageKey(lockerId),
-    );
-    if (!storedValue) return null;
-
-    const session = JSON.parse(storedValue) as LockerTimerSession;
-    if (
-      !Number.isFinite(session.endAt) ||
-      !Number.isFinite(session.configuredTimeInSeconds) ||
-      session.endAt <= Date.now() ||
-      session.configuredTimeInSeconds <= 0
-    ) {
-      window.localStorage.removeItem(getLockerTimerStorageKey(lockerId));
-      return null;
-    }
-
-    return session;
-  } catch {
-    return null;
-  }
-};
-
 const formatTimerEndTime = (endAt: number) => {
   const endTime = new Date(endAt);
   return `${String(endTime.getHours()).padStart(2, "0")}:${String(
@@ -591,14 +562,7 @@ export function LockerDetailBottomSheet({
     setTimerNow(Date.now());
     setIsTimerStartConfirmationOpen(false);
 
-    try {
-      window.localStorage.setItem(
-        getLockerTimerStorageKey(locker.lockerId),
-        JSON.stringify(nextSession),
-      );
-    } catch {
-      // 저장소를 사용할 수 없는 환경에서도 현재 세션 타이머는 동작한다.
-    }
+    saveLockerTimer(locker.lockerId, nextSession);
   };
 
   const handleTimerStop = () => {
@@ -607,11 +571,7 @@ export function LockerDetailBottomSheet({
     setTimerMinutes("00");
     setIsTimerOpen(false);
 
-    try {
-      window.localStorage.removeItem(getLockerTimerStorageKey(locker.lockerId));
-    } catch {
-      // 저장소를 사용할 수 없는 환경에서는 메모리 상태만 정리한다.
-    }
+    removeLockerTimer(locker.lockerId);
   };
 
   const handleOpenMoreActions = () => {
@@ -704,12 +664,17 @@ export function LockerDetailBottomSheet({
   }, []);
 
   useEffect(() => {
-    setTimerSession(getStoredLockerTimer(locker.lockerId));
-    setTimerNow(Date.now());
+    const refreshTimer = () => {
+      setTimerSession(getStoredLockerTimer(locker.lockerId));
+      setTimerNow(Date.now());
+    };
+
+    refreshTimer();
     setIsTimerOpen(false);
     setIsTimerStartConfirmationOpen(false);
     setTimerHours("00");
     setTimerMinutes("00");
+    return subscribeLockerTimerStorage(refreshTimer);
   }, [locker.lockerId]);
 
   useEffect(() => {
@@ -721,13 +686,7 @@ export function LockerDetailBottomSheet({
 
       if (timerSession.endAt <= nextNow) {
         setTimerSession(null);
-        try {
-          window.localStorage.removeItem(
-            getLockerTimerStorageKey(locker.lockerId),
-          );
-        } catch {
-          // 저장소 접근이 제한돼도 화면의 타이머 종료 처리는 유지한다.
-        }
+        removeLockerTimer(locker.lockerId);
       }
     }, 1000);
 

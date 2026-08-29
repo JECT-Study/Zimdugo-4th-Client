@@ -100,6 +100,7 @@ import {
   toLockerIssueReportRequest,
 } from "#/features/locker-correction/api/create-locker-issue-report";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
+import { LockerTimerMapControl } from "#/features/locker-timer/ui/LockerTimerMapControl";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -3578,6 +3579,7 @@ export function IndexPage() {
           */
           style={{ bottom: mapControlRaisedBottom }}
         >
+          <LockerTimerMapControl buttonClassName={locationButton} />
           <RefreshButton
             isRefreshing={isRefreshing}
             isMapReady={!!mapInstance}
