@@ -170,6 +170,8 @@ export const useDragScroll = (
       // 마우스 왼쪽 버튼만. 터치는 브라우저에 맡기고 오른쪽 버튼은 메뉴를 연다.
       if (event.pointerType === "touch" || event.button !== 0) return;
 
+      // 취소하면 settleFrameId 가 비므로 미끄러지던 중이었는지 먼저 기억한다.
+      const wasSettling = settleFrameId !== null;
       cancelSettling();
 
       activePointerId = event.pointerId;
@@ -184,7 +186,7 @@ export const useDragScroll = (
 
       // 미끄러지는 중에 다시 잡으면 이미 스냅이 꺼져 있다. 그때 값을 덮어쓰면
       // "none" 을 원래 값으로 기억해 스냅이 영영 돌아오지 않는다.
-      if (settleFrameId === null) {
+      if (!wasSettling) {
         previousSnapType = element.style.scrollSnapType;
       }
       previousCursor = element.style.cursor;

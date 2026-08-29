@@ -67,17 +67,21 @@ export function LockerTimerMapControl({
 
   if (!activeTimer || remainingTimeInSeconds <= 0) return null;
 
+  const remainingLabel = formatRemainingBadge(remainingTimeInSeconds);
+
   return (
     <button
       type="button"
       className={[buttonClassName, control].join(" ")}
       onClick={() => onSelect(activeTimer.lockerId)}
-      aria-label={m.locker_timer_map_control_aria()}
+      /*
+       * 남은 시간을 이름에 함께 담는다. aria-label 은 자식 텍스트를 밀어내므로,
+       * 배지만 두면 이 버튼의 핵심 정보가 화면 낭독에서 통째로 빠진다.
+       */
+      aria-label={`${m.locker_timer_map_control_aria()}, ${remainingLabel}`}
     >
       <IconNavigationClock24 />
-      <span className={remainingBadge}>
-        {formatRemainingBadge(remainingTimeInSeconds)}
-      </span>
+      <span className={remainingBadge}>{remainingLabel}</span>
     </button>
   );
 }

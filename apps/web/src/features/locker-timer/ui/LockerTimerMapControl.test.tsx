@@ -39,7 +39,7 @@ describe("LockerTimerMapControl", () => {
     );
 
     const timerButton = screen.getByRole("button", {
-      name: "보관 타이머 보기",
+      name: "보관 타이머 보기, 5시간 30분",
     });
     expect(screen.getByText("5시간 30분")).toBeTruthy();
 
