@@ -4,7 +4,7 @@ import { style } from "@vanilla-extract/css";
 /** 사진 비율. 세로로 긴 보관함 사진이 많아 가로로 눌리지 않게 4:3 으로 둔다. */
 const IMAGE_ASPECT_RATIO = "4 / 3";
 
-/** 한 장일 때는 꽉 채우고, 여러 장일 때는 다음 장 가장자리를 남겨 스와이프를 알린다. */
+/** 한 장일 때는 꽉 채우고, 여러 장일 때는 옆 장 가장자리를 남겨 스와이프를 알린다. */
 const PEEK_ITEM_WIDTH = "85%";
 
 export const section = style({
@@ -42,7 +42,14 @@ export const item = style({
   position: "relative",
   aspectRatio: IMAGE_ASPECT_RATIO,
   flex: `0 0 ${PEEK_ITEM_WIDTH}`,
-  scrollSnapAlign: "start",
+  /*
+   * 가운데 정렬이라 중간 장은 양옆 사진이 함께 걸친다. 시작 정렬로 두면 남는
+   * 폭이 전부 오른쪽으로 몰려 왼쪽에는 아무것도 보이지 않고, 앞으로 넘길 수
+   * 있다는 신호가 사라진다.
+   *
+   * 첫 장과 끝 장은 스크롤 끝이라 가운데로 오지 못하고 한쪽만 걸친다.
+   */
+  scrollSnapAlign: "center",
 });
 
 export const singleItem = style({

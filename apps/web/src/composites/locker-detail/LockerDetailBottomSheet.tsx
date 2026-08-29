@@ -703,6 +703,19 @@ export function LockerDetailBottomSheet({
     return () => window.clearInterval(intervalId);
   }, [locker.lockerId, timerSession]);
 
+  /*
+   * 설정 화면의 종료 예정 시각은 현재 시각에 고른 길이를 더해 보여 준다. 모달을
+   * 열어 둔 채 시간이 흐르면 그 값이 굳어, 실제로 시작할 때 계산되는 종료 시각과
+   * 벌어진다. 열려 있는 동안 현재 시각을 따라가게 한다.
+   */
+  useEffect(() => {
+    if (!isTimerOpen || timerSession) return;
+
+    const intervalId = window.setInterval(() => setTimerNow(Date.now()), 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isTimerOpen, timerSession]);
+
   useEffect(() => {
     if (!shouldOpenTimer) return;
 
@@ -857,6 +870,7 @@ export function LockerDetailBottomSheet({
               mode: "setup" as const,
               hours: timerHours,
               minutes: timerMinutes,
+              currentTime: new Date(timerNow),
               onDurationChange: handleTimerDurationChange,
               onStart: handleTimerStartRequest,
             })}

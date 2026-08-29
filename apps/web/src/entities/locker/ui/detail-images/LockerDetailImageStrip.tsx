@@ -242,7 +242,7 @@ export function LockerDetailImageStrip({
     (nextButton ?? sectionRef.current)?.focus();
   });
 
-  useDragScroll(stripRef);
+  useDragScroll(stripRef, { snapAlign: "center", targetKey: totalCount });
 
   if (totalCount === 0) {
     return null;

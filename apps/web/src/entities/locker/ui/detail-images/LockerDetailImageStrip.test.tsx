@@ -183,6 +183,24 @@ describe("LockerDetailImageStrip", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("빈 목록으로 먼저 그려졌다가 사진이 도착해도 끌기 리스너가 붙는다", () => {
+    const { rerender } = render(<LockerDetailImageStrip images={[]} />);
+
+    rerender(<LockerDetailImageStrip images={IMAGES} />);
+
+    const strip = document.querySelector("ul");
+    expect(strip).not.toBeNull();
+
+    // 기본 끌기를 막는 것은 훅이 붙었을 때만 일어난다.
+    const dragStart = new Event("dragstart", {
+      bubbles: true,
+      cancelable: true,
+    });
+    strip?.dispatchEvent(dragStart);
+
+    expect(dragStart.defaultPrevented).toBe(true);
+  });
+
   it("사진을 누르면 위치와 누른 버튼을 넘긴다", () => {
     const onOpenPreview = vi.fn();
     render(
