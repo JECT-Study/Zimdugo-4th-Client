@@ -83,7 +83,10 @@ function HomeMapChromePreview({
             className={locationControlStack}
             style={{ bottom: controlBottom }}
           >
-            <LockerTimerMapControl buttonClassName={locationButton} />
+            <LockerTimerMapControl
+              buttonClassName={locationButton}
+              onSelect={() => {}}
+            />
             <button
               type="button"
               className={locationButton}

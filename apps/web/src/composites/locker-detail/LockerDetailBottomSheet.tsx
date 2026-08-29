@@ -181,6 +181,14 @@ export interface LockerDetailBottomSheetProps {
    */
   onLiveOffsetChange?: (state: LockerDetailSheetLiveOffsetState) => void;
   snapRequest?: LockerDetailSheetSnapRequest | null;
+  /**
+   * 지도의 타이머 컨트롤처럼 시트 밖에서 타이머 모달까지 함께 열 때 켠다.
+   *
+   * 시트가 이 요청을 처리하면 `onTimerAutoOpenHandled` 로 알린다. 부모가 그때
+   * 꺼주지 않으면 이후 다른 경로로 이 보관함을 열 때도 모달이 따라 열린다.
+   */
+  shouldOpenTimer?: boolean;
+  onTimerAutoOpenHandled?: () => void;
 }
 
 export const LOCKER_DETAIL_FULL_TOP_OFFSET = 112;
@@ -340,6 +348,8 @@ export function LockerDetailBottomSheet({
   onSnapStageChange,
   onLiveOffsetChange,
   snapRequest,
+  shouldOpenTimer = false,
+  onTimerAutoOpenHandled,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
@@ -693,6 +703,13 @@ export function LockerDetailBottomSheet({
 
     return () => window.clearInterval(intervalId);
   }, [locker.lockerId, timerSession]);
+
+  useEffect(() => {
+    if (!shouldOpenTimer) return;
+
+    setIsTimerOpen(true);
+    onTimerAutoOpenHandled?.();
+  }, [shouldOpenTimer, onTimerAutoOpenHandled]);
 
   useEffect(() => {
     if (loadState !== "ready") {

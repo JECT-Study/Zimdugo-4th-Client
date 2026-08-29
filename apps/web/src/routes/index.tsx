@@ -779,6 +779,10 @@ export function IndexPage() {
   );
 
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
+  /** 지도 타이머 컨트롤로 연 보관함. 시트가 타이머 모달까지 열면 비운다. */
+  const [timerAutoOpenLockerId, setTimerAutoOpenLockerId] = useState<
+    number | null
+  >(null);
   const hasRequestedHomeLocation = useHasRequestedHomeLocationInSession();
   const didRequestHomeLocationRef = useRef(false);
   const didLogHomeLocationSessionSkipRef = useRef(false);
@@ -2025,6 +2029,25 @@ export function IndexPage() {
       syncLockerDetailUrl,
     ],
   );
+
+  /**
+   * 지도의 타이머 컨트롤을 눌렀을 때. 해당 보관함 상세를 열고 타이머 모달까지
+   * 이어서 띄운다.
+   *
+   * 요청은 시트가 처리한 뒤 곧바로 지운다. 남겨 두면 나중에 같은 보관함을 마커로
+   * 열 때도 모달이 따라 열린다.
+   */
+  const handleTimerControlSelect = useCallback(
+    (lockerId: number) => {
+      setTimerAutoOpenLockerId(lockerId);
+      void openLockerDetailById(lockerId);
+    },
+    [openLockerDetailById],
+  );
+
+  const handleTimerAutoOpenHandled = useCallback(() => {
+    setTimerAutoOpenLockerId(null);
+  }, []);
 
   const openSearchPlaceList = useCallback(
     (
@@ -3579,7 +3602,10 @@ export function IndexPage() {
           */
           style={{ bottom: mapControlRaisedBottom }}
         >
-          <LockerTimerMapControl buttonClassName={locationButton} />
+          <LockerTimerMapControl
+            buttonClassName={locationButton}
+            onSelect={handleTimerControlSelect}
+          />
           <RefreshButton
             isRefreshing={isRefreshing}
             isMapReady={!!mapInstance}
@@ -3712,6 +3738,10 @@ export function IndexPage() {
           snapRequest={detailSheetSnapRequest}
           onSnapStageChange={handleDetailSheetSnapStageChange}
           onLiveOffsetChange={handleDetailSheetLiveOffsetChange}
+          shouldOpenTimer={
+            timerAutoOpenLockerId === displayedLockerDetail.lockerId
+          }
+          onTimerAutoOpenHandled={handleTimerAutoOpenHandled}
         />
       ) : null}
 
