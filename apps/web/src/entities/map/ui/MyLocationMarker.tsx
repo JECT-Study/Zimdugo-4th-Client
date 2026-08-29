@@ -1,19 +1,5 @@
+import { MY_LOCATION_MARKER_ICON_URL } from "@repo/ui/assets/icons";
 import { useEffect, useRef } from "react";
-
-const MY_LOCATION_ICON_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="41" height="41" viewBox="0 0 41 41" fill="none">
-  <g filter="url(#my-location-marker-blur)">
-    <circle cx="20.5" cy="20.5" r="8.5" fill="#718CEF"/>
-  </g>
-  <circle cx="20.5" cy="20.5" r="6.5" fill="#718CEF" stroke="white" stroke-width="2"/>
-  <defs>
-    <filter id="my-location-marker-blur" x="0" y="0" width="41" height="41" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-      <feGaussianBlur stdDeviation="6" result="effect1_foregroundBlur_1197_305"/>
-    </filter>
-  </defs>
-</svg>`;
 
 interface MyLocationMarkerProps {
   map: naver.maps.Map | null;
@@ -69,7 +55,12 @@ export function MyLocationMarker({
       locationIcon.style.left = "19.5px";
       locationIcon.style.width = "41px";
       locationIcon.style.height = "41px";
-      locationIcon.innerHTML = MY_LOCATION_ICON_SVG;
+      const locationImage = document.createElement("img");
+      locationImage.src = MY_LOCATION_MARKER_ICON_URL;
+      locationImage.alt = "";
+      locationImage.width = 41;
+      locationImage.height = 41;
+      locationIcon.appendChild(locationImage);
 
       wrapper.appendChild(cone);
       wrapper.appendChild(locationIcon);
