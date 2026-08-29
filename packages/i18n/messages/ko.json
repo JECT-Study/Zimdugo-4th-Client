@@ -317,6 +317,7 @@
   "locker_detail_realtime_full": "마감",
   "locker_detail_price_section": "가격",
   "locker_detail_size_section": "사이즈",
+  "locker_detail_size_not_provided": "미제공",
   "locker_detail_info_section": "보관함 상세 정보",
   "locker_detail_detail_help": "물품보관함의 상세 위치 및 추가 요금 정보를 알려주세요.",
   "locker_detail_feedback_accurate": "정확한 정보에요 {count}",

@@ -317,6 +317,7 @@
   "locker_detail_realtime_full": "已滿",
   "locker_detail_price_section": "價格",
   "locker_detail_size_section": "尺寸",
+  "locker_detail_size_not_provided": "未提供",
   "locker_detail_info_section": "寄存櫃詳情",
   "locker_detail_detail_help": "請提供寄存櫃的詳細位置和額外費用信息。",
   "locker_detail_feedback_accurate": "信息準確 {count}",

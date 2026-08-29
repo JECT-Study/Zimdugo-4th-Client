@@ -317,6 +317,7 @@
   "locker_detail_realtime_full": "満杯",
   "locker_detail_price_section": "料金",
   "locker_detail_size_section": "サイズ",
+  "locker_detail_size_not_provided": "未提供",
   "locker_detail_info_section": "ロッカー詳細情報",
   "locker_detail_detail_help": "ロッカーの詳しい場所や追加料金情報を教えてください。",
   "locker_detail_feedback_accurate": "正確な情報です {count}",

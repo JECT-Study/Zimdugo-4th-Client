@@ -170,6 +170,21 @@ describe("LockerDetailBottomSheet", () => {
     ).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
   });
 
+  it("사이즈가 없어도 행을 비우지 않고 미제공으로 알린다", () => {
+    // 행이 통째로 사라지면 정보가 아직 안 들어온 것인지 이 보관함에 원래 없는
+    // 것인지 구분되지 않고, 보관함마다 행 개수가 달라 자리가 흔들린다.
+    render(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, sizeLabel: undefined }}
+        onReport={vi.fn()}
+      />,
+    );
+    const sheet = getSheetRoot();
+
+    expect(sheet.getByText("사이즈")).toBeTruthy();
+    expect(sheet.getByText("미제공")).toBeTruthy();
+  });
+
   it("하프 시트에서는 실시간 카드를 시트 바깥에 렌더링한다", () => {
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,

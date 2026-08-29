@@ -50,6 +50,7 @@ import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
+  formatLockerSizeLabel,
 } from "#/shared/lib/locker-detail-labels";
 import {
   type BottomSheetLiveOffsetState,
@@ -1225,14 +1226,12 @@ function FullDetailContent({
               description={locker.priceLabel ?? formatLockerPriceLabel()}
               iconTone="neutral"
             />
-            {locker.sizeLabel ? (
-              <DetailInfoRow
-                icon={<IconLockerDetailCapacity24 />}
-                title={m.locker_detail_size_section()}
-                description={locker.sizeLabel}
-                iconTone="neutral"
-              />
-            ) : null}
+            <DetailInfoRow
+              icon={<IconLockerDetailCapacity24 />}
+              title={m.locker_detail_size_section()}
+              description={formatLockerSizeLabel(locker.sizeLabel)}
+              iconTone="neutral"
+            />
             <DetailInfoRow
               icon={<IconCaution24 />}
               title={m.locker_detail_info_section()}
