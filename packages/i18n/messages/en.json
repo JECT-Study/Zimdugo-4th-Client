@@ -335,6 +335,7 @@
   "locker_timer_helper": "Use this timer on this device to check your remaining storage time.",
   "locker_timer_unset": "Set a timer",
   "locker_timer_set": "Set storage timer",
+  "locker_timer_in_use": "In use",
   "locker_timer_end_scheduled": "Scheduled to end at {time}",
   "locker_timer_end": "Ends at {time}",
   "locker_timer_close": "Close",

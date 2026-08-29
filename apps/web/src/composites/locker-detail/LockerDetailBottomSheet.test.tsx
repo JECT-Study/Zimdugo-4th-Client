@@ -201,6 +201,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       sheet.getByRole("button", { name: "보관 타이머 설정" }),
     ).toBeTruthy();
+    expect(sheet.queryByText("이용중")).toBeNull();
   });
 
   it("상세 시트의 타이머 버튼에서 설정 모달을 연다", () => {
@@ -232,6 +233,7 @@ describe("LockerDetailBottomSheet", () => {
     const timerButton = await screen.findByRole("button", {
       name: /이용 종료/,
     });
+    expect(getSheetRoot().getByText("이용중")).toBeTruthy();
     fireEvent.click(timerButton);
 
     expect(

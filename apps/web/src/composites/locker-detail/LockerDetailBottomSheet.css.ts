@@ -153,6 +153,22 @@ export const summaryTextColumn = style({
   paddingRight: 0,
 });
 
+export const timerInUseBadge = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  alignSelf: "flex-start",
+  height: "18px",
+  padding: `0 ${vars.spacing[8]}`,
+  borderRadius: vars.radius[4],
+  backgroundColor: vars.color.palette.red[100],
+  color: vars.color.palette.red[400],
+  fontSize: "10px",
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: 1,
+  whiteSpace: "nowrap",
+});
+
 export const titleControlRow = style({
   display: "flex",
   alignItems: "flex-start",
@@ -469,7 +485,22 @@ export const timerActionButton = style({
   gap: vars.spacing[8],
   borderWidth: "1.5px",
   borderRadius: vars.radius[8],
+  borderColor: "#0DA345",
+  backgroundColor: vars.color.bg.default,
+  color: "#0A8C38",
   fontSize: vars.typography.fontSize[14],
+  selectors: {
+    "&[data-hovered]": {
+      borderColor: vars.color.palette.green[600],
+      backgroundColor: vars.color.palette.green[100],
+      color: vars.color.palette.green[700],
+    },
+    "&[data-pressed]": {
+      borderColor: vars.color.palette.green[700],
+      backgroundColor: vars.color.palette.green[200],
+      color: vars.color.palette.green[700],
+    },
+  },
 });
 
 export const actionIcon = style({

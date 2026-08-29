@@ -101,6 +101,7 @@ import {
   summarySection,
   summaryTextColumn,
   timerActionButton,
+  timerInUseBadge,
   titleControlRow,
   titleExpandButton,
   titleExpandIcon,
@@ -1090,6 +1091,7 @@ function FullDetailContent({
       <div ref={contentRef} className={contentStack}>
         <SummarySection
           locker={locker}
+          isTimerRunning={isTimerRunning}
           onClose={onClose}
           onMoreActionsOpen={onMoreActionsOpen}
           moreActionsButtonRef={moreActionsButtonRef}
@@ -1190,6 +1192,7 @@ function DetailBackButton({ onBack }: { onBack: () => void }) {
 
 function SummarySection({
   locker,
+  isTimerRunning,
   onClose,
   onMoreActionsOpen,
   moreActionsButtonRef,
@@ -1197,6 +1200,7 @@ function SummarySection({
   canExpandTitle,
 }: {
   locker: LockerDetailItem;
+  isTimerRunning: boolean;
   onClose: () => void;
   onMoreActionsOpen: () => void;
   moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
@@ -1254,6 +1258,9 @@ function SummarySection({
     >
       <div className={summaryRow}>
         <div className={summaryTextColumn}>
+          {isTimerRunning ? (
+            <span className={timerInUseBadge}>{m.locker_timer_in_use()}</span>
+          ) : null}
           <div className={titleControlRow}>
             <h2
               className={[

@@ -335,6 +335,7 @@
   "locker_timer_helper": "타이머는 이 기기에서 남은 보관 시간을 확인하기 위한 기능입니다.",
   "locker_timer_unset": "타이머를 설정하세요",
   "locker_timer_set": "보관 타이머 설정",
+  "locker_timer_in_use": "이용중",
   "locker_timer_end_scheduled": "{time} 이용 종료 예정",
   "locker_timer_end": "{time} 이용 종료",
   "locker_timer_close": "닫기",
