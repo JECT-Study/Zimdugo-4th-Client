@@ -885,6 +885,10 @@ const ICON_CATALOG = [
     label: "지도",
     entries: [
       {
+        name: "내 위치 마커",
+        render: () => <IconNavigateLocation />,
+      },
+      {
         name: "pin40",
         render: () => <IconNavigationPin40 />,
       },
@@ -1174,6 +1178,13 @@ const ICON_CATALOG = [
       },
     ]),
   },
+  /**
+   * 제품 코드 어디에도 그려지지 않는 아이콘을 모아 둔다.
+   *
+   * 소속은 import 여부가 아니라 "화면에 도안이 뜨는가" 로 가른다.
+   * 지도 마커처럼 React 를 못 쓰는 자리는 컴포넌트 대신 같은 에셋 파일을
+   * 불러 쓰기 때문에, import 만 세면 살아 있는 아이콘을 놓친다.
+   */
   {
     id: "archived",
     label: "제품에서 쓰지 않음",
@@ -1227,10 +1238,6 @@ const ICON_CATALOG = [
         name: "nav marker",
         ingredients: ["IconMarker22"],
         render: () => <IconNavigateMarker />,
-      },
-      {
-        name: "nav location",
-        render: () => <IconNavigateLocation />,
       },
       {
         name: "filter",
