@@ -183,8 +183,6 @@ function MyReportsPage() {
                       status={statusDisplay?.variant}
                       statusLabel={statusDisplay?.label}
                       imageUrl={item.imageUrl}
-                      imageTitleText={m.my_report_image_empty()}
-                      imageHelperText=""
                       onPress={() => handleSelectReport(item.reportId)}
                     />
                   </li>
