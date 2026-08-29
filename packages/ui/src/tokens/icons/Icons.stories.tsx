@@ -1151,6 +1151,12 @@ const ICON_CATALOG: IconCategory[] = [
         render: () => <IconCircleboxCrosshair48 state="active" />,
       },
       {
+        name: "crosshairDenied",
+        probeTarget: "root",
+        ingredients: ["IconNavigationCrosshair24(denied)"],
+        render: () => <IconCircleboxCrosshair48 state="denied" />,
+      },
+      {
         name: "crosshairActiveDeprecated",
         probeTarget: "root",
         ingredients: ["IconCircleboxCrosshair48(active)"],
