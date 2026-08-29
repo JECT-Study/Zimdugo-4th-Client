@@ -4,8 +4,8 @@ import {
   type ReactNode,
   useId,
 } from "react";
-import { color } from "../color/color.css.ts";
-import { typography } from "../typography/typography.css.ts";
+import { color } from "../tokens/color/color.css.ts";
+import { typography } from "../tokens/typography/typography.css.ts";
 import {
   brandSymbolBase,
   brandSymbolRoot,

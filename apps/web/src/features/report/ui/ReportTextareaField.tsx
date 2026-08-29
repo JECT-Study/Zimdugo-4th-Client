@@ -1,4 +1,4 @@
-import { IconPencil24 } from "@repo/ui/tokens/icons";
+import { IconPencil24 } from "@repo/ui/icons";
 import type { ChangeEvent } from "react";
 import {
   reportTextareaCounter,

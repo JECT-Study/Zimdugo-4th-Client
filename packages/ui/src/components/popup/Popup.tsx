@@ -5,7 +5,7 @@ import {
   Modal,
   ModalOverlay,
 } from "react-aria-components";
-import { IconCaution24 } from "../../tokens/icons/Icons.tsx";
+import { IconCaution24 } from "../../icons/Icons.tsx";
 import { Button } from "../button/Button.tsx";
 import {
   actionsContainer,

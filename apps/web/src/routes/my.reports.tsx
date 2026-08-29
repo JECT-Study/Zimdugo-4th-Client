@@ -2,7 +2,7 @@ import { languageTag, m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
-import { IconPencil24 } from "@repo/ui/tokens/icons";
+import { IconPencil24 } from "@repo/ui/icons";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";

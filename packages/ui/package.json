@@ -103,8 +103,8 @@
     "./components/feedback/skeleton/theme": {
       "import": "./src/components/feedback/skeleton/skeleton-theme.ts"
     },
-    "./tokens/icons": {
-      "import": "./src/tokens/icons/Icons.tsx"
+    "./icons": {
+      "import": "./src/icons/Icons.tsx"
     }
   },
   "scripts": {

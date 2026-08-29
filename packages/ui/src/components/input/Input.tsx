@@ -5,10 +5,7 @@ import {
   TextField,
   type TextFieldProps,
 } from "react-aria-components";
-import {
-  IconNormalMapPin24,
-  IconNormalSearch24,
-} from "../../tokens/icons/Icons.tsx";
+import { IconNormalMapPin24, IconNormalSearch24 } from "../../icons/Icons.tsx";
 import { LabelTitle } from "../label-title/LabelTitle.tsx";
 import {
   field,

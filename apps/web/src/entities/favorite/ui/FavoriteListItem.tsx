@@ -1,7 +1,7 @@
 ﻿import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { MapPinMarker } from "@repo/ui/components/map-pin-marker";
-import { IconStarFilled24, IconStarOutline24 } from "@repo/ui/tokens/icons";
+import { IconStarFilled24, IconStarOutline24 } from "@repo/ui/icons";
 import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
 import {
   favoriteButton,

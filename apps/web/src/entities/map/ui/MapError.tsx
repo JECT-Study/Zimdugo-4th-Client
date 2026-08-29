@@ -1,4 +1,4 @@
-import { IconCaution24 } from "@repo/ui/tokens/icons";
+import { IconCaution24 } from "@repo/ui/icons";
 import { vars } from "@repo/ui/vars";
 
 interface MapErrorProps {

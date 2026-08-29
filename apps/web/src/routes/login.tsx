@@ -3,7 +3,7 @@ import {
   BrandSymbolIcon,
   BrandTextLogoLarge,
   IconChevronLeft13,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import {
   createFileRoute,
   redirect,

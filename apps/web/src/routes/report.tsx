@@ -2,7 +2,7 @@ import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
-import { IconCircleboxCheck32 } from "@repo/ui/tokens/icons";
+import { IconCircleboxCheck32 } from "@repo/ui/icons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";

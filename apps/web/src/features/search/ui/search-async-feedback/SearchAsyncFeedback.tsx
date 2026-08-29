@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
-import { IconNormalSearch24 } from "@repo/ui/tokens/icons";
+import { IconNormalSearch24 } from "@repo/ui/icons";
 import {
   errorActions,
   helper,

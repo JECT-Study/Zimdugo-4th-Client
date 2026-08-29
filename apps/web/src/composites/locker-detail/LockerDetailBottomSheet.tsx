@@ -15,7 +15,7 @@ import {
   IconRoute20,
   IconTimerStart20,
   IconX24,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import {
   type CSSProperties,

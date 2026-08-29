@@ -1,4 +1,4 @@
-import { IconCheck24, LanguageFlagIcon } from "@repo/ui/tokens/icons";
+import { IconCheck24, LanguageFlagIcon } from "@repo/ui/icons";
 import type { CSSProperties } from "react";
 import {
   APP_LANGUAGES,

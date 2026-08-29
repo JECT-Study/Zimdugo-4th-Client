@@ -1,5 +1,5 @@
 import { Button } from "@repo/ui/components/button";
-import { IconNormalArrow24 } from "@repo/ui/tokens/icons";
+import { IconNormalArrow24 } from "@repo/ui/icons";
 import type { ReactNode } from "react";
 import {
   pickerTriggerButton,

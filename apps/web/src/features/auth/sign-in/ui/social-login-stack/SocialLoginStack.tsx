@@ -1,5 +1,5 @@
 import { languageTag, m } from "@repo/i18n";
-import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/tokens/icons";
+import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/icons";
 import { type CSSProperties, useEffect, useState } from "react";
 import {
   isSubgridSupported,

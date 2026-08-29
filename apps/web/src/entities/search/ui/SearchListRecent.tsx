@@ -1,4 +1,4 @@
-import { IconX16 } from "@repo/ui/tokens/icons";
+import { IconX16 } from "@repo/ui/icons";
 import { vars } from "@repo/ui/vars";
 import type { ReactNode } from "react";
 import { Button, type ButtonProps } from "react-aria-components";

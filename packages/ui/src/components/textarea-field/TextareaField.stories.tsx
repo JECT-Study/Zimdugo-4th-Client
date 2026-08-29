@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect, useState } from "react";
-import { IconPencil24 } from "../../tokens/icons/Icons.tsx";
+import { IconPencil24 } from "../../icons/Icons.tsx";
 import { TextareaField, type TextareaFieldProps } from "./TextareaField.tsx";
 
 type TextareaFieldStoryProps = TextareaFieldProps;

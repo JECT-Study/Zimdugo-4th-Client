@@ -5,7 +5,7 @@ import {
   IconChevronLeft13,
   IconCircleboxCrosshair48,
   IconNavigationPin40,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";

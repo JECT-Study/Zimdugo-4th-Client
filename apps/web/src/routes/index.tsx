@@ -4,7 +4,7 @@ import {
   IconNavigationCrosshair24,
   IconNavigationRefresh24,
   IconX24,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,

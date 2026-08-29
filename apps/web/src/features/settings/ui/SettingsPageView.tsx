@@ -4,7 +4,7 @@ import {
   IconCircleboxPencil32,
   IconSocialProvider18,
   type SocialProvider,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import type { ChangeEvent, RefObject } from "react";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";
 import {

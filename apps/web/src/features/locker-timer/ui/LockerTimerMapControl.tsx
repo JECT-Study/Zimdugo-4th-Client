@@ -1,5 +1,5 @@
 import { m } from "@repo/i18n";
-import { IconNavigationClock24 } from "@repo/ui/tokens/icons";
+import { IconNavigationClock24 } from "@repo/ui/icons";
 import { useActiveLockerTimer } from "../hooks/useActiveLockerTimer";
 import { getRemainingTimeParts } from "../model/locker-timer-format";
 import { control, remainingBadge } from "./LockerTimerMapControl.css";

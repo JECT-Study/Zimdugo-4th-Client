@@ -5,7 +5,7 @@ import {
   IconStarFilled24,
   IconStarOutline24,
   IconX24,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import {
   type CSSProperties,
   type ReactNode,

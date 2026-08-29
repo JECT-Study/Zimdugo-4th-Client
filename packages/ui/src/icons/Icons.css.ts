@@ -1,5 +1,5 @@
 import { style, styleVariants } from "@vanilla-extract/css";
-import { color } from "../color/color.css.ts";
+import { color } from "../tokens/color/color.css.ts";
 
 export const iconSvgFixed = style({
   display: "block",

@@ -5,7 +5,7 @@ import {
   IconCheck24,
   IconFlagCircle24,
   IconHomeProfile32,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { ProfileImage } from "#/entities/user/ui/profile-image/ProfileImage";

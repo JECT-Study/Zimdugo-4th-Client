@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
 import { ControlChip } from "@repo/ui/components/control-chip";
-import { IconFilter14 } from "@repo/ui/tokens/icons";
+import { IconFilter14 } from "@repo/ui/icons";
 import {
   type CSSProperties,
   type ReactNode,

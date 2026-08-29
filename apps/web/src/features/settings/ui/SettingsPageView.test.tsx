@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { setLanguageTag } from "@repo/i18n";
-import type { SocialProvider } from "@repo/ui/tokens/icons";
+import type { SocialProvider } from "@repo/ui/icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { color } from "../color/color.css.ts";
+import { color } from "../tokens/color/color.css.ts";
 import {
   BottomMenuIcon,
   BrandSymbolIcon,

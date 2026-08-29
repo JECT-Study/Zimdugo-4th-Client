@@ -11,7 +11,7 @@ import {
   IconTimerPreview24,
   IconTimerStart20,
   IconTimerStop20,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import { motion, useReducedMotion } from "motion/react";
 import { useId } from "react";
 import {

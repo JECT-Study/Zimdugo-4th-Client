@@ -1,5 +1,5 @@
 import { style } from "@vanilla-extract/css";
-import { vars } from "../../vars.css.ts";
+import { vars } from "../vars.css.ts";
 
 export const root = style({
   display: "inline-flex",

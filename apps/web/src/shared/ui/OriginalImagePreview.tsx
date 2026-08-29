@@ -2,7 +2,7 @@ import {
   IconChevronLeft13,
   IconImageUnavailable24,
   IconX24,
-} from "@repo/ui/tokens/icons";
+} from "@repo/ui/icons";
 import {
   type MouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
