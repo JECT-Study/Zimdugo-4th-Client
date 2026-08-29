@@ -326,6 +326,7 @@
   "locker_detail_title_expand_aria": "보관함 전체 이름 펼치기",
   "locker_detail_title_collapse_aria": "보관함 전체 이름 접기",
   "locker_detail_share_aria": "공유하기",
+  "locker_detail_address_copy_aria": "주소 복사",
   "locker_detail_share_copied": "클립보드에 복사되었습니다",
   "locker_detail_more_actions_aria": "보관함 더보기 메뉴",
   "locker_detail_more_actions_open_aria": "더보기 메뉴 열기",

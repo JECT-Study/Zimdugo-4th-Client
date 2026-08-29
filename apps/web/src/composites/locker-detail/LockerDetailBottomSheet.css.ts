@@ -423,6 +423,38 @@ export const detailDescriptionMultiline = style({
   overflowWrap: "anywhere",
 });
 
+/** 제목과 그 옆 동작을 한 줄에 둔다. 주소가 여러 줄이어도 버튼은 첫 줄에 붙는다. */
+export const detailTitleRow = style({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: vars.spacing[4],
+  minWidth: 0,
+});
+
+export const detailCopyButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "20px",
+  height: "20px",
+  padding: 0,
+  flexShrink: 0,
+  border: 0,
+  borderRadius: vars.radius[4],
+  background: "transparent",
+  color: vars.color.text.disable,
+  cursor: "pointer",
+  selectors: {
+    "&:hover": {
+      color: vars.color.text.title,
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: "1px",
+    },
+  },
+});
+
 export const detailTrailing = style({
   display: "flex",
   flexDirection: "column",

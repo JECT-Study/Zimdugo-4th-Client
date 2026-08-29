@@ -326,6 +326,7 @@
   "locker_detail_title_expand_aria": "展开完整寄存柜名称",
   "locker_detail_title_collapse_aria": "收起完整寄存柜名称",
   "locker_detail_share_aria": "分享",
+  "locker_detail_address_copy_aria": "复制地址",
   "locker_detail_share_copied": "已复制到剪贴板",
   "locker_detail_more_actions_aria": "储物柜更多操作",
   "locker_detail_more_actions_open_aria": "打开更多操作",

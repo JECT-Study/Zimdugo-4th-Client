@@ -326,6 +326,7 @@
   "locker_detail_title_expand_aria": "ロッカー名をすべて表示",
   "locker_detail_title_collapse_aria": "ロッカー名を折りたたむ",
   "locker_detail_share_aria": "共有",
+  "locker_detail_address_copy_aria": "住所をコピー",
   "locker_detail_share_copied": "クリップボードにコピーしました",
   "locker_detail_more_actions_aria": "ロッカーのその他の操作",
   "locker_detail_more_actions_open_aria": "その他の操作を開く",

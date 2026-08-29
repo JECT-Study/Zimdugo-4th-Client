@@ -5,6 +5,7 @@ import { Popup } from "@repo/ui/components/popup";
 import {
   IconCaution24,
   IconChevronLeft13,
+  IconCopy16,
   IconDistanceRoute24,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
@@ -68,6 +69,7 @@ import {
   backIcon,
   CONTENT_STACK_GAP_PX,
   contentStack,
+  detailCopyButton,
   detailDescription,
   detailDescriptionMultiline,
   detailHeader,
@@ -79,6 +81,7 @@ import {
   detailTextColumn,
   detailTitle,
   detailTitleMultiline,
+  detailTitleRow,
   detailTrailing,
   distanceRow,
   fullContentScroll,
@@ -374,6 +377,7 @@ export function LockerDetailBottomSheet({
   const [isTimerOpen, setIsTimerOpen] = useState(false);
   const [isTimerStartConfirmationOpen, setIsTimerStartConfirmationOpen] =
     useState(false);
+  const [isAddressCopied, setIsAddressCopied] = useState(false);
   const [timerHours, setTimerHours] = useState("00");
   const [timerMinutes, setTimerMinutes] = useState("00");
   const [timerSession, setTimerSession] = useState<LockerTimerSession | null>(
@@ -601,6 +605,26 @@ export function LockerDetailBottomSheet({
 
   const handleTimerStartRequest = () => {
     setIsTimerStartConfirmationOpen(true);
+  };
+
+  /**
+   * 주소를 클립보드에 담는다.
+   *
+   * 길찾기까지 가지 않고 주소만 다른 앱에 옮겨 적는 경우가 많다. 실패해도 조용히
+   * 두면 눌렀는지조차 알 수 없어, 성공했을 때만 알림을 띄운다.
+   */
+  const handleAddressCopy = (address: string) => {
+    if (!navigator.clipboard) {
+      console.error("주소 복사 실패: Clipboard API 미지원");
+      return;
+    }
+
+    void navigator.clipboard
+      .writeText(address)
+      .then(() => setIsAddressCopied(true))
+      .catch((error) => {
+        console.error("주소 복사 실패:", error);
+      });
   };
 
   const handleTimerStartConfirm = () => {
@@ -872,6 +896,7 @@ export function LockerDetailBottomSheet({
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
               onTimerOpen={() => setIsTimerOpen(true)}
+              onAddressCopy={handleAddressCopy}
               isTimerRunning={isTimerRunning}
               timerEndTimeLabel={timerEndTimeLabel}
               snapStage={currentSnapStage}
@@ -931,6 +956,17 @@ export function LockerDetailBottomSheet({
         secondaryAction={{
           label: m.common_no(),
           onPress: () => setIsTimerStartConfirmationOpen(false),
+        }}
+      />
+      <Popup
+        isOpen={isAddressCopied}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setIsAddressCopied(false);
+        }}
+        titleText={m.locker_detail_share_copied()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsAddressCopied(false),
         }}
       />
     </>
@@ -1054,6 +1090,7 @@ function FullDetailContent({
   moreActionsButtonRef,
   onNavigate,
   onTimerOpen,
+  onAddressCopy,
   isTimerRunning,
   timerEndTimeLabel,
   snapStage,
@@ -1070,6 +1107,7 @@ function FullDetailContent({
   moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   onNavigate: () => void;
   onTimerOpen: () => void;
+  onAddressCopy: (address: string) => void;
   isTimerRunning: boolean;
   timerEndTimeLabel: string;
   snapStage: LockerDetailSheetSnapStage;
@@ -1153,6 +1191,16 @@ function FullDetailContent({
               title={locker.address}
               description={locker.floorLabel}
               titleClassName={detailTitleMultiline}
+              titleAction={
+                <button
+                  type="button"
+                  className={detailCopyButton}
+                  onClick={() => onAddressCopy(locker.address)}
+                  aria-label={m.locker_detail_address_copy_aria()}
+                >
+                  <IconCopy16 />
+                </button>
+              }
             />
             <DetailInfoRow
               icon={<IconLockerDetailWallet24 />}
@@ -1398,6 +1446,7 @@ function DetailInfoRow({
   title,
   description,
   trailing,
+  titleAction,
   iconTone = "brand",
   titleClassName,
   descriptionClassName,
@@ -1406,6 +1455,8 @@ function DetailInfoRow({
   title: string;
   description?: string;
   trailing?: [string, string];
+  /** 제목 옆에 붙는 동작. 지금은 주소 복사 하나뿐이다. */
+  titleAction?: ReactNode;
   iconTone?: "brand" | "neutral";
   titleClassName?: string;
   descriptionClassName?: string;
@@ -1425,12 +1476,15 @@ function DetailInfoRow({
             {icon}
           </span>
           <div className={detailTextColumn}>
-            <span
-              className={[detailTitle, titleClassName]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {title}
+            <span className={detailTitleRow}>
+              <span
+                className={[detailTitle, titleClassName]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {title}
+              </span>
+              {titleAction}
             </span>
             {description ? (
               <span
