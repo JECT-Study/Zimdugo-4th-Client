@@ -738,27 +738,35 @@ export function IndexPage() {
    */
   const [isSheetSettled, setIsSheetSettled] = useState(true);
   /**
-   * 지금 화면에 떠 있는 시트 종류의 최신값.
+   * 지금 화면에 떠 있는 시트 인스턴스의 식별자.
    *
    * 시트 콜백은 렌더 밖에서 도착하므로 클로저에 갇힌 값 대신 이 ref 를 본다.
-   * 값은 아래에서 visibleSheetKind 를 정한 직후 렌더 중에 갱신한다.
+   * 값은 아래에서 시트가 정해진 직후 렌더 중에 갱신한다.
    */
-  const visibleSheetKindRef = useRef<"list" | "detail" | null>(null);
+  const visibleSheetTokenRef = useRef<string | null>(null);
   /**
    * 밀어 올린 컨트롤의 위치. 시트가 자기 높이를 잡는 방식과 같은 100dvh 기준이라
    * 모바일에서 URL 바가 접혀도 시트 윗변에 붙는다. 상·하한은 CSS 가 매 프레임
    * 계산하므로 React 렌더가 필요 없다.
    */
   const mapControlRaisedBottom = useMotionTemplate`clamp(${MAP_CONTROL_FALLBACK_BOTTOM_PX}px, calc((100dvh - ${sheetLiveOffset}px) * ${sheetMountProgress} + ${MAP_CONTROL_SHEET_GAP_PX}px), calc(100dvh - ${MAP_CONTROL_TOP_RESERVED_PX}px))`;
-  const handleSheetLiveOffsetChange = useCallback(
-    ({
-      offsetPx,
-      mountProgress,
-      isSettled,
-    }: LockerDetailSheetLiveOffsetState) => {
-      // 화면에서 사라진 시트가 마지막으로 흘린 프레임은 버린다. 받아 두면
-      // 오프셋이 되살아나 컨트롤이 없는 시트의 윗변으로 다시 올라간다.
-      if (visibleSheetKindRef.current === null) {
+  /**
+   * 시트가 보고한 프레임을 컨트롤 위치에 반영한다.
+   *
+   * 어느 시트 인스턴스가 보낸 프레임인지 함께 받는다. 목록과 상세는 같은 처리를
+   * 쓰는데, 시트가 바뀌는 동안에는 나가는 시트의 마지막 프레임이 새 시트가 자리를
+   * 잡은 뒤에 도착할 수 있다. 그 값이 반영되면 컨트롤이 엉뚱한 높이로 튄다.
+   *
+   * 종류만 대조해서는 부족하다. 다른 보관함을 열거나 목록이 바뀌면 시트는 새로
+   * 마운트되지만 종류는 그대로다. 화면에 시트가 없을 때(null) 도착한 프레임도
+   * 같은 이유로 버린다.
+   */
+  const applySheetLiveOffset = useCallback(
+    (
+      token: string,
+      { offsetPx, mountProgress, isSettled }: LockerDetailSheetLiveOffsetState,
+    ) => {
+      if (visibleSheetTokenRef.current !== token) {
         return;
       }
 
@@ -3157,7 +3165,6 @@ export function IndexPage() {
     isSearchOpen,
     hasDetailContent: displayedLockerDetail !== null,
   });
-  visibleSheetKindRef.current = visibleSheetKind;
   // 스켈레톤은 하이드레이션 전에도 그려지므로 라이브 오프셋을 쓸 수 없다.
   // 시트가 아직 없는 단계라 정적 계산이 맞고, 실제 컨트롤로 넘어갈 때는 이미
   // 시트가 자리를 잡아 두 값이 같은 위치를 가리킨다.
@@ -3324,6 +3331,36 @@ export function IndexPage() {
     context === "search" && listKind === "keyword"
       ? `search-keyword-${effectiveSearchQuery}`
       : `${context}-${listKind ?? "none"}-${activePlaceId ?? "none"}`;
+  /**
+   * 지금 떠 있는 시트 인스턴스의 식별자. 목록은 리마운트 키를, 상세는 보관함
+   * id 를 쓴다. 시트가 새로 마운트되는 기준과 같아야 이전 인스턴스의 프레임을
+   * 가려낼 수 있다.
+   */
+  const visibleSheetToken =
+    visibleSheetKind === "list"
+      ? `list:${searchListSheetKey}`
+      : visibleSheetKind === "detail" && displayedLockerDetail
+        ? `detail:${displayedLockerDetail.lockerId}`
+        : null;
+  visibleSheetTokenRef.current = visibleSheetToken;
+  const handleListSheetLiveOffsetChange = useCallback(
+    (state: LockerDetailSheetLiveOffsetState) =>
+      applySheetLiveOffset(`list:${searchListSheetKey}`, state),
+    [applySheetLiveOffset, searchListSheetKey],
+  );
+  const detailSheetToken = displayedLockerDetail
+    ? `detail:${displayedLockerDetail.lockerId}`
+    : null;
+  const handleDetailSheetLiveOffsetChange = useCallback(
+    (state: LockerDetailSheetLiveOffsetState) => {
+      if (detailSheetToken === null) {
+        return;
+      }
+
+      applySheetLiveOffset(detailSheetToken, state);
+    },
+    [applySheetLiveOffset, detailSheetToken],
+  );
   // searchListSheetKey 는 본문에서 읽지 않는다. 다른 목록으로 바뀌면 스냅
   // 단계를 하프로 되돌리려고 넣은 트리거다. 빼면 직전 목록의 단계가 남는다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: searchListSheetKey 는 초기화 트리거다
@@ -3642,7 +3679,7 @@ export function IndexPage() {
           onDismiss={listSheetDismissPress}
           snapRequest={listSheetSnapRequest}
           onSnapStageChange={handleListSheetSnapStageChange}
-          onLiveOffsetChange={handleSheetLiveOffsetChange}
+          onLiveOffsetChange={handleListSheetLiveOffsetChange}
         />
       ) : null}
 
@@ -3672,7 +3709,7 @@ export function IndexPage() {
           animateOnMount={lockerDetailAnimatesOnMount}
           snapRequest={detailSheetSnapRequest}
           onSnapStageChange={handleDetailSheetSnapStageChange}
-          onLiveOffsetChange={handleSheetLiveOffsetChange}
+          onLiveOffsetChange={handleDetailSheetLiveOffsetChange}
         />
       ) : null}
 

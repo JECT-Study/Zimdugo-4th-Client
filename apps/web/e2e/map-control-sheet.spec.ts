@@ -237,13 +237,16 @@ test.describe("시트가 사라진 상태의 지도 컨트롤", () => {
    *
    * 마운트 슬라이드 중에는 컨트롤이 시트가 올라온 비율만큼만 따라오므로 차이가
    * 간격보다 작다. 두 값의 차이가 간격과 같아지는 순간이 곧 안착이다.
+   *
+   * 차이는 반올림해서 본다. 시트 높이는 정수로 재고 컨트롤 위치는 소수점까지
+   * 나오므로, 서브픽셀 레이아웃에서는 실제로 간격이 맞아도 11.6 같은 값이 된다.
    */
   const expectControlRaisedOverSheet = async (page: Page) => {
     await expect
       .poll(async () => {
         const bottom = await bottomPxOf(page);
 
-        return bottom - (await sheetVisibleHeightOf(page));
+        return Math.round(bottom - (await sheetVisibleHeightOf(page)));
       })
       .toBe(SHEET_GAP_PX);
   };
