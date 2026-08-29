@@ -68,6 +68,23 @@ const headerFallbackStyle: CSSProperties = {
 /** styles.headerAboveBottomSheet 와 같은 층. 바텀시트(1000) 바로 위. */
 const HEADER_ABOVE_BOTTOM_SHEET_Z_INDEX = 1001;
 
+/**
+ * 로고 버튼의 CSS 없는 자리.
+ *
+ * 버튼은 브라우저 기본 테두리·배경·패딩을 갖고 있어, 클래스가 못 붙으면 로고 둘레에
+ * 그것이 그대로 드러난다. 높이도 사라져 세로로 16px 만 눌린다.
+ */
+const logoButtonFallbackStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  flexShrink: 0,
+  height: "48px",
+  padding: 0,
+  border: "none",
+  background: "none",
+  cursor: "pointer",
+};
+
 const logoFallbackStyle: CSSProperties = {
   width: "78px",
   height: "16px",
@@ -261,6 +278,7 @@ export function HomeHeader({
       <button
         type="button"
         className={styles.logoButton}
+        style={fallbackStyle(logoButtonFallbackStyle)}
         aria-label={m.home_logo_aria()}
         onClick={onLogoPress}
       >
