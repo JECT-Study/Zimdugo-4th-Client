@@ -195,7 +195,25 @@ const DETAIL_CONTENT_TOP_PADDING = 8;
 const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
-const DETAIL_HALF_VISIBLE_HEIGHT = 191;
+
+/**
+ * 액션 영역이 세로로 차지하는 길이.
+ *
+ * 구분선 1 + 위 간격 16 + 버튼 한 줄 46 + 아래 패딩 16. 세이프 에어리어는 기기마다
+ * 달라 여기에 넣지 않는다. 스냅 높이를 잡는 기준값이라 명목값으로 충분하다.
+ */
+const DETAIL_ACTION_FOOTER_HEIGHT = 79;
+
+/**
+ * 하프에서 보이는 높이.
+ *
+ * 액션 영역이 스크롤 밖으로 나오면서 이만큼을 먼저 가져간다. 191 로 두면 핸들
+ * 24 와 패딩 8 을 빼고 남는 159 중 79 를 액션이 쓰고 80 만 남아, 요약(약 79)
+ * 하나로 꽉 차고 그 아래 정보가 전부 잘린다. 하프가 미니와 구분되지 않는다.
+ */
+const DETAIL_HALF_CONTENT_HEIGHT = 191;
+const DETAIL_HALF_VISIBLE_HEIGHT =
+  DETAIL_HALF_CONTENT_HEIGHT + DETAIL_ACTION_FOOTER_HEIGHT;
 const DETAIL_DRAG_SENSITIVITY = 1.2;
 
 export type LockerDetailSheetSnapStage = "full" | "half" | "mini" | "dismiss";

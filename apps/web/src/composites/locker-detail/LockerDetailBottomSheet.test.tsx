@@ -138,7 +138,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 760,
       miniSnapPoint: 701,
       minSnapPoint: 112,
-      snapPoint: 621,
+      snapPoint: 542,
     });
   });
 
@@ -147,7 +147,7 @@ describe("LockerDetailBottomSheet", () => {
       maxSnapPoint: 948,
       miniSnapPoint: 889,
       minSnapPoint: 112,
-      snapPoint: 809,
+      snapPoint: 730,
     });
   });
 
@@ -188,7 +188,7 @@ describe("LockerDetailBottomSheet", () => {
       name: "실시간 이용 가능",
     });
     expect(realtimeStatusCard.parentElement?.style.bottom).toBe(
-      overlayBottomAt(621),
+      overlayBottomAt(542),
     );
     expect(within(realtimeStatusCard).getByText("소형")).toBeTruthy();
     expect(within(realtimeStatusCard).getByText("12")).toBeTruthy();
@@ -326,7 +326,7 @@ describe("LockerDetailBottomSheet", () => {
     const overlay = () =>
       screen.getByRole("region", { name: "실시간 이용 가능" }).parentElement;
 
-    expect(overlay()?.style.bottom).toBe(overlayBottomAt(621));
+    expect(overlay()?.style.bottom).toBe(overlayBottomAt(542));
 
     act(() => {
       Object.defineProperty(window, "innerHeight", {
@@ -338,7 +338,7 @@ describe("LockerDetailBottomSheet", () => {
 
     // 리마운트는 없지만 시트가 옮겨 갈 자리에 라이브 상태를 맞춰야 한다.
     await waitFor(() => {
-      expect(overlay()?.style.bottom).toBe(overlayBottomAt(409));
+      expect(overlay()?.style.bottom).toBe(overlayBottomAt(330));
     });
   });
 
@@ -474,8 +474,8 @@ describe("LockerDetailBottomSheet", () => {
     );
     const renderCountBefore = draggableBottomSheetMock.mock.calls.length;
 
-    // 하프(621)에서 위로 끌어올리는 중. 타깃을 넘지 않아 판정은 그대로다.
-    for (const offset of [600, 580, 560, 540, 520]) {
+    // 하프(542)에서 위로 끌어올리는 중. 타깃을 넘지 않아 판정은 그대로다.
+    for (const offset of [540, 520, 500, 480, 460]) {
       act(() => {
         draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
           offset,
@@ -500,7 +500,7 @@ describe("LockerDetailBottomSheet", () => {
     );
     const renderCountBefore = draggableBottomSheetMock.mock.calls.length;
 
-    for (const offset of [600, 560, 520]) {
+    for (const offset of [540, 500, 460]) {
       act(() => {
         draggableBottomSheetMock.mock.lastCall?.[0].onLiveOffsetChange?.({
           offset,
@@ -512,9 +512,9 @@ describe("LockerDetailBottomSheet", () => {
 
     // 지도 컨트롤이 시트 윗변을 따라오려면 이 값이 프레임마다 올라와야 한다.
     expect(handleLiveOffsetChange.mock.calls.map(([state]) => state)).toEqual([
-      { offsetPx: 600 },
-      { offsetPx: 560 },
-      { offsetPx: 520 },
+      { offsetPx: 540 },
+      { offsetPx: 500 },
+      { offsetPx: 460 },
     ]);
     // 부모가 motion value 로 받으므로 시트는 여전히 리렌더되지 않는다.
     expect(draggableBottomSheetMock.mock.calls.length).toBe(renderCountBefore);
@@ -664,7 +664,7 @@ describe("LockerDetailBottomSheet", () => {
     );
 
     await waitFor(() => {
-      expect(getOverlayBottom()).toBe(overlayBottomAt(621));
+      expect(getOverlayBottom()).toBe(overlayBottomAt(542));
     });
   });
 

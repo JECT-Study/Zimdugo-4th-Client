@@ -134,7 +134,7 @@ describe("full 시트가 화면을 다 덮지 못할 때", () => {
 describe("resolveDetailSheetVisibleHeight", () => {
   it("미니와 하프까지 컨트롤이 따라 올라갈 높이를 준다", () => {
     expect(resolveDetailSheetVisibleHeight("mini")).toBe(111);
-    expect(resolveDetailSheetVisibleHeight("half")).toBe(191);
+    expect(resolveDetailSheetVisibleHeight("half")).toBe(270);
   });
 
   it("full·dismiss 는 따라 올릴 단계가 아니다", () => {
