@@ -212,4 +212,20 @@ describe("LockerDetailImageStrip", () => {
 
     expect(onOpenPreview).toHaveBeenCalledWith(1, buttons[1]);
   });
+
+  it("끌지 않고 눌렀다 떼면 미리보기가 열린다", () => {
+    const onOpenPreview = vi.fn();
+    render(
+      <LockerDetailImageStrip images={IMAGES} onOpenPreview={onOpenPreview} />,
+    );
+
+    const button = getImageButtons()[1];
+
+    // 끌기 훅이 포인터를 가로채면 이 클릭이 사진 버튼까지 오지 않는다.
+    fireEvent.pointerDown(button, { pointerId: 1, button: 0, clientX: 100 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 100 });
+    fireEvent.click(button);
+
+    expect(onOpenPreview).toHaveBeenCalledWith(1, button);
+  });
 });

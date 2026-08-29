@@ -189,8 +189,6 @@ export const useDragScroll = (
       }
       previousCursor = element.style.cursor;
       element.style.scrollSnapType = "none";
-
-      element.setPointerCapture?.(event.pointerId);
     };
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -206,6 +204,15 @@ export const useDragScroll = (
       if (!hasDragged && Math.abs(movedX) >= DRAG_THRESHOLD_PX) {
         hasDragged = true;
         element.style.cursor = "grabbing";
+
+        /*
+         * 포인터를 잡는 시점을 여기까지 미룬다. 잡고 있으면 뒤따르는 click 이
+         * 실제로 눌린 요소가 아니라 잡은 요소로 전달되어, 사진 버튼의 클릭이
+         * 사라진다. 끌기로 판정된 뒤에는 어차피 클릭을 막을 참이라 문제없다.
+         *
+         * 대신 이 시점부터 영역 밖으로 나가도 끌기가 이어진다.
+         */
+        element.setPointerCapture?.(event.pointerId);
       }
 
       if (!hasDragged) return;
@@ -228,10 +235,20 @@ export const useDragScroll = (
     // 이미지를 잡으면 브라우저가 기본 끌기(고스트 이미지)를 시작한다.
     const handleDragStart = (event: Event) => event.preventDefault();
 
+    /*
+     * 움직임과 뗌은 창에서 듣는다. 포인터를 잡기 전까지는 영역을 벗어난 이벤트가
+     * 요소로 오지 않아, 밖에서 손을 떼면 스냅이 꺼진 채로 남는다.
+     */
+    const handlePointerEnd = (event: PointerEvent) => {
+      if (activePointerId !== event.pointerId) return;
+
+      stopDragging();
+    };
+
     element.addEventListener("pointerdown", handlePointerDown);
-    element.addEventListener("pointermove", handlePointerMove);
-    element.addEventListener("pointerup", stopDragging);
-    element.addEventListener("pointercancel", stopDragging);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerEnd);
+    window.addEventListener("pointercancel", handlePointerEnd);
     element.addEventListener("click", handleClickCapture, true);
     element.addEventListener("dragstart", handleDragStart);
 
@@ -240,9 +257,9 @@ export const useDragScroll = (
       stopDragging();
       restoreSnapType();
       element.removeEventListener("pointerdown", handlePointerDown);
-      element.removeEventListener("pointermove", handlePointerMove);
-      element.removeEventListener("pointerup", stopDragging);
-      element.removeEventListener("pointercancel", stopDragging);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerEnd);
+      window.removeEventListener("pointercancel", handlePointerEnd);
       element.removeEventListener("click", handleClickCapture, true);
       element.removeEventListener("dragstart", handleDragStart);
     };
