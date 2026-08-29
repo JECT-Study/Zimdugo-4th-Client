@@ -188,6 +188,39 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     ).toBeNull();
   });
 
+  it("타이머 버튼이 서면 그만큼 더 높은 화면을 요구한다", () => {
+    // 타이머 컨트롤은 버튼 42 + 배지 여백 13 = 55px 에 스택 간격 12 를 더 쓴다.
+    // 하프 시트 191 + 12 + 스택 96 + 67 + 경계 120 = 486px 가 최소 높이가 된다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 419,
+        extraStackHeightPx: 55,
+      }),
+    ).toBeNull();
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 486,
+        extraStackHeightPx: 55,
+      }),
+    ).toBe(203);
+  });
+
+  it("타이머 버튼이 없으면 예약 높이가 그대로다", () => {
+    // 0 을 넘겨도 간격이 붙지 않아야 기존 판정과 같은 결과가 나온다.
+    expect(
+      resolveMapControlBottomPx({
+        baseBottomPx: 70,
+        sheetVisibleHeightPx: 191,
+        windowHeightPx: 419,
+        extraStackHeightPx: 0,
+      }),
+    ).toBe(203);
+  });
+
   it("미니 시트는 낮은 화면에서도 자리가 남는다", () => {
     // 111 + 12 + 96 + 120 = 339px. 390px 화면이면 하프는 못 놓아도 미니는 놓는다.
     expect(

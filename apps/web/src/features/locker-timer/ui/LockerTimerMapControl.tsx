@@ -1,12 +1,7 @@
 import { m } from "@repo/i18n";
 import { IconNavigationClock24 } from "@repo/ui/tokens/icons";
-import { useEffect, useState } from "react";
+import { useActiveLockerTimer } from "../hooks/useActiveLockerTimer";
 import { getRemainingTimeParts } from "../model/locker-timer-format";
-import {
-  type ActiveLockerTimer,
-  getActiveLockerTimer,
-  subscribeLockerTimerStorage,
-} from "../model/locker-timer-storage";
 import { control, remainingBadge } from "./LockerTimerMapControl.css";
 
 const formatRemainingBadge = (remainingTimeInSeconds: number) => {
@@ -31,41 +26,10 @@ export function LockerTimerMapControl({
   buttonClassName: string;
   onSelect: (lockerId: number) => void;
 }) {
-  const [activeTimer, setActiveTimer] = useState<ActiveLockerTimer | null>(
-    null,
-  );
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
-  const remainingTimeInSeconds = activeTimer
-    ? Math.max(0, Math.ceil((activeTimer.endAt - currentTime) / 1000))
-    : 0;
+  const { activeTimer, remainingTimeInSeconds, isVisible } =
+    useActiveLockerTimer();
 
-  useEffect(() => {
-    const refreshTimer = () => {
-      setActiveTimer(getActiveLockerTimer());
-      setCurrentTime(Date.now());
-    };
-
-    refreshTimer();
-    return subscribeLockerTimerStorage(refreshTimer);
-  }, []);
-
-  useEffect(() => {
-    if (!activeTimer) return;
-
-    const intervalId = window.setInterval(() => {
-      const nextTime = Date.now();
-      setCurrentTime(nextTime);
-
-      // 다시 읽는 과정에서 만료된 항목이 저장소에서 정리된다.
-      if (activeTimer.endAt <= nextTime) {
-        setActiveTimer(getActiveLockerTimer());
-      }
-    }, 1000);
-
-    return () => window.clearInterval(intervalId);
-  }, [activeTimer]);
-
-  if (!activeTimer || remainingTimeInSeconds <= 0) return null;
+  if (!activeTimer || !isVisible) return null;
 
   const remainingLabel = formatRemainingBadge(remainingTimeInSeconds);
 

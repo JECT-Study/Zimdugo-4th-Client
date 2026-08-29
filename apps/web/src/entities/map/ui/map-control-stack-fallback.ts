@@ -16,7 +16,12 @@ export const MAP_CONTROL_FALLBACK_BOTTOM_PX = 70;
 /** 컨트롤과 시트 사이 간격 */
 export const MAP_CONTROL_SHEET_GAP_PX = 12;
 
-/** 새로고침·내 위치 버튼과 그 사이 간격을 합한 스택 높이 */
+/**
+ * 새로고침·내 위치 버튼과 그 사이 간격을 합한 스택 높이.
+ *
+ * 늘 서 있는 두 개만 센다. 조건부로 붙는 컨트롤은 그쪽 높이를 아는 곳에서
+ * `resolveMapControlTopReservedPx` 로 더해 준다.
+ */
 const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
 
 /**
@@ -28,6 +33,22 @@ const MAP_CONTROL_TOP_LIMIT_PX = 120;
 /** 스택과 상단 경계가 함께 요구하는 세로 공간 */
 export const MAP_CONTROL_TOP_RESERVED_PX =
   MAP_CONTROL_TOP_LIMIT_PX + MAP_CONTROL_STACK_HEIGHT_PX;
+
+/**
+ * 조건부 컨트롤까지 포함한 예약 높이.
+ *
+ * 보관 타이머처럼 있을 때만 서는 버튼이 있으면 스택이 그만큼 위로 자란다. 이를
+ * 빼고 계산하면 낮은 화면에서 "놓을 자리가 있다" 고 판정한 뒤 실제 스택이 검색
+ * 바를 덮는다.
+ *
+ * 스켈레톤은 이 함수를 쓰지 않는다. 하이드레이션 전이라 어떤 조건부 컨트롤이
+ * 설지 알 수 없고, 그 시점에는 어차피 두 개만 그린다.
+ */
+export const resolveMapControlTopReservedPx = (extraStackHeightPx: number) =>
+  MAP_CONTROL_TOP_RESERVED_PX +
+  (extraStackHeightPx > 0
+    ? extraStackHeightPx + MAP_CONTROL_FALLBACK_GAP_PX
+    : 0);
 
 /**
  * 컨트롤을 놓을 수 있는 최소 뷰포트 높이.
