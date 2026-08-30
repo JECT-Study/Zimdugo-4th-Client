@@ -102,6 +102,18 @@ describe("SearchListBottomSheet", () => {
     ).toBe("full");
   });
 
+  it("호출자가 준 경계 안으로 half·mini 도 들어온다", () => {
+    // 화면 기준으로만 재면 자연 half(471) 가 경계(600) 위로 올라가 순서가 뒤집힌다.
+    const snaps = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      minSnapPoint: 600,
+    });
+
+    expect(snaps.minSnapPoint).toBe(600);
+    expect(snaps.snapPoint).toBeGreaterThanOrEqual(600);
+    expect(snaps.snapPoint).toBeLessThanOrEqual(snaps.miniSnapPoint ?? 0);
+  });
+
   it("결과가 길면 full 이 콘텐츠 높이만큼만 올라온다", () => {
     expect(
       resolveSearchListSnapPoints({ windowHeight: 812, fullContentHeight: 320 })

@@ -279,6 +279,14 @@ export const resolveSearchListSnapPoints = ({
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
   const topLimitPx = resolveSheetTopLimitPx(safeAreaInsetTopPx);
   /*
+   * 단계들이 넘어설 수 없는 바닥.
+   *
+   * 호출자가 경계를 직접 주면 그것을 쓴다. 화면 기준으로만 재면 자연 half 가 그 경계
+   * 위로 올라가 스냅 순서가 뒤집힌다. 호출자가 주는 값은 콘텐츠와 무관하게 고정이라,
+   * 이것을 바닥으로 삼아도 결과가 도착할 때 단계가 흔들리지 않는다.
+   */
+  const stageFloorPx = minSnapPoint ?? topLimitPx;
+  /*
    * half·mini 는 화면 높이에서만 나온다.
    *
    * 콘텐츠 기반 full 로 자르면 결과가 도착해 높이가 바뀔 때 이 두 단계까지 따라
@@ -287,7 +295,7 @@ export const resolveSearchListSnapPoints = ({
    */
   const halfSnapPoint = resolveSearchListSnapOffset({
     maxSnapPoint: resolvedMaxSnapPoint,
-    minSnapPoint: topLimitPx,
+    minSnapPoint: stageFloorPx,
     visibleHeight: resolveSearchListVisibleHeight({
       maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
       ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
@@ -311,7 +319,7 @@ export const resolveSearchListSnapPoints = ({
   const resolvedSnapPoint = snapPoint ?? halfSnapPoint;
   const resolvedMiniSnapPoint = resolveSearchListSnapOffset({
     maxSnapPoint: resolvedMaxSnapPoint,
-    minSnapPoint: topLimitPx,
+    minSnapPoint: stageFloorPx,
     visibleHeight: resolveSearchListVisibleHeight({
       maxVisibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
       ratio: SEARCH_LIST_MINI_VISIBLE_HEIGHT_RATIO,
