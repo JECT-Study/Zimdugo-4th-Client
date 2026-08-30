@@ -16,13 +16,17 @@ import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
 import { inSheetHeader } from "#/features/search/ui/search-results-heading/SearchResultsHeading.css.ts";
 import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
+import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import {
   type EnglishSubPolicy,
   resolveEnglishSubVisibility,
 } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
-import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
+import {
+  resolveSheetFullStageSnapPoint,
+  resolveSheetTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
 import {
   type BottomSheetLiveOffsetState,
   type BottomSheetSnapRequest,
@@ -141,6 +145,8 @@ interface ResolveSearchListSnapPointsOptions {
   maxSnapPoint?: number;
   /** 노치에 덮이는 높이. legacy 단계 계산에는 쓰지 않는다. */
   safeAreaInsetTopPx?: number;
+  /** 잰 콘텐츠 높이. full 을 이 높이만큼만 올린다. */
+  fullContentHeight?: number | null;
 }
 
 const resolveSearchListSnapOffset = ({
@@ -208,8 +214,15 @@ export const resolveSearchListSnapStage = ({
   offset: number;
   snapPoint: number;
 }): SearchListSheetSnapStage => {
+  /*
+   * 콘텐츠가 half 보다 짧으면 full 은 half 와 같은 자리를 가리킨다. 그때는 후보에서
+   * 뺀다. 남겨 두면 같은 픽셀을 full 로 읽어, 실제로는 half 인데 "half 일 때만" 인
+   * 규칙(지도를 눌러 접기)이 막힌다.
+   */
   const entries = [
-    { stage: "full" as const, point: minSnapPoint },
+    ...(minSnapPoint === snapPoint
+      ? []
+      : [{ stage: "full" as const, point: minSnapPoint }]),
     { stage: "half" as const, point: snapPoint },
     { stage: "mini" as const, point: miniSnapPoint },
     { stage: "dismiss" as const, point: maxSnapPoint },
@@ -251,6 +264,7 @@ export const resolveSearchListSnapPoints = ({
   snapPoint,
   windowHeight,
   safeAreaInsetTopPx = 0,
+  fullContentHeight,
 }: ResolveSearchListSnapPointsOptions) => {
   if (behavior === "legacy") {
     return resolveLegacySearchListSnapPoints({
@@ -263,23 +277,54 @@ export const resolveSearchListSnapPoints = ({
 
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
-  const resolvedMinSnapPoint =
-    minSnapPoint ?? resolveSheetTopLimitPx(safeAreaInsetTopPx);
-  const resolvedSnapPoint =
-    snapPoint ??
-    resolveSearchListSnapOffset({
-      maxSnapPoint: resolvedMaxSnapPoint,
-      minSnapPoint: resolvedMinSnapPoint,
-      visibleHeight: resolveSearchListVisibleHeight({
-        maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
-        ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
-        windowHeight,
-      }),
+  const topLimitPx = resolveSheetTopLimitPx(safeAreaInsetTopPx);
+  /*
+   * 단계들이 넘어설 수 없는 바닥.
+   *
+   * 호출자가 경계를 직접 주면 그것을 쓴다. 화면 기준으로만 재면 자연 half 가 그 경계
+   * 위로 올라가 스냅 순서가 뒤집힌다. 호출자가 주는 값은 콘텐츠와 무관하게 고정이라,
+   * 이것을 바닥으로 삼아도 결과가 도착할 때 단계가 흔들리지 않는다.
+   */
+  const stageFloorPx = minSnapPoint ?? topLimitPx;
+  /*
+   * half·mini 는 화면 높이에서만 나온다.
+   *
+   * 콘텐츠 기반 full 로 자르면 결과가 도착해 높이가 바뀔 때 이 두 단계까지 따라
+   * 움직인다. 그러면 시트가 초기 위치를 새로 요청받은 것으로 보고, 사용자가 옮겨 둔
+   * 단계를 무시한 채 그 자리로 뛴다.
+   */
+  const halfSnapPoint = resolveSearchListSnapOffset({
+    maxSnapPoint: resolvedMaxSnapPoint,
+    minSnapPoint: stageFloorPx,
+    visibleHeight: resolveSearchListVisibleHeight({
+      maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
+      ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
       windowHeight,
-    });
+    }),
+    windowHeight,
+  });
+  /*
+   * 호출자가 half 를 직접 주면 그것이 이 시트의 half 다. 화면에서 나온 기본값으로
+   * full 을 판정하면, 지정한 half 보다 아래에 있는 full 을 살려 두게 되어 단계 순서가
+   * 뒤집힌다.
+   */
+  const resolvedSnapPoint = snapPoint ?? halfSnapPoint;
+  const fullStageSnapPoint = resolveSheetFullStageSnapPoint({
+    contentHeight: fullContentHeight,
+    halfSnapPoint: resolvedSnapPoint,
+    topLimitPx,
+    maxSnapPoint: resolvedMaxSnapPoint,
+    windowHeight,
+  });
+  /*
+   * full 이 설 자리가 없으면 half 가 시트의 끝이다. 두 단계를 같은 자리에 겹쳐 두면
+   * 시트가 픽셀에서 단계를 되찾지 못한다.
+   */
+  const resolvedMinSnapPoint =
+    minSnapPoint ?? fullStageSnapPoint ?? resolvedSnapPoint;
   const resolvedMiniSnapPoint = resolveSearchListSnapOffset({
     maxSnapPoint: resolvedMaxSnapPoint,
-    minSnapPoint: resolvedMinSnapPoint,
+    minSnapPoint: stageFloorPx,
     visibleHeight: resolveSearchListVisibleHeight({
       maxVisibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
       ratio: SEARCH_LIST_MINI_VISIBLE_HEIGHT_RATIO,
@@ -328,6 +373,13 @@ export function SearchListBottomSheet({
   const [windowHeight, setWindowHeight] = useState(812);
   const safeAreaInsetTop = useSafeAreaInsetTop();
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
+  const [fullContentHeight, setFullContentHeight] = useState<number | null>(
+    null,
+  );
+  const headerMeasureRef = useRef<HTMLDivElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  /** 늘어나지 않는 목록 자체. 스크롤 영역을 재면 시트가 준 높이가 돌아온다. */
+  const listMeasureRef = useRef<HTMLDivElement | null>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -340,6 +392,7 @@ export function SearchListBottomSheet({
     snapPoint,
     windowHeight,
     safeAreaInsetTopPx: safeAreaInsetTop,
+    fullContentHeight,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined
@@ -541,6 +594,66 @@ export function SearchListBottomSheet({
     );
   }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
+  /**
+   * full 로 올렸을 때 필요한 높이.
+   *
+   * 스크롤 영역이 아니라 그 안의 목록을 잰다. 스크롤 영역은 flex 로 늘어나서 내용이
+   * 짧으면 scrollHeight 가 "지금 시트가 준 높이" 를 돌려준다. 그 값으로 시트 높이를
+   * 정하면 높이가 바뀌고, 그걸 본 ResizeObserver 가 또 재는 순환이 된다.
+   *
+   * 결과가 없을 때(로딩·빈 결과·오류)는 재지 않는다. 그 화면들은 "콘텐츠 길이" 라고
+   * 할 만한 게 없고, 빈 상태는 minHeight 100% 로 영역을 채우도록 되어 있어 같은
+   * 순환에 걸린다.
+   *
+   * 첫 페인트 전에 재는 이유는 필터 시트와 같다. 그 뒤에 재면 시트가 잘못된 자리에서
+   * 올라오다 옮겨 앉는 게 보인다.
+   */
+  useIsomorphicLayoutEffect(() => {
+    const measure = () => {
+      const list = listMeasureRef.current;
+      const scrollArea = scrollAreaRef.current;
+
+      if (!list || !scrollArea) {
+        setFullContentHeight(null);
+        return;
+      }
+
+      // 목록을 감싼 여백들은 목록 바깥이라 offsetHeight 에 안 잡힌다.
+      const paddingOf = (element: HTMLElement) => {
+        const style = window.getComputedStyle(element);
+
+        return (
+          Number.parseFloat(style.paddingTop) +
+          Number.parseFloat(style.paddingBottom)
+        );
+      };
+      const column = scrollArea.parentElement;
+      const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
+
+      setFullContentHeight(
+        Math.ceil(
+          list.offsetHeight +
+            headerHeight +
+            paddingOf(scrollArea) +
+            (column ? paddingOf(column) : 0),
+        ),
+      );
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(measure);
+
+    if (listMeasureRef.current) observer.observe(listMeasureRef.current);
+    if (headerMeasureRef.current) observer.observe(headerMeasureRef.current);
+
+    return () => observer.disconnect();
+  }, [visibleItems, hasResult]);
+
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
     handleResize();
@@ -565,7 +678,11 @@ export function SearchListBottomSheet({
     >
       <div className={sheetColumn}>
         {showResultHeader ? (
-          <div className={resultHeader} style={resultHeaderStyle}>
+          <div
+            ref={headerMeasureRef}
+            className={resultHeader}
+            style={resultHeaderStyle}
+          >
             <div className={headerLeadingRow}>
               <div className={headerTitleSlot}>
                 <SearchResultsHeading
@@ -612,6 +729,7 @@ export function SearchListBottomSheet({
         ) : null}
 
         <div
+          ref={scrollAreaRef}
           className={[listScrollArea, hasResult ? resultScrollArea : ""]
             .filter(Boolean)
             .join(" ")}
@@ -624,7 +742,7 @@ export function SearchListBottomSheet({
                 <SearchAsyncFeedback variant="result-error" onRetry={onRetry} />
               </div>
             ) : hasResult ? (
-              <div className={listStack}>
+              <div ref={listMeasureRef} className={listStack}>
                 <SearchListResults
                   items={visibleItems}
                   onLockerPress={onLockerPress}

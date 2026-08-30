@@ -47,6 +47,15 @@ export const resolveMapControlTopLimitPx = (safeAreaInsetTopPx: number) =>
  */
 const SHEET_CONTENT_BOTTOM_GAP_PX = 32;
 
+/**
+ * 두 단계가 서로 다른 자리로 인정받는 데 필요한 최소 간격.
+ *
+ * 시트가 드래그로 알아보는 최소 이동은 6px 다. 그보다 조금 넓은 정도로는 사용자가
+ * 두 단계 사이를 오갈 수 없어, 단계만 하나 더 생기고 자리는 같은 셈이 된다.
+ * 손잡이 높이를 기준으로 삼는다 — 손잡이보다 좁게 열리는 단계는 단계가 아니다.
+ */
+const SHEET_STAGE_MIN_GAP_PX = BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX;
+
 interface ResolveSheetFullSnapPointOptions {
   /** 잰 콘텐츠 높이. 아직 못 쟀으면 생략한다. */
   contentHeight?: number | null;
@@ -89,4 +98,35 @@ export const resolveSheetFullSnapPoint = ({
     SHEET_CONTENT_BOTTOM_GAP_PX;
 
   return Math.min(maxSnapPoint, Math.max(topLimitPx, contentBasedOffset));
+};
+
+interface ResolveSheetFullStageOptions
+  extends ResolveSheetFullSnapPointOptions {
+  /** half 단계가 멈추는 자리. 화면 높이에서만 나온다. */
+  halfSnapPoint: number;
+}
+
+/**
+ * full 단계가 설 자리. 설 자리가 없으면 null 이다.
+ *
+ * 콘텐츠가 half 보다 짧으면 full 을 둘 이유가 없다. 억지로 두면 half 와 같은 자리에
+ * 겹치는데, 시트는 단계를 픽셀에서 되찾으므로 겹친 지점이 어느 단계인지 알 수 없게
+ * 된다. 그 상태에서 지도를 눌러 접는 동작 같은 "half 일 때만" 인 규칙이 깨진다.
+ *
+ * 상세 시트는 제목·주소·가격에 액션 푸터까지 있어 콘텐츠가 half 아래로 내려가지
+ * 않는다. 그래서 여태 이 경우를 만나지 않았을 뿐, 규칙은 세 시트에 같이 적용된다.
+ *
+ * 정확히 겹칠 때만 막는 것으로는 모자란다. 몇 px 위에 있는 full 은 사용자에게는 half
+ * 와 같은 자리인데 단계만 full 로 통지되어, 같은 규칙이 그대로 깨진다. 손으로 오갈 수
+ * 없는 간격이면 단계로 치지 않는다.
+ */
+export const resolveSheetFullStageSnapPoint = ({
+  halfSnapPoint,
+  ...options
+}: ResolveSheetFullStageOptions): number | null => {
+  const fullSnapPoint = resolveSheetFullSnapPoint(options);
+
+  return halfSnapPoint - fullSnapPoint >= SHEET_STAGE_MIN_GAP_PX
+    ? fullSnapPoint
+    : null;
 };

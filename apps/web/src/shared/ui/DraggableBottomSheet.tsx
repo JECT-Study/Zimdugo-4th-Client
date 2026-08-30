@@ -320,6 +320,20 @@ export function DraggableBottomSheet({
   const settleAnimationRef = useRef<{ stop: () => void } | null>(null);
   const currentSnapRef = useRef(clampedInitialSnap);
   const lastInitialSnapRef = useRef<number | null>(null);
+  /** 직전 full 경계. 경계가 움직였을 때 시트가 거기 있었는지 보려고 들고 있는다. */
+  const lastMinSnapRef = useRef(minSnapPoint);
+  /*
+   * 최신 onSnapChange 를 ref 로 잡는다.
+   *
+   * 호출부가 인라인 함수를 넘겨 매 렌더 정체가 바뀌므로, 의존성에 그대로 넣으면
+   * 아래 이펙트가 렌더마다 돈다.
+   */
+  const onSnapChangeRef = useRef(onSnapChange);
+  onSnapChangeRef.current = onSnapChange;
+  /** 아래에서 정의된다. 이펙트가 스프링을 다시 겨냥할 때 쓴다. */
+  const settleToSnapPointRef = useRef<((nextSnap: number) => void) | null>(
+    null,
+  );
   /**
    * 이미 처리한 스냅 요청 id. 마운트 시점의 요청은 처리된 것으로 본다(snapRequest 참고).
    *
@@ -416,6 +430,45 @@ export function DraggableBottomSheet({
     const currentClampedSnap = clampSnap(currentSnapRef.current);
     const shouldSyncInitialSnap =
       lastInitialSnapRef.current !== nextInitialSnap;
+    /*
+     * full 에 있던 시트는 경계가 움직이면 따라간다.
+     *
+     * 경계는 콘텐츠 높이에서 나오므로 결과가 늘거나 줄면 옮겨 간다. 그때 가만히 두면
+     * 시트는 예전 높이에 남는데 부모에게는 새 full 높이로 알려져, 지도 컨트롤 자리까지
+     * 실제 시트와 어긋난다.
+     *
+     * 경계가 half 와 같은 자리면 따라가지 않는다. 그건 full 이 설 자리가 없어 half 가
+     * 시트의 끝을 맡은 경우라, 거기 있는 사용자는 half 에 있는 것이다.
+     */
+    const previousMinSnap = lastMinSnapRef.current;
+    const shouldFollowMinSnap =
+      previousMinSnap !== minSnapPoint &&
+      previousMinSnap !== snapPoint &&
+      currentSnapRef.current === previousMinSnap;
+    lastMinSnapRef.current = minSnapPoint;
+
+    /*
+     * 경계를 따라갈 때는 스프링으로 보낸다.
+     *
+     * settleToSnapPoint 는 스프링을 시작하면서 목표값을 currentSnapRef 에 미리 적는다.
+     * 그래서 full 로 가는 도중에 경계가 다시 계산되면 "이미 full 에 앉아 있다" 로
+     * 읽히는데, 그때 즉시 옮기면 가던 시트가 순간이동하는 것으로 보인다. 스프링에
+     * 맡기면 날아가던 중이면 목표만 바뀌고, 이미 앉아 있었으면 새 자리로 부드럽게
+     * 옮겨 간다. 부모에게 알리는 것도 그쪽이 함께 한다.
+     */
+    if (shouldFollowMinSnap) {
+      /*
+       * 이번 초기 스냅도 처리한 것으로 적는다.
+       *
+       * 화면 높이가 바뀌면 경계와 기본 half 가 함께 움직인다. 여기서 적지 않고 나가면
+       * 그 half 가 처리되지 않은 채 남아, 나중에 사용자가 mini 로 옮겨 둔 뒤 경계가
+       * 다시 계산될 때 초기 스냅 요청으로 읽혀 시트를 half 로 끌어올린다.
+       */
+      lastInitialSnapRef.current = nextInitialSnap;
+      settleToSnapPointRef.current?.(minSnapPoint);
+      return;
+    }
+
     if (
       !shouldSyncInitialSnap &&
       currentSnapRef.current === currentClampedSnap
@@ -427,11 +480,25 @@ export function DraggableBottomSheet({
     const nextSnap = shouldSyncInitialSnap
       ? nextInitialSnap
       : currentClampedSnap;
+    const previousSnap = currentSnapRef.current;
     lastInitialSnapRef.current = nextInitialSnap;
     currentSnapRef.current = nextSnap;
     setCurrentSnap(nextSnap);
     sheetOffset.set(nextSnap);
-  }, [resolvedInitialSnap, clampSnap, sheetOffset]);
+
+    /*
+     * 자리가 실제로 움직였으면 알린다.
+     *
+     * 여기서 안 알리면 부모는 옛 단계를 그대로 들고 있는다. full 이 사라져 시트가
+     * half 로 내려앉아도 단계는 full 로 남아, "half 일 때만" 인 규칙(지도를 눌러
+     * 접기)이 걸리지 않는다.
+     *
+     * 마운트 때는 두 값이 같아 알리지 않는다. 그쪽은 호출부가 따로 챙긴다.
+     */
+    if (previousSnap !== nextSnap) {
+      onSnapChangeRef.current?.(nextSnap);
+    }
+  }, [resolvedInitialSnap, clampSnap, minSnapPoint, snapPoint, sheetOffset]);
 
   const settleToSnapPoint = useCallback(
     (nextSnap: number) => {
@@ -472,6 +539,7 @@ export function DraggableBottomSheet({
       sheetOffset,
     ],
   );
+  settleToSnapPointRef.current = settleToSnapPoint;
 
   const settleToNextSnap = useCallback(
     ({ offsetY }: { offsetY: number }) => {

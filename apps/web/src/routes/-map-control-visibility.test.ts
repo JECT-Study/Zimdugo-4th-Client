@@ -4,6 +4,7 @@ import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchL
 import {
   resolveMapControlTopLimitPx,
   resolveSheetFullSnapPoint,
+  resolveSheetFullStageSnapPoint,
   resolveSheetTopLimitPx,
 } from "#/shared/lib/app-chrome-layout";
 import {
@@ -421,5 +422,54 @@ describe("resolveSheetFullSnapPoint", () => {
 
   it("콘텐츠가 아주 짧아도 최대 스냅을 넘지 않는다", () => {
     expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 10 })).toBe(746);
+  });
+});
+
+describe("resolveSheetFullStageSnapPoint", () => {
+  const base = {
+    topLimitPx: 112,
+    maxSnapPoint: 760,
+    windowHeight: 812,
+    halfSnapPoint: 471,
+  };
+
+  it("콘텐츠가 half 보다 길면 그 위에 full 을 둔다", () => {
+    // 812 - 320 - 손잡이 24 - 여유 32 = 436. half(471) 보다 위다.
+    expect(
+      resolveSheetFullStageSnapPoint({ ...base, contentHeight: 320 }),
+    ).toBe(436);
+  });
+
+  it("콘텐츠가 half 보다 짧으면 full 을 두지 않는다", () => {
+    // 억지로 두면 half 와 같은 자리에 겹쳐, 시트가 픽셀에서 단계를 되찾지 못한다.
+    expect(
+      resolveSheetFullStageSnapPoint({ ...base, contentHeight: 120 }),
+    ).toBeNull();
+  });
+
+  it("half 와 같은 자리여도 두지 않는다", () => {
+    // 812 - 285 - 56 = 471 로 half 와 정확히 겹치는 경우다.
+    expect(
+      resolveSheetFullStageSnapPoint({ ...base, contentHeight: 285 }),
+    ).toBeNull();
+  });
+
+  it("half 코앞이면 두지 않는다", () => {
+    // 812 - 286 - 56 = 470 으로 half(471) 보다 1px 위다. 손으로는 오갈 수 없는
+    // 간격이라 단계만 하나 더 생기고, 지도를 눌러 접는 규칙이 걸리지 않는다.
+    expect(
+      resolveSheetFullStageSnapPoint({ ...base, contentHeight: 286 }),
+    ).toBeNull();
+  });
+
+  it("손잡이 높이만큼 벌어지면 단계로 인정한다", () => {
+    // 812 - 309 - 56 = 447 로 half(471) 와 24px 떨어진다.
+    expect(
+      resolveSheetFullStageSnapPoint({ ...base, contentHeight: 309 }),
+    ).toBe(447);
+  });
+
+  it("아직 못 쟀으면 상한에 두어 지금까지와 같게 연다", () => {
+    expect(resolveSheetFullStageSnapPoint({ ...base })).toBe(112);
   });
 });
