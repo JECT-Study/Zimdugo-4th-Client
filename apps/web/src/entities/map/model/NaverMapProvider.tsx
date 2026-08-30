@@ -19,6 +19,12 @@ export type NaverMapSdkStatus = "idle" | "loading" | "ready" | "error";
 export interface NaverMapProviderProps {
   children: ReactNode;
   clientId?: string;
+  /**
+   * 지도 디자인툴(Maps 스타일 에디터)에서 만든 스타일 ID.
+   *
+   * 비우면 네이버 기본 스타일로 그린다. 스타일 ID 는 발급한 Client ID 에 묶여 있다.
+   */
+  customStyleId?: string;
   language?: string;
   submodules?: string[];
 }
@@ -41,10 +47,12 @@ const NaverMapContext = createContext<NaverMapContextValue | null>(null);
 
 const getScriptSrc = ({
   clientId,
+  customStyleId,
   language,
   submodules,
 }: {
   clientId: string;
+  customStyleId?: string;
   language: string;
   submodules: string[];
 }) => {
@@ -52,6 +60,11 @@ const getScriptSrc = ({
     ncpKeyId: clientId,
     language,
   });
+
+  // 빈 값을 넘기면 스타일을 못 찾아 지도가 뜨지 않는다. 있을 때만 붙인다.
+  if (customStyleId) {
+    params.set("customStyleId", customStyleId);
+  }
 
   if (submodules.length > 0) {
     params.set("submodules", submodules.join(","));
@@ -124,10 +137,12 @@ const verifyNaverMapAuth = async (clientId: string) => {
 
 const loadNaverMapSdk = async ({
   clientId,
+  customStyleId,
   language,
   submodules,
 }: {
   clientId: string;
+  customStyleId?: string;
   language: string;
   submodules: string[];
 }) => {
@@ -139,7 +154,12 @@ const loadNaverMapSdk = async ({
     throw new Error("VITE_NAVER_MAP_CLIENT_ID is required.");
   }
 
-  const scriptSrc = getScriptSrc({ clientId, language, submodules });
+  const scriptSrc = getScriptSrc({
+    clientId,
+    customStyleId,
+    language,
+    submodules,
+  });
   const activeScript = document.querySelector<HTMLScriptElement>(
     NAVER_MAP_SCRIPT_SELECTOR,
   );
@@ -171,6 +191,7 @@ const loadNaverMapSdk = async ({
 export function NaverMapProvider({
   children,
   clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID,
+  customStyleId = import.meta.env.VITE_NAVER_MAP_CUSTOM_STYLE_ID,
   language = DEFAULT_NAVER_MAP_LANGUAGE,
   submodules = DEFAULT_SUBMODULES,
 }: NaverMapProviderProps) {
@@ -193,6 +214,7 @@ export function NaverMapProvider({
 
     loadNaverMapSdk({
       clientId,
+      customStyleId,
       language: naverMapLanguage,
       submodules,
     })
@@ -220,7 +242,7 @@ export function NaverMapProvider({
     return () => {
       isMounted = false;
     };
-  }, [clientId, naverMapLanguage, submoduleKey, reloadKey]);
+  }, [clientId, customStyleId, naverMapLanguage, submoduleKey, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((key) => key + 1);

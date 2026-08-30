@@ -33,13 +33,25 @@ export interface LocationPickerOverlayProps {
 
 const DEFAULT_COORDS = { lat: 37.4979, lng: 127.0276 }; // 강남역 정중앙
 const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
+const NAVER_MAP_CUSTOM_STYLE_ID = import.meta.env
+  .VITE_NAVER_MAP_CUSTOM_STYLE_ID;
 
 const loadNaverMapsScript = async () => {
   if (typeof window === "undefined") return;
   if (!NAVER_MAP_CLIENT_ID) {
     throw new Error("VITE_NAVER_MAP_CLIENT_ID is required.");
   }
-  const scriptSrc = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_MAP_CLIENT_ID}&submodules=geocoder`;
+  const params = new URLSearchParams({
+    ncpKeyId: NAVER_MAP_CLIENT_ID,
+    submodules: "geocoder",
+  });
+
+  // 지도 디자인툴 스타일. 없으면 기본 스타일로 뜬다. 빈 값을 붙이면 지도가 막힌다.
+  if (NAVER_MAP_CUSTOM_STYLE_ID) {
+    params.set("customStyleId", NAVER_MAP_CUSTOM_STYLE_ID);
+  }
+
+  const scriptSrc = `https://openapi.map.naver.com/openapi/v3/maps.js?${params.toString()}`;
   const activeScript = document.querySelector<HTMLScriptElement>(
     'script[src*="maps.js"]',
   );
