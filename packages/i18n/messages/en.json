@@ -397,6 +397,7 @@
   "login_result_failure_title": "Sign-in failed",
   "home_my_location_aria": "Go to my location",
   "home_search_back_aria": "Back to home",
+  "home_logo_aria": "ZimDUGO home",
   "search_suggest_loading_aria": "Loading suggestions",
   "search_result_loading_aria": "Loading search results",
   "login_back_aria": "Go back",

@@ -397,6 +397,7 @@
   "login_result_failure_title": "登入失敗",
   "home_my_location_aria": "移動到我的位置",
   "home_search_back_aria": "返回首頁",
+  "home_logo_aria": "前往 ZimDUGO 首頁",
   "search_suggest_loading_aria": "正在載入自動完成",
   "search_result_loading_aria": "正在載入搜尋結果",
   "login_back_aria": "返回",

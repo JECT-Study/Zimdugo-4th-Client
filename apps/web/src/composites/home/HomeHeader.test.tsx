@@ -62,12 +62,20 @@ const renderHeader = (profileImageUrl = "") => {
       },
     },
   });
+  const onLogoPress = vi.fn();
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <HomeHeader profileImageUrl={profileImageUrl} onProfilePress={vi.fn()} />
-    </QueryClientProvider>,
-  );
+  return {
+    onLogoPress,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <HomeHeader
+          profileImageUrl={profileImageUrl}
+          onProfilePress={vi.fn()}
+          onLogoPress={onLogoPress}
+        />
+      </QueryClientProvider>,
+    ),
+  };
 };
 
 /** 실제 UI 를 보는 단언은 프로브가 끝난 뒤에 해야 한다. */
@@ -143,5 +151,18 @@ describe("HomeHeader", () => {
     expect(header?.classList.contains(styles.headerAboveBottomSheet)).toBe(
       false,
     );
+  });
+
+  it("로고를 누르면 홈으로 돌아가는 핸들러를 부른다", () => {
+    // 로고 svg 가 스스로 aria-label 을 갖고 있어, 버튼 이름을 명시하지 않으면
+    // "ZimDUGO 텍스트 로고 (소)" 로 잡혀 무슨 일이 일어나는지 읽히지 않는다.
+    const { onLogoPress } = renderStyledHeader();
+    const logoButton = screen.getByRole("button", {
+      name: m.home_logo_aria(),
+    });
+
+    fireEvent.click(logoButton);
+
+    expect(onLogoPress).toHaveBeenCalledTimes(1);
   });
 });

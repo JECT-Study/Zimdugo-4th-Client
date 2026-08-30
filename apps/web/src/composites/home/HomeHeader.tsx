@@ -26,6 +26,8 @@ import * as styles from "./HomeHeader.css";
 export interface HomeHeaderProps {
   profileImageUrl?: string;
   onProfilePress: () => void;
+  /** 로고를 눌렀을 때. 홈 화면에서는 검색 컨텍스트를 되돌리는 것이 "홈으로" 다. */
+  onLogoPress: () => void;
 }
 
 const LANGUAGE_DROPDOWN_TRANSITION = {
@@ -65,6 +67,23 @@ const headerFallbackStyle: CSSProperties = {
 
 /** styles.headerAboveBottomSheet 와 같은 층. 바텀시트(1000) 바로 위. */
 const HEADER_ABOVE_BOTTOM_SHEET_Z_INDEX = 1001;
+
+/**
+ * 로고 버튼의 CSS 없는 자리.
+ *
+ * 버튼은 브라우저 기본 테두리·배경·패딩을 갖고 있어, 클래스가 못 붙으면 로고 둘레에
+ * 그것이 그대로 드러난다. 높이도 사라져 세로로 16px 만 눌린다.
+ */
+const logoButtonFallbackStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  flexShrink: 0,
+  height: "48px",
+  padding: 0,
+  border: "none",
+  background: "none",
+  cursor: "pointer",
+};
 
 const logoFallbackStyle: CSSProperties = {
   width: "78px",
@@ -158,6 +177,7 @@ function HomeHeaderSkeletonContent() {
 export function HomeHeader({
   profileImageUrl = "",
   onProfilePress,
+  onLogoPress,
 }: HomeHeaderProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const languageTriggerRef = useRef<HTMLButtonElement>(null);
@@ -244,8 +264,26 @@ export function HomeHeader({
         .join(" ")}
       style={headerStyle}
     >
-      {/* 로고 svg 는 width/height 속성을 갖고 있어 CSS 없이도 크기가 유지된다. */}
-      <BrandTextLogoSmall className={styles.logo} />
+      {/*
+        로고 svg 는 width/height 속성을 갖고 있어 CSS 없이도 크기가 유지된다.
+
+        svg 가 role="img" 과 aria-label 을 들고 있어, 버튼에 이름을 주지 않으면 접근성
+        이름이 "ZimDUGO 텍스트 로고 (소)" 로 잡힌다. 무슨 일이 일어나는지가 아니라
+        무엇이 그려졌는지를 읽어 주는 셈이라 버튼 쪽에 이름을 명시한다.
+
+        검색 바 뒤로가기와는 다른 이름을 쓴다. 뒤로가기는 단계별로 한 칸씩 돌아가고
+        이 버튼은 홈까지 간다. 검색 컨텍스트에서 둘이 함께 서므로 이름이 같으면
+        무엇을 누르는지 구분할 수 없다.
+      */}
+      <button
+        type="button"
+        className={styles.logoButton}
+        style={fallbackStyle(logoButtonFallbackStyle)}
+        aria-label={m.home_logo_aria()}
+        onClick={onLogoPress}
+      >
+        <BrandTextLogoSmall className={styles.logo} />
+      </button>
       <div
         className={styles.actions}
         style={fallbackStyle(actionsFallbackStyle)}

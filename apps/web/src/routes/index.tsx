@@ -213,6 +213,7 @@ import {
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
+import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
@@ -234,7 +235,6 @@ import {
 import {
   resolveMapControlBottomPx,
   resolveVisibleSheetKind,
-  shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -735,8 +735,10 @@ export function IndexPage() {
   const mapControlExtraStackHeight = isLockerTimerControlVisible
     ? LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX
     : 0;
+  const safeAreaInsetTop = useSafeAreaInsetTop();
   const mapControlTopReserved = resolveMapControlTopReservedPx(
     mapControlExtraStackHeight,
+    safeAreaInsetTop,
   );
 
   const sheetLiveOffset = useMotionValue(SHEET_OFFSET_NONE_PX);
@@ -3139,10 +3141,6 @@ export function IndexPage() {
     hasMapInstance: !!mapInstance,
   });
   const shouldRenderHomeSearchBar = shouldShowHomeSearchBar({ hasMapError });
-  const shouldRenderHomeHeader = shouldShowHomeHeader({
-    isSearchContextActive: context === "search",
-    hasMapError,
-  });
   const isSearchFilterActive =
     searchFilters.regionActive ||
     searchFilters.sizeActive ||
@@ -3221,6 +3219,7 @@ export function IndexPage() {
     sheetVisibleHeightPx: sheetVisibleHeight,
     windowHeightPx: windowHeight,
     extraStackHeightPx: mapControlExtraStackHeight,
+    safeAreaInsetTopPx: safeAreaInsetTop,
   });
 
   /**
@@ -3501,12 +3500,11 @@ export function IndexPage() {
 
   return (
     <main className={pageWrapper}>
-      {shouldRenderHomeHeader ? (
-        <HomeHeader
-          profileImageUrl={user?.profileImageUrl ?? ""}
-          onProfilePress={() => navigate({ to: "/settings" })}
-        />
-      ) : null}
+      <HomeHeader
+        profileImageUrl={user?.profileImageUrl ?? ""}
+        onProfilePress={() => navigate({ to: "/settings" })}
+        onLogoPress={resetSearchContext}
+      />
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
           onOpenSearch={handleOpenSearch}

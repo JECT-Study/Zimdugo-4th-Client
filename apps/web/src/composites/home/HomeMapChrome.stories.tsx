@@ -75,7 +75,11 @@ function HomeMapChromePreview({
             "linear-gradient(145deg, #e4eadf 0%, #f0eee4 48%, #dce7e9 100%)",
         }}
       >
-        <HomeHeader profileImageUrl="" onProfilePress={() => undefined} />
+        <HomeHeader
+          profileImageUrl=""
+          onProfilePress={() => undefined}
+          onLogoPress={() => undefined}
+        />
         <HomeSearchBar onOpenSearch={() => undefined} />
         {/* null 은 놓을 자리가 없다는 뜻이다. 실제 앱도 이때 렌더하지 않는다. */}
         {controlBottom !== null && (

@@ -16,11 +16,13 @@ import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
 import { inSheetHeader } from "#/features/search/ui/search-results-heading/SearchResultsHeading.css.ts";
 import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
+import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import {
   type EnglishSubPolicy,
   resolveEnglishSubVisibility,
 } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
+import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
 import {
   type BottomSheetLiveOffsetState,
   type BottomSheetSnapRequest,
@@ -110,7 +112,6 @@ interface ActiveSort {
   direction: SearchSortDirection;
 }
 
-const SEARCH_LIST_MIN_TOP_OFFSET = 112;
 const SEARCH_LIST_DISMISS_VISIBLE_HEIGHT = 52;
 const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT = 481;
 const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO = 0.42;
@@ -138,6 +139,8 @@ interface ResolveSearchListSnapPointsOptions {
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
+  /** 노치에 덮이는 높이. legacy 단계 계산에는 쓰지 않는다. */
+  safeAreaInsetTopPx?: number;
 }
 
 const resolveSearchListSnapOffset = ({
@@ -247,6 +250,7 @@ export const resolveSearchListSnapPoints = ({
   minSnapPoint,
   snapPoint,
   windowHeight,
+  safeAreaInsetTopPx = 0,
 }: ResolveSearchListSnapPointsOptions) => {
   if (behavior === "legacy") {
     return resolveLegacySearchListSnapPoints({
@@ -259,7 +263,8 @@ export const resolveSearchListSnapPoints = ({
 
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
-  const resolvedMinSnapPoint = minSnapPoint ?? SEARCH_LIST_MIN_TOP_OFFSET;
+  const resolvedMinSnapPoint =
+    minSnapPoint ?? resolveSheetTopLimitPx(safeAreaInsetTopPx);
   const resolvedSnapPoint =
     snapPoint ??
     resolveSearchListSnapOffset({
@@ -321,6 +326,7 @@ export function SearchListBottomSheet({
   children,
 }: SearchListBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
+  const safeAreaInsetTop = useSafeAreaInsetTop();
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
@@ -333,6 +339,7 @@ export function SearchListBottomSheet({
     minSnapPoint,
     snapPoint,
     windowHeight,
+    safeAreaInsetTopPx: safeAreaInsetTop,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined

@@ -43,6 +43,7 @@ const meta = {
   ],
   args: {
     onProfilePress: () => undefined,
+    onLogoPress: () => undefined,
   },
 } satisfies Meta<typeof HomeHeader>;
 

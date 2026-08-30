@@ -14,32 +14,10 @@ interface ShouldShowHomeSearchBarOptions {
   hasMapError: boolean;
 }
 
-interface ShouldShowHomeHeaderOptions {
-  isSearchContextActive: boolean;
-  hasMapError: boolean;
-}
-
 export const shouldShowHomeSearchBar = ({
   hasMapError,
 }: ShouldShowHomeSearchBarOptions) => {
   return !hasMapError;
-};
-
-/**
- * 헤더는 지도 오류와 무관하게 유지한다.
- *
- * 검색 바와 같은 조건으로 묶어 두면 지도 로드가 실패했을 때 헤더까지 사라진다.
- * 오류 화면에는 재시도 버튼뿐이고 하단 탭도 없어서, 그 상태로는 설정·프로필·언어
- * 어디로도 갈 수 없다. 평소에는 검색 컨텍스트에서만 자리를 비켜 준다.
- *
- * 다만 `/?q=...` 같은 딥링크로 들어오면 첫 컨텍스트가 검색이라, 지도 오류와 겹치면
- * 검색 바도 헤더도 없는 상태가 된다. 오류 중에는 검색 컨텍스트여도 헤더를 남긴다.
- */
-export const shouldShowHomeHeader = ({
-  isSearchContextActive,
-  hasMapError,
-}: ShouldShowHomeHeaderOptions) => {
-  return hasMapError || !isSearchContextActive;
 };
 
 export const shouldShowMapControls = ({
@@ -63,6 +41,8 @@ interface ResolveMapControlBottomOptions {
    * 스택 간격은 이 값에서 계산하므로 버튼 자체 높이만 넘긴다.
    */
   extraStackHeightPx?: number;
+  /** 노치에 덮이는 높이. 상단 경계를 그만큼 함께 내린다. */
+  safeAreaInsetTopPx?: number;
 }
 
 /**
@@ -95,9 +75,11 @@ export const resolveMapControlBottomPx = ({
   sheetVisibleHeightPx,
   windowHeightPx,
   extraStackHeightPx = 0,
+  safeAreaInsetTopPx = 0,
 }: ResolveMapControlBottomOptions): number | null => {
   const topLimitedBottomPx =
-    windowHeightPx - resolveMapControlTopReservedPx(extraStackHeightPx);
+    windowHeightPx -
+    resolveMapControlTopReservedPx(extraStackHeightPx, safeAreaInsetTopPx);
 
   // 상단 경계는 시트 단계와 무관하게 먼저 본다. 밀어 올릴 단계가 아니어도 화면이
   // 낮으면 기본 위치의 스택이 그대로 검색 바를 덮기 때문이다. 예전에는 이 검사가

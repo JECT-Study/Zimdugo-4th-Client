@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchListBottomSheet";
 import {
+  resolveMapControlTopLimitPx,
+  resolveSheetTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
+import {
   resolveMapControlBottomPx,
   resolveVisibleSheetKind,
-  shouldShowHomeHeader,
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
@@ -57,25 +60,6 @@ describe("resolveMapControlBottomPx", () => {
         windowHeightPx: 812,
       }),
     ).toBe(70);
-  });
-});
-
-describe("shouldShowHomeHeader", () => {
-  it("지도 오류에도 헤더를 유지한다", () => {
-    // 오류 화면에는 재시도 버튼뿐이고 하단 탭도 없어서, 헤더가 사라지면
-    // 설정·프로필·언어로 갈 방법이 없다.
-    expect(
-      shouldShowHomeHeader({
-        isSearchContextActive: false,
-        hasMapError: false,
-      }),
-    ).toBe(true);
-  });
-
-  it("검색 컨텍스트에서는 헤더를 숨긴다", () => {
-    expect(
-      shouldShowHomeHeader({ isSearchContextActive: true, hasMapError: false }),
-    ).toBe(false);
   });
 });
 
@@ -284,16 +268,6 @@ describe("로딩 스켈레톤과 실제 컨트롤의 위치 일치", () => {
   });
 });
 
-describe("shouldShowHomeHeader 지도 오류", () => {
-  it("검색 컨텍스트여도 지도 오류 중에는 헤더를 유지한다", () => {
-    // /?q=... 딥링크는 첫 컨텍스트가 검색이라, 오류와 겹치면 검색 바도 헤더도
-    // 사라져 설정·언어로 갈 방법이 없어진다.
-    expect(
-      shouldShowHomeHeader({ isSearchContextActive: true, hasMapError: true }),
-    ).toBe(true);
-  });
-});
-
 describe("resolveVisibleSheetKind", () => {
   const base = {
     sheetMode: "list",
@@ -371,5 +345,28 @@ describe("resolveVisibleSheetKind", () => {
         windowHeightPx: 812,
       }),
     ).toBe(70);
+  });
+});
+
+describe("크롬 아래 경계", () => {
+  it("안전 영역이 없으면 검색 바 바닥 바로 아래에 선을 둔다", () => {
+    // 검색 바는 60px 에서 시작해 48px 높이라 바닥이 108px 이다.
+    expect(resolveSheetTopLimitPx(0)).toBe(112);
+  });
+
+  it("노치 기기에서는 검색 바가 내려간 만큼 선도 내린다", () => {
+    // 예전에는 이 선이 112 로 고정이라, 안전 영역이 4px 만 넘어도 full 시트가
+    // 검색 바를 덮어 아무것도 누를 수 없었다.
+    expect(resolveSheetTopLimitPx(59)).toBe(171);
+  });
+
+  it("음수가 들어와도 선을 끌어올리지 않는다", () => {
+    expect(resolveSheetTopLimitPx(-20)).toBe(112);
+  });
+
+  it("지도 컨트롤도 같은 안전 영역만큼 내려간다", () => {
+    // 시트보다 간격을 넓게(12px) 두는 것 말고는 같은 기준이다.
+    expect(resolveMapControlTopLimitPx(0)).toBe(120);
+    expect(resolveMapControlTopLimitPx(59)).toBe(179);
   });
 });
