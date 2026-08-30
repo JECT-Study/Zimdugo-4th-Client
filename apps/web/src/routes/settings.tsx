@@ -23,6 +23,7 @@ import {
   SettingsSkeletonFrame,
 } from "#/features/settings/ui/SettingsRouteSkeleton";
 import { useAuth } from "#/shared/hooks/useAuth";
+import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { BASE_LOCALE, stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import {
@@ -45,6 +46,7 @@ export function SettingsPage() {
     useMapColorSchemePreference();
   const currentLanguageLabel =
     appLanguageLabelMap[normalizeLanguage(languageTag()) ?? BASE_LOCALE];
+  const handleBack = useBackNavigation("/");
   const isSettingsRoot = useRouterState({
     select: (state) =>
       stripLocalePathPrefix(state.location.pathname) === "/settings",
@@ -132,7 +134,7 @@ export function SettingsPage() {
     <>
       <SettingsPageView
         appVersion={import.meta.env.VITE_APP_VERSION || "1.0.0"}
-        onBack={() => navigate({ to: "/" })}
+        onBack={handleBack}
         onLanguagePress={() => navigate({ to: "/settings/language" })}
         languageValue={currentLanguageLabel}
         onThemePress={() => navigate({ to: "/settings/theme" })}
