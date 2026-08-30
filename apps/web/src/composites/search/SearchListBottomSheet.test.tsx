@@ -107,6 +107,26 @@ describe("SearchListBottomSheet", () => {
     expect(snaps.snapPoint).toBeLessThanOrEqual(snaps.miniSnapPoint ?? 0);
   });
 
+  it("full 과 half 가 겹치면 half 로 읽어 접는 길을 남긴다", () => {
+    // full 로 읽히면 지도를 눌러도 mini 로 내려가지 않는다. 그 동작은 half 일 때만
+    // 접기 때문이다.
+    const snaps = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      fullContentHeight: 120,
+    });
+
+    expect(snaps.minSnapPoint).toBe(snaps.snapPoint);
+    expect(
+      resolveSearchListSnapStage({
+        maxSnapPoint: snaps.maxSnapPoint,
+        miniSnapPoint: snaps.miniSnapPoint ?? 0,
+        minSnapPoint: snaps.minSnapPoint,
+        offset: snaps.snapPoint,
+        snapPoint: snaps.snapPoint,
+      }),
+    ).toBe("half");
+  });
+
   it("아직 못 쟀으면 상한을 준다", () => {
     expect(
       resolveSearchListSnapPoints({ windowHeight: 812 }).minSnapPoint,

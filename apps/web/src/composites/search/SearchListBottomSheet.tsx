@@ -221,8 +221,15 @@ export const resolveSearchListSnapStage = ({
     { stage: "dismiss" as const, point: maxSnapPoint },
   ];
 
+  /*
+   * 같은 거리면 뒤에 오는(덜 펼친) 단계를 남긴다.
+   *
+   * 결과가 짧아 full 과 half 가 같은 자리에 겹칠 때, 먼저 등록된 full 로 읽히면
+   * 실제로는 half 에 있는데 단계만 full 이 된다. 그러면 지도를 눌러 접는 길이
+   * 막힌다 — 그 동작은 half 일 때만 mini 로 내린다.
+   */
   return entries.reduce((nearestEntry, entry) =>
-    Math.abs(entry.point - offset) < Math.abs(nearestEntry.point - offset)
+    Math.abs(entry.point - offset) <= Math.abs(nearestEntry.point - offset)
       ? entry
       : nearestEntry,
   ).stage;
