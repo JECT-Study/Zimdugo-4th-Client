@@ -124,6 +124,7 @@ export function SettingsPage() {
         appVersion={import.meta.env.VITE_APP_VERSION || "1.0.0"}
         onBack={() => navigate({ to: "/" })}
         onLanguagePress={() => navigate({ to: "/settings/language" })}
+        onThemePress={() => navigate({ to: "/settings/theme" })}
         onNoticePress={() => navigate({ to: "/notices" })}
         onTermsPress={() => navigate({ to: "/settings/terms" })}
         onPrivacyPress={() => navigate({ to: "/settings/privacy" })}
