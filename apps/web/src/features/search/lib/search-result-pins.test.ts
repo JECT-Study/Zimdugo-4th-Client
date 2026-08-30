@@ -3,7 +3,10 @@ import type {
   SearchLockerResultItem,
   SearchPlaceResultItem,
 } from "#/composites/search/search-list-model";
-import { searchResultItemsToPins } from "./search-result-pins";
+import {
+  searchLockerItemsToPins,
+  searchResultItemsToPins,
+} from "./search-result-pins";
 
 const createLockerItem = (
   overrides: Partial<SearchLockerResultItem> = {},
@@ -84,5 +87,56 @@ describe("searchResultItemsToPins", () => {
         markerStatus: "inactive",
       }),
     ]);
+  });
+});
+
+describe("핀에 실리는 즐겨찾기 상태", () => {
+  it("보관함 항목의 즐겨찾기를 핀으로 옮긴다", () => {
+    // 예전에는 핀을 만들 때 isFavorite 을 버려서, 즐겨찾기를 눌러도 지도 위 마커가
+    // 기본 도안 그대로였다. map-marker 는 pin.isFavorite === true 일 때만 바꿔 그린다.
+    const [pin] = searchLockerItemsToPins([
+      createLockerItem({ lockerId: 101, isFavorite: true }),
+    ]);
+
+    expect(pin?.isFavorite).toBe(true);
+  });
+
+  it("즐겨찾기가 아닌 보관함은 false 로 옮긴다", () => {
+    const [pin] = searchLockerItemsToPins([
+      createLockerItem({ lockerId: 101, isFavorite: false }),
+    ]);
+
+    expect(pin?.isFavorite).toBe(false);
+  });
+
+  it("서버가 즐겨찾기를 안 알려주면 null 로 둔다", () => {
+    const [pin] = searchLockerItemsToPins([
+      createLockerItem({ lockerId: 101 }),
+    ]);
+
+    expect(pin?.isFavorite).toBeNull();
+  });
+
+  it("장소 핀은 보관함 하나를 가리키지 않아 즐겨찾기가 없다", () => {
+    const pins = searchResultItemsToPins([
+      createPlaceItem({
+        lockers: [
+          createLockerItem({ lockerId: 101, isFavorite: true }),
+          createLockerItem({ lockerId: 102, isFavorite: true }),
+        ],
+      }),
+    ]);
+
+    expect(pins).toHaveLength(1);
+    expect(pins[0]?.pinType).toBe("PLACE");
+    expect(pins[0]?.isFavorite).toBeNull();
+  });
+
+  it("검색 결과의 보관함 항목도 즐겨찾기를 싣는다", () => {
+    const pins = searchResultItemsToPins([
+      createLockerItem({ lockerId: 101, isFavorite: true }),
+    ]);
+
+    expect(pins[0]?.isFavorite).toBe(true);
   });
 });
