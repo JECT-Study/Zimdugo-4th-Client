@@ -42,6 +42,14 @@ export interface LocationPickerOverlayProps {
 }
 
 const DEFAULT_COORDS = { lat: 37.4979, lng: 127.0276 }; // 강남역 정중앙
+const PICKER_MAP_ZOOM = 17;
+/** 위치 선택기는 지도 자체 컨트롤을 쓰지 않는다. 생성 경로 두 곳이 공유한다. */
+const PICKER_MAP_CONTROL_OPTIONS = {
+  logoControl: false,
+  mapDataControl: false,
+  scaleControl: false,
+  zoomControl: false,
+} as const;
 const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
 
 const loadNaverMapsScript = async () => {
@@ -99,6 +107,8 @@ export function LocationPickerOverlay({
   const isMountedRef = useRef(true);
   const colorSchemeRef = useRef(colorScheme);
   colorSchemeRef.current = colorScheme;
+  /** 지금 지도에 실제로 적용된 테마. 다시 만들 필요가 있는지 가른다. */
+  const appliedColorSchemeRef = useRef(colorScheme);
   const hasCompletedInitialSetupRef = useRef(false);
 
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
@@ -130,6 +140,10 @@ export function LocationPickerOverlay({
   >("prompt");
 
   const isMapInteractive = isSdkLoaded && isInitialSetupComplete;
+  // 테마 때문에 지도를 다시 만들 때 조작 가능 상태를 그대로 물려주려고 든다.
+  // 값 변화가 재생성을 부르면 안 되므로 의존성이 아니라 ref 로 읽는다.
+  const isMapInteractiveRef = useRef(isMapInteractive);
+  isMapInteractiveRef.current = isMapInteractive;
   const isLocatingMyPosition = locationRequestStatus === "pending";
 
   const completeInitialSetup = useCallback(() => {
@@ -268,6 +282,25 @@ export function LocationPickerOverlay({
     [],
   );
 
+  const attachMapListeners = useCallback(
+    (map: naver.maps.Map) => {
+      window.naver.maps.Event.addListener(map, "dragstart", () => {
+        setIsMapMoving(true);
+        setIsCentered(false);
+      });
+
+      window.naver.maps.Event.addListener(map, "idle", () => {
+        const center = map.getCenter();
+        const lat = center.lat();
+        const lng = center.lng();
+        setCurrentCoords({ lat, lng });
+        setIsMapMoving(false);
+        updateAddressFromCoords(lat, lng);
+      });
+    },
+    [updateAddressFromCoords],
+  );
+
   // 지도 초기화 및 초기 위치·주소 설정
   useEffect(() => {
     if (!isSdkLoaded || !mapRef.current || mapInstanceRef.current) return;
@@ -276,16 +309,12 @@ export function LocationPickerOverlay({
 
     const mapOptions = {
       center: new window.naver.maps.LatLng(startCoords.lat, startCoords.lng),
-      zoom: 17,
-      logoControl: false,
-      mapDataControl: false,
-      scaleControl: false,
-      zoomControl: false,
+      zoom: PICKER_MAP_ZOOM,
+      ...PICKER_MAP_CONTROL_OPTIONS,
       draggable: false,
       scrollWheel: false,
       pinchZoom: false,
-      // 홈 지도와 같은 테마로 띄운다. 오버레이가 떠 있는 동안에는 테마를 바꿀
-      // 수단이 없어 만들 때 한 번 읽으면 된다.
+      // 홈 지도와 같은 테마로 띄운다.
       ...getNaverMapStyleOptions(colorSchemeRef.current),
     };
 
@@ -324,25 +353,44 @@ export function LocationPickerOverlay({
       if (initialCoords) setIsCentered(false);
     }
 
-    window.naver.maps.Event.addListener(map, "dragstart", () => {
-      setIsMapMoving(true);
-      setIsCentered(false);
-    });
-
-    window.naver.maps.Event.addListener(map, "idle", () => {
-      const center = map.getCenter();
-      const lat = center.lat();
-      const lng = center.lng();
-      setCurrentCoords({ lat, lng });
-      setIsMapMoving(false);
-      updateAddressFromCoords(lat, lng);
-    });
+    attachMapListeners(map);
   }, [
+    attachMapListeners,
     completeInitialSetup,
     initialCoords,
     isSdkLoaded,
     updateAddressFromCoords,
   ]);
+
+  // 시스템 테마를 따라가는 중에 OS 설정이 바뀌면 색이 달라진다. 만들어진 지도에
+  // 커스텀 스타일을 다시 붙이는 API 가 없어(홈 지도와 같은 이유) 보던 위치를
+  // 유지한 채 다시 만든다.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const container = mapRef.current;
+    if (!map || !container) return;
+    if (appliedColorSchemeRef.current === colorScheme) return;
+
+    appliedColorSchemeRef.current = colorScheme;
+
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    map.destroy();
+
+    const isInteractive = isMapInteractiveRef.current;
+    const nextMap = new window.naver.maps.Map(container, {
+      center: new window.naver.maps.LatLng(center.lat(), center.lng()),
+      zoom,
+      ...PICKER_MAP_CONTROL_OPTIONS,
+      draggable: isInteractive,
+      scrollWheel: isInteractive,
+      pinchZoom: isInteractive,
+      ...getNaverMapStyleOptions(colorScheme),
+    });
+
+    mapInstanceRef.current = nextMap;
+    attachMapListeners(nextMap);
+  }, [attachMapListeners, colorScheme]);
 
   useEffect(() => {
     if (!isMapInteractive || !mapInstanceRef.current) return;
