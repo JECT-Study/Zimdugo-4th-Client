@@ -64,6 +64,26 @@ export const withoutSearchContextParams = (
   return next;
 };
 
+/**
+ * 상세를 열 때 붙는 파라미터를 모두 뗀다.
+ *
+ * 상세를 닫는 길이 여럿(검색 뒤로가기, 지도 뒤로가기, 딥링크 처리 실패)이라, 목록을
+ * 각자 적어 두면 한 곳만 고쳐져 닫은 화면을 새로고침했을 때 상세가 되살아난다.
+ */
+export const withoutLockerDetailParams = (
+  params: SearchUrlParams,
+): SearchUrlParams => {
+  const next = { ...params };
+
+  delete next.locker;
+  delete next.openLockerId;
+  delete next.detailSnap;
+  delete next.focusLat;
+  delete next.focusLng;
+
+  return next;
+};
+
 export const withLockerDetailParam = (
   params: SearchUrlParams,
   lockerSlug: string,

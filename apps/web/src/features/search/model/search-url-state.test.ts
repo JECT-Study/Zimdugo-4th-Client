@@ -3,6 +3,7 @@ import {
   readSearchPlaceIdParam,
   readSearchQueryParam,
   withLockerDetailParam,
+  withoutLockerDetailParams,
   withoutSearchContextParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
@@ -115,5 +116,36 @@ describe("search-url-state", () => {
       searchPlaceId: 7,
       locker: "123-coex-locker",
     });
+  });
+});
+
+describe("withoutLockerDetailParams", () => {
+  it("상세를 열 때 붙는 파라미터를 모두 뗀다", () => {
+    // 지도에서 핀을 고른 뒤 뒤로 나와도 이 값들이 남아 있어, 새로고침하면 닫았던
+    // 상세가 다시 열렸다.
+    expect(
+      withoutLockerDetailParams({
+        q: "강남역",
+        locker: "500-강남역",
+        openLockerId: 500,
+        detailSnap: "full",
+        focusLat: 37.5,
+        focusLng: 127,
+      }),
+    ).toEqual({ q: "강남역" });
+  });
+
+  it("검색 컨텍스트 파라미터는 건드리지 않는다", () => {
+    expect(
+      withoutLockerDetailParams({ q: "강남역", searchPlaceId: 42 }),
+    ).toEqual({ q: "강남역", searchPlaceId: 42 });
+  });
+
+  it("원본을 바꾸지 않는다", () => {
+    const params = { locker: "500-강남역" };
+
+    withoutLockerDetailParams(params);
+
+    expect(params.locker).toBe("500-강남역");
   });
 });

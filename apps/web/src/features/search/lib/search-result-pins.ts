@@ -10,13 +10,14 @@ const toLockerPin = (
   latitude: number,
   longitude: number,
   markerStatus?: LockerPinItemResponse["markerStatus"],
+  isFavorite: boolean | null = null,
 ): LockerPinItemResponse => ({
   pinType: "LOCKER",
   lockerId,
   placeId: null,
   latitude,
   longitude,
-  isFavorite: null,
+  isFavorite,
   lockerCount: null,
   pinCount: null,
   bounds: null,
@@ -35,6 +36,7 @@ const toPlacePin = (
   lockerId: null,
   latitude,
   longitude,
+  // 장소 핀은 보관함 하나를 가리키지 않으므로 즐겨찾기가 없다.
   isFavorite: null,
   lockerCount,
   pinCount: null,
@@ -70,6 +72,7 @@ export const searchLockerItemToPin = (
     item.latitude,
     item.longitude,
     getLockerMarkerStatus(item),
+    item.isFavorite ?? null,
   );
 };
 
@@ -99,6 +102,7 @@ export const searchResultItemsToPins = (
         item.latitude,
         item.longitude,
         getLockerMarkerStatus(item),
+        item.isFavorite ?? null,
       ),
     ];
   });
