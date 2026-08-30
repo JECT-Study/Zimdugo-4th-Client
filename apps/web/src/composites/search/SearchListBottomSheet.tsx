@@ -586,15 +586,26 @@ export function SearchListBottomSheet({
         return;
       }
 
-      // 스크롤 영역의 위아래 여백은 목록 바깥이라 offsetHeight 에 안 잡힌다.
-      const scrollAreaStyle = window.getComputedStyle(scrollArea);
-      const scrollAreaPadding =
-        Number.parseFloat(scrollAreaStyle.paddingTop) +
-        Number.parseFloat(scrollAreaStyle.paddingBottom);
+      // 목록을 감싼 여백들은 목록 바깥이라 offsetHeight 에 안 잡힌다. 빼먹으면
+      // 그만큼 시트가 짧아져 마지막 줄이 잘린다.
+      const paddingOf = (element: HTMLElement) => {
+        const style = window.getComputedStyle(element);
+
+        return (
+          Number.parseFloat(style.paddingTop) +
+          Number.parseFloat(style.paddingBottom)
+        );
+      };
+      const column = scrollArea.parentElement;
       const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
 
       setFullContentHeight(
-        Math.ceil(list.offsetHeight + headerHeight + scrollAreaPadding),
+        Math.ceil(
+          list.offsetHeight +
+            headerHeight +
+            paddingOf(scrollArea) +
+            (column ? paddingOf(column) : 0),
+        ),
       );
     };
 

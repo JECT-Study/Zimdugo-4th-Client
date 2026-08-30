@@ -606,9 +606,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       getSheetRoot().queryByRole("region", { name: "실시간 이용 가능" }),
     ).toBeNull();
-    // 8 은 콘텐츠 위 여백, 32 는 시트 세 개가 함께 쓰는 아래 여유다.
+    // 8 은 콘텐츠 위 여백, 24 는 시트 손잡이 자리, 32 는 아래 여유다.
     expect(halfMinSnapPoint).toBe(
-      812 - (FULL_CONTENT_HEIGHT + ACTION_FOOTER_HEIGHT + 8 + 32),
+      812 - (FULL_CONTENT_HEIGHT + ACTION_FOOTER_HEIGHT + 8 + 24 + 32),
     );
 
     rerender(

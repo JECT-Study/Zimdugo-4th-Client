@@ -377,18 +377,19 @@ describe("resolveSheetFullSnapPoint", () => {
 
   it("콘텐츠가 짧으면 그 높이만큼만 올린다", () => {
     // 결과가 두어 개인데도 화면 꼭대기까지 덮던 것을 고친 것이다.
-    // 812 - 320 - 여유 32 = 460
+    // 812 - 320 - 손잡이 24 - 여유 32 = 436
     expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 320 })).toBe(
-      460,
+      436,
     );
   });
 
-  it("콘텐츠 아래에 여유를 남긴다", () => {
-    // 딱 맞추면 마지막 항목이 화면 바닥에 붙어 잘린 것처럼 보인다.
+  it("손잡이 자리와 아래 여유를 함께 남긴다", () => {
+    // 딱 맞추면 마지막 항목이 화면 바닥에 붙어 잘린 것처럼 보인다. 손잡이는 시트
+    // 프레임이 콘텐츠 위에 늘 두는 자리라 재는 쪽에서 안 잡힌다.
     const withGap = resolveSheetFullSnapPoint({ ...base, contentHeight: 320 });
     const withoutGap = base.windowHeight - 320;
 
-    expect(withoutGap - withGap).toBe(32);
+    expect(withoutGap - withGap).toBe(24 + 32);
   });
 
   it("콘텐츠가 길면 상한에서 멈춘다", () => {
@@ -419,6 +420,6 @@ describe("resolveSheetFullSnapPoint", () => {
   });
 
   it("콘텐츠가 아주 짧아도 최대 스냅을 넘지 않는다", () => {
-    expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 10 })).toBe(760);
+    expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 10 })).toBe(746);
   });
 });

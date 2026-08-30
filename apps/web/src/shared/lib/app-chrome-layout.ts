@@ -1,3 +1,5 @@
+import { BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX } from "@repo/ui/components/bottom-sheet-frame";
+
 /**
  * 화면 위쪽 크롬(헤더 + 검색 바) 이 차지하는 자리.
  *
@@ -76,8 +78,15 @@ export const resolveSheetFullSnapPoint = ({
     return Math.min(maxSnapPoint, topLimitPx);
   }
 
+  /*
+   * 손잡이 자리는 시트 프레임이 콘텐츠 위에 늘 두는 것이라, 재는 쪽에서는 안 잡힌다.
+   * 빼먹으면 그 높이만큼 시트가 짧아져 마지막 줄이 잘린다.
+   */
   const contentBasedOffset =
-    windowHeight - contentHeight - SHEET_CONTENT_BOTTOM_GAP_PX;
+    windowHeight -
+    contentHeight -
+    BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX -
+    SHEET_CONTENT_BOTTOM_GAP_PX;
 
   return Math.min(maxSnapPoint, Math.max(topLimitPx, contentBasedOffset));
 };

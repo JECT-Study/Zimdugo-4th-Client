@@ -67,11 +67,11 @@ describe("SearchListBottomSheet", () => {
 
   it("결과가 짧으면 full 이 콘텐츠 높이만큼만 올라온다", () => {
     // 예전에는 결과가 두어 개여도 늘 화면 꼭대기(112)까지 덮었다.
-    // 812 - 320 - 아래 여유 32 = 460
+    // 812 - 320 - 손잡이 24 - 아래 여유 32 = 436
     expect(
       resolveSearchListSnapPoints({ windowHeight: 812, fullContentHeight: 320 })
         .minSnapPoint,
-    ).toBe(460);
+    ).toBe(436);
   });
 
   it("결과가 길면 지금처럼 상한에서 멈춘다", () => {
