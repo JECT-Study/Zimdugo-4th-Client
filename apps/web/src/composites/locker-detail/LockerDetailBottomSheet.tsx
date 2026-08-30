@@ -47,6 +47,8 @@ import {
 } from "#/features/locker-timer/model/locker-timer-storage";
 import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
+import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
+import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
@@ -194,7 +196,8 @@ export interface LockerDetailBottomSheetProps {
   onTimerAutoOpenHandled?: () => void;
 }
 
-export const LOCKER_DETAIL_FULL_TOP_OFFSET = 112;
+export { SHEET_TOP_LIMIT_PX as LOCKER_DETAIL_FULL_TOP_OFFSET } from "#/shared/lib/app-chrome-layout";
+
 const DETAIL_CONTENT_TOP_PADDING = 8;
 const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
@@ -252,6 +255,8 @@ interface LockerDetailSheetSnapRequest {
 
 interface ResolveLockerDetailSnapPointsOptions {
   windowHeight: number;
+  /** 노치에 덮이는 높이. full 상한을 그만큼 함께 내린다. */
+  safeAreaInsetTopPx?: number;
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
@@ -328,10 +333,12 @@ export const resolveLockerDetailSnapPoints = ({
   snapPoint,
   windowHeight,
   actionFooterHeightPx = DETAIL_ACTION_FOOTER_HEIGHT,
+  safeAreaInsetTopPx = 0,
 }: ResolveLockerDetailSnapPointsOptions) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
-  const resolvedFullTopOffset = minSnapPoint ?? LOCKER_DETAIL_FULL_TOP_OFFSET;
+  const resolvedFullTopOffset =
+    minSnapPoint ?? resolveSheetTopLimitPx(safeAreaInsetTopPx);
   const resolvedMinSnapPoint = resolveLockerDetailFullSnapPoint({
     contentHeight: fullContentHeight,
     maxSnapPoint: resolvedMaxSnapPoint,
@@ -385,6 +392,7 @@ export function LockerDetailBottomSheet({
   onTimerAutoOpenHandled,
 }: LockerDetailBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
+  const safeAreaInsetTop = useSafeAreaInsetTop();
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
   const [isTimerOpen, setIsTimerOpen] = useState(false);
@@ -484,6 +492,7 @@ export function LockerDetailBottomSheet({
     windowHeight,
     fullContentHeight,
     actionFooterHeightPx: actionFooterHeight,
+    safeAreaInsetTopPx: safeAreaInsetTop,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined

@@ -16,12 +16,13 @@ import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
 import { inSheetHeader } from "#/features/search/ui/search-results-heading/SearchResultsHeading.css.ts";
 import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
+import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import {
   type EnglishSubPolicy,
   resolveEnglishSubVisibility,
 } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
-import { readSafeAreaInsetTopPx } from "#/shared/lib/safe-area-inset";
+import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
 import {
   type BottomSheetLiveOffsetState,
   type BottomSheetSnapRequest,
@@ -111,21 +112,6 @@ interface ActiveSort {
   direction: SearchSortDirection;
 }
 
-/**
- * full 로 올린 시트가 넘어서면 안 되는 선.
- *
- * 검색 바 바닥(60 + 48) 에 간격 4 를 더한 값이다. 시트는 z-index 1000 이라 이 선을
- * 넘으면 검색 바를 덮어 아무것도 누를 수 없게 된다.
- *
- * 안전 영역은 여기에 안 들어 있다. 검색 바는 CSS 로 env(safe-area-inset-top) 만큼
- * 내려가는데 이 값은 뷰포트 꼭대기 기준이라, 노치 기기에서는 둘이 그만큼 어긋난다.
- * 실제 선은 resolveSearchListMinTopOffset 이 정한다.
- */
-const SEARCH_LIST_MIN_TOP_OFFSET = 112;
-
-/** 안전 영역만큼 함께 내려간 시트 상한. */
-export const resolveSearchListMinTopOffset = (safeAreaInsetTopPx: number) =>
-  SEARCH_LIST_MIN_TOP_OFFSET + Math.max(0, safeAreaInsetTopPx);
 const SEARCH_LIST_DISMISS_VISIBLE_HEIGHT = 52;
 const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT = 481;
 const SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO = 0.42;
@@ -278,7 +264,7 @@ export const resolveSearchListSnapPoints = ({
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
   const resolvedMinSnapPoint =
-    minSnapPoint ?? resolveSearchListMinTopOffset(safeAreaInsetTopPx);
+    minSnapPoint ?? resolveSheetTopLimitPx(safeAreaInsetTopPx);
   const resolvedSnapPoint =
     snapPoint ??
     resolveSearchListSnapOffset({
@@ -340,7 +326,7 @@ export function SearchListBottomSheet({
   children,
 }: SearchListBottomSheetProps) {
   const [windowHeight, setWindowHeight] = useState(812);
-  const [safeAreaInsetTop, setSafeAreaInsetTop] = useState(0);
+  const safeAreaInsetTop = useSafeAreaInsetTop();
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
@@ -556,11 +542,7 @@ export function SearchListBottomSheet({
   }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
   useEffect(() => {
-    // 화면을 돌리면 안전 영역도 바뀌므로 높이와 같이 다시 읽는다.
-    const handleResize = () => {
-      setWindowHeight(window.innerHeight);
-      setSafeAreaInsetTop(readSafeAreaInsetTopPx());
-    };
+    const handleResize = () => setWindowHeight(window.innerHeight);
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);

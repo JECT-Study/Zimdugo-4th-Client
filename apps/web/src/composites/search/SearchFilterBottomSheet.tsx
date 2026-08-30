@@ -5,6 +5,8 @@ import { LabelTitle } from "@repo/ui/components/label-title";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
+import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
+import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
 import {
   type BottomSheetLiveOffsetState,
   DraggableBottomSheet,
@@ -48,7 +50,6 @@ export interface SearchFilterBottomSheetProps {
   onSnapChange?: (nextSnap: number) => void;
 }
 
-const SEARCH_FILTER_FULL_TOP_OFFSET = 112;
 const LEGACY_SEARCH_FILTER_FULL_TOP_OFFSET = 52;
 const SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT = 24;
 const SEARCH_FILTER_DRAG_SENSITIVITY = 1.2;
@@ -60,6 +61,8 @@ const SEARCH_BOTTOM_SHEET_SNAP_BEHAVIOR: SearchBottomSheetSnapBehavior =
 
 interface ResolveSearchFilterSnapPointsOptions {
   windowHeight: number;
+  /** 노치에 덮이는 높이. full 상한을 그만큼 함께 내린다. */
+  safeAreaInsetTopPx?: number;
   behavior?: SearchBottomSheetSnapBehavior;
   minSnapPoint?: number;
   snapPoint?: number;
@@ -96,6 +99,7 @@ export const resolveSearchFilterSnapPoints = ({
   snapPoint,
   windowHeight,
   contentHeight,
+  safeAreaInsetTopPx = 0,
 }: ResolveSearchFilterSnapPointsOptions) => {
   if (behavior === "legacy") {
     return resolveLegacySearchFilterSnapPoints({
@@ -108,15 +112,15 @@ export const resolveSearchFilterSnapPoints = ({
 
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT;
-  const maxFullVisibleHeight = windowHeight - SEARCH_FILTER_FULL_TOP_OFFSET;
+  const fullTopOffset = resolveSheetTopLimitPx(safeAreaInsetTopPx);
+  const maxFullVisibleHeight = windowHeight - fullTopOffset;
   const resolvedContentHeight =
     contentHeight !== undefined
       ? Math.min(contentHeight, maxFullVisibleHeight)
       : maxFullVisibleHeight;
   const contentBasedTopOffset = windowHeight - resolvedContentHeight;
   const resolvedMinSnapPoint =
-    minSnapPoint ??
-    Math.max(SEARCH_FILTER_FULL_TOP_OFFSET, contentBasedTopOffset);
+    minSnapPoint ?? Math.max(fullTopOffset, contentBasedTopOffset);
   const resolvedSnapPoint = snapPoint ?? resolvedMinSnapPoint;
 
   return {
@@ -152,6 +156,7 @@ export function SearchFilterBottomSheet({
 }: SearchFilterBottomSheetProps) {
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
   const [windowHeight, setWindowHeight] = useState(812);
+  const safeAreaInsetTop = useSafeAreaInsetTop();
   const [contentHeight, setContentHeight] = useState<number | undefined>();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const actionBarRef = useRef<HTMLDivElement>(null);
@@ -167,6 +172,7 @@ export function SearchFilterBottomSheet({
     snapPoint,
     windowHeight,
     contentHeight,
+    safeAreaInsetTopPx: safeAreaInsetTop,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined

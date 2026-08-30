@@ -1,5 +1,9 @@
 import { appShellMaxWidth } from "@repo/ui/tokens/layout/layout.css";
 import type { CSSProperties } from "react";
+import {
+  MAP_CONTROL_TOP_LIMIT_PX,
+  resolveMapControlTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
 
 /** `-index.css.ts` locationControlStack의 하단 위치와 동기화 */
 export const MAP_CONTROL_BOTTOM = "70px";
@@ -25,16 +29,6 @@ export const MAP_CONTROL_SHEET_GAP_PX = 12;
 const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
 
 /**
- * 컨트롤 스택 상단이 넘어서면 안 되는 경계.
- * 검색 바 하단(safe-area + 60 + 48)에 간격 12 를 더한 값이다.
- */
-const MAP_CONTROL_TOP_LIMIT_PX = 120;
-
-/** 스택과 상단 경계가 함께 요구하는 세로 공간 */
-const MAP_CONTROL_TOP_RESERVED_PX =
-  MAP_CONTROL_TOP_LIMIT_PX + MAP_CONTROL_STACK_HEIGHT_PX;
-
-/**
  * 조건부 컨트롤까지 포함한 예약 높이.
  *
  * 보관 타이머처럼 있을 때만 서는 버튼이 있으면 스택이 그만큼 위로 자란다. 이를
@@ -44,8 +38,21 @@ const MAP_CONTROL_TOP_RESERVED_PX =
  * 스켈레톤은 이 함수를 쓰지 않는다. 하이드레이션 전이라 어떤 조건부 컨트롤이
  * 설지 알 수 없고, 그 시점에는 어차피 두 개만 그린다.
  */
-export const resolveMapControlTopReservedPx = (extraStackHeightPx: number) =>
-  MAP_CONTROL_TOP_RESERVED_PX +
+/**
+ * 안전 영역을 뺀 예약 높이.
+ *
+ * 하이드레이션 전에도 같은 판정을 해야 하는 자리(스켈레톤, CSS 미디어 쿼리)가 쓴다.
+ * 그 시점에는 안전 영역을 잴 수 없고, 미디어 쿼리에는 런타임 값을 넣을 수도 없다.
+ */
+const MAP_CONTROL_TOP_RESERVED_PX =
+  MAP_CONTROL_TOP_LIMIT_PX + MAP_CONTROL_STACK_HEIGHT_PX;
+
+export const resolveMapControlTopReservedPx = (
+  extraStackHeightPx: number,
+  safeAreaInsetTopPx = 0,
+) =>
+  resolveMapControlTopLimitPx(safeAreaInsetTopPx) +
+  MAP_CONTROL_STACK_HEIGHT_PX +
   (extraStackHeightPx > 0
     ? extraStackHeightPx + MAP_CONTROL_FALLBACK_GAP_PX
     : 0);

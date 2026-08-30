@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchListBottomSheet";
 import {
-  resolveSearchListMinTopOffset,
-  resolveSearchListStageVisibleHeight,
-} from "#/composites/search/SearchListBottomSheet";
+  resolveMapControlTopLimitPx,
+  resolveSheetTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
 import {
   resolveMapControlBottomPx,
   resolveVisibleSheetKind,
@@ -347,19 +348,25 @@ describe("resolveVisibleSheetKind", () => {
   });
 });
 
-describe("resolveSearchListMinTopOffset", () => {
+describe("크롬 아래 경계", () => {
   it("안전 영역이 없으면 검색 바 바닥 바로 아래에 선을 둔다", () => {
     // 검색 바는 60px 에서 시작해 48px 높이라 바닥이 108px 이다.
-    expect(resolveSearchListMinTopOffset(0)).toBe(112);
+    expect(resolveSheetTopLimitPx(0)).toBe(112);
   });
 
   it("노치 기기에서는 검색 바가 내려간 만큼 선도 내린다", () => {
     // 예전에는 이 선이 112 로 고정이라, 안전 영역이 4px 만 넘어도 full 시트가
     // 검색 바를 덮어 아무것도 누를 수 없었다.
-    expect(resolveSearchListMinTopOffset(59)).toBe(171);
+    expect(resolveSheetTopLimitPx(59)).toBe(171);
   });
 
   it("음수가 들어와도 선을 끌어올리지 않는다", () => {
-    expect(resolveSearchListMinTopOffset(-20)).toBe(112);
+    expect(resolveSheetTopLimitPx(-20)).toBe(112);
+  });
+
+  it("지도 컨트롤도 같은 안전 영역만큼 내려간다", () => {
+    // 시트보다 간격을 넓게(12px) 두는 것 말고는 같은 기준이다.
+    expect(resolveMapControlTopLimitPx(0)).toBe(120);
+    expect(resolveMapControlTopLimitPx(59)).toBe(179);
   });
 });
