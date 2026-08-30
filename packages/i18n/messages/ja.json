@@ -15,7 +15,7 @@
   "settings_withdraw": "退会",
   "settings_version_prefix": "バージョン",
   "settings_dark_mode": "テーマ設定",
-  "settings_theme_system": "端末の設定に従う",
+  "settings_theme_system": "システムのデフォルト",
   "settings_theme_light": "ライト",
   "settings_theme_dark": "ダーク",
   "settings_withdraw_title": "本当に退会しますか？",

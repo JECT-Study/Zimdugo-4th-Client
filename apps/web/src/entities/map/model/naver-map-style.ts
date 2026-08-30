@@ -24,12 +24,12 @@ export const DEFAULT_MAP_COLOR_SCHEME: MapColorScheme = MAP_COLOR_SCHEMES.Light;
 const NAVER_MAP_GL_SUBMODULE = "gl";
 
 /**
- * 검증용 임시 스위치. 스타일 ID 없이도 GL 벡터 지도로 띄운다.
+ * 스타일 ID 없이도 GL 벡터 지도로 띄우는 스위치.
  *
- * 배포 환경에 스타일 ID 가 아직 들어가지 않아, 실기기에서 벡터 렌더링 자체가
- * 되는지 먼저 확인하려고 켠다. 스타일 ID 가 배포에 반영되면 false 로 되돌린다.
+ * 실기기에서 벡터 렌더링 자체가 되는지 확인할 때만 잠깐 켠다. 스타일 없이 GL 만
+ * 켜면 기본 지도가 벡터로 그려져 렌더링이 달라지므로 평소에는 꺼 둔다.
  */
-const FORCE_VECTOR_MAP = true;
+const FORCE_VECTOR_MAP = false;
 
 export type NaverMapCustomStyleIds = Record<MapColorScheme, string | undefined>;
 

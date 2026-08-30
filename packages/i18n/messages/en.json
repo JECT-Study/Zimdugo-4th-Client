@@ -15,7 +15,7 @@
   "settings_withdraw": "Delete Account",
   "settings_version_prefix": "Version",
   "settings_dark_mode": "Theme Settings",
-  "settings_theme_system": "Follow device setting",
+  "settings_theme_system": "System default",
   "settings_theme_light": "Light",
   "settings_theme_dark": "Dark",
   "settings_withdraw_title": "Are you sure you want to delete your account?",
