@@ -7,13 +7,12 @@ import {
   useMemo,
   useState,
 } from "react";
-
-import { getNaverMapScriptSrc } from "./naver-map-script";
 import {
   DEFAULT_NAVER_MAP_LANGUAGE,
   type NaverMapLanguage,
   normalizeNaverMapLanguage,
 } from "./naver-map-language";
+import { getNaverMapScriptSrc } from "./naver-map-script";
 import {
   DEFAULT_MAP_COLOR_SCHEME,
   getNaverMapStyleOptions,
