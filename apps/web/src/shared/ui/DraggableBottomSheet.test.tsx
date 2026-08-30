@@ -307,6 +307,52 @@ describe("resolveBottomSheetDragIntent", () => {
 });
 
 describe("DraggableBottomSheet", () => {
+  it("full 경계가 움직여 시트를 옮기면 그 자리를 알려 준다", () => {
+    // 안 알리면 부모는 옛 단계를 그대로 들고 있는다. full 이 사라져 시트가 half 로
+    // 내려앉아도 단계는 full 로 남아, "half 일 때만" 인 규칙이 걸리지 않는다.
+    const handleSnapChange = vi.fn();
+    const { rerender } = render(
+      <DraggableBottomSheet
+        minSnapPoint={112}
+        snapPoint={471}
+        maxSnapPoint={760}
+        initialSnapPoint={112}
+        onSnapChange={handleSnapChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    handleSnapChange.mockClear();
+
+    // 결과가 줄어 full 이 사라지고 half 가 시트의 끝을 맡는다.
+    rerender(
+      <DraggableBottomSheet
+        minSnapPoint={471}
+        snapPoint={471}
+        maxSnapPoint={760}
+        initialSnapPoint={112}
+        onSnapChange={handleSnapChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleSnapChange).toHaveBeenCalledWith(471);
+  });
+
+  it("마운트 때는 자리가 그대로라 알리지 않는다", () => {
+    const handleSnapChange = vi.fn();
+
+    render(
+      <DraggableBottomSheet snapPoint={120} onSnapChange={handleSnapChange}>
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>,
+    );
+
+    expect(handleSnapChange).not.toHaveBeenCalled();
+  });
+
   it("마운트 직후 현재 오프셋을 한 번 알려 준다", () => {
     // change 만 듣고 있으면 이 값이 부모에 도달하지 않는다. 초기 스냅 동기화가
     // 돌긴 하지만 이미 같은 값이라 motion 이 알림을 걸러 버린다. 부모는 첫

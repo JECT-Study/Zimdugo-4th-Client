@@ -322,6 +322,14 @@ export function DraggableBottomSheet({
   const lastInitialSnapRef = useRef<number | null>(null);
   /** 직전 full 경계. 경계가 움직였을 때 시트가 거기 있었는지 보려고 들고 있는다. */
   const lastMinSnapRef = useRef(minSnapPoint);
+  /*
+   * 최신 onSnapChange 를 ref 로 잡는다.
+   *
+   * 호출부가 인라인 함수를 넘겨 매 렌더 정체가 바뀌므로, 의존성에 그대로 넣으면
+   * 아래 이펙트가 렌더마다 돈다.
+   */
+  const onSnapChangeRef = useRef(onSnapChange);
+  onSnapChangeRef.current = onSnapChange;
   /**
    * 이미 처리한 스냅 요청 id. 마운트 시점의 요청은 처리된 것으로 본다(snapRequest 참고).
    *
@@ -449,10 +457,24 @@ export function DraggableBottomSheet({
       : shouldFollowMinSnap
         ? minSnapPoint
         : currentClampedSnap;
+    const previousSnap = currentSnapRef.current;
     lastInitialSnapRef.current = nextInitialSnap;
     currentSnapRef.current = nextSnap;
     setCurrentSnap(nextSnap);
     sheetOffset.set(nextSnap);
+
+    /*
+     * 자리가 실제로 움직였으면 알린다.
+     *
+     * 여기서 안 알리면 부모는 옛 단계를 그대로 들고 있는다. full 이 사라져 시트가
+     * half 로 내려앉아도 단계는 full 로 남아, "half 일 때만" 인 규칙(지도를 눌러
+     * 접기)이 걸리지 않는다.
+     *
+     * 마운트 때는 두 값이 같아 알리지 않는다. 그쪽은 호출부가 따로 챙긴다.
+     */
+    if (previousSnap !== nextSnap) {
+      onSnapChangeRef.current?.(nextSnap);
+    }
   }, [resolvedInitialSnap, clampSnap, minSnapPoint, snapPoint, sheetOffset]);
 
   const settleToSnapPoint = useCallback(
