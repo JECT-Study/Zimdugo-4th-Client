@@ -7,6 +7,10 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { Popup } from "@repo/ui/components/popup";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  getNaverMapStyleOptions,
+  withNaverMapStyleSubmodules,
+} from "#/entities/map/model/naver-map-style";
 import { MapLoadingOverlay } from "#/entities/map/ui/map-skeleton/MapLoadingOverlay";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import {
@@ -33,23 +37,21 @@ export interface LocationPickerOverlayProps {
 
 const DEFAULT_COORDS = { lat: 37.4979, lng: 127.0276 }; // 강남역 정중앙
 const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
-const NAVER_MAP_CUSTOM_STYLE_ID = import.meta.env
-  .VITE_NAVER_MAP_CUSTOM_STYLE_ID;
+// 색 테마는 아직 라이트 하나뿐이라 기본값을 쓴다. 앱에 다크가 생기면 여기에
+// 현재 테마를 넘긴다.
+const NAVER_MAP_STYLE_OPTIONS = getNaverMapStyleOptions();
 
 const loadNaverMapsScript = async () => {
   if (typeof window === "undefined") return;
   if (!NAVER_MAP_CLIENT_ID) {
     throw new Error("VITE_NAVER_MAP_CLIENT_ID is required.");
   }
+  // 지도 디자인툴 스타일은 gl 서브모듈에서만 그려진다. 스타일 ID 자체는
+  // 스크립트가 아니라 지도를 만들 때 MapOptions 로 넘긴다.
   const params = new URLSearchParams({
     ncpKeyId: NAVER_MAP_CLIENT_ID,
-    submodules: "geocoder",
+    submodules: withNaverMapStyleSubmodules(["geocoder"]).join(","),
   });
-
-  // 지도 디자인툴 스타일. 없으면 기본 스타일로 뜬다. 빈 값을 붙이면 지도가 막힌다.
-  if (NAVER_MAP_CUSTOM_STYLE_ID) {
-    params.set("customStyleId", NAVER_MAP_CUSTOM_STYLE_ID);
-  }
 
   const scriptSrc = `https://openapi.map.naver.com/openapi/v3/maps.js?${params.toString()}`;
   const activeScript = document.querySelector<HTMLScriptElement>(
@@ -269,6 +271,7 @@ export function LocationPickerOverlay({
       draggable: false,
       scrollWheel: false,
       pinchZoom: false,
+      ...NAVER_MAP_STYLE_OPTIONS,
     };
 
     const map = new window.naver.maps.Map(mapRef.current, mapOptions);

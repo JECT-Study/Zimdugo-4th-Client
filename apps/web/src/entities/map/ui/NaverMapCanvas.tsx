@@ -61,7 +61,8 @@ export function NaverMapCanvas({
 }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
-  const { status, isReady, maps, error, reload } = useNaverMapSdk();
+  const { status, isReady, maps, error, reload, styleOptions } =
+    useNaverMapSdk();
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [isMapBootstrapping, setIsMapBootstrapping] = useState(false);
 
@@ -130,6 +131,9 @@ export function NaverMapCanvas({
           zoomControl: false,
           scaleControl: true,
           mapDataControl: false,
+          // 지도 디자인툴 스타일(gl, customStyleId, background). 스타일 ID 가
+          // 없으면 비어 있어 기본 스타일로 뜬다.
+          ...styleOptions,
         });
 
         if (cancelled) {
@@ -218,7 +222,9 @@ export function NaverMapCanvas({
       }
       setIsMapBootstrapping(false);
     };
-  }, [isReady, maps]);
+    // 커스텀 스타일은 만들어진 지도에 다시 붙이는 공개 API 가 없다. 테마가
+    // 바뀌면 지도를 새로 만든다.
+  }, [isReady, maps, styleOptions]);
 
   useEffect(() => {
     onLoadingChangeRef.current?.(isLoading);

@@ -13,6 +13,13 @@ import {
   type NaverMapLanguage,
   normalizeNaverMapLanguage,
 } from "./naver-map-language";
+import {
+  DEFAULT_MAP_COLOR_SCHEME,
+  getNaverMapStyleOptions,
+  type MapColorScheme,
+  type NaverMapStyleOptions,
+  withNaverMapStyleSubmodules,
+} from "./naver-map-style";
 
 export type NaverMapSdkStatus = "idle" | "loading" | "ready" | "error";
 
@@ -20,11 +27,10 @@ export interface NaverMapProviderProps {
   children: ReactNode;
   clientId?: string;
   /**
-   * 지도 디자인툴(Maps 스타일 에디터)에서 만든 스타일 ID.
-   *
-   * 비우면 네이버 기본 스타일로 그린다. 스타일 ID 는 발급한 Client ID 에 묶여 있다.
+   * 지도에 쓸 색 테마. 테마별 스타일 ID 는 환경 변수에서 읽는다
+   * (`naver-map-style.ts`).
    */
-  customStyleId?: string;
+  colorScheme?: MapColorScheme;
   language?: string;
   submodules?: string[];
 }
@@ -34,6 +40,9 @@ interface NaverMapContextValue {
   isReady: boolean;
   error: Error | null;
   language: NaverMapLanguage;
+  colorScheme: MapColorScheme;
+  /** 지도를 만들 때 MapOptions 에 펼쳐 넣을 커스텀 스타일 조각. */
+  styleOptions: NaverMapStyleOptions;
   maps: typeof naver.maps | null;
   reload: () => void;
 }
@@ -47,12 +56,10 @@ const NaverMapContext = createContext<NaverMapContextValue | null>(null);
 
 const getScriptSrc = ({
   clientId,
-  customStyleId,
   language,
   submodules,
 }: {
   clientId: string;
-  customStyleId?: string;
   language: string;
   submodules: string[];
 }) => {
@@ -61,13 +68,12 @@ const getScriptSrc = ({
     language,
   });
 
-  // 빈 값을 넘기면 스타일을 못 찾아 지도가 뜨지 않는다. 있을 때만 붙인다.
-  if (customStyleId) {
-    params.set("customStyleId", customStyleId);
-  }
+  // 커스텀 스타일은 gl 서브모듈에서만 그려진다. 스타일 ID 는 스크립트가 아니라
+  // 지도를 만들 때 MapOptions 로 넘긴다.
+  const resolvedSubmodules = withNaverMapStyleSubmodules(submodules);
 
-  if (submodules.length > 0) {
-    params.set("submodules", submodules.join(","));
+  if (resolvedSubmodules.length > 0) {
+    params.set("submodules", resolvedSubmodules.join(","));
   }
 
   return `https://openapi.map.naver.com/openapi/v3/maps.js?${params.toString()}`;
@@ -137,12 +143,10 @@ const verifyNaverMapAuth = async (clientId: string) => {
 
 const loadNaverMapSdk = async ({
   clientId,
-  customStyleId,
   language,
   submodules,
 }: {
   clientId: string;
-  customStyleId?: string;
   language: string;
   submodules: string[];
 }) => {
@@ -154,12 +158,7 @@ const loadNaverMapSdk = async ({
     throw new Error("VITE_NAVER_MAP_CLIENT_ID is required.");
   }
 
-  const scriptSrc = getScriptSrc({
-    clientId,
-    customStyleId,
-    language,
-    submodules,
-  });
+  const scriptSrc = getScriptSrc({ clientId, language, submodules });
   const activeScript = document.querySelector<HTMLScriptElement>(
     NAVER_MAP_SCRIPT_SELECTOR,
   );
@@ -191,7 +190,7 @@ const loadNaverMapSdk = async ({
 export function NaverMapProvider({
   children,
   clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID,
-  customStyleId = import.meta.env.VITE_NAVER_MAP_CUSTOM_STYLE_ID,
+  colorScheme = DEFAULT_MAP_COLOR_SCHEME,
   language = DEFAULT_NAVER_MAP_LANGUAGE,
   submodules = DEFAULT_SUBMODULES,
 }: NaverMapProviderProps) {
@@ -202,6 +201,10 @@ export function NaverMapProvider({
 
   const naverMapLanguage = normalizeNaverMapLanguage(language);
   const submoduleKey = submodules.join(",");
+  const styleOptions = useMemo(
+    () => getNaverMapStyleOptions(colorScheme),
+    [colorScheme],
+  );
 
   // submodules 는 배열이라 매 렌더 새 참조다. 그대로 의존성에 넣으면 지도
   // SDK 를 끝없이 다시 불러온다. 그래서 join 한 submoduleKey 를 쓴다.
@@ -214,7 +217,6 @@ export function NaverMapProvider({
 
     loadNaverMapSdk({
       clientId,
-      customStyleId,
       language: naverMapLanguage,
       submodules,
     })
@@ -242,7 +244,9 @@ export function NaverMapProvider({
     return () => {
       isMounted = false;
     };
-  }, [clientId, customStyleId, naverMapLanguage, submoduleKey, reloadKey]);
+    // 스크립트 URL 은 테마와 무관하다. 테마가 바뀌어도 SDK 를 다시 부르지 않고
+    // 지도만 다시 만든다(NaverMapCanvas).
+  }, [clientId, naverMapLanguage, submoduleKey, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((key) => key + 1);
@@ -254,10 +258,12 @@ export function NaverMapProvider({
       isReady: status === "ready",
       error,
       language: naverMapLanguage,
+      colorScheme,
+      styleOptions,
       maps,
       reload,
     }),
-    [error, maps, naverMapLanguage, reload, status],
+    [colorScheme, error, maps, naverMapLanguage, reload, status, styleOptions],
   );
 
   return (

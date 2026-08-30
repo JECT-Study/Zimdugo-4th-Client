@@ -4,5 +4,6 @@ export * from "./model/map-viewport-bootstrap";
 export * from "./model/map-viewport-store";
 export * from "./model/NaverMapProvider";
 export * from "./model/naver-map-language";
+export * from "./model/naver-map-style";
 export * from "./ui/map-skeleton/MapControlsSkeleton";
 export * from "./ui/NaverMapCanvas";

@@ -9,6 +9,12 @@ declare namespace naver.maps {
     draggable?: boolean;
     scrollWheel?: boolean;
     pinchZoom?: boolean;
+    /** GL 벡터 지도. 지도 디자인툴 스타일은 이 모드에서만 그려진다. */
+    gl?: boolean;
+    /** 지도 디자인툴(Maps 스타일 에디터)에서 발급한 스타일 ID. */
+    customStyleId?: string;
+    /** 타일이 오기 전에 깔아 둘 배경. 이미지 URL 또는 CSS 색상값. */
+    background?: string;
   }
 
   // biome-ignore lint/suspicious/noShadowRestrictedNames: naver maps SDK 명세의 Map 이름을 따른다
