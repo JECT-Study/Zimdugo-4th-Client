@@ -303,9 +303,15 @@ export const resolveSearchListSnapPoints = ({
     }),
     windowHeight,
   });
+  /*
+   * 호출자가 half 를 직접 주면 그것이 이 시트의 half 다. 화면에서 나온 기본값으로
+   * full 을 판정하면, 지정한 half 보다 아래에 있는 full 을 살려 두게 되어 단계 순서가
+   * 뒤집힌다.
+   */
+  const resolvedSnapPoint = snapPoint ?? halfSnapPoint;
   const fullStageSnapPoint = resolveSheetFullStageSnapPoint({
     contentHeight: fullContentHeight,
-    halfSnapPoint,
+    halfSnapPoint: resolvedSnapPoint,
     topLimitPx,
     maxSnapPoint: resolvedMaxSnapPoint,
     windowHeight,
@@ -315,8 +321,7 @@ export const resolveSearchListSnapPoints = ({
    * 시트가 픽셀에서 단계를 되찾지 못한다.
    */
   const resolvedMinSnapPoint =
-    minSnapPoint ?? fullStageSnapPoint ?? halfSnapPoint;
-  const resolvedSnapPoint = snapPoint ?? halfSnapPoint;
+    minSnapPoint ?? fullStageSnapPoint ?? resolvedSnapPoint;
   const resolvedMiniSnapPoint = resolveSearchListSnapOffset({
     maxSnapPoint: resolvedMaxSnapPoint,
     minSnapPoint: stageFloorPx,

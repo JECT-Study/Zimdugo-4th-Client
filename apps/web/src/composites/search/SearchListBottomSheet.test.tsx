@@ -114,6 +114,19 @@ describe("SearchListBottomSheet", () => {
     expect(snaps.snapPoint).toBeLessThanOrEqual(snaps.miniSnapPoint ?? 0);
   });
 
+  it("호출자가 준 half 를 기준으로 full 이 설 자리를 판정한다", () => {
+    // 화면 기준 half(471) 로 판정하면 콘텐츠 full(436) 이 살아남아, 지정한 half(120)
+    // 보다 아래에 놓인다. 시트는 요청받은 120 을 436 으로 잘라 full 로 열린다.
+    const snaps = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      snapPoint: 120,
+      fullContentHeight: 320,
+    });
+
+    expect(snaps.snapPoint).toBe(120);
+    expect(snaps.minSnapPoint).toBeLessThanOrEqual(120);
+  });
+
   it("결과가 길면 full 이 콘텐츠 높이만큼만 올라온다", () => {
     expect(
       resolveSearchListSnapPoints({ windowHeight: 812, fullContentHeight: 320 })
