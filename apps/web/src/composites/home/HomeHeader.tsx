@@ -300,20 +300,6 @@ export function HomeHeader({
         className={styles.actions}
         style={fallbackStyle(actionsFallbackStyle)}
       >
-        <button
-          type="button"
-          className={styles.colorSchemeButton}
-          style={fallbackStyle(circleActionFallbackStyle)}
-          aria-pressed={mapColorScheme === "dark"}
-          aria-label={
-            mapColorScheme === "dark"
-              ? m.home_map_light_mode_aria()
-              : m.home_map_dark_mode_aria()
-          }
-          onClick={onMapColorSchemePress}
-        >
-          <IconMapColorScheme24 scheme={mapColorScheme} />
-        </button>
         <motion.div
           ref={languageDropdownRef}
           className={[
@@ -411,6 +397,20 @@ export function HomeHeader({
             ) : null}
           </AnimatePresence>
         </motion.div>
+        <button
+          type="button"
+          className={styles.colorSchemeButton}
+          style={fallbackStyle(circleActionFallbackStyle)}
+          aria-pressed={mapColorScheme === "dark"}
+          aria-label={
+            mapColorScheme === "dark"
+              ? m.home_map_light_mode_aria()
+              : m.home_map_dark_mode_aria()
+          }
+          onClick={onMapColorSchemePress}
+        >
+          <IconMapColorScheme24 scheme={mapColorScheme} />
+        </button>
         <button
           type="button"
           className={styles.profileButton}

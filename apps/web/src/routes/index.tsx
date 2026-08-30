@@ -605,6 +605,8 @@ export function IndexPage() {
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
   /** 딥링크 상세 카메라를 이미 맞춘 보관함. 지도를 다시 만들어도 되풀이하지 않는다. */
   const focusedDeepLinkLockerIdRef = useRef<number | undefined>(undefined);
+  /** 검색 범위를 이미 맞춘 조건. 지도를 다시 만들었다는 이유만으로 되풀이하지 않는다. */
+  const fittedSearchBoundsRef = useRef<string | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
     null,
   );
@@ -2490,6 +2492,10 @@ export function IndexPage() {
       setContext("map");
       setMapDetailBack("idle");
       pinSelectedInAppRef.current = false;
+      // openLockerId 로 들어와도 URL 은 곧 locker 파라미터로 정규화된다. 여기서
+      // 기록해 두지 않으면 테마를 바꿔 지도를 다시 만들 때 새 딥링크로 보고
+      // 사용자가 옮겨 둔 카메라를 상세 위치로 되돌린다.
+      focusedDeepLinkLockerIdRef.current = lockerId;
 
       if (pin) {
         deepLinkMapCenterRef.current = {
@@ -3139,10 +3145,12 @@ export function IndexPage() {
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
+      fittedSearchBoundsRef.current = null;
       return;
     }
 
     if (context === "map") {
+      fittedSearchBoundsRef.current = null;
       return;
     }
 
@@ -3151,6 +3159,7 @@ export function IndexPage() {
       : keywordSearchResults?.bounds;
 
     if (!bounds) {
+      fittedSearchBoundsRef.current = null;
       return;
     }
 
@@ -3158,6 +3167,15 @@ export function IndexPage() {
       sheetMode,
       windowHeight,
     });
+
+    // 테마를 바꾸면 지도를 새로 만든다. 그 이유만으로 범위를 다시 맞추면
+    // 사용자가 드래그해 둔 위치가 검색 결과 전체 범위로 덮인다. 범위·시트·
+    // 화면 높이가 실제로 달라졌을 때만 맞춘다.
+    const fitSignature = JSON.stringify({ bounds, bottomPadding });
+    if (fittedSearchBoundsRef.current === fitSignature) {
+      return;
+    }
+    fittedSearchBoundsRef.current = fitSignature;
 
     fitNaverMapToBounds({
       map: mapInstance,

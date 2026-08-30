@@ -70,7 +70,20 @@ const loadNaverMapsScript = async () => {
 
   // 파라미터가 같은 스크립트일 때만 재사용한다. 아무 maps.js 나 받아들이면
   // gl 없이 실린 SDK 를 그대로 써서 customStyleId 가 조용히 무시된다.
-  if (activeScript?.src === scriptSrc && window.naver?.maps?.Service) {
+  if (activeScript?.src === scriptSrc) {
+    // 아직 내려받는 중일 수 있다. 그때 새로 붙이면 같은 SDK 를 두 번 받아
+    // 초기화가 서로 겹친다. 이미 붙은 것의 결과를 기다린다.
+    if (!window.naver?.maps) {
+      await new Promise<void>((resolve, reject) => {
+        activeScript.addEventListener("load", () => resolve(), { once: true });
+        activeScript.addEventListener(
+          "error",
+          () => reject(new Error("Naver Maps SDK Load Failed")),
+          { once: true },
+        );
+      });
+    }
+
     await waitForNaverMapSdkReady();
     return;
   }
