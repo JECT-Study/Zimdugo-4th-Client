@@ -99,6 +99,26 @@ describe("map-color-scheme-store", () => {
     expect(result.current.colorScheme).toBe("light");
   });
 
+  it("헤더 전환이 기기 설정과 같아지면 시스템 기본값으로 되돌린다", async () => {
+    stubMatchMedia(true);
+    const { useMapColorScheme, useMapColorSchemePreference } =
+      await importStore();
+
+    const { result } = renderHook(() => ({
+      ...useMapColorScheme(),
+      ...useMapColorSchemePreference(),
+    }));
+
+    // 기기가 다크다. 한 번 누르면 라이트로 고정된다.
+    act(() => result.current.toggleColorScheme());
+    expect(result.current.preference).toBe("light");
+
+    // 다시 누르면 다크가 되는데 기기 설정과 같으므로 고정하지 않는다.
+    act(() => result.current.toggleColorScheme());
+    expect(result.current.preference).toBe("system");
+    expect(result.current.colorScheme).toBe("dark");
+  });
+
   it("고른 값을 저장해 다음 방문에 되살린다", async () => {
     stubMatchMedia(true);
     const first = await importStore();

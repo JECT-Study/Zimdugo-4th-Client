@@ -53,6 +53,8 @@ export interface SettingsPageViewProps {
   onBack: () => void;
   onLanguagePress: () => void;
   onThemePress?: () => void;
+  /** 테마 행에 표시할 현재 선택값 */
+  themeValue?: string;
   onNoticePress: () => void;
   onTermsPress: () => void;
   onPrivacyPress: () => void;
@@ -65,6 +67,7 @@ export function SettingsPageView({
   onBack,
   onLanguagePress,
   onThemePress,
+  themeValue,
   onNoticePress,
   onTermsPress,
   onPrivacyPress,
@@ -153,6 +156,7 @@ export function SettingsPageView({
               />
               <SettingsRow
                 label={m.settings_dark_mode()}
+                value={themeValue}
                 onPress={onThemePress}
               />
             </section>
@@ -187,6 +191,7 @@ export function SettingsPageView({
             />
             <SettingsRow
               label={m.settings_dark_mode()}
+              value={themeValue}
               onPress={onThemePress}
             />
           </section>

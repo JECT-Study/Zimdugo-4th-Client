@@ -75,11 +75,18 @@ const useMapColorSchemeStore = create<MapColorSchemeStore>((set, get) => ({
     set({ preference });
   },
   toggleColorScheme: () => {
-    // 헤더 버튼은 지금 보이는 색의 반대를 명시적으로 고른다. 시스템을 따르던
-    // 중이었다면 그 선택을 덮어쓴다.
+    // 헤더 버튼은 지금 보이는 색의 반대로 넘긴다.
+    //
+    // 넘어간 색이 기기 설정과 같아지면 명시적으로 고정하지 않고 "시스템 기본값"
+    // 으로 되돌린다. 고정해 버리면 한 번 누른 뒤로는 기기 설정을 영영 따르지
+    // 않게 되고, 되돌리려면 설정 화면까지 들어가야 한다.
     const { preference, systemColorScheme } = get();
-    const current = resolveColorScheme(preference, systemColorScheme);
-    get().setPreference(current === "dark" ? "light" : "dark");
+    const next =
+      resolveColorScheme(preference, systemColorScheme) === "dark"
+        ? "light"
+        : "dark";
+
+    get().setPreference(next === systemColorScheme ? "system" : next);
   },
   hydrate: () => {
     if (get().isHydrated) return;

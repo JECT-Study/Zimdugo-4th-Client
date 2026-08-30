@@ -8,12 +8,14 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
+import { useMapColorSchemePreference } from "#/entities/map";
 import { useUser } from "#/entities/user/hooks/useUser";
 import { authService } from "#/features/auth/sign-in/api/authService";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { resolveSocialProviders } from "#/features/settings/lib/resolve-social-providers";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
+import { getMapColorSchemeLabel } from "#/features/settings/ui/MapColorSchemeSettingList";
 import { SettingsPageView } from "#/features/settings/ui/SettingsPageView";
 import {
   SettingsHeaderSkeleton,
@@ -37,6 +39,8 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
   const { isAuthenticated, logout } = useAuth();
   const handleBack = useBackNavigation("/");
+  const { preference: mapColorSchemePreference } =
+    useMapColorSchemePreference();
   const isSettingsRoot = useRouterState({
     select: (state) =>
       stripLocalePathPrefix(state.location.pathname) === "/settings",
@@ -127,6 +131,7 @@ export function SettingsPage() {
         onBack={handleBack}
         onLanguagePress={() => navigate({ to: "/settings/language" })}
         onThemePress={() => navigate({ to: "/settings/theme" })}
+        themeValue={getMapColorSchemeLabel(mapColorSchemePreference)}
         onNoticePress={() => navigate({ to: "/notices" })}
         onTermsPress={() => navigate({ to: "/settings/terms" })}
         onPrivacyPress={() => navigate({ to: "/settings/privacy" })}

@@ -28,6 +28,10 @@ const preferenceLabel: Record<MapColorSchemePreference, () => string> = {
   dark: m.settings_theme_dark,
 };
 
+/** 설정 목록 행에 지금 고른 값을 함께 보여줄 때 쓴다. */
+export const getMapColorSchemeLabel = (preference: MapColorSchemePreference) =>
+  preferenceLabel[preference]();
+
 export function MapColorSchemeSettingList({
   preference,
   onSelectPreference,
