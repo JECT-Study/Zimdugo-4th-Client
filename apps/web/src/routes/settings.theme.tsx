@@ -1,6 +1,6 @@
 import { m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMapColorSchemePreference } from "#/entities/map";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
@@ -29,10 +29,22 @@ export const Route = createFileRoute("/settings/theme")({
 });
 
 function SettingsThemePage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady();
   const { preference, setPreference } = useMapColorSchemePreference();
   const applyFallbackStyle = isStyleTimedOut;
+
+  // navigate 는 히스토리를 쌓는다. 뒤로가기로 쓰면 누를수록 스택이 자라
+  // 브라우저·OS 뒤로가기가 앱을 빠져나가지 못한다. 앱 안에서 들어왔으면 직전
+  // 화면으로 돌아가고, 바로 들어온 경우에만 설정으로 보낸다(login.tsx 와 동일).
+  const handleBack = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+
+    router.navigate({ to: "/settings", replace: true });
+  };
 
   if (!isStyleReady) {
     return (
@@ -53,7 +65,7 @@ function SettingsThemePage() {
         leading="back"
         titleType="text"
         title={m.settings_dark_mode()}
-        onBack={() => navigate({ to: "/settings" })}
+        onBack={handleBack}
       />
 
       <main
