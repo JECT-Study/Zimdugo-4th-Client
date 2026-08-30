@@ -270,19 +270,27 @@ export const resolveSearchListSnapPoints = ({
 
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
+  const topLimitPx = resolveSheetTopLimitPx(safeAreaInsetTopPx);
   const resolvedMinSnapPoint =
     minSnapPoint ??
     resolveSheetFullSnapPoint({
       contentHeight: fullContentHeight,
-      topLimitPx: resolveSheetTopLimitPx(safeAreaInsetTopPx),
+      topLimitPx,
       maxSnapPoint: resolvedMaxSnapPoint,
       windowHeight,
     });
+  /*
+   * half·mini 는 화면 높이에서만 나오게 둔다.
+   *
+   * 콘텐츠 기반 full 로 자르면 결과가 도착해 높이가 바뀔 때 이 두 단계까지 따라
+   * 움직인다. 그러면 시트가 초기 위치를 새로 요청받은 것으로 보고, 사용자가 옮겨
+   * 둔 단계를 무시한 채 그 자리로 뛴다.
+   */
   const resolvedSnapPoint =
     snapPoint ??
     resolveSearchListSnapOffset({
       maxSnapPoint: resolvedMaxSnapPoint,
-      minSnapPoint: resolvedMinSnapPoint,
+      minSnapPoint: topLimitPx,
       visibleHeight: resolveSearchListVisibleHeight({
         maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
         ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
@@ -292,7 +300,7 @@ export const resolveSearchListSnapPoints = ({
     });
   const resolvedMiniSnapPoint = resolveSearchListSnapOffset({
     maxSnapPoint: resolvedMaxSnapPoint,
-    minSnapPoint: resolvedMinSnapPoint,
+    minSnapPoint: topLimitPx,
     visibleHeight: resolveSearchListVisibleHeight({
       maxVisibleHeight: SEARCH_LIST_MINI_VISIBLE_HEIGHT,
       ratio: SEARCH_LIST_MINI_VISIBLE_HEIGHT_RATIO,

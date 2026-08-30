@@ -81,6 +81,20 @@ describe("SearchListBottomSheet", () => {
     ).toBe(112);
   });
 
+  it("콘텐츠가 바뀌어도 half·mini 단계는 그대로 둔다", () => {
+    // 이 두 값이 따라 움직이면 시트가 초기 위치를 새로 요청받은 것으로 보고,
+    // 사용자가 옮겨 둔 단계를 무시한 채 그 자리로 뛴다.
+    const 측정전 = resolveSearchListSnapPoints({ windowHeight: 812 });
+    const 측정후 = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      fullContentHeight: 120,
+    });
+
+    expect(측정후.snapPoint).toBe(측정전.snapPoint);
+    expect(측정후.miniSnapPoint).toBe(측정전.miniSnapPoint);
+    expect(측정후.minSnapPoint).not.toBe(측정전.minSnapPoint);
+  });
+
   it("아직 못 쟀으면 상한을 준다", () => {
     expect(
       resolveSearchListSnapPoints({ windowHeight: 812 }).minSnapPoint,
