@@ -12,7 +12,10 @@ import {
   type NaverMapLanguage,
   normalizeNaverMapLanguage,
 } from "./naver-map-language";
-import { getNaverMapScriptSrc } from "./naver-map-script";
+import {
+  getNaverMapScriptSrc,
+  waitForNaverMapSdkReady,
+} from "./naver-map-script";
 import {
   DEFAULT_MAP_COLOR_SCHEME,
   getNaverMapStyleOptions,
@@ -156,6 +159,7 @@ const loadNaverMapSdk = async ({
   );
 
   if (activeScript?.src === scriptSrc && window.naver?.maps) {
+    await waitForNaverMapSdkReady();
     return window.naver.maps;
   }
 
@@ -175,6 +179,10 @@ const loadNaverMapSdk = async ({
     script.onerror = () => reject(new Error("Failed to load Naver Maps SDK."));
     document.head.appendChild(script);
   });
+
+  // onload 는 서브모듈이 실리기 전에 떨어진다. 여기서 기다리지 않으면 gl 이
+  // 아직 없는 상태로 지도를 만들어 래스터로 그려진다.
+  await waitForNaverMapSdkReady();
 
   return window.naver?.maps ?? null;
 };

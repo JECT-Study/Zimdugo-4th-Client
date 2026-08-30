@@ -31,3 +31,39 @@ export const getNaverMapScriptSrc = ({
 
   return `${NAVER_MAP_SCRIPT_BASE_URL}?${params.toString().replaceAll("%2C", ",")}`;
 };
+
+const SDK_READY_TIMEOUT_MS = 5000;
+
+/**
+ * SDK 초기화가 끝날 때까지 기다린다.
+ *
+ * maps.js 의 onload 는 서브모듈이 실리기 전에 떨어진다. 그 시점에 지도를
+ * 만들면 gl 서브모듈이 아직 없어 `glSupported()` 가 false 라, `gl: true` 를
+ * 넘겨도 벡터가 아니라 래스터로 그려진다.
+ */
+export const waitForNaverMapSdkReady = () =>
+  new Promise<void>((resolve) => {
+    const maps = window.naver?.maps;
+
+    if (!maps || maps.jsContentLoaded) {
+      resolve();
+      return;
+    }
+
+    let isSettled = false;
+    const settle = () => {
+      if (isSettled) return;
+      isSettled = true;
+      window.clearTimeout(timeoutId);
+      resolve();
+    };
+
+    // 초기화가 끝나지 않아도 지도는 기본 스타일로 뜬다. 무한정 막지 않는다.
+    const timeoutId = window.setTimeout(settle, SDK_READY_TIMEOUT_MS);
+    const previousCallback = maps.onJSContentLoaded;
+
+    maps.onJSContentLoaded = () => {
+      previousCallback?.();
+      settle();
+    };
+  });

@@ -1,4 +1,9 @@
 declare namespace naver.maps {
+  /** 서브모듈까지 모두 실행됐는지. SDK 가 초기화를 마치며 true 로 바꾼다. */
+  let jsContentLoaded: boolean | undefined;
+  /** 초기화가 끝나면 SDK 가 한 번 호출한다. */
+  let onJSContentLoaded: (() => void) | undefined;
+
   interface MapOptions {
     center?: LatLng | LatLngLiteral;
     zoom?: number;

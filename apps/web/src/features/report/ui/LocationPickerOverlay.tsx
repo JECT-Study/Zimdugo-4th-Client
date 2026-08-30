@@ -7,7 +7,10 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { Popup } from "@repo/ui/components/popup";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getNaverMapScriptSrc } from "#/entities/map/model/naver-map-script";
+import {
+  getNaverMapScriptSrc,
+  waitForNaverMapSdkReady,
+} from "#/entities/map/model/naver-map-script";
 import {
   getNaverMapStyleOptions,
   withNaverMapStyleSubmodules,
@@ -67,6 +70,9 @@ const loadNaverMapsScript = async () => {
     script.onerror = () => reject(new Error("Naver Maps SDK Load Failed"));
     document.head.appendChild(script);
   });
+
+  // 서브모듈(geocoder, gl)은 onload 뒤에 실린다.
+  await waitForNaverMapSdkReady();
 };
 
 type GeocodeOptions = {
