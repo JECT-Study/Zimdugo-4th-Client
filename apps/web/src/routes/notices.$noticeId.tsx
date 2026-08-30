@@ -1,11 +1,7 @@
 import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
-import {
-  createFileRoute,
-  useNavigate,
-  useParams,
-} from "@tanstack/react-router";
+import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useDocuments } from "#/features/settings/legal/model/useDocuments";
 import {
   content,
@@ -15,6 +11,7 @@ import {
   paragraph,
 } from "#/features/settings/legal/ui/legal-document.css.ts";
 import { NoticeDetailPage } from "#/features/settings/legal/ui/NoticePages";
+import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 
 const parseNoticeId = (value: string): number | null => {
@@ -28,16 +25,12 @@ export const Route = createFileRoute("/notices/$noticeId")({
 });
 
 function NoticeDetailRoutePage() {
-  const navigate = useNavigate();
+  const handleBack = useBackNavigation("/notices");
   const { noticeId: rawNoticeId } = useParams({ from: "/notices/$noticeId" });
   const noticeId = parseNoticeId(rawNoticeId);
   const { data, isLoading, isError, refetch } = useDocuments("NOTICE");
   const doc =
     noticeId != null ? data?.find((item) => item.id === noticeId) : null;
-
-  const handleBack = () => {
-    void navigate({ to: "/notices" });
-  };
 
   if (isLoading) {
     return (
