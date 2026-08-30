@@ -214,8 +214,15 @@ export const resolveSearchListSnapStage = ({
   offset: number;
   snapPoint: number;
 }): SearchListSheetSnapStage => {
+  /*
+   * 콘텐츠가 half 보다 짧으면 full 은 half 와 같은 자리를 가리킨다. 그때는 후보에서
+   * 뺀다. 남겨 두면 같은 픽셀을 full 로 읽어, 실제로는 half 인데 "half 일 때만" 인
+   * 규칙(지도를 눌러 접기)이 막힌다.
+   */
   const entries = [
-    { stage: "full" as const, point: minSnapPoint },
+    ...(minSnapPoint === snapPoint
+      ? []
+      : [{ stage: "full" as const, point: minSnapPoint }]),
     { stage: "half" as const, point: snapPoint },
     { stage: "mini" as const, point: miniSnapPoint },
     { stage: "dismiss" as const, point: maxSnapPoint },

@@ -320,6 +320,8 @@ export function DraggableBottomSheet({
   const settleAnimationRef = useRef<{ stop: () => void } | null>(null);
   const currentSnapRef = useRef(clampedInitialSnap);
   const lastInitialSnapRef = useRef<number | null>(null);
+  /** 직전 full 경계. 경계가 움직였을 때 시트가 거기 있었는지 보려고 들고 있는다. */
+  const lastMinSnapRef = useRef(minSnapPoint);
   /**
    * 이미 처리한 스냅 요청 id. 마운트 시점의 요청은 처리된 것으로 본다(snapRequest 참고).
    *
@@ -416,8 +418,26 @@ export function DraggableBottomSheet({
     const currentClampedSnap = clampSnap(currentSnapRef.current);
     const shouldSyncInitialSnap =
       lastInitialSnapRef.current !== nextInitialSnap;
+    /*
+     * full 에 있던 시트는 경계가 움직이면 따라간다.
+     *
+     * 경계는 콘텐츠 높이에서 나오므로 결과가 늘거나 줄면 옮겨 간다. 그때 가만히 두면
+     * 시트는 예전 높이에 남는데 부모에게는 새 full 높이로 알려져, 지도 컨트롤 자리까지
+     * 실제 시트와 어긋난다.
+     *
+     * 경계가 half 와 같은 자리면 따라가지 않는다. 그건 full 이 설 자리가 없어 half 가
+     * 시트의 끝을 맡은 경우라, 거기 있는 사용자는 half 에 있는 것이다.
+     */
+    const previousMinSnap = lastMinSnapRef.current;
+    const shouldFollowMinSnap =
+      previousMinSnap !== minSnapPoint &&
+      previousMinSnap !== snapPoint &&
+      currentSnapRef.current === previousMinSnap;
+    lastMinSnapRef.current = minSnapPoint;
+
     if (
       !shouldSyncInitialSnap &&
+      !shouldFollowMinSnap &&
       currentSnapRef.current === currentClampedSnap
     ) {
       return;
@@ -426,12 +446,14 @@ export function DraggableBottomSheet({
     settleAnimationRef.current?.stop();
     const nextSnap = shouldSyncInitialSnap
       ? nextInitialSnap
-      : currentClampedSnap;
+      : shouldFollowMinSnap
+        ? minSnapPoint
+        : currentClampedSnap;
     lastInitialSnapRef.current = nextInitialSnap;
     currentSnapRef.current = nextSnap;
     setCurrentSnap(nextSnap);
     sheetOffset.set(nextSnap);
-  }, [resolvedInitialSnap, clampSnap, sheetOffset]);
+  }, [resolvedInitialSnap, clampSnap, minSnapPoint, snapPoint, sheetOffset]);
 
   const settleToSnapPoint = useCallback(
     (nextSnap: number) => {

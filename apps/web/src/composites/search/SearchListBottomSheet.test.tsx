@@ -65,6 +65,43 @@ describe("SearchListBottomSheet", () => {
     draggableBottomSheetMock.mockClear();
   });
 
+  it("full 이 없으면 그 자리를 half 로 읽어 접는 길을 남긴다", () => {
+    // full 로 읽히면 지도를 눌러도 mini 로 내려가지 않는다. 그 동작은 half 일 때만
+    // 접기 때문이다.
+    const snaps = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      fullContentHeight: 120,
+    });
+
+    expect(snaps.minSnapPoint).toBe(snaps.snapPoint);
+    expect(
+      resolveSearchListSnapStage({
+        maxSnapPoint: snaps.maxSnapPoint,
+        miniSnapPoint: snaps.miniSnapPoint ?? 0,
+        minSnapPoint: snaps.minSnapPoint,
+        offset: snaps.snapPoint,
+        snapPoint: snaps.snapPoint,
+      }),
+    ).toBe("half");
+  });
+
+  it("full 이 뚜렷하면 그 자리는 full 로 읽는다", () => {
+    const snaps = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      fullContentHeight: 320,
+    });
+
+    expect(
+      resolveSearchListSnapStage({
+        maxSnapPoint: snaps.maxSnapPoint,
+        miniSnapPoint: snaps.miniSnapPoint ?? 0,
+        minSnapPoint: snaps.minSnapPoint,
+        offset: snaps.minSnapPoint,
+        snapPoint: snaps.snapPoint,
+      }),
+    ).toBe("full");
+  });
+
   it("결과가 길면 full 이 콘텐츠 높이만큼만 올라온다", () => {
     expect(
       resolveSearchListSnapPoints({ windowHeight: 812, fullContentHeight: 320 })
