@@ -116,6 +116,7 @@ import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import {
   applyFavoriteOverlayToLockerDetail,
   applyFavoriteOverlayToLockerItems,
+  applyFavoriteOverlayToPins,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
 import {
@@ -175,6 +176,7 @@ import {
   readSearchQueryParam,
   type SearchUrlParams,
   withLockerDetailParam,
+  withoutLockerDetailParams,
   withoutSearchContextParams,
   withSearchPlaceIdParam,
   withSearchQueryParam,
@@ -1602,8 +1604,15 @@ export function IndexPage() {
     [lockerIdFromQuery, loaderData],
   );
 
+  const clearLockerDetailUrl = useCallback(() => {
+    void navigate({ to: ".", search: withoutLockerDetailParams });
+  }, [navigate]);
+
   const resetMapContext = useCallback(() => {
     clearPendingLockerDetailOpen();
+    // 상세를 열 때 붙은 파라미터를 그대로 두면, 뒤로 나온 화면을 새로고침했을 때
+    // 닫았던 상세가 다시 열린다.
+    clearLockerDetailUrl();
     void flushLockerSheetMutations();
     // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
     setIsCameraCentered(false);
@@ -1620,7 +1629,11 @@ export function IndexPage() {
     setSheetMode("idle");
     setContext("idle");
     writeMapSheetSessionSnapshot(null);
-  }, [clearPendingLockerDetailOpen, flushLockerSheetMutations]);
+  }, [
+    clearLockerDetailUrl,
+    clearPendingLockerDetailOpen,
+    flushLockerSheetMutations,
+  ]);
 
   const resetSearchContext = useCallback(() => {
     clearPendingLockerDetailOpen();
@@ -1892,29 +1905,45 @@ export function IndexPage() {
   // 새 결과가 반영된다. 빼면 이전 장소의 핀이 그대로 남는다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: placeLockersResults 는 ref 갱신 트리거다
   const searchResultPins = useMemo(() => {
-    if (context === "search" && listKind === "place") {
-      if (activePlaceId == null) return [];
-      return lastValidPlaceLockersRef.current?.placeId === activePlaceId
-        ? lastValidPlaceLockersRef.current.pins
-        : [];
-    }
+    const pins =
+      context === "search" && listKind === "place"
+        ? activePlaceId != null &&
+          lastValidPlaceLockersRef.current?.placeId === activePlaceId
+          ? lastValidPlaceLockersRef.current.pins
+          : []
+        : searchResultItemsToPins(keywordSearchResults?.items ?? []);
 
-    return searchResultItemsToPins(keywordSearchResults?.items ?? []);
+    return applyFavoriteOverlayToPins(
+      pins,
+      favoriteSession.getEffectiveIsFavorite,
+    );
   }, [
     context,
     keywordSearchResults?.items,
     listKind,
     activePlaceId,
     placeLockersResults,
+    favoriteSession.getEffectiveIsFavorite,
   ]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: placeLockersResults 는 ref 갱신 트리거다
   const mapPlacePins = useMemo(() => {
     if (activePlaceId == null) return [];
-    return lastValidPlaceLockersRef.current?.placeId === activePlaceId
-      ? lastValidPlaceLockersRef.current.pins
-      : [];
-  }, [activePlaceId, placeLockersResults]);
+
+    const pins =
+      lastValidPlaceLockersRef.current?.placeId === activePlaceId
+        ? lastValidPlaceLockersRef.current.pins
+        : [];
+
+    return applyFavoriteOverlayToPins(
+      pins,
+      favoriteSession.getEffectiveIsFavorite,
+    );
+  }, [
+    activePlaceId,
+    placeLockersResults,
+    favoriteSession.getEffectiveIsFavorite,
+  ]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: placeLockersResults 는 ref 갱신 트리거다
   const activePlaceName = useMemo(() => {
@@ -1955,21 +1984,6 @@ export function IndexPage() {
     },
     [navigate],
   );
-
-  const clearLockerDetailUrl = useCallback(() => {
-    void navigate({
-      to: ".",
-      search: (prev: SearchUrlParams) => {
-        const next = { ...prev };
-        delete next.locker;
-        delete next.openLockerId;
-        delete next.detailSnap;
-        delete next.focusLat;
-        delete next.focusLng;
-        return next;
-      },
-    });
-  }, [navigate]);
 
   const openLockerDetailById = useCallback(
     async (
