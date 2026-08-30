@@ -23,6 +23,14 @@ export const DEFAULT_MAP_COLOR_SCHEME: MapColorScheme = MAP_COLOR_SCHEMES.Light;
 
 const NAVER_MAP_GL_SUBMODULE = "gl";
 
+/**
+ * 검증용 임시 스위치. 스타일 ID 없이도 GL 벡터 지도로 띄운다.
+ *
+ * 배포 환경에 스타일 ID 가 아직 들어가지 않아, 실기기에서 벡터 렌더링 자체가
+ * 되는지 먼저 확인하려고 켠다. 스타일 ID 가 배포에 반영되면 false 로 되돌린다.
+ */
+const FORCE_VECTOR_MAP = true;
+
 export type NaverMapCustomStyleIds = Record<MapColorScheme, string | undefined>;
 
 export interface NaverMapStyleOptions {
@@ -64,9 +72,10 @@ const hasNaverMapCustomStyle = (
 export const withNaverMapStyleSubmodules = (
   submodules: readonly string[],
   styleIds: NaverMapCustomStyleIds = NAVER_MAP_CUSTOM_STYLE_IDS,
+  forceVectorMap = FORCE_VECTOR_MAP,
 ) => {
   if (
-    !hasNaverMapCustomStyle(styleIds) ||
+    (!forceVectorMap && !hasNaverMapCustomStyle(styleIds)) ||
     submodules.includes(NAVER_MAP_GL_SUBMODULE)
   ) {
     return [...submodules];
@@ -84,15 +93,15 @@ export const withNaverMapStyleSubmodules = (
 export const getNaverMapStyleOptions = (
   colorScheme: MapColorScheme = DEFAULT_MAP_COLOR_SCHEME,
   styleIds: NaverMapCustomStyleIds = NAVER_MAP_CUSTOM_STYLE_IDS,
+  forceVectorMap = FORCE_VECTOR_MAP,
 ): NaverMapStyleOptions => {
   const customStyleId = getNaverMapCustomStyleId(colorScheme, styleIds);
+  const background = MAP_BACKGROUND_COLORS[colorScheme];
+
   if (!customStyleId) {
-    return {};
+    // 스타일 ID 없이 GL 만 켜면 기본 지도가 벡터로 그려진다. 검증용이다.
+    return forceVectorMap ? { gl: true, background } : {};
   }
 
-  return {
-    gl: true,
-    customStyleId,
-    background: MAP_BACKGROUND_COLORS[colorScheme],
-  };
+  return { gl: true, customStyleId, background };
 };
