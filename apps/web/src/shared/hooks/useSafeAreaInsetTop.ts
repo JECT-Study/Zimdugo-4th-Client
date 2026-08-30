@@ -1,12 +1,6 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useState } from "react";
+import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { readSafeAreaInsetTopPx } from "#/shared/lib/safe-area-inset";
-
-/**
- * 서버에서는 layout effect 를 돌릴 수 없다. 그쪽은 어차피 프로브를 띄울 DOM 이
- * 없어 재지 않는다.
- */
-const useIsomorphicLayoutEffect =
-  typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * 노치에 덮이는 높이.

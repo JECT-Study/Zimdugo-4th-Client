@@ -5,8 +5,12 @@ import { LabelTitle } from "@repo/ui/components/label-title";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
+import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
-import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
+import {
+  resolveSheetFullSnapPoint,
+  resolveSheetTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
 import {
   type BottomSheetLiveOffsetState,
   DraggableBottomSheet,
@@ -112,15 +116,14 @@ export const resolveSearchFilterSnapPoints = ({
 
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT;
-  const fullTopOffset = resolveSheetTopLimitPx(safeAreaInsetTopPx);
-  const maxFullVisibleHeight = windowHeight - fullTopOffset;
-  const resolvedContentHeight =
-    contentHeight !== undefined
-      ? Math.min(contentHeight, maxFullVisibleHeight)
-      : maxFullVisibleHeight;
-  const contentBasedTopOffset = windowHeight - resolvedContentHeight;
   const resolvedMinSnapPoint =
-    minSnapPoint ?? Math.max(fullTopOffset, contentBasedTopOffset);
+    minSnapPoint ??
+    resolveSheetFullSnapPoint({
+      contentHeight,
+      topLimitPx: resolveSheetTopLimitPx(safeAreaInsetTopPx),
+      maxSnapPoint: resolvedMaxSnapPoint,
+      windowHeight,
+    });
   const resolvedSnapPoint = snapPoint ?? resolvedMinSnapPoint;
 
   return {
@@ -205,7 +208,7 @@ export function SearchFilterBottomSheet({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const updateContentHeight = () => {
       const scrollArea = scrollAreaRef.current;
       const actionBar = actionBarRef.current;
