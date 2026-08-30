@@ -650,6 +650,14 @@ export function IconNavigationCrosshair24({
   );
 }
 
+/** RemixIcon `moon-line` (Apache-2.0) */
+const MAP_COLOR_SCHEME_MOON_PATH =
+  "M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z";
+
+/** RemixIcon `sun-line` (Apache-2.0) */
+const MAP_COLOR_SCHEME_SUN_PATH =
+  "M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z";
+
 export function IconMapColorScheme24({
   className,
   scheme = "light",
@@ -658,8 +666,6 @@ export function IconMapColorScheme24({
   /** 지금 지도에 적용된 색 테마. 눌렀을 때 바뀔 테마를 아이콘으로 보여준다. */
   scheme?: "light" | "dark";
 }) {
-  const fill = color.palette.gray[800];
-
   return (
     <svg
       className={[iconSvgFixed, className].filter(Boolean).join(" ")}
@@ -670,23 +676,14 @@ export function IconMapColorScheme24({
       height={24}
       aria-hidden="true"
     >
-      {scheme === "light" ? (
-        // 라이트일 때는 다크로 바꾸는 버튼이라 달을 보여준다.
-        <path
-          d="M12.5 3C7.81 3 4 6.81 4 11.5C4 16.19 7.81 20 12.5 20C15.77 20 18.61 18.15 20.03 15.44C19.32 15.65 18.57 15.76 17.79 15.76C13.44 15.76 9.91 12.23 9.91 7.88C9.91 6.29 10.38 4.81 11.19 3.57C11.63 3.2 12.06 3 12.5 3Z"
-          fill={fill}
-        />
-      ) : (
-        <>
-          <circle cx="12" cy="12" r="4.2" fill={fill} />
-          <path
-            d="M12 1.5V4M12 20V22.5M22.5 12H20M4 12H1.5M19.42 4.58L17.66 6.34M6.34 17.66L4.58 19.42M19.42 19.42L17.66 17.66M6.34 6.34L4.58 4.58"
-            stroke={fill}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </>
-      )}
+      <path
+        d={
+          scheme === "dark"
+            ? MAP_COLOR_SCHEME_SUN_PATH
+            : MAP_COLOR_SCHEME_MOON_PATH
+        }
+        fill={color.palette.gray[800]}
+      />
     </svg>
   );
 }
