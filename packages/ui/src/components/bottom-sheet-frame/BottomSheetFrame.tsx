@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX,
   body,
   bodyNavLayout,
   handle,
@@ -20,6 +21,8 @@ export interface BottomSheetFrameProps {
 }
 
 /** 바텀시트 래퍼(핸들·그림자·상단 라운드). 순수 UI 프레임 버전. */
+export { BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX };
+
 export function BottomSheetFrame({
   children,
   showHomeIndicator = true,

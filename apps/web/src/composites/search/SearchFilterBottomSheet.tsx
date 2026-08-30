@@ -5,8 +5,12 @@ import { LabelTitle } from "@repo/ui/components/label-title";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
+import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
-import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
+import {
+  resolveSheetFullSnapPoint,
+  resolveSheetTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
 import {
   type BottomSheetLiveOffsetState,
   DraggableBottomSheet,
@@ -112,15 +116,14 @@ export const resolveSearchFilterSnapPoints = ({
 
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT;
-  const fullTopOffset = resolveSheetTopLimitPx(safeAreaInsetTopPx);
-  const maxFullVisibleHeight = windowHeight - fullTopOffset;
-  const resolvedContentHeight =
-    contentHeight !== undefined
-      ? Math.min(contentHeight, maxFullVisibleHeight)
-      : maxFullVisibleHeight;
-  const contentBasedTopOffset = windowHeight - resolvedContentHeight;
   const resolvedMinSnapPoint =
-    minSnapPoint ?? Math.max(fullTopOffset, contentBasedTopOffset);
+    minSnapPoint ??
+    resolveSheetFullSnapPoint({
+      contentHeight,
+      topLimitPx: resolveSheetTopLimitPx(safeAreaInsetTopPx),
+      maxSnapPoint: resolvedMaxSnapPoint,
+      windowHeight,
+    });
   const resolvedSnapPoint = snapPoint ?? resolvedMinSnapPoint;
 
   return {
@@ -159,6 +162,8 @@ export function SearchFilterBottomSheet({
   const safeAreaInsetTop = useSafeAreaInsetTop();
   const [contentHeight, setContentHeight] = useState<number | undefined>();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  /** 늘어나지 않는 내용 자체. 스크롤 영역을 재면 시트가 준 높이가 돌아온다. */
+  const contentMeasureRef = useRef<HTMLDivElement>(null);
   const actionBarRef = useRef<HTMLDivElement>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
@@ -205,17 +210,29 @@ export function SearchFilterBottomSheet({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const updateContentHeight = () => {
       const scrollArea = scrollAreaRef.current;
       const actionBar = actionBarRef.current;
+      const content = contentMeasureRef.current;
 
-      if (!scrollArea || !actionBar) return;
+      if (!scrollArea || !actionBar || !content) return;
+
+      /*
+       * 스크롤 영역은 flex 로 늘어나서, 내용이 짧으면 scrollHeight 가 "지금 시트가
+       * 준 높이" 를 돌려준다. 그 값으로 시트 높이를 정하면 내용이 짧아도 시트가
+       * 그대로 커져 아래가 텅 빈다.
+       */
+      const scrollAreaStyle = window.getComputedStyle(scrollArea);
 
       setContentHeight(
-        scrollArea.scrollHeight +
-          actionBar.offsetHeight +
-          SEARCH_FILTER_SHEET_TOP_PADDING,
+        Math.ceil(
+          content.offsetHeight +
+            Number.parseFloat(scrollAreaStyle.paddingTop) +
+            Number.parseFloat(scrollAreaStyle.paddingBottom) +
+            actionBar.offsetHeight +
+            SEARCH_FILTER_SHEET_TOP_PADDING,
+        ),
       );
     };
 
@@ -226,7 +243,8 @@ export function SearchFilterBottomSheet({
     }
 
     const resizeObserver = new ResizeObserver(updateContentHeight);
-    if (scrollAreaRef.current) resizeObserver.observe(scrollAreaRef.current);
+    if (contentMeasureRef.current)
+      resizeObserver.observe(contentMeasureRef.current);
     if (actionBarRef.current) resizeObserver.observe(actionBarRef.current);
 
     return () => resizeObserver.disconnect();
@@ -338,63 +356,65 @@ export function SearchFilterBottomSheet({
     >
       <div className={[sheetColumn, className].filter(Boolean).join(" ")}>
         <div ref={scrollAreaRef} className={scrollArea}>
-          <div className={section}>
-            <LabelTitle size="small">
-              {m.search_filter_section_size()}
-            </LabelTitle>
-            <div className={sizeCardSlot}>
-              <SizeList
-                labels={{
-                  S: m.search_filter_size_small(),
-                  M: m.search_filter_size_medium(),
-                  L: m.search_filter_size_large(),
-                }}
-                value={selectedSizes}
-                onChange={setSelectedSizes}
-              />
+          <div ref={contentMeasureRef}>
+            <div className={section}>
+              <LabelTitle size="small">
+                {m.search_filter_section_size()}
+              </LabelTitle>
+              <div className={sizeCardSlot}>
+                <SizeList
+                  labels={{
+                    S: m.search_filter_size_small(),
+                    M: m.search_filter_size_medium(),
+                    L: m.search_filter_size_large(),
+                  }}
+                  value={selectedSizes}
+                  onChange={setSelectedSizes}
+                />
+              </div>
+              <div className={sizeGuideBox}>
+                <ul className={sizeGuideList}>
+                  <li>
+                    <b>{m.report_size_s()}</b>: {m.report_size_guide_s()}
+                  </li>
+                  <li>
+                    <b>{m.report_size_m()}</b>: {m.report_size_guide_m()}
+                  </li>
+                  <li>
+                    <b>{m.report_size_l()}</b>: {m.report_size_guide_l()}
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div className={sizeGuideBox}>
-              <ul className={sizeGuideList}>
-                <li>
-                  <b>{m.report_size_s()}</b>: {m.report_size_guide_s()}
-                </li>
-                <li>
-                  <b>{m.report_size_m()}</b>: {m.report_size_guide_m()}
-                </li>
-                <li>
-                  <b>{m.report_size_l()}</b>: {m.report_size_guide_l()}
-                </li>
-              </ul>
-            </div>
-          </div>
 
-          <div className={[section, sectionGap24].join(" ")}>
-            <LabelTitle size="small">
-              {m.search_filter_section_indoor_outdoor_short()}
-            </LabelTitle>
-            <div className={indoorOutdoor}>
-              <ControlChipGroup
-                options={indoorOutdoorOptions}
-                value={indoorOutdoorState}
-                onChange={setIndoorOutdoor}
-                selectionMode="multiple"
-                ariaLabel={m.search_filter_section_indoor_outdoor_short()}
-              />
+            <div className={[section, sectionGap24].join(" ")}>
+              <LabelTitle size="small">
+                {m.search_filter_section_indoor_outdoor_short()}
+              </LabelTitle>
+              <div className={indoorOutdoor}>
+                <ControlChipGroup
+                  options={indoorOutdoorOptions}
+                  value={indoorOutdoorState}
+                  onChange={setIndoorOutdoor}
+                  selectionMode="multiple"
+                  ariaLabel={m.search_filter_section_indoor_outdoor_short()}
+                />
+              </div>
             </div>
-          </div>
 
-          <div className={[section, sectionGap24].join(" ")}>
-            <LabelTitle size="small">
-              {m.search_filter_section_locker_type_short()}
-            </LabelTitle>
-            <div className={indoorOutdoor}>
-              <ControlChipGroup
-                options={placeTypeOptions}
-                value={placeTypeState}
-                onChange={setPlaceType}
-                selectionMode="multiple"
-                ariaLabel={m.search_filter_section_locker_type_short()}
-              />
+            <div className={[section, sectionGap24].join(" ")}>
+              <LabelTitle size="small">
+                {m.search_filter_section_locker_type_short()}
+              </LabelTitle>
+              <div className={indoorOutdoor}>
+                <ControlChipGroup
+                  options={placeTypeOptions}
+                  value={placeTypeState}
+                  onChange={setPlaceType}
+                  selectionMode="multiple"
+                  ariaLabel={m.search_filter_section_locker_type_short()}
+                />
+              </div>
             </div>
           </div>
         </div>

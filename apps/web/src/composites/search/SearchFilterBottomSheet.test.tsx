@@ -65,6 +65,7 @@ describe("SearchFilterBottomSheet", () => {
   });
 
   it("fits full height to content while keeping the previous full height as the maximum", () => {
+    // 812 - 560 - 손잡이 24 - 아래 여유 32 = 196
     expect(
       resolveSearchFilterSnapPoints({
         windowHeight: 812,
@@ -73,8 +74,8 @@ describe("SearchFilterBottomSheet", () => {
     ).toEqual({
       maxSnapPoint: 788,
       miniSnapPoint: undefined,
-      minSnapPoint: 252,
-      snapPoint: 252,
+      minSnapPoint: 196,
+      snapPoint: 196,
     });
   });
 

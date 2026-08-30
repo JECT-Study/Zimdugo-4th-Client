@@ -67,9 +67,12 @@ export const sheetNavLayout = style({
   flexDirection: "column",
 });
 
+/** 시트 맨 위 손잡이 자리. 콘텐츠 높이를 재는 쪽도 이 값을 알아야 한다. */
+export const BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX = 24;
+
 export const handleArea = style({
   position: "relative",
-  height: "24px",
+  height: `${BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX}px`,
   width: "100%",
   flexShrink: 0,
 });

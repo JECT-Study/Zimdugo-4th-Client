@@ -416,7 +416,6 @@ export function DraggableBottomSheet({
     const currentClampedSnap = clampSnap(currentSnapRef.current);
     const shouldSyncInitialSnap =
       lastInitialSnapRef.current !== nextInitialSnap;
-
     if (
       !shouldSyncInitialSnap &&
       currentSnapRef.current === currentClampedSnap

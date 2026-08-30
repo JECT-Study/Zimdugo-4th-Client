@@ -1,3 +1,5 @@
+import { BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX } from "@repo/ui/components/bottom-sheet-frame";
+
 /**
  * 화면 위쪽 크롬(헤더 + 검색 바) 이 차지하는 자리.
  *
@@ -37,3 +39,54 @@ export const resolveSheetTopLimitPx = (safeAreaInsetTopPx: number) =>
 
 export const resolveMapControlTopLimitPx = (safeAreaInsetTopPx: number) =>
   MAP_CONTROL_TOP_LIMIT_PX + Math.max(0, safeAreaInsetTopPx);
+
+/**
+ * full 로 올린 시트가 콘텐츠 아래에 남기는 여유.
+ *
+ * 딱 맞춰 재면 마지막 항목이 화면 바닥에 붙어 잘린 것처럼 보인다.
+ */
+const SHEET_CONTENT_BOTTOM_GAP_PX = 32;
+
+interface ResolveSheetFullSnapPointOptions {
+  /** 잰 콘텐츠 높이. 아직 못 쟀으면 생략한다. */
+  contentHeight?: number | null;
+  /** 크롬을 덮지 않는 선. 여기보다 위로는 못 간다. */
+  topLimitPx: number;
+  maxSnapPoint: number;
+  windowHeight: number;
+}
+
+/**
+ * full 단계에서 시트가 멈출 자리.
+ *
+ * 시트 세 개가 같은 규칙을 쓴다. 예전에는 상세·필터만 콘텐츠 높이를 보고 목록은 늘
+ * 꼭대기까지 올라와서, 결과가 두어 개일 때도 화면을 다 덮었다.
+ *
+ * 콘텐츠를 아직 못 쟀으면 상한을 준다. 못 잰 동안 콘텐츠가 짧다고 가정하면 시트가
+ * 낮게 떴다가 측정 후 올라가고, 길다고 가정하면 반대로 움직인다. 어느 쪽이든 올라오는
+ * 도중에 높이가 바뀌어 보이므로, 값을 알기 전에는 단계의 끝(상한)에 둔다.
+ */
+export const resolveSheetFullSnapPoint = ({
+  contentHeight,
+  topLimitPx,
+  maxSnapPoint,
+  windowHeight,
+}: ResolveSheetFullSnapPointOptions) => {
+  if (!contentHeight || contentHeight <= 0) {
+    // 화면이 아주 낮으면 상한이 이 선보다 아래일 수 있다. 그대로 두면
+    // minSnapPoint 가 maxSnapPoint 를 넘어 스냅 범위가 뒤집힌다.
+    return Math.min(maxSnapPoint, topLimitPx);
+  }
+
+  /*
+   * 손잡이 자리는 시트 프레임이 콘텐츠 위에 늘 두는 것이라, 재는 쪽에서는 안 잡힌다.
+   * 빼먹으면 그 높이만큼 시트가 짧아져 마지막 줄이 잘린다.
+   */
+  const contentBasedOffset =
+    windowHeight -
+    contentHeight -
+    BOTTOM_SHEET_HANDLE_AREA_HEIGHT_PX -
+    SHEET_CONTENT_BOTTOM_GAP_PX;
+
+  return Math.min(maxSnapPoint, Math.max(topLimitPx, contentBasedOffset));
+};
