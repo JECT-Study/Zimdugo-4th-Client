@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import { getNaverMapScriptSrc } from "./naver-map-script";
 import {
   DEFAULT_NAVER_MAP_LANGUAGE,
   type NaverMapLanguage,
@@ -62,22 +63,14 @@ const getScriptSrc = ({
   clientId: string;
   language: string;
   submodules: string[];
-}) => {
-  const params = new URLSearchParams({
-    ncpKeyId: clientId,
+}) =>
+  getNaverMapScriptSrc({
+    clientId,
     language,
+    // 커스텀 스타일은 gl 서브모듈에서만 그려진다. 스타일 ID 는 스크립트가 아니라
+    // 지도를 만들 때 MapOptions 로 넘긴다.
+    submodules: withNaverMapStyleSubmodules(submodules),
   });
-
-  // 커스텀 스타일은 gl 서브모듈에서만 그려진다. 스타일 ID 는 스크립트가 아니라
-  // 지도를 만들 때 MapOptions 로 넘긴다.
-  const resolvedSubmodules = withNaverMapStyleSubmodules(submodules);
-
-  if (resolvedSubmodules.length > 0) {
-    params.set("submodules", resolvedSubmodules.join(","));
-  }
-
-  return `https://openapi.map.naver.com/openapi/v3/maps.js?${params.toString()}`;
-};
 
 const removeNaverMapScript = () => {
   const activeScript = document.querySelector<HTMLScriptElement>(

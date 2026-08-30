@@ -7,6 +7,7 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { Popup } from "@repo/ui/components/popup";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getNaverMapScriptSrc } from "#/entities/map/model/naver-map-script";
 import {
   getNaverMapStyleOptions,
   withNaverMapStyleSubmodules,
@@ -48,12 +49,10 @@ const loadNaverMapsScript = async () => {
   }
   // 지도 디자인툴 스타일은 gl 서브모듈에서만 그려진다. 스타일 ID 자체는
   // 스크립트가 아니라 지도를 만들 때 MapOptions 로 넘긴다.
-  const params = new URLSearchParams({
-    ncpKeyId: NAVER_MAP_CLIENT_ID,
-    submodules: withNaverMapStyleSubmodules(["geocoder"]).join(","),
+  const scriptSrc = getNaverMapScriptSrc({
+    clientId: NAVER_MAP_CLIENT_ID,
+    submodules: withNaverMapStyleSubmodules(["geocoder"]),
   });
-
-  const scriptSrc = `https://openapi.map.naver.com/openapi/v3/maps.js?${params.toString()}`;
   const activeScript = document.querySelector<HTMLScriptElement>(
     'script[src*="maps.js"]',
   );
