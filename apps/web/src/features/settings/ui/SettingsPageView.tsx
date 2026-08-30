@@ -233,7 +233,9 @@ function SettingsRow({ label, value, onPress }: SettingsRowProps) {
     <button
       type="button"
       className={[rowButton, settingRow].join(" ")}
-      aria-label={label}
+      // aria-label 은 내용으로 계산되는 이름을 덮는다. 값을 함께 넣지 않으면
+      // 스크린 리더 사용자는 지금 무엇이 골라져 있는지 들을 수 없다.
+      aria-label={value ? `${label}, ${value}` : label}
       onClick={onPress}
       disabled={!onPress}
     >

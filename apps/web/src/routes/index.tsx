@@ -603,6 +603,8 @@ export function IndexPage() {
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pinSelectedInAppRef = useRef(false);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
+  /** 딥링크 상세 카메라를 이미 맞춘 보관함. 지도를 다시 만들어도 되풀이하지 않는다. */
+  const focusedDeepLinkLockerIdRef = useRef<number | undefined>(undefined);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
     null,
   );
@@ -1583,7 +1585,14 @@ export function IndexPage() {
       mapInstanceRef.current = map;
       setMapInstance(map);
 
-      if (map && lockerIdFromQuery !== undefined && loaderData?.detail) {
+      // 딥링크로 연 상세는 처음 한 번만 카메라를 맞춘다. 테마를 바꾸면 지도를
+      // 다시 만드는데, 그때마다 다시 맞추면 사용자가 옮겨 둔 위치를 덮어쓴다.
+      const isNewDeepLinkFocus =
+        lockerIdFromQuery !== undefined &&
+        focusedDeepLinkLockerIdRef.current !== lockerIdFromQuery;
+
+      if (map && isNewDeepLinkFocus && loaderData?.detail) {
+        focusedDeepLinkLockerIdRef.current = lockerIdFromQuery;
         focusNaverMapOnCoordinates({
           map,
           coordinates: {
@@ -1611,6 +1620,14 @@ export function IndexPage() {
     },
     [lockerIdFromQuery, loaderData],
   );
+
+  // 상세를 닫으면 파라미터가 사라진다. 그때 표시를 지워야 같은 보관함을 다시
+  // 열었을 때 카메라를 다시 맞춘다.
+  useEffect(() => {
+    if (lockerIdFromQuery === undefined) {
+      focusedDeepLinkLockerIdRef.current = undefined;
+    }
+  }, [lockerIdFromQuery]);
 
   const clearLockerDetailUrl = useCallback(() => {
     void navigate({ to: ".", search: withoutLockerDetailParams });
