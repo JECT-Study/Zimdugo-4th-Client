@@ -271,14 +271,6 @@ export const resolveSearchListSnapPoints = ({
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
   const topLimitPx = resolveSheetTopLimitPx(safeAreaInsetTopPx);
-  const resolvedMinSnapPoint =
-    minSnapPoint ??
-    resolveSheetFullSnapPoint({
-      contentHeight: fullContentHeight,
-      topLimitPx,
-      maxSnapPoint: resolvedMaxSnapPoint,
-      windowHeight,
-    });
   /*
    * half·mini 는 화면 높이에서만 나오게 둔다.
    *
@@ -286,18 +278,35 @@ export const resolveSearchListSnapPoints = ({
    * 움직인다. 그러면 시트가 초기 위치를 새로 요청받은 것으로 보고, 사용자가 옮겨
    * 둔 단계를 무시한 채 그 자리로 뛴다.
    */
-  const resolvedSnapPoint =
-    snapPoint ??
-    resolveSearchListSnapOffset({
-      maxSnapPoint: resolvedMaxSnapPoint,
-      minSnapPoint: topLimitPx,
-      visibleHeight: resolveSearchListVisibleHeight({
-        maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
-        ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
+  const halfSnapPoint = resolveSearchListSnapOffset({
+    maxSnapPoint: resolvedMaxSnapPoint,
+    minSnapPoint: topLimitPx,
+    visibleHeight: resolveSearchListVisibleHeight({
+      maxVisibleHeight: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT,
+      ratio: SEARCH_LIST_DEFAULT_VISIBLE_HEIGHT_RATIO,
+      windowHeight,
+    }),
+    windowHeight,
+  });
+  /*
+   * full 은 half 보다 아래로 내려가지 않는다.
+   *
+   * 시트는 모든 오프셋을 full 위로 자르므로, 콘텐츠가 아주 짧다고 full 을 half 아래에
+   * 두면 half 로 갈 수 없는 자리가 된다. 그만큼 짧은 결과에서는 두 단계가 같은 자리에
+   * 겹치는 편이 맞다.
+   */
+  const resolvedMinSnapPoint =
+    minSnapPoint ??
+    Math.min(
+      halfSnapPoint,
+      resolveSheetFullSnapPoint({
+        contentHeight: fullContentHeight,
+        topLimitPx,
+        maxSnapPoint: resolvedMaxSnapPoint,
         windowHeight,
       }),
-      windowHeight,
-    });
+    );
+  const resolvedSnapPoint = snapPoint ?? halfSnapPoint;
   const resolvedMiniSnapPoint = resolveSearchListSnapOffset({
     maxSnapPoint: resolvedMaxSnapPoint,
     minSnapPoint: topLimitPx,

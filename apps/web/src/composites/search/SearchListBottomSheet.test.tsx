@@ -95,6 +95,18 @@ describe("SearchListBottomSheet", () => {
     expect(측정후.minSnapPoint).not.toBe(측정전.minSnapPoint);
   });
 
+  it("결과가 아주 짧아도 full 이 half 아래로 내려가지 않는다", () => {
+    // 시트는 모든 오프셋을 full 위로 자른다. full 이 half 아래에 있으면 half 로 갈 수
+    // 없는 자리가 되고, 기본 위치까지 full 로 끌려 내려간다.
+    const snaps = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      fullContentHeight: 120,
+    });
+
+    expect(snaps.minSnapPoint).toBeLessThanOrEqual(snaps.snapPoint);
+    expect(snaps.snapPoint).toBeLessThanOrEqual(snaps.miniSnapPoint ?? 0);
+  });
+
   it("아직 못 쟀으면 상한을 준다", () => {
     expect(
       resolveSearchListSnapPoints({ windowHeight: 812 }).minSnapPoint,
