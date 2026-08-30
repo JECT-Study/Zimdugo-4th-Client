@@ -406,6 +406,18 @@ describe("resolveSheetFullSnapPoint", () => {
     expect(resolveSheetFullSnapPoint(base)).toBe(112);
   });
 
+  it("화면이 낮아 상한이 선보다 아래면 스냅 범위를 뒤집지 않는다", () => {
+    // minSnapPoint 가 maxSnapPoint 를 넘으면 시트가 놓일 자리가 없어진다.
+    expect(
+      resolveSheetFullSnapPoint({
+        contentHeight: null,
+        topLimitPx: 112,
+        maxSnapPoint: 98,
+        windowHeight: 150,
+      }),
+    ).toBe(98);
+  });
+
   it("콘텐츠가 아주 짧아도 최대 스냅을 넘지 않는다", () => {
     expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 10 })).toBe(760);
   });

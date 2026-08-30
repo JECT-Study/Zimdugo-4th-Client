@@ -71,7 +71,9 @@ export const resolveSheetFullSnapPoint = ({
   windowHeight,
 }: ResolveSheetFullSnapPointOptions) => {
   if (!contentHeight || contentHeight <= 0) {
-    return topLimitPx;
+    // 화면이 아주 낮으면 상한이 이 선보다 아래일 수 있다. 그대로 두면
+    // minSnapPoint 가 maxSnapPoint 를 넘어 스냅 범위가 뒤집힌다.
+    return Math.min(maxSnapPoint, topLimitPx);
   }
 
   const contentBasedOffset =

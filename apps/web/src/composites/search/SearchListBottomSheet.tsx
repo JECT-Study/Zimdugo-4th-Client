@@ -345,6 +345,8 @@ export function SearchListBottomSheet({
     null,
   );
   const headerMeasureRef = useRef<HTMLDivElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  /** 늘어나지 않는 목록 자체. 스크롤 영역을 재면 순환에 걸린다. */
   const listMeasureRef = useRef<HTMLDivElement | null>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
@@ -563,8 +565,13 @@ export function SearchListBottomSheet({
   /**
    * full 로 올렸을 때 필요한 높이.
    *
-   * 스크롤 영역은 실제로 그릴 높이(scrollHeight)를 재야 한다. 지금 보이는 높이를 재면
-   * 시트 크기에 따라 값이 달라져, 재고 옮기고 다시 재는 순환이 된다.
+   * 스크롤 영역이 아니라 그 안의 목록을 잰다. 스크롤 영역은 flex 로 늘어나서
+   * 내용이 짧으면 scrollHeight 가 "지금 시트가 준 높이" 를 돌려준다. 그 값으로 시트
+   * 높이를 정하면 높이가 바뀌고, 그걸 본 ResizeObserver 가 또 재는 순환이 된다.
+   *
+   * 결과가 없을 때(로딩·빈 결과·오류)는 재지 않는다. 그 화면들은 "콘텐츠 길이" 라고
+   * 할 만한 게 없고, 빈 상태는 minHeight 100% 로 영역을 채우도록 되어 있어 같은
+   * 순환에 걸린다. 이때는 지금까지처럼 상한까지 올라간다.
    *
    * 첫 페인트 전에 재는 이유는 필터 시트와 같다. 그 뒤에 재면 시트가 잘못된 자리에서
    * 올라오다 옮겨 앉는 게 보인다.
@@ -572,15 +579,23 @@ export function SearchListBottomSheet({
   useIsomorphicLayoutEffect(() => {
     const measure = () => {
       const list = listMeasureRef.current;
+      const scrollArea = scrollAreaRef.current;
 
-      if (!list) {
+      if (!list || !scrollArea) {
         setFullContentHeight(null);
         return;
       }
 
+      // 스크롤 영역의 위아래 여백은 목록 바깥이라 offsetHeight 에 안 잡힌다.
+      const scrollAreaStyle = window.getComputedStyle(scrollArea);
+      const scrollAreaPadding =
+        Number.parseFloat(scrollAreaStyle.paddingTop) +
+        Number.parseFloat(scrollAreaStyle.paddingBottom);
       const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
 
-      setFullContentHeight(Math.ceil(list.scrollHeight + headerHeight));
+      setFullContentHeight(
+        Math.ceil(list.offsetHeight + headerHeight + scrollAreaPadding),
+      );
     };
 
     measure();
@@ -595,7 +610,7 @@ export function SearchListBottomSheet({
     if (headerMeasureRef.current) observer.observe(headerMeasureRef.current);
 
     return () => observer.disconnect();
-  }, [visibleItems, isLoading, isError, showEmpty, showFilterEmpty]);
+  }, [visibleItems, hasResult]);
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
@@ -672,7 +687,7 @@ export function SearchListBottomSheet({
         ) : null}
 
         <div
-          ref={listMeasureRef}
+          ref={scrollAreaRef}
           className={[listScrollArea, hasResult ? resultScrollArea : ""]
             .filter(Boolean)
             .join(" ")}
@@ -685,7 +700,7 @@ export function SearchListBottomSheet({
                 <SearchAsyncFeedback variant="result-error" onRetry={onRetry} />
               </div>
             ) : hasResult ? (
-              <div className={listStack}>
+              <div ref={listMeasureRef} className={listStack}>
                 <SearchListResults
                   items={visibleItems}
                   onLockerPress={onLockerPress}
