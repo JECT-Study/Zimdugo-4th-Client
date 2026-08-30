@@ -21,6 +21,7 @@ import {
   SettingsSkeletonFrame,
 } from "#/features/settings/ui/SettingsRouteSkeleton";
 import { useAuth } from "#/shared/hooks/useAuth";
+import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
@@ -35,6 +36,7 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated, logout } = useAuth();
+  const handleBack = useBackNavigation("/");
   const isSettingsRoot = useRouterState({
     select: (state) =>
       stripLocalePathPrefix(state.location.pathname) === "/settings",
@@ -122,7 +124,7 @@ export function SettingsPage() {
     <>
       <SettingsPageView
         appVersion={import.meta.env.VITE_APP_VERSION || "1.0.0"}
-        onBack={() => navigate({ to: "/" })}
+        onBack={handleBack}
         onLanguagePress={() => navigate({ to: "/settings/language" })}
         onThemePress={() => navigate({ to: "/settings/theme" })}
         onNoticePress={() => navigate({ to: "/notices" })}

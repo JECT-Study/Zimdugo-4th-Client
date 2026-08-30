@@ -4,7 +4,7 @@ import { Button } from "@repo/ui/components/button";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import {
   type ReportDetailViewerLoadState,
@@ -21,6 +21,7 @@ import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { summaryText } from "#/features/my/ui/my-list.css.ts";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { getMyLockerReportDetail } from "#/shared/api/my-page";
+import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { formatUpdatedLabel } from "#/shared/lib/format-updated-label";
@@ -56,7 +57,7 @@ const REPORT_SKELETON_ROW_KEYS = [
 ] as const;
 
 function MyReportsPage() {
-  const navigate = useNavigate();
+  const handleBack = useBackNavigation("/settings");
   const listQuery = useReportHistoryList();
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
 
@@ -101,10 +102,6 @@ function MyReportsPage() {
     enabled: canLoadMore,
     onIntersect: handleLoadMore,
   });
-
-  const handleBack = () => {
-    navigate({ to: "/settings" });
-  };
 
   const handleRetry = () => {
     void listQuery.refetch();
