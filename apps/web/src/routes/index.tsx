@@ -76,6 +76,10 @@ import {
   getPinId,
   type LockerMarkerOffset,
 } from "#/entities/map/model/map-marker";
+import {
+  applyFavoriteOverlayToPins,
+  type ResolvePinFavorite,
+} from "#/entities/map/model/map-pin-favorite";
 import { useHasRequestedHomeLocationInSession } from "#/entities/map/model/useHomeLocationRequestSession";
 import {
   type LocationData,
@@ -116,7 +120,6 @@ import { useSearchHistory } from "#/features/search/hooks/useSearchHistory";
 import {
   applyFavoriteOverlayToLockerDetail,
   applyFavoriteOverlayToLockerItems,
-  applyFavoriteOverlayToPins,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
 import {
@@ -3564,6 +3567,7 @@ export function IndexPage() {
             selectedPin={selectedMapPin}
             onSelectPin={handleSearchMarkerSelect}
             onClusterClick={handleClusterClick}
+            resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
           />
         )}
         {!isMapLoading &&
@@ -3829,6 +3833,7 @@ function LockerMarkersLayer({
   onSelectPin,
   onClusterClick,
   spreadCenter,
+  resolveEffectiveFavorite,
 }: {
   map: naver.maps.Map | null;
   searchParams?: LockerPinSearchParams | null;
@@ -3844,6 +3849,7 @@ function LockerMarkersLayer({
     bounds: import("#/shared/api/lockers").LockerBoundsRaw,
   ) => void;
   spreadCenter?: { lat: number; lng: number } | null;
+  resolveEffectiveFavorite?: ResolvePinFavorite;
 }) {
   const { maps } = useNaverMapSdk();
 
@@ -3856,6 +3862,7 @@ function LockerMarkersLayer({
     onSelectLocker: onSelectPin,
     onClusterClick,
     spreadCenter,
+    resolveEffectiveFavorite,
   });
 
   return null;

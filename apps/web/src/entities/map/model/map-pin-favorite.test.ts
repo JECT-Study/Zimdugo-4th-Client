@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
-import { applyFavoriteOverlayToPins } from "./apply-favorite-overlay";
+import { applyFavoriteOverlayToPins } from "./map-pin-favorite";
 
 type LockerPin = Extract<LockerPinItemResponse, { pinType: "LOCKER" }>;
 type PlacePin = Extract<LockerPinItemResponse, { pinType: "PLACE" }>;
@@ -77,5 +77,26 @@ describe("applyFavoriteOverlayToPins", () => {
 
     expect(pins[0]?.isFavorite).toBeNull();
     expect(pins[1]?.isFavorite).toBe(true);
+  });
+
+  it("클러스터 핀은 건드리지 않는다", () => {
+    // 클러스터는 여러 보관함을 묶은 것이라 lockerId 가 없고 즐겨찾기 도안도 없다.
+    // 줌아웃 상태에서는 덧입혀도 달라지는 게 없다.
+    const clusterPin = {
+      pinType: "CLUSTER" as const,
+      lockerId: null,
+      placeId: null,
+      latitude: 37.5,
+      longitude: 127,
+      isFavorite: null,
+      lockerCount: null,
+      pinCount: 12,
+      bounds: { swLat: 37.4, swLng: 126.9, neLat: 37.6, neLng: 127.1 },
+    };
+
+    const pins = applyFavoriteOverlayToPins([clusterPin], () => true);
+
+    expect(pins[0]).toBe(clusterPin);
+    expect(pins[0]?.isFavorite).toBeNull();
   });
 });

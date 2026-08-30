@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  applyFavoriteOverlayToPins,
+  type ResolvePinFavorite,
+} from "#/entities/map/model/map-pin-favorite";
 import type { LockerBoundsRaw } from "#/shared/api/lockers";
 import {
   getLockerPins,
@@ -52,6 +56,16 @@ export interface UseLockerMarkersOptions {
   ) => void;
   onClusterClick?: (bounds: LockerBoundsRaw) => void;
   spreadCenter?: { lat: number; lng: number } | null;
+  /**
+   * 아직 서버에 닿지 않은 즐겨찾기 토글을 핀에 비추는 함수.
+   *
+   * 핀은 뷰포트 단위 쿼리라 목록에서 즐겨찾기를 눌러도 flush 전까지 캐시가 그대로다.
+   * 표시할 때 덧입혀야 목록의 별과 지도 위 마커가 같이 움직인다.
+   *
+   * 여기서 받는 이유는 즐겨찾기 세션이 features 에 있어서다. 훅이 직접 가져오면
+   * entities 가 features 를 보게 된다.
+   */
+  resolveEffectiveFavorite?: ResolvePinFavorite;
 }
 
 export const useLockerMarkers = ({
@@ -63,6 +77,7 @@ export const useLockerMarkers = ({
   onSelectLocker,
   onClusterClick,
   spreadCenter,
+  resolveEffectiveFavorite,
 }: UseLockerMarkersOptions) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = useAuthStore((state) => state.userId);
@@ -149,7 +164,7 @@ export const useLockerMarkers = ({
   }, [map, maps]);
 
   // 2. 뷰포트 상태를 기반으로 TanStack Query 호출 (캐싱, 상태 관리 자동화)
-  const { data: lockers, isFetching } = useQuery({
+  const { data: rawLockers, isFetching } = useQuery({
     queryKey: [
       LOCKER_PINS_QUERY_KEY,
       lockerPinQuery?.swLat,
@@ -184,6 +199,18 @@ export const useLockerMarkers = ({
     staleTime: 1000 * 60 * 5, // 5분 캐싱
     gcTime: 1000 * 60 * 5,
   });
+
+  /**
+   * 클러스터 핀은 보관함 하나를 가리키지 않아 즐겨찾기 표현이 없다. 그래서 줌아웃 상태는
+   * 덧입혀도 달라지는 게 없고, 개별 핀으로 풀리는 줌인 상태에서만 눈에 띈다.
+   */
+  const lockers = useMemo(() => {
+    if (!rawLockers || !resolveEffectiveFavorite) {
+      return rawLockers;
+    }
+
+    return applyFavoriteOverlayToPins(rawLockers, resolveEffectiveFavorite);
+  }, [rawLockers, resolveEffectiveFavorite]);
 
   // 3. 서버에서 받아온 데이터를 지도 마커와 동기화
   // viewport가 변경될 때마다(드래그 등) 화면 밖 마커 컬링 로직이 수행되도록 의존성 추가
