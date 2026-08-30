@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
 /**
- * 지도 컨트롤(새로고침·다크 모드·내 위치)의 위치 규칙을 검증한다.
+ * 지도 컨트롤(새로고침·내 위치)의 위치 규칙을 검증한다.
  *
  * 시트 위로 밀어 올리는 거리, 검색 바를 덮지 않도록 자르는 경계, 놓을 자리가
  * 없을 때 숨기는 판정은 모두 실제 레이아웃이 있어야 확인할 수 있다. jsdom 은
@@ -16,8 +16,8 @@ const MAP_CONTROL = {
   sheetGapPx: 12,
   /** 스택 상단이 넘어서면 안 되는 선(검색 바 아래) */
   topLimitPx: 120,
-  /** 상시 버튼 세 개와 그 사이 간격을 합한 높이 */
-  stackHeightPx: 42 * 3 + 12 * 2,
+  /** 버튼 두 개와 그 사이 간격을 합한 높이 */
+  stackHeightPx: 42 * 2 + 12,
 } as const;
 
 /**
@@ -94,17 +94,17 @@ test.describe("지도 컨트롤 위치", () => {
     await page.goto("/");
     await expect(mapControlStack(page)).toBeVisible();
 
-    // 상단 경계(120) + 스택(150) + 기본 하단(70) = 340px 이 최소 높이다.
-    await page.setViewportSize({ width: 430, height: 300 });
+    // 상단 경계(120) + 스택(96) + 기본 하단(70) = 286px 이 최소 높이다.
+    await page.setViewportSize({ width: 430, height: 260 });
     await expect(mapControlStack(page)).toHaveCount(0);
   });
 
   test("경계 높이에서 표시 여부가 갈린다", async ({ page }) => {
-    await page.setViewportSize({ width: 430, height: 340 });
+    await page.setViewportSize({ width: 430, height: 286 });
     await page.goto("/");
     await waitForMapReady(page);
 
-    // 340px 이면 딱 놓을 수 있다. 스택 상단이 경계선에 정확히 닿는다.
+    // 286px 이면 딱 놓을 수 있다. 스택 상단이 경계선에 정확히 닿는다.
     const box = await mapControlStack(page).boundingBox();
     expect(box?.y).toBeCloseTo(MAP_CONTROL.topLimitPx, 0);
   });

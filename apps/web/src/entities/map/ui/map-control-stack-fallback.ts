@@ -20,18 +20,13 @@ export const MAP_CONTROL_FALLBACK_BOTTOM_PX = 70;
 /** 컨트롤과 시트 사이 간격 */
 export const MAP_CONTROL_SHEET_GAP_PX = 12;
 
-/** 늘 서 있는 컨트롤 개수(새로고침·다크 모드·내 위치) */
-const MAP_CONTROL_PERSISTENT_COUNT = 3;
-
 /**
- * 상시 컨트롤과 그 사이 간격을 합한 스택 높이.
+ * 새로고침·내 위치 버튼과 그 사이 간격을 합한 스택 높이.
  *
- * 늘 서 있는 것만 센다. 조건부로 붙는 컨트롤은 그쪽 높이를 아는 곳에서
+ * 늘 서 있는 두 개만 센다. 조건부로 붙는 컨트롤은 그쪽 높이를 아는 곳에서
  * `resolveMapControlTopReservedPx` 로 더해 준다.
  */
-const MAP_CONTROL_STACK_HEIGHT_PX =
-  42 * MAP_CONTROL_PERSISTENT_COUNT +
-  MAP_CONTROL_SHEET_GAP_PX * (MAP_CONTROL_PERSISTENT_COUNT - 1);
+const MAP_CONTROL_STACK_HEIGHT_PX = 42 * 2 + MAP_CONTROL_SHEET_GAP_PX;
 
 /**
  * 조건부 컨트롤까지 포함한 예약 높이.

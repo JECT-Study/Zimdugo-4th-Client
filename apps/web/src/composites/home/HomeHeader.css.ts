@@ -225,6 +225,34 @@ globalStyle(`${languageCheckIcon} svg`, {
   height: "16px",
 });
 
+/**
+ * 지도 색 테마 버튼.
+ *
+ * 접힌 언어 트리거와 같은 형태(32px 원형, 그림자 1)를 쓴다. 헤더 우측 액션은
+ * 모두 같은 크기로 서야 간격이 고르다.
+ */
+export const colorSchemeButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "32px",
+  height: "32px",
+  padding: "4px",
+  border: 0,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.title,
+  boxShadow: vars.shadow[1],
+  cursor: "pointer",
+  outline: "none",
+  flexShrink: 0,
+  selectors: {
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
+});
+
 export const profileButton = style({
   display: "inline-flex",
   alignItems: "center",

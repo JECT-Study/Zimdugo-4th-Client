@@ -93,7 +93,7 @@ describe("두 시트가 같은 규칙을 따른다", () => {
 describe("full 시트가 화면을 다 덮지 못할 때", () => {
   it("위에 자리가 남으면 컨트롤을 시트 위로 올린다", () => {
     // 콘텐츠가 짧은 보관함은 full 이어도 시트 상단이 400px 에 머문다.
-    // 808 - 400 = 408 을 피하고도 상단 경계(808 - 270 = 538)를 지킬 수 있다.
+    // 808 - 400 = 408 을 피하고도 상단 경계(808 - 216 = 592)를 지킬 수 있다.
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
@@ -157,31 +157,31 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
   });
 
   it("시트와 경계를 모두 지킬 수 있으면 시트 위에 그대로 올린다", () => {
-    // 하프 시트 191px + 간격 12 + 스택 150 + 경계 120 = 473px 가 최소 높이다.
+    // 하프 시트 191px + 간격 12 + 스택 96 + 경계 120 = 419px 가 최소 높이다.
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 191,
-        windowHeightPx: 473,
+        windowHeightPx: 419,
       }),
     ).toBe(203);
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 191,
-        windowHeightPx: 472,
+        windowHeightPx: 418,
       }),
     ).toBeNull();
   });
 
   it("타이머 버튼이 서면 그만큼 더 높은 화면을 요구한다", () => {
     // 타이머 컨트롤은 버튼 42 + 배지 여백 13 = 55px 에 스택 간격 12 를 더 쓴다.
-    // 하프 시트 191 + 12 + 스택 150 + 67 + 경계 120 = 540px 가 최소 높이가 된다.
+    // 하프 시트 191 + 12 + 스택 96 + 67 + 경계 120 = 486px 가 최소 높이가 된다.
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 191,
-        windowHeightPx: 473,
+        windowHeightPx: 419,
         extraStackHeightPx: 55,
       }),
     ).toBeNull();
@@ -189,7 +189,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 191,
-        windowHeightPx: 540,
+        windowHeightPx: 486,
         extraStackHeightPx: 55,
       }),
     ).toBe(203);
@@ -201,19 +201,19 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 191,
-        windowHeightPx: 473,
+        windowHeightPx: 419,
         extraStackHeightPx: 0,
       }),
     ).toBe(203);
   });
 
   it("미니 시트는 낮은 화면에서도 자리가 남는다", () => {
-    // 111 + 12 + 150 + 120 = 393px. 393px 화면이면 하프는 못 놓아도 미니는 놓는다.
+    // 111 + 12 + 96 + 120 = 339px. 390px 화면이면 하프는 못 놓아도 미니는 놓는다.
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
         sheetVisibleHeightPx: 111,
-        windowHeightPx: 393,
+        windowHeightPx: 390,
       }),
     ).toBe(123);
   });

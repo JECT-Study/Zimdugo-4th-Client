@@ -4,6 +4,7 @@ import {
   IconCheck24,
   IconFlagCircle24,
   IconHomeProfile32,
+  IconMapColorScheme24,
 } from "@repo/ui/assets/icons";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { AnimatePresence, motion } from "motion/react";
@@ -28,6 +29,9 @@ export interface HomeHeaderProps {
   onProfilePress: () => void;
   /** 로고를 눌렀을 때. 홈 화면에서는 검색 컨텍스트를 되돌리는 것이 "홈으로" 다. */
   onLogoPress: () => void;
+  /** 지금 지도에 적용된 색 테마 */
+  mapColorScheme: "light" | "dark";
+  onMapColorSchemePress: () => void;
 }
 
 const LANGUAGE_DROPDOWN_TRANSITION = {
@@ -169,6 +173,12 @@ function HomeHeaderSkeletonContent() {
           variant="circle"
           style={SKELETON_SURFACE_STYLE}
         />
+        <Skeleton
+          width={32}
+          height={32}
+          variant="circle"
+          style={SKELETON_SURFACE_STYLE}
+        />
       </div>
     </>
   );
@@ -178,6 +188,8 @@ export function HomeHeader({
   profileImageUrl = "",
   onProfilePress,
   onLogoPress,
+  mapColorScheme,
+  onMapColorSchemePress,
 }: HomeHeaderProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const languageTriggerRef = useRef<HTMLButtonElement>(null);
@@ -288,6 +300,20 @@ export function HomeHeader({
         className={styles.actions}
         style={fallbackStyle(actionsFallbackStyle)}
       >
+        <button
+          type="button"
+          className={styles.colorSchemeButton}
+          style={fallbackStyle(circleActionFallbackStyle)}
+          aria-pressed={mapColorScheme === "dark"}
+          aria-label={
+            mapColorScheme === "dark"
+              ? m.home_map_light_mode_aria()
+              : m.home_map_dark_mode_aria()
+          }
+          onClick={onMapColorSchemePress}
+        >
+          <IconMapColorScheme24 scheme={mapColorScheme} />
+        </button>
         <motion.div
           ref={languageDropdownRef}
           className={[

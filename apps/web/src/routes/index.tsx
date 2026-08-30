@@ -1,6 +1,5 @@
 import { languageTag, m } from "@repo/i18n";
 import {
-  IconMapColorScheme24,
   IconNavigationCrosshair24,
   IconNavigationRefresh24,
   IconX24,
@@ -524,32 +523,6 @@ const RefreshButton = memo(function RefreshButton({
       {isRefreshing && !isRefreshSpinning && refreshCooldownRemaining > 0 && (
         <div className={refreshCooldownBadge}>{refreshCooldownRemaining}</div>
       )}
-    </button>
-  );
-});
-
-interface MapColorSchemeButtonProps {
-  colorScheme: "light" | "dark";
-  onToggle: () => void;
-}
-
-const MapColorSchemeButton = memo(function MapColorSchemeButton({
-  colorScheme,
-  onToggle,
-}: MapColorSchemeButtonProps) {
-  return (
-    <button
-      type="button"
-      className={locationButton}
-      onClick={onToggle}
-      aria-pressed={colorScheme === "dark"}
-      aria-label={
-        colorScheme === "dark"
-          ? m.home_map_light_mode_aria()
-          : m.home_map_dark_mode_aria()
-      }
-    >
-      <IconMapColorScheme24 className={myLocationIcon} scheme={colorScheme} />
     </button>
   );
 });
@@ -3553,6 +3526,8 @@ export function IndexPage() {
         profileImageUrl={user?.profileImageUrl ?? ""}
         onProfilePress={() => navigate({ to: "/settings" })}
         onLogoPress={resetSearchContext}
+        mapColorScheme={mapColorScheme}
+        onMapColorSchemePress={toggleMapColorScheme}
       />
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
@@ -3679,10 +3654,6 @@ export function IndexPage() {
             isRefreshSpinning={isRefreshSpinning}
             refreshCooldownRemaining={refreshCooldownRemaining}
             onRefresh={handleRefreshMap}
-          />
-          <MapColorSchemeButton
-            colorScheme={mapColorScheme}
-            onToggle={toggleMapColorScheme}
           />
           <MyLocationButton
             permission={permission}
