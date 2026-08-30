@@ -16,13 +16,17 @@ import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
 import { inSheetHeader } from "#/features/search/ui/search-results-heading/SearchResultsHeading.css.ts";
 import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
+import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import {
   type EnglishSubPolicy,
   resolveEnglishSubVisibility,
 } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
-import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
+import {
+  resolveSheetFullSnapPoint,
+  resolveSheetTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
 import {
   type BottomSheetLiveOffsetState,
   type BottomSheetSnapRequest,
@@ -141,6 +145,8 @@ interface ResolveSearchListSnapPointsOptions {
   maxSnapPoint?: number;
   /** 노치에 덮이는 높이. legacy 단계 계산에는 쓰지 않는다. */
   safeAreaInsetTopPx?: number;
+  /** 잰 콘텐츠 높이. full 을 이 높이만큼만 올린다. */
+  fullContentHeight?: number | null;
 }
 
 const resolveSearchListSnapOffset = ({
@@ -251,6 +257,7 @@ export const resolveSearchListSnapPoints = ({
   snapPoint,
   windowHeight,
   safeAreaInsetTopPx = 0,
+  fullContentHeight,
 }: ResolveSearchListSnapPointsOptions) => {
   if (behavior === "legacy") {
     return resolveLegacySearchListSnapPoints({
@@ -264,7 +271,13 @@ export const resolveSearchListSnapPoints = ({
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
   const resolvedMinSnapPoint =
-    minSnapPoint ?? resolveSheetTopLimitPx(safeAreaInsetTopPx);
+    minSnapPoint ??
+    resolveSheetFullSnapPoint({
+      contentHeight: fullContentHeight,
+      topLimitPx: resolveSheetTopLimitPx(safeAreaInsetTopPx),
+      maxSnapPoint: resolvedMaxSnapPoint,
+      windowHeight,
+    });
   const resolvedSnapPoint =
     snapPoint ??
     resolveSearchListSnapOffset({
@@ -328,6 +341,11 @@ export function SearchListBottomSheet({
   const [windowHeight, setWindowHeight] = useState(812);
   const safeAreaInsetTop = useSafeAreaInsetTop();
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
+  const [fullContentHeight, setFullContentHeight] = useState<number | null>(
+    null,
+  );
+  const headerMeasureRef = useRef<HTMLDivElement | null>(null);
+  const listMeasureRef = useRef<HTMLDivElement | null>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -340,6 +358,7 @@ export function SearchListBottomSheet({
     snapPoint,
     windowHeight,
     safeAreaInsetTopPx: safeAreaInsetTop,
+    fullContentHeight,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined
@@ -541,6 +560,43 @@ export function SearchListBottomSheet({
     );
   }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
+  /**
+   * full 로 올렸을 때 필요한 높이.
+   *
+   * 스크롤 영역은 실제로 그릴 높이(scrollHeight)를 재야 한다. 지금 보이는 높이를 재면
+   * 시트 크기에 따라 값이 달라져, 재고 옮기고 다시 재는 순환이 된다.
+   *
+   * 첫 페인트 전에 재는 이유는 필터 시트와 같다. 그 뒤에 재면 시트가 잘못된 자리에서
+   * 올라오다 옮겨 앉는 게 보인다.
+   */
+  useIsomorphicLayoutEffect(() => {
+    const measure = () => {
+      const list = listMeasureRef.current;
+
+      if (!list) {
+        setFullContentHeight(null);
+        return;
+      }
+
+      const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
+
+      setFullContentHeight(Math.ceil(list.scrollHeight + headerHeight));
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(measure);
+
+    if (listMeasureRef.current) observer.observe(listMeasureRef.current);
+    if (headerMeasureRef.current) observer.observe(headerMeasureRef.current);
+
+    return () => observer.disconnect();
+  }, [visibleItems, isLoading, isError, showEmpty, showFilterEmpty]);
+
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
     handleResize();
@@ -565,7 +621,11 @@ export function SearchListBottomSheet({
     >
       <div className={sheetColumn}>
         {showResultHeader ? (
-          <div className={resultHeader} style={resultHeaderStyle}>
+          <div
+            ref={headerMeasureRef}
+            className={resultHeader}
+            style={resultHeaderStyle}
+          >
             <div className={headerLeadingRow}>
               <div className={headerTitleSlot}>
                 <SearchResultsHeading
@@ -612,6 +672,7 @@ export function SearchListBottomSheet({
         ) : null}
 
         <div
+          ref={listMeasureRef}
           className={[listScrollArea, hasResult ? resultScrollArea : ""]
             .filter(Boolean)
             .join(" ")}

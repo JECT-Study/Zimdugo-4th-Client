@@ -65,6 +65,28 @@ describe("SearchListBottomSheet", () => {
     draggableBottomSheetMock.mockClear();
   });
 
+  it("결과가 짧으면 full 이 콘텐츠 높이만큼만 올라온다", () => {
+    // 예전에는 결과가 두어 개여도 늘 화면 꼭대기(112)까지 덮었다.
+    // 812 - 320 - 아래 여유 32 = 460
+    expect(
+      resolveSearchListSnapPoints({ windowHeight: 812, fullContentHeight: 320 })
+        .minSnapPoint,
+    ).toBe(460);
+  });
+
+  it("결과가 길면 지금처럼 상한에서 멈춘다", () => {
+    expect(
+      resolveSearchListSnapPoints({ windowHeight: 812, fullContentHeight: 900 })
+        .minSnapPoint,
+    ).toBe(112);
+  });
+
+  it("아직 못 쟀으면 상한을 준다", () => {
+    expect(
+      resolveSearchListSnapPoints({ windowHeight: 812 }).minSnapPoint,
+    ).toBe(112);
+  });
+
   it("resolves search-list snaps from visible heights", () => {
     expect(resolveSearchListSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,

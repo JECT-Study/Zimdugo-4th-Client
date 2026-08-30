@@ -48,7 +48,10 @@ import {
 import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
-import { resolveSheetTopLimitPx } from "#/shared/lib/app-chrome-layout";
+import {
+  resolveSheetFullSnapPoint,
+  resolveSheetTopLimitPx,
+} from "#/shared/lib/app-chrome-layout";
 import {
   formatLockerOperatingHoursLabel,
   formatLockerPriceLabel,
@@ -199,7 +202,6 @@ export interface LockerDetailBottomSheetProps {
 export { SHEET_TOP_LIMIT_PX as LOCKER_DETAIL_FULL_TOP_OFFSET } from "#/shared/lib/app-chrome-layout";
 
 const DETAIL_CONTENT_TOP_PADDING = 8;
-const DETAIL_CONTENT_BOTTOM_PADDING = 24;
 const DETAIL_DISMISS_VISIBLE_HEIGHT = 52;
 const DETAIL_MINI_VISIBLE_HEIGHT = 111;
 
@@ -305,27 +307,6 @@ const resolveLockerDetailSnapStage = ({
   ).stage;
 };
 
-export const resolveLockerDetailFullSnapPoint = ({
-  contentHeight,
-  maxSnapPoint,
-  minSnapPoint,
-  windowHeight,
-}: {
-  contentHeight?: number | null;
-  maxSnapPoint: number;
-  minSnapPoint: number;
-  windowHeight: number;
-}) => {
-  if (!contentHeight || contentHeight <= 0) {
-    return minSnapPoint;
-  }
-
-  return Math.min(
-    maxSnapPoint,
-    Math.max(minSnapPoint, windowHeight - contentHeight),
-  );
-};
-
 export const resolveLockerDetailSnapPoints = ({
   fullContentHeight,
   maxSnapPoint,
@@ -339,10 +320,10 @@ export const resolveLockerDetailSnapPoints = ({
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
   const resolvedFullTopOffset =
     minSnapPoint ?? resolveSheetTopLimitPx(safeAreaInsetTopPx);
-  const resolvedMinSnapPoint = resolveLockerDetailFullSnapPoint({
+  const resolvedMinSnapPoint = resolveSheetFullSnapPoint({
     contentHeight: fullContentHeight,
+    topLimitPx: resolvedFullTopOffset,
     maxSnapPoint: resolvedMaxSnapPoint,
-    minSnapPoint: resolvedFullTopOffset,
     windowHeight,
   });
   const resolvedSnapPoint =
@@ -461,8 +442,7 @@ export function LockerDetailBottomSheet({
         element.scrollHeight +
           footerHeight +
           missingRealtimeCardHeight +
-          DETAIL_CONTENT_TOP_PADDING +
-          DETAIL_CONTENT_BOTTOM_PADDING,
+          DETAIL_CONTENT_TOP_PADDING,
       ),
     );
   }, [isRealtimeAvailable]);

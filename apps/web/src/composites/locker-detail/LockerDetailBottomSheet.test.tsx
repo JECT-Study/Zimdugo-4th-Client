@@ -69,7 +69,6 @@ import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
-  resolveLockerDetailFullSnapPoint,
   resolveLockerDetailSnapPoints,
 } from "./LockerDetailBottomSheet";
 
@@ -149,25 +148,6 @@ describe("LockerDetailBottomSheet", () => {
       minSnapPoint: 112,
       snapPoint: 730,
     });
-  });
-
-  it("uses the search bar bottom as the maximum full snap height", () => {
-    expect(
-      resolveLockerDetailFullSnapPoint({
-        contentHeight: 320,
-        maxSnapPoint: 760,
-        minSnapPoint: LOCKER_DETAIL_FULL_TOP_OFFSET,
-        windowHeight: 812,
-      }),
-    ).toBe(492);
-    expect(
-      resolveLockerDetailFullSnapPoint({
-        contentHeight: 900,
-        maxSnapPoint: 760,
-        minSnapPoint: LOCKER_DETAIL_FULL_TOP_OFFSET,
-        windowHeight: 812,
-      }),
-    ).toBe(LOCKER_DETAIL_FULL_TOP_OFFSET);
   });
 
   it("사이즈가 없어도 행을 비우지 않고 미제공으로 알린다", () => {
@@ -626,8 +606,9 @@ describe("LockerDetailBottomSheet", () => {
     expect(
       getSheetRoot().queryByRole("region", { name: "실시간 이용 가능" }),
     ).toBeNull();
+    // 8 은 콘텐츠 위 여백, 32 는 시트 세 개가 함께 쓰는 아래 여유다.
     expect(halfMinSnapPoint).toBe(
-      812 - (FULL_CONTENT_HEIGHT + ACTION_FOOTER_HEIGHT + 8 + 24),
+      812 - (FULL_CONTENT_HEIGHT + ACTION_FOOTER_HEIGHT + 8 + 32),
     );
 
     rerender(

@@ -3,6 +3,7 @@ import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/Lock
 import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchListBottomSheet";
 import {
   resolveMapControlTopLimitPx,
+  resolveSheetFullSnapPoint,
   resolveSheetTopLimitPx,
 } from "#/shared/lib/app-chrome-layout";
 import {
@@ -368,5 +369,44 @@ describe("크롬 아래 경계", () => {
     // 시트보다 간격을 넓게(12px) 두는 것 말고는 같은 기준이다.
     expect(resolveMapControlTopLimitPx(0)).toBe(120);
     expect(resolveMapControlTopLimitPx(59)).toBe(179);
+  });
+});
+
+describe("resolveSheetFullSnapPoint", () => {
+  const base = { topLimitPx: 112, maxSnapPoint: 760, windowHeight: 812 };
+
+  it("콘텐츠가 짧으면 그 높이만큼만 올린다", () => {
+    // 결과가 두어 개인데도 화면 꼭대기까지 덮던 것을 고친 것이다.
+    // 812 - 320 - 여유 32 = 460
+    expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 320 })).toBe(
+      460,
+    );
+  });
+
+  it("콘텐츠 아래에 여유를 남긴다", () => {
+    // 딱 맞추면 마지막 항목이 화면 바닥에 붙어 잘린 것처럼 보인다.
+    const withGap = resolveSheetFullSnapPoint({ ...base, contentHeight: 320 });
+    const withoutGap = base.windowHeight - 320;
+
+    expect(withoutGap - withGap).toBe(32);
+  });
+
+  it("콘텐츠가 길면 상한에서 멈춘다", () => {
+    expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 900 })).toBe(
+      112,
+    );
+  });
+
+  it("아직 못 쟀으면 상한을 준다", () => {
+    // 짧다고 가정하면 낮게 떴다가 올라가고, 길다고 가정하면 반대로 움직인다.
+    // 어느 쪽이든 올라오는 도중에 높이가 바뀌어 보인다.
+    expect(resolveSheetFullSnapPoint({ ...base, contentHeight: null })).toBe(
+      112,
+    );
+    expect(resolveSheetFullSnapPoint(base)).toBe(112);
+  });
+
+  it("콘텐츠가 아주 짧아도 최대 스냅을 넘지 않는다", () => {
+    expect(resolveSheetFullSnapPoint({ ...base, contentHeight: 10 })).toBe(760);
   });
 });
