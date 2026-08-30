@@ -307,6 +307,10 @@ export function LocationPickerOverlay({
 
     const startCoords = initialCoords ?? DEFAULT_COORDS;
 
+    // 첫 렌더는 SSR 기본값(라이트)이고 저장값·기기 설정은 마운트 뒤에 들어온다.
+    // 지도를 만드는 시점의 값을 쓰고, 그 값을 적용 상태로 기록해야 한다. 첫 렌더
+    // 값을 적용 상태로 두면 곧바로 "달라졌다" 고 판정해 방금 만든 지도를 부순다.
+    const initialColorScheme = colorSchemeRef.current;
     const mapOptions = {
       center: new window.naver.maps.LatLng(startCoords.lat, startCoords.lng),
       zoom: PICKER_MAP_ZOOM,
@@ -315,11 +319,12 @@ export function LocationPickerOverlay({
       scrollWheel: false,
       pinchZoom: false,
       // 홈 지도와 같은 테마로 띄운다.
-      ...getNaverMapStyleOptions(colorSchemeRef.current),
+      ...getNaverMapStyleOptions(initialColorScheme),
     };
 
     const map = new window.naver.maps.Map(mapRef.current, mapOptions);
     mapInstanceRef.current = map;
+    appliedColorSchemeRef.current = initialColorScheme;
 
     const finishInitialGeocode = (lat: number, lng: number) => {
       updateAddressFromCoords(lat, lng, {
@@ -333,8 +338,10 @@ export function LocationPickerOverlay({
           if (!isMountedRef.current) return;
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
+          // 테마가 바뀌면 지도를 다시 만들므로, 여기서 붙잡아 둔 map 은 이미
+          // 부서졌을 수 있다. 그 경우 화면 중앙과 제출 좌표가 어긋난다.
           const latLng = new window.naver.maps.LatLng(lat, lng);
-          map.panTo(latLng);
+          mapInstanceRef.current?.panTo(latLng);
           setCurrentCoords({ lat, lng });
           setIsCentered(true);
           setLocationPermission("granted");
