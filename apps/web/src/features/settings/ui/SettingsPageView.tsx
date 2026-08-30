@@ -52,6 +52,8 @@ export interface SettingsPageViewProps {
   appVersion: string;
   onBack: () => void;
   onLanguagePress: () => void;
+  /** 언어 행에 표시할 현재 언어 */
+  languageValue?: string;
   onThemePress?: () => void;
   /** 테마 행에 표시할 현재 선택값 */
   themeValue?: string;
@@ -66,6 +68,7 @@ export function SettingsPageView({
   appVersion,
   onBack,
   onLanguagePress,
+  languageValue,
   onThemePress,
   themeValue,
   onNoticePress,
@@ -152,6 +155,7 @@ export function SettingsPageView({
             <section className={[group, groupGap].join(" ")}>
               <SettingsRow
                 label={m.settings_language()}
+                value={languageValue}
                 onPress={onLanguagePress}
               />
               <SettingsRow
@@ -187,6 +191,7 @@ export function SettingsPageView({
           <section className={group}>
             <SettingsRow
               label={m.settings_language()}
+              value={languageValue}
               onPress={onLanguagePress}
             />
             <SettingsRow

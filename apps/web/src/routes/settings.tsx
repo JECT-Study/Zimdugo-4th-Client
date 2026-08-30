@@ -1,4 +1,4 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -24,8 +24,12 @@ import {
 } from "#/features/settings/ui/SettingsRouteSkeleton";
 import { useAuth } from "#/shared/hooks/useAuth";
 import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
-import { stripLocalePathPrefix } from "#/shared/i18n/locales";
+import { BASE_LOCALE, stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
+import {
+  appLanguageLabelMap,
+  normalizeLanguage,
+} from "#/shared/store/language";
 import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 
 export const Route = createFileRoute("/settings")({
@@ -41,6 +45,8 @@ export function SettingsPage() {
   const handleBack = useBackNavigation("/");
   const { preference: mapColorSchemePreference } =
     useMapColorSchemePreference();
+  const currentLanguageLabel =
+    appLanguageLabelMap[normalizeLanguage(languageTag()) ?? BASE_LOCALE];
   const isSettingsRoot = useRouterState({
     select: (state) =>
       stripLocalePathPrefix(state.location.pathname) === "/settings",
@@ -130,6 +136,7 @@ export function SettingsPage() {
         appVersion={import.meta.env.VITE_APP_VERSION || "1.0.0"}
         onBack={handleBack}
         onLanguagePress={() => navigate({ to: "/settings/language" })}
+        languageValue={currentLanguageLabel}
         onThemePress={() => navigate({ to: "/settings/theme" })}
         themeValue={getMapColorSchemeLabel(mapColorSchemePreference)}
         onNoticePress={() => navigate({ to: "/notices" })}
