@@ -90,3 +90,28 @@ export const resolveSheetFullSnapPoint = ({
 
   return Math.min(maxSnapPoint, Math.max(topLimitPx, contentBasedOffset));
 };
+
+interface ResolveSheetFullStageOptions
+  extends ResolveSheetFullSnapPointOptions {
+  /** half 단계가 멈추는 자리. 화면 높이에서만 나온다. */
+  halfSnapPoint: number;
+}
+
+/**
+ * full 단계가 설 자리. 설 자리가 없으면 null 이다.
+ *
+ * 콘텐츠가 half 보다 짧으면 full 을 둘 이유가 없다. 억지로 두면 half 와 같은 자리에
+ * 겹치는데, 시트는 단계를 픽셀에서 되찾으므로 겹친 지점이 어느 단계인지 알 수 없게
+ * 된다. 그 상태에서 지도를 눌러 접는 동작 같은 "half 일 때만" 인 규칙이 깨진다.
+ *
+ * 상세 시트는 제목·주소·가격에 액션 푸터까지 있어 콘텐츠가 half 아래로 내려가지
+ * 않는다. 그래서 여태 이 경우를 만나지 않았을 뿐, 규칙은 세 시트에 같이 적용된다.
+ */
+export const resolveSheetFullStageSnapPoint = ({
+  halfSnapPoint,
+  ...options
+}: ResolveSheetFullStageOptions): number | null => {
+  const fullSnapPoint = resolveSheetFullSnapPoint(options);
+
+  return fullSnapPoint < halfSnapPoint ? fullSnapPoint : null;
+};

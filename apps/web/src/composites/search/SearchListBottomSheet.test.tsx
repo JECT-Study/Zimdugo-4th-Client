@@ -65,6 +65,49 @@ describe("SearchListBottomSheet", () => {
     draggableBottomSheetMock.mockClear();
   });
 
+  it("결과가 길면 full 이 콘텐츠 높이만큼만 올라온다", () => {
+    expect(
+      resolveSearchListSnapPoints({ windowHeight: 812, fullContentHeight: 320 })
+        .minSnapPoint,
+    ).toBe(436);
+  });
+
+  it("결과가 짧으면 half 가 시트의 끝이다", () => {
+    // full 을 억지로 두면 half 와 겹쳐, 지도를 눌러 접는 동작이 막힌다.
+    const snaps = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      fullContentHeight: 120,
+    });
+
+    expect(snaps.minSnapPoint).toBe(snaps.snapPoint);
+  });
+
+  it("콘텐츠가 바뀌어도 half·mini 는 그대로 둔다", () => {
+    // 이 둘이 따라 움직이면 시트가 초기 위치를 새로 요청받은 것으로 보고, 사용자가
+    // 옮겨 둔 단계를 무시한 채 그 자리로 뛴다.
+    const 측정전 = resolveSearchListSnapPoints({ windowHeight: 812 });
+    const 측정후 = resolveSearchListSnapPoints({
+      windowHeight: 812,
+      fullContentHeight: 320,
+    });
+
+    expect(측정후.snapPoint).toBe(측정전.snapPoint);
+    expect(측정후.miniSnapPoint).toBe(측정전.miniSnapPoint);
+  });
+
+  it("스냅 순서가 뒤집히지 않는다", () => {
+    for (const fullContentHeight of [80, 120, 285, 320, 900]) {
+      const snaps = resolveSearchListSnapPoints({
+        windowHeight: 812,
+        fullContentHeight,
+      });
+
+      expect(snaps.minSnapPoint).toBeLessThanOrEqual(snaps.snapPoint);
+      expect(snaps.snapPoint).toBeLessThanOrEqual(snaps.miniSnapPoint ?? 0);
+      expect(snaps.miniSnapPoint ?? 0).toBeLessThanOrEqual(snaps.maxSnapPoint);
+    }
+  });
+
   it("resolves search-list snaps from visible heights", () => {
     expect(resolveSearchListSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
