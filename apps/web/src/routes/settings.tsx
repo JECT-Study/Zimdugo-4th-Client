@@ -23,7 +23,6 @@ import {
   SettingsSkeletonFrame,
 } from "#/features/settings/ui/SettingsRouteSkeleton";
 import { useAuth } from "#/shared/hooks/useAuth";
-import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { BASE_LOCALE, stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
 import {
@@ -42,7 +41,6 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated, logout } = useAuth();
-  const handleBack = useBackNavigation("/");
   const { preference: mapColorSchemePreference } =
     useMapColorSchemePreference();
   const currentLanguageLabel =
@@ -134,7 +132,7 @@ export function SettingsPage() {
     <>
       <SettingsPageView
         appVersion={import.meta.env.VITE_APP_VERSION || "1.0.0"}
-        onBack={handleBack}
+        onBack={() => navigate({ to: "/" })}
         onLanguagePress={() => navigate({ to: "/settings/language" })}
         languageValue={currentLanguageLabel}
         onThemePress={() => navigate({ to: "/settings/theme" })}

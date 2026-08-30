@@ -1,6 +1,6 @@
 import { languageTag, m } from "@repo/i18n";
 import { Header } from "@repo/ui/components/layout/header";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
 import { LanguageSettingList } from "#/features/settings/ui/LanguageSettingList";
@@ -21,7 +21,6 @@ import {
   settingsLanguageSettingRowInlineFallbackStyle,
   settingsPageInlineFallbackStyle,
 } from "#/features/settings/ui/settings-page-fallback";
-import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { BASE_LOCALE } from "#/shared/i18n/locales";
 import {
   type AppLanguage,
@@ -35,8 +34,8 @@ export const Route = createFileRoute("/settings/language")({
 });
 
 function SettingsLanguagePage() {
+  const navigate = useNavigate();
   const { isStyleReady, isStyleTimedOut } = useSettingsStyleReady();
-  const handleBack = useBackNavigation("/settings");
   const applyFallbackStyle = isStyleTimedOut;
   const currentLanguage = normalizeLanguage(languageTag()) ?? BASE_LOCALE;
 
@@ -63,7 +62,7 @@ function SettingsLanguagePage() {
         leading="back"
         titleType="text"
         title={m.settings_language()}
-        onBack={handleBack}
+        onBack={() => navigate({ to: "/settings" })}
       />
 
       <main

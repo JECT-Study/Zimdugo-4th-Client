@@ -17,11 +17,6 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: unknown) => ({ options }),
   useNavigate: () => vi.fn(),
-  // 뒤로가기는 히스토리가 있으면 history.back() 을 쓴다(useBackNavigation).
-  useRouter: () => ({
-    history: { canGoBack: () => false, back: vi.fn() },
-    navigate: vi.fn(),
-  }),
 }));
 
 vi.mock("#/features/my/hooks/useInfiniteScrollSentinel", () => ({

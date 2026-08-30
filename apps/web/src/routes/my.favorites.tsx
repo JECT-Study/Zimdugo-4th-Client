@@ -14,7 +14,6 @@ import { useInfiniteScrollSentinel } from "#/features/my/hooks/useInfiniteScroll
 import { MyListErrorState } from "#/features/my/ui/MyListErrorState";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import type { FavoriteLockerListItem } from "#/shared/api/my-page";
-import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { resolveEnglishSubVisibility } from "#/shared/i18n/english-sub-policy";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { formatDistanceMeters } from "#/shared/lib/format-distance-meters";
@@ -50,7 +49,6 @@ export const Route = createFileRoute("/my/favorites")({
 
 function MyFavoritesPage() {
   const navigate = useNavigate();
-  const handleBack = useBackNavigation("/settings");
   const {
     listQuery,
     filteredItems,
@@ -78,6 +76,10 @@ function MyFavoritesPage() {
     enabled: canLoadMore,
     onIntersect: handleLoadMore,
   });
+
+  const handleBack = () => {
+    navigate({ to: "/settings" });
+  };
 
   const handleRetry = () => {
     void listQuery.refetch();
