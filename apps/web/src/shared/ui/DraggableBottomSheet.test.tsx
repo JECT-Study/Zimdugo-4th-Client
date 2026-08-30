@@ -14,7 +14,11 @@ const { animateTargets, animationStop } = vi.hoisted(() => ({
   animationStop: vi.fn(),
 }));
 
-vi.mock("motion/react", () => {
+vi.mock("motion/react", async () => {
+  // 실제 useMotionValue 는 렌더가 다시 돌아도 같은 값을 돌려준다. 렌더마다 새로
+  // 만들면 이 값을 의존성에 둔 이펙트가 매 렌더 다시 돌아, 프로덕션에서는 한 번만
+  // 도는 동기화가 테스트에서만 여러 번 돌며 어긋난 상태를 덮어 준다.
+  const { useRef } = await import("react");
   const createMotionValue = (initial: number) => {
     let value = initial;
     const listeners = new Set<(value: number) => void>();
@@ -85,7 +89,14 @@ vi.mock("motion/react", () => {
       },
     },
     useMotionTemplate: () => "calc(100dvh - 0px)",
-    useMotionValue: createMotionValue,
+    useMotionValue: (initial: number) => {
+      const ref = useRef<TestMotionValue | null>(null);
+      if (ref.current == null) {
+        ref.current = createMotionValue(initial);
+      }
+
+      return ref.current;
+    },
     useTransform: (source: TestMotionValue, transform: (v: number) => string) =>
       transform(source.get()),
   };
@@ -374,6 +385,73 @@ describe("DraggableBottomSheet", () => {
 
     expect(animateTargets).toEqual([200]);
     expect(handleSnapChange).toHaveBeenLastCalledWith(200);
+  });
+
+  it("경계를 따라간 뒤에는 사용자가 옮겨 둔 자리를 지킨다", () => {
+    // 화면 높이가 바뀌면 경계와 기본 half 가 함께 움직인다. 따라가는 길에서 그 half 를
+    // 처리한 것으로 적지 않으면, 사용자가 mini 로 내려 둔 뒤 경계가 다시 계산될 때
+    // 초기 스냅 요청으로 읽혀 시트를 half 로 끌어올린다.
+    const handleSnapChange = vi.fn();
+    const renderSheet = (props: {
+      minSnapPoint: number;
+      snapPoint: number;
+      miniSnapPoint: number;
+      snapRequest?: { id: number; snapPoint: number };
+    }) => (
+      <DraggableBottomSheet
+        maxSnapPoint={760}
+        initialSnapPoint={props.snapPoint}
+        onSnapChange={handleSnapChange}
+        {...props}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>
+    );
+
+    const { rerender } = render(
+      renderSheet({ minSnapPoint: 300, snapPoint: 471, miniSnapPoint: 633 }),
+    );
+
+    // 사용자가 full 로 올린다.
+    dragSheet({
+      target: screen.getByTestId("sheet-surface"),
+      from: 200,
+      to: 0,
+    });
+    expect(animateTargets.at(-1)).toBe(300);
+
+    // 화면이 줄어 경계와 기본 half 가 함께 내려온다. 시트는 경계를 따라간다.
+    rerender(
+      renderSheet({ minSnapPoint: 340, snapPoint: 500, miniSnapPoint: 650 }),
+    );
+    expect(animateTargets.at(-1)).toBe(340);
+
+    // 사용자가 mini 로 내려 둔다.
+    rerender(
+      renderSheet({
+        minSnapPoint: 340,
+        snapPoint: 500,
+        miniSnapPoint: 650,
+        snapRequest: { id: 1, snapPoint: 650 },
+      }),
+    );
+    expect(animateTargets.at(-1)).toBe(650);
+
+    animateTargets.length = 0;
+    handleSnapChange.mockClear();
+
+    // 결과가 바뀌어 경계만 다시 계산된다.
+    rerender(
+      renderSheet({
+        minSnapPoint: 300,
+        snapPoint: 500,
+        miniSnapPoint: 650,
+        snapRequest: { id: 1, snapPoint: 650 },
+      }),
+    );
+
+    expect(animateTargets).toEqual([]);
+    expect(handleSnapChange).not.toHaveBeenCalled();
   });
 
   it("마운트 때는 자리가 그대로라 알리지 않는다", () => {

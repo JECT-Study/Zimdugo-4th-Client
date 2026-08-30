@@ -457,6 +457,14 @@ export function DraggableBottomSheet({
      * 옮겨 간다. 부모에게 알리는 것도 그쪽이 함께 한다.
      */
     if (shouldFollowMinSnap) {
+      /*
+       * 이번 초기 스냅도 처리한 것으로 적는다.
+       *
+       * 화면 높이가 바뀌면 경계와 기본 half 가 함께 움직인다. 여기서 적지 않고 나가면
+       * 그 half 가 처리되지 않은 채 남아, 나중에 사용자가 mini 로 옮겨 둔 뒤 경계가
+       * 다시 계산될 때 초기 스냅 요청으로 읽혀 시트를 half 로 끌어올린다.
+       */
+      lastInitialSnapRef.current = nextInitialSnap;
       settleToSnapPointRef.current?.(minSnapPoint);
       return;
     }
