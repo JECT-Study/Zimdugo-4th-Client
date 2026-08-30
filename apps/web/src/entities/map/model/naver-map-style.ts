@@ -11,7 +11,7 @@
  * 채우고 colorScheme 을 넘기면 그대로 이어지도록만 열어 둔다.
  */
 
-export const MAP_COLOR_SCHEMES = {
+const MAP_COLOR_SCHEMES = {
   Light: "light",
   Dark: "dark",
 } as const;
@@ -21,7 +21,7 @@ export type MapColorScheme =
 
 export const DEFAULT_MAP_COLOR_SCHEME: MapColorScheme = MAP_COLOR_SCHEMES.Light;
 
-export const NAVER_MAP_GL_SUBMODULE = "gl";
+const NAVER_MAP_GL_SUBMODULE = "gl";
 
 export type NaverMapCustomStyleIds = Record<MapColorScheme, string | undefined>;
 
@@ -40,7 +40,7 @@ const MAP_BACKGROUND_COLORS: Record<MapColorScheme, string> = {
   dark: "#111111",
 };
 
-export const NAVER_MAP_CUSTOM_STYLE_IDS: NaverMapCustomStyleIds = {
+const NAVER_MAP_CUSTOM_STYLE_IDS: NaverMapCustomStyleIds = {
   light: import.meta.env.VITE_NAVER_MAP_CUSTOM_STYLE_ID_LIGHT,
   dark: import.meta.env.VITE_NAVER_MAP_CUSTOM_STYLE_ID_DARK,
 };
@@ -48,7 +48,7 @@ export const NAVER_MAP_CUSTOM_STYLE_IDS: NaverMapCustomStyleIds = {
 // 빈 문자열을 그대로 넘기면 스타일을 못 찾아 지도가 뜨지 않는다.
 const normalizeStyleId = (styleId?: string) => styleId?.trim() || undefined;
 
-export const getNaverMapCustomStyleId = (
+const getNaverMapCustomStyleId = (
   colorScheme: MapColorScheme,
   styleIds: NaverMapCustomStyleIds = NAVER_MAP_CUSTOM_STYLE_IDS,
 ) => normalizeStyleId(styleIds[colorScheme]);
@@ -57,7 +57,7 @@ export const getNaverMapCustomStyleId = (
  * 스타일 ID 가 하나라도 있으면 GL 서브모듈을 싣는다. 지금 쓰는 테마의 ID 만
  * 보고 정하면 테마를 바꿀 때 SDK 를 다시 불러야 한다.
  */
-export const hasNaverMapCustomStyle = (
+const hasNaverMapCustomStyle = (
   styleIds: NaverMapCustomStyleIds = NAVER_MAP_CUSTOM_STYLE_IDS,
 ) => Object.values(styleIds).some((styleId) => normalizeStyleId(styleId));
 
