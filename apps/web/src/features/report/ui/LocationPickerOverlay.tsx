@@ -1,4 +1,4 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import {
   IconChevronLeft13,
   IconCircleboxCrosshair48,
@@ -7,6 +7,8 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { Popup } from "@repo/ui/components/popup";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useMapColorScheme } from "#/entities/map";
+import { normalizeNaverMapLanguage } from "#/entities/map/model/naver-map-language";
 import {
   getNaverMapScriptSrc,
   waitForNaverMapSdkReady,
@@ -41,9 +43,6 @@ export interface LocationPickerOverlayProps {
 
 const DEFAULT_COORDS = { lat: 37.4979, lng: 127.0276 }; // 강남역 정중앙
 const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
-// 색 테마는 아직 라이트 하나뿐이라 기본값을 쓴다. 앱에 다크가 생기면 여기에
-// 현재 테마를 넘긴다.
-const NAVER_MAP_STYLE_OPTIONS = getNaverMapStyleOptions();
 
 const loadNaverMapsScript = async () => {
   if (typeof window === "undefined") return;
@@ -54,13 +53,19 @@ const loadNaverMapsScript = async () => {
   // 스크립트가 아니라 지도를 만들 때 MapOptions 로 넘긴다.
   const scriptSrc = getNaverMapScriptSrc({
     clientId: NAVER_MAP_CLIENT_ID,
+    language: normalizeNaverMapLanguage(languageTag()),
     submodules: withNaverMapStyleSubmodules(["geocoder"]),
   });
   const activeScript = document.querySelector<HTMLScriptElement>(
     'script[src*="maps.js"]',
   );
 
-  if (activeScript && window.naver?.maps?.Service) return;
+  // 파라미터가 같은 스크립트일 때만 재사용한다. 아무 maps.js 나 받아들이면
+  // gl 없이 실린 SDK 를 그대로 써서 customStyleId 가 조용히 무시된다.
+  if (activeScript?.src === scriptSrc && window.naver?.maps?.Service) {
+    await waitForNaverMapSdkReady();
+    return;
+  }
 
   await new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
@@ -85,12 +90,15 @@ export function LocationPickerOverlay({
   onSelect,
   initialCoords,
 }: LocationPickerOverlayProps) {
+  const { colorScheme } = useMapColorScheme();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
   const geocodeRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
   const isMountedRef = useRef(true);
+  const colorSchemeRef = useRef(colorScheme);
+  colorSchemeRef.current = colorScheme;
   const hasCompletedInitialSetupRef = useRef(false);
 
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
@@ -276,7 +284,9 @@ export function LocationPickerOverlay({
       draggable: false,
       scrollWheel: false,
       pinchZoom: false,
-      ...NAVER_MAP_STYLE_OPTIONS,
+      // 홈 지도와 같은 테마로 띄운다. 오버레이가 떠 있는 동안에는 테마를 바꿀
+      // 수단이 없어 만들 때 한 번 읽으면 된다.
+      ...getNaverMapStyleOptions(colorSchemeRef.current),
     };
 
     const map = new window.naver.maps.Map(mapRef.current, mapOptions);

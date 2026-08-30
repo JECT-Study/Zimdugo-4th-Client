@@ -131,4 +131,19 @@ describe("map-color-scheme-store", () => {
 
     expect(revisited.result.current.preference).toBe("dark");
   });
+
+  it("다시 구독할 때 그 사이 바뀐 기기 설정을 반영한다", async () => {
+    stubMatchMedia(false);
+    const { useMapColorScheme } = await importStore();
+
+    const first = renderHook(() => useMapColorScheme());
+    expect(first.result.current.colorScheme).toBe("light");
+    first.unmount();
+
+    // 아무도 듣고 있지 않은 동안 기기 테마가 바뀐다.
+    stubMatchMedia(true);
+
+    const second = renderHook(() => useMapColorScheme());
+    expect(second.result.current.colorScheme).toBe("dark");
+  });
 });

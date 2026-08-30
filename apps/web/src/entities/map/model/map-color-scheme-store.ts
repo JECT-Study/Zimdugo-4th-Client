@@ -102,8 +102,13 @@ const useMapColorSchemeStore = create<MapColorSchemeStore>((set, get) => ({
 /**
  * 기기 설정을 따라가는 중이면 그 변화도 즉시 반영한다.
  *
- * 구독은 시스템을 따르는지와 무관하게 걸어 둔다. "시스템 따름" 으로 바꾸는
+ * 구독은 시스템을 따르는지와 무관하게 걸어 둔다. "시스템 기본값" 으로 바꾸는
  * 순간 이미 값이 최신이어야 하기 때문이다.
+ *
+ * 구독을 걸 때마다 현재 값도 다시 읽는다. hydrate 는 한 번만 돌고, 구독은
+ * 이후 변화만 받는다. 이 훅을 쓰는 화면을 모두 떠나 있는 동안 기기 테마가
+ * 바뀌면 그 사이의 변화를 아무도 못 듣는데, 돌아와서 현재 값을 읽지 않으면
+ * 다음 변경이 올 때까지 예전 색으로 남는다.
  */
 const useMapColorSchemeSync = () => {
   const hydrate = useMapColorSchemeStore((state) => state.hydrate);
@@ -116,6 +121,8 @@ const useMapColorSchemeSync = () => {
 
     const query = window.matchMedia?.(DARK_SCHEME_QUERY);
     if (!query) return;
+
+    setSystemColorScheme(query.matches ? "dark" : "light");
 
     const handleChange = (event: MediaQueryListEvent) => {
       setSystemColorScheme(event.matches ? "dark" : "light");
