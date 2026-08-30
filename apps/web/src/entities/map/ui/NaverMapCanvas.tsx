@@ -87,6 +87,13 @@ export function NaverMapCanvas({
   const initialZoomRef = useRef(initialZoom);
   initialZoomRef.current = initialZoom;
 
+  // 색 테마가 바뀌면 지도를 새로 만든다. 그때 보고 있던 위치를 잃지 않도록
+  // 부수기 직전 카메라를 여기 담아 다음 생성의 시작점으로 쓴다.
+  const lastViewportRef = useRef<{
+    center: MapCanvasCoordinates;
+    zoom: number;
+  } | null>(null);
+
   const hasError = status === "error" || mapInitError !== null;
   const isSdkLoading = status === "idle" || status === "loading";
   const isLoading = isSdkLoading || isMapBootstrapping;
@@ -124,10 +131,14 @@ export function NaverMapCanvas({
       if (cancelled) return;
 
       try {
-        const bootstrapCenter = initialCenterRef.current ?? DEFAULT_MAP_CENTER;
+        const restoredViewport = lastViewportRef.current;
+        const bootstrapCenter =
+          restoredViewport?.center ??
+          initialCenterRef.current ??
+          DEFAULT_MAP_CENTER;
         const map = new maps.Map(container, {
           center: new maps.LatLng(bootstrapCenter.lat, bootstrapCenter.lng),
-          zoom: initialZoomRef.current,
+          zoom: restoredViewport?.zoom ?? initialZoomRef.current,
           zoomControl: false,
           scaleControl: true,
           mapDataControl: false,
@@ -215,6 +226,11 @@ export function NaverMapCanvas({
         resizeObserver.disconnect();
       }
       if (mapRef.current) {
+        const center = mapRef.current.getCenter();
+        lastViewportRef.current = {
+          center: { lat: center.lat(), lng: center.lng() },
+          zoom: mapRef.current.getZoom(),
+        };
         onWillDestroyRef.current?.(mapRef.current);
         mapRef.current.destroy();
         mapRef.current = null;

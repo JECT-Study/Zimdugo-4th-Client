@@ -1,5 +1,6 @@
 import { languageTag, m } from "@repo/i18n";
 import {
+  IconMapColorScheme24,
   IconNavigationCrosshair24,
   IconNavigationRefresh24,
   IconX24,
@@ -57,6 +58,7 @@ import {
   NaverMapProvider,
   resolveMapBootstrapViewport,
   subscribeMapIdle,
+  useMapColorScheme,
   useMapViewportStore,
   useNaverMapSdk,
 } from "#/entities/map";
@@ -526,6 +528,32 @@ const RefreshButton = memo(function RefreshButton({
   );
 });
 
+interface MapColorSchemeButtonProps {
+  colorScheme: "light" | "dark";
+  onToggle: () => void;
+}
+
+const MapColorSchemeButton = memo(function MapColorSchemeButton({
+  colorScheme,
+  onToggle,
+}: MapColorSchemeButtonProps) {
+  return (
+    <button
+      type="button"
+      className={locationButton}
+      onClick={onToggle}
+      aria-pressed={colorScheme === "dark"}
+      aria-label={
+        colorScheme === "dark"
+          ? m.home_map_light_mode_aria()
+          : m.home_map_dark_mode_aria()
+      }
+    >
+      <IconMapColorScheme24 className={myLocationIcon} scheme={colorScheme} />
+    </button>
+  );
+});
+
 interface MyLocationButtonProps {
   permission: PermissionState;
   /** 다른 컨트롤이 동작 중이면 같이 잠근다 */
@@ -578,6 +606,10 @@ export function IndexPage() {
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: user } = useUser(isAuthenticated);
+  const {
+    colorScheme: mapColorScheme,
+    toggleColorScheme: toggleMapColorScheme,
+  } = useMapColorScheme();
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
@@ -3533,7 +3565,7 @@ export function IndexPage() {
         />
       ) : null}
 
-      <NaverMapProvider language={languageTag()}>
+      <NaverMapProvider colorScheme={mapColorScheme} language={languageTag()}>
         <NaverMapCanvas
           key={mapRemountKey}
           onLoad={handleMapLoad}
@@ -3647,6 +3679,10 @@ export function IndexPage() {
             isRefreshSpinning={isRefreshSpinning}
             refreshCooldownRemaining={refreshCooldownRemaining}
             onRefresh={handleRefreshMap}
+          />
+          <MapColorSchemeButton
+            colorScheme={mapColorScheme}
+            onToggle={toggleMapColorScheme}
           />
           <MyLocationButton
             permission={permission}

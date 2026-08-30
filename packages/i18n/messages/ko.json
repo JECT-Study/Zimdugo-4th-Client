@@ -396,6 +396,8 @@
   "login_result_success_title": "로그인이 확인되었습니다",
   "login_result_failure_title": "로그인에 실패했습니다",
   "home_my_location_aria": "내 위치로 이동",
+  "home_map_dark_mode_aria": "지도 다크 모드로 전환",
+  "home_map_light_mode_aria": "지도 라이트 모드로 전환",
   "home_search_back_aria": "홈으로 돌아가기",
   "home_logo_aria": "짐두고 홈으로",
   "search_suggest_loading_aria": "자동완성 불러오는 중",

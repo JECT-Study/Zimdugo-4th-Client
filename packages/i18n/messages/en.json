@@ -396,6 +396,8 @@
   "login_result_success_title": "Signed in successfully",
   "login_result_failure_title": "Sign-in failed",
   "home_my_location_aria": "Go to my location",
+  "home_map_dark_mode_aria": "Switch map to dark mode",
+  "home_map_light_mode_aria": "Switch map to light mode",
   "home_search_back_aria": "Back to home",
   "home_logo_aria": "ZimDUGO home",
   "search_suggest_loading_aria": "Loading suggestions",

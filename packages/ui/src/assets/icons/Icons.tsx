@@ -650,6 +650,47 @@ export function IconNavigationCrosshair24({
   );
 }
 
+export function IconMapColorScheme24({
+  className,
+  scheme = "light",
+}: {
+  className?: string;
+  /** 지금 지도에 적용된 색 테마. 눌렀을 때 바뀔 테마를 아이콘으로 보여준다. */
+  scheme?: "light" | "dark";
+}) {
+  const fill = color.palette.gray[800];
+
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      aria-hidden="true"
+    >
+      {scheme === "light" ? (
+        // 라이트일 때는 다크로 바꾸는 버튼이라 달을 보여준다.
+        <path
+          d="M12.5 3C7.81 3 4 6.81 4 11.5C4 16.19 7.81 20 12.5 20C15.77 20 18.61 18.15 20.03 15.44C19.32 15.65 18.57 15.76 17.79 15.76C13.44 15.76 9.91 12.23 9.91 7.88C9.91 6.29 10.38 4.81 11.19 3.57C11.63 3.2 12.06 3 12.5 3Z"
+          fill={fill}
+        />
+      ) : (
+        <>
+          <circle cx="12" cy="12" r="4.2" fill={fill} />
+          <path
+            d="M12 1.5V4M12 20V22.5M22.5 12H20M4 12H1.5M19.42 4.58L17.66 6.34M6.34 17.66L4.58 19.42M19.42 19.42L17.66 17.66M6.34 6.34L4.58 4.58"
+            stroke={fill}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </>
+      )}
+    </svg>
+  );
+}
+
 export function IconNavigationNavigate24({
   className,
   state = "default",
