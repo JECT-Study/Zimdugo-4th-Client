@@ -341,6 +341,41 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).toHaveBeenCalledWith(471);
   });
 
+  it("full 로 날아가는 중에 경계가 바뀌면 순간이동하지 않고 목표만 바꾼다", () => {
+    // settleToSnapPoint 는 스프링을 시작하면서 목표값을 미리 적어 둔다. 그래서
+    // 날아가는 도중에 경계가 다시 계산되면 "이미 full 에 앉아 있다" 로 읽힌다.
+    // 그때 오프셋을 바로 써 버리면 가던 시트가 툭 튄다.
+    const handleSnapChange = vi.fn();
+    const renderSheet = (minSnapPoint: number) => (
+      <DraggableBottomSheet
+        minSnapPoint={minSnapPoint}
+        snapPoint={500}
+        maxSnapPoint={760}
+        onSnapChange={handleSnapChange}
+      >
+        <div data-testid="sheet-surface">sheet surface</div>
+      </DraggableBottomSheet>
+    );
+
+    const { rerender } = render(renderSheet(300));
+
+    dragSheet({
+      target: screen.getByTestId("sheet-surface"),
+      from: 200,
+      to: 0,
+    });
+    expect(animateTargets.at(-1)).toBe(300);
+
+    animateTargets.length = 0;
+    handleSnapChange.mockClear();
+
+    // full 콘텐츠가 늘어 경계가 더 위로 올라간다.
+    rerender(renderSheet(200));
+
+    expect(animateTargets).toEqual([200]);
+    expect(handleSnapChange).toHaveBeenLastCalledWith(200);
+  });
+
   it("마운트 때는 자리가 그대로라 알리지 않는다", () => {
     const handleSnapChange = vi.fn();
 

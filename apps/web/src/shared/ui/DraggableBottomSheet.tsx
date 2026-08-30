@@ -330,6 +330,10 @@ export function DraggableBottomSheet({
    */
   const onSnapChangeRef = useRef(onSnapChange);
   onSnapChangeRef.current = onSnapChange;
+  /** 아래에서 정의된다. 이펙트가 스프링을 다시 겨냥할 때 쓴다. */
+  const settleToSnapPointRef = useRef<((nextSnap: number) => void) | null>(
+    null,
+  );
   /**
    * 이미 처리한 스냅 요청 id. 마운트 시점의 요청은 처리된 것으로 본다(snapRequest 참고).
    *
@@ -443,9 +447,22 @@ export function DraggableBottomSheet({
       currentSnapRef.current === previousMinSnap;
     lastMinSnapRef.current = minSnapPoint;
 
+    /*
+     * 경계를 따라갈 때는 스프링으로 보낸다.
+     *
+     * settleToSnapPoint 는 스프링을 시작하면서 목표값을 currentSnapRef 에 미리 적는다.
+     * 그래서 full 로 가는 도중에 경계가 다시 계산되면 "이미 full 에 앉아 있다" 로
+     * 읽히는데, 그때 즉시 옮기면 가던 시트가 순간이동하는 것으로 보인다. 스프링에
+     * 맡기면 날아가던 중이면 목표만 바뀌고, 이미 앉아 있었으면 새 자리로 부드럽게
+     * 옮겨 간다. 부모에게 알리는 것도 그쪽이 함께 한다.
+     */
+    if (shouldFollowMinSnap) {
+      settleToSnapPointRef.current?.(minSnapPoint);
+      return;
+    }
+
     if (
       !shouldSyncInitialSnap &&
-      !shouldFollowMinSnap &&
       currentSnapRef.current === currentClampedSnap
     ) {
       return;
@@ -454,9 +471,7 @@ export function DraggableBottomSheet({
     settleAnimationRef.current?.stop();
     const nextSnap = shouldSyncInitialSnap
       ? nextInitialSnap
-      : shouldFollowMinSnap
-        ? minSnapPoint
-        : currentClampedSnap;
+      : currentClampedSnap;
     const previousSnap = currentSnapRef.current;
     lastInitialSnapRef.current = nextInitialSnap;
     currentSnapRef.current = nextSnap;
@@ -516,6 +531,7 @@ export function DraggableBottomSheet({
       sheetOffset,
     ],
   );
+  settleToSnapPointRef.current = settleToSnapPoint;
 
   const settleToNextSnap = useCallback(
     ({ offsetY }: { offsetY: number }) => {
