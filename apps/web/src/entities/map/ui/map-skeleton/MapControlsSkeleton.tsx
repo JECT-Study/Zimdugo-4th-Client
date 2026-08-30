@@ -15,7 +15,7 @@ export interface MapControlsSkeletonProps {
 }
 
 /**
- * 지도 우측 하단 컨트롤(새로고침/내 위치) 로딩 스켈레톤.
+ * 지도 우측 하단 컨트롤(새로고침/다크 모드/내 위치) 로딩 스켈레톤.
  *
  * 로딩 중 실제 컨트롤 대신 표시한다. 인라인 폴백 덕분에 첫 페인트에 즉시 보인다.
  *
@@ -30,6 +30,14 @@ export function MapControlsSkeleton({ bottomPx }: MapControlsSkeletonProps) {
       style={{ ...mapControlStackInlineFallbackStyle, bottom: bottomPx }}
       aria-hidden="true"
     >
+      <Skeleton
+        width={42}
+        height={42}
+        borderRadius={9999}
+        variant="rect"
+        className={controlButton}
+        style={controlButtonStyle}
+      />
       <Skeleton
         width={42}
         height={42}
