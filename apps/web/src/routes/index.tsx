@@ -3171,7 +3171,17 @@ export function IndexPage() {
     // 테마를 바꾸면 지도를 새로 만든다. 그 이유만으로 범위를 다시 맞추면
     // 사용자가 드래그해 둔 위치가 검색 결과 전체 범위로 덮인다. 범위·시트·
     // 화면 높이가 실제로 달라졌을 때만 맞춘다.
-    const fitSignature = JSON.stringify({ bounds, bottomPadding });
+    //
+    // 무엇을 찾은 결과인지도 함께 본다. 결과가 이전 검색과 같은 외곽 좌표로
+    // 나오면 범위만으로는 구분되지 않는데, 두 훅 모두 placeholderData 로 이전
+    // 결과를 들고 있어 그 사이 bounds 가 비어 ref 가 풀리는 순간도 없다.
+    const fitSignature = JSON.stringify({
+      bounds,
+      bottomPadding,
+      placeId: activePlaceId ?? null,
+      keyword: effectiveSearchQuery,
+      filters: searchFilters,
+    });
     if (fittedSearchBoundsRef.current === fitSignature) {
       return;
     }
@@ -3193,6 +3203,8 @@ export function IndexPage() {
     mapInstance,
     placeLockersResults?.bounds,
     activePlaceId,
+    effectiveSearchQuery,
+    searchFilters,
     sheetMode,
     windowHeight,
     context,

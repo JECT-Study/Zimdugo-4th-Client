@@ -117,66 +117,77 @@ const markerPosition = async (page: Page) => {
 };
 
 /**
- * 지도를 끌어 카메라를 옮긴다.
+ * 지도 인스턴스를 붙잡아 둔다.
  *
- * 모바일 프로젝트라 SDK 가 터치를 듣는다. 마우스로 끌면 아무 일도 일어나지 않아
- * 터치 이벤트를 직접 만들어 보낸다. 시트와 헤더를 피해 지도가 드러난 위쪽을 잡는다.
+ * 카메라를 옮기려면 지도를 끌어야 하는데, 검색 목록은 화면 전체를 덮는 모달로
+ * 열려 눈에 보이는 지도까지 포인터 이벤트를 가로챈다. 합성 터치든 실제 입력이든
+ * 지도에 닿지 않아 카메라가 1px 도 움직이지 않는다. 그래서 SDK 로 직접 옮긴다.
+ *
+ * 지도는 SDK 를 내려받은 뒤에 만들어지므로 `naver` 전역이 채워지는 순간을 잡아
+ * 생성자를 감싼다.
  */
-const dragMap = async (page: Page, dx: number, dy: number) => {
-  const size = page.viewportSize();
-  if (!size) throw new Error("뷰포트 크기를 알 수 없다");
+const captureMapInstances = async (page: Page) => {
+  await page.addInitScript(() => {
+    const scope = window as unknown as Record<string, unknown>;
+    scope.__zimdugoMaps = [];
 
-  const startX = Math.round(size.width / 2);
-  const startY = 240;
+    const patchMaps = (namespace: any) => {
+      if (!namespace?.maps?.Map || namespace.maps.__zimdugoPatched) return;
 
-  const dragged = await page.evaluate(
-    async ({ startX, startY, dx, dy }) => {
-      const target =
-        document.querySelector("canvas") ??
-        document.querySelector("[data-map-state] div");
-      if (!target) return false;
+      const OriginalMap = namespace.maps.Map;
+      const PatchedMap = function (...args: unknown[]) {
+        const instance = new OriginalMap(...args);
+        (scope.__zimdugoMaps as unknown[]).push(instance);
+        return instance;
+      } as unknown as typeof OriginalMap;
+      // instanceof 와 정적 멤버를 SDK 내부가 그대로 쓰므로 이어 준다.
+      PatchedMap.prototype = OriginalMap.prototype;
+      Object.setPrototypeOf(PatchedMap, OriginalMap);
 
-      const at = (x: number, y: number) =>
-        new Touch({
-          identifier: 1,
-          target,
-          clientX: x,
-          clientY: y,
-          pageX: x,
-          pageY: y,
-        });
-      const fire = (type: string, x: number, y: number) =>
-        target.dispatchEvent(
-          new TouchEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            touches: type === "touchend" ? [] : [at(x, y)],
-            targetTouches: type === "touchend" ? [] : [at(x, y)],
-            changedTouches: [at(x, y)],
-          }),
-        );
-      const wait = (ms: number) =>
-        new Promise((resolve) => setTimeout(resolve, ms));
+      namespace.maps.Map = PatchedMap;
+      namespace.maps.__zimdugoPatched = true;
+    };
 
-      fire("touchstart", startX, startY);
-      await wait(60);
-      const steps = 10;
-      for (let step = 1; step <= steps; step += 1) {
-        fire(
-          "touchmove",
-          startX + (dx * step) / steps,
-          startY + (dy * step) / steps,
-        );
-        await wait(30);
-      }
-      fire("touchend", startX + dx, startY + dy);
+    let namespace: any;
+    Object.defineProperty(window, "naver", {
+      configurable: true,
+      get: () => namespace,
+      set: (next) => {
+        namespace = next;
+        if (next && !next.__zimdugoWatched) {
+          next.__zimdugoWatched = true;
+          // maps 서브모듈은 전역이 붙은 뒤에 채워지기도 한다.
+          let maps = next.maps;
+          Object.defineProperty(next, "maps", {
+            configurable: true,
+            get: () => maps,
+            set: (nextMaps) => {
+              maps = nextMaps;
+              patchMaps(next);
+            },
+          });
+        }
+        patchMaps(next);
+      },
+    });
+  });
+};
+
+/** 사용자가 지도를 끌어 옮긴 것과 같은 만큼 카메라를 민다. */
+const panMap = async (page: Page, dx: number, dy: number) => {
+  const panned = await page.evaluate(
+    ({ dx, dy }) => {
+      const maps = (window as any).__zimdugoMaps ?? [];
+      const map = maps[maps.length - 1];
+      if (!map) return false;
+
+      map.panBy(new (window as any).naver.maps.Point(dx, dy));
       return true;
     },
-    { startX, startY, dx, dy },
+    { dx, dy },
   );
 
-  expect(dragged, "지도를 찾지 못했다").toBe(true);
+  expect(panned, "지도를 찾지 못했다").toBe(true);
   await page.waitForTimeout(1_500);
 };
 
@@ -202,6 +213,7 @@ const pressThemeToggle = async (page: Page) => {
 const MOVE_TOLERANCE_PX = 12;
 
 test.beforeEach(async ({ page }) => {
+  await captureMapInstances(page);
   await stubApi(page);
 });
 
@@ -215,15 +227,15 @@ test.describe("테마 전환과 지도 카메라", () => {
     // 검색 범위에 맞춰 카메라가 안착할 시간을 준다.
     await page.waitForTimeout(1_500);
 
-    const beforeDrag = await markerPosition(page);
-    await dragMap(page, -110, -90);
+    const beforeMove = await markerPosition(page);
+    await panMap(page, 110, 90);
     const movedTo = await markerPosition(page);
 
-    // 터치 이벤트가 먹히지 않아 카메라가 그대로면, 테마 전환이 범위를 되돌려도
-    // 좌표 차이가 0 이라 그냥 통과한다. 드래그가 실제로 옮겼는지 먼저 본다.
+    // 카메라가 그대로면 테마 전환이 범위를 되돌려도 좌표 차이가 0 이라 그냥
+    // 통과한다. 이동이 실제로 먹혔는지 먼저 본다.
     expect(
-      Math.hypot(movedTo.x - beforeDrag.x, movedTo.y - beforeDrag.y),
-      "드래그가 카메라를 옮기지 못했다",
+      Math.hypot(movedTo.x - beforeMove.x, movedTo.y - beforeMove.y),
+      "카메라를 옮기지 못했다",
     ).toBeGreaterThan(MOVE_TOLERANCE_PX);
 
     await pressThemeToggle(page);

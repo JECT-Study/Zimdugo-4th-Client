@@ -176,7 +176,12 @@ const loadNaverMapSdk = async ({
     script.async = true;
     script.dataset[NAVER_MAP_SCRIPT_DATA_KEY] = "true";
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Naver Maps SDK."));
+    script.onerror = () => {
+      // 실패한 요소를 남겨 두면 위치 선택기처럼 같은 src 를 재사용하는 쪽이
+      // 이미 지나간 load/error 를 기다리다 영영 끝나지 않는다.
+      script.remove();
+      reject(new Error("Failed to load Naver Maps SDK."));
+    };
     document.head.appendChild(script);
   });
 
