@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
+  useRouter,
   useSearch,
 } from "@tanstack/react-router";
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
@@ -218,6 +219,11 @@ import {
   type LockerPinItemResponse,
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
+import { useExitConfirm } from "#/shared/hooks/useExitConfirm";
+import {
+  isHistoryPop,
+  useHistoryAction,
+} from "#/shared/hooks/useHistoryAction";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
@@ -296,9 +302,6 @@ export interface HomeSearchParams {
 }
 
 /** 보관함 딥링크 파라미터만 걷어 낸다. 열고 나면 주소에 남길 이유가 없다. */
-const withoutLockerParam = ({ locker: _locker, ...rest }: HomeSearchParams) =>
-  rest;
-
 /** openLockerId 계열 딥링크 파라미터를 걷어 낸다. */
 const withoutOpenLockerParams = ({
   openLockerId: _openLockerId,
@@ -575,6 +578,10 @@ const MyLocationButton = memo(function MyLocationButton({
 
 export function IndexPage() {
   const navigate = useNavigate();
+  const router = useRouter();
+  const lastHistoryActionRef = useHistoryAction();
+  /** 상세 시트를 열면서 히스토리를 한 칸 쌓았는지. 닫을 때 그 칸을 회수한다. */
+  const detailLayerPushedRef = useRef(false);
   const search = (useSearch({ strict: false }) || {}) as HomeSearchParams;
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -1627,18 +1634,28 @@ export function IndexPage() {
   useEffect(() => {
     if (lockerIdFromQuery === undefined) {
       focusedDeepLinkLockerIdRef.current = undefined;
+      // 기기 뒤로가기로 직접 닫혔을 수도 있다. 그때도 칸은 이미 회수됐다.
+      detailLayerPushedRef.current = false;
     }
   }, [lockerIdFromQuery]);
 
   const clearLockerDetailUrl = useCallback(() => {
-    // 상세를 닫는 동작이다. push 하면 뒤로가기를 눌렀는데 앞으로 한 칸
-    // 나아가는 꼴이 되어, 되돌아가려면 그만큼 더 눌러야 한다.
+    // 열 때 쌓은 칸이 있으면 그 칸을 되감는다. 화면 안의 닫기 버튼과 기기
+    // 뒤로가기가 같은 길을 타야 둘의 결과가 어긋나지 않는다.
+    if (detailLayerPushedRef.current) {
+      detailLayerPushedRef.current = false;
+      router.history.back({ ignoreBlocker: true });
+      return;
+    }
+
+    // 링크나 새로고침으로 상세부터 열린 경우다. 되감을 칸이 없으므로 파라미터만
+    // 지운다. push 하면 뒤로가기를 눌렀는데 앞으로 한 칸 나아가는 꼴이 된다.
     void navigate({
       to: ".",
       search: withoutLockerDetailParams,
       replace: true,
     });
-  }, [navigate]);
+  }, [navigate, router]);
 
   const resetMapContext = useCallback(() => {
     clearPendingLockerDetailOpen();
@@ -2001,18 +2018,27 @@ export function IndexPage() {
     (lockerId: number, title?: string) => {
       const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
 
+      // 시트를 여는 순간에만 한 칸 쌓는다. 그래야 기기 뒤로가기가 시트를 닫는
+      // 동작이 된다. 이미 locker 가 붙어 있으면 상세끼리 갈아타거나 제목이
+      // 붙는 정규화라 같은 레이어이고, 뒤로가기로 복원된 URL 을 보고 여는
+      // 경우에 또 쌓으면 뒤로가기가 앞으로 나아가 제자리를 맴돈다.
+      const opensNewLayer =
+        !search.locker && !isHistoryPop(lastHistoryActionRef.current);
+
+      if (opensNewLayer) {
+        detailLayerPushedRef.current = true;
+      }
+
       void navigate({
         to: ".",
         search: (prev: SearchUrlParams) =>
           String(prev.locker ?? "") === lockerSlug
             ? prev
             : withLockerDetailParam(prev, lockerSlug),
-        // push 하면 뒤로가기가 이 항목으로 되돌아오고, 복원된 URL 을 보고
-        // 상세가 다시 열리면서 또 push 한다. 뒤로가기가 제자리를 맴돌게 된다.
-        replace: true,
+        replace: !opensNewLayer,
       });
     },
-    [navigate],
+    [lastHistoryActionRef, navigate, search.locker],
   );
 
   const openLockerDetailById = useCallback(
@@ -2907,29 +2933,18 @@ export function IndexPage() {
     setSelectedMapPinOffset(null);
     setIsNavigationPopupOpen(false);
 
-    // 이 핸들러는 "뒤로"다. push 하면 뒤로가기를 누를수록 히스토리가 늘어
-    // 원래 화면으로 돌아가려면 그만큼 더 눌러야 한다. 상세를 여닫는 것은
-    // 히스토리 단계가 아니라 같은 화면의 상태 변화이므로 replace 로 되돌린다.
+    // 이 핸들러는 "뒤로"다. 상세를 열며 쌓아 둔 히스토리 한 칸을 되감아야
+    // 기기 뒤로가기와 결과가 같아진다. 그 몫은 clearLockerDetailUrl 이 맡는다.
     if (context === "map") {
       if (mapDetailBack === "idle") {
+        // resetMapContext 가 이미 상세 URL 을 정리한다.
         resetMapContext();
-        if (search.locker) {
-          void navigate({
-            to: ".",
-            search: withoutLockerParam,
-            replace: true,
-          });
-        }
         return;
       }
 
       setSheetMode("list");
       if (search.locker) {
-        void navigate({
-          to: ".",
-          search: withoutLockerParam,
-          replace: true,
-        });
+        clearLockerDetailUrl();
       }
       return;
     }
@@ -2941,20 +2956,16 @@ export function IndexPage() {
 
     setSheetMode("list");
     if (search.locker) {
-      void navigate({
-        to: ".",
-        search: withoutLockerParam,
-        replace: true,
-      });
+      clearLockerDetailUrl();
     }
   }, [
+    clearLockerDetailUrl,
     context,
     flushLockerSheetMutations,
     mapDetailBack,
     resetMapContext,
     searchDetailBack,
     search.locker,
-    navigate,
   ]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
@@ -3219,6 +3230,15 @@ export function IndexPage() {
     windowHeight,
     context,
   ]);
+
+  // 홈 첫 화면에서만 종료를 되묻는다. 시트가 열려 있으면 뒤로가기는 그 시트를
+  // 닫아야 하고, 그 몫은 시트를 열며 쌓아 둔 히스토리 한 칸이 맡는다.
+  const isHomeRoot =
+    context === "idle" &&
+    sheetMode === "idle" &&
+    !isSearchOpen &&
+    lockerIdFromQuery === undefined;
+  const isExitConfirming = useExitConfirm(isHomeRoot);
 
   const shouldRenderMapControls = shouldShowMapControls({
     isMapLoading,
@@ -3750,6 +3770,16 @@ export function IndexPage() {
             >
               <IconX24 />
             </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isExitConfirming ? (
+        <div className={locationRecoveryNoticePositioner}>
+          <div className={locationRecoveryNotice} aria-live="polite">
+            <span className={locationRecoveryNoticeMessage}>
+              {m.home_exit_confirm()}
+            </span>
           </div>
         </div>
       ) : null}

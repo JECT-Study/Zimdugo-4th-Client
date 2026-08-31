@@ -148,6 +148,9 @@ const pressCloseButton = async (page: Page) => {
   expect(pressed, "닫기 버튼을 찾지 못했다").toBe(true);
 };
 
+/** 종료를 되묻는 토스트 문구. */
+const EXIT_CONFIRM_TEXT = "한 번 더 누르면 앱을 나갑니다";
+
 const historyLength = (page: Page) => page.evaluate(() => history.length);
 
 const lockerParam = (page: Page) =>
@@ -166,6 +169,7 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       .toBeGreaterThan(0);
 
     const baseline = await historyLength(page);
+    let afterFirstRound = 0;
 
     for (let round = 0; round < 3; round += 1) {
       await pressMarker(page, 0);
@@ -175,12 +179,54 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       await expect.poll(() => lockerParam(page)).toBeNull();
       // 시트 닫힘 애니메이션이 끝나고 마커가 기본 상태로 돌아와야 다시 눌린다.
       await page.waitForTimeout(1_000);
+
+      if (round === 0) {
+        afterFirstRound = await historyLength(page);
+      }
     }
 
+    // 시트는 기기 뒤로가기로 닫을 수 있어야 하므로 열 때 한 칸을 쓴다. 닫을 때
+    // 그 칸을 되감아 다시 쓰므로, 여닫기를 반복해도 더 자라지 않는다.
+    expect(
+      afterFirstRound,
+      "시트 하나에 히스토리 한 칸을 넘게 쓰면 안 된다",
+    ).toBeLessThanOrEqual(baseline + 1);
     expect(
       await historyLength(page),
       "상세를 여닫을 때마다 히스토리가 쌓이면 뒤로가기를 그만큼 더 눌러야 한다",
-    ).toBe(baseline);
+    ).toBe(afterFirstRound);
+  });
+
+  test("기기 뒤로가기가 상세 시트를 닫고 홈에 머무른다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    await page.evaluate(() => window.history.back());
+
+    await expect.poll(() => lockerParam(page)).toBeNull();
+    expect(page.url(), "뒤로가기 한 번에 앱을 벗어났다").toContain("localhost");
+  });
+
+  test("홈 첫 화면에서는 뒤로가기를 한 번 되묻는다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(page.url(), "되묻지 않고 그대로 나갔다").toContain("localhost");
+
+    await page.evaluate(() => window.history.back());
+
+    await expect
+      .poll(() => page.url(), { timeout: 10_000 })
+      .not.toContain("localhost");
   });
 
   test("다른 마커로 상세를 옮겨도 히스토리가 늘지 않는다", async ({ page }) => {
