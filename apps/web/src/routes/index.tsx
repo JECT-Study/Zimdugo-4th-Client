@@ -592,6 +592,15 @@ export function IndexPage() {
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
   const hasExplicitLockerEntry = openLockerId != null;
+  // 히스토리 한 칸을 쥔 시트가 없을 때만 종료를 되묻는다. 상세 시트가 열려 있으면
+  // 뒤로가기는 그 시트를 닫아야 하고, 그 몫은 시트를 열며 쌓아 둔 칸이 맡는다.
+  // 그 밖의 상태 — 마커를 눌렀다 닫아 지도 컨텍스트만 남은 경우까지 — 에서는
+  // 뒤로가기가 곧 이탈이므로 되물어야 한다.
+  //
+  // openLockerId 로 들어온 화면도 상세가 떠 있는 상태다. 이때 자리를 만들면 그
+  // 자리가 딥링크 항목 위에 얹혀, 상세를 닫고 뒤로가기를 눌렀을 때 딥링크가 다시
+  // 열린다. 상세가 URL 에서 내려간 뒤에 만들어야 한다.
+  const isExitConfirming = useExitConfirm(!hasExplicitLockerEntry);
   const restoredSession = useMemo(
     () => (hasExplicitLockerEntry ? null : readRestoredSessionForTabReturn()),
     [hasExplicitLockerEntry],
@@ -3267,16 +3276,6 @@ export function IndexPage() {
     windowHeight,
     context,
   ]);
-
-  // 히스토리 한 칸을 쥔 시트가 없을 때만 종료를 되묻는다. 상세 시트가 열려
-  // 있으면 뒤로가기는 그 시트를 닫아야 하고, 그 몫은 시트를 열며 쌓아 둔 칸이
-  // 맡는다. 그 밖의 상태 — 마커를 눌렀다 닫아 지도 컨텍스트만 남은 경우까지 —
-  // 에서는 뒤로가기가 곧 이탈이므로 되물어야 한다.
-  // openLockerId 로 들어온 화면도 상세가 떠 있는 상태다. 이때 자리를 만들면 그
-  // 자리가 딥링크 항목 위에 얹혀, 상세를 닫고 뒤로가기를 눌렀을 때 딥링크가 다시
-  // 열린다. 상세가 URL 에서 내려간 뒤에 만들어야 한다.
-  const hasHistoryLayerOpen = openLockerId !== undefined;
-  const isExitConfirming = useExitConfirm(!hasHistoryLayerOpen);
 
   const shouldRenderMapControls = shouldShowMapControls({
     isMapLoading,
