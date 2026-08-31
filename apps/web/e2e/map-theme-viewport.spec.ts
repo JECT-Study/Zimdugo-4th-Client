@@ -215,8 +215,16 @@ test.describe("테마 전환과 지도 카메라", () => {
     // 검색 범위에 맞춰 카메라가 안착할 시간을 준다.
     await page.waitForTimeout(1_500);
 
+    const beforeDrag = await markerPosition(page);
     await dragMap(page, -110, -90);
     const movedTo = await markerPosition(page);
+
+    // 터치 이벤트가 먹히지 않아 카메라가 그대로면, 테마 전환이 범위를 되돌려도
+    // 좌표 차이가 0 이라 그냥 통과한다. 드래그가 실제로 옮겼는지 먼저 본다.
+    expect(
+      Math.hypot(movedTo.x - beforeDrag.x, movedTo.y - beforeDrag.y),
+      "드래그가 카메라를 옮기지 못했다",
+    ).toBeGreaterThan(MOVE_TOLERANCE_PX);
 
     await pressThemeToggle(page);
     const afterToggle = await markerPosition(page);

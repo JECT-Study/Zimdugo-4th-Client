@@ -93,7 +93,13 @@ const loadNaverMapsScript = async () => {
     script.src = scriptSrc;
     script.async = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Naver Maps SDK Load Failed"));
+    script.onerror = () => {
+      // 실패한 요소를 남겨 두면 다음 호출이 같은 src 로 그것을 재사용한다.
+      // error 는 이미 떨어진 뒤라 새 리스너에는 영영 오지 않고, 기다리던
+      // 약속이 끝나지 않아 지도가 로딩 상태로 굳는다.
+      script.remove();
+      reject(new Error("Naver Maps SDK Load Failed"));
+    };
     document.head.appendChild(script);
   });
 
