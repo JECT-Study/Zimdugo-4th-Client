@@ -153,10 +153,20 @@ const historyLength = (page: Page) => page.evaluate(() => history.length);
 /** 마커들의 화면 자리. 카메라가 움직이면 함께 움직인다. */
 const markerPositions = (page: Page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll(".map-marker-offset-wrapper")].map((marker) => {
-      const box = marker.getBoundingClientRect();
-      return `${Math.round(box.x)},${Math.round(box.y)}`;
-    }),
+    [...document.querySelectorAll(".map-marker-offset-wrapper")].map(
+      (marker) => {
+        const box = marker.getBoundingClientRect();
+        return `${Math.round(box.x)},${Math.round(box.y)}`;
+      },
+    ),
+  );
+
+/** 상세 시트가 떠 있는지. 닫기 버튼이 시트의 표식이다. */
+const isDetailSheetOpen = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll("button")].some(
+      (candidate) => candidate.getAttribute("aria-label") === "닫기",
+    ),
   );
 
 const lockerParam = (page: Page) =>
@@ -224,6 +234,12 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
 
     await expect.poll(() => lockerParam(page)).toBeNull();
     expect(page.url(), "뒤로가기 한 번에 앱을 벗어났다").toContain("localhost");
+
+    // 되감기는 URL 만 되돌린다. 시트를 함께 닫지 않으면 주소는 홈인데 상세가
+    // 그대로 남는다.
+    await expect
+      .poll(() => isDetailSheetOpen(page), { timeout: 10_000 })
+      .toBe(false);
 
     // 늦게 도착한 상세 응답이 닫힌 시트를 되살리지 않아야 한다.
     await page.waitForTimeout(2_500);
@@ -309,6 +325,9 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     const baseline = await historyLength(page);
     const before = await markerPositions(page);
 
+    // 상세가 열려 있는 동안 다른 핀을 누르면 그 핀이 골라지며 카메라가 옮겨간다.
+    // 상세를 갈아타는 것은 그 다음 조작의 몫이라 여기서는 URL 이 바뀌지 않는다.
+    // 어느 쪽이든 같은 화면 안의 상태 변화이므로 히스토리를 쌓으면 안 된다.
     for (let round = 0; round < 3; round += 1) {
       await pressMarker(page, (round + 1) % 2);
       await page.waitForTimeout(700);
@@ -326,5 +345,6 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       await historyLength(page),
       "핀을 고를 때마다 쌓이면 뒤로가기를 그만큼 더 눌러야 한다",
     ).toBe(baseline);
+
   });
 });
