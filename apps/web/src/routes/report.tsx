@@ -146,7 +146,9 @@ function ReportPage() {
 
   const handleLeaveReport = () => {
     setIsExitPopupOpen(false);
-    navigate({ to: "/" });
+    // 작성을 접고 나가는 동작이라 되돌아갈 지점이 아니다. push 하면 신고를
+    // 열었다 접을 때마다 히스토리가 한 칸씩 쌓인다.
+    navigate({ to: "/", replace: true });
   };
 
   return (

@@ -70,7 +70,10 @@ export const switchAppLanguage = (language: AppLanguage) => {
   const localizedHref = getLocalizedHref(currentHref, language);
 
   if (localizedHref !== currentHref) {
-    window.location.assign(localizedHref);
+    // 같은 화면을 다른 언어로 다시 여는 것이라 되돌아갈 지점이 아니다. assign 은
+    // 항목을 쌓아, 언어를 바꾼 뒤 뒤로가기를 누르면 이전 화면이 아니라 예전
+    // 언어로 돌아가고 한 번 더 눌러야 빠져나간다.
+    window.location.replace(localizedHref);
     return;
   }
 

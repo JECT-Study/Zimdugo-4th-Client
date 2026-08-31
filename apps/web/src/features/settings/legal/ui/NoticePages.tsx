@@ -1,8 +1,8 @@
 import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
-import { useNavigate } from "@tanstack/react-router";
 import type { ClientDocumentResponse } from "#/shared/api/documents";
+import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import { useDocuments } from "../model/useDocuments";
 import {
@@ -39,7 +39,7 @@ interface NoticeListPageProps {
 }
 
 export function NoticeListPage({ onSelect }: NoticeListPageProps) {
-  const navigate = useNavigate();
+  const goBack = useBackNavigation("/settings");
   const { data, isLoading, isError, refetch } = useDocuments("NOTICE");
 
   const handleRetry = () => {
@@ -54,7 +54,7 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
           leading="back"
           titleType="text"
           title={m.settings_notice()}
-          onBack={() => navigate({ to: "/settings" })}
+          onBack={goBack}
         />
         <main
           className={content}
@@ -99,7 +99,7 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
           leading="back"
           titleType="text"
           title={m.settings_notice()}
-          onBack={() => navigate({ to: "/settings" })}
+          onBack={goBack}
         />
         <main
           className={content}
@@ -140,7 +140,7 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
           leading="back"
           titleType="text"
           title={m.settings_notice()}
-          onBack={() => navigate({ to: "/settings" })}
+          onBack={goBack}
         />
         <main
           className={content}
@@ -159,7 +159,7 @@ export function NoticeListPage({ onSelect }: NoticeListPageProps) {
         leading="back"
         titleType="text"
         title={m.settings_notice()}
-        onBack={() => navigate({ to: "/settings" })}
+        onBack={goBack}
       />
       <main className={content}>
         {notices.map((doc) => (
