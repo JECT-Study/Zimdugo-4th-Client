@@ -322,11 +322,14 @@ function ReportPage() {
               <IconCircleboxCheck32 />
             </motion.div>
           }
-          // 제출을 마친 작성 화면은 되돌아갈 지점이 아니다. 남겨 두면 뒤로가기가
-          // 이미 보낸 신고를 다시 띄운다.
+          // 제출을 마친 작성 화면은 되돌아갈 지점이 아니라 지우고 나간다.
+          //
+          // 나가기와 달리 이 버튼은 이름으로 목적지를 약속한다. 되감으면 직전
+          // 화면이 홈이 아닐 때 — 설정에서 제보 탭으로 들어온 경우처럼 — 설정이
+          // 열린다. 그래서 여기서는 홈을 지정한다.
           primaryAction={{
             label: m.report_submit_success_home(),
-            onPress: leaveReport,
+            onPress: () => navigate({ to: "/", replace: true }),
           }}
           subAction={{
             label: m.report_submit_success_history(),
