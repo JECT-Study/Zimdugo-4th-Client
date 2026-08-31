@@ -3,6 +3,7 @@ import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
 import { useNavigate } from "@tanstack/react-router";
 import type { DocumentType } from "#/shared/api/documents";
+import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import { toLegalDocument } from "../model/legal-documents";
 import type { LegalReturnSearch } from "../model/legal-return-search";
@@ -38,6 +39,7 @@ export function LegalDocumentPage({
 }: LegalDocumentPageProps) {
   // 1. Hooks
   const navigate = useNavigate();
+  const goBack = useBackNavigation("/settings");
   const { data, isLoading, isError, refetch } = useDocuments(documentType);
 
   // 2. Derived values
@@ -46,15 +48,17 @@ export function LegalDocumentPage({
 
   // 3. Event handlers
   const handleBack = () => {
+    // 신고 작성 중에 열었으면 그 단계로 정확히 돌아가야 해서 지정 이동이다.
     if (returnSearch?.returnTo) {
       navigate({
         to: returnSearch.returnTo,
         ...(returnSearch.step === 2 ? { search: { step: 2 } } : {}),
+        replace: true,
       });
       return;
     }
 
-    navigate({ to: "/settings" });
+    goBack();
   };
 
   const handleRetry = () => {
