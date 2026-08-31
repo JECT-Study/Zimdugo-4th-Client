@@ -4,6 +4,7 @@ import {
   IconCheck24,
   IconFlagCircle24,
   IconHomeProfile32,
+  IconMapColorScheme24,
 } from "@repo/ui/assets/icons";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { AnimatePresence, motion } from "motion/react";
@@ -28,6 +29,9 @@ export interface HomeHeaderProps {
   onProfilePress: () => void;
   /** 로고를 눌렀을 때. 홈 화면에서는 검색 컨텍스트를 되돌리는 것이 "홈으로" 다. */
   onLogoPress: () => void;
+  /** 지금 지도에 적용된 색 테마 */
+  mapColorScheme: "light" | "dark";
+  onMapColorSchemePress: () => void;
 }
 
 const LANGUAGE_DROPDOWN_TRANSITION = {
@@ -169,6 +173,12 @@ function HomeHeaderSkeletonContent() {
           variant="circle"
           style={SKELETON_SURFACE_STYLE}
         />
+        <Skeleton
+          width={32}
+          height={32}
+          variant="circle"
+          style={SKELETON_SURFACE_STYLE}
+        />
       </div>
     </>
   );
@@ -178,6 +188,8 @@ export function HomeHeader({
   profileImageUrl = "",
   onProfilePress,
   onLogoPress,
+  mapColorScheme,
+  onMapColorSchemePress,
 }: HomeHeaderProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const languageTriggerRef = useRef<HTMLButtonElement>(null);
@@ -385,6 +397,22 @@ export function HomeHeader({
             ) : null}
           </AnimatePresence>
         </motion.div>
+        <button
+          type="button"
+          className={styles.colorSchemeButton}
+          style={fallbackStyle(circleActionFallbackStyle)}
+          // 이름이 다음에 넘어갈 색을 가리키므로 aria-pressed 를 함께 두지
+          // 않는다. "라이트 모드로 전환, 눌림" 은 라이트가 켜져 있다는 뜻으로
+          // 들려 지금 색을 정반대로 알린다.
+          aria-label={
+            mapColorScheme === "dark"
+              ? m.home_map_light_mode_aria()
+              : m.home_map_dark_mode_aria()
+          }
+          onClick={onMapColorSchemePress}
+        >
+          <IconMapColorScheme24 scheme={mapColorScheme} />
+        </button>
         <button
           type="button"
           className={styles.profileButton}

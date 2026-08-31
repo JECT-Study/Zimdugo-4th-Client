@@ -61,7 +61,8 @@ export function NaverMapCanvas({
 }: NaverMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
-  const { status, isReady, maps, error, reload } = useNaverMapSdk();
+  const { status, isReady, maps, error, reload, styleOptions } =
+    useNaverMapSdk();
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [isMapBootstrapping, setIsMapBootstrapping] = useState(false);
 
@@ -85,6 +86,13 @@ export function NaverMapCanvas({
 
   const initialZoomRef = useRef(initialZoom);
   initialZoomRef.current = initialZoom;
+
+  // 색 테마가 바뀌면 지도를 새로 만든다. 그때 보고 있던 위치를 잃지 않도록
+  // 부수기 직전 카메라를 여기 담아 다음 생성의 시작점으로 쓴다.
+  const lastViewportRef = useRef<{
+    center: MapCanvasCoordinates;
+    zoom: number;
+  } | null>(null);
 
   const hasError = status === "error" || mapInitError !== null;
   const isSdkLoading = status === "idle" || status === "loading";
@@ -123,13 +131,20 @@ export function NaverMapCanvas({
       if (cancelled) return;
 
       try {
-        const bootstrapCenter = initialCenterRef.current ?? DEFAULT_MAP_CENTER;
+        const restoredViewport = lastViewportRef.current;
+        const bootstrapCenter =
+          restoredViewport?.center ??
+          initialCenterRef.current ??
+          DEFAULT_MAP_CENTER;
         const map = new maps.Map(container, {
           center: new maps.LatLng(bootstrapCenter.lat, bootstrapCenter.lng),
-          zoom: initialZoomRef.current,
+          zoom: restoredViewport?.zoom ?? initialZoomRef.current,
           zoomControl: false,
           scaleControl: true,
           mapDataControl: false,
+          // 지도 디자인툴 스타일(gl, customStyleId, background). 스타일 ID 가
+          // 없으면 비어 있어 기본 스타일로 뜬다.
+          ...styleOptions,
         });
 
         if (cancelled) {
@@ -211,6 +226,11 @@ export function NaverMapCanvas({
         resizeObserver.disconnect();
       }
       if (mapRef.current) {
+        const center = mapRef.current.getCenter();
+        lastViewportRef.current = {
+          center: { lat: center.lat(), lng: center.lng() },
+          zoom: mapRef.current.getZoom(),
+        };
         onWillDestroyRef.current?.(mapRef.current);
         mapRef.current.destroy();
         mapRef.current = null;
@@ -218,7 +238,9 @@ export function NaverMapCanvas({
       }
       setIsMapBootstrapping(false);
     };
-  }, [isReady, maps]);
+    // 커스텀 스타일은 만들어진 지도에 다시 붙이는 공개 API 가 없다. 테마가
+    // 바뀌면 지도를 새로 만든다.
+  }, [isReady, maps, styleOptions]);
 
   useEffect(() => {
     onLoadingChangeRef.current?.(isLoading);

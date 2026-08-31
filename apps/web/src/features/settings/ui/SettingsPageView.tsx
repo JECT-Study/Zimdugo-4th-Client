@@ -52,7 +52,11 @@ export interface SettingsPageViewProps {
   appVersion: string;
   onBack: () => void;
   onLanguagePress: () => void;
+  /** 언어 행에 표시할 현재 언어 */
+  languageValue?: string;
   onThemePress?: () => void;
+  /** 테마 행에 표시할 현재 선택값 */
+  themeValue?: string;
   onNoticePress: () => void;
   onTermsPress: () => void;
   onPrivacyPress: () => void;
@@ -64,7 +68,9 @@ export function SettingsPageView({
   appVersion,
   onBack,
   onLanguagePress,
+  languageValue,
   onThemePress,
+  themeValue,
   onNoticePress,
   onTermsPress,
   onPrivacyPress,
@@ -149,10 +155,12 @@ export function SettingsPageView({
             <section className={[group, groupGap].join(" ")}>
               <SettingsRow
                 label={m.settings_language()}
+                value={languageValue}
                 onPress={onLanguagePress}
               />
               <SettingsRow
                 label={m.settings_dark_mode()}
+                value={themeValue}
                 onPress={onThemePress}
               />
             </section>
@@ -183,10 +191,12 @@ export function SettingsPageView({
           <section className={group}>
             <SettingsRow
               label={m.settings_language()}
+              value={languageValue}
               onPress={onLanguagePress}
             />
             <SettingsRow
               label={m.settings_dark_mode()}
+              value={themeValue}
               onPress={onThemePress}
             />
           </section>
@@ -223,7 +233,9 @@ function SettingsRow({ label, value, onPress }: SettingsRowProps) {
     <button
       type="button"
       className={[rowButton, settingRow].join(" ")}
-      aria-label={label}
+      // aria-label 은 내용으로 계산되는 이름을 덮는다. 값을 함께 넣지 않으면
+      // 스크린 리더 사용자는 지금 무엇이 골라져 있는지 들을 수 없다.
+      aria-label={value ? `${label}, ${value}` : label}
       onClick={onPress}
       disabled={!onPress}
     >

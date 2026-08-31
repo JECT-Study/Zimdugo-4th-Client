@@ -172,6 +172,9 @@ test.describe("상세 시트와 지도 컨트롤", () => {
     await page.goto(`/?locker=${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
+    // 시트가 제자리에 설 때까지 기다린다. 여는 동안 읽으면 애니메이션 중간값이
+    // 잡힌다. 형제 테스트들과 같은 대기다.
+    await expectSheetSettledAt(page, DETAIL_HALF_VISIBLE_HEIGHT);
 
     const bottom = await mapControlStack(page).evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).bottom),

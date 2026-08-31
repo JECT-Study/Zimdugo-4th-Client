@@ -79,6 +79,17 @@ export const headerAboveBottomSheet = style({
 /** 펼친 트리거와 선택지 목록이 같은 너비를 쓴다. */
 const languageMenuWidth = "164px";
 
+/**
+ * 좁은 화면에서 쓰는 폭.
+ *
+ * 헤더는 로고와 액션을 양 끝으로 미는데 로고도 액션도 줄지 않는다. 360px 에서
+ * 언어 메뉴를 펼치면 로고 78 + 액션 252 = 330 이 되어 가용 폭(314)을 넘고,
+ * 액션이 로고 위로 18px 겹친다. 겹치지 않는 최대치는 148 이라 여유를 두고
+ * 140 을 쓴다. 390px 부터는 원래 폭으로 충분하다.
+ */
+const narrowLanguageMenuWidth = "140px";
+const narrowHeaderQuery = "screen and (max-width: 389px)";
+
 export const languageDropdown = style({
   position: "relative",
   display: "inline-flex",
@@ -121,6 +132,15 @@ export const languageTrigger = style({
     },
     "&:focus-visible": {
       boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
+  "@media": {
+    [narrowHeaderQuery]: {
+      selectors: {
+        [`${languageDropdownExpanded} &`]: {
+          width: narrowLanguageMenuWidth,
+        },
+      },
     },
   },
 });
@@ -166,6 +186,11 @@ export const languageOptions = style({
   boxShadow: vars.shadow[2],
   overflow: "hidden",
   transformOrigin: "top right",
+  "@media": {
+    [narrowHeaderQuery]: {
+      width: narrowLanguageMenuWidth,
+    },
+  },
 });
 
 export const languageOption = style({
@@ -223,6 +248,34 @@ export const languageCheckIcon = style({
 globalStyle(`${languageCheckIcon} svg`, {
   width: "16px",
   height: "16px",
+});
+
+/**
+ * 지도 색 테마 버튼.
+ *
+ * 접힌 언어 트리거와 같은 형태(32px 원형, 그림자 1)를 쓴다. 헤더 우측 액션은
+ * 모두 같은 크기로 서야 간격이 고르다.
+ */
+export const colorSchemeButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "32px",
+  height: "32px",
+  padding: "4px",
+  border: 0,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.title,
+  boxShadow: vars.shadow[1],
+  cursor: "pointer",
+  outline: "none",
+  flexShrink: 0,
+  selectors: {
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
 });
 
 export const profileButton = style({

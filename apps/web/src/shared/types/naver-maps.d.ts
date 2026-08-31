@@ -1,4 +1,9 @@
 declare namespace naver.maps {
+  /** 서브모듈까지 모두 실행됐는지. SDK 가 초기화를 마치며 true 로 바꾼다. */
+  let jsContentLoaded: boolean | undefined;
+  /** 초기화가 끝나면 SDK 가 한 번 호출한다. */
+  let onJSContentLoaded: (() => void) | undefined;
+
   interface MapOptions {
     center?: LatLng | LatLngLiteral;
     zoom?: number;
@@ -9,6 +14,12 @@ declare namespace naver.maps {
     draggable?: boolean;
     scrollWheel?: boolean;
     pinchZoom?: boolean;
+    /** GL 벡터 지도. 지도 디자인툴 스타일은 이 모드에서만 그려진다. */
+    gl?: boolean;
+    /** 지도 디자인툴(Maps 스타일 에디터)에서 발급한 스타일 ID. */
+    customStyleId?: string;
+    /** 타일이 오기 전에 깔아 둘 배경. 이미지 URL 또는 CSS 색상값. */
+    background?: string;
   }
 
   // biome-ignore lint/suspicious/noShadowRestrictedNames: naver maps SDK 명세의 Map 이름을 따른다

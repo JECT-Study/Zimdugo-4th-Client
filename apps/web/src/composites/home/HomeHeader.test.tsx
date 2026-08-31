@@ -63,15 +63,19 @@ const renderHeader = (profileImageUrl = "") => {
     },
   });
   const onLogoPress = vi.fn();
+  const onMapColorSchemePress = vi.fn();
 
   return {
     onLogoPress,
+    onMapColorSchemePress,
     ...render(
       <QueryClientProvider client={queryClient}>
         <HomeHeader
           profileImageUrl={profileImageUrl}
           onProfilePress={vi.fn()}
           onLogoPress={onLogoPress}
+          mapColorScheme="light"
+          onMapColorSchemePress={onMapColorSchemePress}
         />
       </QueryClientProvider>,
     ),
@@ -164,5 +168,15 @@ describe("HomeHeader", () => {
     fireEvent.click(logoButton);
 
     expect(onLogoPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("지도 색 테마 버튼을 누르면 전환을 알린다", () => {
+    const { onMapColorSchemePress } = renderStyledHeader();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: m.home_map_dark_mode_aria() }),
+    );
+
+    expect(onMapColorSchemePress).toHaveBeenCalledTimes(1);
   });
 });

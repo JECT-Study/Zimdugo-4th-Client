@@ -7,18 +7,33 @@ import {
   useMemo,
   useState,
 } from "react";
-
 import {
   DEFAULT_NAVER_MAP_LANGUAGE,
   type NaverMapLanguage,
   normalizeNaverMapLanguage,
 } from "./naver-map-language";
+import {
+  getNaverMapScriptSrc,
+  waitForNaverMapSdkReady,
+} from "./naver-map-script";
+import {
+  DEFAULT_MAP_COLOR_SCHEME,
+  getNaverMapStyleOptions,
+  type MapColorScheme,
+  type NaverMapStyleOptions,
+  withNaverMapStyleSubmodules,
+} from "./naver-map-style";
 
 export type NaverMapSdkStatus = "idle" | "loading" | "ready" | "error";
 
 export interface NaverMapProviderProps {
   children: ReactNode;
   clientId?: string;
+  /**
+   * 지도에 쓸 색 테마. 테마별 스타일 ID 는 환경 변수에서 읽는다
+   * (`naver-map-style.ts`).
+   */
+  colorScheme?: MapColorScheme;
   language?: string;
   submodules?: string[];
 }
@@ -28,6 +43,9 @@ interface NaverMapContextValue {
   isReady: boolean;
   error: Error | null;
   language: NaverMapLanguage;
+  colorScheme: MapColorScheme;
+  /** 지도를 만들 때 MapOptions 에 펼쳐 넣을 커스텀 스타일 조각. */
+  styleOptions: NaverMapStyleOptions;
   maps: typeof naver.maps | null;
   reload: () => void;
 }
@@ -47,18 +65,14 @@ const getScriptSrc = ({
   clientId: string;
   language: string;
   submodules: string[];
-}) => {
-  const params = new URLSearchParams({
-    ncpKeyId: clientId,
+}) =>
+  getNaverMapScriptSrc({
+    clientId,
     language,
+    // 커스텀 스타일은 gl 서브모듈에서만 그려진다. 스타일 ID 는 스크립트가 아니라
+    // 지도를 만들 때 MapOptions 로 넘긴다.
+    submodules: withNaverMapStyleSubmodules(submodules),
   });
-
-  if (submodules.length > 0) {
-    params.set("submodules", submodules.join(","));
-  }
-
-  return `https://openapi.map.naver.com/openapi/v3/maps.js?${params.toString()}`;
-};
 
 const removeNaverMapScript = () => {
   const activeScript = document.querySelector<HTMLScriptElement>(
@@ -145,6 +159,7 @@ const loadNaverMapSdk = async ({
   );
 
   if (activeScript?.src === scriptSrc && window.naver?.maps) {
+    await waitForNaverMapSdkReady();
     return window.naver.maps;
   }
 
@@ -161,9 +176,18 @@ const loadNaverMapSdk = async ({
     script.async = true;
     script.dataset[NAVER_MAP_SCRIPT_DATA_KEY] = "true";
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Naver Maps SDK."));
+    script.onerror = () => {
+      // 실패한 요소를 남겨 두면 위치 선택기처럼 같은 src 를 재사용하는 쪽이
+      // 이미 지나간 load/error 를 기다리다 영영 끝나지 않는다.
+      script.remove();
+      reject(new Error("Failed to load Naver Maps SDK."));
+    };
     document.head.appendChild(script);
   });
+
+  // onload 는 서브모듈이 실리기 전에 떨어진다. 여기서 기다리지 않으면 gl 이
+  // 아직 없는 상태로 지도를 만들어 래스터로 그려진다.
+  await waitForNaverMapSdkReady();
 
   return window.naver?.maps ?? null;
 };
@@ -171,6 +195,7 @@ const loadNaverMapSdk = async ({
 export function NaverMapProvider({
   children,
   clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID,
+  colorScheme = DEFAULT_MAP_COLOR_SCHEME,
   language = DEFAULT_NAVER_MAP_LANGUAGE,
   submodules = DEFAULT_SUBMODULES,
 }: NaverMapProviderProps) {
@@ -181,6 +206,10 @@ export function NaverMapProvider({
 
   const naverMapLanguage = normalizeNaverMapLanguage(language);
   const submoduleKey = submodules.join(",");
+  const styleOptions = useMemo(
+    () => getNaverMapStyleOptions(colorScheme),
+    [colorScheme],
+  );
 
   // submodules 는 배열이라 매 렌더 새 참조다. 그대로 의존성에 넣으면 지도
   // SDK 를 끝없이 다시 불러온다. 그래서 join 한 submoduleKey 를 쓴다.
@@ -220,6 +249,8 @@ export function NaverMapProvider({
     return () => {
       isMounted = false;
     };
+    // 스크립트 URL 은 테마와 무관하다. 테마가 바뀌어도 SDK 를 다시 부르지 않고
+    // 지도만 다시 만든다(NaverMapCanvas).
   }, [clientId, naverMapLanguage, submoduleKey, reloadKey]);
 
   const reload = useCallback(() => {
@@ -232,10 +263,12 @@ export function NaverMapProvider({
       isReady: status === "ready",
       error,
       language: naverMapLanguage,
+      colorScheme,
+      styleOptions,
       maps,
       reload,
     }),
-    [error, maps, naverMapLanguage, reload, status],
+    [colorScheme, error, maps, naverMapLanguage, reload, status, styleOptions],
   );
 
   return (

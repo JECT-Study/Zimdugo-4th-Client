@@ -43,6 +43,7 @@ import {
   IconLockerDetailWallet24,
   IconLockerTimerClose28,
   IconLockerTimerLarge,
+  IconMapColorScheme24,
   IconMarker22,
   IconMinusBox18,
   IconMore24,
@@ -908,6 +909,14 @@ const ICON_CATALOG = [
       {
         name: "crosshairDenied",
         render: () => <IconNavigationCrosshair24 state="denied" />,
+      },
+      {
+        name: "colorSchemeLight",
+        render: () => <IconMapColorScheme24 scheme="light" />,
+      },
+      {
+        name: "colorSchemeDark",
+        render: () => <IconMapColorScheme24 scheme="dark" />,
       },
       {
         name: "refresh",

@@ -1,4 +1,4 @@
-import { m } from "@repo/i18n";
+import { languageTag, m } from "@repo/i18n";
 import { Popup } from "@repo/ui/components/popup";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,12 +8,14 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
+import { useMapColorSchemePreference } from "#/entities/map";
 import { useUser } from "#/entities/user/hooks/useUser";
 import { authService } from "#/features/auth/sign-in/api/authService";
 import { useProfileImageChange } from "#/features/my/hooks/useProfileImageChange";
 import { createNoIndexNoFollowHead } from "#/features/seo/model/robots-meta";
 import { resolveSocialProviders } from "#/features/settings/lib/resolve-social-providers";
 import { useSettingsStyleReady } from "#/features/settings/model/useSettingsStyleReady";
+import { getMapColorSchemeLabel } from "#/features/settings/ui/MapColorSchemeSettingList";
 import { SettingsPageView } from "#/features/settings/ui/SettingsPageView";
 import {
   SettingsHeaderSkeleton,
@@ -21,8 +23,12 @@ import {
   SettingsSkeletonFrame,
 } from "#/features/settings/ui/SettingsRouteSkeleton";
 import { useAuth } from "#/shared/hooks/useAuth";
-import { stripLocalePathPrefix } from "#/shared/i18n/locales";
+import { BASE_LOCALE, stripLocalePathPrefix } from "#/shared/i18n/locales";
 import { removePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
+import {
+  appLanguageLabelMap,
+  normalizeLanguage,
+} from "#/shared/store/language";
 import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 
 export const Route = createFileRoute("/settings")({
@@ -35,6 +41,10 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated, logout } = useAuth();
+  const { preference: mapColorSchemePreference } =
+    useMapColorSchemePreference();
+  const currentLanguageLabel =
+    appLanguageLabelMap[normalizeLanguage(languageTag()) ?? BASE_LOCALE];
   const isSettingsRoot = useRouterState({
     select: (state) =>
       stripLocalePathPrefix(state.location.pathname) === "/settings",
@@ -124,6 +134,9 @@ export function SettingsPage() {
         appVersion={import.meta.env.VITE_APP_VERSION || "1.0.0"}
         onBack={() => navigate({ to: "/" })}
         onLanguagePress={() => navigate({ to: "/settings/language" })}
+        languageValue={currentLanguageLabel}
+        onThemePress={() => navigate({ to: "/settings/theme" })}
+        themeValue={getMapColorSchemeLabel(mapColorSchemePreference)}
         onNoticePress={() => navigate({ to: "/notices" })}
         onTermsPress={() => navigate({ to: "/settings/terms" })}
         onPrivacyPress={() => navigate({ to: "/settings/privacy" })}

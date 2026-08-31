@@ -44,6 +44,8 @@ const meta = {
   args: {
     onProfilePress: () => undefined,
     onLogoPress: () => undefined,
+    mapColorScheme: "light",
+    onMapColorSchemePress: () => undefined,
   },
 } satisfies Meta<typeof HomeHeader>;
 

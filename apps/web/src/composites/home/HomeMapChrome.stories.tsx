@@ -79,6 +79,8 @@ function HomeMapChromePreview({
           profileImageUrl=""
           onProfilePress={() => undefined}
           onLogoPress={() => undefined}
+          mapColorScheme="light"
+          onMapColorSchemePress={() => undefined}
         />
         <HomeSearchBar onOpenSearch={() => undefined} />
         {/* null 은 놓을 자리가 없다는 뜻이다. 실제 앱도 이때 렌더하지 않는다. */}

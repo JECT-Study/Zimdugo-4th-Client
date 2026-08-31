@@ -57,6 +57,7 @@ import {
   NaverMapProvider,
   resolveMapBootstrapViewport,
   subscribeMapIdle,
+  useMapColorScheme,
   useMapViewportStore,
   useNaverMapSdk,
 } from "#/entities/map";
@@ -578,6 +579,10 @@ export function IndexPage() {
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: user } = useUser(isAuthenticated);
+  const {
+    colorScheme: mapColorScheme,
+    toggleColorScheme: toggleMapColorScheme,
+  } = useMapColorScheme();
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
   const openLockerId = lockerIdFromQuery ?? search.openLockerId;
@@ -598,6 +603,10 @@ export function IndexPage() {
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pinSelectedInAppRef = useRef(false);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
+  /** 딥링크 상세 카메라를 이미 맞춘 보관함. 지도를 다시 만들어도 되풀이하지 않는다. */
+  const focusedDeepLinkLockerIdRef = useRef<number | undefined>(undefined);
+  /** 검색 범위를 이미 맞춘 조건. 지도를 다시 만들었다는 이유만으로 되풀이하지 않는다. */
+  const fittedSearchBoundsRef = useRef<string | null>(null);
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
     null,
   );
@@ -1578,7 +1587,14 @@ export function IndexPage() {
       mapInstanceRef.current = map;
       setMapInstance(map);
 
-      if (map && lockerIdFromQuery !== undefined && loaderData?.detail) {
+      // 딥링크로 연 상세는 처음 한 번만 카메라를 맞춘다. 테마를 바꾸면 지도를
+      // 다시 만드는데, 그때마다 다시 맞추면 사용자가 옮겨 둔 위치를 덮어쓴다.
+      const isNewDeepLinkFocus =
+        lockerIdFromQuery !== undefined &&
+        focusedDeepLinkLockerIdRef.current !== lockerIdFromQuery;
+
+      if (map && isNewDeepLinkFocus && loaderData?.detail) {
+        focusedDeepLinkLockerIdRef.current = lockerIdFromQuery;
         focusNaverMapOnCoordinates({
           map,
           coordinates: {
@@ -1606,6 +1622,14 @@ export function IndexPage() {
     },
     [lockerIdFromQuery, loaderData],
   );
+
+  // 상세를 닫으면 파라미터가 사라진다. 그때 표시를 지워야 같은 보관함을 다시
+  // 열었을 때 카메라를 다시 맞춘다.
+  useEffect(() => {
+    if (lockerIdFromQuery === undefined) {
+      focusedDeepLinkLockerIdRef.current = undefined;
+    }
+  }, [lockerIdFromQuery]);
 
   const clearLockerDetailUrl = useCallback(() => {
     void navigate({ to: ".", search: withoutLockerDetailParams });
@@ -2001,6 +2025,10 @@ export function IndexPage() {
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
+      // 앱 안에서 연 상세도 URL 에 locker 가 붙는다. 카메라는 이 경로가 직접
+      // 맞추므로 여기서 기록해 두지 않으면, 테마를 바꿔 지도를 다시 만들 때
+      // handleMapLoad 가 새 딥링크로 보고 옮겨 둔 카메라를 되돌린다.
+      focusedDeepLinkLockerIdRef.current = lockerId;
       setLockerDetailQueryOrigin({
         lat: searchCoordinates.lat,
         lng: searchCoordinates.lng,
@@ -3117,10 +3145,12 @@ export function IndexPage() {
 
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
+      fittedSearchBoundsRef.current = null;
       return;
     }
 
     if (context === "map") {
+      fittedSearchBoundsRef.current = null;
       return;
     }
 
@@ -3129,6 +3159,7 @@ export function IndexPage() {
       : keywordSearchResults?.bounds;
 
     if (!bounds) {
+      fittedSearchBoundsRef.current = null;
       return;
     }
 
@@ -3137,16 +3168,43 @@ export function IndexPage() {
       windowHeight,
     });
 
-    fitNaverMapToBounds({
+    // 테마를 바꾸면 지도를 새로 만든다. 그 이유만으로 범위를 다시 맞추면
+    // 사용자가 드래그해 둔 위치가 검색 결과 전체 범위로 덮인다. 범위·시트·
+    // 화면 높이가 실제로 달라졌을 때만 맞춘다.
+    //
+    // 무엇을 찾은 결과인지도 함께 본다. 결과가 이전 검색과 같은 외곽 좌표로
+    // 나오면 범위만으로는 구분되지 않는데, 두 훅 모두 placeholderData 로 이전
+    // 결과를 들고 있어 그 사이 bounds 가 비어 ref 가 풀리는 순간도 없다.
+    const fitSignature = JSON.stringify({
+      bounds,
+      bottomPadding,
+      placeId: activePlaceId ?? null,
+      keyword: effectiveSearchQuery,
+      filters: searchFilters,
+    });
+    if (fittedSearchBoundsRef.current === fitSignature) {
+      return;
+    }
+    // 검색 결과가 SDK 보다 먼저 오면 지도가 아직 없어 범위를 못 맞춘다. 그때도
+    // 기록해 버리면 지도가 준비돼 다시 돌 때 같은 시그니처로 걸러져, ?q= 로 연
+    // 화면이 결과 범위에 영영 맞지 않는다.
+    const didFitBounds = fitNaverMapToBounds({
       map: mapInstance,
       bounds,
       bottomPadding,
     });
+    if (!didFitBounds) {
+      return;
+    }
+
+    fittedSearchBoundsRef.current = fitSignature;
   }, [
     keywordSearchResults?.bounds,
     mapInstance,
     placeLockersResults?.bounds,
     activePlaceId,
+    effectiveSearchQuery,
+    searchFilters,
     sheetMode,
     windowHeight,
     context,
@@ -3521,6 +3579,8 @@ export function IndexPage() {
         profileImageUrl={user?.profileImageUrl ?? ""}
         onProfilePress={() => navigate({ to: "/settings" })}
         onLogoPress={resetSearchContext}
+        mapColorScheme={mapColorScheme}
+        onMapColorSchemePress={toggleMapColorScheme}
       />
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar
@@ -3533,7 +3593,7 @@ export function IndexPage() {
         />
       ) : null}
 
-      <NaverMapProvider language={languageTag()}>
+      <NaverMapProvider colorScheme={mapColorScheme} language={languageTag()}>
         <NaverMapCanvas
           key={mapRemountKey}
           onLoad={handleMapLoad}
