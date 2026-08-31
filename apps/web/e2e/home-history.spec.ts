@@ -270,6 +270,32 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       .not.toContain("localhost");
   });
 
+  test("새로고침한 상세를 닫아도 쌓아 둔 칸을 되감는다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    // 상세 URL 에서 새로고침한다. 소유권을 컴포넌트가 들고 있으면 여기서 잊고,
+    // 닫을 때 그 칸을 되감는 대신 현재 항목을 홈으로 덮는다. 그러면 종료 확인용
+    // 자리 앞에 같은 홈이 하나 더 남아, 뒤로가기가 화면 변화 없이 그것을 먹는다.
+    await page.reload();
+    await waitForMapReady(page);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    await pressCloseButton(page);
+    await expect.poll(() => lockerParam(page)).toBeNull();
+
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(page.url(), "중복 항목을 헛돌다 나갔다").toContain("localhost");
+  });
+
   test("되묻는 사이에 시트를 여닫아도 확인 없이 나가지 않는다", async ({
     page,
   }) => {

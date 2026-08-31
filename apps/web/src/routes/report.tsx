@@ -149,17 +149,25 @@ function ReportPage() {
     setIsExitPopupOpen(false);
   };
 
-  const handleLeaveReport = () => {
-    setIsExitPopupOpen(false);
-    // 들어올 때 쌓인 칸을 되감는다. 지정 이동으로 덮으면 그 칸이 남아, 신고를
-    // 열었다 접을 때마다 같은 홈이 하나씩 늘고 뒤로가기가 화면 변화 없이
-    // 그 중복을 헛돈다. 링크로 바로 들어와 되감을 자리가 없을 때만 홈으로 보낸다.
+  /**
+   * 신고 화면을 벗어난다.
+   *
+   * 들어올 때 쌓인 칸을 되감는다. 지정 이동으로 덮으면 그 칸이 남아, 신고를
+   * 열었다 나올 때마다 같은 홈이 하나씩 늘고 뒤로가기가 화면 변화 없이 그
+   * 중복을 헛돈다. 링크로 바로 들어와 되감을 자리가 없을 때만 홈으로 보낸다.
+   */
+  const leaveReport = () => {
     if (router.history.canGoBack()) {
       router.history.back();
       return;
     }
 
     navigate({ to: "/", replace: true });
+  };
+
+  const handleLeaveReport = () => {
+    setIsExitPopupOpen(false);
+    leaveReport();
   };
 
   return (
@@ -318,7 +326,7 @@ function ReportPage() {
           // 이미 보낸 신고를 다시 띄운다.
           primaryAction={{
             label: m.report_submit_success_home(),
-            onPress: () => navigate({ to: "/", replace: true }),
+            onPress: leaveReport,
           }}
           subAction={{
             label: m.report_submit_success_history(),

@@ -1,16 +1,13 @@
 import { useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
+import {
+  EXIT_SENTINEL_STATE,
+  isExitSentinelEntry,
+} from "#/shared/lib/history-entry-state";
+
 /** 두 번째 누름을 "종료 의사"로 받아 주는 시간. 토스트가 떠 있는 동안이다. */
 const EXIT_CONFIRM_WINDOW_MS = 2_000;
-
-/** 우리가 종료를 가로채려고 만든 자리라는 표시. */
-const EXIT_SENTINEL_STATE_KEY = "zimdugoExitSentinel";
-
-const isExitSentinelLocation = (state: unknown) =>
-  typeof state === "object" &&
-  state !== null &&
-  (state as Record<string, unknown>)[EXIT_SENTINEL_STATE_KEY] === true;
 
 /**
  * 홈 첫 화면에서 뒤로가기를 한 번은 잡아 두고 토스트를 띄운다.
@@ -39,7 +36,7 @@ export const useExitConfirm = (enabled: boolean) => {
 
     // 화면을 오가다 이 자리로 되돌아왔을 수도 있다. 그때 또 만들면 자리만 늘고,
     // 알아보지 못하면 종료를 되묻지 못한다.
-    if (isExitSentinelLocation(router.history.location.state)) {
+    if (isExitSentinelEntry(router.history.location.state)) {
       hasSentinelRef.current = true;
       return;
     }
@@ -48,9 +45,7 @@ export const useExitConfirm = (enabled: boolean) => {
     if (router.history.canGoBack()) return;
 
     hasSentinelRef.current = true;
-    router.history.push(router.history.location.href, {
-      [EXIT_SENTINEL_STATE_KEY]: true,
-    });
+    router.history.push(router.history.location.href, EXIT_SENTINEL_STATE);
   }, [enabled, router]);
 
   // 시트가 열려 종료 확인이 꺼지면 되묻던 상태도 흘려보낸다. 남겨 두면 시트를

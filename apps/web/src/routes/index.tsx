@@ -223,6 +223,11 @@ import { useExitConfirm } from "#/shared/hooks/useExitConfirm";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
+import {
+  isDetailLayerEntry,
+  withDetailLayerFlag,
+  withoutDetailLayerFlag,
+} from "#/shared/lib/history-entry-state";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
 import {
@@ -575,8 +580,6 @@ const MyLocationButton = memo(function MyLocationButton({
 export function IndexPage() {
   const navigate = useNavigate();
   const router = useRouter();
-  /** 상세 시트를 열면서 히스토리를 한 칸 쌓았는지. 닫을 때 그 칸을 회수한다. */
-  const detailLayerPushedRef = useRef(false);
   const search = (useSearch({ strict: false }) || {}) as HomeSearchParams;
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -676,6 +679,8 @@ export function IndexPage() {
         // 홈은 시트·컨텍스트 상태를 URL 파라미터로 표현할 뿐이라 push 하면
         // 검색어를 바꿀 때마다 히스토리가 쌓인다. 상태 표현은 항상 replace 다.
         replace: true,
+        // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+        state: true,
       });
     },
     [navigate, searchPlaceIdFromUrl, searchQueryFromUrl],
@@ -1082,6 +1087,8 @@ export function IndexPage() {
           return next;
         },
         replace: true,
+        // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+        state: true,
       });
     }
   }, [navigate, searchPlaceIdFromUrl, searchQueryFromUrl]);
@@ -1629,8 +1636,6 @@ export function IndexPage() {
   useEffect(() => {
     if (lockerIdFromQuery === undefined) {
       focusedDeepLinkLockerIdRef.current = undefined;
-      // 기기 뒤로가기로 직접 닫혔을 수도 있다. 그때도 칸은 이미 회수됐다.
-      detailLayerPushedRef.current = false;
       // 핀을 누르면 모션이 끝난 뒤 시트를 연다. 그 사이에 뒤로가기로 URL 이
       // 내려갔다면 예약도 접는다. 그대로 두면 URL 없는 시트가 열려, 다음
       // 뒤로가기가 그 시트를 닫지 못하고 종료 확인으로 넘어간다.
@@ -1639,10 +1644,9 @@ export function IndexPage() {
   }, [clearPendingLockerDetailOpen, lockerIdFromQuery]);
 
   const clearLockerDetailUrl = useCallback(() => {
-    // 열 때 쌓은 칸이 있으면 그 칸을 되감는다. 화면 안의 닫기 버튼과 기기
-    // 뒤로가기가 같은 길을 타야 둘의 결과가 어긋나지 않는다.
-    if (detailLayerPushedRef.current) {
-      detailLayerPushedRef.current = false;
+    // 열 때 쌓은 칸이면 그 칸을 되감는다. 화면 안의 닫기 버튼과 기기 뒤로가기가
+    // 같은 길을 타야 둘의 결과가 어긋나지 않는다.
+    if (isDetailLayerEntry(router.history.location.state)) {
       router.history.back({ ignoreBlocker: true });
       return;
     }
@@ -1653,6 +1657,7 @@ export function IndexPage() {
       to: ".",
       search: withoutLockerDetailParams,
       replace: true,
+      state: withoutDetailLayerFlag,
     });
   }, [navigate, router]);
 
@@ -1702,6 +1707,7 @@ export function IndexPage() {
       },
       // 검색 컨텍스트를 빠져나오는 정리 동작이라 되돌아갈 지점이 아니다.
       replace: true,
+      state: withoutDetailLayerFlag,
     });
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
@@ -2028,10 +2034,6 @@ export function IndexPage() {
       // 쌓아 두면 닫을 때 그 URL 로 돌아가 새로고침에 상세가 되살아난다.
       const opensNewLayer = !search.locker && !hasExplicitLockerEntry;
 
-      if (opensNewLayer) {
-        detailLayerPushedRef.current = true;
-      }
-
       void navigate({
         to: ".",
         search: (prev: SearchUrlParams) =>
@@ -2039,6 +2041,12 @@ export function IndexPage() {
             ? prev
             : withLockerDetailParam(prev, lockerSlug),
         replace: !opensNewLayer,
+        // 쌓은 칸에 표시를 남긴다. 컴포넌트가 다시 마운트돼도 — 상세 URL 에서
+        // 새로고침하는 흔한 경우까지 — 그 칸이 우리 것임을 알아본다.
+        //
+        // state 를 넘기지 않으면 이동이 항목의 상태를 비운다. 같은 칸을 갱신할
+        // 때는 true 로 지켜야 제목이 붙는 정규화에 표시가 날아가지 않는다.
+        state: opensNewLayer ? withDetailLayerFlag : true,
       });
     },
     [hasExplicitLockerEntry, navigate, search.locker],
@@ -2585,6 +2593,8 @@ export function IndexPage() {
               : { ...rest, locker: String(openLockerId) };
           },
           replace: true,
+          // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+          state: true,
         });
       })
       .catch((error) => {
@@ -2595,6 +2605,8 @@ export function IndexPage() {
           to: ".",
           search: withoutOpenLockerParams,
           replace: true,
+          // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+          state: true,
         });
       });
   }, [
@@ -2755,6 +2767,8 @@ export function IndexPage() {
           // 목록으로 돌아가는 길은 handleBackToKeywordList 가 맡는다.
           // 여기서 push 하면 핀을 고를 때마다 히스토리만 쌓인다.
           replace: true,
+          // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+          state: true,
         });
         setActiveLockerId(null);
         setSearchDetailBack(null);
