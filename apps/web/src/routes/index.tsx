@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
+  useRouter,
   useSearch,
 } from "@tanstack/react-router";
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
@@ -221,6 +222,11 @@ import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
+import {
+  isDetailLayerEntry,
+  withDetailLayerFlag,
+  withoutDetailLayerFlag,
+} from "#/shared/lib/history-entry-state";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
 import {
@@ -296,9 +302,6 @@ export interface HomeSearchParams {
 }
 
 /** 보관함 딥링크 파라미터만 걷어 낸다. 열고 나면 주소에 남길 이유가 없다. */
-const withoutLockerParam = ({ locker: _locker, ...rest }: HomeSearchParams) =>
-  rest;
-
 /** openLockerId 계열 딥링크 파라미터를 걷어 낸다. */
 const withoutOpenLockerParams = ({
   openLockerId: _openLockerId,
@@ -575,6 +578,7 @@ const MyLocationButton = memo(function MyLocationButton({
 
 export function IndexPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const search = (useSearch({ strict: false }) || {}) as HomeSearchParams;
   const loaderData = Route.useLoaderData();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -674,6 +678,8 @@ export function IndexPage() {
         // 홈은 시트·컨텍스트 상태를 URL 파라미터로 표현할 뿐이라 push 하면
         // 검색어를 바꿀 때마다 히스토리가 쌓인다. 상태 표현은 항상 replace 다.
         replace: true,
+        // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+        state: true,
       });
     },
     [navigate, searchPlaceIdFromUrl, searchQueryFromUrl],
@@ -1080,6 +1086,8 @@ export function IndexPage() {
           return next;
         },
         replace: true,
+        // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+        state: true,
       });
     }
   }, [navigate, searchPlaceIdFromUrl, searchQueryFromUrl]);
@@ -1627,18 +1635,30 @@ export function IndexPage() {
   useEffect(() => {
     if (lockerIdFromQuery === undefined) {
       focusedDeepLinkLockerIdRef.current = undefined;
+      // 핀을 누르면 모션이 끝난 뒤 시트를 연다. 그 사이에 뒤로가기로 URL 이
+      // 내려갔다면 예약도 접는다. 그대로 두면 URL 없는 시트가 열려, 다음
+      // 뒤로가기가 그 시트를 닫지 못하고 종료 확인으로 넘어간다.
+      clearPendingLockerDetailOpen();
     }
-  }, [lockerIdFromQuery]);
+  }, [clearPendingLockerDetailOpen, lockerIdFromQuery]);
 
   const clearLockerDetailUrl = useCallback(() => {
-    // 상세를 닫는 동작이다. push 하면 뒤로가기를 눌렀는데 앞으로 한 칸
-    // 나아가는 꼴이 되어, 되돌아가려면 그만큼 더 눌러야 한다.
+    // 열 때 쌓은 칸이면 그 칸을 되감는다. 화면 안의 닫기 버튼과 기기 뒤로가기가
+    // 같은 길을 타야 둘의 결과가 어긋나지 않는다.
+    if (isDetailLayerEntry(router.history.location.state)) {
+      router.history.back({ ignoreBlocker: true });
+      return;
+    }
+
+    // 링크나 새로고침으로 상세부터 열린 경우다. 되감을 칸이 없으므로 파라미터만
+    // 지운다. push 하면 뒤로가기를 눌렀는데 앞으로 한 칸 나아가는 꼴이 된다.
     void navigate({
       to: ".",
       search: withoutLockerDetailParams,
       replace: true,
+      state: withoutDetailLayerFlag,
     });
-  }, [navigate]);
+  }, [navigate, router]);
 
   const resetMapContext = useCallback(() => {
     clearPendingLockerDetailOpen();
@@ -1686,6 +1706,7 @@ export function IndexPage() {
       },
       // 검색 컨텍스트를 빠져나오는 정리 동작이라 되돌아갈 지점이 아니다.
       replace: true,
+      state: withoutDetailLayerFlag,
     });
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
@@ -2001,18 +2022,33 @@ export function IndexPage() {
     (lockerId: number, title?: string) => {
       const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
 
+      // 시트를 여는 순간에만 한 칸 쌓는다. 그래야 기기 뒤로가기가 시트를 닫는
+      // 동작이 된다.
+      //
+      // 이미 locker 가 붙어 있으면 상세끼리 갈아타거나 제목이 붙는 정규화라 같은
+      // 레이어다. 뒤로가기로 복원된 URL 을 보고 다시 여는 경우도 여기에 걸려
+      // 걸러진다. 그때 또 쌓으면 뒤로가기가 앞으로 나아가 제자리를 맴돈다.
+      //
+      // openLockerId 로 들어온 화면은 상세가 곧 첫 화면이라 되감을 자리가 없다.
+      // 쌓아 두면 닫을 때 그 URL 로 돌아가 새로고침에 상세가 되살아난다.
+      const opensNewLayer = !search.locker && !hasExplicitLockerEntry;
+
       void navigate({
         to: ".",
         search: (prev: SearchUrlParams) =>
           String(prev.locker ?? "") === lockerSlug
             ? prev
             : withLockerDetailParam(prev, lockerSlug),
-        // push 하면 뒤로가기가 이 항목으로 되돌아오고, 복원된 URL 을 보고
-        // 상세가 다시 열리면서 또 push 한다. 뒤로가기가 제자리를 맴돌게 된다.
-        replace: true,
+        replace: !opensNewLayer,
+        // 쌓은 칸에 표시를 남긴다. 컴포넌트가 다시 마운트돼도 — 상세 URL 에서
+        // 새로고침하는 흔한 경우까지 — 그 칸이 우리 것임을 알아본다.
+        //
+        // state 를 넘기지 않으면 이동이 항목의 상태를 비운다. 같은 칸을 갱신할
+        // 때는 true 로 지켜야 제목이 붙는 정규화에 표시가 날아가지 않는다.
+        state: opensNewLayer ? withDetailLayerFlag : true,
       });
     },
-    [navigate],
+    [hasExplicitLockerEntry, navigate, search.locker],
   );
 
   const openLockerDetailById = useCallback(
@@ -2556,6 +2592,8 @@ export function IndexPage() {
               : { ...rest, locker: String(openLockerId) };
           },
           replace: true,
+          // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+          state: true,
         });
       })
       .catch((error) => {
@@ -2566,6 +2604,8 @@ export function IndexPage() {
           to: ".",
           search: withoutOpenLockerParams,
           replace: true,
+          // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+          state: true,
         });
       });
   }, [
@@ -2726,6 +2766,8 @@ export function IndexPage() {
           // 목록으로 돌아가는 길은 handleBackToKeywordList 가 맡는다.
           // 여기서 push 하면 핀을 고를 때마다 히스토리만 쌓인다.
           replace: true,
+          // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
+          state: true,
         });
         setActiveLockerId(null);
         setSearchDetailBack(null);
@@ -2907,29 +2949,18 @@ export function IndexPage() {
     setSelectedMapPinOffset(null);
     setIsNavigationPopupOpen(false);
 
-    // 이 핸들러는 "뒤로"다. push 하면 뒤로가기를 누를수록 히스토리가 늘어
-    // 원래 화면으로 돌아가려면 그만큼 더 눌러야 한다. 상세를 여닫는 것은
-    // 히스토리 단계가 아니라 같은 화면의 상태 변화이므로 replace 로 되돌린다.
+    // 이 핸들러는 "뒤로"다. 상세를 열며 쌓아 둔 히스토리 한 칸을 되감아야
+    // 기기 뒤로가기와 결과가 같아진다. 그 몫은 clearLockerDetailUrl 이 맡는다.
     if (context === "map") {
       if (mapDetailBack === "idle") {
+        // resetMapContext 가 이미 상세 URL 을 정리한다.
         resetMapContext();
-        if (search.locker) {
-          void navigate({
-            to: ".",
-            search: withoutLockerParam,
-            replace: true,
-          });
-        }
         return;
       }
 
       setSheetMode("list");
       if (search.locker) {
-        void navigate({
-          to: ".",
-          search: withoutLockerParam,
-          replace: true,
-        });
+        clearLockerDetailUrl();
       }
       return;
     }
@@ -2941,20 +2972,16 @@ export function IndexPage() {
 
     setSheetMode("list");
     if (search.locker) {
-      void navigate({
-        to: ".",
-        search: withoutLockerParam,
-        replace: true,
-      });
+      clearLockerDetailUrl();
     }
   }, [
+    clearLockerDetailUrl,
     context,
     flushLockerSheetMutations,
     mapDetailBack,
     resetMapContext,
     searchDetailBack,
     search.locker,
-    navigate,
   ]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
@@ -3035,7 +3062,12 @@ export function IndexPage() {
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title);
+    //
+    // 다만 상세가 URL 에서 이미 내려갔으면 손대지 않는다. 기기 뒤로가기로 시트를
+    // 닫은 직후에 응답이 도착하면, 여기서 다시 붙여 닫은 시트가 되살아난다.
+    if (lockerIdFromQuery !== undefined) {
+      syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title);
+    }
 
     if (
       isPendingFocusRef.current &&
@@ -3056,6 +3088,7 @@ export function IndexPage() {
     }
   }, [
     lockerDetail,
+    lockerIdFromQuery,
     mapInstance,
     syncLockerDetailUrl,
     sheetMode,
