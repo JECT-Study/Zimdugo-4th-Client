@@ -2025,6 +2025,10 @@ export function IndexPage() {
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
+      // 앱 안에서 연 상세도 URL 에 locker 가 붙는다. 카메라는 이 경로가 직접
+      // 맞추므로 여기서 기록해 두지 않으면, 테마를 바꿔 지도를 다시 만들 때
+      // handleMapLoad 가 새 딥링크로 보고 옮겨 둔 카메라를 되돌린다.
+      focusedDeepLinkLockerIdRef.current = lockerId;
       setLockerDetailQueryOrigin({
         lat: searchCoordinates.lat,
         lng: searchCoordinates.lng,
@@ -2492,10 +2496,6 @@ export function IndexPage() {
       setContext("map");
       setMapDetailBack("idle");
       pinSelectedInAppRef.current = false;
-      // openLockerId 로 들어와도 URL 은 곧 locker 파라미터로 정규화된다. 여기서
-      // 기록해 두지 않으면 테마를 바꿔 지도를 다시 만들 때 새 딥링크로 보고
-      // 사용자가 옮겨 둔 카메라를 상세 위치로 되돌린다.
-      focusedDeepLinkLockerIdRef.current = lockerId;
 
       if (pin) {
         deepLinkMapCenterRef.current = {
