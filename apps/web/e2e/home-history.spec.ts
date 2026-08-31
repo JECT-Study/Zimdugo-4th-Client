@@ -296,6 +296,25 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     expect(page.url(), "중복 항목을 헛돌다 나갔다").toContain("localhost");
   });
 
+  test("딥링크로 연 상세를 닫아도 뒤로가기가 그 딥링크를 다시 열지 않는다", async ({
+    page,
+  }) => {
+    await page.goto(`/?openLockerId=${LOCKER_ID}`);
+    await waitForMapReady(page);
+    // 딥링크 파라미터는 곧 locker 로 정규화된다.
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    await pressCloseButton(page);
+    await expect.poll(() => lockerParam(page)).toBeNull();
+
+    // 상세가 떠 있는 동안 종료 확인용 자리를 만들면 그 자리가 딥링크 항목 위에
+    // 얹혀, 뒤로가기가 딥링크를 다시 연다.
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(await lockerParam(page), "닫은 딥링크가 다시 열렸다").toBeNull();
+  });
+
   test("되묻는 사이에 시트를 여닫아도 확인 없이 나가지 않는다", async ({
     page,
   }) => {

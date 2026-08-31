@@ -70,10 +70,14 @@ export const switchAppLanguage = (language: AppLanguage) => {
   const localizedHref = getLocalizedHref(currentHref, language);
 
   if (localizedHref !== currentHref) {
-    // 같은 화면을 다른 언어로 다시 여는 것이라 되돌아갈 지점이 아니다. assign 은
-    // 항목을 쌓아, 언어를 바꾼 뒤 뒤로가기를 누르면 이전 화면이 아니라 예전
-    // 언어로 돌아가고 한 번 더 눌러야 빠져나간다.
-    window.location.replace(localizedHref);
+    // 같은 화면을 다른 언어로 다시 여는 것이라 항목을 쌓지 않는다.
+    //
+    // location.replace 도 새 문서를 띄우며 현재 항목의 라우터 상태를 버린다.
+    // 그러면 새 문서가 자신을 첫 항목으로 보아 종료 확인용 자리를 또 만들고,
+    // 되돌아갈 기록이 없다고 판단해 뒤로가기가 예전 언어의 화면을 연다.
+    // 주소만 바꿔치우고 다시 띄우면 항목에 남긴 것들이 그대로 살아 있다.
+    window.history.replaceState(window.history.state, "", localizedHref);
+    window.location.reload();
     return;
   }
 

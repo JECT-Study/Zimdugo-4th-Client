@@ -156,8 +156,15 @@ test.describe("설정 화면과 브라우저 히스토리", () => {
       "언어 전환이 항목을 쌓으면 뒤로가기가 예전 언어로 되돌아간다",
     ).toBe(baseline);
 
-    await pressDeviceBack(page);
+    // 로케일 이동이 항목의 라우터 상태를 버리면, 헤더 뒤로가기가 되돌아갈 기록이
+    // 없다고 보고 현재 항목을 덮는다. 그러면 이어지는 기기 뒤로가기가 예전 언어의
+    // 화면을 다시 연다.
+    await pressHeaderBack(page);
     await page.waitForLoadState("domcontentloaded");
     await expect.poll(() => currentPath(page)).toMatch(/\/settings$/);
+
+    await pressDeviceBack(page);
+    await page.waitForLoadState("domcontentloaded");
+    await expect.poll(() => currentPath(page)).not.toMatch(/settings/);
   });
 });
