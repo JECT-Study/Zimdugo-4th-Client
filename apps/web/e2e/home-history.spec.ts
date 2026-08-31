@@ -227,6 +227,33 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     ).toBeNull();
   });
 
+  test("기기 뒤로가기로 닫았다 다시 열어도 종료 확인이 살아 있다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    // 두 번째 여닫이가 첫 번째와 같은 칸을 써야 한다. 첫 닫힘이 남긴 흔적을
+    // 보고 두 번째를 "같은 레이어"로 오해하면, 그때 종료 확인용 자리를 대신
+    // 소비해 다음 뒤로가기가 토스트 없이 앱을 벗어난다.
+    for (let round = 0; round < 2; round += 1) {
+      await pressMarker(page, 0);
+      await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+      await page.evaluate(() => window.history.back());
+      await expect.poll(() => lockerParam(page)).toBeNull();
+      await page.waitForTimeout(1_000);
+    }
+
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(page.url(), "되묻지 않고 그대로 나갔다").toContain("localhost");
+  });
+
   test("홈 첫 화면에서는 뒤로가기를 한 번 되묻는다", async ({ page }) => {
     await page.goto("/");
     await waitForMapReady(page);

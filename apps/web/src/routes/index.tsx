@@ -220,10 +220,6 @@ import {
 } from "#/shared/api/lockers";
 import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useExitConfirm } from "#/shared/hooks/useExitConfirm";
-import {
-  isHistoryPop,
-  useHistoryAction,
-} from "#/shared/hooks/useHistoryAction";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
@@ -579,7 +575,6 @@ const MyLocationButton = memo(function MyLocationButton({
 export function IndexPage() {
   const navigate = useNavigate();
   const router = useRouter();
-  const lastHistoryActionRef = useHistoryAction();
   /** 상세 시트를 열면서 히스토리를 한 칸 쌓았는지. 닫을 때 그 칸을 회수한다. */
   const detailLayerPushedRef = useRef(false);
   const search = (useSearch({ strict: false }) || {}) as HomeSearchParams;
@@ -2019,11 +2014,15 @@ export function IndexPage() {
       const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
 
       // 시트를 여는 순간에만 한 칸 쌓는다. 그래야 기기 뒤로가기가 시트를 닫는
-      // 동작이 된다. 이미 locker 가 붙어 있으면 상세끼리 갈아타거나 제목이
-      // 붙는 정규화라 같은 레이어이고, 뒤로가기로 복원된 URL 을 보고 여는
-      // 경우에 또 쌓으면 뒤로가기가 앞으로 나아가 제자리를 맴돈다.
-      const opensNewLayer =
-        !search.locker && !isHistoryPop(lastHistoryActionRef.current);
+      // 동작이 된다.
+      //
+      // 이미 locker 가 붙어 있으면 상세끼리 갈아타거나 제목이 붙는 정규화라 같은
+      // 레이어다. 뒤로가기로 복원된 URL 을 보고 다시 여는 경우도 여기에 걸려
+      // 걸러진다. 그때 또 쌓으면 뒤로가기가 앞으로 나아가 제자리를 맴돈다.
+      //
+      // openLockerId 로 들어온 화면은 상세가 곧 첫 화면이라 되감을 자리가 없다.
+      // 쌓아 두면 닫을 때 그 URL 로 돌아가 새로고침에 상세가 되살아난다.
+      const opensNewLayer = !search.locker && !hasExplicitLockerEntry;
 
       if (opensNewLayer) {
         detailLayerPushedRef.current = true;
@@ -2038,7 +2037,7 @@ export function IndexPage() {
         replace: !opensNewLayer,
       });
     },
-    [lastHistoryActionRef, navigate, search.locker],
+    [hasExplicitLockerEntry, navigate, search.locker],
   );
 
   const openLockerDetailById = useCallback(
@@ -3237,14 +3236,12 @@ export function IndexPage() {
     context,
   ]);
 
-  // 홈 첫 화면에서만 종료를 되묻는다. 시트가 열려 있으면 뒤로가기는 그 시트를
-  // 닫아야 하고, 그 몫은 시트를 열며 쌓아 둔 히스토리 한 칸이 맡는다.
-  const isHomeRoot =
-    context === "idle" &&
-    sheetMode === "idle" &&
-    !isSearchOpen &&
-    lockerIdFromQuery === undefined;
-  const isExitConfirming = useExitConfirm(isHomeRoot);
+  // 히스토리 한 칸을 쥔 시트가 없을 때만 종료를 되묻는다. 상세 시트가 열려
+  // 있으면 뒤로가기는 그 시트를 닫아야 하고, 그 몫은 시트를 열며 쌓아 둔 칸이
+  // 맡는다. 그 밖의 상태 — 마커를 눌렀다 닫아 지도 컨텍스트만 남은 경우까지 —
+  // 에서는 뒤로가기가 곧 이탈이므로 되물어야 한다.
+  const hasHistoryLayerOpen = lockerIdFromQuery !== undefined;
+  const isExitConfirming = useExitConfirm(!hasHistoryLayerOpen);
 
   const shouldRenderMapControls = shouldShowMapControls({
     isMapLoading,

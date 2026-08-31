@@ -303,15 +303,17 @@ function ReportPage() {
               <IconCircleboxCheck32 />
             </motion.div>
           }
+          // 제출을 마친 작성 화면은 되돌아갈 지점이 아니다. 남겨 두면 뒤로가기가
+          // 이미 보낸 신고를 다시 띄운다.
           primaryAction={{
             label: m.report_submit_success_home(),
-            onPress: () => navigate({ to: "/" }),
+            onPress: () => navigate({ to: "/", replace: true }),
           }}
           subAction={{
             label: m.report_submit_success_history(),
             onPress: () => {
               setIsPopupOpen(false);
-              navigate({ to: "/my/reports" });
+              navigate({ to: "/my/reports", replace: true });
             },
           }}
         />

@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react";
 /** 두 번째 누름을 "종료 의사"로 받아 주는 시간. 토스트가 떠 있는 동안이다. */
 const EXIT_CONFIRM_WINDOW_MS = 2_000;
 
+/** 우리가 종료를 가로채려고 만든 자리라는 표시. */
+const EXIT_SENTINEL_STATE_KEY = "zimdugoExitSentinel";
+
+const isExitSentinelLocation = (state: unknown) =>
+  typeof state === "object" &&
+  state !== null &&
+  (state as Record<string, unknown>)[EXIT_SENTINEL_STATE_KEY] === true;
+
 /**
  * 홈 첫 화면에서 뒤로가기를 한 번은 잡아 두고 토스트를 띄운다.
  *
@@ -28,10 +36,21 @@ export const useExitConfirm = (enabled: boolean) => {
 
   useEffect(() => {
     if (!enabled || hasSentinelRef.current) return;
+
+    // 화면을 오가다 이 자리로 되돌아왔을 수도 있다. 그때 또 만들면 자리만 늘고,
+    // 알아보지 못하면 종료를 되묻지 못한다.
+    if (isExitSentinelLocation(router.history.location.state)) {
+      hasSentinelRef.current = true;
+      return;
+    }
+
+    // 뒤에 화면이 있으면 뒤로가기는 앱을 벗어나는 동작이 아니다. 그대로 둔다.
     if (router.history.canGoBack()) return;
 
     hasSentinelRef.current = true;
-    router.history.push(router.history.location.href);
+    router.history.push(router.history.location.href, {
+      [EXIT_SENTINEL_STATE_KEY]: true,
+    });
   }, [enabled, router]);
 
   useEffect(() => {
@@ -39,7 +58,9 @@ export const useExitConfirm = (enabled: boolean) => {
 
     return router.history.block({
       blockerFn: ({ action }) => {
-        if (action !== "BACK") return false;
+        // 우리가 만든 자리에 서 있을 때만 종료를 되묻는다. 뒤에 앱 화면이 있으면
+        // 그 화면으로 돌아가는 동작이라 막으면 안 된다.
+        if (action !== "BACK" || !hasSentinelRef.current) return false;
 
         const isConfirming =
           Date.now() - promptedAtRef.current <= EXIT_CONFIRM_WINDOW_MS;

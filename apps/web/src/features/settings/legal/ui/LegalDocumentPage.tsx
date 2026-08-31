@@ -1,7 +1,7 @@
 import { m } from "@repo/i18n";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import { Header } from "@repo/ui/components/layout/header";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import type { DocumentType } from "#/shared/api/documents";
 import { useBackNavigation } from "#/shared/hooks/useBackNavigation";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
@@ -39,6 +39,7 @@ export function LegalDocumentPage({
 }: LegalDocumentPageProps) {
   // 1. Hooks
   const navigate = useNavigate();
+  const router = useRouter();
   const goBack = useBackNavigation("/settings");
   const { data, isLoading, isError, refetch } = useDocuments(documentType);
 
@@ -48,8 +49,10 @@ export function LegalDocumentPage({
 
   // 3. Event handlers
   const handleBack = () => {
-    // 신고 작성 중에 열었으면 그 단계로 정확히 돌아가야 해서 지정 이동이다.
-    if (returnSearch?.returnTo) {
+    // 신고 작성 중에 열었어도 되돌아갈 기록이 있으면 그 자리를 되감는다. 지정
+    // 이동으로 덮으면 약관 기록이 사라지고 신고 기록이 새로 쌓여, 오갈수록
+    // 뒤로가기를 더 눌러야 한다. 기록이 없을 때만 단계를 지정해 되돌린다.
+    if (returnSearch?.returnTo && !router.history.canGoBack()) {
       navigate({
         to: returnSearch.returnTo,
         ...(returnSearch.step === 2 ? { search: { step: 2 } } : {}),
