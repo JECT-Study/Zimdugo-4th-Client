@@ -3,7 +3,11 @@ import { IconCircleboxCheck32 } from "@repo/ui/assets/icons";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@repo/ui/components/layout/header";
 import { Popup } from "@repo/ui/components/popup";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { FormProvider, useWatch } from "react-hook-form";
@@ -65,6 +69,7 @@ export const Route = createFileRoute("/report")({
 
 function ReportPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const [isExitPopupOpen, setIsExitPopupOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLElement>(null);
@@ -144,11 +149,25 @@ function ReportPage() {
     setIsExitPopupOpen(false);
   };
 
+  /**
+   * 신고 화면을 벗어난다.
+   *
+   * 들어올 때 쌓인 칸을 되감는다. 지정 이동으로 덮으면 그 칸이 남아, 신고를
+   * 열었다 나올 때마다 같은 홈이 하나씩 늘고 뒤로가기가 화면 변화 없이 그
+   * 중복을 헛돈다. 링크로 바로 들어와 되감을 자리가 없을 때만 홈으로 보낸다.
+   */
+  const leaveReport = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+
+    navigate({ to: "/", replace: true });
+  };
+
   const handleLeaveReport = () => {
     setIsExitPopupOpen(false);
-    // 작성을 접고 나가는 동작이라 되돌아갈 지점이 아니다. push 하면 신고를
-    // 열었다 접을 때마다 히스토리가 한 칸씩 쌓인다.
-    navigate({ to: "/", replace: true });
+    leaveReport();
   };
 
   return (
@@ -303,15 +322,17 @@ function ReportPage() {
               <IconCircleboxCheck32 />
             </motion.div>
           }
+          // 제출을 마친 작성 화면은 되돌아갈 지점이 아니다. 남겨 두면 뒤로가기가
+          // 이미 보낸 신고를 다시 띄운다.
           primaryAction={{
             label: m.report_submit_success_home(),
-            onPress: () => navigate({ to: "/" }),
+            onPress: leaveReport,
           }}
           subAction={{
             label: m.report_submit_success_history(),
             onPress: () => {
               setIsPopupOpen(false);
-              navigate({ to: "/my/reports" });
+              navigate({ to: "/my/reports", replace: true });
             },
           }}
         />
