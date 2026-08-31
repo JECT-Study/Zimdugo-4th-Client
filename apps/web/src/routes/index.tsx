@@ -1637,7 +1637,7 @@ export function IndexPage() {
       focusedDeepLinkLockerIdRef.current = undefined;
       // 핀을 누르면 모션이 끝난 뒤 시트를 연다. 그 사이에 뒤로가기로 URL 이
       // 내려갔다면 예약도 접는다. 그대로 두면 URL 없는 시트가 열려, 다음
-      // 뒤로가기가 그 시트를 닫지 못하고 종료 확인으로 넘어간다.
+      // 뒤로가기가 그 시트를 닫지 못한다.
       clearPendingLockerDetailOpen();
     }
   }, [clearPendingLockerDetailOpen, lockerIdFromQuery]);
@@ -2999,6 +2999,20 @@ export function IndexPage() {
     setSearchPlaceId(null);
     setSheetMode("list");
   }, [flushLockerSheetMutations, searchDraft, setConfirmedSearchQuery]);
+
+  /**
+   * 기기 뒤로가기로 상세 칸이 되감기면 시트도 함께 닫는다.
+   *
+   * 되감기는 URL 만 되돌린다. 시트는 화면 상태로 떠 있으므로, 여기서 닫지 않으면
+   * 주소는 홈인데 상세가 그대로 남는다. 화면 안의 닫기 버튼과 같은 길을 태워
+   * 컨텍스트 복귀까지 똑같이 처리한다.
+   */
+  useEffect(() => {
+    if (lockerIdFromQuery !== undefined) return;
+    if (sheetMode !== "detail" || activeLockerId == null) return;
+
+    handleBackFromDetail();
+  }, [activeLockerId, handleBackFromDetail, lockerIdFromQuery, sheetMode]);
 
   const handleBackFromSearchFilter = useCallback(() => {
     setSheetMode("list");
