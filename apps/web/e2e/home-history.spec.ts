@@ -175,6 +175,7 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       .toBeGreaterThan(0);
 
     const baseline = await historyLength(page);
+    let afterFirstRound = 0;
 
     for (let round = 0; round < 3; round += 1) {
       await pressMarker(page, 0);
@@ -184,12 +185,113 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       await expect.poll(() => lockerParam(page)).toBeNull();
       // 시트 닫힘 애니메이션이 끝나고 마커가 기본 상태로 돌아와야 다시 눌린다.
       await page.waitForTimeout(1_000);
+
+      if (round === 0) {
+        afterFirstRound = await historyLength(page);
+      }
     }
 
+    // 시트는 기기 뒤로가기로 닫을 수 있어야 하므로 열 때 한 칸을 쓴다. 닫을 때
+    // 그 칸을 되감아 다시 쓰므로, 여닫기를 반복해도 더 자라지 않는다.
+    expect(
+      afterFirstRound,
+      "시트 하나에 히스토리 한 칸을 넘게 쓰면 안 된다",
+    ).toBeLessThanOrEqual(baseline + 1);
     expect(
       await historyLength(page),
       "상세를 여닫을 때마다 히스토리가 쌓이면 뒤로가기를 그만큼 더 눌러야 한다",
-    ).toBe(baseline);
+    ).toBe(afterFirstRound);
+  });
+
+  test("기기 뒤로가기가 상세 시트를 닫고 홈에 머무른다", async ({ page }) => {
+    // 상세 응답을 늦춘다. 응답이 늦게 오면 시트가 닫힌 뒤에 제목 슬러그 정규화가
+    // 돌아 URL 을 되살릴 수 있다. 빠른 스텁으로는 그 틈이 드러나지 않는다.
+    await page.route("**/lockers/*", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
+      await route.fallback();
+    });
+
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    await page.evaluate(() => window.history.back());
+
+    await expect.poll(() => lockerParam(page)).toBeNull();
+    expect(page.url(), "뒤로가기 한 번에 앱을 벗어났다").toContain("localhost");
+
+    // 늦게 도착한 상세 응답이 닫힌 시트를 되살리지 않아야 한다.
+    await page.waitForTimeout(2_500);
+    expect(
+      await lockerParam(page),
+      "늦게 온 상세 응답이 닫은 시트를 되살렸다",
+    ).toBeNull();
+  });
+
+  test("새로고침한 상세를 닫아도 쌓아 둔 칸을 되감는다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+    // 쌓은 칸이 자리를 잡기 전에 다시 띄우면 표시가 실리지 않는다.
+    await page.waitForTimeout(1_500);
+
+    // 상세 URL 에서 새로고침한다. 소유권을 컴포넌트가 들고 있으면 여기서 잊고,
+    // 닫을 때 그 칸을 되감는 대신 현재 항목을 홈으로 덮는다. 그러면 같은 홈이
+    // 하나 더 남아, 뒤로가기가 화면 변화 없이 그것을 먹는다.
+    await page.reload();
+    await waitForMapReady(page);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    expect(
+      await page.evaluate(() =>
+        Boolean(
+          (window.history.state as { zimdugoDetailLayer?: boolean } | null)
+            ?.zimdugoDetailLayer,
+        ),
+      ),
+      "새로고침을 넘기지 못하고 표시가 사라졌다",
+    ).toBe(true);
+
+    await pressCloseButton(page);
+    await expect.poll(() => lockerParam(page)).toBeNull();
+
+    // 되감지 않고 덮었다면 같은 홈이 하나 더 남아, 첫 뒤로가기가 화면 변화 없이
+    // 그 중복을 먹는다. 제대로 되감았다면 한 번에 앱을 벗어난다.
+    //
+    // 닫기가 부른 되감기가 아직 진행 중이면 곧이어 누른 뒤로가기가 묻힌다.
+    await page.waitForTimeout(2_500);
+    await page.evaluate(() => window.history.back());
+
+    await expect.poll(() => page.url()).not.toContain("localhost");
+  });
+
+  test("딥링크로 연 상세를 닫아도 뒤로가기가 그 딥링크를 다시 열지 않는다", async ({
+    page,
+  }) => {
+    await page.goto(`/?openLockerId=${LOCKER_ID}`);
+    await waitForMapReady(page);
+    // 딥링크 파라미터는 곧 locker 로 정규화된다.
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    await pressCloseButton(page);
+    await expect.poll(() => lockerParam(page)).toBeNull();
+
+    // 딥링크로 들어온 화면은 상세가 곧 첫 화면이라 되감을 자리가 없다. 칸을
+    // 쌓아 두면 닫을 때 그 URL 로 돌아가 상세가 되살아난다.
+    await page.waitForTimeout(2_500);
+    await page.evaluate(() => window.history.back());
+
+    await expect.poll(() => page.url()).not.toContain("localhost");
   });
 
   test("상세를 연 채 다른 핀을 눌러도 히스토리가 늘지 않는다", async ({
