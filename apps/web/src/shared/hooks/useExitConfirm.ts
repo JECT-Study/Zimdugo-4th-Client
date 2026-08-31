@@ -53,6 +53,17 @@ export const useExitConfirm = (enabled: boolean) => {
     });
   }, [enabled, router]);
 
+  // 시트가 열려 종료 확인이 꺼지면 되묻던 상태도 흘려보낸다. 남겨 두면 시트를
+  // 여닫는 사이에 시간만 지나, 다시 홈으로 돌아온 첫 뒤로가기가 "두 번째 누름"
+  // 으로 처리돼 확인 없이 앱을 벗어난다.
+  useEffect(() => {
+    if (enabled) return;
+
+    promptedAtRef.current = 0;
+    shouldLeaveAfterPopRef.current = false;
+    setIsPrompting(false);
+  }, [enabled]);
+
   useEffect(() => {
     if (!enabled) return;
 

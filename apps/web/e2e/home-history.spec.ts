@@ -270,6 +270,33 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       .not.toContain("localhost");
   });
 
+  test("되묻는 사이에 시트를 여닫아도 확인 없이 나가지 않는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    // 되묻기가 뜬 직후 시트를 여닫으면 종료 확인이 잠시 꺼진다. 그때 흘러간
+    // 시간을 "두 번째 누름"으로 세면, 돌아와서 누른 첫 뒤로가기가 확인 없이
+    // 앱을 벗어난다.
+    await page.evaluate(() => window.history.back());
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    await page.evaluate(() => window.history.back());
+    await expect.poll(() => lockerParam(page)).toBeNull();
+
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(page.url(), "되묻지 않고 그대로 나갔다").toContain("localhost");
+  });
+
   test("다른 마커로 상세를 옮겨도 히스토리가 늘지 않는다", async ({ page }) => {
     await page.goto("/");
     await waitForMapReady(page);

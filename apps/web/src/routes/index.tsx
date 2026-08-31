@@ -1631,8 +1631,12 @@ export function IndexPage() {
       focusedDeepLinkLockerIdRef.current = undefined;
       // 기기 뒤로가기로 직접 닫혔을 수도 있다. 그때도 칸은 이미 회수됐다.
       detailLayerPushedRef.current = false;
+      // 핀을 누르면 모션이 끝난 뒤 시트를 연다. 그 사이에 뒤로가기로 URL 이
+      // 내려갔다면 예약도 접는다. 그대로 두면 URL 없는 시트가 열려, 다음
+      // 뒤로가기가 그 시트를 닫지 못하고 종료 확인으로 넘어간다.
+      clearPendingLockerDetailOpen();
     }
-  }, [lockerIdFromQuery]);
+  }, [clearPendingLockerDetailOpen, lockerIdFromQuery]);
 
   const clearLockerDetailUrl = useCallback(() => {
     // 열 때 쌓은 칸이 있으면 그 칸을 되감는다. 화면 안의 닫기 버튼과 기기
