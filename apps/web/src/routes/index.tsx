@@ -3175,13 +3175,19 @@ export function IndexPage() {
     if (fittedSearchBoundsRef.current === fitSignature) {
       return;
     }
-    fittedSearchBoundsRef.current = fitSignature;
-
-    fitNaverMapToBounds({
+    // 검색 결과가 SDK 보다 먼저 오면 지도가 아직 없어 범위를 못 맞춘다. 그때도
+    // 기록해 버리면 지도가 준비돼 다시 돌 때 같은 시그니처로 걸러져, ?q= 로 연
+    // 화면이 결과 범위에 영영 맞지 않는다.
+    const didFitBounds = fitNaverMapToBounds({
       map: mapInstance,
       bounds,
       bottomPadding,
     });
+    if (!didFitBounds) {
+      return;
+    }
+
+    fittedSearchBoundsRef.current = fitSignature;
   }, [
     keywordSearchResults?.bounds,
     mapInstance,

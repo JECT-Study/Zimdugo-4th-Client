@@ -401,7 +401,9 @@ export function HomeHeader({
           type="button"
           className={styles.colorSchemeButton}
           style={fallbackStyle(circleActionFallbackStyle)}
-          aria-pressed={mapColorScheme === "dark"}
+          // 이름이 다음에 넘어갈 색을 가리키므로 aria-pressed 를 함께 두지
+          // 않는다. "라이트 모드로 전환, 눌림" 은 라이트가 켜져 있다는 뜻으로
+          // 들려 지금 색을 정반대로 알린다.
           aria-label={
             mapColorScheme === "dark"
               ? m.home_map_light_mode_aria()
