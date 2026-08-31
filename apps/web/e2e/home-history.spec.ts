@@ -150,6 +150,15 @@ const pressCloseButton = async (page: Page) => {
 
 const historyLength = (page: Page) => page.evaluate(() => history.length);
 
+/** 마커들의 화면 자리. 카메라가 움직이면 함께 움직인다. */
+const markerPositions = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll(".map-marker-offset-wrapper")].map((marker) => {
+      const box = marker.getBoundingClientRect();
+      return `${Math.round(box.x)},${Math.round(box.y)}`;
+    }),
+  );
+
 const lockerParam = (page: Page) =>
   page.evaluate(() => new URLSearchParams(location.search).get("locker"));
 
@@ -183,7 +192,9 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     ).toBe(baseline);
   });
 
-  test("다른 마커로 상세를 옮겨도 히스토리가 늘지 않는다", async ({ page }) => {
+  test("상세를 연 채 다른 핀을 눌러도 히스토리가 늘지 않는다", async ({
+    page,
+  }) => {
     await page.goto("/");
     await waitForMapReady(page);
     await expect
@@ -194,12 +205,24 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     await expect.poll(() => lockerParam(page)).not.toBeNull();
 
     const baseline = await historyLength(page);
+    const before = await markerPositions(page);
 
     for (let round = 0; round < 3; round += 1) {
       await pressMarker(page, (round + 1) % 2);
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(700);
     }
 
-    expect(await historyLength(page)).toBe(baseline);
+    // 탭이 가로막혀 아무 일도 없었다면 히스토리는 어차피 그대로라, 눌린 것을
+    // 확인하지 않으면 이 테스트는 늘 통과한다. 핀을 고르면 카메라가 그 핀으로
+    // 옮겨가므로 마커 자리가 달라진다.
+    expect(
+      await markerPositions(page),
+      "핀이 눌리지 않아 아무 일도 일어나지 않았다",
+    ).not.toEqual(before);
+
+    expect(
+      await historyLength(page),
+      "핀을 고를 때마다 쌓이면 뒤로가기를 그만큼 더 눌러야 한다",
+    ).toBe(baseline);
   });
 });
