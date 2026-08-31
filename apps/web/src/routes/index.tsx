@@ -3046,7 +3046,12 @@ export function IndexPage() {
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title);
+    //
+    // 다만 상세가 URL 에서 이미 내려갔으면 손대지 않는다. 기기 뒤로가기로 시트를
+    // 닫은 직후에 응답이 도착하면, 여기서 다시 붙여 닫은 시트가 되살아난다.
+    if (lockerIdFromQuery !== undefined) {
+      syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title);
+    }
 
     if (
       isPendingFocusRef.current &&
@@ -3067,6 +3072,7 @@ export function IndexPage() {
     }
   }, [
     lockerDetail,
+    lockerIdFromQuery,
     mapInstance,
     syncLockerDetailUrl,
     sheetMode,

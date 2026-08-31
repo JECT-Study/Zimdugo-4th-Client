@@ -198,6 +198,13 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
   });
 
   test("기기 뒤로가기가 상세 시트를 닫고 홈에 머무른다", async ({ page }) => {
+    // 상세 응답을 늦춘다. 응답이 늦게 오면 시트가 닫힌 뒤에 제목 슬러그 정규화가
+    // 돌아 URL 을 되살릴 수 있다. 빠른 스텁으로는 그 틈이 드러나지 않는다.
+    await page.route("**/lockers/*", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
+      await route.fallback();
+    });
+
     await page.goto("/");
     await waitForMapReady(page);
     await expect
@@ -211,6 +218,13 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
 
     await expect.poll(() => lockerParam(page)).toBeNull();
     expect(page.url(), "뒤로가기 한 번에 앱을 벗어났다").toContain("localhost");
+
+    // 늦게 도착한 상세 응답이 닫힌 시트를 되살리지 않아야 한다.
+    await page.waitForTimeout(2_500);
+    expect(
+      await lockerParam(page),
+      "늦게 온 상세 응답이 닫은 시트를 되살렸다",
+    ).toBeNull();
   });
 
   test("홈 첫 화면에서는 뒤로가기를 한 번 되묻는다", async ({ page }) => {
