@@ -2,7 +2,7 @@ import { useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 /** 두 번째 누름을 "종료 의사"로 받아 주는 시간. 토스트가 떠 있는 동안이다. */
-export const EXIT_CONFIRM_WINDOW_MS = 2_000;
+const EXIT_CONFIRM_WINDOW_MS = 2_000;
 
 /**
  * 홈 첫 화면에서 뒤로가기를 한 번은 잡아 두고 토스트를 띄운다.
