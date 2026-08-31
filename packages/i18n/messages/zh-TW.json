@@ -423,5 +423,6 @@
   "seo_locker_detail_price_text": "最低費用 {price} 韓元",
   "seo_locker_detail_price_unknown": "可查詢費用資訊",
   "seo_global_title": "Zimdugo | 韓國行李寄存與寄物櫃地圖",
-  "seo_global_description": "Zimdugo 是一款幫助您輕鬆查找韓國全境行李寄物櫃位置、收費標準和營業時間的地圖服務。定位地鐵站、商場和旅遊景點的寄存處，或直接回報新的寄物處。"
+  "seo_global_description": "Zimdugo 是一款幫助您輕鬆查找韓國全境行李寄物櫃位置、收費標準和營業時間的地圖服務。定位地鐵站、商場和旅遊景點的寄存處，或直接回報新的寄物處。",
+  "home_exit_confirm": "再按一次返回鍵離開"
 }

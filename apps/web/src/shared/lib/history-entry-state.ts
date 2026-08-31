@@ -11,6 +11,7 @@
  */
 
 const DETAIL_LAYER_KEY = "zimdugoDetailLayer";
+const EXIT_SENTINEL_KEY = "zimdugoExitSentinel";
 
 const hasFlag = (state: unknown, key: string) =>
   typeof state === "object" &&
@@ -38,4 +39,13 @@ export const withoutDetailLayerFlag = (
   };
   delete (next as Record<string, unknown>)[DETAIL_LAYER_KEY];
   return next;
+};
+
+/** 종료를 가로채려고 만든 자리인지. */
+export const isExitSentinelEntry = (state: unknown) =>
+  hasFlag(state, EXIT_SENTINEL_KEY);
+
+/** 종료 확인용 자리에 얹을 표시. */
+export const EXIT_SENTINEL_STATE: Record<string, unknown> = {
+  [EXIT_SENTINEL_KEY]: true,
 };

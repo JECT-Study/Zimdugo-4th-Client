@@ -148,6 +148,9 @@ const pressCloseButton = async (page: Page) => {
   expect(pressed, "닫기 버튼을 찾지 못했다").toBe(true);
 };
 
+/** 종료를 되묻는 토스트 문구. */
+const EXIT_CONFIRM_TEXT = "한 번 더 누르면 앱을 나갑니다";
+
 const historyLength = (page: Page) => page.evaluate(() => history.length);
 
 /** 마커들의 화면 자리. 카메라가 움직이면 함께 움직인다. */
@@ -282,13 +285,13 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     await expect.poll(() => lockerParam(page)).toBeNull();
 
     // 되감지 않고 덮었다면 같은 홈이 하나 더 남아, 첫 뒤로가기가 화면 변화 없이
-    // 그 중복을 먹는다. 제대로 되감았다면 한 번에 앱을 벗어난다.
+    // 그 중복을 먹고 되묻지도 못한다.
     //
     // 닫기가 부른 되감기가 아직 진행 중이면 곧이어 누른 뒤로가기가 묻힌다.
     await page.waitForTimeout(2_500);
     await page.evaluate(() => window.history.back());
 
-    await expect.poll(() => page.url()).not.toContain("localhost");
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
   });
 
   test("딥링크로 연 상세를 닫아도 뒤로가기가 그 딥링크를 다시 열지 않는다", async ({
@@ -302,12 +305,83 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     await pressCloseButton(page);
     await expect.poll(() => lockerParam(page)).toBeNull();
 
-    // 딥링크로 들어온 화면은 상세가 곧 첫 화면이라 되감을 자리가 없다. 칸을
-    // 쌓아 두면 닫을 때 그 URL 로 돌아가 상세가 되살아난다.
+    // 상세가 떠 있는 동안 종료 확인용 자리를 만들면 그 자리가 딥링크 항목 위에
+    // 얹혀, 뒤로가기가 딥링크를 다시 연다.
     await page.waitForTimeout(2_500);
     await page.evaluate(() => window.history.back());
 
-    await expect.poll(() => page.url()).not.toContain("localhost");
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(await lockerParam(page), "닫은 딥링크가 다시 열렸다").toBeNull();
+  });
+
+  test("홈 첫 화면에서는 뒤로가기를 한 번 되묻는다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(page.url(), "되묻지 않고 그대로 나갔다").toContain("localhost");
+
+    await page.evaluate(() => window.history.back());
+
+    await expect
+      .poll(() => page.url(), { timeout: 10_000 })
+      .not.toContain("localhost");
+  });
+
+  test("기기 뒤로가기로 닫았다 다시 열어도 종료 확인이 살아 있다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    // 두 번째 여닫이가 첫 번째와 같은 칸을 써야 한다. 첫 닫힘이 남긴 흔적을 보고
+    // 두 번째를 "같은 레이어" 로 오해하면, 그때 종료 확인용 자리를 대신 소비해
+    // 다음 뒤로가기가 토스트 없이 앱을 벗어난다.
+    for (let round = 0; round < 2; round += 1) {
+      await pressMarker(page, 0);
+      await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+      await page.evaluate(() => window.history.back());
+      await expect.poll(() => lockerParam(page)).toBeNull();
+      await page.waitForTimeout(1_000);
+    }
+
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(page.url(), "되묻지 않고 그대로 나갔다").toContain("localhost");
+  });
+
+  test("되묻는 사이에 시트를 여닫아도 확인 없이 나가지 않는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    // 되묻기가 뜬 직후 시트를 여닫으면 종료 확인이 잠시 꺼진다. 그때 흘러간
+    // 시간을 "두 번째 누름" 으로 세면, 돌아와서 누른 첫 뒤로가기가 확인 없이
+    // 앱을 벗어난다.
+    await page.evaluate(() => window.history.back());
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerParam(page)).not.toBeNull();
+
+    await page.evaluate(() => window.history.back());
+    await expect.poll(() => lockerParam(page)).toBeNull();
+
+    await page.evaluate(() => window.history.back());
+
+    await expect(page.getByText(EXIT_CONFIRM_TEXT)).toBeVisible();
+    expect(page.url(), "되묻지 않고 그대로 나갔다").toContain("localhost");
   });
 
   test("상세를 연 채 다른 핀을 눌러도 히스토리가 늘지 않는다", async ({
