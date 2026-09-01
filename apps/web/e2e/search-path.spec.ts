@@ -14,12 +14,18 @@ import { expect, type Page, test } from "@playwright/test";
 const LOCKER_ID = 500;
 const KEYWORD = "강남역";
 
+/**
+ * 자동완성과 결과 목록이 서로 다른 이름을 낸다.
+ *
+ * 같은 이름을 쓰면 "자동완성이 떴다" 와 "결과 목록이 떴다" 를 텍스트로 가를 수 없어,
+ * 한쪽이 고장 나도 다른 쪽 단언이 통과한다.
+ */
 const suggestItemRaw = {
   type: "LOCKER",
   placeId: 900,
   placeName: "강남역",
   lockerId: LOCKER_ID,
-  lockerName: "강남역 4번 출구 보관함",
+  lockerName: "자동완성 강남역 보관함",
   roadAddress: "서울 강남구 강남대로 지하 396",
   lockerType: "SUBWAY",
   distanceMeters: 120,
@@ -31,7 +37,7 @@ const searchItemRaw = {
   placeId: 900,
   placeName: "강남역",
   lockerId: LOCKER_ID,
-  lockerName: "강남역 4번 출구 보관함",
+  lockerName: "결과 목록 강남역 보관함",
   roadAddress: "서울 강남구 강남대로 지하 396",
   lockerType: "SUBWAY",
   minPrice: 2000,
@@ -52,7 +58,7 @@ const boundsRaw = {
 
 const lockerDetailRaw = {
   lockerId: LOCKER_ID,
-  lockerName: "강남역 4번 출구 보관함",
+  lockerName: "상세 강남역 보관함",
   roadAddress: "서울 강남구 강남대로 지하 396",
   latitude: 37.4979,
   longitude: 127.0276,
@@ -187,6 +193,13 @@ test.describe("검색 경로", () => {
     await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
   });
 
+  /**
+   * 주소만 보면 모자란다.
+   *
+   * openLockerDetailById 는 locker 파라미터를 먼저 붙이고 상세 상태는 다음
+   * 이벤트 루프에서 세운다. 그래서 시트가 뜨지 않거나 상세 데이터가 안 와도
+   * 파라미터 단언은 통과한다. 상세에만 있는 값까지 봐야 길이 이어진 것이다.
+   */
   test("결과 항목을 누르면 상세가 열린다", async ({ page }) => {
     await page.goto("/");
     await waitForMapReady(page);
@@ -196,6 +209,12 @@ test.describe("검색 경로", () => {
     await page.getByText(searchItemRaw.lockerName).first().click();
 
     await expect.poll(() => queryParam(page, "locker")).not.toBeNull();
+
+    // 상세 시트가 실제로 떴는지. 길찾기는 상세에만 있는 동작이다.
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+
+    // 상세 API 의 값이 화면까지 닿았는지. 목록에는 없는 필드다.
+    await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
   });
 
   /**
