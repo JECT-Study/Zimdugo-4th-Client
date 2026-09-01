@@ -46,6 +46,7 @@ import {
 import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
+import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import {
   resolveSheetFullSnapPoint,
   resolveSheetTopLimitPx,
@@ -370,7 +371,7 @@ export function LockerDetailBottomSheet({
   shouldOpenTimer = false,
   onTimerAutoOpenHandled,
 }: LockerDetailBottomSheetProps) {
-  const [windowHeight, setWindowHeight] = useState(812);
+  const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
@@ -798,13 +799,6 @@ export function LockerDetailBottomSheet({
     },
     [onLiveOffsetChange, sheetOffsetValue],
   );
-
-  useEffect(() => {
-    const handleResize = () => setWindowHeight(window.innerHeight);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   /*
    * 보관함이 바뀌면 고르던 시간과 열려 있던 모달을 지운다.

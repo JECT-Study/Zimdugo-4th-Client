@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { LockerImageReportFrame } from "#/entities/locker/ui/image-report-frame";
 import type { MyLockerReportDetail } from "#/shared/api/my-page";
+import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import { DraggableBottomSheet } from "#/shared/ui/DraggableBottomSheet";
 import { OriginalImagePreview } from "#/shared/ui/OriginalImagePreview";
 import { OverflowMarqueeText } from "#/shared/ui/OverflowMarqueeText";
@@ -68,7 +69,18 @@ export function ReportDetailViewerModal({
   loadState,
   className,
 }: ReportDetailViewerModalProps) {
-  const [collapsedSnap, setCollapsedSnap] = useState(760);
+  const viewportHeight = useViewportHeight();
+  /**
+   * 시트가 사실상 닫힌 자리. 뷰포트 바닥에서 살짝 띄운다.
+   *
+   * 예전에는 창을 직접 읽어 effect 로 채웠다. 첫 렌더 값(760)이 실제와 달라
+   * 브라우저가 그 자리로 한 번 그린 뒤 옮겨졌다. 훅은 그리기 전에 재므로
+   * 그 프레임이 없다.
+   */
+  const collapsedSnap = Math.max(
+    DEFAULT_SNAP_POINT,
+    viewportHeight - COLLAPSED_BOTTOM_GAP,
+  );
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const imagePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -98,17 +110,6 @@ export function ReportDetailViewerModal({
     setPreviewImageUrl(null);
     imagePreviewTriggerRef.current?.focus();
     imagePreviewTriggerRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    const updateCollapsedSnap = () => {
-      setCollapsedSnap(
-        Math.max(DEFAULT_SNAP_POINT, window.innerHeight - COLLAPSED_BOTTOM_GAP),
-      );
-    };
-    updateCollapsedSnap();
-    window.addEventListener("resize", updateCollapsedSnap);
-    return () => window.removeEventListener("resize", updateCollapsedSnap);
   }, []);
 
   useEffect(() => {

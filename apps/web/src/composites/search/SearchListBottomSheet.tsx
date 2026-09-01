@@ -18,6 +18,7 @@ import { inSheetHeader } from "#/features/search/ui/search-results-heading/Searc
 import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
+import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import {
   type EnglishSubPolicy,
   resolveEnglishSubVisibility,
@@ -370,7 +371,7 @@ export function SearchListBottomSheet({
   onDismiss,
   children,
 }: SearchListBottomSheetProps) {
-  const [windowHeight, setWindowHeight] = useState(812);
+  const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
   const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
@@ -653,13 +654,6 @@ export function SearchListBottomSheet({
 
     return () => observer.disconnect();
   }, [visibleItems, hasResult]);
-
-  useEffect(() => {
-    const handleResize = () => setWindowHeight(window.innerHeight);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   return (
     <DraggableBottomSheet

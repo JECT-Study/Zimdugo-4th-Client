@@ -7,6 +7,7 @@ import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
 import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
+import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import {
   resolveSheetFullSnapPoint,
   resolveSheetTopLimitPx,
@@ -158,7 +159,7 @@ export function SearchFilterBottomSheet({
   onSnapChange,
 }: SearchFilterBottomSheetProps) {
   const restoredFilters = initialFilters ?? createDefaultSearchFilters();
-  const [windowHeight, setWindowHeight] = useState(812);
+  const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
   const [contentHeight, setContentHeight] = useState<number | undefined>();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -202,13 +203,6 @@ export function SearchFilterBottomSheet({
   const [selectedSizes, setSelectedSizes] = useState<SizeCardType[]>(
     restoredFilters.selectedSizes,
   );
-
-  useEffect(() => {
-    const handleResize = () => setWindowHeight(window.innerHeight);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   useIsomorphicLayoutEffect(() => {
     const updateContentHeight = () => {
