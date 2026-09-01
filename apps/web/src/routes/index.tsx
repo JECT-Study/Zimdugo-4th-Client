@@ -2762,12 +2762,17 @@ export function IndexPage() {
         setSearchPlaceId(id);
         void navigate({
           to: ".",
-          search: (prev: SearchUrlParams) => withSearchPlaceIdParam(prev, id),
+          // 상세에서 장소 목록으로 갈아탄다. 상세 파라미터를 함께 걷어내지
+          // 않으면 주소는 상세인데 화면은 목록이 되어, 새로고침에 닫았던
+          // 상세가 되살아난다.
+          search: (prev: SearchUrlParams) =>
+            withSearchPlaceIdParam(withoutLockerDetailParams(prev), id),
           // 목록으로 돌아가는 길은 handleBackToKeywordList 가 맡는다.
           // 여기서 push 하면 핀을 고를 때마다 히스토리만 쌓인다.
           replace: true,
-          // 같은 칸을 갱신하는 이동이라 항목에 남긴 표시를 지킨다.
-          state: true,
+          // 이 칸은 더 이상 상세가 아니다. 표시를 남겨 두면 나중에 엉뚱한
+          // 되감기의 대상이 된다.
+          state: withoutDetailLayerFlag,
         });
         setActiveLockerId(null);
         setSearchDetailBack(null);
