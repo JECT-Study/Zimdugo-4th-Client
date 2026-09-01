@@ -5,11 +5,17 @@
  * 브라우저에서 gl 을 켜면 예외가 나지 않는다. 지도 객체는 만들어지고 idle 도
  * 떨어지는데 화면만 비어서, 에러로 잡을 곳이 없다. 그래서 지도를 만들기 전에
  * 여기서 걸러 래스터 지도로 떨어뜨린다(`naver-map-style.ts`).
+ *
+ * 판별을 통과하고도 깨지는 경우가 남는다. 소프트웨어 렌더러로 떨어졌거나,
+ * 지도가 뜬 뒤 GPU 프로세스가 죽는 경우다. 그때는 캔버스가 `webglcontextlost`
+ * 를 던지므로 `disableWebglSupport()` 로 판별 결과를 뒤집고, 구독자가 지도를
+ * 래스터로 다시 만든다(`useWebglSupport.ts`).
  */
 
 const WEBGL_CONTEXT_IDS = ["webgl2", "webgl"] as const;
 
 let cachedSupport: boolean | undefined;
+const listeners = new Set<() => void>();
 
 const createProbeContext = (canvas: HTMLCanvasElement) => {
   for (const contextId of WEBGL_CONTEXT_IDS) {
@@ -52,4 +58,25 @@ export const detectWebglSupport = () => {
   }
 
   return cachedSupport;
+};
+
+/**
+ * WebGL 을 더는 쓸 수 없다고 표시한다. 되돌리지 않는다 — 한 번 잃은 컨텍스트가
+ * 이 세션에서 다시 살아난다는 보장이 없고, 오갈수록 지도만 다시 만들어진다.
+ */
+export const disableWebglSupport = () => {
+  if (cachedSupport === false) return;
+
+  cachedSupport = false;
+  for (const listener of listeners) {
+    listener();
+  }
+};
+
+export const subscribeWebglSupport = (listener: () => void) => {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
 };

@@ -11,6 +11,7 @@ import {
   DEFAULT_MAP_ZOOM,
 } from "../model/map-viewport-bootstrap";
 import { useNaverMapSdk } from "../model/NaverMapProvider";
+import { disableWebglSupport } from "../model/webgl-support";
 import { MapError } from "./MapError";
 import { MapSkeleton } from "./map-skeleton/MapSkeleton";
 import { canvas, root } from "./NaverMapCanvas.css";
@@ -24,6 +25,21 @@ const MAP_AUTH_ERROR_SIGNATURES = [
 ];
 
 const MAP_BOOTSTRAP_TIMEOUT_MS = 3_000;
+
+/**
+ * 컨텍스트를 잃은 GL 지도는 SDK 안에서 destroy 도중 예외를 던진다. 래스터로
+ * 다시 만들려고 부수는 참이라, 그대로 흘리면 에러 경계가 화면 전체를 대신
+ * 그린다. 부수는 데 실패해도 새 지도는 만들 수 있으므로 참조만 놓아 준다.
+ */
+const destroyMapSafely = (map: naver.maps.Map, container: HTMLElement) => {
+  try {
+    map.destroy();
+  } catch {
+    // 부수다 만 지도의 DOM 이 컨테이너에 남는다. 그대로 두면 다음 지도가 그
+    // 위에 겹쳐 네이버 로고와 축척이 두 벌로 보인다.
+    container.replaceChildren();
+  }
+};
 
 const getMapErrorMessage = (message?: string) => {
   if (!message) return m.map_error_default_message();
@@ -104,6 +120,34 @@ export function NaverMapCanvas({
     reload();
   };
 
+  // 컨텍스트를 잃으면 GL 지도는 아무것도 그리지 않는다. 예외가 나지 않아
+  // 지도는 ready 인 채로 화면만 비므로, 여기서 잡아 래스터로 되돌린다.
+  //
+  // 캔버스는 SDK 가 만들고 지도를 다시 만들 때마다 갈아끼운다. 이 이벤트는
+  // 버블링하지 않아 부모까지 올라오지 않으므로, 컨테이너에서 캡처 단계로 받는다.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWebglContextLost = () => {
+      disableWebglSupport();
+    };
+
+    container.addEventListener(
+      "webglcontextlost",
+      handleWebglContextLost,
+      true,
+    );
+
+    return () => {
+      container.removeEventListener(
+        "webglcontextlost",
+        handleWebglContextLost,
+        true,
+      );
+    };
+  }, []);
+
   useEffect(() => {
     if (!isReady || !maps || !containerRef.current) return;
 
@@ -148,7 +192,7 @@ export function NaverMapCanvas({
         });
 
         if (cancelled) {
-          map.destroy();
+          destroyMapSafely(map, container);
           return;
         }
 
@@ -232,7 +276,7 @@ export function NaverMapCanvas({
           zoom: mapRef.current.getZoom(),
         };
         onWillDestroyRef.current?.(mapRef.current);
-        mapRef.current.destroy();
+        destroyMapSafely(mapRef.current, container);
         mapRef.current = null;
         onLoadRef.current?.(null);
       }

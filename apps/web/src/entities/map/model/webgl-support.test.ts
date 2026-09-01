@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // 판별 결과를 모듈에 캐시하므로 검증마다 모듈을 새로 불러온다.
-const importDetectWebglSupport = async () => {
+const importWebglSupport = async () => {
   vi.resetModules();
-  const { detectWebglSupport } = await import("./webgl-support");
-  return detectWebglSupport;
+  return await import("./webgl-support");
 };
+
+const importDetectWebglSupport = async () =>
+  (await importWebglSupport()).detectWebglSupport;
 
 const stubGetContext = (getContext: (contextId: string) => unknown) =>
   vi
@@ -74,5 +76,68 @@ describe("detectWebglSupport", () => {
     detectWebglSupport();
 
     expect(getContext).toHaveBeenCalledOnce();
+  });
+});
+
+describe("disableWebglSupport", () => {
+  it("판별을 통과했더라도 못 쓴다고 뒤집는다", async () => {
+    stubGetContext(() => createContext());
+    const { detectWebglSupport, disableWebglSupport } =
+      await importWebglSupport();
+    expect(detectWebglSupport()).toBe(true);
+
+    disableWebglSupport();
+
+    expect(detectWebglSupport()).toBe(false);
+  });
+
+  it("뒤집힌 것을 구독자에게 알린다", async () => {
+    stubGetContext(() => createContext());
+    const { disableWebglSupport, subscribeWebglSupport } =
+      await importWebglSupport();
+    const listener = vi.fn();
+    subscribeWebglSupport(listener);
+
+    disableWebglSupport();
+
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it("이미 못 쓰는 상태면 다시 알리지 않는다", async () => {
+    stubGetContext(() => null);
+    const { detectWebglSupport, disableWebglSupport, subscribeWebglSupport } =
+      await importWebglSupport();
+    expect(detectWebglSupport()).toBe(false);
+    const listener = vi.fn();
+    subscribeWebglSupport(listener);
+
+    disableWebglSupport();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("한 번 알린 뒤로는 다시 알리지 않는다", async () => {
+    stubGetContext(() => createContext());
+    const { disableWebglSupport, subscribeWebglSupport } =
+      await importWebglSupport();
+    const listener = vi.fn();
+    subscribeWebglSupport(listener);
+
+    disableWebglSupport();
+    disableWebglSupport();
+
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it("구독을 끊으면 더 알리지 않는다", async () => {
+    stubGetContext(() => createContext());
+    const { disableWebglSupport, subscribeWebglSupport } =
+      await importWebglSupport();
+    const listener = vi.fn();
+    subscribeWebglSupport(listener)();
+
+    disableWebglSupport();
+
+    expect(listener).not.toHaveBeenCalled();
   });
 });
