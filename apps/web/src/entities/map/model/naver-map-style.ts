@@ -6,10 +6,16 @@
  * gl: true 와 customStyleId 를 함께 넘겨야 한다. 둘 중 하나만 하면 네이버
  * 기본 스타일로 떨어진다.
  *
+ * GL 은 WebGL 위에서만 돈다. WebGL 을 못 쓰는 환경에서는 스타일을 포기하고
+ * 래스터 기본 지도로 떨어진다(`webgl-support.ts`). 지도가 아예 안 뜨는 것보다
+ * 색이 기본값인 편이 낫다.
+ *
  * 라이트/다크는 스타일 에디터에서 각각 만들어 ID 를 따로 발급받는다.
  * 앱 전체 다크 모드는 아직 없어서 지금은 라이트만 실제로 쓰이고, 다크 ID 를
  * 채우고 colorScheme 을 넘기면 그대로 이어지도록만 열어 둔다.
  */
+
+import { detectWebglSupport } from "./webgl-support";
 
 const MAP_COLOR_SCHEMES = {
   Light: "light",
@@ -73,8 +79,12 @@ export const withNaverMapStyleSubmodules = (
   submodules: readonly string[],
   styleIds: NaverMapCustomStyleIds = NAVER_MAP_CUSTOM_STYLE_IDS,
   forceVectorMap = FORCE_VECTOR_MAP,
+  isWebglAvailable = detectWebglSupport(),
 ) => {
   if (
+    // WebGL 이 없으면 강제 벡터 스위치보다 이쪽이 먼저다. 실어 봐야 그릴 수
+    // 없고, 스크립트만 무겁게 만든다.
+    !isWebglAvailable ||
     (!forceVectorMap && !hasNaverMapCustomStyle(styleIds)) ||
     submodules.includes(NAVER_MAP_GL_SUBMODULE)
   ) {
@@ -87,14 +97,19 @@ export const withNaverMapStyleSubmodules = (
 /**
  * 지도를 만들 때 펼쳐 넣을 MapOptions 조각.
  *
- * 스타일 ID 가 없으면 빈 객체를 준다. gl 만 켜면 기본 지도까지 벡터로 바뀌어
- * 스타일과 무관하게 렌더링이 달라지므로 켜지 않는다.
+ * 스타일 ID 가 없거나 WebGL 을 못 쓰면 빈 객체를 준다. gl 만 켜면 기본 지도까지
+ * 벡터로 바뀌어 스타일과 무관하게 렌더링이 달라지므로 켜지 않는다.
  */
 export const getNaverMapStyleOptions = (
   colorScheme: MapColorScheme = DEFAULT_MAP_COLOR_SCHEME,
   styleIds: NaverMapCustomStyleIds = NAVER_MAP_CUSTOM_STYLE_IDS,
   forceVectorMap = FORCE_VECTOR_MAP,
+  isWebglAvailable = detectWebglSupport(),
 ): NaverMapStyleOptions => {
+  // WebGL 이 없으면 스타일도 배경색도 그릴 수단이 없다. background 만 남겨도
+  // 래스터 타일이 그 위를 덮어 의미가 없다.
+  if (!isWebglAvailable) return {};
+
   const customStyleId = getNaverMapCustomStyleId(colorScheme, styleIds);
   const background = MAP_BACKGROUND_COLORS[colorScheme];
 
