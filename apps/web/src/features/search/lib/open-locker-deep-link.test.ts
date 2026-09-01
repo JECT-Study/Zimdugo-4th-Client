@@ -8,7 +8,7 @@ import {
 } from "./open-locker-deep-link";
 
 describe("createLockerDeepLinkSlug", () => {
-  it("creates a shareable locker slug from id and title", () => {
+  it("id 와 제목으로 공유용 보관함 슬러그를 만든다", () => {
     expect(
       createLockerDeepLinkSlug({
         lockerId: 515,
@@ -17,14 +17,14 @@ describe("createLockerDeepLinkSlug", () => {
     ).toBe("515-강남역-4번-출구-B1층-ES-34-하단");
   });
 
-  it("uses only the locker id when title is missing or empty after cleanup", () => {
+  it("제목이 없거나 정리 후 비면 보관함 id 만 쓴다", () => {
     expect(createLockerDeepLinkSlug({ lockerId: 7 })).toBe("7");
     expect(createLockerDeepLinkSlug({ lockerId: 7, title: "!!!" })).toBe("7");
   });
 });
 
 describe("createLockerDeepLinkUrl", () => {
-  it("creates a clean locker share URL without search context params", () => {
+  it("검색 컨텍스트 파라미터 없는 공유 주소를 만든다", () => {
     expect(
       createLockerDeepLinkUrl({
         origin: "https://zimdugo-web.vercel.app",
@@ -34,7 +34,7 @@ describe("createLockerDeepLinkUrl", () => {
     ).toBe("https://zimdugo-web.vercel.app/?locker=515-Gangnam-Station-Locker");
   });
 
-  it("creates a locale-prefixed locker URL when a locale is provided", () => {
+  it("로케일이 오면 접두사를 붙인 보관함 주소를 만든다", () => {
     expect(
       createLockerDeepLinkUrl({
         origin: "https://zimdugo.com",
@@ -45,7 +45,7 @@ describe("createLockerDeepLinkUrl", () => {
     ).toBe("https://zimdugo.com/en?locker=515-Gangnam-Station-Locker");
   });
 
-  it("percent-encodes Korean locker names while keeping the decoded slug readable", () => {
+  it("한글 이름을 인코딩하되 풀었을 때 읽히게 남긴다", () => {
     const shareUrl = createLockerDeepLinkUrl({
       origin: "https://zimdugo-web.vercel.app",
       lockerId: 515,
@@ -61,7 +61,7 @@ describe("createLockerDeepLinkUrl", () => {
 });
 
 describe("createLockerCanonicalUrl", () => {
-  it("creates an absolute canonical locker URL without search context params", () => {
+  it("검색 컨텍스트 없는 절대 canonical 주소를 만든다", () => {
     expect(
       createLockerCanonicalUrl({
         lockerId: 515,
@@ -73,7 +73,7 @@ describe("createLockerCanonicalUrl", () => {
     );
   });
 
-  it("creates a locale-prefixed canonical locker URL when a locale is provided", () => {
+  it("로케일이 오면 접두사를 붙인 canonical 주소를 만든다", () => {
     expect(
       createLockerCanonicalUrl({
         lockerId: 515,
@@ -85,7 +85,7 @@ describe("createLockerCanonicalUrl", () => {
 });
 
 describe("createLockerShareText", () => {
-  it("creates a localized share template with emphasized title, address, readable URL, comment order", () => {
+  it("제목·주소·읽히는 주소·안내문 순서로 로케일별 공유 문구를 만든다", () => {
     expect(
       createLockerShareText({
         locale: "ko",
@@ -138,7 +138,7 @@ describe("createLockerShareText", () => {
     ).toBe(true);
   });
 
-  it("keeps non-ASCII URL text readable across languages without trailing blank lines", () => {
+  it("어느 언어에서도 주소가 읽히고 끝에 빈 줄이 남지 않는다", () => {
     const shareText = createLockerShareText({
       locale: "en",
       url: "https://zimdugo-web.vercel.app/?locker=77-%E6%96%B0%E5%AE%BF-%E3%83%AD%E3%83%83%E3%82%AB%E3%83%BC",

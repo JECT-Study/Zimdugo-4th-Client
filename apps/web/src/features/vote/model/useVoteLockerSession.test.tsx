@@ -61,7 +61,7 @@ describe("useVoteLockerSession", () => {
     });
   });
 
-  it("cancels and patches detail queries after a successful flush", async () => {
+  it("반영에 성공하면 상세 쿼리를 취소하고 값을 덧댄다", async () => {
     const queryClient = createQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
     const cancelSpy = vi.spyOn(queryClient, "cancelQueries");
@@ -98,7 +98,7 @@ describe("useVoteLockerSession", () => {
     expect(result.current.pending.size).toBe(0);
   });
 
-  it("uses the active server snapshot when detail display has overlays", () => {
+  it("상세 표시에 덧댄 값이 있으면 서버 스냅숏을 쓴다", () => {
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useVoteLockerSession(), {
       wrapper: createWrapper(queryClient),
@@ -128,7 +128,7 @@ describe("useVoteLockerSession", () => {
     expect(result.current.pending.has(9)).toBe(false);
   });
 
-  it("opens the auth popup and does not create pending when unauthenticated", () => {
+  it("로그인하지 않았으면 대기 항목 없이 인증 팝업을 연다", () => {
     const queryClient = createQueryClient();
     useAuthPopupStore.setState({
       isOpen: false,

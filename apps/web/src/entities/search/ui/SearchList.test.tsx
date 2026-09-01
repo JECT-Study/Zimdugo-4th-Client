@@ -50,8 +50,8 @@ const STANDALONE_LOCKER: SearchLockerResultItem = {
 
 afterEach(cleanup);
 
-describe("search list rows", () => {
-  it("separates recent keyword select and remove actions", () => {
+describe("검색 목록의 줄", () => {
+  it("최근 검색어의 선택과 삭제를 따로 다룬다", () => {
     const handlePress = vi.fn();
     const handleRemove = vi.fn();
 
@@ -75,7 +75,7 @@ describe("search list rows", () => {
     expect(handleRemove).toHaveBeenCalledOnce();
   });
 
-  it("renders place lockers as nested locker rows without accordion controls", () => {
+  it("장소의 보관함은 아코디언 없이 하위 줄로 그린다", () => {
     const handleToggle = vi.fn();
     const handlePlacePress = vi.fn();
 
@@ -100,7 +100,7 @@ describe("search list rows", () => {
     expect(handlePlacePress).toHaveBeenCalledWith(PLACE);
   });
 
-  it("opens locker detail and favorite action from a nested locker row", () => {
+  it("하위 줄에서도 상세 열기와 즐겨찾기가 된다", () => {
     const handleLockerPress = vi.fn();
     const handleFavoriteChange = vi.fn();
 
@@ -128,7 +128,7 @@ describe("search list rows", () => {
     expect(handleFavoriteChange).toHaveBeenCalledWith(PLACE.lockers[0], true);
   });
 
-  it("renders standalone lockers as top-level results without accordion", () => {
+  it("단독 보관함은 아코디언 없이 최상위 결과로 그린다", () => {
     render(<SearchLockerResult item={STANDALONE_LOCKER} />);
 
     expect(

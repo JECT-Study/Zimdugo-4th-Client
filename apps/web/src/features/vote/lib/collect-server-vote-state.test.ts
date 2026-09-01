@@ -5,7 +5,7 @@ import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail
 import { collectServerVoteByLockerId } from "./collect-server-vote-state";
 
 describe("collectServerVoteByLockerId", () => {
-  it("reads vote state from the scoped detail query cache", () => {
+  it("범위가 맞는 상세 캐시에서 투표 상태를 읽는다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
       itemType: "LOCKER",
@@ -29,7 +29,7 @@ describe("collectServerVoteByLockerId", () => {
     );
   });
 
-  it("ignores detail cache from a different auth scope", () => {
+  it("인증 범위가 다른 상세 캐시는 무시한다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
       itemType: "LOCKER",

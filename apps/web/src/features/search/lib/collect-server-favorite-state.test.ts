@@ -13,7 +13,7 @@ import type {
 import { collectServerFavoriteByLockerId } from "./collect-server-favorite-state";
 
 describe("collectServerFavoriteByLockerId", () => {
-  it("reads favorite state from the favorite list cache", () => {
+  it("즐겨찾기 목록 캐시에서 상태를 읽는다", () => {
     const queryClient = new QueryClient();
     const page: PaginatedListData<FavoriteLockerListItem> = {
       count: 1,
@@ -46,7 +46,7 @@ describe("collectServerFavoriteByLockerId", () => {
     );
   });
 
-  it("prefers scoped detail cache over list cache", () => {
+  it("목록 캐시보다 범위가 맞는 상세 캐시를 먼저 본다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
       itemType: "LOCKER",
@@ -94,7 +94,7 @@ describe("collectServerFavoriteByLockerId", () => {
     );
   });
 
-  it("ignores caches from a different auth scope", () => {
+  it("인증 범위가 다른 캐시는 무시한다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
       itemType: "LOCKER",

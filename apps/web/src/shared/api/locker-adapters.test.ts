@@ -292,7 +292,7 @@ describe("locker-adapters", () => {
     ]);
   });
 
-  it("normalizes Swagger HH:mm:ss operating hours for keyword results", () => {
+  it("키워드 결과의 HH:mm:ss 영업시간을 정리한다", () => {
     const viewModel = toLockerSearchViewModel({
       count: 1,
       bounds: {
@@ -327,7 +327,7 @@ describe("locker-adapters", () => {
     });
   });
 
-  it("normalizes Swagger HH:mm:ss operating hours for place lockers", () => {
+  it("장소 보관함의 HH:mm:ss 영업시간을 정리한다", () => {
     const viewModel = toPlaceLockersViewModel({
       placeId: 158,
       placeName: "강남역 1, 12번 출구",

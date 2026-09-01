@@ -29,7 +29,7 @@ const createRequest = (payload: Record<string, unknown>) =>
     body: JSON.stringify(payload),
   });
 
-describe("location diagnostics server", () => {
+describe("위치 진단 서버", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });

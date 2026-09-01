@@ -26,7 +26,7 @@ const issueIntentCookie = (url: string): string => {
 };
 
 describe("resolveLocaleRequest", () => {
-  it("redirects a non-canonical locale prefix to its canonical casing", () => {
+  it("표기가 다른 로케일 접두사를 정규 표기로 되돌린다", () => {
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/zh-tw/settings?tab=1"),
     );
@@ -41,7 +41,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Set-Cookie")).toBeNull();
   });
 
-  it("redirects an uppercase locale prefix to its canonical casing", () => {
+  it("대문자 로케일 접두사를 정규 표기로 되돌린다", () => {
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/EN"),
     );
@@ -52,7 +52,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/en");
   });
 
-  it("keeps a canonical locale prefix as is", () => {
+  it("정규 표기 접두사는 그대로 둔다", () => {
     // 로케일은 URL 로 해석되므로 가드가 요청을 손대지 않는다. 쿠키는 사용자가
     // 언어를 직접 고를 때만 기록되는 선호 채널이라, 가드가 덮어써서도 안 되고
     // 다른 쿠키를 흘려서도 안 된다.
@@ -71,7 +71,7 @@ describe("resolveLocaleRequest", () => {
     );
   });
 
-  it("still redirects locale-less document requests to the preferred locale", () => {
+  it("접두사 없는 문서 요청은 선호 로케일로 보낸다", () => {
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/settings", {
         Cookie: "PARAGLIDE_LOCALE=ja",
@@ -85,7 +85,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Vary")).toBe("Cookie, Accept-Language");
   });
 
-  it("never writes the locale preference cookie", () => {
+  it("로케일 선호 쿠키를 쓰지 않는다", () => {
     const preferenceRedirect = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/settings", {
         "Accept-Language": "en-US,en;q=0.9",
@@ -102,7 +102,7 @@ describe("resolveLocaleRequest", () => {
     expect(preferenceRedirect.response.headers.get("Set-Cookie")).toBeNull();
   });
 
-  it("leaves locale-less document requests alone for the base locale", () => {
+  it("base locale 이면 접두사 없는 문서 요청을 그대로 둔다", () => {
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/settings", {
         Cookie: "PARAGLIDE_LOCALE=ko",
@@ -115,7 +115,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.pathLocale).toBeNull();
   });
 
-  it("normalizes locale casing for non-document requests too", () => {
+  it("문서가 아닌 요청도 로케일 표기를 정규화한다", () => {
     const result = resolveLocaleRequest(
       new Request("https://zimdugo.com/zh-tw/settings"),
     );
@@ -123,7 +123,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.kind).toBe("redirect");
   });
 
-  it("strips the base locale prefix and carries the intent marker", () => {
+  it("base locale 접두사를 떼면서 의도 마커를 실어 보낸다", () => {
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/ko/settings?tab=1", {
         "Accept-Language": "en-US,en;q=0.9",
@@ -145,7 +145,7 @@ describe("resolveLocaleRequest", () => {
     expect(setCookie).not.toContain("PARAGLIDE_LOCALE=");
   });
 
-  it("normalizes base locale casing in the same redirect", () => {
+  it("같은 리다이렉트에서 base locale 표기도 정규화한다", () => {
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/KO/settings"),
     );
@@ -156,7 +156,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/settings");
   });
 
-  it("collapses leading slashes so the redirect cannot leave the origin", () => {
+  it("앞선 슬래시를 접어 리다이렉트가 출처를 벗어나지 못하게 한다", () => {
     // 접두사를 떼면 //evil.example/x 가 되어 프로토콜 상대 URL 로 해석된다.
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/ko//evil.example/x"),
@@ -168,7 +168,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/evil.example/x");
   });
 
-  it("keeps the base locale when the intent marker survived the redirect", () => {
+  it("의도 마커가 살아 왔으면 base locale 을 유지한다", () => {
     // Accept-Language 만 보면 en 이지만, 사용자가 /ko 링크로 들어왔다.
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/settings", {
@@ -184,7 +184,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.consumedLocaleIntent).toBe(true);
   });
 
-  it("ignores a marker left for a different destination", () => {
+  it("다른 목적지 앞으로 남은 마커는 무시한다", () => {
     // 같은 브라우저에서 /ko/settings 리다이렉트와 /my 탐색이 겹친 상황.
     // /my 가 남의 마커를 삼키면 한국어로 렌더되고, 마커가 지워져 원래
     // /settings 요청은 다시 Accept-Language 로 끌려간다.
@@ -201,7 +201,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/en/my");
   });
 
-  it("gives every redirect its own marker, same destination included", () => {
+  it("목적지가 같아도 리다이렉트마다 마커를 따로 준다", () => {
     // 같은 /ko/a 를 두 탭에서 열어도 마커가 겹치면 안 된다. 겹치면 먼저
     // 소비한 쪽의 Max-Age=0 이 아직 쓰이지 않은 다른 탭의 마커까지 지운다.
     const first = issueIntentCookie("https://zimdugo.com/ko/a");
@@ -239,7 +239,7 @@ describe("resolveLocaleRequest", () => {
     expect(secondTab.pathLocale).toBe("ko");
   });
 
-  it("keeps markers for different destinations independent", () => {
+  it("목적지가 다른 마커끼리는 서로 건드리지 않는다", () => {
     const cookies = [
       issueIntentCookie("https://zimdugo.com/ko/a"),
       issueIntentCookie("https://zimdugo.com/ko/b"),
@@ -263,7 +263,7 @@ describe("resolveLocaleRequest", () => {
     }
   });
 
-  it("still applies Accept-Language once the marker is gone", () => {
+  it("마커가 사라지면 다시 Accept-Language 를 본다", () => {
     const result = resolveLocaleRequest(
       createDocumentRequest("https://zimdugo.com/settings", {
         "Accept-Language": "en-US,en;q=0.9",
@@ -276,7 +276,7 @@ describe("resolveLocaleRequest", () => {
     expect(result.response.headers.get("Location")).toBe("/en/settings");
   });
 
-  it("leaves the base locale prefix alone for non-document requests", () => {
+  it("문서가 아닌 요청은 base locale 접두사를 그대로 둔다", () => {
     // 문서 요청이 아니면 브라우저 주소가 바뀌지 않아 마커를 소비할 기회가 없다.
     const result = resolveLocaleRequest(
       new Request("https://zimdugo.com/ko/settings"),
@@ -291,7 +291,7 @@ describe("resolveLocaleRequest", () => {
 });
 
 describe("withConsumedLocaleIntentHeaders", () => {
-  it("clears the marker and varies on the channels that decided the locale", () => {
+  it("마커를 지우고 로케일을 정한 채널을 Vary 에 남긴다", () => {
     const response = withConsumedLocaleIntentHeaders(
       createDocumentRequest("https://zimdugo.com/settings", {
         Cookie: issueIntentCookie("https://zimdugo.com/ko/settings"),
@@ -311,7 +311,7 @@ describe("withForwardedLocaleIntent", () => {
   const createAuthRedirect = (location: string) =>
     new Response(null, { status: 302, headers: { Location: location } });
 
-  it("carries the intent to the auth guard's destination", () => {
+  it("인증 가드가 만든 목적지에도 의도를 이어 준다", () => {
     // /ko/report 를 비로그인으로 열면 보호 가드가 "/" 로 돌려보낸다. 마커를
     // 이어주지 않으면 그 "/" 요청이 다시 Accept-Language 로 넘어간다.
     const req = createDocumentRequest("https://zimdugo.com/report", {
@@ -341,7 +341,7 @@ describe("withForwardedLocaleIntent", () => {
     expect(next.pathLocale).toBe("ko");
   });
 
-  it("leaves a destination that already carries a locale alone", () => {
+  it("이미 로케일을 담은 목적지에는 마커를 붙이지 않는다", () => {
     const req = createDocumentRequest("https://zimdugo.com/report", {
       Cookie: issueIntentCookie("https://zimdugo.com/ko/report"),
     });
@@ -357,7 +357,7 @@ describe("withForwardedLocaleIntent", () => {
     ).toBe(true);
   });
 
-  it("never marks a destination outside the origin", () => {
+  it("출처 밖 목적지에는 마커를 붙이지 않는다", () => {
     const req = createDocumentRequest("https://zimdugo.com/report", {
       Cookie: issueIntentCookie("https://zimdugo.com/ko/report"),
     });
@@ -373,8 +373,8 @@ describe("withForwardedLocaleIntent", () => {
   });
 });
 
-describe("withForwardedLocaleIntent on router redirects", () => {
-  it("carries the intent through a route-level redirect", () => {
+describe("라우터가 만든 리다이렉트의 withForwardedLocaleIntent", () => {
+  it("라우트가 만든 리다이렉트에도 의도를 이어 준다", () => {
     // /ko/my → /my 로 마커를 받은 뒤, 라우터가 /settings 로 다시 보낸다.
     const req = createDocumentRequest("https://zimdugo.com/my", {
       Cookie: issueIntentCookie("https://zimdugo.com/ko/my"),
@@ -402,7 +402,7 @@ describe("withForwardedLocaleIntent on router redirects", () => {
     expect(next.pathLocale).toBe("ko");
   });
 
-  it("clears the marker on a plain rendered response", () => {
+  it("그냥 렌더된 응답에서는 마커만 지운다", () => {
     const req = createDocumentRequest("https://zimdugo.com/settings", {
       Cookie: issueIntentCookie("https://zimdugo.com/ko/settings"),
     });
@@ -417,8 +417,8 @@ describe("withForwardedLocaleIntent on router redirects", () => {
   });
 });
 
-describe("locale intent marker size and headers", () => {
-  it("keeps the marker small for a very long destination", () => {
+describe("로케일 의도 마커의 크기와 헤더", () => {
+  it("목적지가 아주 길어도 마커는 작게 유지한다", () => {
     // returnPath 는 길이 제한이 없다. 목적지를 그대로 담으면 쿠키 크기 제한을
     // 넘겨 브라우저가 마커를 저장하지 않는다.
     const returnPath = `/${"a".repeat(8000)}`;
@@ -449,7 +449,7 @@ describe("locale intent marker size and headers", () => {
     expect(next.pathLocale).toBe("ko");
   });
 
-  it("merges into an existing Vary instead of replacing it", () => {
+  it("이미 있는 Vary 를 덮지 않고 합친다", () => {
     const response = withConsumedLocaleIntentHeaders(
       createDocumentRequest("https://zimdugo.com/settings", {
         Cookie: issueIntentCookie("https://zimdugo.com/ko/settings"),
@@ -466,7 +466,7 @@ describe("locale intent marker size and headers", () => {
     expect(vary).toContain("Accept-Language");
   });
 
-  it("leaves a wildcard Vary alone", () => {
+  it("와일드카드 Vary 는 그대로 둔다", () => {
     const response = withConsumedLocaleIntentHeaders(
       createDocumentRequest("https://zimdugo.com/settings", {
         Cookie: issueIntentCookie("https://zimdugo.com/ko/settings"),

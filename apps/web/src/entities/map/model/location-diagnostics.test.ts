@@ -4,7 +4,7 @@ import {
   postLocationDiagnostic,
 } from "./location-diagnostics";
 
-describe("location diagnostics client", () => {
+describe("위치 진단 클라이언트", () => {
   const fetchMock = vi
     .fn()
     .mockResolvedValue(new Response(null, { status: 204 }));

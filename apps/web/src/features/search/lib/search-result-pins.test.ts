@@ -41,7 +41,7 @@ const createPlaceItem = (
 });
 
 describe("searchResultItemsToPins", () => {
-  it("uses the place locker count for place pin badges", () => {
+  it("장소 핀 배지에 장소의 보관함 개수를 쓴다", () => {
     const pins = searchResultItemsToPins([createPlaceItem()]);
 
     expect(pins).toEqual([
@@ -53,7 +53,7 @@ describe("searchResultItemsToPins", () => {
     ]);
   });
 
-  it("skips search results without coordinates", () => {
+  it("좌표가 없는 검색 결과는 건너뛴다", () => {
     const pins = searchResultItemsToPins([
       createLockerItem({ latitude: undefined }),
       createPlaceItem({ longitude: undefined }),
@@ -62,7 +62,7 @@ describe("searchResultItemsToPins", () => {
     expect(pins).toEqual([]);
   });
 
-  it("marks closed lockers and places with only closed lockers inactive", () => {
+  it("닫힌 보관함과 그것만 있는 장소를 비활성으로 표시한다", () => {
     const closedHours = { open: "10:00", close: "09:00" };
     const pins = searchResultItemsToPins([
       createLockerItem({ lockerId: 301, operatingHours: closedHours }),

@@ -57,7 +57,7 @@ const getInfiniteQueryOptions = () => {
   return options as InfiniteQueryOptions;
 };
 
-describe("my history query options", () => {
+describe("내 활동 내역 쿼리 옵션", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getMyLockerReportHistory.mockResolvedValue({

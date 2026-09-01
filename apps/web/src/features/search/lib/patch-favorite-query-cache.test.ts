@@ -107,7 +107,7 @@ describe("patchFavoriteInQueryCaches", () => {
     expect(nextPins).not.toBe(previousPins);
   });
 
-  it("does not patch caches from a different auth scope", () => {
+  it("인증 범위가 다른 캐시는 덧대지 않는다", () => {
     const queryClient = new QueryClient();
     const queryKey = [LOCKER_PINS_QUERY_KEY, 37, 127, 38, 128, 15, "anonymous"];
     const previousPins = [createLockerPin()];

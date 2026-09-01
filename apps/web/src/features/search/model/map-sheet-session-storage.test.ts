@@ -38,7 +38,7 @@ const createSnapshot = (
   ...overrides,
 });
 
-describe("map sheet session storage", () => {
+describe("지도 시트 세션 저장소", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
   });

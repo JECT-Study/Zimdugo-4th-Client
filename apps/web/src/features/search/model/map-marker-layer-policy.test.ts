@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { resolveMapMarkerLayer } from "./map-marker-layer-policy";
 
 describe("resolveMapMarkerLayer", () => {
-  it("shows idle markers only in the idle home state", () => {
+  it("가만히 있는 홈에서만 기본 마커를 보인다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
@@ -17,7 +17,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("idle");
   });
 
-  it("shows search markers while search results are visible", () => {
+  it("검색 결과가 떠 있는 동안 검색 마커를 보인다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "search",
@@ -31,7 +31,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("search");
   });
 
-  it("uses place markers for map place lists", () => {
+  it("지도 장소 목록에는 장소 마커를 쓴다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -45,7 +45,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("mapPlace");
   });
 
-  it("keeps place markers when map detail can return to a place list", () => {
+  it("상세에서 장소 목록으로 돌아갈 수 있으면 장소 마커를 남긴다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -59,7 +59,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("mapPlace");
   });
 
-  it("keeps idle markers when a home map pin is selected", () => {
+  it("홈에서 핀을 골라도 기본 마커를 남긴다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -73,7 +73,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("idle");
   });
 
-  it("falls back to the selected detail marker without a selected map pin", () => {
+  it("고른 핀이 없으면 선택된 상세 마커로 물러선다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -87,7 +87,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBe("selectedMapDetail");
   });
 
-  it("returns null when no marker layer should be visible", () => {
+  it("보일 마커 레이어가 없으면 null 을 준다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "map",
@@ -101,7 +101,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBeNull();
   });
 
-  it("hides marker layers while the search overlay is open", () => {
+  it("검색 오버레이가 떠 있는 동안 마커 레이어를 감춘다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",
@@ -115,7 +115,7 @@ describe("resolveMapMarkerLayer", () => {
     ).toBeNull();
   });
 
-  it("does not show markers in address list mode", () => {
+  it("주소 목록 상태에서는 마커를 보이지 않는다", () => {
     expect(
       resolveMapMarkerLayer({
         context: "idle",

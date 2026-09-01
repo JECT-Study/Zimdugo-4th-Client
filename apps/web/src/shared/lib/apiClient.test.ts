@@ -3,7 +3,7 @@ import type { AxiosInstance } from "axios";
 import { describe, expect, it, vi } from "vitest";
 
 describe("createApiClient", () => {
-  it("serializes array query params without bracket suffixes", () => {
+  it("배열 쿼리를 대괄호 없이 직렬화한다", () => {
     const client = createApiClient("http://example.com");
 
     const uri = client.getUri({
@@ -55,7 +55,7 @@ describe("createApiMethods", () => {
     };
   };
 
-  it("returns the response body instead of the AxiosResponse envelope", async () => {
+  it("AxiosResponse 봉투가 아니라 본문을 준다", async () => {
     const { client } = createStubClient();
     const { httpGet, httpPost, httpPut, httpPatch, httpDelete } =
       createApiMethods(client);
@@ -67,7 +67,7 @@ describe("createApiMethods", () => {
     await expect(httpDelete("/x")).resolves.toBe(body);
   });
 
-  it("passes url, request body and config through to the client", async () => {
+  it("주소·본문·설정을 그대로 클라이언트에 넘긴다", async () => {
     const { client, respond } = createStubClient();
     const { httpGet, httpPost, httpDelete } = createApiMethods(client);
     const config = { params: { page: 0 } };
@@ -83,7 +83,7 @@ describe("createApiMethods", () => {
     expect(respond).toHaveBeenLastCalledWith("/delete", config);
   });
 
-  it("rejects when the underlying client rejects", async () => {
+  it("아래 클라이언트가 실패하면 함께 실패한다", async () => {
     const failure = new Error("network down");
     const client = {
       post: vi.fn().mockRejectedValue(failure),

@@ -228,7 +228,7 @@ const getMarkerItemClass = (content: string): string =>
   content.match(/class="map-marker-item ([^"]+)"/)?.[1] ?? "";
 
 describe("createMapPinIcon", () => {
-  it("renders the default locker map pin asset", () => {
+  it("기본 보관함 핀 그림을 그린다", () => {
     const icon = createMapPinIcon(createLockerPin());
 
     expect(icon).toContain('data-type="LOCKER"');
@@ -241,7 +241,7 @@ describe("createMapPinIcon", () => {
     expect(icon).toContain('fill="white"');
   });
 
-  it("renders the favorite locker map pin asset only when isFavorite is true", () => {
+  it("즐겨찾기 핀 그림은 isFavorite 일 때만 그린다", () => {
     const icon = createMapPinIcon(createLockerPin({ isFavorite: true }));
 
     expect(icon).toContain('data-type="LOCKER"');
@@ -251,7 +251,7 @@ describe("createMapPinIcon", () => {
     expect(icon).toContain(`fill="${MOCK_MARKER_FILL}"`);
   });
 
-  it("keeps the default locker asset when the locker is selected", () => {
+  it("선택된 보관함도 기본 그림을 그대로 쓴다", () => {
     const icon = createMapPinIcon(createLockerPin(), true);
 
     expect(icon).toContain('data-type="LOCKER"');
@@ -259,7 +259,7 @@ describe("createMapPinIcon", () => {
     expect(icon).toContain(`stroke="${MOCK_MARKER_FILL}" stroke-width="3"`);
   });
 
-  it("renders inactive locker markers in gray", () => {
+  it("영업하지 않는 보관함 마커는 회색으로 그린다", () => {
     const icon = createMapPinIcon(
       createLockerPin({ markerStatus: "inactive" }),
       true,
@@ -272,7 +272,7 @@ describe("createMapPinIcon", () => {
     );
   });
 
-  it("renders place markers with the default map pin and a count badge", () => {
+  it("장소 마커는 기본 핀에 개수 배지를 붙여 그린다", () => {
     const icon = createMapPinIcon(createPlacePin({ lockerCount: 12 }));
 
     expect(icon).toContain('data-type="PLACE"');
@@ -288,7 +288,7 @@ describe("createMapPinIcon", () => {
     expect(icon).not.toContain('width="121" height="121"');
   });
 
-  it("renders inactive place markers in gray", () => {
+  it("영업하지 않는 장소 마커는 회색으로 그린다", () => {
     const icon = createMapPinIcon(
       createPlacePin({ markerStatus: "inactive", lockerCount: 12 }),
     );
@@ -302,7 +302,7 @@ describe("createMapPinIcon", () => {
     expect(icon).toContain(`text-anchor="middle" fill="white"`);
   });
 
-  it("renders cluster markers for count < 10 (S size)", () => {
+  it("10 개 미만 클러스터는 S 크기로 그린다", () => {
     const icon = createMapPinIcon(createClusterPin({ pinCount: 5 }));
 
     expect(icon).toContain('data-type="CLUSTER"');
@@ -314,7 +314,7 @@ describe("createMapPinIcon", () => {
     expect(icon).toContain('font-weight="700"');
   });
 
-  it("renders cluster markers for count >= 10 (L size)", () => {
+  it("10 개 이상 클러스터는 L 크기로 그린다", () => {
     const icon = createMapPinIcon(createClusterPin({ pinCount: 15 }));
 
     expect(icon).toContain('data-type="CLUSTER"');
@@ -326,7 +326,7 @@ describe("createMapPinIcon", () => {
 });
 
 describe("syncLockerMarkers", () => {
-  it("creates locker markers and removes them on cleanup", () => {
+  it("보관함 마커를 만들고 정리할 때 지운다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -350,7 +350,7 @@ describe("syncLockerMarkers", () => {
     expect(maps.Event.removeListener).not.toHaveBeenCalled();
   });
 
-  it("uses an HTML icon option for locker markers", () => {
+  it("보관함 마커는 HTML 아이콘으로 넘긴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -375,7 +375,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.anchor).toMatchObject({ x: 22, y: 22 });
   });
 
-  it("uses the selected locker map pin dimensions", () => {
+  it("선택된 보관함 핀의 크기를 쓴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -398,7 +398,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.anchor).toMatchObject({ x: 22, y: 22 });
   });
 
-  it("uses the favorite locker map pin dimensions", () => {
+  it("즐겨찾기 핀의 크기를 쓴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -419,7 +419,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.anchor).toMatchObject({ x: 22, y: 22 });
   });
 
-  it("uses an HTML icon option for place markers", () => {
+  it("장소 마커는 HTML 아이콘으로 넘긴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -445,7 +445,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
 
-  it("uses S size and anchor for cluster markers with < 10 items", () => {
+  it("10 개 미만 클러스터는 S 크기와 앵커를 쓴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -466,7 +466,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.anchor).toMatchObject({ x: 26, y: 26 });
   });
 
-  it("uses L size and anchor for cluster markers with >= 10 items", () => {
+  it("10 개 이상 클러스터는 L 크기와 앵커를 쓴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -487,7 +487,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.anchor).toMatchObject({ x: 32, y: 32 });
   });
 
-  it("passes pin type and id when a locker marker is clicked", () => {
+  it("보관함 마커를 누르면 핀 종류와 id 를 넘긴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -511,7 +511,7 @@ describe("syncLockerMarkers", () => {
     );
   });
 
-  it("passes place id when a place marker is clicked", () => {
+  it("장소 마커를 누르면 장소 id 를 넘긴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -535,7 +535,7 @@ describe("syncLockerMarkers", () => {
     );
   });
 
-  it("uses the latest cluster click handler when reusing an existing marker", () => {
+  it("마커를 재사용해도 클러스터 클릭 핸들러는 최신 것을 쓴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -566,7 +566,7 @@ describe("syncLockerMarkers", () => {
     expect(nextClusterClick).toHaveBeenCalledWith(pin.bounds);
   });
 
-  it("removes click listeners on cleanup", () => {
+  it("정리할 때 클릭 리스너를 걷어낸다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -584,7 +584,7 @@ describe("syncLockerMarkers", () => {
     expect(maps.Event.removeListener).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps an existing click listener when the same pin id and handler are synced", () => {
+  it("같은 핀 id 와 핸들러면 리스너를 그대로 둔다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -619,7 +619,7 @@ describe("syncLockerMarkers", () => {
     );
   });
 
-  it("reuses an existing marker for the same pin", () => {
+  it("같은 핀이면 있던 마커를 다시 쓴다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -646,7 +646,7 @@ describe("syncLockerMarkers", () => {
     );
   });
 
-  it("skips marker updates when the pin data is unchanged", () => {
+  it("핀 데이터가 그대로면 마커를 건드리지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -662,7 +662,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
   });
 
-  it("animates an existing locker marker when it becomes a favorite", () => {
+  it("즐겨찾기가 되면 있던 마커에 애니메이션을 준다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -700,7 +700,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).toHaveBeenCalledTimes(1);
   });
 
-  it("does not animate a marker that is initially a favorite", () => {
+  it("처음부터 즐겨찾기인 마커는 애니메이션하지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -719,7 +719,7 @@ describe("syncLockerMarkers", () => {
     );
   });
 
-  it("removes the favorite animation class after the guard expires", () => {
+  it("가드가 끝나면 즐겨찾기 애니메이션 클래스를 뗀다", () => {
     vi.useFakeTimers();
 
     try {
@@ -759,7 +759,7 @@ describe("syncLockerMarkers", () => {
     }
   });
 
-  it("does not animate a marker when favorite is removed", () => {
+  it("즐겨찾기를 풀 때는 애니메이션하지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -784,7 +784,7 @@ describe("syncLockerMarkers", () => {
     );
   });
 
-  it("raises the selected marker above nearby markers", () => {
+  it("선택된 마커를 곁의 마커보다 위로 올린다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -820,7 +820,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[1]?.setZIndex).toHaveBeenCalledWith(20);
   });
 
-  it("keeps marker hit boxes aligned to visible marker dimensions", () => {
+  it("마커의 누르는 영역을 보이는 크기에 맞춘다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -851,7 +851,7 @@ describe("syncLockerMarkers", () => {
     expect(placeOptions.icon?.anchor).toMatchObject({ x: 23.6, y: 28.4 });
   });
 
-  it("spreads nearby locker and place markers instead of relying on z-index", () => {
+  it("겹친 보관함·장소 마커는 z-index 대신 펼쳐서 가른다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -886,7 +886,7 @@ describe("syncLockerMarkers", () => {
     });
   });
 
-  it("applies spread class and styles when spreadCenter is provided", () => {
+  it("spreadCenter 가 오면 펼침 클래스와 스타일을 붙인다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -908,7 +908,7 @@ describe("syncLockerMarkers", () => {
     expect(options.icon?.content).toContain("--spread-y");
   });
 
-  it("skips icon updates after creating a spread marker with unchanged pin data", () => {
+  it("펼친 마커도 핀 데이터가 그대로면 아이콘을 다시 만들지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -924,7 +924,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[0]?.setIcon).not.toHaveBeenCalled();
   });
 
-  it("applies different offsets when two lockers share the same coordinates", () => {
+  it("좌표가 같은 보관함 둘은 서로 다른 자리로 민다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -967,7 +967,7 @@ describe("syncLockerMarkers", () => {
     });
   });
 
-  it("keeps a preserved offset when only the selected marker is rendered", () => {
+  it("선택된 마커만 남아도 밀어 둔 자리를 지킨다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -992,7 +992,7 @@ describe("syncLockerMarkers", () => {
     });
   });
 
-  it("distributes three or more lockers with the same coordinates", () => {
+  it("좌표가 같은 보관함이 셋 이상이어도 고르게 흩는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1015,7 +1015,7 @@ describe("syncLockerMarkers", () => {
     expect(new Set(offsets)).toEqual(new Set(["24,0", "-12,21", "-12,-21"]));
   });
 
-  it("keeps the same locker offset when server response order changes", () => {
+  it("서버 응답 순서가 바뀌어도 같은 보관함은 같은 자리에 둔다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1039,7 +1039,7 @@ describe("syncLockerMarkers", () => {
     expect(locker101Content).toContain('data-offset-y="0"');
   });
 
-  it("applies offset to PLACE type markers when coordinates are shared", () => {
+  it("좌표가 겹치면 장소 마커도 자리를 민다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1079,7 +1079,7 @@ describe("syncLockerMarkers", () => {
     });
   });
 
-  it("keeps offset styles when an existing spread marker icon is updated", () => {
+  it("펼친 마커의 아이콘을 갱신해도 민 자리를 지킨다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1122,7 +1122,7 @@ describe("syncLockerMarkers", () => {
     expect(content).toContain('data-offset-y="0"');
   });
 
-  it("does not replay spread animation when a spread marker becomes selected", () => {
+  it("펼친 마커가 선택돼도 펼침 애니메이션을 다시 돌리지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1160,7 +1160,7 @@ describe("syncLockerMarkers", () => {
     expect(content).not.toContain("--spread-y");
   });
 
-  it("does not replay spread animation when a selected spread marker is unselected", () => {
+  it("펼친 마커의 선택을 풀어도 펼침 애니메이션을 다시 돌리지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1206,7 +1206,7 @@ describe("syncLockerMarkers", () => {
     expect(content).toContain('data-offset-y="0"');
   });
 
-  it("keeps selected state in marker classes without changing icon variant", () => {
+  it("선택 상태는 클래스로만 나타내고 아이콘 종류는 바꾸지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();
@@ -1244,7 +1244,7 @@ describe("syncLockerMarkers", () => {
     );
   });
 
-  it("does not update unrelated spread markers when selection changes after map projection changes", () => {
+  it("투영이 바뀐 뒤 선택이 바뀌어도 무관한 펼친 마커는 건드리지 않는다", () => {
     FakeMarker.instances = [];
 
     let projectionScale = 1000;
@@ -1301,7 +1301,7 @@ describe("syncLockerMarkers", () => {
     expect(FakeMarker.instances[2]?.setIcon).not.toHaveBeenCalled();
   });
 
-  it("does not activate offset transform for markers far enough apart", () => {
+  it("충분히 떨어진 마커는 자리를 밀지 않는다", () => {
     FakeMarker.instances = [];
 
     const map = createMockMap();

@@ -132,7 +132,7 @@ describe("LockerDetailBottomSheet", () => {
     draggableBottomSheetMock.mockClear();
   });
 
-  it("resolves detail-specific mini and half snap heights", () => {
+  it("상세 시트의 미니·하프 높이를 정한다", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
       miniSnapPoint: 701,
@@ -141,7 +141,7 @@ describe("LockerDetailBottomSheet", () => {
     });
   });
 
-  it("caps the full snap height on tall viewports", () => {
+  it("화면이 높아도 full 높이에 상한을 둔다", () => {
     expect(resolveLockerDetailSnapPoints({ windowHeight: 1000 })).toEqual({
       maxSnapPoint: 948,
       miniSnapPoint: 889,
@@ -963,7 +963,7 @@ describe("LockerDetailBottomSheet", () => {
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
 
-  it("renders a loading skeleton while locker detail is loading", () => {
+  it("상세를 불러오는 동안 스켈레톤을 그린다", () => {
     render(
       <LockerDetailBottomSheet
         locker={LOCKER_DETAIL}
@@ -1082,7 +1082,7 @@ describe("LockerDetailBottomSheet", () => {
     ).toBeNull();
   });
 
-  it("converts stage snap requests to detail snap points", () => {
+  it("단계 요청을 상세 시트의 스냅 지점으로 바꾼다", () => {
     render(
       <LockerDetailBottomSheet
         locker={LOCKER_DETAIL}
@@ -1099,7 +1099,7 @@ describe("LockerDetailBottomSheet", () => {
     });
   });
 
-  it("forwards snap changes as detail snap stages", () => {
+  it("스냅 변화를 상세 시트의 단계로 알린다", () => {
     const handleSnapStageChange = vi.fn();
 
     render(
@@ -1126,7 +1126,7 @@ describe("LockerDetailBottomSheet", () => {
     });
   });
 
-  it("enables internal content scroll only when the detail sheet opens full", () => {
+  it("상세가 full 로 열릴 때만 안쪽 스크롤을 켠다", () => {
     const { rerender } = render(
       <LockerDetailBottomSheet
         locker={LOCKER_DETAIL}

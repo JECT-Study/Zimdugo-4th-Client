@@ -321,7 +321,7 @@ describe("sheet-session v2", () => {
     ).toBeNull();
   });
 
-  it("restores search list state when URL has search params without locker detail", () => {
+  it("주소에 검색 파라미터만 있으면 목록 상태를 되살린다", () => {
     expect(
       shouldRestoreSearchListFromUrl({
         hasExplicitLockerEntry: false,

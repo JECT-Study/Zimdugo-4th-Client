@@ -142,7 +142,7 @@ const dragSheet = ({
 };
 
 describe("shouldStartBottomSheetDrag", () => {
-  it("allows dragging from a non-interactive sheet surface", () => {
+  it("누를 것이 없는 시트 표면에서는 드래그를 시작한다", () => {
     const boundary = document.createElement("div");
     const surface = document.createElement("div");
     boundary.append(surface);
@@ -150,7 +150,7 @@ describe("shouldStartBottomSheetDrag", () => {
     expect(shouldStartBottomSheetDrag(surface, boundary)).toBe(true);
   });
 
-  it("does not start sheet dragging from interactive controls", () => {
+  it("누를 수 있는 컨트롤에서는 시트를 끌지 않는다", () => {
     const boundary = document.createElement("div");
     const button = document.createElement("button");
     boundary.append(button);
@@ -158,7 +158,7 @@ describe("shouldStartBottomSheetDrag", () => {
     expect(shouldStartBottomSheetDrag(button, boundary)).toBe(false);
   });
 
-  it("does not steal gestures from scrollable content", () => {
+  it("스크롤되는 콘텐츠의 제스처를 가로채지 않는다", () => {
     const boundary = document.createElement("div");
     const scrollArea = document.createElement("div");
     const row = document.createElement("div");
@@ -170,7 +170,7 @@ describe("shouldStartBottomSheetDrag", () => {
     expect(shouldStartBottomSheetDrag(row, boundary)).toBe(false);
   });
 
-  it("does not start dragging from an overlay portalled outside the sheet", () => {
+  it("시트 밖으로 포털된 오버레이에서는 시트를 끌지 않는다", () => {
     const boundary = document.createElement("div");
     // 포털로 띄운 모달은 DOM 상 시트 밖이지만 React 트리를 따라 이벤트가 올라온다.
     const overlay = document.createElement("div");
@@ -186,7 +186,7 @@ describe("shouldStartBottomSheetDrag", () => {
 });
 
 describe("resolveBottomSheetExpandedProgress", () => {
-  it("returns 1 at the top and 0 at the bottom", () => {
+  it("맨 위에서 1, 맨 아래에서 0 을 준다", () => {
     expect(
       resolveBottomSheetExpandedProgress({
         minSnapPoint: 40,
@@ -203,7 +203,7 @@ describe("resolveBottomSheetExpandedProgress", () => {
     ).toBe(0);
   });
 
-  it("clamps progress inside the 0 to 1 range", () => {
+  it("진행도를 0 과 1 사이로 가둔다", () => {
     expect(
       resolveBottomSheetExpandedProgress({
         minSnapPoint: 40,
@@ -222,7 +222,7 @@ describe("resolveBottomSheetExpandedProgress", () => {
 });
 
 describe("resolveBottomSheetNextSnap", () => {
-  it("uses the nearest configured snap from the actual release offset", () => {
+  it("손을 뗀 실제 위치에서 가장 가까운 스냅을 고른다", () => {
     expect(
       resolveBottomSheetNextSnap({
         startSnap: 240,
@@ -232,7 +232,7 @@ describe("resolveBottomSheetNextSnap", () => {
     ).toBe(480);
   });
 
-  it("does not skip the mini snap when the release point is closer to mini than dismiss", () => {
+  it("미니가 더 가까우면 미니를 건너뛰고 dismiss 로 가지 않는다", () => {
     expect(
       resolveBottomSheetNextSnap({
         startSnap: 240,
@@ -242,7 +242,7 @@ describe("resolveBottomSheetNextSnap", () => {
     ).toBe(480);
   });
 
-  it("uses drag direction to break an exact midpoint tie", () => {
+  it("정확히 가운데면 끌던 방향으로 가른다", () => {
     expect(
       resolveBottomSheetNextSnap({
         startSnap: 240,
@@ -261,7 +261,7 @@ describe("resolveBottomSheetNextSnap", () => {
 });
 
 describe("resolveBottomSheetDragIntent", () => {
-  it("keeps a vertical gesture inside scrollable content while the content can scroll", () => {
+  it("콘텐츠가 더 스크롤될 수 있으면 세로 제스처를 콘텐츠에 남긴다", () => {
     const boundary = document.createElement("div");
     const scrollArea = document.createElement("div");
     const row = document.createElement("div");
@@ -281,7 +281,7 @@ describe("resolveBottomSheetDragIntent", () => {
     ).toBe("content");
   });
 
-  it("starts sheet dragging from scrollable content when pulling past the top", () => {
+  it("콘텐츠 맨 위에서 더 당기면 시트를 끌기 시작한다", () => {
     const boundary = document.createElement("div");
     const scrollArea = document.createElement("div");
     const row = document.createElement("div");
@@ -301,7 +301,7 @@ describe("resolveBottomSheetDragIntent", () => {
     ).toBe("sheet");
   });
 
-  it("keeps horizontal gestures inside content", () => {
+  it("가로 제스처는 콘텐츠에 남긴다", () => {
     const boundary = document.createElement("div");
     const surface = document.createElement("div");
     boundary.append(surface);
@@ -581,7 +581,7 @@ describe("DraggableBottomSheet", () => {
     expect(last?.isSettled).toBe(true);
   });
 
-  it("updates live offset from a non-interactive sheet surface", () => {
+  it("누를 것이 없는 표면에서 끌면 라이브 오프셋을 갱신한다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -605,7 +605,7 @@ describe("DraggableBottomSheet", () => {
     expect(lastState.offset).toBe(240);
   });
 
-  it("keeps interactive controls clickable instead of starting sheet dragging", () => {
+  it("누를 수 있는 컨트롤은 시트를 끌지 않고 눌리게 둔다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -627,7 +627,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleLiveOffsetChange).not.toHaveBeenCalled();
   });
 
-  it("ignores secondary pointer buttons when starting sheet dragging", () => {
+  it("주 버튼이 아닌 포인터로는 시트를 끌지 않는다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -650,7 +650,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleLiveOffsetChange).not.toHaveBeenCalled();
   });
 
-  it("keeps scrollable content gestures inside the content while it can scroll", () => {
+  it("더 스크롤될 수 있으면 콘텐츠의 제스처를 콘텐츠에 남긴다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -676,7 +676,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleLiveOffsetChange).not.toHaveBeenCalled();
   });
 
-  it("starts sheet dragging from scrollable content at its edge", () => {
+  it("콘텐츠가 끝에 닿으면 시트를 끌기 시작한다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -702,7 +702,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleLiveOffsetChange).toHaveBeenCalled();
   });
 
-  it("settles by animating the offset to a configured snap", () => {
+  it("정해진 스냅까지 오프셋을 움직여 안착시킨다", () => {
     render(
       <DraggableBottomSheet
         minSnapPoint={40}
@@ -723,7 +723,7 @@ describe("DraggableBottomSheet", () => {
     expect(animateTargets.at(-1)).toBe(480);
   });
 
-  it("uses the mini snap between half and dismiss", () => {
+  it("하프와 dismiss 사이에서는 미니를 쓴다", () => {
     const handleSnapChange = vi.fn();
 
     render(
@@ -747,7 +747,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).toHaveBeenCalledWith(480);
   });
 
-  it("settles to an external snap request", () => {
+  it("밖에서 온 스냅 요청 자리로 안착한다", () => {
     const handleSnapChange = vi.fn();
 
     const { rerender } = render(
@@ -779,7 +779,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).toHaveBeenLastCalledWith(480);
   });
 
-  it("does not replay an already consumed snap request after remounting", () => {
+  it("리마운트해도 이미 처리한 스냅 요청을 다시 재생하지 않는다", () => {
     const handleSnapChange = vi.fn();
     const snapRequest = { id: 1, snapPoint: 480 };
     const renderSheet = (
@@ -814,7 +814,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).not.toHaveBeenCalled();
   });
 
-  it("still settles to a snap request that arrives after remounting", () => {
+  it("리마운트 뒤에 온 스냅 요청에는 안착한다", () => {
     const handleSnapChange = vi.fn();
     const renderSheet = (
       sheetKey: string,
@@ -845,7 +845,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).toHaveBeenLastCalledWith(40);
   });
 
-  it("reports live offset changes while dragging", () => {
+  it("끄는 동안 라이브 오프셋 변화를 알린다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -874,7 +874,7 @@ describe("DraggableBottomSheet", () => {
     expect(lastState.snapPoints).toEqual([40, 240, 480, 720]);
   });
 
-  it("applies drag sensitivity to live dragging", () => {
+  it("끄는 동안 드래그 감도를 반영한다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -902,7 +902,7 @@ describe("DraggableBottomSheet", () => {
     expect(lastState.offset).toBe(384);
   });
 
-  it("re-clamps the current offset when snap bounds change", () => {
+  it("스냅 경계가 바뀌면 현재 오프셋을 다시 가둔다", () => {
     const handleLiveOffsetChange = vi.fn();
     const { rerender } = render(
       <DraggableBottomSheet
@@ -934,7 +934,7 @@ describe("DraggableBottomSheet", () => {
     expect(lastState.offset).toBe(500);
   });
 
-  it("calls onDismiss when the sheet reaches the dismiss snap", () => {
+  it("시트가 dismiss 자리에 닿으면 onDismiss 를 부른다", () => {
     const handleDismiss = vi.fn();
     const handleSnapChange = vi.fn();
 

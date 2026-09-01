@@ -55,7 +55,7 @@ const getButtonByText = (name: string) => {
 };
 
 describe("SearchFilterBottomSheet", () => {
-  it("resolves filter sheet snaps without a half step by default", () => {
+  it("필터 시트는 기본으로 하프 없이 스냅을 정한다", () => {
     expect(resolveSearchFilterSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 788,
       miniSnapPoint: undefined,
@@ -64,7 +64,7 @@ describe("SearchFilterBottomSheet", () => {
     });
   });
 
-  it("fits full height to content while keeping the previous full height as the maximum", () => {
+  it("full 높이를 콘텐츠에 맞추되 이전 높이를 상한으로 둔다", () => {
     // 812 - 560 - 손잡이 24 - 아래 여유 32 = 196
     expect(
       resolveSearchFilterSnapPoints({
@@ -79,7 +79,7 @@ describe("SearchFilterBottomSheet", () => {
     });
   });
 
-  it("keeps the legacy filter snap calculation available for rollback", () => {
+  it("되돌릴 수 있도록 예전 필터 스냅 계산을 남겨 둔다", () => {
     expect(resolveLegacySearchFilterSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 788,
       miniSnapPoint: 420,
@@ -94,7 +94,7 @@ describe("SearchFilterBottomSheet", () => {
     ).toEqual(resolveLegacySearchFilterSnapPoints({ windowHeight: 812 }));
   });
 
-  it("applies selected indoor/outdoor and place filters", () => {
+  it("고른 실내·실외와 장소 필터를 적용한다", () => {
     setLanguageTag("ko");
     const handleApply = vi.fn();
 
@@ -120,7 +120,7 @@ describe("SearchFilterBottomSheet", () => {
     });
   });
 
-  it("restores previously applied filter values when reopened", () => {
+  it("다시 열면 먼저 적용한 필터 값을 되살린다", () => {
     setLanguageTag("ko");
 
     render(

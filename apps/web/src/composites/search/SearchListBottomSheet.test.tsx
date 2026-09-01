@@ -170,7 +170,7 @@ describe("SearchListBottomSheet", () => {
     }
   });
 
-  it("resolves search-list snaps from visible heights", () => {
+  it("보이는 높이에서 목록 시트의 스냅을 정한다", () => {
     expect(resolveSearchListSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 760,
       miniSnapPoint: 633,
@@ -179,7 +179,7 @@ describe("SearchListBottomSheet", () => {
     });
   });
 
-  it("caps responsive visible heights on taller screens", () => {
+  it("화면이 높아도 보이는 높이에 상한을 둔다", () => {
     expect(
       resolveSearchListVisibleHeight({
         maxVisibleHeight: 481,
@@ -196,7 +196,7 @@ describe("SearchListBottomSheet", () => {
     ).toBe(481);
   });
 
-  it("keeps the legacy snap calculation available for rollback", () => {
+  it("되돌릴 수 있도록 예전 스냅 계산을 남겨 둔다", () => {
     expect(resolveLegacySearchListSnapPoints({ windowHeight: 812 })).toEqual({
       maxSnapPoint: 768,
       miniSnapPoint: 549.5,
@@ -258,7 +258,7 @@ describe("SearchListBottomSheet", () => {
     );
   });
 
-  it("passes detail-style snap props to the draggable sheet by default", () => {
+  it("기본으로 상세와 같은 방식의 스냅 값을 시트에 넘긴다", () => {
     render(<SearchListBottomSheet searchQuery="강남" items={[]} />);
 
     expect(draggableBottomSheetMock).toHaveBeenCalledWith(
@@ -274,7 +274,7 @@ describe("SearchListBottomSheet", () => {
     );
   });
 
-  it("passes legacy snap props only when explicitly requested", () => {
+  it("예전 스냅 값은 명시적으로 요청할 때만 넘긴다", () => {
     render(
       <SearchListBottomSheet
         searchQuery="강남"
@@ -293,7 +293,7 @@ describe("SearchListBottomSheet", () => {
     );
   });
 
-  it("keeps caller-provided snap bounds", () => {
+  it("부르는 쪽이 준 스냅 경계를 지킨다", () => {
     expect(
       resolveSearchListSnapPoints({
         windowHeight: 812,
@@ -311,7 +311,7 @@ describe("SearchListBottomSheet", () => {
     });
   });
 
-  it("resolves the nearest search-list snap stage", () => {
+  it("목록 시트에서 가장 가까운 단계를 찾는다", () => {
     expect(
       resolveSearchListSnapStage({
         maxSnapPoint: 760,
@@ -323,7 +323,7 @@ describe("SearchListBottomSheet", () => {
     ).toBe("mini");
   });
 
-  it("passes stage snap requests as concrete snap points", () => {
+  it("단계 요청을 실제 스냅 지점으로 바꿔 넘긴다", () => {
     render(
       <SearchListBottomSheet
         searchQuery="媛뺣궓"
@@ -342,7 +342,7 @@ describe("SearchListBottomSheet", () => {
     );
   });
 
-  it("keeps filter and sort controls visible when active filters return no lockers", () => {
+  it("필터 결과가 비어도 필터·정렬 컨트롤은 남긴다", () => {
     setLanguageTag("ko");
     const handleResetFilter = vi.fn();
 
