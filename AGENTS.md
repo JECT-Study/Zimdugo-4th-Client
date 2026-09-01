@@ -151,6 +151,13 @@ Record:
 - 커밋을 스테이징하기 전에 커밋 범위를 검토하고 관련 gstack 피드백 단계를 실행한다. 보안, 의존성, 인증, 인프라, 환경, CI/CD, 데이터 노출과 관련된 변경은 CSO 리뷰를 사용하고, 일반 구현과 UI 변경은 코드 리뷰 또는 디자인 리뷰를 사용한다.
 - 각 커밋은 독립적으로 리뷰, 되돌리기, 설명이 가능할 만큼 작게 유지한다.
 
+#### 검증 명령의 함정
+
+둘 다 조용히 통과하거나 조용히 잘못된 오류를 내서, 깨진 채로 CI 에 올라간 적이 있다.
+
+- **타입 검사는 `pnpm --filter web typecheck` 로 돌린다.** `tsc --noEmit` 을 직접 부르면 `pretypecheck` 가 건너뛰어져 paraglide 메시지가 생성되지 않는다. i18n 키가 추가된 뒤에는 "존재하지 않는 속성"이라는 잘못된 오류가 쏟아진다. 같은 이유로 `test`·`dev`·`build` 도 각각의 `pre*` 훅을 타는 스크립트로 부른다.
+- **Biome 은 저장소 루트에서 돌린다.** `apps/web` 안에서 `pnpm exec biome check apps/web/src` 를 돌리면 `apps/web/apps/web/src` 라는 없는 경로를 검사하고 아무 말 없이 통과한다.
+
 ### Functions
 
 #### Components
