@@ -342,7 +342,7 @@ describe("SearchListBottomSheet", () => {
     );
   });
 
-  it("필터 결과가 비어도 필터·정렬 컨트롤은 남긴다", () => {
+  it("적용한 필터의 결과가 비어도 필터·정렬 컨트롤은 남긴다", () => {
     setLanguageTag("ko");
     const handleResetFilter = vi.fn();
 

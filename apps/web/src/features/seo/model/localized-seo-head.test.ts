@@ -47,7 +47,7 @@ describe("로케일별 SEO 주소 헬퍼", () => {
     expect(getSeoPathname({ pathname: "/notices" })).toBe("/notices");
   });
 
-  it("한국어 SEO 메타를 빼면 서비스 이름을 영문으로 둔다", () => {
+  it("한국어가 아니면 서비스 이름을 영문으로 둔다", () => {
     expect(getSeoSiteName("ko")).toBe("\uC9D0\uB450\uACE0 (Zimdugo)");
     expect(getSeoSiteName("en")).toBe("Zimdugo");
     expect(getSeoSiteName("ja")).toBe("Zimdugo");

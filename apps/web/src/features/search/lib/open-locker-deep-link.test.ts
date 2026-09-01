@@ -138,7 +138,7 @@ describe("createLockerShareText", () => {
     ).toBe(true);
   });
 
-  it("어느 언어에서도 주소가 읽히고 끝에 빈 줄이 남지 않는다", () => {
+  it("주소에 비 ASCII 가 있어도 읽히게 남기고 끝에 빈 줄을 두지 않는다", () => {
     const shareText = createLockerShareText({
       locale: "en",
       url: "https://zimdugo-web.vercel.app/?locker=77-%E6%96%B0%E5%AE%BF-%E3%83%AD%E3%83%83%E3%82%AB%E3%83%BC",

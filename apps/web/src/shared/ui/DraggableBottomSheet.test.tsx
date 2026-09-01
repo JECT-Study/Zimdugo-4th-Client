@@ -845,7 +845,7 @@ describe("DraggableBottomSheet", () => {
     expect(handleSnapChange).toHaveBeenLastCalledWith(40);
   });
 
-  it("끄는 동안 라이브 오프셋 변화를 알린다", () => {
+  it("끌고 있는 동안 라이브 오프셋 변화를 알린다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(
@@ -874,7 +874,7 @@ describe("DraggableBottomSheet", () => {
     expect(lastState.snapPoints).toEqual([40, 240, 480, 720]);
   });
 
-  it("끄는 동안 드래그 감도를 반영한다", () => {
+  it("끌고 있는 동안 드래그 감도를 반영한다", () => {
     const handleLiveOffsetChange = vi.fn();
 
     render(

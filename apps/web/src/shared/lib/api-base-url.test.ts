@@ -12,7 +12,7 @@ describe("normalizeApiBaseUrl", () => {
     );
   });
 
-  it("출처 끝의 슬래시를 걷어낸다", () => {
+  it("기준 주소 끝의 슬래시를 걷어낸다", () => {
     expect(normalizeApiBaseUrl(" https://api.example.com// ")).toBe(
       "https://api.example.com",
     );

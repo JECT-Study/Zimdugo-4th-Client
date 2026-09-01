@@ -377,7 +377,7 @@ All Messages should be written in Korean
 - 괄호 스코프를 쓰지 않는다. `feat(ui):` `fix(payment):` ❌ → `feat:` `fix:` ✅
 - **제목은 명사형으로 끝낸다.** 문장형(`~한다`, `~했다`)을 쓰지 않는다.
 
-```
+```text
 <type>: <제목 (명사형 종결, 50자 이내, 마침표 없음)>
 
 <본문 (선택)>
@@ -389,7 +389,7 @@ All Messages should be written in Korean
 
 `main` 의 히스토리는 명사형으로 일관돼 있다. 작업 브랜치에서 문장형으로 적었다가 그대로 올라오는 일이 반복된다.
 
-```
+```text
 ✅ fix: 되돌아가는 길을 히스토리 되감기로 통일
 ✅ refactor: 지도가 가려지는 영역을 방향 있는 값으로
 ✅ feat: 목록 시트 full 을 콘텐츠 높이 기준으로
@@ -420,13 +420,13 @@ All Messages should be written in Korean
 
 #### Examples
 
-```
+```text
 feat: 캠페인 목록 필터 추가
 fix: 모바일 네비게이션 레이아웃 깨짐 수정
 chore: TanStack Query v5로 업그레이드
 ```
 
-```
+```text
 fix: 가상계좌 결제 완료 후 상태 미갱신 수정
 
 결제 완료 웹훅 수신 후 쿼리 캐시를 invalidate하지 않아
@@ -440,7 +440,7 @@ PR 제목은 커밋 제목과 **같은 규칙**을 쓴다. 한국어, 타입 접
 
 스쿼시 머지라 PR 제목이 그대로 `main` 의 커밋 제목이 된다. 여기서 어긋나면 히스토리에 남는다.
 
-```
+```text
 ✅ fix: 장소 목록으로 갈아탈 때 남던 상세 파라미터 정리
 ✅ test: 검색 경로 e2e
 
@@ -457,7 +457,7 @@ PR 제목은 커밋 제목과 **같은 규칙**을 쓴다. 한국어, 타입 접
 
 ### Branch Strategy (Git Flow)
 
-```
+```text
 main
 └── develop
     ├── feat/...
@@ -481,7 +481,7 @@ main
 
 #### Branch Naming
 
-```
+```text
 <type>/<kebab-case-description>
 
 # Examples
@@ -501,7 +501,7 @@ fix/87-pagination-error
 
 #### PR Body Template
 
-```
+```text
 ### 변경 사항
 <!-- 무엇을 변경했는지 간략히 작성 -->
 
