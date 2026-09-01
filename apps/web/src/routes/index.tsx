@@ -650,7 +650,7 @@ export function IndexPage() {
   const syncSearchQueryUrl = useCallback(
     (
       query: string | null | undefined,
-      options: { replace?: boolean; searchPlaceId?: number | null } = {},
+      options: { searchPlaceId?: number | null } = {},
     ) => {
       const nextQuery = readSearchQueryParam(query);
       const currentQuery = searchQueryFromUrl;
@@ -671,7 +671,9 @@ export function IndexPage() {
             withSearchQueryParam(prev, nextQuery),
             nextSearchPlaceId,
           ),
-        replace: options.replace,
+        // 홈은 시트·컨텍스트 상태를 URL 파라미터로 표현할 뿐이라 push 하면
+        // 검색어를 바꿀 때마다 히스토리가 쌓인다. 상태 표현은 항상 replace 다.
+        replace: true,
       });
     },
     [navigate, searchPlaceIdFromUrl, searchQueryFromUrl],
@@ -683,10 +685,7 @@ export function IndexPage() {
     [],
   );
   const setConfirmedSearchQuery = useCallback(
-    (
-      query: string,
-      options: { replace?: boolean; searchPlaceId?: number | null } = {},
-    ) => {
+    (query: string, options: { searchPlaceId?: number | null } = {}) => {
       setSearchQuery(query);
       syncSearchQueryUrl(query, options);
     },
@@ -1632,7 +1631,13 @@ export function IndexPage() {
   }, [lockerIdFromQuery]);
 
   const clearLockerDetailUrl = useCallback(() => {
-    void navigate({ to: ".", search: withoutLockerDetailParams });
+    // 상세를 닫는 동작이다. push 하면 뒤로가기를 눌렀는데 앞으로 한 칸
+    // 나아가는 꼴이 되어, 되돌아가려면 그만큼 더 눌러야 한다.
+    void navigate({
+      to: ".",
+      search: withoutLockerDetailParams,
+      replace: true,
+    });
   }, [navigate]);
 
   const resetMapContext = useCallback(() => {
@@ -1679,6 +1684,8 @@ export function IndexPage() {
         delete next.focusLng;
         return next;
       },
+      // 검색 컨텍스트를 빠져나오는 정리 동작이라 되돌아갈 지점이 아니다.
+      replace: true,
     });
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
@@ -1991,13 +1998,7 @@ export function IndexPage() {
   );
 
   const syncLockerDetailUrl = useCallback(
-    (
-      lockerId: number,
-      title?: string,
-      options?: {
-        replace?: boolean;
-      },
-    ) => {
+    (lockerId: number, title?: string) => {
       const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
 
       void navigate({
@@ -2006,7 +2007,9 @@ export function IndexPage() {
           String(prev.locker ?? "") === lockerSlug
             ? prev
             : withLockerDetailParam(prev, lockerSlug),
-        replace: options?.replace,
+        // push 하면 뒤로가기가 이 항목으로 되돌아오고, 복원된 URL 을 보고
+        // 상세가 다시 열리면서 또 push 한다. 뒤로가기가 제자리를 맴돌게 된다.
+        replace: true,
       });
     },
     [navigate],
@@ -2720,6 +2723,9 @@ export function IndexPage() {
         void navigate({
           to: ".",
           search: (prev: SearchUrlParams) => withSearchPlaceIdParam(prev, id),
+          // 목록으로 돌아가는 길은 handleBackToKeywordList 가 맡는다.
+          // 여기서 push 하면 핀을 고를 때마다 히스토리만 쌓인다.
+          replace: true,
         });
         setActiveLockerId(null);
         setSearchDetailBack(null);
@@ -2901,6 +2907,9 @@ export function IndexPage() {
     setSelectedMapPinOffset(null);
     setIsNavigationPopupOpen(false);
 
+    // 이 핸들러는 "뒤로"다. push 하면 뒤로가기를 누를수록 히스토리가 늘어
+    // 원래 화면으로 돌아가려면 그만큼 더 눌러야 한다. 상세를 여닫는 것은
+    // 히스토리 단계가 아니라 같은 화면의 상태 변화이므로 replace 로 되돌린다.
     if (context === "map") {
       if (mapDetailBack === "idle") {
         resetMapContext();
@@ -2908,6 +2917,7 @@ export function IndexPage() {
           void navigate({
             to: ".",
             search: withoutLockerParam,
+            replace: true,
           });
         }
         return;
@@ -2918,6 +2928,7 @@ export function IndexPage() {
         void navigate({
           to: ".",
           search: withoutLockerParam,
+          replace: true,
         });
       }
       return;
@@ -2933,6 +2944,7 @@ export function IndexPage() {
       void navigate({
         to: ".",
         search: withoutLockerParam,
+        replace: true,
       });
     }
   }, [
@@ -3023,9 +3035,7 @@ export function IndexPage() {
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title, {
-      replace: true,
-    });
+    syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title);
 
     if (
       isPendingFocusRef.current &&
