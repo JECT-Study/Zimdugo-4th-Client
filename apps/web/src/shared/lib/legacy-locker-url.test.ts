@@ -16,19 +16,19 @@ import { parseSearchString } from "#/shared/lib/search-serialization";
 const at = (href: string) => new URL(href, "https://zimdugo.com");
 
 describe("resolveLegacyLockerPath", () => {
-  it("moves the sitemap shape onto the locker route", () => {
+  it("사이트맵이 내는 모양을 보관함 경로로 옮긴다", () => {
     expect(resolveLegacyLockerPath(at("/?locker=164-강남역-4번-출구"))).toBe(
       `/lockers/${encodeURIComponent("164-강남역-4번-출구")}`,
     );
   });
 
-  it("moves the deep link shape onto the locker route", () => {
+  it("딥링크 모양을 보관함 경로로 옮긴다", () => {
     expect(resolveLegacyLockerPath(at("/?openLockerId=164"))).toBe(
       "/lockers/164",
     );
   });
 
-  it("keeps the locale prefix on the destination", () => {
+  it("목적지에도 로케일 접두사를 남긴다", () => {
     for (const prefix of ["/en", "/ja", "/zh", "/zh-TW"]) {
       expect(resolveLegacyLockerPath(at(`${prefix}/?locker=164`))).toBe(
         `${prefix}/lockers/164`,
@@ -36,26 +36,26 @@ describe("resolveLegacyLockerPath", () => {
     }
   });
 
-  it("carries the remaining search state to the destination", () => {
+  it("남은 검색 상태를 목적지로 옮긴다", () => {
     expect(
       resolveLegacyLockerPath(at("/?locker=164&q=강남&detailSnap=full")),
     ).toBe(`/lockers/164?q=${encodeURIComponent("강남")}&detailSnap=full`);
   });
 
-  it("drops the place list param that cannot coexist with a detail", () => {
+  it("상세와 공존할 수 없는 장소 목록 파라미터는 뗀다", () => {
     // 구 구조가 만들 수 있었던 모순된 주소(#215). 목적지는 하나여야 한다.
     expect(resolveLegacyLockerPath(at("/?locker=164&searchPlaceId=900"))).toBe(
       "/lockers/164",
     );
   });
 
-  it("prefers the indexed param when both detail params are present", () => {
+  it("상세 파라미터가 둘 다 있으면 색인된 쪽을 고른다", () => {
     expect(
       resolveLegacyLockerPath(at("/?locker=164-강남&openLockerId=999")),
     ).toBe(`/lockers/${encodeURIComponent("164-강남")}`);
   });
 
-  it("leaves addresses that are not a legacy detail alone", () => {
+  it("구 상세 주소가 아니면 그대로 둔다", () => {
     expect(resolveLegacyLockerPath(at("/"))).toBeNull();
     expect(resolveLegacyLockerPath(at("/?q=강남"))).toBeNull();
     expect(resolveLegacyLockerPath(at("/?searchPlaceId=900"))).toBeNull();
@@ -63,7 +63,7 @@ describe("resolveLegacyLockerPath", () => {
     expect(resolveLegacyLockerPath(at("/en/notices?locker=164"))).toBeNull();
   });
 
-  it("rejects ids that were never valid", () => {
+  it("애초에 유효하지 않은 id 는 받지 않는다", () => {
     expect(resolveLegacyLockerPath(at("/?locker=0"))).toBeNull();
     expect(resolveLegacyLockerPath(at("/?locker=-1"))).toBeNull();
     expect(resolveLegacyLockerPath(at("/?locker=abc"))).toBeNull();
@@ -76,7 +76,7 @@ describe("resolveLegacyLockerPath", () => {
    * 구 파라미터를 읽던 정규식은 하이픈 뒤를 무엇이든 받았다. 그 모양이 경로로
    * 그대로 넘어가면 다른 라우트나 다른 출처로 새어 나간다.
    */
-  it("keeps an unsafe slug inside the locker route by dropping the name", () => {
+  it("경로에 위험한 슬러그는 이름을 버리고 보관함 경로 안에 남긴다", () => {
     // 오늘 열리는 주소이므로 목적지는 있어야 한다. 다만 이름은 버리고 id 만 남는다.
     expect(resolveLegacyLockerPath(at("/?locker=164-a/b"))).toBe(
       "/lockers/164",
@@ -89,7 +89,7 @@ describe("resolveLegacyLockerPath", () => {
     );
   });
 
-  it("never returns a protocol relative destination", () => {
+  it("프로토콜 상대 주소를 목적지로 내지 않는다", () => {
     for (const href of [
       "/?locker=164",
       "/en/?locker=164",
@@ -106,7 +106,7 @@ describe("resolveLegacyLockerPath", () => {
 });
 
 describe("parseLegacyLockerUrl", () => {
-  it("reports the locker id the destination stands for", () => {
+  it("목적지가 가리키는 보관함 id 를 알려 준다", () => {
     expect(parseLegacyLockerUrl(at("/?locker=164-강남역"))?.lockerId).toBe(164);
     expect(parseLegacyLockerUrl(at("/?openLockerId=164"))?.lockerId).toBe(164);
   });
@@ -118,7 +118,7 @@ describe("parseLegacyLockerUrl", () => {
  * 규칙이 맞는지는 사이트맵과 canonical 이 지금 뱉는 모양으로만 확인할 수 있다.
  * 생성 쪽이 바뀌면 이 테스트가 먼저 깨져야 한다.
  */
-describe("round trip against the URLs we actually publish", () => {
+describe("실제로 내보내는 주소로 왕복해 본다", () => {
   const LOCKER_TITLE = "강남역 4번 출구 B1층";
 
   const SEO_LOCKERS: SeoLockerItem[] = [
@@ -134,7 +134,7 @@ describe("round trip against the URLs we actually publish", () => {
     },
   ];
 
-  it("maps every locker URL in the sitemap onto the locker route", () => {
+  it("사이트맵의 보관함 주소를 모두 보관함 경로로 옮긴다", () => {
     const xml = createSitemapXml(SEO_LOCKERS, []);
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
       (match) => match[1],
@@ -155,7 +155,7 @@ describe("round trip against the URLs we actually publish", () => {
     }
   });
 
-  it("maps the canonical URL of every locale onto the locker route", () => {
+  it("모든 로케일의 canonical 주소를 보관함 경로로 옮긴다", () => {
     for (const locale of ["ko", "en", "ja", "zh", "zh-TW"] as const) {
       const canonical = createLockerCanonicalUrl({
         lockerId: 515,
@@ -180,7 +180,7 @@ describe("round trip against the URLs we actually publish", () => {
  * 홈 라우트가 상세로 인정하는 값이면 목적지가 반드시 있어야 한다. 판정 함수를 함께
  * 쓰므로 지금은 성립하지만, 누가 한쪽에 예외를 더하면 여기서 먼저 깨진다.
  */
-describe("agreement with the parser the home route uses", () => {
+describe("홈 라우트가 쓰는 판정과 어긋나지 않는지", () => {
   const RAW_LOCKER_VALUES = [
     "164",
     "164-강남역",
@@ -236,18 +236,18 @@ describe("agreement with the parser the home route uses", () => {
  * 규칙이 홈 라우트보다 엄격하면 오늘 열리던 주소가 전환 뒤 조용히 홈으로 떨어진다.
  * 주소를 읽는 세 단계가 모두 홈과 같은 함수를 쓰는지 여기서 고정한다.
  */
-describe("agreement with how the router reads an address", () => {
+describe("라우터가 주소를 읽는 방식과 어긋나지 않는지", () => {
   /**
    * 라우터는 값마다 JSON 으로 읽어 본다(`router.tsx` 의 parseSearch).
    * 원시 문자열을 보면 같은 주소를 라우터와 다르게 해석하게 된다.
    */
-  it("reads a JSON-ish value the way the router does", () => {
+  it("JSON 으로 읽히는 값을 라우터와 같게 읽는다", () => {
     // `1e3` 은 JSON 으로 읽으면 숫자 1000 이다. 홈도 1000 번을 연다.
     expect(parseSearchString("?locker=1e3").locker).toBe(1000);
     expect(resolveLegacyLockerPath(at("/?locker=1e3"))).toBe("/lockers/1000");
   });
 
-  it("keeps the last value when a key repeats, as the router does", () => {
+  it("같은 키가 겹치면 라우터처럼 마지막 값을 남긴다", () => {
     expect(parseSearchString("?locker=164&locker=999").locker).toBe(999);
     expect(resolveLegacyLockerPath(at("/?locker=164&locker=999"))).toBe(
       "/lockers/999",
@@ -259,7 +259,7 @@ describe("agreement with how the router reads an address", () => {
    * `12.5` 도 홈에서는 상세로 간다. 규칙만 `locker` 문법으로 다시 재면 그런 주소가
    * 여기서만 탈락한다. 각자의 파서가 낸 결과를 그대로 쓴다.
    */
-  it("follows the deep link parser for openLockerId, not the slug syntax", () => {
+  it("openLockerId 는 슬러그 문법이 아니라 딥링크 파서를 따른다", () => {
     expect(
       parseOpenLockerDeepLinkSearch({ openLockerId: "12.5" }).openLockerId,
     ).toBe(12.5);
@@ -268,7 +268,7 @@ describe("agreement with how the router reads an address", () => {
     );
   });
 
-  it("carries the remaining query back out the way the router writes it", () => {
+  it("남은 쿼리를 라우터가 쓰는 방식 그대로 되돌려 낸다", () => {
     const path = resolveLegacyLockerPath(
       at("/?locker=164&q=강남&detailSnap=full"),
     );

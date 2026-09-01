@@ -19,7 +19,7 @@ describe("getLockerPins", () => {
     vi.mocked(httpGet).mockReset();
   });
 
-  it("keeps single pins when the server sends LOCKER instead of CLUSTER", async () => {
+  it("서버가 CLUSTER 대신 LOCKER 를 줘도 단일 핀으로 둔다", async () => {
     vi.mocked(httpGet).mockResolvedValue(
       mockPinResponse([
         {
@@ -56,7 +56,7 @@ describe("getLockerPins", () => {
     ]);
   });
 
-  it("normalizes single-count CLUSTER responses with lockerId to LOCKER", async () => {
+  it("개수가 1 이고 lockerId 가 있는 CLUSTER 는 LOCKER 로 고친다", async () => {
     vi.mocked(httpGet).mockResolvedValue(
       mockPinResponse([
         {
@@ -100,7 +100,7 @@ describe("getLockerPins", () => {
     ]);
   });
 
-  it("keeps valid multi-count CLUSTER responses with bounds", async () => {
+  it("범위를 가진 다중 CLUSTER 는 그대로 둔다", async () => {
     const bounds = {
       swLat: 37.49,
       swLng: 126.99,
@@ -145,7 +145,7 @@ describe("getLockerPins", () => {
     ]);
   });
 
-  it("normalizes single-count CLUSTER responses with placeId to PLACE", async () => {
+  it("개수가 1 이고 placeId 가 있는 CLUSTER 는 PLACE 로 고친다", async () => {
     vi.mocked(httpGet).mockResolvedValue(
       mockPinResponse([
         {
@@ -189,7 +189,7 @@ describe("getLockerPins", () => {
     ]);
   });
 
-  it("drops single-count CLUSTER responses without a lockerId or placeId", async () => {
+  it("id 가 없는 단일 CLUSTER 는 버린다", async () => {
     vi.mocked(httpGet).mockResolvedValue(
       mockPinResponse([
         {
@@ -215,7 +215,7 @@ describe("getLockerPins", () => {
     ).resolves.toEqual([]);
   });
 
-  it("forwards keyword pin search params to the pins API", async () => {
+  it("키워드 핀 검색 파라미터를 pins API 로 넘긴다", async () => {
     vi.mocked(httpGet).mockResolvedValue(mockPinResponse([]));
 
     await getLockerPins({

@@ -44,7 +44,7 @@ const getTransitionVisibility = (
       router.state.matches.at(-1)?.pathname,
   });
 
-describe("page transition router integration", () => {
+describe("페이지 전환과 라우터 연동", () => {
   it("programmatic pathname navigation 동안 Router 상태로 표시하고 완료 시 종료한다", async () => {
     const router = createTransitionTestRouter();
     await router.load();

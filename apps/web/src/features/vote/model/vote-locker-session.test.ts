@@ -16,7 +16,7 @@ import {
 } from "./vote-locker-session";
 
 describe("vote-locker-session", () => {
-  it("converts server boolean flags to effective vote", () => {
+  it("서버가 준 불리언을 실제 투표 값으로 바꾼다", () => {
     expect(
       serverVoteStateToEffective({
         isAccurateVoted: true,
@@ -37,7 +37,7 @@ describe("vote-locker-session", () => {
     ).toBeNull();
   });
 
-  it("keeps the server vote when the same vote is clicked again", () => {
+  it("같은 투표를 다시 누르면 서버 값을 유지한다", () => {
     const pending = toggleVotePending(new Map(), 1, "CORRECT", {
       isAccurateVoted: true,
       isInaccurateVoted: false,
@@ -49,7 +49,7 @@ describe("vote-locker-session", () => {
     });
   });
 
-  it("uses the clicked vote when a different vote is selected", () => {
+  it("다른 투표를 고르면 누른 쪽을 쓴다", () => {
     const pending = toggleVotePending(new Map(), 1, "INCORRECT", {
       isAccurateVoted: true,
       isInaccurateVoted: false,
@@ -63,7 +63,7 @@ describe("vote-locker-session", () => {
     ).toBe("INCORRECT");
   });
 
-  it("converts effective vote to UI flags", () => {
+  it("실제 투표 값을 화면용 플래그로 바꾼다", () => {
     const pending: LockerVotePending = new Map([
       [1, { nextVote: "CORRECT", serverVote: "INCORRECT" }],
     ]);
@@ -76,7 +76,7 @@ describe("vote-locker-session", () => {
     ).toEqual(effectiveVoteToServerState("CORRECT"));
   });
 
-  it("keeps undefined counts when server does not provide them", () => {
+  it("서버가 개수를 주지 않으면 비운 채로 둔다", () => {
     expect(
       getEffectiveVoteCounts(new Map(), 1, {
         isAccurateVoted: false,
@@ -89,7 +89,7 @@ describe("vote-locker-session", () => {
     });
   });
 
-  it("applies pending vote to counts optimistically", () => {
+  it("대기 중인 투표를 개수에 미리 반영한다", () => {
     const pending = toggleVotePending(new Map(), 1, "CORRECT", {
       isAccurateVoted: false,
       isInaccurateVoted: false,
@@ -108,7 +108,7 @@ describe("vote-locker-session", () => {
     });
   });
 
-  it("builds flush operations only for server differences", () => {
+  it("서버와 다른 것만 반영 작업으로 만든다", () => {
     const pending: LockerVotePending = new Map([
       [1, { nextVote: "CORRECT", serverVote: null }],
       [2, { nextVote: null, serverVote: "CORRECT" }],
@@ -119,7 +119,7 @@ describe("vote-locker-session", () => {
     ]);
   });
 
-  it("keeps cancel operations when the server cache is missing", () => {
+  it("서버 캐시가 없어도 취소 작업은 남긴다", () => {
     const pending: LockerVotePending = new Map([
       [2, { nextVote: null, serverVote: "CORRECT" }],
     ]);
@@ -129,7 +129,7 @@ describe("vote-locker-session", () => {
     ]);
   });
 
-  it("computes detail cache patch after flush", () => {
+  it("반영 뒤 상세 캐시에 적용할 값을 계산한다", () => {
     expect(
       computeVoteDetailAfterFlush(
         {
@@ -147,7 +147,7 @@ describe("vote-locker-session", () => {
     });
   });
 
-  it("rolls back unchanged failed pending entries", () => {
+  it("실패한 뒤 그대로인 대기 항목은 되돌린다", () => {
     const firstEntry: LockerVotePendingEntry = {
       nextVote: "CORRECT",
       serverVote: null,
@@ -170,7 +170,7 @@ describe("vote-locker-session", () => {
     );
   });
 
-  it("keeps pending entries changed after failed flush started", () => {
+  it("반영이 실패해도 그 뒤에 바뀐 대기 항목은 남긴다", () => {
     const changedEntry: LockerVotePendingEntry = {
       nextVote: "INCORRECT",
       serverVote: null,

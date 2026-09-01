@@ -18,28 +18,28 @@ const readLocaleCookie = () => {
 };
 
 describe("getLocalizedHref", () => {
-  it("adds the locale prefix for non-base languages", () => {
+  it("base 가 아닌 언어에는 로케일 접두사를 붙인다", () => {
     expect(getLocalizedHref("/settings", "en")).toBe("/en/settings");
     expect(getLocalizedHref("/", "ja")).toBe("/ja");
     expect(getLocalizedHref("/notices/1", "zh-TW")).toBe("/zh-TW/notices/1");
   });
 
-  it("strips the locale prefix for the base language", () => {
+  it("base 언어에서는 로케일 접두사를 뗀다", () => {
     expect(getLocalizedHref("/en/settings", "ko")).toBe("/settings");
     expect(getLocalizedHref("/ja", "ko")).toBe("/");
   });
 
-  it("replaces an existing locale prefix", () => {
+  it("이미 있는 로케일 접두사를 갈아 끼운다", () => {
     expect(getLocalizedHref("/en/settings", "ja")).toBe("/ja/settings");
   });
 
-  it("keeps the search string and hash", () => {
+  it("쿼리와 해시를 지킨다", () => {
     expect(getLocalizedHref("/settings?tab=language#current", "en")).toBe(
       "/en/settings?tab=language#current",
     );
   });
 
-  it("keeps absolute hrefs absolute", () => {
+  it("절대 주소는 절대 주소로 둔다", () => {
     expect(getLocalizedHref("https://zimdugo.com/settings", "en")).toBe(
       "https://zimdugo.com/en/settings",
     );
@@ -60,20 +60,20 @@ describe("setAppLanguage", () => {
     clearLocaleCookie();
   });
 
-  it("writes the selected language to the locale cookie", () => {
+  it("고른 언어를 로케일 쿠키에 적는다", () => {
     setAppLanguage("en");
 
     expect(readLocaleCookie()).toBe("en");
   });
 
-  it("overwrites a previously stored preference", () => {
+  it("먼저 저장된 선호를 덮어쓴다", () => {
     setAppLanguage("en");
     setAppLanguage("zh-TW");
 
     expect(readLocaleCookie()).toBe("zh-TW");
   });
 
-  it("ignores values outside the supported locales", () => {
+  it("지원하지 않는 값은 무시한다", () => {
     setAppLanguage("fr" as never);
 
     expect(readLocaleCookie()).toBeNull();

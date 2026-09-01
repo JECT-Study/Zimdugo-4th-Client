@@ -5,7 +5,7 @@ import {
 } from "./useReportForm";
 
 describe("isReportSubmitEnabled", () => {
-  it("requires EXIF consent before enabling submit", () => {
+  it("EXIF 동의 전에는 제출을 열지 않는다", () => {
     expect(
       isReportSubmitEnabled({
         areRequiredFieldsComplete: true,
@@ -23,7 +23,7 @@ describe("isReportSubmitEnabled", () => {
     ).toBe(true);
   });
 
-  it("keeps submit disabled until required fields are complete", () => {
+  it("필수 항목이 다 차기 전에는 제출을 막는다", () => {
     expect(
       isReportSubmitEnabled({
         areRequiredFieldsComplete: false,

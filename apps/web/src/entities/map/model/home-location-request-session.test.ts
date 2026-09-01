@@ -5,22 +5,22 @@ import {
   markHomeLocationRequestedInSession,
 } from "./home-location-request-session";
 
-describe("home location request session", () => {
+describe("홈 위치 요청 세션", () => {
   afterEach(() => {
     window.sessionStorage.clear();
   });
 
-  it("returns false before the first request", () => {
+  it("첫 요청 전에는 false 를 준다", () => {
     expect(hasRequestedHomeLocationInSession()).toBe(false);
   });
 
-  it("remembers a request for the current tab session", () => {
+  it("현재 탭 세션 동안 요청을 기억한다", () => {
     markHomeLocationRequestedInSession();
 
     expect(hasRequestedHomeLocationInSession()).toBe(true);
   });
 
-  it("forgets a settled request", () => {
+  it("끝난 요청은 잊는다", () => {
     markHomeLocationRequestedInSession();
 
     clearHomeLocationRequestedInSession();

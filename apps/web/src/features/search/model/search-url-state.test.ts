@@ -10,19 +10,19 @@ import {
 } from "./search-url-state";
 
 describe("search-url-state", () => {
-  it("reads a validated and trimmed URL q value", () => {
+  it("주소의 q 를 검증하고 다듬어 읽는다", () => {
     expect(readSearchQueryParam(" 강남역 ")).toBe("강남역");
     expect(readSearchQueryParam("강남역")).toBe("강남역");
   });
 
-  it("ignores q values that cannot be used as search queries", () => {
+  it("검색어로 쓸 수 없는 q 는 무시한다", () => {
     expect(readSearchQueryParam("ㄱㄴ")).toBeUndefined();
     expect(readSearchQueryParam("!!!")).toBeUndefined();
     expect(readSearchQueryParam("   ")).toBeUndefined();
     expect(readSearchQueryParam(123)).toBeUndefined();
   });
 
-  it("adds q to URL params while preserving detail params", () => {
+  it("상세 파라미터를 지키면서 q 를 붙인다", () => {
     expect(
       withSearchQueryParam(
         {
@@ -44,7 +44,7 @@ describe("search-url-state", () => {
     });
   });
 
-  it("removes only q when the search query is empty", () => {
+  it("검색어가 비면 q 만 걷어낸다", () => {
     expect(
       withSearchQueryParam(
         {
@@ -58,7 +58,7 @@ describe("search-url-state", () => {
     });
   });
 
-  it("reads URL searchPlaceId as a positive integer", () => {
+  it("주소의 searchPlaceId 를 양의 정수로 읽는다", () => {
     expect(readSearchPlaceIdParam("123")).toBe(123);
     expect(readSearchPlaceIdParam(456)).toBe(456);
     expect(readSearchPlaceIdParam("0")).toBeUndefined();
@@ -67,7 +67,7 @@ describe("search-url-state", () => {
     expect(readSearchPlaceIdParam("123abc")).toBeUndefined();
   });
 
-  it("adds or removes searchPlaceId in URL params", () => {
+  it("주소에 searchPlaceId 를 붙이거나 뗀다", () => {
     expect(withSearchPlaceIdParam({ q: "코엑스" }, 7)).toEqual({
       q: "코엑스",
       searchPlaceId: 7,
@@ -88,7 +88,7 @@ describe("search-url-state", () => {
     });
   });
 
-  it("removes q and searchPlaceId while preserving detail params", () => {
+  it("상세 파라미터를 지키면서 q 와 searchPlaceId 를 걷어낸다", () => {
     expect(
       withoutSearchContextParams({
         q: "coex",
@@ -102,7 +102,7 @@ describe("search-url-state", () => {
     });
   });
 
-  it("adds locker detail param while preserving search context params", () => {
+  it("검색 컨텍스트를 지키면서 상세 파라미터를 붙인다", () => {
     expect(
       withLockerDetailParam(
         {

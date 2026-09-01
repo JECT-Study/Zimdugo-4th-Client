@@ -8,7 +8,7 @@ import {
 } from "./api-locale";
 
 describe("toAcceptLanguage", () => {
-  it("maps app locales to backend Accept-Language values", () => {
+  it("앱 로케일을 백엔드 Accept-Language 값으로 옮긴다", () => {
     expect(toAcceptLanguage("ko")).toBe("ko-KR");
     expect(toAcceptLanguage("en")).toBe("en-US");
     expect(toAcceptLanguage("ja")).toBe("ja-JP");
@@ -18,14 +18,14 @@ describe("toAcceptLanguage", () => {
 });
 
 describe("buildAcceptLanguageHeader", () => {
-  it("uses app locale first and wildcard fallback for server-side English", () => {
+  it("서버 영어에서는 앱 로케일을 먼저, 와일드카드를 나중에 쓴다", () => {
     expect(buildAcceptLanguageHeader("ko")).toBe("ko-KR, *;q=0.5");
     expect(buildAcceptLanguageHeader("zh-TW")).toBe("zh-TW, *;q=0.5");
   });
 });
 
 describe("shouldAttachAcceptLanguage", () => {
-  it("matches locker, place, and document read APIs", () => {
+  it("보관함·장소·문서 조회 API 에 걸린다", () => {
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/pins")).toBe(true);
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/search")).toBe(true);
     expect(shouldAttachAcceptLanguage("/api/v1/lockers/42")).toBe(true);
@@ -51,13 +51,13 @@ describe("shouldAttachAcceptLanguage", () => {
 });
 
 describe("resolveAcceptLanguageHeader", () => {
-  it("returns undefined outside locker/place APIs", () => {
+  it("보관함·장소 API 밖에서는 값을 주지 않는다", () => {
     expect(
       resolveAcceptLanguageHeader("/api/v1/me/profile", "ja"),
     ).toBeUndefined();
   });
 
-  it("returns app locale with wildcard for locker/place APIs", () => {
+  it("보관함·장소 API 에는 앱 로케일과 와일드카드를 함께 준다", () => {
     expect(resolveAcceptLanguageHeader("/api/v1/lockers/search", "zh-TW")).toBe(
       "zh-TW, *;q=0.5",
     );

@@ -16,7 +16,7 @@ describe("useHasRequestedHomeLocationInSession", () => {
     window.sessionStorage.clear();
   });
 
-  it("hydrates with the server snapshot before applying the client session", async () => {
+  it("클라이언트 세션을 적용하기 전에 서버 스냅숏으로 하이드레이트한다", async () => {
     const container = document.createElement("div");
     const serverMarkup = renderToString(<HomeLocationRequestState />);
     let root: Root | undefined;

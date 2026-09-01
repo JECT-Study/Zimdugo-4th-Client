@@ -10,7 +10,7 @@ import {
 } from "./map-control-stack-fallback";
 
 describe("map-control-stack-fallback", () => {
-  it("uses a centered fixed frame that matches the app max width", () => {
+  it("앱 최대 폭에 맞춘 가운데 고정 틀을 쓴다", () => {
     expect(MAP_CONTROL_FALLBACK_APP_MAX_WIDTH_PX).toBe(430);
     expect(MAP_CONTROL_FALLBACK_MAX_WIDTH).toContain("430px");
     expect(mapControlStackPositionFallbackStyle).toMatchObject({
@@ -26,7 +26,7 @@ describe("map-control-stack-fallback", () => {
     expect(mapControlStackPositionFallbackStyle).not.toHaveProperty("right");
   });
 
-  it("combines the right safe area with the default side inset", () => {
+  it("오른쪽 안전 영역과 기본 여백을 합친다", () => {
     expect(MAP_CONTROL_FALLBACK_SIDE_INSET).toBe(
       "max(16px, env(safe-area-inset-right, 0px))",
     );

@@ -90,7 +90,7 @@ const expectedInitialViewport: MapViewport = {
 };
 
 describe("subscribeMapIdle", () => {
-  it("emits current viewport immediately after subscription", () => {
+  it("구독하면 곧바로 현재 뷰포트를 내보낸다", () => {
     const mapsState: FakeMapsState = { handlers: {}, removed: [] };
     const { map } = createFakeMap();
     const maps = createFakeMaps(mapsState);

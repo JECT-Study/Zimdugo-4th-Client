@@ -5,7 +5,7 @@ import { LOCKER_DETAIL_QUERY_KEY } from "#/features/search/hooks/useLockerDetail
 import { readLockerDetailFromQueryCache } from "./read-locker-detail-from-query-cache";
 
 describe("readLockerDetailFromQueryCache", () => {
-  it("reads detail data from the scoped detail query key", () => {
+  it("범위가 맞는 상세 쿼리 키에서 값을 읽는다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
       itemType: "LOCKER",
@@ -27,7 +27,7 @@ describe("readLockerDetailFromQueryCache", () => {
     expect(readLockerDetailFromQueryCache(queryClient, 7, 1)).toEqual(detail);
   });
 
-  it("ignores detail queries from a different auth scope", () => {
+  it("인증 범위가 다른 상세 쿼리는 무시한다", () => {
     const queryClient = new QueryClient();
     const detail: LockerDetailItem = {
       itemType: "LOCKER",

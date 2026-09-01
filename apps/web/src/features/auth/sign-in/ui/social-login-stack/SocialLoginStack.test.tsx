@@ -15,13 +15,13 @@ describe("SocialLoginStack", () => {
     setTestLanguage("ko");
   });
 
-  it("shows English sub labels for non-English UI locales", () => {
+  it("영어가 아닌 화면에서는 영문 보조 라벨을 보인다", () => {
     render(<SocialLoginStack />);
 
     expect(screen.getByText("Naver 1 second login/membership")).toBeTruthy();
   });
 
-  it("hides English sub labels when UI locale is English", () => {
+  it("화면이 영어면 영문 보조 라벨을 감춘다", () => {
     setTestLanguage("en");
 
     render(<SocialLoginStack />);

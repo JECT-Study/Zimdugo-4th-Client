@@ -69,7 +69,7 @@ describe("useLocationTracking", () => {
     vi.restoreAllMocks();
   });
 
-  it("should treat the Permissions API result as advisory", async () => {
+  it("Permissions API 결과는 참고로만 쓴다", async () => {
     queryMock.mockResolvedValueOnce({
       state: "granted",
       addEventListener: vi.fn(),
@@ -88,7 +88,7 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).not.toHaveBeenCalled();
   });
 
-  it("should call onFirstLocation exactly once when the first position callback is fired", async () => {
+  it("첫 위치가 오면 onFirstLocation 을 한 번만 부른다", async () => {
     const onFirstLocation = vi.fn();
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
@@ -140,7 +140,7 @@ describe("useLocationTracking", () => {
     });
   });
 
-  it("should clear tracking on unmount", async () => {
+  it("언마운트하면 추적을 정리한다", async () => {
     const { result, unmount } = renderHook(() => useLocationTracking());
 
     act(() => {
@@ -155,7 +155,7 @@ describe("useLocationTracking", () => {
     expect(clearWatchMock).toHaveBeenCalledWith(123);
   });
 
-  it("should set tracking to false when permission is denied", async () => {
+  it("권한이 거부되면 추적을 끈다", async () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -185,7 +185,7 @@ describe("useLocationTracking", () => {
     ).not.toContain("tracking_cancelled");
   });
 
-  it("should expose an unavailable outcome as a terminal request state", () => {
+  it("쓸 수 없는 결과는 더 기다릴 것 없는 상태로 알린다", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -206,7 +206,7 @@ describe("useLocationTracking", () => {
     expect(onRequestSettled).toHaveBeenCalledWith("unavailable");
   });
 
-  it("should settle as unsupported when geolocation is unavailable", () => {
+  it("위치 기능이 없으면 미지원으로 마무리한다", () => {
     const onRequestSettled = vi.fn();
     Object.defineProperty(global.navigator, "geolocation", {
       value: undefined,
@@ -227,7 +227,7 @@ describe("useLocationTracking", () => {
     expect(onRequestSettled).toHaveBeenCalledWith("unsupported");
   });
 
-  it("should ignore a permission query result while a location request is active", async () => {
+  it("위치 요청이 진행 중이면 권한 조회 결과를 무시한다", async () => {
     let resolvePermission: ((status: PermissionStatus) => void) | undefined;
     queryMock.mockReturnValueOnce(
       new Promise<PermissionStatus>((resolve) => {
@@ -252,7 +252,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isTracking).toBe(true);
   });
 
-  it("should allow a manual retry after a permission-denied request error", () => {
+  it("권한 거부로 실패한 뒤에도 사용자가 다시 시도할 수 있다", () => {
     const { result } = renderHook(() => useLocationTracking());
 
     act(() => {
@@ -272,7 +272,7 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).toHaveBeenCalledTimes(2);
   });
 
-  it("should not treat a location timeout as a permission denial", () => {
+  it("위치 시간 초과를 권한 거부로 보지 않는다", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -297,7 +297,7 @@ describe("useLocationTracking", () => {
     ).not.toContain("tracking_cancelled");
   });
 
-  it("should stop locating when the application watchdog expires", () => {
+  it("앱 감시 시간이 지나면 위치 찾기를 멈춘다", () => {
     vi.useFakeTimers();
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
@@ -323,7 +323,7 @@ describe("useLocationTracking", () => {
     ).not.toContain("tracking_cancelled");
   });
 
-  it("should cancel the application watchdog after the first position", () => {
+  it("첫 위치가 오면 앱 감시를 끈다", () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useLocationTracking());
 
@@ -343,7 +343,7 @@ describe("useLocationTracking", () => {
     expect(result.current.isLocating).toBe(false);
   });
 
-  it("should mark a pending request as interrupted while hidden", () => {
+  it("화면이 가려지면 진행 중인 요청을 중단으로 표시한다", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -381,7 +381,7 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).toHaveBeenCalledTimes(1);
   });
 
-  it("should settle interruption before the location effect creates a watch", () => {
+  it("위치 이펙트가 watch 를 만들기 전에 중단을 마무리한다", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -404,7 +404,7 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).not.toHaveBeenCalled();
   });
 
-  it("should settle a new request independently from the previous successful watch", () => {
+  it("직전에 성공한 watch 와 무관하게 새 요청을 마무리한다", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -439,7 +439,7 @@ describe("useLocationTracking", () => {
     expect(watchPositionMock).toHaveBeenCalledTimes(1);
   });
 
-  it("should preserve successful tracking across normal visibility changes", () => {
+  it("평범한 화면 전환에서는 성공한 추적을 유지한다", () => {
     const onRequestSettled = vi.fn();
     const { result } = renderHook(() =>
       useLocationTracking({ onRequestSettled }),
@@ -470,7 +470,7 @@ describe("useLocationTracking", () => {
     expect(clearWatchMock).not.toHaveBeenCalled();
   });
 
-  it("should ignore a late error from a suspended watch", () => {
+  it("멈춰 둔 watch 에서 늦게 온 오류는 무시한다", () => {
     watchPositionMock.mockReturnValueOnce(123).mockReturnValueOnce(456);
     const { result } = renderHook(() => useLocationTracking());
 
@@ -507,7 +507,7 @@ describe("useLocationTracking", () => {
     expect(clearWatchMock).not.toHaveBeenCalledWith(456);
   });
 
-  it("should not create watches from repeated visibility changes", () => {
+  it("화면 전환이 반복돼도 watch 를 새로 만들지 않는다", () => {
     const { result } = renderHook(() => useLocationTracking());
 
     act(() => {

@@ -27,15 +27,15 @@ const NOTICES: ClientDocumentResponse[] = [
   },
 ];
 
-describe("SITE URL constants", () => {
-  it("uses the production domain for sitemap discovery", () => {
+describe("사이트 주소 상수", () => {
+  it("사이트맵 위치에 프로덕션 도메인을 쓴다", () => {
     expect(SITE_ORIGIN).toBe("https://zimdugo.com");
     expect(SITE_SITEMAP_URL).toBe("https://zimdugo.com/sitemap.xml");
   });
 });
 
 describe("createSitemapXml", () => {
-  it("creates sitemap locations with the production domain only", () => {
+  it("사이트맵 주소를 프로덕션 도메인으로만 만든다", () => {
     const xml = createSitemapXml(SEO_LOCKERS, NOTICES);
 
     expect(xml).toContain("<loc>https://zimdugo.com</loc>");
@@ -48,7 +48,7 @@ describe("createSitemapXml", () => {
     expect(xml).not.toContain("zimdugo-web.vercel.app");
   });
 
-  it("adds hreflang alternates and x-default for locker detail URLs", () => {
+  it("보관함 상세 주소에 hreflang 대체와 x-default 를 붙인다", () => {
     const xml = createSitemapXml(SEO_LOCKERS);
 
     expect(xml).toContain('hreflang="ko"');
@@ -59,7 +59,7 @@ describe("createSitemapXml", () => {
     expect(xml).toContain('hreflang="x-default"');
   });
 
-  it("escapes query separators for XML attribute safety", () => {
+  it("XML 속성에 안전하도록 쿼리 구분자를 이스케이프한다", () => {
     const xml = createSitemapXml(SEO_LOCKERS);
 
     expect(xml).toContain(
@@ -67,7 +67,7 @@ describe("createSitemapXml", () => {
     );
   });
 
-  it("falls back to locker id when runtime data is missing localized names", () => {
+  it("로케일 이름이 없으면 보관함 id 로 물러선다", () => {
     const xml = createSitemapXml([
       {
         lockerId: 77,

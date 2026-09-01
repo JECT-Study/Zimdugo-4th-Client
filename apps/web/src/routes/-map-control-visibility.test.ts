@@ -19,13 +19,13 @@ import {
 } from "./-map-control-visibility";
 
 describe("shouldShowHomeSearchBar", () => {
-  it("hides home search bar when map loading failed", () => {
+  it("지도를 불러오지 못하면 홈 검색 바를 감춘다", () => {
     expect(shouldShowHomeSearchBar({ hasMapError: true })).toBe(false);
   });
 });
 
 describe("shouldShowMapControls", () => {
-  it("hides map controls when map loading failed", () => {
+  it("지도를 불러오지 못하면 지도 컨트롤을 감춘다", () => {
     expect(
       shouldShowMapControls({
         isMapLoading: false,

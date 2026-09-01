@@ -328,21 +328,81 @@ function Example({ userId }: { userId: string }) {
 
 ---
 
+### Testing
+
+#### 테스트 이름은 한국어 문장으로 쓴다
+
+`it` / `test` 의 이름은 **무엇이 지켜져야 하는지를 한국어 문장**으로 적는다. 종결은 `~한다` / `~다`.
+
+```ts
+// ✅
+it("좌표가 같은 보관함 둘은 서로 다른 자리로 민다", ...)
+it("권한이 거부되면 추적을 끈다", ...)
+test("검색을 끝내고 뒤로 가면 홈이 아니라 그 전 화면으로 간다", ...)
+
+// ❌
+it("applies different offsets when two lockers share the same coordinates", ...)
+it("should set tracking to false when permission is denied", ...)
+```
+
+테스트 이름은 실패했을 때 읽는 문장이다. 이 저장소의 코드 주석·커밋·이슈가 모두 한국어라, 이름만 영어면 실패 로그에서 문맥이 한 번 끊긴다. `should` 로 시작하는 관용도 쓰지 않는다 — 테스트는 전부 "그래야 한다" 는 주장이라 아무것도 구분해 주지 못한다.
+
+`describe` 는 두 가지로 나뉜다.
+
+| `describe` 가 가리키는 것 | 표기 |
+|---|---|
+| 함수·모듈 이름 (`resolveMapControlBottomPx`, `search-url-state`) | 코드에 있는 이름 그대로 |
+| 묶음의 성격 (`검색 목록의 줄`, `로케일 경로 헬퍼`) | 한국어 |
+
+식별자를 번역하면 코드에서 찾을 수 없게 된다. 이름을 가리킬 때는 이름을 쓴다.
+
+#### 단언은 무엇을 재는지 확인하고 쓴다
+
+통과는 검증의 시작이지 끝이 아니다. 특히 e2e 는 화면 밖으로 나가거나 요소가 없어도 통과하는 단언을 쉽게 만든다.
+
+- 이름이 주장하는 것과 단언이 재는 것이 같은지 본다
+- 여러 화면이 같은 문자열을 낼 수 있으면 스텁 값을 서로 다르게 두어 출처를 가른다
+- 주소·파라미터만 보는 단언은 화면이 그려지기 전에 통과할 수 있다. 화면에 닿았는지도 함께 본다
+
+
+---
+
 ## Git Conventions
 
 All Messages should be written in Korean
 
 ### Commit Message Format
 
-- Do NOT use scope keywords in parentheses (e.g., `feat(ui):`, `fix(payment):`). Use only the type prefix (e.g., `feat:`, `fix:`).
+- 모든 메시지는 한국어로 쓴다.
+- 괄호 스코프를 쓰지 않는다. `feat(ui):` `fix(payment):` ❌ → `feat:` `fix:` ✅
+- **제목은 명사형으로 끝낸다.** 문장형(`~한다`, `~했다`)을 쓰지 않는다.
 
+```text
+<type>: <제목 (명사형 종결, 50자 이내, 마침표 없음)>
+
+<본문 (선택)>
+
+<꼬리말 (선택)>
 ```
-<type>: <title (imperative, ≤50 chars, no period)>
 
-<body (optional)>
+#### 제목 종결 — 위반이 가장 잦은 자리
 
-<footer (optional)>
+`main` 의 히스토리는 명사형으로 일관돼 있다. 작업 브랜치에서 문장형으로 적었다가 그대로 올라오는 일이 반복된다.
+
+```text
+✅ fix: 되돌아가는 길을 히스토리 되감기로 통일
+✅ refactor: 지도가 가려지는 영역을 방향 있는 값으로
+✅ feat: 목록 시트 full 을 콘텐츠 높이 기준으로
+✅ chore: 미사용 의존성 22개 정리
+
+❌ fix: 되돌아가는 길을 히스토리 되감기로 통일한다
+❌ feat: 홈 첫 화면에서 종료를 되묻는다
+❌ fix: 첫 뒤로가기를 막지 않고 흘려보낸다
 ```
+
+바꾸는 방법은 서술어를 명사로 되돌리는 것뿐이다. `통일한다` → `통일`, `되묻는다` → `종료 확인`, `흘려보낸다` → `통과 처리`.
+
+**본문은 문장형으로 쓴다.** 이 규칙은 제목 한 줄에만 적용된다.
 
 #### Commit Types
 
@@ -360,13 +420,13 @@ All Messages should be written in Korean
 
 #### Examples
 
-```
+```text
 feat: 캠페인 목록 필터 추가
 fix: 모바일 네비게이션 레이아웃 깨짐 수정
 chore: TanStack Query v5로 업그레이드
 ```
 
-```
+```text
 fix: 가상계좌 결제 완료 후 상태 미갱신 수정
 
 결제 완료 웹훅 수신 후 쿼리 캐시를 invalidate하지 않아
@@ -374,9 +434,30 @@ fix: 가상계좌 결제 완료 후 상태 미갱신 수정
 ```
 ---
 
+### Pull Request Title
+
+PR 제목은 커밋 제목과 **같은 규칙**을 쓴다. 한국어, 타입 접두사, 괄호 스코프 없음, **명사형 종결**.
+
+스쿼시 머지라 PR 제목이 그대로 `main` 의 커밋 제목이 된다. 여기서 어긋나면 히스토리에 남는다.
+
+```text
+✅ fix: 장소 목록으로 갈아탈 때 남던 상세 파라미터 정리
+✅ test: 검색 경로 e2e
+
+❌ fix: 장소 목록으로 갈아탈 때 상세 파라미터를 걷어낸다
+❌ [FIX] 검색 파라미터 정리
+❌ fix(search): 검색 파라미터 정리
+```
+
+커밋이 여럿이면 제목은 **PR 전체가 하는 일**을 가리킨다. 첫 커밋 제목을 그대로 쓰지 않는다.
+
+번호는 붙이지 않는다 — 머지할 때 `(#216)` 이 자동으로 붙는다.
+
+---
+
 ### Branch Strategy (Git Flow)
 
-```
+```text
 main
 └── develop
     ├── feat/...
@@ -400,7 +481,7 @@ main
 
 #### Branch Naming
 
-```
+```text
 <type>/<kebab-case-description>
 
 # Examples
@@ -420,7 +501,7 @@ fix/87-pagination-error
 
 #### PR Body Template
 
-```
+```text
 ### 변경 사항
 <!-- 무엇을 변경했는지 간략히 작성 -->
 

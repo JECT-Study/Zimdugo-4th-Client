@@ -44,7 +44,7 @@ function hasStep1FieldErrors(
   return STEP_1_FIELDS.some((field) => Boolean(errors[field]));
 }
 
-describe("report form multi-step validation", () => {
+describe("신고 폼의 단계별 검증", () => {
   it("Step 1 필수값이 채워지면 Step 1 Zod 오류가 없다", () => {
     expect(hasStep1ValidationErrors(validStep1Values())).toBe(false);
   });
@@ -113,7 +113,7 @@ describe("report form multi-step validation", () => {
   });
 });
 
-describe("report form submit handling", () => {
+describe("신고 폼의 제출 처리", () => {
   it("필수 입력값이 모두 채워진 경우에만 제출 준비 상태가 된다", () => {
     expect(isReportRequiredFieldsComplete(validStep1Values())).toBe(true);
     expect(

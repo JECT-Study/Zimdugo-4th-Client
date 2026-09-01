@@ -7,7 +7,7 @@ import { useSheetSnapRequest } from "./useSheetSnapRequest";
 type Stage = "full" | "half" | "mini";
 
 describe("useSheetSnapRequest", () => {
-  it("issues a new id for every request", () => {
+  it("요청마다 새 id 를 준다", () => {
     const { result } = renderHook(() => useSheetSnapRequest<Stage>());
 
     expect(result.current.snapRequest).toBeNull();
@@ -19,7 +19,7 @@ describe("useSheetSnapRequest", () => {
     expect(result.current.snapRequest).toEqual({ id: 2, stage: "half" });
   });
 
-  it("keeps ids increasing after the request is cleared", () => {
+  it("요청을 비운 뒤에도 id 는 계속 올라간다", () => {
     const { result } = renderHook(() => useSheetSnapRequest<Stage>());
 
     act(() => result.current.requestSnap("mini"));

@@ -10,15 +10,15 @@ import {
   getSeoSiteName,
 } from "./localized-seo-head";
 
-describe("localized SEO URL helpers", () => {
-  it("resolves SEO locale from localized pathnames", () => {
+describe("로케일별 SEO 주소 헬퍼", () => {
+  it("로케일이 붙은 경로에서 SEO 로케일을 정한다", () => {
     expect(getSeoLocaleFromPathname("/")).toBe("ko");
     expect(getSeoLocaleFromPathname("/en")).toBe("en");
     expect(getSeoLocaleFromPathname("/ja/notices")).toBe("ja");
     expect(getSeoLocaleFromPathname("/zh-TW/notices")).toBe("zh-TW");
   });
 
-  it("resolves SEO locale from the public href before router-rewritten pathnames", () => {
+  it("라우터가 고친 경로보다 공개 주소를 먼저 보고 로케일을 정한다", () => {
     expect(
       getSeoLocale({
         publicHref: "/en",
@@ -40,20 +40,20 @@ describe("localized SEO URL helpers", () => {
     ).toBe("ja");
   });
 
-  it("resolves SEO pathname from the public href before router-rewritten pathnames", () => {
+  it("라우터가 고친 경로보다 공개 주소를 먼저 보고 경로를 정한다", () => {
     expect(getSeoPathname({ publicHref: "/zh/notices", pathname: "/" })).toBe(
       "/zh/notices",
     );
     expect(getSeoPathname({ pathname: "/notices" })).toBe("/notices");
   });
 
-  it("keeps the service title English except Korean SEO metadata", () => {
+  it("한국어가 아니면 서비스 이름을 영문으로 둔다", () => {
     expect(getSeoSiteName("ko")).toBe("\uC9D0\uB450\uACE0 (Zimdugo)");
     expect(getSeoSiteName("en")).toBe("Zimdugo");
     expect(getSeoSiteName("ja")).toBe("Zimdugo");
   });
 
-  it("creates locale-prefixed pathnames while keeping Korean as the root path", () => {
+  it("한국어는 루트로 두고 나머지에만 접두사를 붙인다", () => {
     expect(createLocalizedPathname("/", "ko")).toBe("/");
     expect(createLocalizedPathname("/", "en")).toBe("/en");
     expect(createLocalizedPathname("/ja/notices", "zh-TW")).toBe(
@@ -61,7 +61,7 @@ describe("localized SEO URL helpers", () => {
     );
   });
 
-  it("creates canonical URLs for the current pathname locale", () => {
+  it("현재 경로의 로케일에 맞는 canonical 주소를 만든다", () => {
     expect(createCanonicalUrlForPathname("/")).toBe("https://zimdugo.com");
     expect(createCanonicalUrlForPathname("/en")).toBe("https://zimdugo.com/en");
     expect(createCanonicalUrlForPathname("/zh/notices")).toBe(
@@ -69,7 +69,7 @@ describe("localized SEO URL helpers", () => {
     );
   });
 
-  it("creates alternate links for all supported locales and x-default", () => {
+  it("지원하는 모든 로케일과 x-default 의 대체 링크를 만든다", () => {
     const links = createAlternateLinksForPathname("/en/notices");
 
     expect(links).toEqual([
@@ -106,7 +106,7 @@ describe("localized SEO URL helpers", () => {
     ]);
   });
 
-  it("keeps search params when creating localized URLs", () => {
+  it("로케일 주소를 만들 때 쿼리를 지킨다", () => {
     expect(
       createLocalizedUrl({
         pathname: "/",

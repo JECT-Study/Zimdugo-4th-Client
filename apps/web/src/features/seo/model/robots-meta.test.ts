@@ -5,7 +5,7 @@ import {
 } from "./robots-meta";
 
 describe("createNoIndexNoFollowHead", () => {
-  it("creates a robots meta tag that blocks indexing and link following", () => {
+  it("색인과 링크 추적을 막는 robots 메타를 만든다", () => {
     expect(createNoIndexNoFollowHead()).toEqual({
       meta: [
         {
