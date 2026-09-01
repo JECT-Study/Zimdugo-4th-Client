@@ -220,7 +220,22 @@ test.describe("검색 경로", () => {
     ).toBe(baseline);
   });
 
-  test("검색 결과에서 뒤로 가면 검색 컨텍스트를 벗어난다", async ({ page }) => {
+  /**
+   * 지금 상태를 있는 그대로 박아 둔다. #215 가 바꾸려는 자리다.
+   *
+   * 검색 진입이 replace 라 홈은 자기 칸을 갖지 못한다. 그래서 검색을 끝내고 뒤로
+   * 가면 홈이 아니라 홈보다 앞에 있던 화면으로 간다. 전환 뒤에는 `/` 로 돌아와야
+   * 하고, 그때 이 테스트가 깨지면서 무엇이 달라졌는지 알려 준다.
+   *
+   * 홈 앞에 칸을 하나 만들어 두고 시작한다. 홈에서 바로 열면 뒤로가기가 문서 밖
+   * (about:blank)으로 나가 버려, "홈으로 돌아오지 못했다" 를 주소로 가릴 수 없다.
+   */
+  test("검색을 끝내고 뒤로 가면 홈이 아니라 그 전 화면으로 간다", async ({
+    page,
+  }) => {
+    await page.goto("/settings");
+    await expect(page.getByRole("button", { name: /테마 설정/ })).toBeVisible();
+
     await page.goto("/");
     await waitForMapReady(page);
     await openSearchOverlay(page);
@@ -228,6 +243,6 @@ test.describe("검색 경로", () => {
 
     await page.goBack();
 
-    await expect.poll(() => queryParam(page, "q")).toBeNull();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/settings");
   });
 });
