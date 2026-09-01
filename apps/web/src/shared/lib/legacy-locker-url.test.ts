@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createLockerCanonicalUrl,
   createLockerDeepLinkSlug,
+  parseOpenLockerDeepLinkSearch,
 } from "#/features/search/lib/open-locker-deep-link";
 import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
 import { createSitemapXml } from "#/features/seo/model/sitemap";
@@ -10,6 +11,7 @@ import {
   parseLegacyLockerUrl,
   resolveLegacyLockerPath,
 } from "#/shared/lib/legacy-locker-url";
+import { parseSearchString } from "#/shared/lib/search-serialization";
 
 const at = (href: string) => new URL(href, "https://zimdugo.com");
 
@@ -66,7 +68,8 @@ describe("resolveLegacyLockerPath", () => {
     expect(resolveLegacyLockerPath(at("/?locker=-1"))).toBeNull();
     expect(resolveLegacyLockerPath(at("/?locker=abc"))).toBeNull();
     expect(resolveLegacyLockerPath(at("/?locker="))).toBeNull();
-    expect(resolveLegacyLockerPath(at("/?openLockerId=12.5"))).toBeNull();
+    expect(resolveLegacyLockerPath(at("/?openLockerId=0"))).toBeNull();
+    expect(resolveLegacyLockerPath(at("/?openLockerId=abc"))).toBeNull();
   });
 
   /**
@@ -191,6 +194,8 @@ describe("agreement with the parser the home route uses", () => {
     " 164 ",
     "12.5",
     "164 강남",
+    "1e3",
+    "0164",
   ];
 
   it.each(RAW_LOCKER_VALUES)(
@@ -200,7 +205,10 @@ describe("agreement with the parser the home route uses", () => {
         `/?locker=${encodeURIComponent(raw)}`,
         "https://zimdugo.com",
       );
-      const opensDetail = parseLockerSearchParam(raw) !== undefined;
+      // 홈 라우트가 실제로 받는 값은 역직렬화를 거친 뒤의 것이다.
+      const opensDetail =
+        parseLockerSearchParam(parseSearchString(url.search).locker) !==
+        undefined;
 
       expect(resolveLegacyLockerPath(url) !== null).toBe(opensDetail);
     },
@@ -222,4 +230,54 @@ describe("agreement with the parser the home route uses", () => {
       expect(path.slice("/lockers/".length).split("?")[0]).not.toContain("/");
     },
   );
+});
+
+/**
+ * 규칙이 홈 라우트보다 엄격하면 오늘 열리던 주소가 전환 뒤 조용히 홈으로 떨어진다.
+ * 주소를 읽는 세 단계가 모두 홈과 같은 함수를 쓰는지 여기서 고정한다.
+ */
+describe("agreement with how the router reads an address", () => {
+  /**
+   * 라우터는 값마다 JSON 으로 읽어 본다(`router.tsx` 의 parseSearch).
+   * 원시 문자열을 보면 같은 주소를 라우터와 다르게 해석하게 된다.
+   */
+  it("reads a JSON-ish value the way the router does", () => {
+    // `1e3` 은 JSON 으로 읽으면 숫자 1000 이다. 홈도 1000 번을 연다.
+    expect(parseSearchString("?locker=1e3").locker).toBe(1000);
+    expect(resolveLegacyLockerPath(at("/?locker=1e3"))).toBe("/lockers/1000");
+  });
+
+  it("keeps the last value when a key repeats, as the router does", () => {
+    expect(parseSearchString("?locker=164&locker=999").locker).toBe(999);
+    expect(resolveLegacyLockerPath(at("/?locker=164&locker=999"))).toBe(
+      "/lockers/999",
+    );
+  });
+
+  /**
+   * 두 파라미터는 판정하는 함수가 다르다. 딥링크 파서는 정수를 요구하지 않아
+   * `12.5` 도 홈에서는 상세로 간다. 규칙만 `locker` 문법으로 다시 재면 그런 주소가
+   * 여기서만 탈락한다. 각자의 파서가 낸 결과를 그대로 쓴다.
+   */
+  it("follows the deep link parser for openLockerId, not the slug syntax", () => {
+    expect(
+      parseOpenLockerDeepLinkSearch({ openLockerId: "12.5" }).openLockerId,
+    ).toBe(12.5);
+    expect(resolveLegacyLockerPath(at("/?openLockerId=12.5"))).toBe(
+      "/lockers/12.5",
+    );
+  });
+
+  it("carries the remaining query back out the way the router writes it", () => {
+    const path = resolveLegacyLockerPath(
+      at("/?locker=164&q=강남&detailSnap=full"),
+    );
+
+    expect(path).not.toBeNull();
+
+    const search = parseSearchString(
+      new URL(path as string, "https://zimdugo.com").search,
+    );
+    expect(search).toEqual({ q: "강남", detailSnap: "full" });
+  });
 });

@@ -1,6 +1,10 @@
 import { parseOpenLockerDeepLinkSearch } from "#/features/search/lib/open-locker-deep-link";
 import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
 import { LOCALE_PATH_PREFIX } from "#/shared/i18n/locales";
+import {
+  parseSearchString,
+  stringifySearchParams,
+} from "#/shared/lib/search-serialization";
 
 /**
  * 구 주소(`/?locker=…`)를 새 경로 주소(`/lockers/…`)로 옮기는 규칙.
@@ -11,6 +15,11 @@ import { LOCALE_PATH_PREFIX } from "#/shared/i18n/locales";
  *
  * 이 모듈은 순수 함수만 둔다. 실제 리다이렉트 응답을 내는 것은 목적지 라우트가
  * 생긴 뒤의 일이다.
+ *
+ * 규칙이 홈 라우트보다 엄격하면 오늘 열리던 주소가 전환 뒤 조용히 홈으로 떨어지고,
+ * 느슨하면 열리지 않던 주소에 목적지가 생긴다. 그래서 주소를 읽는 세 단계 — 쿼리
+ * 역직렬화, `locker` 판정, `openLockerId` 판정 — 를 모두 홈 라우트와 같은 함수로
+ * 한다. 여기서 정규식을 하나라도 따로 들면 그날부터 둘이 갈라진다.
  */
 
 /** 새 주소에서 경로가 대신 나타내는 파라미터. 목적지에 남기지 않는다. */
@@ -44,11 +53,11 @@ const CANONICAL_LOCKER_SLUG_PATTERN = /^\d+(?:-[\p{L}\p{N}-]*)?$/u;
 export interface LegacyLockerUrl {
   /** 원래 주소가 달고 있던 로케일 접두사. 목적지에도 그대로 붙는다. */
   localePrefix: string;
-  /** 목적지 경로의 마지막 조각. 정규 슬러그이거나 숫자 id 다. */
+  /** 목적지 경로의 마지막 조각. 정규 슬러그이거나 id 다. */
   slug: string;
   lockerId: number;
-  /** 목적지로 옮겨 갈 나머지 쿼리. */
-  search: URLSearchParams;
+  /** 목적지로 옮겨 갈 나머지 쿼리. 라우터와 같은 방식으로 다시 쓴다. */
+  search: Record<string, unknown>;
 }
 
 /**
@@ -63,39 +72,43 @@ export const parseLegacyLockerUrl = (url: URL): LegacyLockerUrl | null => {
 
   if (pathnameWithoutLocale !== "/") return null;
 
-  const search = new URLSearchParams(url.search);
+  /*
+   * 라우터와 같은 방식으로 읽는다. `URLSearchParams.get` 을 쓰면 `?locker=1e3` 을
+   * 문자열로 보고(라우터는 숫자 1000), 같은 키가 두 번 오면 첫 값을 집는다(라우터는
+   * 마지막). 둘 다 홈은 여는데 규칙은 못 알아보는 주소를 만든다.
+   */
+  const search = parseSearchString(url.search);
 
   /*
    * `locker` 가 `openLockerId` 보다 우선이다. 둘 다 붙은 주소라면 사이트맵이 낸
    * 쪽(`locker`)이 색인된 정체성이고, `openLockerId` 는 앱이 딥링크를 처리하며
    * 붙였다 떼는 일회용 값이다.
    */
-  const rawLocker = search.get("locker") ?? "";
-  const rawOpenLockerId = search.get("openLockerId") ?? "";
+  const lockerParamId = parseLockerSearchParam(search.locker);
 
   /*
-   * 상세로 인정할지는 홈 라우트와 같은 함수로 판정한다. 여기서 따로 정규식을 들면
-   * 둘이 갈라지는 날 오늘 열리던 주소가 조용히 홈으로 떨어진다.
+   * 두 파라미터는 판정하는 함수가 다르다. `openLockerId` 는 딥링크 파서가 숫자로
+   * 받으므로 `12.5` 같은 값도 홈에서는 상세로 간다. 여기서 `locker` 문법으로 다시
+   * 재면 그런 주소가 규칙에서만 탈락한다. 각자의 파서가 낸 결과를 그대로 쓴다.
    */
+  const deepLinkId = parseOpenLockerDeepLinkSearch(search).openLockerId;
+
   const rawSlug =
-    parseLockerSearchParam(rawLocker) !== undefined
-      ? rawLocker.trim()
-      : parseOpenLockerDeepLinkSearch({ openLockerId: rawOpenLockerId })
-            .openLockerId !== undefined
-        ? rawOpenLockerId.trim()
+    lockerParamId !== undefined
+      ? String(search.locker).trim()
+      : deepLinkId !== undefined
+        ? String(deepLinkId)
         : null;
+  const lockerId = lockerParamId ?? deepLinkId;
 
-  if (rawSlug === null) return null;
-
-  const lockerId = parseLockerSearchParam(rawSlug);
-  if (lockerId === undefined) return null;
+  if (rawSlug === null || lockerId === undefined) return null;
 
   const slug = CANONICAL_LOCKER_SLUG_PATTERN.test(rawSlug)
     ? rawSlug
     : String(lockerId);
 
-  for (const param of CONSUMED_DETAIL_PARAMS) search.delete(param);
-  for (const param of CONFLICTING_SCREEN_PARAMS) search.delete(param);
+  for (const param of CONSUMED_DETAIL_PARAMS) delete search[param];
+  for (const param of CONFLICTING_SCREEN_PARAMS) delete search[param];
 
   return { localePrefix, slug, lockerId, search };
 };
@@ -111,9 +124,8 @@ export const resolveLegacyLockerPath = (url: URL): string | null => {
   if (!parsed) return null;
 
   const { localePrefix, slug, search } = parsed;
-  const query = search.toString();
 
-  return `${localePrefix}${LOCKER_ROUTE_BASE}/${encodeURIComponent(slug)}${
-    query ? `?${query}` : ""
-  }`;
+  return `${localePrefix}${LOCKER_ROUTE_BASE}/${encodeURIComponent(
+    slug,
+  )}${stringifySearchParams(search)}`;
 };
