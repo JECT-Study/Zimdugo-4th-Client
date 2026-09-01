@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useViewportHeight,
   VIEWPORT_HEIGHT_FALLBACK_PX,
@@ -13,7 +13,40 @@ const setInnerHeight = (height: number) => {
   });
 };
 
+/**
+ * 지금 창에 붙어 있는 resize 리스너.
+ *
+ * 훅이 떼어 갔는지 보려면 실제로 붙고 떨어진 것을 세야 한다. 언마운트한 훅의
+ * setter 는 React 가 삼키므로, resize 를 쏘고 값이 그대로인지 보는 것으로는
+ * 리스너가 남아 있어도 통과한다.
+ */
+const trackResizeListeners = () => {
+  const listeners = new Set<EventListenerOrEventListenerObject>();
+  const add = window.addEventListener.bind(window);
+  const remove = window.removeEventListener.bind(window);
+
+  vi.spyOn(window, "addEventListener").mockImplementation(
+    (type, listener, options) => {
+      if (type === "resize" && listener) listeners.add(listener);
+      return add(type, listener, options);
+    },
+  );
+  vi.spyOn(window, "removeEventListener").mockImplementation(
+    (type, listener, options) => {
+      if (type === "resize" && listener) listeners.delete(listener);
+      return remove(type, listener, options);
+    },
+  );
+
+  return listeners;
+};
+
+beforeEach(() => {
+  setInnerHeight(768);
+});
+
 afterEach(() => {
+  vi.restoreAllMocks();
   setInnerHeight(768);
 });
 
@@ -43,17 +76,14 @@ describe("useViewportHeight", () => {
     expect(VIEWPORT_HEIGHT_FALLBACK_PX).toBe(812);
   });
 
-  it("떼어내면 리스너를 남기지 않는다", () => {
-    const { result, unmount } = renderHook(() => useViewportHeight());
-    const heightBeforeUnmount = result.current;
+  it("떼어내면 붙여 둔 resize 리스너를 걷어간다", () => {
+    const resizeListeners = trackResizeListeners();
+
+    const { unmount } = renderHook(() => useViewportHeight());
+    expect(resizeListeners.size).toBe(1);
 
     unmount();
 
-    act(() => {
-      setInnerHeight(200);
-      window.dispatchEvent(new Event("resize"));
-    });
-
-    expect(result.current).toBe(heightBeforeUnmount);
+    expect(resizeListeners.size).toBe(0);
   });
 });
