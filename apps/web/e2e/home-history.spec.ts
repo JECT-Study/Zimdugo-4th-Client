@@ -249,6 +249,41 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     ).toBeNull();
   });
 
+  test("로더가 느려도 핀으로 연 상세가 닫히지 않는다", async ({ page }) => {
+    // 되감기로 URL 이 내려가면 시트를 닫는다. 그 판단이 "우리가 붙인 주소가 아직
+    // 안 닿은 창"까지 되감기로 오인하면, 방금 연 시트가 곧바로 닫히고 주소만
+    // 남는다.
+    //
+    // 지금 라우터는 검색 파라미터를 로더보다 먼저 커밋한다. 응답을 2.5초 늦추고
+    // 재보니 주소는 19ms, 시트는 2545ms 였다 — 순서가 뒤집히지 않아 그 창이
+    // 생기지 않는다. 이 테스트는 그 순서가 뒤집히면 깨지라고 둔다.
+    await page.route("**/lockers/*", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      await route.fallback();
+    });
+
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    await pressMarker(page, 0);
+
+    // 낙관적 상세로 시트가 먼저 뜬다. 주소가 따라붙는 동안 살아 있어야 한다.
+    await expect
+      .poll(() => isDetailSheetOpen(page), { timeout: 10_000 })
+      .toBe(true);
+    await expect
+      .poll(() => lockerParam(page), { timeout: 20_000 })
+      .not.toBeNull();
+
+    expect(
+      await isDetailSheetOpen(page),
+      "주소가 붙기 전의 빈 창을 되감기로 오인해 방금 연 시트를 닫았다",
+    ).toBe(true);
+  });
+
   test("새로고침한 상세를 닫아도 쌓아 둔 칸을 되감는다", async ({ page }) => {
     await page.goto("/");
     await waitForMapReady(page);
