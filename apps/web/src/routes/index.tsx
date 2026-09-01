@@ -176,6 +176,7 @@ import {
   type SearchSelectionState,
 } from "#/features/search/model/search-selection";
 import {
+  parseLockerSearchParam,
   readSearchPlaceIdParam,
   readSearchQueryParam,
   type SearchUrlParams,
@@ -263,14 +264,6 @@ const SHEET_OFFSET_NONE_PX = 1_000_000;
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
   DETAIL_FOCUS_MORPH_DURATION_MS + 40;
-
-const parseLockerSearchParam = (raw: unknown): number | undefined => {
-  if (raw === undefined || raw === null) return undefined;
-  const str = String(raw).trim();
-  if (!/^\d+(?:-.*)?$/.test(str)) return undefined;
-  const parsed = parseInt(str, 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
-};
 
 const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
 

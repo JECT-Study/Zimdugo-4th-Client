@@ -2,6 +2,10 @@ import { deLocalizeUrl, localizeUrl } from "@repo/i18n";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import {
+  parseSearchString,
+  stringifySearchParams,
+} from "#/shared/lib/search-serialization";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -13,31 +17,8 @@ export function getRouter() {
     defaultPreload: "intent",
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
-    parseSearch: (searchStr) => {
-      const params = new URLSearchParams(searchStr);
-      const result: Record<string, unknown> = {};
-      params.forEach((value, key) => {
-        try {
-          result[key] = JSON.parse(value);
-        } catch {
-          result[key] = value;
-        }
-      });
-      return result;
-    },
-    stringifySearch: (search) => {
-      const params = new URLSearchParams();
-      Object.entries(search).forEach(([key, value]) => {
-        if (value === undefined || value === null) return;
-        if (typeof value === "string") {
-          params.set(key, value);
-        } else {
-          params.set(key, JSON.stringify(value));
-        }
-      });
-      const query = params.toString();
-      return query ? `?${query}` : "";
-    },
+    parseSearch: parseSearchString,
+    stringifySearch: stringifySearchParams,
     rewrite: {
       input: ({ url }) => deLocalizeUrl(url),
       output: ({ url }) => localizeUrl(url),

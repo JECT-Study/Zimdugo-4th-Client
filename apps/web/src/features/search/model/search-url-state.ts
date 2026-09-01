@@ -21,6 +21,25 @@ export const readSearchPlaceIdParam = (raw: unknown): number | undefined => {
   return Number.isInteger(value) && value > 0 ? value : undefined;
 };
 
+/**
+ * `locker` 파라미터가 가리키는 보관함 id. 상세로 인정하지 않는 값이면 undefined.
+ *
+ * 슬러그는 `164-강남역-4번-출구` 처럼 id 뒤에 이름이 붙는다. 이름은 장식이라 모양을
+ * 따지지 않고, id 만 본다.
+ *
+ * 홈 라우트와 구 주소 리다이렉트 규칙(`shared/lib/legacy-locker-url`)이 같은 판정을
+ * 써야 한다. 갈라지면 오늘 열리는 주소가 전환 뒤 조용히 홈으로 떨어진다.
+ */
+export const parseLockerSearchParam = (raw: unknown): number | undefined => {
+  if (raw === undefined || raw === null) return undefined;
+
+  const value = String(raw).trim();
+  if (!/^\d+(?:-.*)?$/.test(value)) return undefined;
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+};
+
 export const withSearchQueryParam = (
   params: SearchUrlParams,
   query: string | null | undefined,
