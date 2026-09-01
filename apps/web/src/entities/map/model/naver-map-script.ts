@@ -32,6 +32,53 @@ export const getNaverMapScriptSrc = ({
   return `${NAVER_MAP_SCRIPT_BASE_URL}?${params.toString().replaceAll("%2C", ",")}`;
 };
 
+const getScriptSubmodules = (url: URL) => {
+  const submodules = url.searchParams.get("submodules");
+
+  return submodules ? submodules.split(",") : [];
+};
+
+/**
+ * 이미 붙어 있는 maps.js 를 그대로 써도 되는지 본다.
+ *
+ * 필요한 서브모듈을 다 갖고 있으면 재사용한다. 없는 것을 요구하면 안 된다 —
+ * gl 없이 실린 SDK 를 쓰면 customStyleId 가 조용히 무시된다. 반대로 더 많이
+ * 실린 것은 문제가 되지 않는다.
+ *
+ * 문자열을 그대로 비교하면 WebGL 을 잃어 gl 을 빼고 다시 계산했을 때 같은
+ * SDK 를 한 번 더 받는다. maps.js 를 두 번 실으면 window.naver.maps 가
+ * 갈아끼워져 먼저 만든 지도가 함께 흔들린다.
+ */
+export const canReuseNaverMapScript = (
+  activeSrc: string,
+  requiredSrc: string,
+) => {
+  let activeUrl: URL;
+  let requiredUrl: URL;
+
+  try {
+    activeUrl = new URL(activeSrc);
+    requiredUrl = new URL(requiredSrc);
+  } catch {
+    return false;
+  }
+
+  if (activeUrl.origin !== requiredUrl.origin) return false;
+  if (activeUrl.pathname !== requiredUrl.pathname) return false;
+
+  for (const key of ["ncpKeyId", "language"]) {
+    if (activeUrl.searchParams.get(key) !== requiredUrl.searchParams.get(key)) {
+      return false;
+    }
+  }
+
+  const activeSubmodules = new Set(getScriptSubmodules(activeUrl));
+
+  return getScriptSubmodules(requiredUrl).every((submodule) =>
+    activeSubmodules.has(submodule),
+  );
+};
+
 const SDK_READY_TIMEOUT_MS = 5000;
 
 /**
