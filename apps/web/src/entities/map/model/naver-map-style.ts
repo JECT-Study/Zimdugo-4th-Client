@@ -81,10 +81,15 @@ export const withNaverMapStyleSubmodules = (
   forceVectorMap = FORCE_VECTOR_MAP,
   isWebglAvailable = detectWebglSupport(),
 ) => {
+  // WebGL 이 없으면 강제 벡터 스위치보다 이쪽이 먼저다. 실어 봐야 그릴 수
+  // 없고, 스크립트만 무겁게 만든다. 부르는 쪽이 직접 넣어 둔 gl 도 뺀다.
+  if (!isWebglAvailable) {
+    return submodules.filter(
+      (submodule) => submodule !== NAVER_MAP_GL_SUBMODULE,
+    );
+  }
+
   if (
-    // WebGL 이 없으면 강제 벡터 스위치보다 이쪽이 먼저다. 실어 봐야 그릴 수
-    // 없고, 스크립트만 무겁게 만든다.
-    !isWebglAvailable ||
     (!forceVectorMap && !hasNaverMapCustomStyle(styleIds)) ||
     submodules.includes(NAVER_MAP_GL_SUBMODULE)
   ) {

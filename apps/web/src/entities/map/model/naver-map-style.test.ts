@@ -83,6 +83,17 @@ describe("naver-map-style", () => {
     ).toEqual(["geocoder"]);
   });
 
+  it("WebGL 을 못 쓰면 부르는 쪽이 넣어 둔 gl 도 뺀다", () => {
+    expect(
+      withNaverMapStyleSubmodules(
+        ["geocoder", "gl"],
+        BOTH_STYLE_IDS,
+        false,
+        false,
+      ),
+    ).toEqual(["geocoder"]);
+  });
+
   it("WebGL 을 못 쓰면 벡터맵 강제도 따르지 않는다", () => {
     expect(
       getNaverMapStyleOptions("light", EMPTY_STYLE_IDS, true, false),

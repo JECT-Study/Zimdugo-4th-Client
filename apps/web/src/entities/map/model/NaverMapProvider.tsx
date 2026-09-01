@@ -13,6 +13,7 @@ import {
   normalizeNaverMapLanguage,
 } from "./naver-map-language";
 import {
+  canReuseNaverMapScript,
   getNaverMapScriptSrc,
   waitForNaverMapSdkReady,
 } from "./naver-map-script";
@@ -159,7 +160,15 @@ const loadNaverMapSdk = async ({
     NAVER_MAP_SCRIPT_SELECTOR,
   );
 
-  if (activeScript?.src === scriptSrc && window.naver?.maps) {
+  // 필요한 서브모듈을 다 갖췄으면 그대로 쓴다. 주소가 똑같을 때만 재사용하면,
+  // WebGL 을 잃어 gl 을 뺀 뒤 다시 들어왔을 때 멀쩡히 돌던 SDK 를 지우고
+  // 인증부터 다시 밟는다. 그 사이 네트워크나 인증이 한 번 흔들리면 이미 보고
+  // 있던 래스터 지도가 오류 화면으로 바뀐다.
+  if (
+    activeScript &&
+    canReuseNaverMapScript(activeScript.src, scriptSrc) &&
+    window.naver?.maps
+  ) {
     await waitForNaverMapSdkReady();
     return window.naver.maps;
   }
