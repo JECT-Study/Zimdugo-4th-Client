@@ -73,6 +73,7 @@ import {
   fitNaverMapToBounds,
   focusNaverMapOnClusterBounds,
 } from "#/entities/map/model/map-bounds";
+import { createBottomMapInset } from "#/entities/map/model/map-inset";
 import {
   getPinId,
   type LockerMarkerOffset,
@@ -3296,9 +3297,17 @@ export function IndexPage() {
       : visibleSheetKind === "list"
         ? listSheetVisibleHeight
         : null;
+  /*
+   * 화면이 지도를 얼마나 가리는지. 지금은 시트뿐이라 하단만 채워진다.
+   *
+   * 전환 뒤에는 이 값을 레이아웃 라우트가 자식에게서 받아 쥔다. 소비하는 쪽은
+   * 무엇이 가리는지 몰라도 되고, 넓은 화면에서 좌측 패널을 쓰면 같은 자리에
+   * left 가 채워진다.
+   */
+  const mapObscuredInset = createBottomMapInset(sheetVisibleHeight);
   const mapControlBottom = resolveMapControlBottomPx({
     baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
-    sheetVisibleHeightPx: sheetVisibleHeight,
+    obscuredInset: mapObscuredInset,
     windowHeightPx: windowHeight,
     extraStackHeightPx: mapControlExtraStackHeight,
     safeAreaInsetTopPx: safeAreaInsetTop,

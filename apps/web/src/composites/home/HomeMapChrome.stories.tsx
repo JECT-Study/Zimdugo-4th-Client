@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
+import { createBottomMapInset } from "#/entities/map/model/map-inset";
 import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
 import {
   removeLockerTimer,
@@ -45,7 +46,9 @@ function HomeMapChromePreview({
 }: HomeMapChromePreviewProps) {
   const controlBottom = resolveMapControlBottomPx({
     baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
-    sheetVisibleHeightPx: resolveDetailSheetVisibleHeight(detailSheetStage),
+    obscuredInset: createBottomMapInset(
+      resolveDetailSheetVisibleHeight(detailSheetStage),
+    ),
     windowHeightPx: viewportHeight,
   });
 

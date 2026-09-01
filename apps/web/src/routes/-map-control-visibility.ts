@@ -1,3 +1,4 @@
+import type { MapInset } from "#/entities/map/model/map-inset";
 import {
   MAP_CONTROL_SHEET_GAP_PX,
   resolveMapControlTopReservedPx,
@@ -31,8 +32,14 @@ export const shouldShowMapControls = ({
 interface ResolveMapControlBottomOptions {
   /** 시트가 컨트롤을 밀어 올리지 않을 때 쓰는 기본 하단 위치 */
   baseBottomPx: number;
-  /** 현재 단계에서 시트가 화면 하단에 차지하는 높이. 밀어 올릴 단계가 아니면 null */
-  sheetVisibleHeightPx: number | null;
+  /**
+   * 지도가 가려지는 영역. 무엇이 가리는지는 보지 않는다.
+   *
+   * 예전에는 "시트가 하단에 차지하는 높이" 하나였다. 밀어 올릴 단계가 아니면 null
+   * 이었는데, 가리지 않는 것과 0px 가리는 것은 같은 뜻이라 단계 판정은 부르는 쪽에
+   * 남기고 여기서는 결과만 받는다.
+   */
+  obscuredInset: MapInset;
   /** 상단 경계를 계산할 뷰포트 높이 */
   windowHeightPx: number;
   /**
@@ -54,7 +61,7 @@ interface ResolveMapControlBottomOptions {
  *
  * 미니와 하프까지는 컨트롤이 시트를 따라 올라간다. full 은 시트가 화면을 덮는
  * 단계라 따라 올릴 자리가 없고, dismiss 는 시트가 사실상 닫힌 상태다. 두 단계는
- * 시트 쪽에서 null 을 주므로 기본 위치를 그대로 쓴다.
+ * 가리는 영역이 비어 오므로 기본 위치를 그대로 쓴다.
  *
  * 다만 화면이 낮으면(가로 모드 등) 시트 높이를 그대로 더했을 때 스택이 검색 바
  * 위를 덮거나 뷰포트 밖으로 밀려난다.
@@ -72,7 +79,7 @@ interface ResolveMapControlBottomOptions {
  */
 export const resolveMapControlBottomPx = ({
   baseBottomPx,
-  sheetVisibleHeightPx,
+  obscuredInset,
   windowHeightPx,
   extraStackHeightPx = 0,
   safeAreaInsetTopPx = 0,
@@ -83,17 +90,13 @@ export const resolveMapControlBottomPx = ({
 
   // 상단 경계는 시트 단계와 무관하게 먼저 본다. 밀어 올릴 단계가 아니어도 화면이
   // 낮으면 기본 위치의 스택이 그대로 검색 바를 덮기 때문이다. 예전에는 이 검사가
-  // 시트가 있을 때만 돌아서, 낮은 화면에서 상세가 full 로 올라가면(full 은 null 을
-  // 준다) 버튼이 시트 뒤에 깔린 채 검색 바만 가렸다.
+  // 시트가 있을 때만 돌아서, 낮은 화면에서 상세가 full 로 올라가면(가리는 영역이
+  // 비어 온다) 버튼이 시트 뒤에 깔린 채 검색 바만 가렸다.
   if (topLimitedBottomPx < baseBottomPx) {
     return null;
   }
 
-  if (sheetVisibleHeightPx === null) {
-    return baseBottomPx;
-  }
-
-  const raisedBottomPx = sheetVisibleHeightPx + MAP_CONTROL_SHEET_GAP_PX;
+  const raisedBottomPx = obscuredInset.bottom + MAP_CONTROL_SHEET_GAP_PX;
 
   // 시트를 피한 자리가 상단 경계를 넘으면 놓을 곳이 없다. 경계에 맞춰 내리면
   // 시트 뒤로 들어가므로 잘라 내지 않고 배치 불가로 판정한다.

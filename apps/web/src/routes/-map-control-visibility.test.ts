@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { resolveSearchListStageVisibleHeight } from "#/composites/search/SearchListBottomSheet";
 import {
+  createBottomMapInset,
+  EMPTY_MAP_INSET,
+} from "#/entities/map/model/map-inset";
+import {
   resolveMapControlTopLimitPx,
   resolveSheetFullSnapPoint,
   resolveSheetFullStageSnapPoint,
@@ -37,7 +41,7 @@ describe("resolveMapControlBottomPx", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: null,
+        obscuredInset: EMPTY_MAP_INSET,
         windowHeightPx: 812,
       }),
     ).toBe(70);
@@ -48,7 +52,7 @@ describe("resolveMapControlBottomPx", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 111,
+        obscuredInset: createBottomMapInset(111),
         windowHeightPx: 812,
       }),
     ).toBe(123);
@@ -58,7 +62,7 @@ describe("resolveMapControlBottomPx", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 40,
+        obscuredInset: createBottomMapInset(40),
         windowHeightPx: 812,
       }),
     ).toBe(70);
@@ -76,14 +80,14 @@ describe("두 시트가 같은 규칙을 따른다", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 상세full,
+        obscuredInset: createBottomMapInset(상세full),
         windowHeightPx: 808,
       }),
     ).toBeNull();
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 목록full,
+        obscuredInset: createBottomMapInset(목록full),
         windowHeightPx: 808,
       }),
     ).toBeNull();
@@ -97,7 +101,7 @@ describe("full 시트가 화면을 다 덮지 못할 때", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 408,
+        obscuredInset: createBottomMapInset(408),
         windowHeightPx: 808,
       }),
     ).toBe(420);
@@ -110,7 +114,7 @@ describe("full 시트가 화면을 다 덮지 못할 때", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 696,
+        obscuredInset: createBottomMapInset(696),
         windowHeightPx: 808,
       }),
     ).toBeNull();
@@ -150,7 +154,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 390,
       }),
     ).toBeNull();
@@ -161,14 +165,14 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 419,
       }),
     ).toBe(203);
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 418,
       }),
     ).toBeNull();
@@ -180,7 +184,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 419,
         extraStackHeightPx: 55,
       }),
@@ -188,7 +192,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 486,
         extraStackHeightPx: 55,
       }),
@@ -200,7 +204,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 419,
         extraStackHeightPx: 0,
       }),
@@ -212,7 +216,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 111,
+        obscuredInset: createBottomMapInset(111),
         windowHeightPx: 390,
       }),
     ).toBe(123);
@@ -225,7 +229,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: null,
+        obscuredInset: EMPTY_MAP_INSET,
         windowHeightPx: 260,
       }),
     ).toBeNull();
@@ -237,7 +241,7 @@ describe("resolveMapControlBottomPx 상단 경계", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 260,
       }),
     ).toBeNull();
@@ -250,7 +254,7 @@ describe("로딩 스켈레톤과 실제 컨트롤의 위치 일치", () => {
     // 있어서 지도가 준비되는 순간 실제 컨트롤 위치로 튀었다.
     const options = {
       baseBottomPx: 70,
-      sheetVisibleHeightPx: 191,
+      obscuredInset: createBottomMapInset(191),
       windowHeightPx: 812,
     };
 
@@ -263,7 +267,7 @@ describe("로딩 스켈레톤과 실제 컨트롤의 위치 일치", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx: 191,
+        obscuredInset: createBottomMapInset(191),
         windowHeightPx: 260,
       }),
     ).toBeNull();
@@ -340,10 +344,11 @@ describe("resolveVisibleSheetKind", () => {
     expect(
       resolveMapControlBottomPx({
         baseBottomPx: 70,
-        sheetVisibleHeightPx:
+        obscuredInset: createBottomMapInset(
           visibleSheetKind === null
             ? null
             : resolveSearchListStageVisibleHeight("half", 812),
+        ),
         windowHeightPx: 812,
       }),
     ).toBe(70);
@@ -471,5 +476,47 @@ describe("resolveSheetFullStageSnapPoint", () => {
 
   it("아직 못 쟀으면 상한에 두어 지금까지와 같게 연다", () => {
     expect(resolveSheetFullStageSnapPoint({ ...base })).toBe(112);
+  });
+});
+
+/**
+ * 값 하나(`sheetVisibleHeightPx`)를 가려지는 영역으로 바꾸면서, null 이 겸하던
+ * "밀어 올릴 단계가 아니다" 가 하단 0 으로 합쳐졌다. 두 입력이 같은 자리를
+ * 가리키는지 고정한다.
+ */
+describe("가려지는 영역이 비어 있을 때", () => {
+  const options = {
+    baseBottomPx: 70,
+    windowHeightPx: 812,
+  };
+
+  it("아무것도 가리지 않으면 기본 자리에 놓는다", () => {
+    expect(
+      resolveMapControlBottomPx({ ...options, obscuredInset: EMPTY_MAP_INSET }),
+    ).toBe(70);
+  });
+
+  it("하단 0 은 아무것도 가리지 않는 것과 같은 자리다", () => {
+    expect(
+      resolveMapControlBottomPx({
+        ...options,
+        obscuredInset: createBottomMapInset(0),
+      }),
+    ).toBe(
+      resolveMapControlBottomPx({ ...options, obscuredInset: EMPTY_MAP_INSET }),
+    );
+  });
+
+  /**
+   * 가로 방향은 아직 아무도 만들지 않지만, 세로 배치가 그 값에 끌려가면
+   * 좌측 패널이 들어오는 날 컨트롤이 엉뚱한 자리로 간다.
+   */
+  it("가로로 가리는 값은 세로 배치를 건드리지 않는다", () => {
+    expect(
+      resolveMapControlBottomPx({
+        ...options,
+        obscuredInset: { top: 0, right: 0, bottom: 0, left: 420 },
+      }),
+    ).toBe(70);
   });
 });
