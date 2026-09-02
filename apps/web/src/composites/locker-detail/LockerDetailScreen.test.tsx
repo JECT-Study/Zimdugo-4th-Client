@@ -2,7 +2,12 @@
 
 import { m } from "@repo/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render as rtlRender, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render as rtlRender,
+  screen,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
@@ -118,5 +123,31 @@ describe("LockerDetailScreen", () => {
     );
 
     expect(screen.queryByText(m.locker_detail_navigate())).toBeNull();
+  });
+
+  /**
+   * 시트는 보관함마다 새로 마운트되지 않는다. 열려 있던 정정 요청을 그대로 두면
+   * 제출 콜백이 지금 보고 있는 보관함을 써서, A 에서 연 모달이 B 의 정정 요청으로
+   * 나갈 수 있다.
+   */
+  it("보관함이 바뀌면 열려 있던 더보기 메뉴를 접는다", () => {
+    const { rerender } = render(<LockerDetailScreen locker={LOCKER_DETAIL} />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: m.locker_detail_more_actions_open_aria(),
+      }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeNull();
+
+    // 래퍼로 다시 감싸면 그 자리의 요소 타입이 달라져 트리가 통째로 리마운트된다.
+    // 그러면 이펙트와 무관하게 상태가 초기화돼 이 테스트가 헛돈다.
+    rerender(
+      <LockerDetailScreen
+        locker={{ ...LOCKER_DETAIL, lockerId: 12, title: "다른 보관함" }}
+      />,
+    );
+
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

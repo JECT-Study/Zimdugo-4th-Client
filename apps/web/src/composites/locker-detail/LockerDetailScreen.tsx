@@ -460,6 +460,15 @@ export function LockerDetailScreen({
     setTimerNow(Date.now());
     setIsTimerOpen(false);
     setIsTimerStartConfirmationOpen(false);
+    /*
+     * 정정 요청·더보기·주소 복사도 함께 접는다.
+     *
+     * 특히 정정 요청은 열린 채로 두면 제출 콜백이 지금 보고 있는 보관함을 쓴다.
+     * A 에서 연 모달이 B 의 정정 요청으로 나갈 수 있다.
+     */
+    setIsCorrectionOpen(false);
+    setIsMoreActionsOpen(false);
+    setIsAddressCopied(false);
     // 팝업도 함께 접는다. 남겨 두면 A 의 종료·실패 알림이 B 위에 뜬다.
     setIsPermissionNoticeOpen(false);
     setIsTimerFinishedOpen(false);
