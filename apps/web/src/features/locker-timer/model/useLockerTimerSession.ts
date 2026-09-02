@@ -1,5 +1,5 @@
 import { m } from "@repo/i18n";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   getPushErrorCode,
   PUSH_ERROR_CODE,
@@ -130,6 +130,19 @@ export const useLockerTimerSession = (
   const createReminder = useCreateReminderMutation();
   const deleteReminder = useDeleteReminderMutation();
   const [failure, setFailure] = useState<LockerTimerFailureState | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  /*
+   * 시작 흐름 전체를 잠근다.
+   *
+   * 리마인더 뮤테이션의 isPending 만으로는 부족하다. 그 앞의 권한 요청·기기
+   * 초기화·구독 등록을 기다리는 동안에는 아직 거짓이라, 느린 회선에서 버튼이 두
+   * 번 눌리면 두 흐름이 나란히 돈다. 두 번째가 한도 초과로 끝나면 타이머는
+   * 켜졌는데 실패 팝업이 뜬다.
+   *
+   * 상태가 아니라 ref 로 잠근다. 상태는 다음 렌더에야 반영돼 같은 틱의 두 번째
+   * 클릭을 막지 못한다. 화면에 쓰라고 상태도 함께 둔다.
+   */
+  const isStartingRef = useRef(false);
 
   const isForThisLocker = reminder?.lockerId === lockerId;
 
@@ -160,6 +173,8 @@ export const useLockerTimerSession = (
 
   const start = useCallback(
     async (durationInSeconds: number) => {
+      if (isStartingRef.current) return false;
+
       // 모달을 열 때 이미 봤지만, 그 사이에 홈 화면 앱으로 옮겨 가거나 설정이
       // 바뀔 수 있어 실제로 만들기 직전에 한 번 더 본다.
       if (!ensureEnvironment()) return false;
@@ -178,6 +193,9 @@ export const useLockerTimerSession = (
         });
         return false;
       }
+
+      isStartingRef.current = true;
+      setIsStarting(true);
 
       try {
         // 첫 진입의 기기 초기화가 실패했거나 아직 끝나지 않았을 수 있다. 그
@@ -200,6 +218,9 @@ export const useLockerTimerSession = (
       } catch (error) {
         setFailure({ operation: "start", reason: toFailure(error) });
         return false;
+      } finally {
+        isStartingRef.current = false;
+        setIsStarting(false);
       }
     },
     [lockerId, createReminder, ensureEnvironment],
@@ -221,7 +242,8 @@ export const useLockerTimerSession = (
   return {
     endAt: isForThisLocker ? Date.parse(reminder.endAt) : null,
     totalSeconds: isForThisLocker ? reminder.totalUsageMinutes * 60 : 0,
-    isPending: createReminder.isPending || deleteReminder.isPending,
+    isPending:
+      isStarting || createReminder.isPending || deleteReminder.isPending,
     isStopping: deleteReminder.isPending,
     failure,
     clearFailure: () => setFailure(null),

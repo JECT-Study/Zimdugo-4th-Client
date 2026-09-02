@@ -92,6 +92,7 @@ const getRegistration = async () => {
  */
 export const ensurePushSubscription = async (
   locale: ApiLocale = resolvePushLocale(),
+  signal?: AbortSignal,
 ): Promise<PushSubscription> => {
   const registration = await getRegistration();
   const existing = await registration.pushManager.getSubscription();
@@ -102,7 +103,7 @@ export const ensurePushSubscription = async (
       // 브라우저가 요구한다. 푸시를 받으면 반드시 알림을 띄우겠다는 약속이다.
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(
-        await getPushVapidPublicKey(),
+        await getPushVapidPublicKey(signal),
       ),
     }));
 
@@ -111,11 +112,14 @@ export const ensurePushSubscription = async (
     throw new Error("푸시 구독 키가 비어 있습니다.");
   }
 
-  await putPushSubscription({
-    endpoint: subscription.endpoint,
-    keys: { p256dh, auth },
-    locale,
-  });
+  await putPushSubscription(
+    {
+      endpoint: subscription.endpoint,
+      keys: { p256dh, auth },
+      locale,
+    },
+    signal,
+  );
 
   return subscription;
 };
@@ -150,12 +154,13 @@ export const revokePushSubscription = async (): Promise<void> => {
  */
 export const syncPushSubscription = async (
   locale: ApiLocale = resolvePushLocale(),
+  signal?: AbortSignal,
 ): Promise<boolean> => {
   if (!isPushSupported() || Notification.permission !== "granted") {
     return false;
   }
 
-  await ensurePushSubscription(locale);
+  await ensurePushSubscription(locale, signal);
 
   return true;
 };

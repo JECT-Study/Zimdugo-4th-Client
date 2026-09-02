@@ -652,9 +652,8 @@ export function LockerDetailBottomSheet({
   };
 
   const startTimer = async () => {
-    // 느린 회선에서 확인 팝업이 닫힌 뒤에도 시작 버튼이 남아 있어 다시 눌릴 수
-    // 있다. 두 번째 요청이 한도 초과로 끝나면 타이머는 켜졌는데 실패 팝업이
-    // 뜬다.
+    // 중복 실행은 세션이 시작 흐름 전체를 잠가 막는다. 여기서는 화면이 눌린
+    // 상태를 더 만들지 않도록 일찍 접어 둔다.
     if (timerSession.isPending) return;
 
     const configuredTimeInSeconds =

@@ -49,7 +49,7 @@ export const usePushDevice = () => {
           return;
         }
 
-        await syncPushSubscription(locale);
+        await syncPushSubscription(locale, controller.signal);
       } catch (error) {
         if (controller.signal.aborted) return;
 
@@ -61,6 +61,12 @@ export const usePushDevice = () => {
 
     return () => controller.abort();
   }, [locale]);
+
+  /*
+   * 언어가 바뀌면 정리 함수가 앞선 요청을 끊는다. 끊지 않으면 이전 로케일의 PUT
+   * 이 나중에 도착해 구독에 과거 값이 다시 저장되고, 다음 동기화 전까지 알림이
+   * 잘못된 언어로 나간다.
+   */
 
   /*
    * 워커가 구독 소실을 알리면 다시 등록한다.

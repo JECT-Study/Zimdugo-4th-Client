@@ -71,7 +71,8 @@ describe("syncPushSubscription", () => {
     await expect(syncPushSubscription("ja")).resolves.toBe(true);
 
     expect(subscribe).not.toHaveBeenCalled();
-    expect(putPushSubscription).toHaveBeenCalledWith({
+    // 두 번째 인자는 취소 신호다. 여기서는 본문만 본다.
+    expect(putPushSubscription.mock.calls[0]?.[0]).toEqual({
       endpoint: "endpoint-existing",
       keys: { p256dh: "p256dh-value", auth: "auth-value" },
       locale: "ja",
@@ -89,7 +90,7 @@ describe("syncPushSubscription", () => {
     await expect(syncPushSubscription("ko")).resolves.toBe(true);
 
     expect(subscribe).toHaveBeenCalledOnce();
-    expect(putPushSubscription).toHaveBeenCalledWith(
+    expect(putPushSubscription.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({ endpoint: "endpoint-new", locale: "ko" }),
     );
   });
