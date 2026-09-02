@@ -106,6 +106,13 @@ export interface LockerTimerSessionState {
   isPending: boolean;
   failure: LockerTimerFailureState | null;
   clearFailure: () => void;
+  /**
+   * 이 브라우저에서 타이머를 쓸 수 있는지.
+   *
+   * 쓸 수 없으면 이유를 `failure` 에 남기고 거짓을 준다. 시간을 고르기 전에
+   * 불러야 안내가 제때 뜬다.
+   */
+  ensureEnvironment: () => boolean;
   start: (durationInSeconds: number) => Promise<boolean>;
   stop: () => Promise<boolean>;
 }
@@ -120,26 +127,36 @@ export const useLockerTimerSession = (
 
   const isForThisLocker = reminder?.lockerId === lockerId;
 
+  /**
+   * iOS 를 먼저 본다. 설치 전에는 `PushManager` 가 없어 대개 아래 검사에서도
+   * 걸리지만, 그 노출 여부는 iOS 버전마다 다르다. 노출되는 버전에서 순서가
+   * 반대면 지원되는 것으로 보고 진행하다 구독에서 알 수 없는 실패로 끝난다.
+   * 설치하면 되는 상황을 "이 브라우저는 원래 안 됨" 으로 알리지 않는다.
+   */
+  const ensureEnvironment = useCallback(() => {
+    setFailure(null);
+
+    if (isIosWithoutInstall()) {
+      setFailure({
+        operation: "start",
+        reason: { kind: "ios-install-required" },
+      });
+      return false;
+    }
+
+    if (!isPushSupported()) {
+      setFailure({ operation: "start", reason: { kind: "unsupported" } });
+      return false;
+    }
+
+    return true;
+  }, []);
+
   const start = useCallback(
     async (durationInSeconds: number) => {
-      setFailure(null);
-
-      // iOS 를 먼저 본다. 설치 전에는 PushManager 가 없어 대개 아래 검사에서도
-      // 걸리지만, 그 노출 여부는 iOS 버전마다 다르다. 노출되는 버전에서 순서가
-      // 반대면 지원되는 것으로 보고 진행하다 구독에서 알 수 없는 실패로 끝난다.
-      // 설치하면 되는 상황을 "이 브라우저는 원래 안 됨" 으로 알리지 않는다.
-      if (isIosWithoutInstall()) {
-        setFailure({
-          operation: "start",
-          reason: { kind: "ios-install-required" },
-        });
-        return false;
-      }
-
-      if (!isPushSupported()) {
-        setFailure({ operation: "start", reason: { kind: "unsupported" } });
-        return false;
-      }
+      // 모달을 열 때 이미 봤지만, 그 사이에 홈 화면 앱으로 옮겨 가거나 설정이
+      // 바뀔 수 있어 실제로 만들기 직전에 한 번 더 본다.
+      if (!ensureEnvironment()) return false;
 
       // 권한 요청은 사용자 제스처 안에서 일어나야 브라우저가 팝업을 띄운다.
       // 이 함수가 버튼 핸들러에서 곧바로 불리는 이유다.
@@ -174,7 +191,7 @@ export const useLockerTimerSession = (
         return false;
       }
     },
-    [lockerId, createReminder],
+    [lockerId, createReminder, ensureEnvironment],
   );
 
   const stop = useCallback(async () => {
@@ -196,6 +213,7 @@ export const useLockerTimerSession = (
     isPending: createReminder.isPending || deleteReminder.isPending,
     failure,
     clearFailure: () => setFailure(null),
+    ensureEnvironment,
     start,
     stop,
   };

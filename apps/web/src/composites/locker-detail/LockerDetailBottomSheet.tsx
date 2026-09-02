@@ -614,6 +614,20 @@ export function LockerDetailBottomSheet({
   };
 
   /**
+   * 설정 모달을 열기 전에 이 브라우저에서 타이머를 쓸 수 있는지 본다.
+   *
+   * 쓸 수 없으면 모달 대신 안내를 띄운다. 타이머는 서버 리마인더와 푸시 구독에
+   * 기대므로, 구독을 만들 수 없는 브라우저에서는 시간을 골라도 켜지지 않는다.
+   * 끝까지 고르고 확인까지 누른 뒤에 "홈 화면에 추가하세요" 를 보여 주면 그
+   * 과정이 통째로 헛일이 된다.
+   */
+  const handleTimerOpen = () => {
+    if (!timerSession.ensureEnvironment()) return;
+
+    setIsTimerOpen(true);
+  };
+
+  /**
    * 주소를 클립보드에 담는다.
    *
    * 길찾기까지 가지 않고 주소만 다른 앱에 옮겨 적는 경우가 많다. 실패해도 조용히
@@ -830,6 +844,11 @@ export function LockerDetailBottomSheet({
     return () => window.clearInterval(intervalId);
   }, [isTimerOpen, timerSession.endAt]);
 
+  /*
+   * 지도 컨트롤에서 넘어온 자동 열기. 여기는 환경을 보지 않는다. 이미 도는
+   * 타이머를 보러 오는 길이라 구독이 만들어졌다는 뜻이고, 남은 시간을 확인하는
+   * 것까지 막을 이유가 없다.
+   */
   useEffect(() => {
     if (!shouldOpenTimer) return;
 
@@ -941,7 +960,7 @@ export function LockerDetailBottomSheet({
               onMoreActionsOpen={handleOpenMoreActions}
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
-              onTimerOpen={() => setIsTimerOpen(true)}
+              onTimerOpen={handleTimerOpen}
               onAddressCopy={handleAddressCopy}
               isTimerRunning={isTimerRunning}
               timerEndTimeLabel={timerEndTimeLabel}

@@ -126,6 +126,14 @@ describe("LockerDetailBottomSheet", () => {
       defaultOptions: { queries: { retry: false } },
     });
     queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
+    // jsdom 에는 푸시 API 가 없다. 없으면 타이머 설정 모달이 "지원하지 않는
+    // 브라우저" 로 막히므로, 지원하는 환경을 기본값으로 세워 둔다.
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {},
+    });
+    vi.stubGlobal("PushManager", function PushManager() {});
+    vi.stubGlobal("Notification", { permission: "granted" });
     window.localStorage.clear();
     Element.prototype.scrollTo = vi.fn();
     Object.defineProperty(window, "innerHeight", {
@@ -228,6 +236,33 @@ describe("LockerDetailBottomSheet", () => {
 
     expect(screen.getByRole("dialog", { name: "보관 타이머" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "타이머 켜기" })).toBeTruthy();
+  });
+
+  it("홈 화면에 설치되지 않은 iOS 에서는 설정 모달 대신 설치를 안내한다", () => {
+    // 설치 전에는 푸시 구독을 만들 수 없어 시간을 골라도 타이머가 켜지지 않는다.
+    // 고르기 전에 알려야 그 과정이 헛일이 되지 않는다.
+    const originalUserAgent = navigator.userAgent;
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
+    });
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+
+    expect(screen.queryByRole("dialog", { name: "보관 타이머" })).toBeNull();
+    expect(screen.getByText(/홈 화면에 추가/)).toBeTruthy();
+
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value: originalUserAgent,
+    });
   });
 
   it("타이머가 끝나면 알림 팝업을 띄운다", async () => {
