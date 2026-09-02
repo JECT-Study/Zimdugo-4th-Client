@@ -218,14 +218,14 @@ export function LockerDetailScreen({
    */
   const actionFooterHeightRef = useRef(DETAIL_ACTION_FOOTER_HEIGHT);
   const moreActionsButtonRef = useRef<HTMLButtonElement | null>(null);
-  const realtimeAvailability = locker.realtimeAvailability;
-  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
   /*
    * 잰 값은 부모에게 올려보낸다. 콜백을 의존성에 넣으면 부모가 매 렌더 새 함수를
    * 주는 순간 측정이 매번 다시 붙으므로 최신 참조만 들고 있는다.
    */
   const metricsChangeRef = useRef(onMetricsChange);
   metricsChangeRef.current = onMetricsChange;
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
   const updateFullContentHeight = useCallback(() => {
     const element = fullContentMeasureRef.current;
 
@@ -272,20 +272,6 @@ export function LockerDetailScreen({
       actionFooterHeightPx: footerHeight,
     });
   }, [isRealtimeAvailable]);
-  const handleFullContentMeasureRef = useCallback(
-    (element: HTMLDivElement | null) => {
-      fullContentMeasureRef.current = element;
-      updateFullContentHeight();
-    },
-    [updateFullContentHeight],
-  );
-  const handleActionFooterMeasureRef = useCallback(
-    (element: HTMLDivElement | null) => {
-      actionFooterMeasureRef.current = element;
-      updateFullContentHeight();
-    },
-    [updateFullContentHeight],
-  );
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
@@ -303,6 +289,20 @@ export function LockerDetailScreen({
     ? formatTimerEndTime(timerSession.endAt)
     : "";
 
+  const handleFullContentMeasureRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      fullContentMeasureRef.current = element;
+      updateFullContentHeight();
+    },
+    [updateFullContentHeight],
+  );
+  const handleActionFooterMeasureRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      actionFooterMeasureRef.current = element;
+      updateFullContentHeight();
+    },
+    [updateFullContentHeight],
+  );
   const handleFavoritePress = () => {
     if (!canFavorite) {
       return;
