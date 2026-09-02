@@ -30,6 +30,20 @@ const render = (ui: ReactNode) => rtlRender(ui, { wrapper: QueryWrapper });
 
 const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
 
+/**
+ * 리마인더 삭제만 성공하는 것으로 둔다. 나머지 상수와 헬퍼는 실제 구현을 쓴다.
+ *
+ * 이 파일의 타이머 테스트는 쿼리 캐시를 직접 심어 화면만 본다. 끄기 경로만
+ * 네트워크를 타는데, 실패하면 "끄기 실패라 다시 예약" 이라는 다른 동작이 되어
+ * 검증하려는 것이 가려진다.
+ */
+const deletePushReminderMock = vi.hoisted(() => vi.fn(async () => {}));
+
+vi.mock("#/shared/api/push", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#/shared/api/push")>()),
+  deletePushReminder: deletePushReminderMock,
+}));
+
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   SHEET_SETTLE_SPRING: { type: "spring" },
   DraggableBottomSheet: (props: {
@@ -236,6 +250,98 @@ describe("LockerDetailBottomSheet", () => {
 
     expect(screen.getByRole("dialog", { name: "보관 타이머" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "타이머 켜기" })).toBeTruthy();
+  });
+
+  it("다른 보관함으로 바꾸면 고르던 시간을 지운다", () => {
+    // 시트는 보관함마다 새로 마운트되지 않는다. 남겨 두면 A 에서 고른 시간으로
+    // B 에 리마인더가 만들어진다.
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+    fireEvent.wheel(screen.getByRole("dialog", { name: "보관 타이머" }), {
+      deltaY: 100,
+    });
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, lockerId: 99 }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    // 모달이 닫히고 시작 버튼도 다시 잠긴다.
+    expect(screen.queryByRole("dialog", { name: "보관 타이머" })).toBeNull();
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+
+    expect(
+      screen
+        .getByRole("button", { name: "타이머 켜기" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("종료 직전에 타이머를 끄면 종료 팝업을 띄우지 않는다", async () => {
+    // 삭제 응답을 기다리는 사이에도 endAt 은 남아 있다. 예약을 접지 않으면
+    // 끄기가 성공해도 종료 팝업이 먼저 뜬다.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: LOCKER_DETAIL.lockerId,
+        startedAt: new Date(Date.now()).toISOString(),
+        endAt: new Date(Date.now() + 3000).toISOString(),
+        totalUsageMinutes: 1,
+        remainingMinutes: 1,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(getSheetRoot().getByRole("button", { name: /이용 종료/ }));
+    // 삭제 응답을 붙잡아 둔다. 즉시 끝나면 endAt 이 먼저 사라져 경합이 재현되지
+    // 않는다. 실제로 문제가 되는 것은 응답을 기다리는 사이에 종료 시각이 지나는
+    // 경우다.
+    let finishDelete = () => {};
+    deletePushReminderMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishDelete = () => resolve();
+        }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "타이머 끄기" }));
+
+    // 가짜 시간에서는 React 의 상태 반영도 타이머를 타므로, 종료 시각 전에 짧게
+    // 감아 끄기 요청이 반영되게 한다. 곧바로 3초를 감으면 예약이 먼저 발화한다.
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(deletePushReminderMock).toHaveBeenCalled();
+
+    // 삭제가 아직 끝나지 않은 채 종료 시각을 지난다.
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
+
+    await act(async () => {
+      finishDelete();
+    });
+
+    expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
+
+    vi.useRealTimers();
   });
 
   it("홈 화면에 설치되지 않은 iOS 에서는 설정 모달 대신 설치를 안내한다", () => {

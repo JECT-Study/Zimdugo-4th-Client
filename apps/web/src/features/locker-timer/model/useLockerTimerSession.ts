@@ -1,6 +1,10 @@
 import { m } from "@repo/i18n";
 import { useCallback, useState } from "react";
-import { getPushErrorCode, PUSH_ERROR_CODE } from "#/shared/api/push";
+import {
+  getPushErrorCode,
+  PUSH_ERROR_CODE,
+  postPushDevice,
+} from "#/shared/api/push";
 import {
   ensurePushSubscription,
   isIosWithoutInstall,
@@ -104,6 +108,8 @@ export interface LockerTimerSessionState {
   endAt: number | null;
   totalSeconds: number;
   isPending: boolean;
+  /** 끄기 요청이 아직 끝나지 않았는지. 종료 예약을 접어 두는 데 쓴다 */
+  isStopping: boolean;
   failure: LockerTimerFailureState | null;
   clearFailure: () => void;
   /**
@@ -174,6 +180,11 @@ export const useLockerTimerSession = (
       }
 
       try {
+        // 첫 진입의 기기 초기화가 실패했거나 아직 끝나지 않았을 수 있다. 그
+        // 상태로 구독을 올리면 이후 요청이 계속 실패하고, 화면을 다시 열기
+        // 전까지 다시 눌러도 복구되지 않는다. 쿠키가 유효하면 서버가 같은
+        // 기기를 유지하므로 다시 불러도 신원이 흔들리지 않는다.
+        await postPushDevice();
         await ensurePushSubscription();
 
         const startedAt = new Date(Date.now() + START_BUFFER_MS);
@@ -211,6 +222,7 @@ export const useLockerTimerSession = (
     endAt: isForThisLocker ? Date.parse(reminder.endAt) : null,
     totalSeconds: isForThisLocker ? reminder.totalUsageMinutes * 60 : 0,
     isPending: createReminder.isPending || deleteReminder.isPending,
+    isStopping: deleteReminder.isPending,
     failure,
     clearFailure: () => setFailure(null),
     ensureEnvironment,

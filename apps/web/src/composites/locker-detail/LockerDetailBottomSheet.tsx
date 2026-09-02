@@ -567,6 +567,7 @@ export function LockerDetailBottomSheet({
   // 이펙트 의존성으로 쓰려면 객체가 아니라 값으로 꺼내 두어야 한다. 세션 객체는
   // 매 렌더 새로 만들어져 통째로 의존하면 이펙트가 매번 다시 돈다.
   const timerEndAt = timerSession.endAt;
+  const isStoppingTimer = timerSession.isStopping;
   const remainingTimeInSeconds = timerSession.endAt
     ? Math.max(0, Math.ceil((timerSession.endAt - timerNow) / 1000))
     : 0;
@@ -651,6 +652,11 @@ export function LockerDetailBottomSheet({
   };
 
   const startTimer = async () => {
+    // 느린 회선에서 확인 팝업이 닫힌 뒤에도 시작 버튼이 남아 있어 다시 눌릴 수
+    // 있다. 두 번째 요청이 한도 초과로 끝나면 타이머는 켜졌는데 실패 팝업이
+    // 뜬다.
+    if (timerSession.isPending) return;
+
     const configuredTimeInSeconds =
       (Number(timerHours) * 60 + Number(timerMinutes)) * 60;
     if (configuredTimeInSeconds <= 0) return;
@@ -792,13 +798,23 @@ export function LockerDetailBottomSheet({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  /*
+   * 보관함이 바뀌면 고르던 시간과 열려 있던 모달을 지운다.
+   *
+   * 시트는 보관함마다 새로 마운트되지 않는다(스냅 위치를 지키려고 인스턴스를
+   * 유지한다). 초기화하지 않으면 A 에서 고른 시간이 B 로 넘어가, 사용자가 확인만
+   * 눌러도 의도하지 않은 리마인더가 만들어진다.
+   *
+   * 이펙트 안에서 lockerId 를 읽지는 않지만 그 값이 바뀌는 것이 곧 재실행 신호다.
+   */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: lockerId 는 읽지 않고 재실행 신호로만 쓴다
   useEffect(() => {
     setTimerNow(Date.now());
     setIsTimerOpen(false);
     setIsTimerStartConfirmationOpen(false);
     setTimerHours("00");
     setTimerMinutes("00");
-  }, []);
+  }, [locker.lockerId]);
 
   useEffect(() => {
     if (timerSession.endAt === null) return;
@@ -820,7 +836,10 @@ export function LockerDetailBottomSheet({
    * 경우도 서버 목록에서 빠져 있어 여기까지 오지 않는다.
    */
   useEffect(() => {
-    if (timerEndAt === null) return;
+    // 끄는 중에는 예약하지 않는다. 삭제 응답을 기다리는 사이에도 endAt 은 남아
+    // 있어서, 종료 직전에 끄면 삭제가 성공해도 종료 팝업이 먼저 뜬다. 끄기가
+    // 실패하면 isStopping 이 풀리며 남은 시간으로 다시 예약된다.
+    if (timerEndAt === null || isStoppingTimer) return;
 
     const remainingMs = timerEndAt - Date.now();
     if (remainingMs <= 0) return;
@@ -831,7 +850,7 @@ export function LockerDetailBottomSheet({
     );
 
     return () => window.clearTimeout(timeoutId);
-  }, [timerEndAt]);
+  }, [timerEndAt, isStoppingTimer]);
 
   /*
    * 설정 화면의 종료 예정 시각은 현재 시각에 고른 길이를 더해 보여 준다. 모달을
