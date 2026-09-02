@@ -206,7 +206,7 @@ import {
   shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
-import { useSheetSnapRequest } from "#/features/search/model/useSheetSnapRequest";
+import { useSheetStageSession } from "#/features/search/model/useSheetStageSession";
 import {
   createAlternateLinksForPathname,
   createLocalizedUrl,
@@ -830,39 +830,35 @@ export function IndexPage() {
       return lockerIdFromQuery;
     return null;
   });
-  const [listSheetSnapStage, setListSheetSnapStage] =
-    useState<SearchListSheetSnapStage>("half");
-  /**
-   * 목록 시트가 지금 단계에서 실제로 차지하는 높이. 시트가 올려 준다.
-   *
-   * full 은 최소 상단 여백까지 올라가므로 단계 상수로는 알 수 없다. 상세 시트와
-   * 같은 규칙을 따라야 컨트롤 배치가 두 시트에서 갈리지 않는다.
-   */
-  const [listSheetVisibleHeight, setListSheetVisibleHeight] = useState<
-    number | null
-  >(() => resolveSearchListStageVisibleHeight("half", SSR_WINDOW_HEIGHT_PX));
   const {
+    snapStage: listSheetSnapStage,
+    setSnapStage: setListSheetSnapStage,
+    visibleHeightPx: listSheetVisibleHeight,
+    setVisibleHeightPx: setListSheetVisibleHeight,
     snapRequest: listSheetSnapRequest,
     requestSnap: requestListSheetSnap,
     clearSnapRequest: clearListSheetSnapRequest,
-  } = useSheetSnapRequest<SearchListSheetSnapStage>();
-  const [detailSheetSnapStage, setDetailSheetSnapStage] =
-    useState<LockerDetailSheetSnapStage>("half");
-  /**
-   * 상세 시트가 지금 단계에서 실제로 차지하는 높이. 시트가 올려 준다.
-   *
-   * full 은 콘텐츠 높이에 따라 자리가 달라져 단계 상수로는 알 수 없다. 실시간
-   * 카드가 있는 보관함은 시트가 더 높이 올라가고, 없는 보관함은 위에 지도가
-   * 남는다. 그 차이를 컨트롤 배치에 반영하려면 실측값이 필요하다.
-   */
-  const [detailSheetVisibleHeight, setDetailSheetVisibleHeight] = useState<
-    number | null
-  >(() => resolveDetailSheetVisibleHeight("half"));
+    handleSnapStageChange: handleListSheetSnapStageChange,
+  } = useSheetStageSession<SearchListSheetSnapStage>({
+    initialStage: "half",
+    initialVisibleHeightPx: resolveSearchListStageVisibleHeight(
+      "half",
+      SSR_WINDOW_HEIGHT_PX,
+    ),
+  });
   const {
+    snapStage: detailSheetSnapStage,
+    setSnapStage: setDetailSheetSnapStage,
+    visibleHeightPx: detailSheetVisibleHeight,
+    setVisibleHeightPx: setDetailSheetVisibleHeight,
     snapRequest: detailSheetSnapRequest,
     requestSnap: requestDetailSheetSnap,
     clearSnapRequest: clearDetailSheetSnapRequest,
-  } = useSheetSnapRequest<LockerDetailSheetSnapStage>();
+    handleSnapStageChange: handleDetailSheetSnapStageChange,
+  } = useSheetStageSession<LockerDetailSheetSnapStage>({
+    initialStage: "half",
+    initialVisibleHeightPx: resolveDetailSheetVisibleHeight("half"),
+  });
   const [selectedLockerDetail, setSelectedLockerDetail] =
     useState<LockerDetailItem | null>(() => {
       if (lockerIdFromQuery !== undefined) {
@@ -2397,22 +2393,6 @@ export function IndexPage() {
       }, DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS);
     },
     [clearPendingLockerDetailOpen, openLockerDetailById, syncLockerDetailUrl],
-  );
-
-  const handleListSheetSnapStageChange = useCallback(
-    (nextStage: SearchListSheetSnapStage, visibleHeightPx: number | null) => {
-      setListSheetSnapStage(nextStage);
-      setListSheetVisibleHeight(visibleHeightPx);
-    },
-    [],
-  );
-
-  const handleDetailSheetSnapStageChange = useCallback(
-    (nextStage: LockerDetailSheetSnapStage, visibleHeightPx: number | null) => {
-      setDetailSheetSnapStage(nextStage);
-      setDetailSheetVisibleHeight(visibleHeightPx);
-    },
-    [],
   );
 
   const selectedPinId = useMemo(() => {
