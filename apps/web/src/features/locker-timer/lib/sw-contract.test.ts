@@ -28,6 +28,14 @@ describe("서비스 워커와 페이지가 나눠 가진 상수", () => {
     expect(serviceWorkerSource).toContain('credentials: "include"');
   });
 
+  it("등록 URL 에 넘기는 API 주소를 정규화한다", () => {
+    // 워커는 이 값에 경로를 이어 붙일 뿐이라 후행 슬래시가 남으면 이중 슬래시가
+    // 된다. 이중 슬래시를 다른 경로로 보는 서버에서는 구독 해제가 404 가 된다.
+    const source = readSource("../../../shared/hooks/useServiceWorker.ts");
+
+    expect(source).toContain("normalizeApiBaseUrl");
+  });
+
   it("워커가 등록 URL 의 쿼리에서 API 주소를 읽는다", () => {
     // useServiceWorker 가 ?api= 로 넘긴다. 키가 어긋나면 상대 경로로 요청해
     // 다른 오리진을 때린다.

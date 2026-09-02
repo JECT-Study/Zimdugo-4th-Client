@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { normalizeApiBaseUrl } from "#/shared/lib/api-base-url";
 
 const SERVICE_WORKER_URL = "/sw.js";
 
@@ -12,7 +13,14 @@ const SERVICE_WORKER_URL = "/sw.js";
  * 값이 바뀌면 스크립트 URL 이 달라져 브라우저가 새 워커로 교체한다.
  */
 const buildServiceWorkerUrl = () => {
-  const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL ?? "";
+  const rawBaseUrl = import.meta.env?.VITE_API_BASE_URL ?? "";
+  if (!rawBaseUrl) return SERVICE_WORKER_URL;
+
+  // 워커는 이 값에 경로를 이어 붙일 뿐이다. 후행 슬래시가 남아 있으면
+  // `.../api/v1/...` 이 `...//api/v1/...` 이 되고, 이중 슬래시를 다른 경로로
+  // 보는 서버에서는 구독 해제가 404 가 된다. API 클라이언트와 같은 정규화를
+  // 거쳐 넘긴다.
+  const apiBaseUrl = normalizeApiBaseUrl(rawBaseUrl);
   if (!apiBaseUrl) return SERVICE_WORKER_URL;
 
   return `${SERVICE_WORKER_URL}?api=${encodeURIComponent(apiBaseUrl)}`;

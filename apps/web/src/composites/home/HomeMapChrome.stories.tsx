@@ -4,7 +4,7 @@ import {
 } from "@repo/ui/assets/icons";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useState } from "react";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { createBottomMapInset } from "#/entities/map/model/map-inset";
@@ -19,13 +19,39 @@ import {
 import { resolveMapControlBottomPx } from "#/routes/-map-control-visibility";
 import { HomeHeader } from "./HomeHeader";
 
-const storyQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+const createStoryQueryClient = (hasActiveTimer: boolean) => {
+  const client = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        // 스토리에서는 심어 둔 값만 쓴다. 다시 읽으면 실제 API 를 때린다.
+        staleTime: Number.POSITIVE_INFINITY,
+        refetchOnWindowFocus: false,
+      },
     },
-  },
-});
+  });
+
+  client.setQueryData(
+    PUSH_REMINDER_QUERY_KEY,
+    hasActiveTimer
+      ? [
+          {
+            id: 1,
+            lockerId: 101,
+            startedAt: new Date().toISOString(),
+            endAt: new Date(
+              Date.now() + 5 * 60 * 60 * 1000 + 30 * 60 * 1000,
+            ).toISOString(),
+            totalUsageMinutes: 330,
+            remainingMinutes: 330,
+            remindBeforeMinutes: null,
+          },
+        ]
+      : [],
+  );
+
+  return client;
+};
 
 interface HomeMapChromePreviewProps {
   /** 세로로 짧은 화면(가로 모드)에서 컨트롤이 검색 바를 덮지 않는지 보기 위한 값 */
@@ -49,30 +75,17 @@ function HomeMapChromePreview({
     windowHeightPx: viewportHeight,
   });
 
-  // 타이머는 서버 상태다. 스토리에서는 네트워크 대신 캐시에 직접 심는다.
-  useEffect(() => {
-    storyQueryClient.setQueryData(
-      PUSH_REMINDER_QUERY_KEY,
-      hasActiveTimer
-        ? [
-            {
-              id: 1,
-              lockerId: 101,
-              startedAt: new Date().toISOString(),
-              endAt: new Date(
-                Date.now() + 5 * 60 * 60 * 1000 + 30 * 60 * 1000,
-              ).toISOString(),
-              totalUsageMinutes: 330,
-              remainingMinutes: 330,
-              remindBeforeMinutes: null,
-            },
-          ]
-        : [],
-    );
-  }, [hasActiveTimer]);
+  /*
+   * 타이머는 서버 상태다. 스토리에서는 네트워크 대신 캐시에 심는다.
+   *
+   * 이펙트가 아니라 클라이언트를 만들 때 심는다. 이펙트는 자식이 그려진 뒤에
+   * 도는데, 그사이 지도 컨트롤의 조회가 먼저 나가 실제 API 를 때린다. 늦게 도착한
+   * 응답이 심어 둔 값을 덮으면 스토리가 그 기기의 상태에 따라 달라진다.
+   */
+  const [queryClient] = useState(() => createStoryQueryClient(hasActiveTimer));
 
   return (
-    <QueryClientProvider client={storyQueryClient}>
+    <QueryClientProvider client={queryClient}>
       <main
         style={{
           position: "relative",
