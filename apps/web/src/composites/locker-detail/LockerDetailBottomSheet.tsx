@@ -39,12 +39,9 @@ import type { LockerCorrectionRequest } from "#/features/locker-correction/model
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
 import { getRemainingTimeParts } from "#/features/locker-timer/model/locker-timer-format";
 import {
-  getStoredLockerTimer,
-  type LockerTimerSession,
-  removeLockerTimer,
-  saveLockerTimer,
-  subscribeLockerTimerStorage,
-} from "#/features/locker-timer/model/locker-timer-storage";
+  describeFailure,
+  useLockerTimerSession,
+} from "#/features/locker-timer/model/useLockerTimerSession";
 import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
@@ -382,10 +379,8 @@ export function LockerDetailBottomSheet({
   const [isAddressCopied, setIsAddressCopied] = useState(false);
   const [timerHours, setTimerHours] = useState("00");
   const [timerMinutes, setTimerMinutes] = useState("00");
-  const [timerSession, setTimerSession] = useState<LockerTimerSession | null>(
-    null,
-  );
   const [timerNow, setTimerNow] = useState(() => Date.now());
+  const timerSession = useLockerTimerSession(locker.lockerId);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
@@ -566,11 +561,12 @@ export function LockerDetailBottomSheet({
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
-  const remainingTimeInSeconds = timerSession
+  const remainingTimeInSeconds = timerSession.endAt
     ? Math.max(0, Math.ceil((timerSession.endAt - timerNow) / 1000))
     : 0;
-  const isTimerRunning = timerSession !== null && remainingTimeInSeconds > 0;
-  const timerEndTimeLabel = timerSession
+  const isTimerRunning =
+    timerSession.endAt !== null && remainingTimeInSeconds > 0;
+  const timerEndTimeLabel = timerSession.endAt
     ? formatTimerEndTime(timerSession.endAt)
     : "";
 
@@ -634,29 +630,28 @@ export function LockerDetailBottomSheet({
       });
   };
 
-  const handleTimerStartConfirm = () => {
+  const handleTimerStartConfirm = async () => {
     const configuredTimeInSeconds =
       (Number(timerHours) * 60 + Number(timerMinutes)) * 60;
     if (configuredTimeInSeconds <= 0) return;
 
-    const nextSession = {
-      configuredTimeInSeconds,
-      endAt: Date.now() + configuredTimeInSeconds * 1000,
-    };
-    setTimerSession(nextSession);
-    setTimerNow(Date.now());
     setIsTimerStartConfirmationOpen(false);
 
-    saveLockerTimer(locker.lockerId, nextSession);
+    // 권한 팝업은 이 클릭의 사용자 제스처 안에서 떠야 한다. 확인 팝업을 먼저
+    // 닫고 부르는 이유이기도 하다.
+    const hasStarted = await timerSession.start(configuredTimeInSeconds);
+    if (hasStarted) {
+      setTimerNow(Date.now());
+    }
   };
 
-  const handleTimerStop = () => {
-    setTimerSession(null);
+  const handleTimerStop = async () => {
+    const hasStopped = await timerSession.stop();
+    if (!hasStopped) return;
+
     setTimerHours("00");
     setTimerMinutes("00");
     setIsTimerOpen(false);
-
-    removeLockerTimer(locker.lockerId);
   };
 
   const handleOpenMoreActions = () => {
@@ -749,34 +744,20 @@ export function LockerDetailBottomSheet({
   }, []);
 
   useEffect(() => {
-    const refreshTimer = () => {
-      setTimerSession(getStoredLockerTimer(locker.lockerId));
-      setTimerNow(Date.now());
-    };
-
-    refreshTimer();
+    setTimerNow(Date.now());
     setIsTimerOpen(false);
     setIsTimerStartConfirmationOpen(false);
     setTimerHours("00");
     setTimerMinutes("00");
-    return subscribeLockerTimerStorage(refreshTimer);
-  }, [locker.lockerId]);
+  }, []);
 
   useEffect(() => {
-    if (!timerSession) return;
+    if (timerSession.endAt === null) return;
 
-    const intervalId = window.setInterval(() => {
-      const nextNow = Date.now();
-      setTimerNow(nextNow);
-
-      if (timerSession.endAt <= nextNow) {
-        setTimerSession(null);
-        removeLockerTimer(locker.lockerId);
-      }
-    }, 1000);
+    const intervalId = window.setInterval(() => setTimerNow(Date.now()), 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [locker.lockerId, timerSession]);
+  }, [timerSession.endAt]);
 
   /*
    * 설정 화면의 종료 예정 시각은 현재 시각에 고른 길이를 더해 보여 준다. 모달을
@@ -784,12 +765,12 @@ export function LockerDetailBottomSheet({
    * 벌어진다. 열려 있는 동안 현재 시각을 따라가게 한다.
    */
   useEffect(() => {
-    if (!isTimerOpen || timerSession) return;
+    if (!isTimerOpen || timerSession.endAt !== null) return;
 
     const intervalId = window.setInterval(() => setTimerNow(Date.now()), 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [isTimerOpen, timerSession]);
+  }, [isTimerOpen, timerSession.endAt]);
 
   useEffect(() => {
     if (!shouldOpenTimer) return;
@@ -934,13 +915,13 @@ export function LockerDetailBottomSheet({
       <LockerTimerModal
         isOpen={isTimerOpen}
         onOpenChange={setIsTimerOpen}
-        {...(isTimerRunning && timerSession
+        {...(isTimerRunning
           ? {
               mode: "running" as const,
               remainingTimeLabel: formatRemainingTime(remainingTimeInSeconds),
               endTimeLabel: timerEndTimeLabel,
               remainingTimeInSeconds,
-              configuredTimeInSeconds: timerSession.configuredTimeInSeconds,
+              configuredTimeInSeconds: timerSession.totalSeconds,
               onStop: handleTimerStop,
             }
           : {
@@ -951,6 +932,28 @@ export function LockerDetailBottomSheet({
               onDurationChange: handleTimerDurationChange,
               onStart: handleTimerStartRequest,
             })}
+      />
+      {/*
+       * 실패를 조용히 넘기지 않는다. 서버가 소스라 실패하면 타이머도 서지
+       * 않는데, 그 사실을 화면이 말하지 않으면 눌러도 아무 일이 없는 것처럼
+       * 보인다. 알 수 없는 실패는 서버 코드를 문구에 남겨 어디가 막혔는지
+       * 화면만 보고 알 수 있게 한다.
+       */}
+      <Popup
+        isOpen={timerSession.failure !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) timerSession.clearFailure();
+        }}
+        titleText={m.locker_timer_error_title()}
+        helperText={
+          timerSession.failure
+            ? describeFailure(timerSession.failure)
+            : undefined
+        }
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: timerSession.clearFailure,
+        }}
       />
       <Popup
         isOpen={isTimerStartConfirmationOpen}

@@ -26,9 +26,6 @@ export const PUSH_ERROR_CODE = {
   RateLimited: "PUSH-429-1",
 } as const;
 
-export type PushErrorCode =
-  (typeof PUSH_ERROR_CODE)[keyof typeof PUSH_ERROR_CODE];
-
 /**
  * 실패 응답에서 서버 오류 코드를 꺼낸다.
  *
@@ -46,7 +43,7 @@ export const getPushErrorCode = (error: unknown): string | undefined => {
   return typeof code === "string" ? code : undefined;
 };
 
-export interface PushSubscriptionKeys {
+interface PushSubscriptionKeys {
   p256dh: string;
   auth: string;
 }

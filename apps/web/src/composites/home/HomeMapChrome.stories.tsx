@@ -9,10 +9,7 @@ import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/Lock
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { createBottomMapInset } from "#/entities/map/model/map-inset";
 import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
-import {
-  removeLockerTimer,
-  saveLockerTimer,
-} from "#/features/locker-timer/model/locker-timer-storage";
+import { PUSH_REMINDER_QUERY_KEY } from "#/features/locker-timer/model/push-reminder-queries";
 import { LockerTimerMapControl } from "#/features/locker-timer/ui/LockerTimerMapControl";
 import {
   locationButton,
@@ -52,15 +49,26 @@ function HomeMapChromePreview({
     windowHeightPx: viewportHeight,
   });
 
+  // 타이머는 서버 상태다. 스토리에서는 네트워크 대신 캐시에 직접 심는다.
   useEffect(() => {
-    if (!hasActiveTimer) return;
-
-    saveLockerTimer(101, {
-      configuredTimeInSeconds: 5 * 60 * 60 + 30 * 60,
-      endAt: Date.now() + 5 * 60 * 60 * 1000 + 30 * 60 * 1000,
-    });
-
-    return () => removeLockerTimer(101);
+    storyQueryClient.setQueryData(
+      PUSH_REMINDER_QUERY_KEY,
+      hasActiveTimer
+        ? [
+            {
+              id: 1,
+              lockerId: 101,
+              startedAt: new Date().toISOString(),
+              endAt: new Date(
+                Date.now() + 5 * 60 * 60 * 1000 + 30 * 60 * 1000,
+              ).toISOString(),
+              totalUsageMinutes: 330,
+              remainingMinutes: 330,
+              remindBeforeMinutes: null,
+            },
+          ]
+        : [],
+    );
   }, [hasActiveTimer]);
 
   return (

@@ -1,18 +1,32 @@
 // @vitest-environment jsdom
 
 import { m } from "@repo/i18n";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as rtlRender,
   screen,
   waitFor,
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PUSH_REMINDER_QUERY_KEY } from "#/features/locker-timer/model/push-reminder-queries";
 import { setTestLanguage } from "#/shared/test/language-runtime";
+
+/**
+ * 타이머가 서버 상태라 시트가 쿼리 컨텍스트를 요구한다. 활성 리마인더가 없는
+ * 상태를 캐시에 미리 심어 두어 네트워크를 태우지 않는다.
+ */
+let queryClient = new QueryClient();
+
+const QueryWrapper = ({ children }: { children?: ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+
+const render = (ui: ReactNode) => rtlRender(ui, { wrapper: QueryWrapper });
 
 const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
 
@@ -108,6 +122,10 @@ const overlayBottomAt = (sheetOffset: number) =>
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setTestLanguage("ko");
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
     window.localStorage.clear();
     Element.prototype.scrollTo = vi.fn();
     Object.defineProperty(window, "innerHeight", {
@@ -212,14 +230,18 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.getByRole("button", { name: "타이머 켜기" })).toBeTruthy();
   });
 
-  it("이 기기에 저장된 실행 중 타이머를 상세 시트에 복원한다", async () => {
-    window.localStorage.setItem(
-      `zimdugo:locker-timer:${LOCKER_DETAIL.lockerId}`,
-      JSON.stringify({
-        configuredTimeInSeconds: 3600,
-        endAt: Date.now() + 3600 * 1000,
-      }),
-    );
+  it("이 기기의 서버 리마인더를 상세 시트에 복원한다", async () => {
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: LOCKER_DETAIL.lockerId,
+        startedAt: new Date(Date.now()).toISOString(),
+        endAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+        totalUsageMinutes: 60,
+        remainingMinutes: 60,
+        remindBeforeMinutes: null,
+      },
+    ]);
 
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,

@@ -4,7 +4,7 @@ import {
   getPushVapidPublicKey,
   putPushSubscription,
 } from "#/shared/api/push";
-import { toAcceptLanguage } from "#/shared/i18n/api-locale";
+import { type ApiLocale, toAcceptLanguage } from "#/shared/i18n/api-locale";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 
 /**
@@ -141,7 +141,9 @@ export const revokePushSubscription = async (): Promise<void> => {
  * 구독이 없으면 새로 만들지 않는다. 사용자가 아직 권한을 준 적이 없거나 스스로
  * 껐다는 뜻이라, 여기서 팝업 없이 구독을 되살리면 의도를 거스른다.
  */
-export const syncPushSubscription = async (): Promise<boolean> => {
+export const syncPushSubscription = async (
+  locale: ApiLocale = resolvePushLocale(),
+): Promise<boolean> => {
   if (!isPushSupported() || Notification.permission !== "granted") {
     return false;
   }
@@ -156,7 +158,7 @@ export const syncPushSubscription = async (): Promise<boolean> => {
   await putPushSubscription({
     endpoint: subscription.endpoint,
     keys: { p256dh, auth },
-    locale: resolvePushLocale(),
+    locale,
   });
 
   return true;
