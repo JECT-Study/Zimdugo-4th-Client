@@ -8,19 +8,26 @@ import {
 } from "./api-locale";
 
 describe("toAcceptLanguage", () => {
-  it("앱 로케일을 백엔드 Accept-Language 값으로 옮긴다", () => {
-    expect(toAcceptLanguage("ko")).toBe("ko-KR");
-    expect(toAcceptLanguage("en")).toBe("en-US");
-    expect(toAcceptLanguage("ja")).toBe("ja-JP");
-    expect(toAcceptLanguage("zh")).toBe("zh-CN");
-    expect(toAcceptLanguage("zh-TW")).toBe("zh-TW");
+  it("앱 로케일을 백엔드에 보내는 한 벌의 어휘로 옮긴다", () => {
+    expect(toAcceptLanguage("ko")).toBe("ko");
+    expect(toAcceptLanguage("en")).toBe("en");
+    expect(toAcceptLanguage("ja")).toBe("ja");
+    expect(toAcceptLanguage("zh")).toBe("zh-Hans");
+    expect(toAcceptLanguage("zh-TW")).toBe("zh-Hant");
+  });
+
+  it("중국어를 지역이 아니라 문자로 가른다", () => {
+    // 푸시 구독 본문은 zh-CN·zh-TW 를 400 으로 막는다. 그 값으로 되돌아가면
+    // 구독 등록이 실패하므로 표기를 고정해 둔다.
+    expect(toAcceptLanguage("zh")).not.toBe("zh-CN");
+    expect(toAcceptLanguage("zh-TW")).not.toBe("zh-TW");
   });
 });
 
 describe("buildAcceptLanguageHeader", () => {
   it("서버 영어에서는 앱 로케일을 먼저, 와일드카드를 나중에 쓴다", () => {
-    expect(buildAcceptLanguageHeader("ko")).toBe("ko-KR, *;q=0.5");
-    expect(buildAcceptLanguageHeader("zh-TW")).toBe("zh-TW, *;q=0.5");
+    expect(buildAcceptLanguageHeader("ko")).toBe("ko, *;q=0.5");
+    expect(buildAcceptLanguageHeader("zh-TW")).toBe("zh-Hant, *;q=0.5");
   });
 });
 
@@ -59,7 +66,7 @@ describe("resolveAcceptLanguageHeader", () => {
 
   it("보관함·장소 API 에는 앱 로케일과 와일드카드를 함께 준다", () => {
     expect(resolveAcceptLanguageHeader("/api/v1/lockers/search", "zh-TW")).toBe(
-      "zh-TW, *;q=0.5",
+      "zh-Hant, *;q=0.5",
     );
   });
 });

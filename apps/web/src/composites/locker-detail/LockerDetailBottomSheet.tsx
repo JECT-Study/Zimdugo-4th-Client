@@ -39,12 +39,10 @@ import type { LockerCorrectionRequest } from "#/features/locker-correction/model
 import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/LockerCorrectionRequestFlow";
 import { getRemainingTimeParts } from "#/features/locker-timer/model/locker-timer-format";
 import {
-  getStoredLockerTimer,
-  type LockerTimerSession,
-  removeLockerTimer,
-  saveLockerTimer,
-  subscribeLockerTimerStorage,
-} from "#/features/locker-timer/model/locker-timer-storage";
+  describeFailure,
+  titleForFailure,
+  useLockerTimerSession,
+} from "#/features/locker-timer/model/useLockerTimerSession";
 import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
@@ -379,13 +377,13 @@ export function LockerDetailBottomSheet({
   const [isTimerOpen, setIsTimerOpen] = useState(false);
   const [isTimerStartConfirmationOpen, setIsTimerStartConfirmationOpen] =
     useState(false);
+  const [isPermissionNoticeOpen, setIsPermissionNoticeOpen] = useState(false);
+  const [isTimerFinishedOpen, setIsTimerFinishedOpen] = useState(false);
   const [isAddressCopied, setIsAddressCopied] = useState(false);
   const [timerHours, setTimerHours] = useState("00");
   const [timerMinutes, setTimerMinutes] = useState("00");
-  const [timerSession, setTimerSession] = useState<LockerTimerSession | null>(
-    null,
-  );
   const [timerNow, setTimerNow] = useState(() => Date.now());
+  const timerSession = useLockerTimerSession(locker.lockerId);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
@@ -566,11 +564,17 @@ export function LockerDetailBottomSheet({
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
-  const remainingTimeInSeconds = timerSession
+  // 이펙트 의존성으로 쓰려면 객체가 아니라 값으로 꺼내 두어야 한다. 세션 객체는
+  // 매 렌더 새로 만들어져 통째로 의존하면 이펙트가 매번 다시 돈다.
+  const clearTimerFailure = timerSession.clearFailure;
+  const timerEndAt = timerSession.endAt;
+  const isStoppingTimer = timerSession.isStopping;
+  const remainingTimeInSeconds = timerSession.endAt
     ? Math.max(0, Math.ceil((timerSession.endAt - timerNow) / 1000))
     : 0;
-  const isTimerRunning = timerSession !== null && remainingTimeInSeconds > 0;
-  const timerEndTimeLabel = timerSession
+  const isTimerRunning =
+    timerSession.endAt !== null && remainingTimeInSeconds > 0;
+  const timerEndTimeLabel = timerSession.endAt
     ? formatTimerEndTime(timerSession.endAt)
     : "";
 
@@ -615,6 +619,28 @@ export function LockerDetailBottomSheet({
   };
 
   /**
+   * 설정 모달을 열기 전에 이 브라우저에서 타이머를 쓸 수 있는지 본다.
+   *
+   * 쓸 수 없으면 모달 대신 안내를 띄운다. 타이머는 서버 리마인더와 푸시 구독에
+   * 기대므로, 구독을 만들 수 없는 브라우저에서는 시간을 골라도 켜지지 않는다.
+   * 끝까지 고르고 확인까지 누른 뒤에 "홈 화면에 추가하세요" 를 보여 주면 그
+   * 과정이 통째로 헛일이 된다.
+   */
+  const handleTimerOpen = () => {
+    if (!timerSession.ensureEnvironment()) return;
+
+    // 서버 상태를 모르는 채 열면 이미 도는 타이머를 못 본 채 새로 켜게 된다.
+    // 조회가 계속 실패하면 그 타이머를 끌 수도 없으므로, 없는 것처럼 다루지
+    // 않고 그대로 알린다.
+    if (timerSession.isReminderUnknown) {
+      timerSession.reportReminderUnknown();
+      return;
+    }
+
+    setIsTimerOpen(true);
+  };
+
+  /**
    * 주소를 클립보드에 담는다.
    *
    * 길찾기까지 가지 않고 주소만 다른 앱에 옮겨 적는 경우가 많다. 실패해도 조용히
@@ -634,29 +660,61 @@ export function LockerDetailBottomSheet({
       });
   };
 
-  const handleTimerStartConfirm = () => {
+  const startTimer = async () => {
+    // 중복 실행은 세션이 시작 흐름 전체를 잠가 막는다. 여기서는 화면이 눌린
+    // 상태를 더 만들지 않도록 일찍 접어 둔다.
+    if (timerSession.isPending) return;
+
     const configuredTimeInSeconds =
       (Number(timerHours) * 60 + Number(timerMinutes)) * 60;
     if (configuredTimeInSeconds <= 0) return;
 
-    const nextSession = {
-      configuredTimeInSeconds,
-      endAt: Date.now() + configuredTimeInSeconds * 1000,
-    };
-    setTimerSession(nextSession);
-    setTimerNow(Date.now());
-    setIsTimerStartConfirmationOpen(false);
-
-    saveLockerTimer(locker.lockerId, nextSession);
+    const hasStarted = await timerSession.start(configuredTimeInSeconds);
+    if (hasStarted) {
+      setTimerNow(Date.now());
+    }
   };
 
-  const handleTimerStop = () => {
-    setTimerSession(null);
+  /**
+   * 브라우저 권한 팝업이 뜨기 전에 왜 필요한지 먼저 알린다.
+   *
+   * 맥락 없이 뜨는 권한 팝업은 반사적으로 거부당하기 쉽고, 한 번 거부되면
+   * 사이트 설정에 들어가야 되돌릴 수 있다. 이미 정해진 권한(허용·거부)에는
+   * 이 안내를 띄우지 않는다. 물어볼 것이 없다.
+   */
+  const handleTimerStartConfirm = () => {
+    setIsTimerStartConfirmationOpen(false);
+
+    const needsPermissionNotice =
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default";
+
+    if (needsPermissionNotice) {
+      setIsPermissionNoticeOpen(true);
+      return;
+    }
+
+    void startTimer();
+  };
+
+  /**
+   * 안내를 확인한 뒤 실제로 시작한다.
+   *
+   * 브라우저는 사용자 제스처 안에서만 권한 팝업을 띄운다. 이 확인 버튼의 클릭이
+   * 그 제스처라 여기서 곧바로 이어 불러야 한다.
+   */
+  const handlePermissionNoticeConfirm = () => {
+    setIsPermissionNoticeOpen(false);
+    void startTimer();
+  };
+
+  const handleTimerStop = async () => {
+    const hasStopped = await timerSession.stop();
+    if (!hasStopped) return;
+
     setTimerHours("00");
     setTimerMinutes("00");
     setIsTimerOpen(false);
-
-    removeLockerTimer(locker.lockerId);
   };
 
   const handleOpenMoreActions = () => {
@@ -748,35 +806,63 @@ export function LockerDetailBottomSheet({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  /*
+   * 보관함이 바뀌면 고르던 시간과 열려 있던 모달을 지운다.
+   *
+   * 시트는 보관함마다 새로 마운트되지 않는다(스냅 위치를 지키려고 인스턴스를
+   * 유지한다). 초기화하지 않으면 A 에서 고른 시간이 B 로 넘어가, 사용자가 확인만
+   * 눌러도 의도하지 않은 리마인더가 만들어진다.
+   *
+   * 이펙트 안에서 lockerId 를 읽지는 않지만 그 값이 바뀌는 것이 곧 재실행 신호다.
+   */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: lockerId 는 읽지 않고 재실행 신호로만 쓴다
   useEffect(() => {
-    const refreshTimer = () => {
-      setTimerSession(getStoredLockerTimer(locker.lockerId));
-      setTimerNow(Date.now());
-    };
-
-    refreshTimer();
+    setTimerNow(Date.now());
     setIsTimerOpen(false);
     setIsTimerStartConfirmationOpen(false);
+    // 팝업도 함께 접는다. 남겨 두면 A 의 종료·실패 알림이 B 위에 뜬다.
+    setIsPermissionNoticeOpen(false);
+    setIsTimerFinishedOpen(false);
+    clearTimerFailure();
     setTimerHours("00");
     setTimerMinutes("00");
-    return subscribeLockerTimerStorage(refreshTimer);
-  }, [locker.lockerId]);
+  }, [locker.lockerId, clearTimerFailure]);
 
   useEffect(() => {
-    if (!timerSession) return;
+    if (timerSession.endAt === null) return;
 
-    const intervalId = window.setInterval(() => {
-      const nextNow = Date.now();
-      setTimerNow(nextNow);
-
-      if (timerSession.endAt <= nextNow) {
-        setTimerSession(null);
-        removeLockerTimer(locker.lockerId);
-      }
-    }, 1000);
+    const intervalId = window.setInterval(() => setTimerNow(Date.now()), 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [locker.lockerId, timerSession]);
+  }, [timerSession.endAt]);
+
+  /*
+   * 화면을 보고 있는 사이에 타이머가 끝나면 알린다.
+   *
+   * 푸시는 앱이 닫혀 있을 때를 위한 것이라, 앱을 열어 둔 채 끝나는 경우를 덮지
+   * 못한다. 게이지만 0 이 되고 아무 말이 없으면 끝난 것인지 멈춘 것인지 알 수
+   * 없다.
+   *
+   * 사용자가 직접 끄면 endAt 이 null 이 되어 정리 함수가 예약을 지운다. 끄기와
+   * 종료를 같은 팝업으로 알리지 않는 이유다. 이미 지난 타이머로 다시 진입한
+   * 경우도 서버 목록에서 빠져 있어 여기까지 오지 않는다.
+   */
+  useEffect(() => {
+    // 끄는 중에는 예약하지 않는다. 삭제 응답을 기다리는 사이에도 endAt 은 남아
+    // 있어서, 종료 직전에 끄면 삭제가 성공해도 종료 팝업이 먼저 뜬다. 끄기가
+    // 실패하면 isStopping 이 풀리며 남은 시간으로 다시 예약된다.
+    if (timerEndAt === null || isStoppingTimer) return;
+
+    const remainingMs = timerEndAt - Date.now();
+    if (remainingMs <= 0) return;
+
+    const timeoutId = window.setTimeout(
+      () => setIsTimerFinishedOpen(true),
+      remainingMs,
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [timerEndAt, isStoppingTimer]);
 
   /*
    * 설정 화면의 종료 예정 시각은 현재 시각에 고른 길이를 더해 보여 준다. 모달을
@@ -784,13 +870,18 @@ export function LockerDetailBottomSheet({
    * 벌어진다. 열려 있는 동안 현재 시각을 따라가게 한다.
    */
   useEffect(() => {
-    if (!isTimerOpen || timerSession) return;
+    if (!isTimerOpen || timerSession.endAt !== null) return;
 
     const intervalId = window.setInterval(() => setTimerNow(Date.now()), 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [isTimerOpen, timerSession]);
+  }, [isTimerOpen, timerSession.endAt]);
 
+  /*
+   * 지도 컨트롤에서 넘어온 자동 열기. 여기는 환경을 보지 않는다. 이미 도는
+   * 타이머를 보러 오는 길이라 구독이 만들어졌다는 뜻이고, 남은 시간을 확인하는
+   * 것까지 막을 이유가 없다.
+   */
   useEffect(() => {
     if (!shouldOpenTimer) return;
 
@@ -902,7 +993,7 @@ export function LockerDetailBottomSheet({
               onMoreActionsOpen={handleOpenMoreActions}
               moreActionsButtonRef={moreActionsButtonRef}
               onNavigate={handleNavigate}
-              onTimerOpen={() => setIsTimerOpen(true)}
+              onTimerOpen={handleTimerOpen}
               onAddressCopy={handleAddressCopy}
               isTimerRunning={isTimerRunning}
               timerEndTimeLabel={timerEndTimeLabel}
@@ -934,13 +1025,13 @@ export function LockerDetailBottomSheet({
       <LockerTimerModal
         isOpen={isTimerOpen}
         onOpenChange={setIsTimerOpen}
-        {...(isTimerRunning && timerSession
+        {...(isTimerRunning
           ? {
               mode: "running" as const,
               remainingTimeLabel: formatRemainingTime(remainingTimeInSeconds),
               endTimeLabel: timerEndTimeLabel,
               remainingTimeInSeconds,
-              configuredTimeInSeconds: timerSession.configuredTimeInSeconds,
+              configuredTimeInSeconds: timerSession.totalSeconds,
               onStop: handleTimerStop,
             }
           : {
@@ -951,6 +1042,52 @@ export function LockerDetailBottomSheet({
               onDurationChange: handleTimerDurationChange,
               onStart: handleTimerStartRequest,
             })}
+      />
+      {/*
+       * 실패를 조용히 넘기지 않는다. 서버가 소스라 실패하면 타이머도 서지
+       * 않는데, 그 사실을 화면이 말하지 않으면 눌러도 아무 일이 없는 것처럼
+       * 보인다. 알 수 없는 실패는 서버 코드를 문구에 남겨 어디가 막혔는지
+       * 화면만 보고 알 수 있게 한다.
+       */}
+      <Popup
+        isOpen={timerSession.failure !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) timerSession.clearFailure();
+        }}
+        titleText={
+          timerSession.failure
+            ? titleForFailure(timerSession.failure)
+            : m.locker_timer_error_title()
+        }
+        helperText={
+          timerSession.failure
+            ? describeFailure(timerSession.failure.reason)
+            : undefined
+        }
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: timerSession.clearFailure,
+        }}
+      />
+      <Popup
+        isOpen={isPermissionNoticeOpen}
+        onOpenChange={setIsPermissionNoticeOpen}
+        titleText={m.locker_timer_permission_notice_title()}
+        helperText={m.locker_timer_permission_notice_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: handlePermissionNoticeConfirm,
+        }}
+      />
+      <Popup
+        isOpen={isTimerFinishedOpen}
+        onOpenChange={setIsTimerFinishedOpen}
+        titleText={m.locker_timer_finished_title()}
+        helperText={m.locker_timer_finished_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsTimerFinishedOpen(false),
+        }}
       />
       <Popup
         isOpen={isTimerStartConfirmationOpen}

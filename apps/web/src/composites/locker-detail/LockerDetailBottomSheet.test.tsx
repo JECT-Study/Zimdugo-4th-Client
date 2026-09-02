@@ -1,20 +1,51 @@
 // @vitest-environment jsdom
 
 import { m } from "@repo/i18n";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as rtlRender,
   screen,
   waitFor,
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PUSH_REMINDER_QUERY_KEY } from "#/features/locker-timer/model/push-reminder-queries";
 import { setTestLanguage } from "#/shared/test/language-runtime";
 
+/**
+ * 타이머가 서버 상태라 시트가 쿼리 컨텍스트를 요구한다. 활성 리마인더가 없는
+ * 상태를 캐시에 미리 심어 두어 네트워크를 태우지 않는다.
+ */
+let queryClient = new QueryClient();
+
+const QueryWrapper = ({ children }: { children?: ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+
+const render = (ui: ReactNode) => rtlRender(ui, { wrapper: QueryWrapper });
+
 const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
+
+/**
+ * 리마인더 삭제만 성공하는 것으로 둔다. 나머지 상수와 헬퍼는 실제 구현을 쓴다.
+ *
+ * 이 파일의 타이머 테스트는 쿼리 캐시를 직접 심어 화면만 본다. 끄기 경로만
+ * 네트워크를 타는데, 실패하면 "끄기 실패라 다시 예약" 이라는 다른 동작이 되어
+ * 검증하려는 것이 가려진다.
+ */
+const deletePushReminderMock = vi.hoisted(() => vi.fn(async () => {}));
+
+vi.mock("#/shared/api/push", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#/shared/api/push")>()),
+  deletePushReminder: deletePushReminderMock,
+  // 삭제 뒤 invalidateQueries 가 재조회를 건다. 실제 구현이면 axios 가 네트워크를
+  // 때리고, 그 대기가 다음 테스트의 프레임 기반 단언까지 늦춘다.
+  getPushReminders: vi.fn(async () => []),
+}));
 
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   SHEET_SETTLE_SPRING: { type: "spring" },
@@ -108,6 +139,18 @@ const overlayBottomAt = (sheetOffset: number) =>
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setTestLanguage("ko");
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
+    // jsdom 에는 푸시 API 가 없다. 없으면 타이머 설정 모달이 "지원하지 않는
+    // 브라우저" 로 막히므로, 지원하는 환경을 기본값으로 세워 둔다.
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {},
+    });
+    vi.stubGlobal("PushManager", function PushManager() {});
+    vi.stubGlobal("Notification", { permission: "granted" });
     window.localStorage.clear();
     Element.prototype.scrollTo = vi.fn();
     Object.defineProperty(window, "innerHeight", {
@@ -129,6 +172,10 @@ describe("LockerDetailBottomSheet", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    // 가짜 타이머는 반드시 여기서 되돌린다. 테스트 본문 끝에서만 되돌리면 그
+    // 앞의 단언이 실패했을 때 그대로 새어 나가, 다음 테스트의 rAF 기반 오프셋
+    // 갱신이 멈춰 엉뚱한 곳에서 깨진다.
+    vi.useRealTimers();
     draggableBottomSheetMock.mockClear();
   });
 
@@ -212,14 +259,162 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.getByRole("button", { name: "타이머 켜기" })).toBeTruthy();
   });
 
-  it("이 기기에 저장된 실행 중 타이머를 상세 시트에 복원한다", async () => {
-    window.localStorage.setItem(
-      `zimdugo:locker-timer:${LOCKER_DETAIL.lockerId}`,
-      JSON.stringify({
-        configuredTimeInSeconds: 3600,
-        endAt: Date.now() + 3600 * 1000,
-      }),
+  it("다른 보관함으로 바꾸면 고르던 시간을 지운다", () => {
+    // 시트는 보관함마다 새로 마운트되지 않는다. 남겨 두면 A 에서 고른 시간으로
+    // B 에 리마인더가 만들어진다.
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
     );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+    fireEvent.wheel(screen.getByRole("dialog", { name: "보관 타이머" }), {
+      deltaY: 100,
+    });
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, lockerId: 99 }}
+        onReport={vi.fn()}
+      />,
+    );
+
+    // 모달이 닫히고 시작 버튼도 다시 잠긴다.
+    expect(screen.queryByRole("dialog", { name: "보관 타이머" })).toBeNull();
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+
+    expect(
+      screen
+        .getByRole("button", { name: "타이머 켜기" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("종료 직전에 타이머를 끄면 종료 팝업을 띄우지 않는다", async () => {
+    // 삭제 응답을 기다리는 사이에도 endAt 은 남아 있다. 예약을 접지 않으면
+    // 끄기가 성공해도 종료 팝업이 먼저 뜬다.
+    //
+    // 가짜 타이머를 쓰지 않는다. motion 의 프레임 루프가 한 번 가짜 시간을
+    // 거치면 실제 시간으로 되돌려도 회복되지 않아, 뒤따르는 오프셋 테스트가
+    // 엉뚱한 곳에서 깨진다. 짧은 실제 시간으로 기다린다.
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: LOCKER_DETAIL.lockerId,
+        startedAt: new Date(Date.now()).toISOString(),
+        // 모달을 열고 끄기를 누르는 데도 시간이 든다. 그 전에 종료 시각이
+        // 지나면 예약이 서지 않아 경합이 재현되지 않는다.
+        endAt: new Date(Date.now() + 1200).toISOString(),
+        totalUsageMinutes: 1,
+        remainingMinutes: 1,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(getSheetRoot().getByRole("button", { name: /이용 종료/ }));
+    // 삭제 응답을 붙잡아 둔다. 즉시 끝나면 endAt 이 먼저 사라져 경합이 재현되지
+    // 않는다. 실제로 문제가 되는 것은 응답을 기다리는 사이에 종료 시각이 지나는
+    // 경우다.
+    let finishDelete = () => {};
+    deletePushReminderMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishDelete = () => resolve();
+        }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "타이머 끄기" }));
+
+    await act(async () => {});
+    expect(deletePushReminderMock).toHaveBeenCalled();
+
+    // 삭제가 아직 끝나지 않은 채 종료 시각을 지난다.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    });
+
+    expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
+
+    await act(async () => {
+      finishDelete();
+    });
+
+    expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
+  });
+
+  it("홈 화면에 설치되지 않은 iOS 에서는 설정 모달 대신 설치를 안내한다", () => {
+    // 설치 전에는 푸시 구독을 만들 수 없어 시간을 골라도 타이머가 켜지지 않는다.
+    // 고르기 전에 알려야 그 과정이 헛일이 되지 않는다.
+    const originalUserAgent = navigator.userAgent;
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
+    });
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+
+    expect(screen.queryByRole("dialog", { name: "보관 타이머" })).toBeNull();
+    expect(screen.getByText(/홈 화면에 추가/)).toBeTruthy();
+
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value: originalUserAgent,
+    });
+  });
+
+  it("타이머가 끝나면 알림 팝업을 띄운다", async () => {
+    // 가짜 타이머를 쓰지 않는 이유는 위 테스트의 주석과 같다.
+    const endAt = Date.now() + 300;
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: LOCKER_DETAIL.lockerId,
+        startedAt: new Date(Date.now()).toISOString(),
+        endAt: new Date(endAt).toISOString(),
+        totalUsageMinutes: 1,
+        remainingMinutes: 1,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
+
+    expect(await screen.findByText("타이머가 끝났어요")).toBeTruthy();
+    // 확인 하나만 둔다. 되돌릴 것이 없는 알림이다.
+    expect(screen.getByRole("button", { name: "확인" })).toBeTruthy();
+  });
+
+  it("이 기기의 서버 리마인더를 상세 시트에 복원한다", async () => {
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: LOCKER_DETAIL.lockerId,
+        startedAt: new Date(Date.now()).toISOString(),
+        endAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+        totalUsageMinutes: 60,
+        remainingMinutes: 60,
+        remindBeforeMinutes: null,
+      },
+    ]);
 
     render(
       <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,

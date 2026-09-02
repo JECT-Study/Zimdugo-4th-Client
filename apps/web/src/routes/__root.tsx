@@ -16,6 +16,7 @@ import { AppShell } from "@repo/ui/components/layout/app-shell";
 import { useRedirectWhenUnauthenticated } from "#/features/auth/sign-in/hooks/useRedirectWhenUnauthenticated";
 import { AuthRequirePopup } from "#/features/auth/sign-in/ui/AuthRequirePopup";
 import { LoginResultModal } from "#/features/auth/sign-in/ui/LoginResultModal";
+import { usePushDevice } from "#/features/locker-timer/hooks/usePushDevice";
 import {
   getSeoLocale,
   getSeoSiteName,
@@ -283,6 +284,7 @@ function RootDocument({ children }: { children: ReactNode }) {
   useLoginResultHandler();
   useRedirectWhenUnauthenticated();
   useServiceWorker();
+  usePushDevice();
 
   const pathname = useRouterState({
     select: (state) => state.location.pathname,

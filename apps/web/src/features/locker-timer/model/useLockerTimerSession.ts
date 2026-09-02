@@ -1,0 +1,309 @@
+import { m } from "@repo/i18n";
+import { useCallback, useRef, useState } from "react";
+import {
+  getPushErrorCode,
+  PUSH_ERROR_CODE,
+  postPushDevice,
+} from "#/shared/api/push";
+import {
+  ensurePushSubscription,
+  isIosWithoutInstall,
+  isPushSupported,
+  PushUnavailableError,
+} from "../lib/push-subscription";
+import {
+  useActiveReminderQuery,
+  useCreateReminderMutation,
+  useDeleteReminderMutation,
+} from "./push-reminder-queries";
+
+/**
+ * 타이머 한 벌을 서버 상태로 다룬다.
+ *
+ * 로컬 저장소에 복제하지 않는다. 서버가 소스이므로 실패하면 타이머도 서지
+ * 않아야 하고, 그 실패가 화면에 그대로 드러나야 한다. 조용히 로컬로 흘려보내면
+ * 어디가 막혔는지 알 수 없다.
+ */
+
+export type LockerTimerFailure =
+  | { kind: "unsupported" }
+  | { kind: "reminder-unknown" }
+  | { kind: "push-unavailable" }
+  | { kind: "ios-install-required" }
+  | { kind: "permission-denied" }
+  | { kind: "subscription-missing" }
+  | { kind: "subscription-conflict" }
+  | { kind: "invalid-schedule" }
+  | { kind: "limit-exceeded" }
+  | { kind: "rate-limited" }
+  | { kind: "unknown"; code: string };
+
+/**
+ * `startedAt` 에 얹는 여유.
+ *
+ * 서버는 `startedAt` 이 현재 시각보다 뒤여야 한다고 요구한다. 하한이 공유되지
+ * 않은 채 하루 사이 1 초에서 1~5 초로 움직인 적이 있어(#209) 넉넉히 잡았다.
+ *
+ * 종료 시각은 밀지 않는다. 사용자가 고른 시간이 그대로 `endAt` 이어야 모달이
+ * 보여 준 종료 시각과 실제가 어긋나지 않는다. 대신 전체 이용 시간이 이만큼
+ * 짧게 기록된다.
+ */
+const START_BUFFER_MS = 10_000;
+
+const toFailure = (error: unknown): LockerTimerFailure => {
+  // 서버 응답이 아니라 브라우저 쪽 사정이다. 오류 코드로는 가릴 수 없다.
+  if (error instanceof PushUnavailableError) {
+    return { kind: "push-unavailable" };
+  }
+
+  const code = getPushErrorCode(error);
+
+  switch (code) {
+    case PUSH_ERROR_CODE.SubscriptionMissing:
+      return { kind: "subscription-missing" };
+    case PUSH_ERROR_CODE.SubscriptionConflict:
+      return { kind: "subscription-conflict" };
+    case PUSH_ERROR_CODE.InvalidSchedule:
+      return { kind: "invalid-schedule" };
+    case PUSH_ERROR_CODE.LimitExceeded:
+      return { kind: "limit-exceeded" };
+    case PUSH_ERROR_CODE.RateLimited:
+      return { kind: "rate-limited" };
+    default:
+      // 서버가 코드를 주지 않는 실패(네트워크 단절, COMMON-500)도 여기로 온다.
+      // 코드를 문구에 남겨 두어야 어느 지점이 막혔는지 화면만 보고 알 수 있다.
+      return { kind: "unknown", code: code ?? "network" };
+  }
+};
+
+/** 팝업 제목. 켜기 실패와 끄기 실패는 사용자가 할 일이 다르다. */
+export const titleForFailure = (failure: LockerTimerFailureState): string =>
+  failure.operation === "stop"
+    ? m.locker_timer_stop_error_title()
+    : m.locker_timer_error_title();
+
+export const describeFailure = (failure: LockerTimerFailure): string => {
+  switch (failure.kind) {
+    case "unsupported":
+      return m.locker_timer_error_unsupported();
+    case "reminder-unknown":
+      return m.locker_timer_error_reminder_unknown();
+    case "push-unavailable":
+      return m.locker_timer_error_push_unavailable();
+    case "ios-install-required":
+      return m.locker_timer_error_ios_install();
+    case "permission-denied":
+      return m.locker_timer_error_permission_denied();
+    case "subscription-missing":
+      return m.locker_timer_error_subscription();
+    case "subscription-conflict":
+      return m.locker_timer_error_subscription_conflict();
+    case "invalid-schedule":
+      return m.locker_timer_error_schedule();
+    case "limit-exceeded":
+      return m.locker_timer_error_limit();
+    case "rate-limited":
+      return m.locker_timer_error_rate_limited();
+    default:
+      return m.locker_timer_error_unknown({ code: failure.code });
+  }
+};
+
+/** 어느 동작이 실패했는지. 팝업 제목이 갈린다. */
+export interface LockerTimerFailureState {
+  operation: "start" | "stop";
+  reason: LockerTimerFailure;
+}
+
+export interface LockerTimerSessionState {
+  /** 이 보관함에서 돌고 있는 타이머. 다른 보관함 것이면 null */
+  endAt: number | null;
+  totalSeconds: number;
+  isPending: boolean;
+  /** 끄기 요청이 아직 끝나지 않았는지. 종료 예약을 접어 두는 데 쓴다 */
+  isStopping: boolean;
+  /**
+   * 서버의 타이머 상태를 아직 모르는지.
+   *
+   * 조회가 끝나지 않았거나 실패한 경우다. "타이머 없음" 과 구분해야 한다. 같게
+   * 다루면 이미 도는 타이머를 못 본 채 새로 켜게 되고, 조회 실패가 이어지면
+   * 그 타이머를 끌 수도 없다.
+   */
+  isReminderUnknown: boolean;
+  failure: LockerTimerFailureState | null;
+  clearFailure: () => void;
+  /** 서버 상태를 모르는 채 진입하려 할 때 그 사실을 화면에 알린다 */
+  reportReminderUnknown: () => void;
+  /**
+   * 이 브라우저에서 타이머를 쓸 수 있는지.
+   *
+   * 쓸 수 없으면 이유를 `failure` 에 남기고 거짓을 준다. 시간을 고르기 전에
+   * 불러야 안내가 제때 뜬다.
+   */
+  ensureEnvironment: () => boolean;
+  start: (durationInSeconds: number) => Promise<boolean>;
+  stop: () => Promise<boolean>;
+}
+
+export const useLockerTimerSession = (
+  lockerId: number,
+): LockerTimerSessionState => {
+  const { data: reminder } = useActiveReminderQuery();
+  const createReminder = useCreateReminderMutation();
+  const deleteReminder = useDeleteReminderMutation();
+  const [failure, setFailure] = useState<LockerTimerFailureState | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  /*
+   * 시작 흐름 전체를 잠근다.
+   *
+   * 리마인더 뮤테이션의 isPending 만으로는 부족하다. 그 앞의 권한 요청·기기
+   * 초기화·구독 등록을 기다리는 동안에는 아직 거짓이라, 느린 회선에서 버튼이 두
+   * 번 눌리면 두 흐름이 나란히 돈다. 두 번째가 한도 초과로 끝나면 타이머는
+   * 켜졌는데 실패 팝업이 뜬다.
+   *
+   * 상태가 아니라 ref 로 잠근다. 상태는 다음 렌더에야 반영돼 같은 틱의 두 번째
+   * 클릭을 막지 못한다. 화면에 쓰라고 상태도 함께 둔다.
+   */
+  const isStartingRef = useRef(false);
+  /*
+   * 끄기도 같은 이유로 잠근다.
+   *
+   * 두 번 눌리면 같은 리마인더에 삭제가 둘 나간다. 첫 요청이 성공한 뒤 새 타이머를
+   * 만들었는데 늦은 두 번째가 성공하면, 그 onSuccess 가 새 리마인더까지 캐시에서
+   * 지워 서버에는 도는 타이머가 화면에서만 사라진다.
+   */
+  const isStoppingRef = useRef(false);
+
+  const isForThisLocker = reminder?.lockerId === lockerId;
+
+  /**
+   * iOS 를 먼저 본다. 설치 전에는 `PushManager` 가 없어 대개 아래 검사에서도
+   * 걸리지만, 그 노출 여부는 iOS 버전마다 다르다. 노출되는 버전에서 순서가
+   * 반대면 지원되는 것으로 보고 진행하다 구독에서 알 수 없는 실패로 끝난다.
+   * 설치하면 되는 상황을 "이 브라우저는 원래 안 됨" 으로 알리지 않는다.
+   */
+  const ensureEnvironment = useCallback(() => {
+    setFailure(null);
+
+    if (isIosWithoutInstall()) {
+      setFailure({
+        operation: "start",
+        reason: { kind: "ios-install-required" },
+      });
+      return false;
+    }
+
+    if (!isPushSupported()) {
+      setFailure({ operation: "start", reason: { kind: "unsupported" } });
+      return false;
+    }
+
+    return true;
+  }, []);
+
+  const start = useCallback(
+    async (durationInSeconds: number) => {
+      if (isStartingRef.current) return false;
+
+      // 권한 요청보다 먼저 잠근다. 권한이 아직 default 면 브라우저 팝업을
+      // 기다리는 동안 두 번째 클릭이 재진입 검사를 그대로 통과한다.
+      isStartingRef.current = true;
+      setIsStarting(true);
+
+      try {
+        // 모달을 열 때 이미 봤지만, 그 사이에 홈 화면 앱으로 옮겨 가거나 설정이
+        // 바뀔 수 있어 실제로 만들기 직전에 한 번 더 본다.
+        if (!ensureEnvironment()) return false;
+
+        // 권한 요청은 사용자 제스처 안에서 일어나야 브라우저가 팝업을 띄운다.
+        // 이 함수가 버튼 핸들러에서 곧바로 불리는 이유다.
+        const permission =
+          Notification.permission === "granted"
+            ? "granted"
+            : await Notification.requestPermission();
+
+        if (permission !== "granted") {
+          setFailure({
+            operation: "start",
+            reason: { kind: "permission-denied" },
+          });
+          return false;
+        }
+
+        // 첫 진입의 기기 초기화가 실패했거나 아직 끝나지 않았을 수 있다. 그
+        // 상태로 구독을 올리면 이후 요청이 계속 실패하고, 화면을 다시 열기
+        // 전까지 다시 눌러도 복구되지 않는다. 쿠키가 유효하면 서버가 같은
+        // 기기를 유지하므로 다시 불러도 신원이 흔들리지 않는다.
+        await postPushDevice();
+        await ensurePushSubscription();
+
+        const startedAt = new Date(Date.now() + START_BUFFER_MS);
+        const endAt = new Date(Date.now() + durationInSeconds * 1000);
+
+        await createReminder.mutateAsync({
+          lockerId,
+          startedAt: startedAt.toISOString(),
+          endAt: endAt.toISOString(),
+        });
+
+        return true;
+      } catch (error) {
+        setFailure({ operation: "start", reason: toFailure(error) });
+        return false;
+      } finally {
+        isStartingRef.current = false;
+        setIsStarting(false);
+      }
+    },
+    [lockerId, createReminder, ensureEnvironment],
+  );
+
+  const clearFailure = useCallback(() => setFailure(null), []);
+
+  const reportReminderUnknown = useCallback(
+    () =>
+      setFailure({ operation: "start", reason: { kind: "reminder-unknown" } }),
+    [],
+  );
+
+  const stop = useCallback(async () => {
+    if (isStoppingRef.current) return false;
+
+    setFailure(null);
+    if (!reminder) return true;
+
+    isStoppingRef.current = true;
+
+    try {
+      await deleteReminder.mutateAsync(reminder.id);
+      return true;
+    } catch (error) {
+      setFailure({ operation: "stop", reason: toFailure(error) });
+      return false;
+    } finally {
+      isStoppingRef.current = false;
+    }
+  }, [reminder, deleteReminder]);
+
+  return {
+    endAt: isForThisLocker ? Date.parse(reminder.endAt) : null,
+    totalSeconds: isForThisLocker ? reminder.totalUsageMinutes * 60 : 0,
+    isPending:
+      isStarting || createReminder.isPending || deleteReminder.isPending,
+    isStopping: deleteReminder.isPending,
+    /*
+     * 한 번이라도 읽혔으면 아는 것으로 본다.
+     *
+     * 조회 상태로 판단하면, 캐시에 도는 타이머가 있는데 배경 재조회만 실패한
+     * 경우까지 "모름" 이 된다. 그러면 지도에는 타이머가 보이는데 상세에서는 열
+     * 수도 끌 수도 없다. 쓸 수 있는 답이 있는지로 가른다.
+     */
+    isReminderUnknown: reminder === undefined,
+    failure,
+    clearFailure,
+    reportReminderUnknown,
+    ensureEnvironment,
+    start,
+    stop,
+  };
+};
