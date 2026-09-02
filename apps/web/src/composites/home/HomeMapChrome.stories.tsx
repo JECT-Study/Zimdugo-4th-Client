@@ -4,7 +4,7 @@ import {
 } from "@repo/ui/assets/icons";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo } from "react";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { createBottomMapInset } from "#/entities/map/model/map-inset";
@@ -81,8 +81,14 @@ function HomeMapChromePreview({
    * 이펙트가 아니라 클라이언트를 만들 때 심는다. 이펙트는 자식이 그려진 뒤에
    * 도는데, 그사이 지도 컨트롤의 조회가 먼저 나가 실제 API 를 때린다. 늦게 도착한
    * 응답이 심어 둔 값을 덮으면 스토리가 그 기기의 상태에 따라 달라진다.
+   *
+   * 인자가 바뀌면 다시 만든다. 한 번만 만들면 Controls 에서 값을 바꿔도 캐시가
+   * 그대로라, 화면이 지금 인자와 다른 상태를 보여 준다.
    */
-  const [queryClient] = useState(() => createStoryQueryClient(hasActiveTimer));
+  const queryClient = useMemo(
+    () => createStoryQueryClient(hasActiveTimer),
+    [hasActiveTimer],
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
