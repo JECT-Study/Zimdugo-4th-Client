@@ -3349,7 +3349,16 @@ export function IndexPage() {
       resolveSearchListStageVisibleHeight("half", windowHeight),
     );
     setDetailSheetVisibleHeight(resolveDetailSheetVisibleHeight("half"));
-  }, [visibleSheetKind, windowHeight]);
+    /*
+     * 두 세터는 useSheetStageSession 을 통과한 useState 반환이라 identity 가
+     * 바뀌지 않는다. 의존성에 적어도 이 이펙트가 더 자주 돌지 않는다.
+     */
+  }, [
+    visibleSheetKind,
+    windowHeight,
+    setListSheetVisibleHeight,
+    setDetailSheetVisibleHeight,
+  ]);
 
   const isSearchListLoading = shouldShowSearchListLoading({
     isPlaceListScope,
