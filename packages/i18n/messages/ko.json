@@ -363,7 +363,7 @@
   "locker_timer_error_limit": "이미 켜져 있는 타이머가 있어요. 먼저 끄고 다시 시도해 주세요.",
   "locker_timer_error_rate_limited": "요청이 너무 잦아요. 잠시 뒤에 다시 시도해 주세요.",
   "locker_timer_error_unknown": "잠시 뒤에 다시 시도해 주세요. ({code})",
-  "locker_timer_stop_error": "타이머를 끄지 못했어요. 잠시 뒤에 다시 시도해 주세요.",
+  "locker_timer_stop_error_title": "타이머를 끄지 못했어요",
   "locker_correction_title": "신고하기",
   "locker_correction_heading": "유형을 선택해주세요",
   "locker_correction_helper": "짐두고에서 확인해서 바로 수정할게요",

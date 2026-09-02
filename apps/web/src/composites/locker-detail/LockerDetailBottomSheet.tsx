@@ -40,6 +40,7 @@ import { LockerCorrectionRequestFlow } from "#/features/locker-correction/ui/Loc
 import { getRemainingTimeParts } from "#/features/locker-timer/model/locker-timer-format";
 import {
   describeFailure,
+  titleForFailure,
   useLockerTimerSession,
 } from "#/features/locker-timer/model/useLockerTimerSession";
 import { LockerTimerModal } from "#/features/locker-timer/ui/LockerTimerModal";
@@ -944,10 +945,14 @@ export function LockerDetailBottomSheet({
         onOpenChange={(isOpen) => {
           if (!isOpen) timerSession.clearFailure();
         }}
-        titleText={m.locker_timer_error_title()}
+        titleText={
+          timerSession.failure
+            ? titleForFailure(timerSession.failure)
+            : m.locker_timer_error_title()
+        }
         helperText={
           timerSession.failure
-            ? describeFailure(timerSession.failure)
+            ? describeFailure(timerSession.failure.reason)
             : undefined
         }
         primaryAction={{

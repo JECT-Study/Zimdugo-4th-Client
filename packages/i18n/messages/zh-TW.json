@@ -363,7 +363,7 @@
   "locker_timer_error_limit": "已有正在執行的計時器。請先關閉後再試。",
   "locker_timer_error_rate_limited": "請求過於頻繁。請稍後再試。",
   "locker_timer_error_unknown": "請稍後再試。({code})",
-  "locker_timer_stop_error": "無法關閉計時器。請稍後再試。",
+  "locker_timer_stop_error_title": "無法關閉計時器",
   "locker_correction_title": "檢舉",
   "locker_correction_heading": "請選擇檢舉類型",
   "locker_correction_helper": "我們確認後會立即修改資訊",

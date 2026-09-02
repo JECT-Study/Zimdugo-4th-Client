@@ -90,7 +90,9 @@ const getRegistration = async () => {
  * 권한 요청은 하지 않는다. 호출부가 사용자 제스처 안에서 먼저 받아야 브라우저가
  * 팝업을 띄운다.
  */
-export const ensurePushSubscription = async (): Promise<PushSubscription> => {
+export const ensurePushSubscription = async (
+  locale: ApiLocale = resolvePushLocale(),
+): Promise<PushSubscription> => {
   const registration = await getRegistration();
   const existing = await registration.pushManager.getSubscription();
 
@@ -112,7 +114,7 @@ export const ensurePushSubscription = async (): Promise<PushSubscription> => {
   await putPushSubscription({
     endpoint: subscription.endpoint,
     keys: { p256dh, auth },
-    locale: resolvePushLocale(),
+    locale,
   });
 
   return subscription;
@@ -136,10 +138,15 @@ export const revokePushSubscription = async (): Promise<void> => {
 };
 
 /**
- * 앱 재진입·언어 변경 때 서버 쪽 구독을 현재 상태에 맞춘다.
+ * 앱 진입·언어 변경 때 구독을 현재 상태에 맞춘다.
  *
- * 구독이 없으면 새로 만들지 않는다. 사용자가 아직 권한을 준 적이 없거나 스스로
- * 껐다는 뜻이라, 여기서 팝업 없이 구독을 되살리면 의도를 거스른다.
+ * 권한이 허용돼 있으면 구독이 없더라도 새로 만든다. 브라우저가 구독을 무효화한
+ * 뒤(`pushsubscriptionchange`) 열린 탭이 없었으면 통지를 받을 곳이 없어 그대로
+ * 사라지는데, 다시 만들지 않으면 권한은 허용된 채 푸시만 영영 오지 않는다.
+ *
+ * 권한이 허용됐다는 것은 이 앱에서 타이머를 켜 본 적이 있다는 뜻이다. 권한을 준
+ * 적이 없으면 `default`, 스스로 거둔 경우는 `denied` 라 여기로 오지 않는다.
+ * 이미 허용된 권한으로 만드는 구독이라 팝업도 뜨지 않는다.
  */
 export const syncPushSubscription = async (
   locale: ApiLocale = resolvePushLocale(),
@@ -148,18 +155,7 @@ export const syncPushSubscription = async (
     return false;
   }
 
-  const registration = await navigator.serviceWorker.getRegistration();
-  const subscription = await registration?.pushManager.getSubscription();
-  if (!subscription) return false;
-
-  const { p256dh, auth } = subscription.toJSON().keys ?? {};
-  if (!p256dh || !auth) return false;
-
-  await putPushSubscription({
-    endpoint: subscription.endpoint,
-    keys: { p256dh, auth },
-    locale,
-  });
+  await ensurePushSubscription(locale);
 
   return true;
 };

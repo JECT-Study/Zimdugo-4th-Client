@@ -64,6 +64,12 @@ const toFailure = (error: unknown): LockerTimerFailure => {
   }
 };
 
+/** 팝업 제목. 켜기 실패와 끄기 실패는 사용자가 할 일이 다르다. */
+export const titleForFailure = (failure: LockerTimerFailureState): string =>
+  failure.operation === "stop"
+    ? m.locker_timer_stop_error_title()
+    : m.locker_timer_error_title();
+
 export const describeFailure = (failure: LockerTimerFailure): string => {
   switch (failure.kind) {
     case "unsupported":
@@ -87,12 +93,18 @@ export const describeFailure = (failure: LockerTimerFailure): string => {
   }
 };
 
+/** 어느 동작이 실패했는지. 팝업 제목이 갈린다. */
+export interface LockerTimerFailureState {
+  operation: "start" | "stop";
+  reason: LockerTimerFailure;
+}
+
 export interface LockerTimerSessionState {
   /** 이 보관함에서 돌고 있는 타이머. 다른 보관함 것이면 null */
   endAt: number | null;
   totalSeconds: number;
   isPending: boolean;
-  failure: LockerTimerFailure | null;
+  failure: LockerTimerFailureState | null;
   clearFailure: () => void;
   start: (durationInSeconds: number) => Promise<boolean>;
   stop: () => Promise<boolean>;
@@ -104,7 +116,7 @@ export const useLockerTimerSession = (
   const { data: reminder } = useActiveReminderQuery();
   const createReminder = useCreateReminderMutation();
   const deleteReminder = useDeleteReminderMutation();
-  const [failure, setFailure] = useState<LockerTimerFailure | null>(null);
+  const [failure, setFailure] = useState<LockerTimerFailureState | null>(null);
 
   const isForThisLocker = reminder?.lockerId === lockerId;
 
@@ -113,11 +125,12 @@ export const useLockerTimerSession = (
       setFailure(null);
 
       if (!isPushSupported()) {
-        setFailure(
-          isIosWithoutInstall()
+        setFailure({
+          operation: "start",
+          reason: isIosWithoutInstall()
             ? { kind: "ios-install-required" }
             : { kind: "unsupported" },
-        );
+        });
         return false;
       }
 
@@ -129,7 +142,10 @@ export const useLockerTimerSession = (
           : await Notification.requestPermission();
 
       if (permission !== "granted") {
-        setFailure({ kind: "permission-denied" });
+        setFailure({
+          operation: "start",
+          reason: { kind: "permission-denied" },
+        });
         return false;
       }
 
@@ -147,7 +163,7 @@ export const useLockerTimerSession = (
 
         return true;
       } catch (error) {
-        setFailure(toFailure(error));
+        setFailure({ operation: "start", reason: toFailure(error) });
         return false;
       }
     },
@@ -162,7 +178,7 @@ export const useLockerTimerSession = (
       await deleteReminder.mutateAsync(reminder.id);
       return true;
     } catch (error) {
-      setFailure(toFailure(error));
+      setFailure({ operation: "stop", reason: toFailure(error) });
       return false;
     }
   }, [reminder, deleteReminder]);

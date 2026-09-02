@@ -363,7 +363,7 @@
   "locker_timer_error_limit": "すでに動作中のタイマーがあります。先に停止してからお試しください。",
   "locker_timer_error_rate_limited": "リクエストが多すぎます。しばらくしてからお試しください。",
   "locker_timer_error_unknown": "しばらくしてからお試しください。({code})",
-  "locker_timer_stop_error": "タイマーを停止できませんでした。しばらくしてからお試しください。",
+  "locker_timer_stop_error_title": "タイマーを停止できませんでした",
   "locker_correction_title": "報告する",
   "locker_correction_heading": "報告の種類を選択してください",
   "locker_correction_helper": "確認後、すぐに情報を修正します",
