@@ -70,6 +70,9 @@ export function ReportDetailViewerModal({
   className,
 }: ReportDetailViewerModalProps) {
   const viewportHeight = useViewportHeight();
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const imagePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
   /**
    * 시트가 사실상 닫힌 자리. 뷰포트 바닥에서 살짝 띄운다.
    *
@@ -81,9 +84,6 @@ export function ReportDetailViewerModal({
     DEFAULT_SNAP_POINT,
     viewportHeight - COLLAPSED_BOTTOM_GAP,
   );
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const imagePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const informationGroups =
     detail != null && loadState === "ready"
       ? formatReportViewerInformationGroups(detail)
