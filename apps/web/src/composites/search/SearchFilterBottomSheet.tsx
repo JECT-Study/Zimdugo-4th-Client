@@ -1,11 +1,16 @@
-import { m } from "@repo/i18n";
-import { Button } from "@repo/ui/components/button";
-import { ControlChipGroup } from "@repo/ui/components/control-chip-group";
-import { LabelTitle } from "@repo/ui/components/label-title";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
-import type { SizeCardType } from "#/entities/locker/ui/size-card/SizeCard";
-import { SizeList } from "#/entities/locker/ui/size-card/SizeList";
-import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
+import { useEffect, useState } from "react";
+import {
+  createDefaultSearchFilters,
+  type SearchFilterAppliedState,
+  SearchFilterScreen,
+} from "./SearchFilterScreen";
+
+/**
+ * 필터 상태 타입과 기본값은 화면이 정의한다. 부르는 쪽(검색 세션·필터 변환)이 이미
+ * 이 파일에서 가져다 쓰고 있어 그대로 내보낸다. 화면 자체는 쓰는 쪽이 직접 가져간다.
+ */
+export { createDefaultSearchFilters, type SearchFilterAppliedState };
+
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import {
@@ -17,28 +22,6 @@ import {
   DraggableBottomSheet,
   resolveBottomSheetExpandedProgress,
 } from "#/shared/ui/DraggableBottomSheet";
-import {
-  applyButton,
-  bottomActionBar,
-  indoorOutdoor,
-  resetButton,
-  scrollArea,
-  section,
-  sectionGap24,
-  sheetColumn,
-  sizeCardSlot,
-  sizeGuideBox,
-  sizeGuideList,
-} from "./SearchFilterBottomSheet.css.ts";
-
-export interface SearchFilterAppliedState {
-  regionActive: boolean;
-  sizeActive: boolean;
-  placeTypeActive: boolean;
-  indoorOutdoorState: string[];
-  placeTypeState: string[];
-  selectedSizes: SizeCardType[];
-}
 
 export interface SearchFilterBottomSheetProps {
   className?: string;
@@ -58,6 +41,7 @@ export interface SearchFilterBottomSheetProps {
 const LEGACY_SEARCH_FILTER_FULL_TOP_OFFSET = 52;
 const SEARCH_FILTER_DISMISS_VISIBLE_HEIGHT = 24;
 const SEARCH_FILTER_DRAG_SENSITIVITY = 1.2;
+/** 시트가 콘텐츠 위에 늘 두는 자리. 화면이 잰 높이에 이만큼을 더해야 실제 높이다. */
 const SEARCH_FILTER_SHEET_TOP_PADDING = 16;
 
 type SearchBottomSheetSnapBehavior = "detail" | "legacy";
@@ -135,15 +119,13 @@ export const resolveSearchFilterSnapPoints = ({
   };
 };
 
-export const createDefaultSearchFilters = (): SearchFilterAppliedState => ({
-  regionActive: false,
-  sizeActive: false,
-  placeTypeActive: false,
-  indoorOutdoorState: [],
-  placeTypeState: [],
-  selectedSizes: [],
-});
-
+/**
+ * 필터 화면을 바텀시트라는 표면에 얹는다.
+ *
+ * 표면이 아는 것은 자리 계산뿐이다. 화면이 무엇을 담고 있는지는 모르고, 잰 높이만
+ * 받아 스냅 지점을 정한다. 넓은 화면에서 다른 표면을 쓰게 되면 이 파일 대신 그
+ * 표면이 같은 화면을 감싼다.
+ */
 export function SearchFilterBottomSheet({
   className,
   initialFilters,
@@ -158,14 +140,9 @@ export function SearchFilterBottomSheet({
   onApply,
   onSnapChange,
 }: SearchFilterBottomSheetProps) {
-  const restoredFilters = initialFilters ?? createDefaultSearchFilters();
   const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
-  const [contentHeight, setContentHeight] = useState<number | undefined>();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  /** 늘어나지 않는 내용 자체. 스크롤 영역을 재면 시트가 준 높이가 돌아온다. */
-  const contentMeasureRef = useRef<HTMLDivElement>(null);
-  const actionBarRef = useRef<HTMLDivElement>(null);
+  const [screenHeight, setScreenHeight] = useState<number | undefined>();
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -177,7 +154,10 @@ export function SearchFilterBottomSheet({
     minSnapPoint,
     snapPoint,
     windowHeight,
-    contentHeight,
+    contentHeight:
+      screenHeight === undefined
+        ? undefined
+        : screenHeight + SEARCH_FILTER_SHEET_TOP_PADDING,
     safeAreaInsetTopPx: safeAreaInsetTop,
   });
   const resolvedInitialSnapPoint =
@@ -194,134 +174,11 @@ export function SearchFilterBottomSheet({
       offset: resolvedInitialSnapPoint,
     }),
   );
-  const [indoorOutdoorState, setIndoorOutdoor] = useState<string[]>(
-    restoredFilters.indoorOutdoorState,
-  );
-  const [placeTypeState, setPlaceType] = useState<string[]>(
-    restoredFilters.placeTypeState,
-  );
-  const [selectedSizes, setSelectedSizes] = useState<SizeCardType[]>(
-    restoredFilters.selectedSizes,
-  );
 
-  useIsomorphicLayoutEffect(() => {
-    const updateContentHeight = () => {
-      const scrollArea = scrollAreaRef.current;
-      const actionBar = actionBarRef.current;
-      const content = contentMeasureRef.current;
-
-      if (!scrollArea || !actionBar || !content) return;
-
-      /*
-       * 스크롤 영역은 flex 로 늘어나서, 내용이 짧으면 scrollHeight 가 "지금 시트가
-       * 준 높이" 를 돌려준다. 그 값으로 시트 높이를 정하면 내용이 짧아도 시트가
-       * 그대로 커져 아래가 텅 빈다.
-       */
-      const scrollAreaStyle = window.getComputedStyle(scrollArea);
-
-      setContentHeight(
-        Math.ceil(
-          content.offsetHeight +
-            Number.parseFloat(scrollAreaStyle.paddingTop) +
-            Number.parseFloat(scrollAreaStyle.paddingBottom) +
-            actionBar.offsetHeight +
-            SEARCH_FILTER_SHEET_TOP_PADDING,
-        ),
-      );
-    };
-
-    updateContentHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(updateContentHeight);
-    if (contentMeasureRef.current)
-      resizeObserver.observe(contentMeasureRef.current);
-    if (actionBarRef.current) resizeObserver.observe(actionBarRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!initialFilters) return;
-
-    setIndoorOutdoor(initialFilters.indoorOutdoorState);
-    setPlaceType(initialFilters.placeTypeState);
-    setSelectedSizes(initialFilters.selectedSizes);
-  }, [initialFilters]);
-
-  const indoorOutdoorOptions = [
-    {
-      label: m.search_filter_indoor_short(),
-      value: "indoor",
-    },
-    {
-      label: m.search_filter_outdoor_short(),
-      value: "outdoor",
-    },
-  ];
-  const placeTypeOptions = [
-    {
-      label: m.search_filter_place_museum_short(),
-      value: "museum",
-    },
-    {
-      label: m.search_filter_place_subway_short(),
-      value: "subway",
-    },
-    {
-      label: m.search_filter_place_department_short(),
-      value: "department",
-    },
-    {
-      label: m.search_filter_place_convenience_short(),
-      value: "convenience",
-    },
-    {
-      label: m.search_filter_place_public_short(),
-      value: "public",
-    },
-    {
-      label: m.search_filter_place_private_short(),
-      value: "private",
-    },
-    {
-      label: m.search_filter_place_train_short(),
-      value: "train",
-    },
-    {
-      label: m.search_filter_place_other_short(),
-      value: "other",
-    },
-  ];
-
-  const handleReset = () => {
-    setIndoorOutdoor([]);
-    setPlaceType([]);
-    setSelectedSizes([]);
-    onReset?.();
-  };
-
-  const handleApply = () => {
-    onApply?.({
-      regionActive: indoorOutdoorState.length > 0,
-      sizeActive: selectedSizes.length > 0,
-      placeTypeActive: placeTypeState.length > 0,
-      indoorOutdoorState,
-      placeTypeState,
-      selectedSizes,
-    });
-  };
   const handleLiveOffsetChange = ({
-    expandedProgress,
+    expandedProgress: nextExpandedProgress,
   }: BottomSheetLiveOffsetState) => {
-    setExpandedProgress(expandedProgress);
-  };
-  const actionBarStyle: CSSProperties = {
-    opacity: 0.88 + expandedProgress * 0.12,
-    transform: `translateY(${(1 - expandedProgress) * 8}px)`,
+    setExpandedProgress(nextExpandedProgress);
   };
 
   useEffect(() => {
@@ -348,96 +205,14 @@ export function SearchFilterBottomSheet({
       onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onCollapseToResults}
     >
-      <div className={[sheetColumn, className].filter(Boolean).join(" ")}>
-        <div ref={scrollAreaRef} className={scrollArea}>
-          <div ref={contentMeasureRef}>
-            <div className={section}>
-              <LabelTitle size="small">
-                {m.search_filter_section_size()}
-              </LabelTitle>
-              <div className={sizeCardSlot}>
-                <SizeList
-                  labels={{
-                    S: m.search_filter_size_small(),
-                    M: m.search_filter_size_medium(),
-                    L: m.search_filter_size_large(),
-                  }}
-                  value={selectedSizes}
-                  onChange={setSelectedSizes}
-                />
-              </div>
-              <div className={sizeGuideBox}>
-                <ul className={sizeGuideList}>
-                  <li>
-                    <b>{m.report_size_s()}</b>: {m.report_size_guide_s()}
-                  </li>
-                  <li>
-                    <b>{m.report_size_m()}</b>: {m.report_size_guide_m()}
-                  </li>
-                  <li>
-                    <b>{m.report_size_l()}</b>: {m.report_size_guide_l()}
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className={[section, sectionGap24].join(" ")}>
-              <LabelTitle size="small">
-                {m.search_filter_section_indoor_outdoor_short()}
-              </LabelTitle>
-              <div className={indoorOutdoor}>
-                <ControlChipGroup
-                  options={indoorOutdoorOptions}
-                  value={indoorOutdoorState}
-                  onChange={setIndoorOutdoor}
-                  selectionMode="multiple"
-                  ariaLabel={m.search_filter_section_indoor_outdoor_short()}
-                />
-              </div>
-            </div>
-
-            <div className={[section, sectionGap24].join(" ")}>
-              <LabelTitle size="small">
-                {m.search_filter_section_locker_type_short()}
-              </LabelTitle>
-              <div className={indoorOutdoor}>
-                <ControlChipGroup
-                  options={placeTypeOptions}
-                  value={placeTypeState}
-                  onChange={setPlaceType}
-                  selectionMode="multiple"
-                  ariaLabel={m.search_filter_section_locker_type_short()}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          ref={actionBarRef}
-          className={bottomActionBar}
-          style={actionBarStyle}
-        >
-          <Button
-            className={resetButton}
-            variant="filled"
-            intent="neutral"
-            size="L"
-            onPress={handleReset}
-          >
-            {m.search_filter_reset()}
-          </Button>
-          <Button
-            className={applyButton}
-            variant="filled"
-            intent="primary"
-            size="L"
-            onPress={handleApply}
-          >
-            {m.search_filter_view_lockers()}
-          </Button>
-        </div>
-      </div>
+      <SearchFilterScreen
+        className={className}
+        initialFilters={initialFilters}
+        onReset={onReset}
+        onApply={onApply}
+        onContentHeightChange={setScreenHeight}
+        expandedProgress={expandedProgress}
+      />
     </DraggableBottomSheet>
   );
 }
