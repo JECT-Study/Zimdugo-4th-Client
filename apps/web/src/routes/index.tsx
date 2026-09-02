@@ -56,7 +56,6 @@ import {
   NaverMapCanvas,
   NaverMapProvider,
   resolveMapBootstrapViewport,
-  subscribeMapIdle,
   useMapColorScheme,
   useMapViewportStore,
   useNaverMapSdk,
@@ -92,6 +91,7 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
+import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import {
@@ -1375,16 +1375,10 @@ export function IndexPage() {
     }, 1000);
   }, [isRefreshing, queryClient]);
 
-  const persistMapViewport = useCallback((map: naver.maps.Map) => {
-    useMapViewportStore.getState().saveFromMap(map);
-  }, []);
-
-  const saveMapViewport = useCallback(() => {
-    const map = mapInstanceRef.current;
-    if (map) {
-      persistMapViewport(map);
-    }
-  }, [persistMapViewport]);
+  const { persistMapViewport } = useMapViewportPersistence({
+    map: mapInstance,
+    getMap: () => mapInstanceRef.current,
+  });
 
   const clearPendingLockerDetailOpen = useCallback(() => {
     window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
@@ -1399,36 +1393,6 @@ export function IndexPage() {
       window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
     };
   }, []);
-
-  // 탭 전환·백그라운드 이탈 직전 viewport 저장
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        saveMapViewport();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("pagehide", saveMapViewport);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pagehide", saveMapViewport);
-    };
-  }, [saveMapViewport]);
-
-  useEffect(() => {
-    if (!mapInstance) return;
-
-    const maps = window.naver?.maps;
-    if (!maps) return;
-
-    return subscribeMapIdle({
-      map: mapInstance,
-      maps,
-      onSettle: saveMapViewport,
-    });
-  }, [mapInstance, saveMapViewport]);
 
   const handleMyLocation = useCallback(async () => {
     setIsMyLocationPending(true);
