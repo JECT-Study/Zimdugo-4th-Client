@@ -3,6 +3,22 @@ import { useEffect } from "react";
 const SERVICE_WORKER_URL = "/sw.js";
 
 /**
+ * 워커가 서버에 직접 요청할 때 쓸 API 주소.
+ *
+ * `sw.js` 는 번들러를 거치지 않아 `import.meta.env` 를 읽을 수 없다. 등록 URL 의
+ * 쿼리로 넘기면 워커가 다시 깨어나도 `self.location` 에 남아 있어, 열린 탭이
+ * 없는 상태에서 오는 `pushsubscriptionchange` 도 처리할 수 있다.
+ *
+ * 값이 바뀌면 스크립트 URL 이 달라져 브라우저가 새 워커로 교체한다.
+ */
+const buildServiceWorkerUrl = () => {
+  const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL ?? "";
+  if (!apiBaseUrl) return SERVICE_WORKER_URL;
+
+  return `${SERVICE_WORKER_URL}?api=${encodeURIComponent(apiBaseUrl)}`;
+};
+
+/**
  * 푸시 전용 서비스 워커를 등록한다.
  *
  * 워커는 `apps/web/public/sw.js` 에 있고 번들러를 거치지 않는다. 캐싱을 하지 않고
@@ -22,7 +38,7 @@ export const useServiceWorker = () => {
 
     const register = async () => {
       try {
-        await navigator.serviceWorker.register(SERVICE_WORKER_URL, {
+        await navigator.serviceWorker.register(buildServiceWorkerUrl(), {
           scope: "/",
         });
       } catch (error) {

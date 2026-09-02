@@ -358,6 +358,7 @@
   "locker_timer_error_ios_install": "加入主畫面後開啟即可接收通知。請點按分享按鈕，選擇「加入主畫面」。",
   "locker_timer_error_unsupported": "此瀏覽器無法接收通知。",
   "locker_timer_error_subscription": "通知註冊已失效。請重試。",
+  "locker_timer_error_subscription_conflict": "此瀏覽器的通知已註冊到其他裝置。請先關閉通知再重新開啟後重試。",
   "locker_timer_error_schedule": "設定的時間太短。請設定得長一些。",
   "locker_timer_error_limit": "已有正在執行的計時器。請先關閉後再試。",
   "locker_timer_error_rate_limited": "請求過於頻繁。請稍後再試。",

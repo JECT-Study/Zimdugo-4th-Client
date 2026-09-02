@@ -358,6 +358,7 @@
   "locker_timer_error_ios_install": "ホーム画面に追加してから開くと通知を受け取れます。共有ボタンから「ホーム画面に追加」を選んでください。",
   "locker_timer_error_unsupported": "このブラウザでは通知を受け取れません。",
   "locker_timer_error_subscription": "通知の登録が解除されました。もう一度お試しください。",
+  "locker_timer_error_subscription_conflict": "このブラウザの通知が別の端末に登録されています。通知をオフにしてから再度オンにしてお試しください。",
   "locker_timer_error_schedule": "設定した時間が短すぎます。もう少し長くしてください。",
   "locker_timer_error_limit": "すでに動作中のタイマーがあります。先に停止してからお試しください。",
   "locker_timer_error_rate_limited": "リクエストが多すぎます。しばらくしてからお試しください。",

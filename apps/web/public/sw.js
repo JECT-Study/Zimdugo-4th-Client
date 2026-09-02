@@ -150,3 +150,45 @@ self.addEventListener("notificationclick", (event) => {
     })(),
   );
 });
+
+/**
+ * 브라우저가 구독을 무효화했을 때.
+ *
+ * 키 만료, 사용자의 알림 초기화, 브라우저의 정리 등으로 발생한다. 이 시점에
+ * 서버에 남은 구독은 이미 죽은 endpoint 라, 그대로 두면 발송 시점마다 헛되이
+ * 시도한다. 명세의 "권한 취소 또는 구독 소실" 갈래가 여기다.
+ *
+ * 워커는 앱의 로케일을 모른다. `PUT /push/subscriptions` 는 `locale` 을 필수로
+ * 받으므로 여기서 재등록하지 않고, 죽은 구독만 걷어낸 뒤 페이지에 알린다.
+ * 열려 있는 탭이 있으면 그쪽이 제 로케일로 다시 등록하고, 없으면 다음 진입에서
+ * 처리된다.
+ */
+const API_BASE_URL = new URL(self.location.href).searchParams.get("api") ?? "";
+
+const SUBSCRIPTION_LOST_MESSAGE = "zimdugo:push-subscription-lost";
+
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        // deviceToken 은 HttpOnly 라 워커가 읽을 수 없다. credentials 로 실어 보낸다.
+        // 앱과 API 는 같은 사이트라 SameSite=Lax 쿠키가 실린다.
+        await fetch(`${API_BASE_URL}/api/v1/push/subscriptions`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+      } catch (_) {
+        // 네트워크가 없으면 서버 정리는 다음 기회로 미룬다. 아래 통지는 계속한다.
+      }
+
+      const windows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      for (const client of windows) {
+        client.postMessage({ type: SUBSCRIPTION_LOST_MESSAGE });
+      }
+    })(),
+  );
+});

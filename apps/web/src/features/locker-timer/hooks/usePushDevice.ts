@@ -4,10 +4,14 @@ import { postPushDevice } from "#/shared/api/push";
 import { toAcceptLanguage } from "#/shared/i18n/api-locale";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import {
+  ensurePushSubscription,
   isPushSupported,
   revokePushSubscription,
   syncPushSubscription,
 } from "../lib/push-subscription";
+
+/** `public/sw.js` 가 구독 소실을 알릴 때 쓰는 이름. 양쪽을 함께 고쳐야 한다. */
+const SUBSCRIPTION_LOST_MESSAGE = "zimdugo:push-subscription-lost";
 
 /**
  * 앱 진입 시 기기를 초기화하고, 이미 구독이 있으면 서버 쪽을 현재 상태에 맞춘다.
@@ -57,4 +61,31 @@ export const usePushDevice = () => {
 
     return () => controller.abort();
   }, [locale]);
+
+  /*
+   * 워커가 구독 소실을 알리면 다시 등록한다.
+   *
+   * 워커는 앱의 로케일을 몰라 죽은 구독을 지우고 통지만 한다. 재등록은 로케일을
+   * 아는 이쪽에서 한다. 권한이 살아 있을 때만 하는데, 권한이 없다면 사용자가
+   * 스스로 껐다는 뜻이라 몰래 되살리면 안 된다.
+   */
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type !== SUBSCRIPTION_LOST_MESSAGE) return;
+      if (!isPushSupported() || Notification.permission !== "granted") return;
+
+      ensurePushSubscription().catch((error) => {
+        console.warn("푸시 구독 재등록 실패", error);
+      });
+    };
+
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", handleMessage);
+  }, []);
 };

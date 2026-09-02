@@ -25,6 +25,7 @@ export type LockerTimerFailure =
   | { kind: "ios-install-required" }
   | { kind: "permission-denied" }
   | { kind: "subscription-missing" }
+  | { kind: "subscription-conflict" }
   | { kind: "invalid-schedule" }
   | { kind: "limit-exceeded" }
   | { kind: "rate-limited" }
@@ -48,6 +49,8 @@ const toFailure = (error: unknown): LockerTimerFailure => {
   switch (code) {
     case PUSH_ERROR_CODE.SubscriptionMissing:
       return { kind: "subscription-missing" };
+    case PUSH_ERROR_CODE.SubscriptionConflict:
+      return { kind: "subscription-conflict" };
     case PUSH_ERROR_CODE.InvalidSchedule:
       return { kind: "invalid-schedule" };
     case PUSH_ERROR_CODE.LimitExceeded:
@@ -71,6 +74,8 @@ export const describeFailure = (failure: LockerTimerFailure): string => {
       return m.locker_timer_error_permission_denied();
     case "subscription-missing":
       return m.locker_timer_error_subscription();
+    case "subscription-conflict":
+      return m.locker_timer_error_subscription_conflict();
     case "invalid-schedule":
       return m.locker_timer_error_schedule();
     case "limit-exceeded":

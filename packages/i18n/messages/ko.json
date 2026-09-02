@@ -358,6 +358,7 @@
   "locker_timer_error_ios_install": "홈 화면에 추가한 뒤 열면 알림을 받을 수 있어요. 공유 버튼에서 '홈 화면에 추가'를 눌러 주세요.",
   "locker_timer_error_unsupported": "이 브라우저에서는 알림을 받을 수 없어요.",
   "locker_timer_error_subscription": "알림 등록이 풀렸어요. 다시 시도해 주세요.",
+  "locker_timer_error_subscription_conflict": "이 브라우저의 알림이 다른 기기에 등록돼 있어요. 알림을 껐다가 다시 켠 뒤 시도해 주세요.",
   "locker_timer_error_schedule": "설정한 시간이 너무 짧아요. 조금 더 길게 잡아 주세요.",
   "locker_timer_error_limit": "이미 켜져 있는 타이머가 있어요. 먼저 끄고 다시 시도해 주세요.",
   "locker_timer_error_rate_limited": "요청이 너무 잦아요. 잠시 뒤에 다시 시도해 주세요.",

@@ -20,6 +20,8 @@ export const PUSH_ERROR_CODE = {
   InvalidSchedule: "PUSH-400-1",
   /** 최대 예약 기간 또는 기기당 활성 리마인더 한도 초과 */
   LimitExceeded: "PUSH-400-2",
+  /** 다른 기기에 이미 묶인 `endpoint` 다. 명세의 멱등 upsert 와 어긋난다 */
+  SubscriptionConflict: "PUSH-409-1",
   /** 현재 기기에 등록된 활성 푸시 구독이 없다 */
   SubscriptionMissing: "PUSH-409-2",
   /** 기기 또는 IP 기준 요청 한도 초과 */

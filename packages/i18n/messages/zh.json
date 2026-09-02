@@ -358,6 +358,7 @@
   "locker_timer_error_ios_install": "添加到主屏幕后打开即可接收通知。请点按分享按钮，选择“添加到主屏幕”。",
   "locker_timer_error_unsupported": "此浏览器无法接收通知。",
   "locker_timer_error_subscription": "通知注册已失效。请重试。",
+  "locker_timer_error_subscription_conflict": "此浏览器的通知已注册到其他设备。请先关闭通知再重新开启后重试。",
   "locker_timer_error_schedule": "设置的时间太短。请设置得长一些。",
   "locker_timer_error_limit": "已有正在运行的计时器。请先关闭后再试。",
   "locker_timer_error_rate_limited": "请求过于频繁。请稍后再试。",

@@ -358,6 +358,7 @@
   "locker_timer_error_ios_install": "Add this app to your Home Screen to receive notifications. Tap Share, then Add to Home Screen.",
   "locker_timer_error_unsupported": "This browser can't receive notifications.",
   "locker_timer_error_subscription": "Your notification registration was lost. Please try again.",
+  "locker_timer_error_subscription_conflict": "This browser's notifications are registered to another device. Turn notifications off and on again, then retry.",
   "locker_timer_error_schedule": "That duration is too short. Please choose a longer one.",
   "locker_timer_error_limit": "A timer is already running. Turn it off first, then try again.",
   "locker_timer_error_rate_limited": "Too many requests. Please try again in a moment.",
