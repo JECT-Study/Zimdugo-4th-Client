@@ -1,4 +1,5 @@
 import { languageTag } from "@repo/i18n";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { postPushDevice } from "#/shared/api/push";
 import { toAcceptLanguage } from "#/shared/i18n/api-locale";
@@ -9,6 +10,7 @@ import {
   revokePushSubscription,
   syncPushSubscription,
 } from "../lib/push-subscription";
+import { PUSH_REMINDER_QUERY_KEY } from "../model/push-reminder-queries";
 
 /** `public/sw.js` 가 구독 소실을 알릴 때 쓰는 이름. 양쪽을 함께 고쳐야 한다. */
 const SUBSCRIPTION_LOST_MESSAGE = "zimdugo:push-subscription-lost";
@@ -27,6 +29,8 @@ const SUBSCRIPTION_LOST_MESSAGE = "zimdugo:push-subscription-lost";
  * 그때는 실패를 화면에 드러낸다.
  */
 export const usePushDevice = () => {
+  const queryClient = useQueryClient();
+
   // 언어가 바뀌면 구독에 저장된 locale 도 다시 올려야 한다. 이펙트가 이 값을
   // 직접 넘기므로 재실행 조건이 코드에 드러난다.
   const locale = toAcceptLanguage(
@@ -40,6 +44,18 @@ export const usePushDevice = () => {
       try {
         await postPushDevice(controller.signal);
         if (controller.signal.aborted) return;
+
+        /*
+         * 기기가 정해진 뒤 리마인더를 다시 읽는다.
+         *
+         * 이 이펙트는 화면이 그려진 뒤에 도는데, 지도 컨트롤은 그 전에 이미
+         * 조회를 시작한다. 쿠키가 없던 첫 방문이면 그 조회는 기기가 정해지기
+         * 전에 나가므로 결과를 믿을 수 없다. staleTime 때문에 한동안 그 값이
+         * 남아 도는 타이머를 못 본 채로 있게 된다.
+         */
+        await queryClient.invalidateQueries({
+          queryKey: PUSH_REMINDER_QUERY_KEY,
+        });
 
         // 사용자가 브라우저 설정에서 권한을 거둔 경우. 구독은 남아 있어 서버가
         // 계속 발송을 시도하므로 여기서 걷어낸다. 리마인더는 그대로 두고,
@@ -60,7 +76,7 @@ export const usePushDevice = () => {
     void bootstrap();
 
     return () => controller.abort();
-  }, [locale]);
+  }, [locale, queryClient]);
 
   /*
    * 언어가 바뀌면 정리 함수가 앞선 요청을 끊는다. 끊지 않으면 이전 로케일의 PUT
