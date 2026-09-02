@@ -124,13 +124,20 @@ export const useLockerTimerSession = (
     async (durationInSeconds: number) => {
       setFailure(null);
 
-      if (!isPushSupported()) {
+      // iOS 를 먼저 본다. 설치 전에는 PushManager 가 없어 대개 아래 검사에서도
+      // 걸리지만, 그 노출 여부는 iOS 버전마다 다르다. 노출되는 버전에서 순서가
+      // 반대면 지원되는 것으로 보고 진행하다 구독에서 알 수 없는 실패로 끝난다.
+      // 설치하면 되는 상황을 "이 브라우저는 원래 안 됨" 으로 알리지 않는다.
+      if (isIosWithoutInstall()) {
         setFailure({
           operation: "start",
-          reason: isIosWithoutInstall()
-            ? { kind: "ios-install-required" }
-            : { kind: "unsupported" },
+          reason: { kind: "ios-install-required" },
         });
+        return false;
+      }
+
+      if (!isPushSupported()) {
+        setFailure({ operation: "start", reason: { kind: "unsupported" } });
         return false;
       }
 

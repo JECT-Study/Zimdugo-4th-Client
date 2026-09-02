@@ -377,6 +377,8 @@ export function LockerDetailBottomSheet({
   const [isTimerOpen, setIsTimerOpen] = useState(false);
   const [isTimerStartConfirmationOpen, setIsTimerStartConfirmationOpen] =
     useState(false);
+  const [isPermissionNoticeOpen, setIsPermissionNoticeOpen] = useState(false);
+  const [isTimerFinishedOpen, setIsTimerFinishedOpen] = useState(false);
   const [isAddressCopied, setIsAddressCopied] = useState(false);
   const [timerHours, setTimerHours] = useState("00");
   const [timerMinutes, setTimerMinutes] = useState("00");
@@ -631,19 +633,48 @@ export function LockerDetailBottomSheet({
       });
   };
 
-  const handleTimerStartConfirm = async () => {
+  const startTimer = async () => {
     const configuredTimeInSeconds =
       (Number(timerHours) * 60 + Number(timerMinutes)) * 60;
     if (configuredTimeInSeconds <= 0) return;
 
-    setIsTimerStartConfirmationOpen(false);
-
-    // 권한 팝업은 이 클릭의 사용자 제스처 안에서 떠야 한다. 확인 팝업을 먼저
-    // 닫고 부르는 이유이기도 하다.
     const hasStarted = await timerSession.start(configuredTimeInSeconds);
     if (hasStarted) {
       setTimerNow(Date.now());
     }
+  };
+
+  /**
+   * 브라우저 권한 팝업이 뜨기 전에 왜 필요한지 먼저 알린다.
+   *
+   * 맥락 없이 뜨는 권한 팝업은 반사적으로 거부당하기 쉽고, 한 번 거부되면
+   * 사이트 설정에 들어가야 되돌릴 수 있다. 이미 정해진 권한(허용·거부)에는
+   * 이 안내를 띄우지 않는다. 물어볼 것이 없다.
+   */
+  const handleTimerStartConfirm = () => {
+    setIsTimerStartConfirmationOpen(false);
+
+    const needsPermissionNotice =
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default";
+
+    if (needsPermissionNotice) {
+      setIsPermissionNoticeOpen(true);
+      return;
+    }
+
+    void startTimer();
+  };
+
+  /**
+   * 안내를 확인한 뒤 실제로 시작한다.
+   *
+   * 브라우저는 사용자 제스처 안에서만 권한 팝업을 띄운다. 이 확인 버튼의 클릭이
+   * 그 제스처라 여기서 곧바로 이어 불러야 한다.
+   */
+  const handlePermissionNoticeConfirm = () => {
+    setIsPermissionNoticeOpen(false);
+    void startTimer();
   };
 
   const handleTimerStop = async () => {
@@ -758,6 +789,32 @@ export function LockerDetailBottomSheet({
     const intervalId = window.setInterval(() => setTimerNow(Date.now()), 1000);
 
     return () => window.clearInterval(intervalId);
+  }, [timerSession.endAt]);
+
+  /*
+   * 화면을 보고 있는 사이에 타이머가 끝나면 알린다.
+   *
+   * 푸시는 앱이 닫혀 있을 때를 위한 것이라, 앱을 열어 둔 채 끝나는 경우를 덮지
+   * 못한다. 게이지만 0 이 되고 아무 말이 없으면 끝난 것인지 멈춘 것인지 알 수
+   * 없다.
+   *
+   * 사용자가 직접 끄면 endAt 이 null 이 되어 정리 함수가 예약을 지운다. 끄기와
+   * 종료를 같은 팝업으로 알리지 않는 이유다. 이미 지난 타이머로 다시 진입한
+   * 경우도 서버 목록에서 빠져 있어 여기까지 오지 않는다.
+   */
+  useEffect(() => {
+    const { endAt } = timerSession;
+    if (endAt === null) return;
+
+    const remainingMs = endAt - Date.now();
+    if (remainingMs <= 0) return;
+
+    const timeoutId = window.setTimeout(
+      () => setIsTimerFinishedOpen(true),
+      remainingMs,
+    );
+
+    return () => window.clearTimeout(timeoutId);
   }, [timerSession.endAt]);
 
   /*
@@ -958,6 +1015,26 @@ export function LockerDetailBottomSheet({
         primaryAction={{
           label: m.common_confirm(),
           onPress: timerSession.clearFailure,
+        }}
+      />
+      <Popup
+        isOpen={isPermissionNoticeOpen}
+        onOpenChange={setIsPermissionNoticeOpen}
+        titleText={m.locker_timer_permission_notice_title()}
+        helperText={m.locker_timer_permission_notice_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: handlePermissionNoticeConfirm,
+        }}
+      />
+      <Popup
+        isOpen={isTimerFinishedOpen}
+        onOpenChange={setIsTimerFinishedOpen}
+        titleText={m.locker_timer_finished_title()}
+        helperText={m.locker_timer_finished_helper()}
+        primaryAction={{
+          label: m.common_confirm(),
+          onPress: () => setIsTimerFinishedOpen(false),
         }}
       />
       <Popup

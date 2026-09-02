@@ -230,6 +230,38 @@ describe("LockerDetailBottomSheet", () => {
     expect(screen.getByRole("button", { name: "타이머 켜기" })).toBeTruthy();
   });
 
+  it("타이머가 끝나면 알림 팝업을 띄운다", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const endAt = Date.now() + 3000;
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: LOCKER_DETAIL.lockerId,
+        startedAt: new Date(Date.now()).toISOString(),
+        endAt: new Date(endAt).toISOString(),
+        totalUsageMinutes: 1,
+        remainingMinutes: 1,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
+
+    await act(async () => {
+      vi.advanceTimersByTime(3100);
+    });
+
+    expect(await screen.findByText("타이머가 끝났어요")).toBeTruthy();
+    // 확인 하나만 둔다. 되돌릴 것이 없는 알림이다.
+    expect(screen.getByRole("button", { name: "확인" })).toBeTruthy();
+
+    vi.useRealTimers();
+  });
+
   it("이 기기의 서버 리마인더를 상세 시트에 복원한다", async () => {
     queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
       {
