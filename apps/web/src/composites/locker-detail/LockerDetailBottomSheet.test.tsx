@@ -42,6 +42,9 @@ const deletePushReminderMock = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("#/shared/api/push", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/shared/api/push")>()),
   deletePushReminder: deletePushReminderMock,
+  // 삭제 뒤 invalidateQueries 가 재조회를 건다. 실제 구현이면 axios 가 네트워크를
+  // 때리고, 그 대기가 다음 테스트의 프레임 기반 단언까지 늦춘다.
+  getPushReminders: vi.fn(async () => []),
 }));
 
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
@@ -169,6 +172,10 @@ describe("LockerDetailBottomSheet", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    // 가짜 타이머는 반드시 여기서 되돌린다. 테스트 본문 끝에서만 되돌리면 그
+    // 앞의 단언이 실패했을 때 그대로 새어 나가, 다음 테스트의 rAF 기반 오프셋
+    // 갱신이 멈춰 엉뚱한 곳에서 깨진다.
+    vi.useRealTimers();
     draggableBottomSheetMock.mockClear();
   });
 
@@ -290,13 +297,18 @@ describe("LockerDetailBottomSheet", () => {
   it("종료 직전에 타이머를 끄면 종료 팝업을 띄우지 않는다", async () => {
     // 삭제 응답을 기다리는 사이에도 endAt 은 남아 있다. 예약을 접지 않으면
     // 끄기가 성공해도 종료 팝업이 먼저 뜬다.
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    //
+    // 가짜 타이머를 쓰지 않는다. motion 의 프레임 루프가 한 번 가짜 시간을
+    // 거치면 실제 시간으로 되돌려도 회복되지 않아, 뒤따르는 오프셋 테스트가
+    // 엉뚱한 곳에서 깨진다. 짧은 실제 시간으로 기다린다.
     queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
       {
         id: 1,
         lockerId: LOCKER_DETAIL.lockerId,
         startedAt: new Date(Date.now()).toISOString(),
-        endAt: new Date(Date.now() + 3000).toISOString(),
+        // 모달을 열고 끄기를 누르는 데도 시간이 든다. 그 전에 종료 시각이
+        // 지나면 예약이 서지 않아 경합이 재현되지 않는다.
+        endAt: new Date(Date.now() + 1200).toISOString(),
         totalUsageMinutes: 1,
         remainingMinutes: 1,
         remindBeforeMinutes: null,
@@ -321,16 +333,12 @@ describe("LockerDetailBottomSheet", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "타이머 끄기" }));
 
-    // 가짜 시간에서는 React 의 상태 반영도 타이머를 타므로, 종료 시각 전에 짧게
-    // 감아 끄기 요청이 반영되게 한다. 곧바로 3초를 감으면 예약이 먼저 발화한다.
-    await act(async () => {
-      vi.advanceTimersByTime(100);
-    });
+    await act(async () => {});
     expect(deletePushReminderMock).toHaveBeenCalled();
 
     // 삭제가 아직 끝나지 않은 채 종료 시각을 지난다.
     await act(async () => {
-      vi.advanceTimersByTime(3000);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     });
 
     expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
@@ -340,8 +348,6 @@ describe("LockerDetailBottomSheet", () => {
     });
 
     expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
-
-    vi.useRealTimers();
   });
 
   it("홈 화면에 설치되지 않은 iOS 에서는 설정 모달 대신 설치를 안내한다", () => {
@@ -372,8 +378,8 @@ describe("LockerDetailBottomSheet", () => {
   });
 
   it("타이머가 끝나면 알림 팝업을 띄운다", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    const endAt = Date.now() + 3000;
+    // 가짜 타이머를 쓰지 않는 이유는 위 테스트의 주석과 같다.
+    const endAt = Date.now() + 300;
     queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
       {
         id: 1,
@@ -392,15 +398,9 @@ describe("LockerDetailBottomSheet", () => {
 
     expect(screen.queryByText("타이머가 끝났어요")).toBeNull();
 
-    await act(async () => {
-      vi.advanceTimersByTime(3100);
-    });
-
     expect(await screen.findByText("타이머가 끝났어요")).toBeTruthy();
     // 확인 하나만 둔다. 되돌릴 것이 없는 알림이다.
     expect(screen.getByRole("button", { name: "확인" })).toBeTruthy();
-
-    vi.useRealTimers();
   });
 
   it("이 기기의 서버 리마인더를 상세 시트에 복원한다", async () => {
