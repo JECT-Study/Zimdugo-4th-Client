@@ -48,7 +48,10 @@ import {
   sortLockerData,
 } from "./sort-locker-data";
 
-type ActiveSort = { key: SearchSortKey; direction: SearchSortDirection };
+interface ActiveSort {
+  key: SearchSortKey;
+  direction: SearchSortDirection;
+}
 
 /**
  * 검색 결과 목록 화면. 무엇을 담고 있는지만 안다.
