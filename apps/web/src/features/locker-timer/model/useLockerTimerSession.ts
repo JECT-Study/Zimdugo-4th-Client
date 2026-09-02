@@ -148,11 +148,7 @@ export interface LockerTimerSessionState {
 export const useLockerTimerSession = (
   lockerId: number,
 ): LockerTimerSessionState => {
-  const {
-    data: reminder,
-    isPending: isReminderPending,
-    isError: isReminderError,
-  } = useActiveReminderQuery();
+  const { data: reminder } = useActiveReminderQuery();
   const createReminder = useCreateReminderMutation();
   const deleteReminder = useDeleteReminderMutation();
   const [failure, setFailure] = useState<LockerTimerFailureState | null>(null);
@@ -295,7 +291,14 @@ export const useLockerTimerSession = (
     isPending:
       isStarting || createReminder.isPending || deleteReminder.isPending,
     isStopping: deleteReminder.isPending,
-    isReminderUnknown: isReminderPending || isReminderError,
+    /*
+     * 한 번이라도 읽혔으면 아는 것으로 본다.
+     *
+     * 조회 상태로 판단하면, 캐시에 도는 타이머가 있는데 배경 재조회만 실패한
+     * 경우까지 "모름" 이 된다. 그러면 지도에는 타이머가 보이는데 상세에서는 열
+     * 수도 끌 수도 없다. 쓸 수 있는 답이 있는지로 가른다.
+     */
+    isReminderUnknown: reminder === undefined,
     failure,
     clearFailure,
     reportReminderUnknown,

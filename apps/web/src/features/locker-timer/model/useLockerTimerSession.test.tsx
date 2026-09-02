@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -18,13 +18,16 @@ const postPushReminder = vi.hoisted(() =>
 );
 const postPushDevice = vi.hoisted(() => vi.fn(async () => {}));
 const deletePushReminder = vi.hoisted(() => vi.fn(async () => {}));
+const getPushReminders = vi.hoisted(() =>
+  vi.fn(async (): Promise<unknown[]> => []),
+);
 
 vi.mock("#/shared/api/push", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/shared/api/push")>()),
   postPushDevice,
   postPushReminder,
   deletePushReminder,
-  getPushReminders: vi.fn(async () => []),
+  getPushReminders,
 }));
 
 const ensurePushSubscription = vi.hoisted(() => vi.fn(async () => undefined));
@@ -36,6 +39,7 @@ vi.mock("../lib/push-subscription", async (importOriginal) => ({
   isIosWithoutInstall: () => false,
 }));
 
+import { PUSH_REMINDER_QUERY_KEY } from "./push-reminder-queries";
 import { useLockerTimerSession } from "./useLockerTimerSession";
 
 const wrapper = ({ children }: { children?: ReactNode }) => {
@@ -54,6 +58,7 @@ describe("useLockerTimerSession", () => {
     postPushReminder.mockClear();
     ensurePushSubscription.mockClear();
     deletePushReminder.mockClear();
+    getPushReminders.mockClear();
     vi.stubGlobal("Notification", { permission: "granted" });
   });
 
@@ -155,6 +160,74 @@ describe("useLockerTimerSession", () => {
     expect(deletePushReminder).toHaveBeenCalledOnce();
     await act(async () => {
       await firstStop;
+    });
+  });
+
+  it("배경 재조회가 실패해도 캐시에 있는 타이머는 계속 쓴다", async () => {
+    // 조회 상태로 판단하면 지도에는 타이머가 보이는데 상세에서는 열 수도 끌 수도
+    // 없는 상태가 된다.
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 7,
+        lockerId: 171,
+        startedAt: new Date().toISOString(),
+        endAt: new Date(Date.now() + 600_000).toISOString(),
+        totalUsageMinutes: 10,
+        remainingMinutes: 10,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    const seeded = ({ children }: { children?: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useLockerTimerSession(171), {
+      wrapper: seeded,
+    });
+
+    expect(result.current.isReminderUnknown).toBe(false);
+
+    getPushReminders.mockRejectedValueOnce(new Error("network"));
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: PUSH_REMINDER_QUERY_KEY });
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(PUSH_REMINDER_QUERY_KEY)?.status).toBe(
+        "error",
+      ),
+    );
+    // 훅이 오류를 관측한 뒤에 본다. 곧바로 단언하면 갱신 전 값이라 결함 상태에서도
+    // 통과한다.
+    await act(async () => {});
+
+    expect(result.current.isReminderUnknown).toBe(false);
+    expect(result.current.endAt).not.toBeNull();
+  });
+
+  it("생성 전에 진행 중인 조회를 끊는다", async () => {
+    // 생성 전의 빈 목록을 읽은 응답이 늦게 도착하면 방금 넣은 값을 덮어쓴다.
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const cancelQueries = vi.spyOn(queryClient, "cancelQueries");
+
+    const seeded = ({ children }: { children?: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useLockerTimerSession(171), {
+      wrapper: seeded,
+    });
+
+    await act(async () => {
+      await result.current.start(600);
+    });
+
+    expect(cancelQueries).toHaveBeenCalledWith({
+      queryKey: PUSH_REMINDER_QUERY_KEY,
     });
   });
 

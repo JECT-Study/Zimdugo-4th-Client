@@ -44,6 +44,15 @@ export const useCreateReminderMutation = () => {
 
   return useMutation({
     mutationFn: (body: PushReminderCreateBody) => postPushReminder(body),
+    /*
+     * 진행 중인 조회를 먼저 끊는다.
+     *
+     * 기기 초기화의 무효화나 포커스 재조회가 도는 사이에 생성이 끝나면, 생성
+     * 전의 빈 목록을 읽은 응답이 아래 setQueryData 보다 늦게 도착해 방금 넣은
+     * 값을 덮어쓴다. 서버에는 타이머가 도는데 화면에서만 사라진다.
+     */
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: PUSH_REMINDER_QUERY_KEY }),
     onSuccess: (created) => {
       // 응답이 곧 새 상태다. 재조회를 기다리지 않고 바로 화면에 반영한다.
       queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [created]);
@@ -56,6 +65,9 @@ export const useDeleteReminderMutation = () => {
 
   return useMutation({
     mutationFn: (reminderId: number) => deletePushReminder(reminderId),
+    // 생성과 같은 이유다. 늦게 도착한 조회가 지운 결과를 되살린다.
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: PUSH_REMINDER_QUERY_KEY }),
     onSuccess: () => {
       queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
     },
