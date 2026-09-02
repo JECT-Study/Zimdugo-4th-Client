@@ -137,7 +137,27 @@ const config = defineConfig({
       routeRules:
         process.env.NODE_ENV === "development"
           ? {
-              "/api/**": { proxy: `${API_BASE_URL}/api/**` },
+              /*
+               * 개발 서버에서만 Origin 을 프로덕션 값으로 바꿔 보낸다.
+               *
+               * 서버는 상태를 바꾸는 요청에 허용 Origin 검증을 건다. 프록시가
+               * 브라우저의 `http://localhost:3000` 을 그대로 넘기면 목록 밖이라
+               * 403 COMMON-403 이 온다. 푸시 타이머는 쿠키 신원에 기대므로 이
+               * 검증을 통과하지 못하면 로컬에서 흐름 전체를 확인할 수 없다.
+               *
+               * `SameSite=Lax` 인 deviceToken 은 교차 사이트 XHR 에 실리지 않아
+               * 프리뷰 도메인(vercel.app)에서도 검증이 안 된다. 프록시를 거쳐
+               * same-origin 으로 만들면 그 제약도 함께 풀린다.
+               *
+               * NODE_ENV 가 development 일 때만 적용된다. 빌드 산출물에는 들어가지
+               * 않는다. 백엔드가 개발 Origin 을 허용 목록에 넣어 주면 지울 수 있다.
+               */
+              "/api/**": {
+                proxy: {
+                  to: `${API_BASE_URL}/api/**`,
+                  headers: { origin: "https://zimdugo.com" },
+                },
+              },
               "/oauth2/**": { proxy: `${API_BASE_URL}/oauth2/**` },
               "/login/oauth2/**": {
                 proxy: `${API_BASE_URL}/login/oauth2/**`,
