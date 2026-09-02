@@ -564,6 +564,9 @@ export function LockerDetailBottomSheet({
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
   const canFavorite =
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
+  // 이펙트 의존성으로 쓰려면 객체가 아니라 값으로 꺼내 두어야 한다. 세션 객체는
+  // 매 렌더 새로 만들어져 통째로 의존하면 이펙트가 매번 다시 돈다.
+  const timerEndAt = timerSession.endAt;
   const remainingTimeInSeconds = timerSession.endAt
     ? Math.max(0, Math.ceil((timerSession.endAt - timerNow) / 1000))
     : 0;
@@ -817,10 +820,9 @@ export function LockerDetailBottomSheet({
    * 경우도 서버 목록에서 빠져 있어 여기까지 오지 않는다.
    */
   useEffect(() => {
-    const { endAt } = timerSession;
-    if (endAt === null) return;
+    if (timerEndAt === null) return;
 
-    const remainingMs = endAt - Date.now();
+    const remainingMs = timerEndAt - Date.now();
     if (remainingMs <= 0) return;
 
     const timeoutId = window.setTimeout(
@@ -829,7 +831,7 @@ export function LockerDetailBottomSheet({
     );
 
     return () => window.clearTimeout(timeoutId);
-  }, [timerSession.endAt]);
+  }, [timerEndAt]);
 
   /*
    * 설정 화면의 종료 예정 시각은 현재 시각에 고른 길이를 더해 보여 준다. 모달을
