@@ -13,6 +13,7 @@ import {
   normalizeNaverMapLanguage,
 } from "./naver-map-language";
 import {
+  canReuseNaverMapScript,
   getNaverMapScriptSrc,
   waitForNaverMapSdkReady,
 } from "./naver-map-script";
@@ -23,6 +24,7 @@ import {
   type NaverMapStyleOptions,
   withNaverMapStyleSubmodules,
 } from "./naver-map-style";
+import { useWebglSupport } from "./useWebglSupport";
 
 export type NaverMapSdkStatus = "idle" | "loading" | "ready" | "error";
 
@@ -158,7 +160,15 @@ const loadNaverMapSdk = async ({
     NAVER_MAP_SCRIPT_SELECTOR,
   );
 
-  if (activeScript?.src === scriptSrc && window.naver?.maps) {
+  // 필요한 서브모듈을 다 갖췄으면 그대로 쓴다. 주소가 똑같을 때만 재사용하면,
+  // WebGL 을 잃어 gl 을 뺀 뒤 다시 들어왔을 때 멀쩡히 돌던 SDK 를 지우고
+  // 인증부터 다시 밟는다. 그 사이 네트워크나 인증이 한 번 흔들리면 이미 보고
+  // 있던 래스터 지도가 오류 화면으로 바뀐다.
+  if (
+    activeScript &&
+    canReuseNaverMapScript(activeScript.src, scriptSrc) &&
+    window.naver?.maps
+  ) {
     await waitForNaverMapSdkReady();
     return window.naver.maps;
   }
@@ -206,9 +216,14 @@ export function NaverMapProvider({
 
   const naverMapLanguage = normalizeNaverMapLanguage(language);
   const submoduleKey = submodules.join(",");
+  const isWebglAvailable = useWebglSupport();
+  // getNaverMapStyleOptions 는 WebGL 여부를 스스로 읽는다. 여기서는 그 값이
+  // 뒤집혔을 때 다시 계산하라는 신호로만 쓴다. 컨텍스트를 잃으면 스타일이
+  // 빠진 새 옵션이 나오고, NaverMapCanvas 가 지도를 래스터로 다시 만든다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: isWebglAvailable 은 재계산 신호다
   const styleOptions = useMemo(
     () => getNaverMapStyleOptions(colorScheme),
-    [colorScheme],
+    [colorScheme, isWebglAvailable],
   );
 
   // submodules 는 배열이라 매 렌더 새 참조다. 그대로 의존성에 넣으면 지도

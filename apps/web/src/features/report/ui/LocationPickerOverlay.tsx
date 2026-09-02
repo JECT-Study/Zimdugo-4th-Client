@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMapColorScheme } from "#/entities/map";
 import { normalizeNaverMapLanguage } from "#/entities/map/model/naver-map-language";
 import {
+  canReuseNaverMapScript,
   getNaverMapScriptSrc,
   waitForNaverMapSdkReady,
 } from "#/entities/map/model/naver-map-script";
@@ -68,9 +69,9 @@ const loadNaverMapsScript = async () => {
     'script[src*="maps.js"]',
   );
 
-  // 파라미터가 같은 스크립트일 때만 재사용한다. 아무 maps.js 나 받아들이면
-  // gl 없이 실린 SDK 를 그대로 써서 customStyleId 가 조용히 무시된다.
-  if (activeScript?.src === scriptSrc) {
+  // 필요한 서브모듈을 다 갖춘 스크립트일 때만 재사용한다. 아무 maps.js 나
+  // 받아들이면 gl 없이 실린 SDK 를 그대로 써서 customStyleId 가 조용히 무시된다.
+  if (activeScript && canReuseNaverMapScript(activeScript.src, scriptSrc)) {
     // 아직 내려받는 중일 수 있다. 그때 새로 붙이면 같은 SDK 를 두 번 받아
     // 초기화가 서로 겹친다. 이미 붙은 것의 결과를 기다린다.
     if (!window.naver?.maps) {
