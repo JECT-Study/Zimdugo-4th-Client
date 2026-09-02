@@ -126,21 +126,51 @@ const getRegistration = async () => {
  * 권한 요청은 하지 않는다. 호출부가 사용자 제스처 안에서 먼저 받아야 브라우저가
  * 팝업을 띄운다.
  */
+/** 기존 구독이 지금의 VAPID 공개키로 만들어진 것인지. */
+const isBoundTo = (
+  subscription: PushSubscription,
+  applicationServerKey: Uint8Array,
+): boolean => {
+  const bound = subscription.options.applicationServerKey;
+  if (!bound) return false;
+
+  const boundBytes = new Uint8Array(bound);
+  if (boundBytes.length !== applicationServerKey.length) return false;
+
+  return boundBytes.every(
+    (byte, index) => byte === applicationServerKey[index],
+  );
+};
+
 export const ensurePushSubscription = async (
   locale: ApiLocale = resolvePushLocale(),
   signal?: AbortSignal,
 ): Promise<PushSubscription> => {
   const registration = await getRegistration();
+  const applicationServerKey = urlBase64ToUint8Array(
+    await getPushVapidPublicKey(signal),
+  );
+
+  /*
+   * 서버가 VAPID 키를 바꾸면 기존 구독은 죽은 것이나 마찬가지다.
+   *
+   * endpoint 는 살아 있어 등록도 계속 성공하지만, 새 개인키로는 그 구독에
+   * 발송할 수 없다. 비교하지 않으면 예전 사용자에게만 알림이 조용히 끊긴다.
+   */
   const existing = await registration.pushManager.getSubscription();
+  if (existing && !isBoundTo(existing, applicationServerKey)) {
+    await existing.unsubscribe();
+  }
+
+  const reusable =
+    existing && isBoundTo(existing, applicationServerKey) ? existing : null;
 
   const subscription =
-    existing ??
+    reusable ??
     (await registration.pushManager.subscribe({
       // 브라우저가 요구한다. 푸시를 받으면 반드시 알림을 띄우겠다는 약속이다.
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        await getPushVapidPublicKey(signal),
-      ),
+      applicationServerKey,
     }));
 
   const { p256dh, auth } = subscription.toJSON().keys ?? {};

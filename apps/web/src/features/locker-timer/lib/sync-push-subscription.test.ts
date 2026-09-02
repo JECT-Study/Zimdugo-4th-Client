@@ -22,8 +22,21 @@ import {
   syncPushSubscription,
 } from "./push-subscription";
 
-const buildSubscription = (endpoint: string) => ({
+/** 서버가 실제로 주는 키를 디코딩한 값. 재사용 판정의 기준이 된다. */
+const CURRENT_KEY = Uint8Array.from(
+  atob(
+    "BLpB8OmQGMwP03BTnvmBUrRJBaKX4o5C0Mmv3NXsZwIqWPVwKzRPGUP7v+LxwOV6LreEa5zpdtqMUsBfz3kTCtA=",
+  ),
+  (character) => character.charCodeAt(0),
+);
+
+const buildSubscription = (
+  endpoint: string,
+  applicationServerKey: Uint8Array | null = CURRENT_KEY,
+) => ({
   endpoint,
+  options: { applicationServerKey: applicationServerKey?.buffer ?? null },
+  unsubscribe: vi.fn(async () => true),
   toJSON: () => ({ keys: { p256dh: "p256dh-value", auth: "auth-value" } }),
 });
 
@@ -148,5 +161,49 @@ describe("ensurePushSubscription", () => {
     await vi.advanceTimersByTimeAsync(10_000);
 
     await assertion;
+  });
+});
+
+describe("VAPID 키 교체", () => {
+  beforeEach(() => {
+    putPushSubscription.mockClear();
+    getPushVapidPublicKey.mockClear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it("키가 그대로면 기존 구독을 다시 쓴다", async () => {
+    const { subscribe } = stubPushEnvironment({
+      permission: "granted",
+      existing: buildSubscription("endpoint-existing"),
+    });
+
+    await ensurePushSubscription("ko");
+
+    expect(subscribe).not.toHaveBeenCalled();
+  });
+
+  it("키가 바뀌었으면 기존 구독을 풀고 다시 만든다", async () => {
+    // endpoint 는 살아 있어 등록도 계속 성공하지만, 새 개인키로는 그 구독에
+    // 발송할 수 없다. 비교하지 않으면 예전 사용자에게만 알림이 조용히 끊긴다.
+    const stale = buildSubscription(
+      "endpoint-stale",
+      Uint8Array.from([4, 1, 2, 3]),
+    );
+    const { subscribe } = stubPushEnvironment({
+      permission: "granted",
+      existing: stale,
+    });
+
+    await ensurePushSubscription("ko");
+
+    expect(stale.unsubscribe).toHaveBeenCalledOnce();
+    expect(subscribe).toHaveBeenCalledOnce();
+    expect(putPushSubscription.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ endpoint: "endpoint-new" }),
+    );
   });
 });
