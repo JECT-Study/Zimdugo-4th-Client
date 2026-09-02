@@ -18,10 +18,7 @@ import {
   DraggableBottomSheet,
   SHEET_SETTLE_SPRING,
 } from "#/shared/ui/DraggableBottomSheet";
-import {
-  realtimeStatusCardOverlay,
-  sheetColumn,
-} from "./LockerDetailBottomSheet.css.ts";
+import { realtimeStatusCardOverlay } from "./LockerDetailBottomSheet.css.ts";
 
 import {
   DETAIL_ACTION_FOOTER_HEIGHT,
@@ -531,29 +528,27 @@ export function LockerDetailBottomSheet({
         onLiveOffsetChange={handleLiveOffsetChange}
         onDismiss={onBack}
       >
-        <div className={sheetColumn}>
-          <LockerDetailScreen
-            locker={locker}
-            loadState={loadState}
-            onRetry={onRetry}
-            onBack={onBack}
-            onShare={onShare}
-            onNavigate={onNavigate}
-            onFavoriteChange={onFavoriteChange}
-            onReport={onReport}
-            onCorrectionSubmit={onCorrectionSubmit}
-            isFavoriteActionVisible={isFavoriteActionVisible}
-            shouldOpenTimer={shouldOpenTimer}
-            onTimerAutoOpenHandled={onTimerAutoOpenHandled}
-            onMetricsChange={setScreenMetrics}
-            isActionFooterVisible={
-              currentSnapStage === "full" || currentSnapStage === "half"
-            }
-            isSummaryOnly={currentSnapStage === "mini"}
-            isScrollEnabled={currentSnapStage === "full"}
-            isRealtimeCardVisible={isSheetAtFullOffset}
-          />
-        </div>
+        <LockerDetailScreen
+          locker={locker}
+          loadState={loadState}
+          onRetry={onRetry}
+          onBack={onBack}
+          onShare={onShare}
+          onNavigate={onNavigate}
+          onFavoriteChange={onFavoriteChange}
+          onReport={onReport}
+          onCorrectionSubmit={onCorrectionSubmit}
+          isFavoriteActionVisible={isFavoriteActionVisible}
+          shouldOpenTimer={shouldOpenTimer}
+          onTimerAutoOpenHandled={onTimerAutoOpenHandled}
+          onMetricsChange={setScreenMetrics}
+          isActionFooterVisible={
+            currentSnapStage === "full" || currentSnapStage === "half"
+          }
+          isSummaryOnly={currentSnapStage === "mini"}
+          isScrollEnabled={currentSnapStage === "full"}
+          isRealtimeCardVisible={isSheetAtFullOffset}
+        />
       </DraggableBottomSheet>
     </>
   );

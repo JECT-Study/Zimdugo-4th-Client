@@ -55,7 +55,7 @@ beforeEach(() => {
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  queryClient.setQueryData([PUSH_REMINDER_QUERY_KEY], { reminders: [] });
+  queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
 });
 
 afterEach(cleanup);
