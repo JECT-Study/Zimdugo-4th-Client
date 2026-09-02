@@ -361,6 +361,7 @@
   "locker_timer_error_permission_denied": "通知がブロックされています。\nブラウザの設定でこのサイトの通知を許可してください。",
   "locker_timer_error_ios_install": "ホーム画面に追加してから開くと通知を受け取れます。\n共有ボタンから「ホーム画面に追加」を選んでください。",
   "locker_timer_error_unsupported": "このブラウザでは通知を受け取れません。",
+  "locker_timer_error_reminder_unknown": "タイマーの状態を読み込めませんでした。\nしばらくしてからお試しください。",
   "locker_timer_error_subscription": "通知の登録が解除されました。\nもう一度お試しください。",
   "locker_timer_error_subscription_conflict": "このブラウザの通知が別の端末に登録されています。\n通知をオフにしてから再度オンにしてお試しください。",
   "locker_timer_error_schedule": "設定した時間が短すぎます。\nもう少し長くしてください。",

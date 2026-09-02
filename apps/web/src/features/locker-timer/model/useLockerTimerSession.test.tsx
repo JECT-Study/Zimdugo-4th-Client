@@ -17,11 +17,13 @@ const postPushReminder = vi.hoisted(() =>
   })),
 );
 const postPushDevice = vi.hoisted(() => vi.fn(async () => {}));
+const deletePushReminder = vi.hoisted(() => vi.fn(async () => {}));
 
 vi.mock("#/shared/api/push", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/shared/api/push")>()),
   postPushDevice,
   postPushReminder,
+  deletePushReminder,
   getPushReminders: vi.fn(async () => []),
 }));
 
@@ -51,6 +53,7 @@ describe("useLockerTimerSession", () => {
     postPushDevice.mockClear();
     postPushReminder.mockClear();
     ensurePushSubscription.mockClear();
+    deletePushReminder.mockClear();
     vi.stubGlobal("Notification", { permission: "granted" });
   });
 
@@ -92,6 +95,67 @@ describe("useLockerTimerSession", () => {
     });
 
     expect(postPushReminder).toHaveBeenCalledOnce();
+  });
+
+  it("권한 팝업을 기다리는 동안 다시 시작해도 흘려보낸다", async () => {
+    // 잠금이 권한 요청 뒤에 걸리면, 권한이 아직 default 일 때 두 번째 클릭이
+    // 재진입 검사를 그대로 통과한다.
+    let grantPermission = () => {};
+    const requestPermission = vi.fn(
+      () =>
+        new Promise<NotificationPermission>((resolve) => {
+          grantPermission = () => resolve("granted");
+        }),
+    );
+    vi.stubGlobal("Notification", { permission: "default", requestPermission });
+
+    const { result } = renderHook(() => useLockerTimerSession(171), {
+      wrapper,
+    });
+
+    let firstStart: Promise<boolean> | undefined;
+    let secondStart: Promise<boolean> | undefined;
+
+    await act(async () => {
+      firstStart = result.current.start(600);
+      secondStart = result.current.start(600);
+    });
+
+    await expect(secondStart).resolves.toBe(false);
+    expect(requestPermission).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      grantPermission();
+      await firstStart;
+    });
+
+    expect(postPushReminder).toHaveBeenCalledOnce();
+  });
+
+  it("끄기가 끝나기 전에 다시 끄면 두 번째는 흘려보낸다", async () => {
+    // 늦게 성공한 두 번째 삭제의 onSuccess 가 그사이 만들어진 리마인더까지
+    // 캐시에서 지운다.
+    const { result } = renderHook(() => useLockerTimerSession(171), {
+      wrapper,
+    });
+
+    await act(async () => {
+      await result.current.start(600);
+    });
+
+    let firstStop: Promise<boolean> | undefined;
+    let secondStop: Promise<boolean> | undefined;
+
+    await act(async () => {
+      firstStop = result.current.stop();
+      secondStop = result.current.stop();
+    });
+
+    await expect(secondStop).resolves.toBe(false);
+    expect(deletePushReminder).toHaveBeenCalledOnce();
+    await act(async () => {
+      await firstStop;
+    });
   });
 
   it("시작이 끝나면 다시 시작할 수 있다", async () => {

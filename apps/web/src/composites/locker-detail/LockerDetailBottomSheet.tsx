@@ -566,6 +566,7 @@ export function LockerDetailBottomSheet({
     isFavoriteActionVisible && typeof onFavoriteChange === "function";
   // 이펙트 의존성으로 쓰려면 객체가 아니라 값으로 꺼내 두어야 한다. 세션 객체는
   // 매 렌더 새로 만들어져 통째로 의존하면 이펙트가 매번 다시 돈다.
+  const clearTimerFailure = timerSession.clearFailure;
   const timerEndAt = timerSession.endAt;
   const isStoppingTimer = timerSession.isStopping;
   const remainingTimeInSeconds = timerSession.endAt
@@ -627,6 +628,14 @@ export function LockerDetailBottomSheet({
    */
   const handleTimerOpen = () => {
     if (!timerSession.ensureEnvironment()) return;
+
+    // 서버 상태를 모르는 채 열면 이미 도는 타이머를 못 본 채 새로 켜게 된다.
+    // 조회가 계속 실패하면 그 타이머를 끌 수도 없으므로, 없는 것처럼 다루지
+    // 않고 그대로 알린다.
+    if (timerSession.isReminderUnknown) {
+      timerSession.reportReminderUnknown();
+      return;
+    }
 
     setIsTimerOpen(true);
   };
@@ -811,9 +820,13 @@ export function LockerDetailBottomSheet({
     setTimerNow(Date.now());
     setIsTimerOpen(false);
     setIsTimerStartConfirmationOpen(false);
+    // 팝업도 함께 접는다. 남겨 두면 A 의 종료·실패 알림이 B 위에 뜬다.
+    setIsPermissionNoticeOpen(false);
+    setIsTimerFinishedOpen(false);
+    clearTimerFailure();
     setTimerHours("00");
     setTimerMinutes("00");
-  }, [locker.lockerId]);
+  }, [locker.lockerId, clearTimerFailure]);
 
   useEffect(() => {
     if (timerSession.endAt === null) return;

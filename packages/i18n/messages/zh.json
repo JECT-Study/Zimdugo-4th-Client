@@ -361,6 +361,7 @@
   "locker_timer_error_permission_denied": "通知已被阻止。\n请在浏览器设置中允许本站发送通知。",
   "locker_timer_error_ios_install": "添加到主屏幕后打开即可接收通知。\n请点按分享按钮，选择“添加到主屏幕”。",
   "locker_timer_error_unsupported": "此浏览器无法接收通知。",
+  "locker_timer_error_reminder_unknown": "无法加载计时器状态。\n请稍后再试。",
   "locker_timer_error_subscription": "通知注册已失效。\n请重试。",
   "locker_timer_error_subscription_conflict": "此浏览器的通知已注册到其他设备。\n请先关闭通知再重新开启后重试。",
   "locker_timer_error_schedule": "设置的时间太短。\n请设置得长一些。",

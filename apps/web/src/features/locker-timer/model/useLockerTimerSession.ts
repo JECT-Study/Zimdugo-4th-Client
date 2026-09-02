@@ -26,6 +26,7 @@ import {
 
 export type LockerTimerFailure =
   | { kind: "unsupported" }
+  | { kind: "reminder-unknown" }
   | { kind: "ios-install-required" }
   | { kind: "permission-denied" }
   | { kind: "subscription-missing" }
@@ -78,6 +79,8 @@ export const describeFailure = (failure: LockerTimerFailure): string => {
   switch (failure.kind) {
     case "unsupported":
       return m.locker_timer_error_unsupported();
+    case "reminder-unknown":
+      return m.locker_timer_error_reminder_unknown();
     case "ios-install-required":
       return m.locker_timer_error_ios_install();
     case "permission-denied":
@@ -110,8 +113,18 @@ export interface LockerTimerSessionState {
   isPending: boolean;
   /** 끄기 요청이 아직 끝나지 않았는지. 종료 예약을 접어 두는 데 쓴다 */
   isStopping: boolean;
+  /**
+   * 서버의 타이머 상태를 아직 모르는지.
+   *
+   * 조회가 끝나지 않았거나 실패한 경우다. "타이머 없음" 과 구분해야 한다. 같게
+   * 다루면 이미 도는 타이머를 못 본 채 새로 켜게 되고, 조회 실패가 이어지면
+   * 그 타이머를 끌 수도 없다.
+   */
+  isReminderUnknown: boolean;
   failure: LockerTimerFailureState | null;
   clearFailure: () => void;
+  /** 서버 상태를 모르는 채 진입하려 할 때 그 사실을 화면에 알린다 */
+  reportReminderUnknown: () => void;
   /**
    * 이 브라우저에서 타이머를 쓸 수 있는지.
    *
@@ -126,7 +139,11 @@ export interface LockerTimerSessionState {
 export const useLockerTimerSession = (
   lockerId: number,
 ): LockerTimerSessionState => {
-  const { data: reminder } = useActiveReminderQuery();
+  const {
+    data: reminder,
+    isPending: isReminderPending,
+    isError: isReminderError,
+  } = useActiveReminderQuery();
   const createReminder = useCreateReminderMutation();
   const deleteReminder = useDeleteReminderMutation();
   const [failure, setFailure] = useState<LockerTimerFailureState | null>(null);
@@ -143,6 +160,14 @@ export const useLockerTimerSession = (
    * 클릭을 막지 못한다. 화면에 쓰라고 상태도 함께 둔다.
    */
   const isStartingRef = useRef(false);
+  /*
+   * 끄기도 같은 이유로 잠근다.
+   *
+   * 두 번 눌리면 같은 리마인더에 삭제가 둘 나간다. 첫 요청이 성공한 뒤 새 타이머를
+   * 만들었는데 늦은 두 번째가 성공하면, 그 onSuccess 가 새 리마인더까지 캐시에서
+   * 지워 서버에는 도는 타이머가 화면에서만 사라진다.
+   */
+  const isStoppingRef = useRef(false);
 
   const isForThisLocker = reminder?.lockerId === lockerId;
 
@@ -175,29 +200,31 @@ export const useLockerTimerSession = (
     async (durationInSeconds: number) => {
       if (isStartingRef.current) return false;
 
-      // 모달을 열 때 이미 봤지만, 그 사이에 홈 화면 앱으로 옮겨 가거나 설정이
-      // 바뀔 수 있어 실제로 만들기 직전에 한 번 더 본다.
-      if (!ensureEnvironment()) return false;
-
-      // 권한 요청은 사용자 제스처 안에서 일어나야 브라우저가 팝업을 띄운다.
-      // 이 함수가 버튼 핸들러에서 곧바로 불리는 이유다.
-      const permission =
-        Notification.permission === "granted"
-          ? "granted"
-          : await Notification.requestPermission();
-
-      if (permission !== "granted") {
-        setFailure({
-          operation: "start",
-          reason: { kind: "permission-denied" },
-        });
-        return false;
-      }
-
+      // 권한 요청보다 먼저 잠근다. 권한이 아직 default 면 브라우저 팝업을
+      // 기다리는 동안 두 번째 클릭이 재진입 검사를 그대로 통과한다.
       isStartingRef.current = true;
       setIsStarting(true);
 
       try {
+        // 모달을 열 때 이미 봤지만, 그 사이에 홈 화면 앱으로 옮겨 가거나 설정이
+        // 바뀔 수 있어 실제로 만들기 직전에 한 번 더 본다.
+        if (!ensureEnvironment()) return false;
+
+        // 권한 요청은 사용자 제스처 안에서 일어나야 브라우저가 팝업을 띄운다.
+        // 이 함수가 버튼 핸들러에서 곧바로 불리는 이유다.
+        const permission =
+          Notification.permission === "granted"
+            ? "granted"
+            : await Notification.requestPermission();
+
+        if (permission !== "granted") {
+          setFailure({
+            operation: "start",
+            reason: { kind: "permission-denied" },
+          });
+          return false;
+        }
+
         // 첫 진입의 기기 초기화가 실패했거나 아직 끝나지 않았을 수 있다. 그
         // 상태로 구독을 올리면 이후 요청이 계속 실패하고, 화면을 다시 열기
         // 전까지 다시 눌러도 복구되지 않는다. 쿠키가 유효하면 서버가 같은
@@ -226,9 +253,21 @@ export const useLockerTimerSession = (
     [lockerId, createReminder, ensureEnvironment],
   );
 
+  const clearFailure = useCallback(() => setFailure(null), []);
+
+  const reportReminderUnknown = useCallback(
+    () =>
+      setFailure({ operation: "start", reason: { kind: "reminder-unknown" } }),
+    [],
+  );
+
   const stop = useCallback(async () => {
+    if (isStoppingRef.current) return false;
+
     setFailure(null);
     if (!reminder) return true;
+
+    isStoppingRef.current = true;
 
     try {
       await deleteReminder.mutateAsync(reminder.id);
@@ -236,6 +275,8 @@ export const useLockerTimerSession = (
     } catch (error) {
       setFailure({ operation: "stop", reason: toFailure(error) });
       return false;
+    } finally {
+      isStoppingRef.current = false;
     }
   }, [reminder, deleteReminder]);
 
@@ -245,8 +286,10 @@ export const useLockerTimerSession = (
     isPending:
       isStarting || createReminder.isPending || deleteReminder.isPending,
     isStopping: deleteReminder.isPending,
+    isReminderUnknown: isReminderPending || isReminderError,
     failure,
-    clearFailure: () => setFailure(null),
+    clearFailure,
+    reportReminderUnknown,
     ensureEnvironment,
     start,
     stop,
