@@ -361,6 +361,7 @@
   "locker_timer_error_permission_denied": "알림이 차단되어 있어요.\n브라우저 설정에서 이 사이트의 알림을 허용해 주세요.",
   "locker_timer_error_ios_install": "홈 화면에 추가한 뒤 열면 알림을 받을 수 있어요.\n공유 버튼에서 '홈 화면에 추가'를 눌러 주세요.",
   "locker_timer_error_unsupported": "이 브라우저에서는 알림을 받을 수 없어요.",
+  "locker_timer_error_push_unavailable": "알림 준비가 끝나지 않았어요.\n페이지를 새로고침한 뒤 다시 시도해 주세요.",
   "locker_timer_error_reminder_unknown": "타이머 상태를 불러오지 못했어요.\n잠시 뒤에 다시 시도해 주세요.",
   "locker_timer_error_subscription": "알림 등록이 풀렸어요.\n다시 시도해 주세요.",
   "locker_timer_error_subscription_conflict": "이 브라우저의 알림이 다른 기기에 등록돼 있어요.\n알림을 껐다가 다시 켠 뒤 시도해 주세요.",

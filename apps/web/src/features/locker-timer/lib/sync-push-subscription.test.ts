@@ -16,7 +16,11 @@ vi.mock("#/shared/api/push", () => ({
   deletePushSubscription: vi.fn(),
 }));
 
-import { syncPushSubscription } from "./push-subscription";
+import {
+  ensurePushSubscription,
+  PushUnavailableError,
+  syncPushSubscription,
+} from "./push-subscription";
 
 const buildSubscription = (endpoint: string) => ({
   endpoint,
@@ -60,6 +64,7 @@ describe("syncPushSubscription", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it("구독이 살아 있으면 새로 만들지 않고 서버에만 다시 올린다", async () => {
@@ -117,5 +122,31 @@ describe("syncPushSubscription", () => {
 
     expect(subscribe).not.toHaveBeenCalled();
     expect(putPushSubscription).not.toHaveBeenCalled();
+  });
+});
+
+describe("ensurePushSubscription", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it("워커가 준비되지 않으면 기다리다 실패로 끊는다", async () => {
+    // navigator.serviceWorker.ready 는 등록이 실패해도 거부되지 않는다. 끊지
+    // 않으면 시작 흐름이 잠긴 채 풀리지 않아 다시 시도할 수도 없다.
+    vi.useFakeTimers();
+    vi.stubGlobal("Notification", { permission: "granted" });
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: { ready: new Promise(() => {}), getRegistration: vi.fn() },
+    });
+
+    const pending = ensurePushSubscription("ko");
+    const assertion =
+      expect(pending).rejects.toBeInstanceOf(PushUnavailableError);
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    await assertion;
   });
 });

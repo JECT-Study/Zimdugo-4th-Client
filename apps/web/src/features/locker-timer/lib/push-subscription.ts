@@ -76,9 +76,45 @@ export const isIosWithoutInstall = (): boolean => {
 const resolvePushLocale = () =>
   toAcceptLanguage(normalizeLocale(languageTag()) ?? BASE_LOCALE);
 
+/**
+ * 서비스 워커 등록이 실패했을 때.
+ *
+ * 오류 응답이 아니라 브라우저 쪽 사정이라 서버 코드로 가릴 수 없다. 화면 문구를
+ * 가르려고 따로 둔다.
+ */
+export class PushUnavailableError extends Error {
+  constructor() {
+    super("서비스 워커가 준비되지 않았습니다.");
+    this.name = "PushUnavailableError";
+  }
+}
+
+/** 워커가 활성화되기를 기다리는 한도. */
+const SERVICE_WORKER_READY_TIMEOUT_MS = 10_000;
+
+/**
+ * 활성 워커를 기다린다.
+ *
+ * `navigator.serviceWorker.ready` 는 등록이 실패해도 거부되지 않고 영원히
+ * 기다린다. 그대로 두면 시작 흐름이 잠긴 채 풀리지 않아, 화면은 진행 중으로 남고
+ * 사용자가 다시 시도할 수도 없다. 한도를 두고 실패로 끊는다.
+ */
 const getRegistration = async () => {
-  const registration = await navigator.serviceWorker.ready;
-  return registration;
+  let timeoutId: number | undefined;
+
+  try {
+    return await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<never>((_, reject) => {
+        timeoutId = window.setTimeout(
+          () => reject(new PushUnavailableError()),
+          SERVICE_WORKER_READY_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 };
 
 /**

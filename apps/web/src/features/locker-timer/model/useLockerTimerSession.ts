@@ -9,6 +9,7 @@ import {
   ensurePushSubscription,
   isIosWithoutInstall,
   isPushSupported,
+  PushUnavailableError,
 } from "../lib/push-subscription";
 import {
   useActiveReminderQuery,
@@ -27,6 +28,7 @@ import {
 export type LockerTimerFailure =
   | { kind: "unsupported" }
   | { kind: "reminder-unknown" }
+  | { kind: "push-unavailable" }
   | { kind: "ios-install-required" }
   | { kind: "permission-denied" }
   | { kind: "subscription-missing" }
@@ -49,6 +51,11 @@ export type LockerTimerFailure =
 const START_BUFFER_MS = 10_000;
 
 const toFailure = (error: unknown): LockerTimerFailure => {
+  // 서버 응답이 아니라 브라우저 쪽 사정이다. 오류 코드로는 가릴 수 없다.
+  if (error instanceof PushUnavailableError) {
+    return { kind: "push-unavailable" };
+  }
+
   const code = getPushErrorCode(error);
 
   switch (code) {
@@ -81,6 +88,8 @@ export const describeFailure = (failure: LockerTimerFailure): string => {
       return m.locker_timer_error_unsupported();
     case "reminder-unknown":
       return m.locker_timer_error_reminder_unknown();
+    case "push-unavailable":
+      return m.locker_timer_error_push_unavailable();
     case "ios-install-required":
       return m.locker_timer_error_ios_install();
     case "permission-denied":

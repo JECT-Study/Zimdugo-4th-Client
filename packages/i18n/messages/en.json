@@ -361,6 +361,7 @@
   "locker_timer_error_permission_denied": "Notifications are blocked.\nAllow notifications for this site in your browser settings.",
   "locker_timer_error_ios_install": "Add this app to your Home Screen to receive notifications.\nTap Share, then Add to Home Screen.",
   "locker_timer_error_unsupported": "This browser can't receive notifications.",
+  "locker_timer_error_push_unavailable": "Notifications aren't ready yet.\nRefresh the page and try again.",
   "locker_timer_error_reminder_unknown": "We couldn't load your timer.\nPlease try again in a moment.",
   "locker_timer_error_subscription": "Your notification registration was lost.\nPlease try again.",
   "locker_timer_error_subscription_conflict": "This browser's notifications are registered to another device.\nTurn notifications off and on again, then retry.",
