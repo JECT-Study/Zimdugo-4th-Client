@@ -1,28 +1,13 @@
-import { m } from "@repo/i18n";
-import { IconFilter14 } from "@repo/ui/assets/icons";
-import { Button } from "@repo/ui/components/button";
-import { ControlChip } from "@repo/ui/components/control-chip";
 import {
-  type CSSProperties,
   type ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import { NonSearch, SearchListResults } from "#/entities/search";
-import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
-import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
-import { inSheetHeader } from "#/features/search/ui/search-results-heading/SearchResultsHeading.css.ts";
-import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
-import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
-import {
-  type EnglishSubPolicy,
-  resolveEnglishSubVisibility,
-} from "#/shared/i18n/english-sub-policy";
+import type { EnglishSubPolicy } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
 import {
   resolveSheetFullStageSnapPoint,
@@ -34,33 +19,12 @@ import {
   DraggableBottomSheet,
   resolveBottomSheetExpandedProgress,
 } from "#/shared/ui/DraggableBottomSheet";
-import {
-  dropdownCompact,
-  emptyState,
-  emptyStateResetButton,
-  emptyStateStack,
-  filterChip,
-  headerLeadingRow,
-  headerTitleSlot,
-  listScrollArea,
-  listStack,
-  resultHeader,
-  resultScrollArea,
-  resultSortRow,
-  sheetColumn,
-} from "./SearchListBottomSheet.css.ts";
+import { SearchListScreen } from "./SearchListScreen";
 import type {
   SearchLockerResultItem,
   SearchPlaceResultItem,
   SearchResultItem,
-  SearchSortDirection,
-  SearchSortKey,
 } from "./search-list-model";
-import {
-  type LockerPrimarySortType,
-  type LockerSortDirection,
-  sortLockerData,
-} from "./sort-locker-data";
 
 interface SearchListSheetLiveOffsetState {
   /** 뷰포트 상단부터 시트 상단까지 거리. `100dvh - offsetPx` 가 시트가 차지하는 높이다. */
@@ -110,11 +74,6 @@ export interface SearchListBottomSheetProps {
   snapRequest?: SearchListSheetSnapRequest | null;
   onDismiss?: () => void;
   children?: ReactNode;
-}
-
-interface ActiveSort {
-  key: SearchSortKey;
-  direction: SearchSortDirection;
 }
 
 const SEARCH_LIST_DISMISS_VISIBLE_HEIGHT = 52;
@@ -342,6 +301,13 @@ export const resolveSearchListSnapPoints = ({
   };
 };
 
+/**
+ * 목록 화면을 바텀시트라는 표면에 얹는다.
+ *
+ * 표면이 아는 것은 자리 계산과 단계 알림뿐이다. 화면이 무엇을 담고 있는지는 모르고,
+ * 잰 높이만 받아 스냅 지점을 정한다. 넓은 화면에서 다른 표면을 쓰게 되면 이 파일 대신
+ * 그 표면이 같은 화면을 감싼다.
+ */
 export function SearchListBottomSheet({
   searchQuery,
   items = [],
@@ -373,14 +339,9 @@ export function SearchListBottomSheet({
 }: SearchListBottomSheetProps) {
   const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
-  const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
-  const headerMeasureRef = useRef<HTMLDivElement | null>(null);
-  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-  /** 늘어나지 않는 목록 자체. 스크롤 영역을 재면 시트가 준 높이가 돌아온다. */
-  const listMeasureRef = useRef<HTMLDivElement | null>(null);
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
     miniSnapPoint: resolvedMiniSnapPoint,
@@ -416,37 +377,6 @@ export function SearchListBottomSheet({
       }
     : null;
 
-  const visibleItems = useMemo(() => {
-    const primarySortType: Record<SearchSortKey, LockerPrimarySortType> = {
-      distance: "DISTANCE",
-      updatedAt: "UPDATED_AT",
-      price: "PRICE",
-    };
-    const sortDirection: Record<SearchSortDirection, LockerSortDirection> = {
-      asc: "ASC",
-      desc: "DESC",
-    };
-    const resolvedSort: ActiveSort = activeSort ?? {
-      key: "distance",
-      direction: "asc",
-    };
-
-    return sortLockerData(
-      items,
-      primarySortType[resolvedSort.key],
-      sortDirection[resolvedSort.direction],
-      new Date(),
-    );
-  }, [activeSort, items]);
-  const isPlaceScope = Boolean(placeName);
-  const hasResult = !isLoading && !isError && visibleItems.length > 0;
-  const showEmpty = !isLoading && !isError && visibleItems.length === 0;
-  const showFilterEmpty = showEmpty && isFilterActive;
-  const showResultHeader = hasResult || isPlaceScope || showFilterEmpty;
-  const showEnglishSub = resolveEnglishSubVisibility({
-    appLanguage,
-    policy: englishSubPolicy,
-  });
   const [expandedProgress, setExpandedProgress] = useState(() =>
     resolveBottomSheetExpandedProgress({
       maxSnapPoint: resolvedMaxSnapPoint,
@@ -454,30 +384,6 @@ export function SearchListBottomSheet({
       offset: resolvedInitialSnapPoint,
     }),
   );
-  const resultHeaderStyle: CSSProperties = {
-    opacity: 0.84 + expandedProgress * 0.16,
-    transform: `translateY(${(1 - expandedProgress) * 6}px)`,
-  };
-  const sortLabels: Record<SearchSortKey, string> = {
-    distance: m.search_sort_distance(),
-    updatedAt: m.search_sort_recent(),
-    price: m.search_sort_price(),
-  };
-  const resultTitleText = placeName
-    ? m.search_place_lockers_title({ place: placeName })
-    : undefined;
-
-  const handleSortPress = (key: SearchSortKey) => {
-    setActiveSort((previousSort) => {
-      if (!previousSort || previousSort.key !== key) {
-        return { key, direction: "asc" };
-      }
-      if (previousSort.direction === "asc") {
-        return { key, direction: "desc" };
-      }
-      return null;
-    });
-  };
 
   /**
    * 프레임마다 불린다. identity 가 매 렌더 바뀌면 시트 쪽 구독 effect 가
@@ -595,66 +501,6 @@ export function SearchListBottomSheet({
     );
   }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
-  /**
-   * full 로 올렸을 때 필요한 높이.
-   *
-   * 스크롤 영역이 아니라 그 안의 목록을 잰다. 스크롤 영역은 flex 로 늘어나서 내용이
-   * 짧으면 scrollHeight 가 "지금 시트가 준 높이" 를 돌려준다. 그 값으로 시트 높이를
-   * 정하면 높이가 바뀌고, 그걸 본 ResizeObserver 가 또 재는 순환이 된다.
-   *
-   * 결과가 없을 때(로딩·빈 결과·오류)는 재지 않는다. 그 화면들은 "콘텐츠 길이" 라고
-   * 할 만한 게 없고, 빈 상태는 minHeight 100% 로 영역을 채우도록 되어 있어 같은
-   * 순환에 걸린다.
-   *
-   * 첫 페인트 전에 재는 이유는 필터 시트와 같다. 그 뒤에 재면 시트가 잘못된 자리에서
-   * 올라오다 옮겨 앉는 게 보인다.
-   */
-  useIsomorphicLayoutEffect(() => {
-    const measure = () => {
-      const list = listMeasureRef.current;
-      const scrollArea = scrollAreaRef.current;
-
-      if (!list || !scrollArea) {
-        setFullContentHeight(null);
-        return;
-      }
-
-      // 목록을 감싼 여백들은 목록 바깥이라 offsetHeight 에 안 잡힌다.
-      const paddingOf = (element: HTMLElement) => {
-        const style = window.getComputedStyle(element);
-
-        return (
-          Number.parseFloat(style.paddingTop) +
-          Number.parseFloat(style.paddingBottom)
-        );
-      };
-      const column = scrollArea.parentElement;
-      const headerHeight = headerMeasureRef.current?.offsetHeight ?? 0;
-
-      setFullContentHeight(
-        Math.ceil(
-          list.offsetHeight +
-            headerHeight +
-            paddingOf(scrollArea) +
-            (column ? paddingOf(column) : 0),
-        ),
-      );
-    };
-
-    measure();
-
-    if (typeof ResizeObserver === "undefined") {
-      return;
-    }
-
-    const observer = new ResizeObserver(measure);
-
-    if (listMeasureRef.current) observer.observe(listMeasureRef.current);
-    if (headerMeasureRef.current) observer.observe(headerMeasureRef.current);
-
-    return () => observer.disconnect();
-  }, [visibleItems, hasResult]);
-
   return (
     <DraggableBottomSheet
       snapPoint={resolvedSnapPoint}
@@ -670,105 +516,27 @@ export function SearchListBottomSheet({
       onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onDismiss}
     >
-      <div className={sheetColumn}>
-        {showResultHeader ? (
-          <div
-            ref={headerMeasureRef}
-            className={resultHeader}
-            style={resultHeaderStyle}
-          >
-            <div className={headerLeadingRow}>
-              <div className={headerTitleSlot}>
-                <SearchResultsHeading
-                  className={inSheetHeader}
-                  queryText={searchQuery}
-                  titleText={resultTitleText}
-                  resultCount={
-                    hasResult || showFilterEmpty
-                      ? visibleItems.length
-                      : undefined
-                  }
-                />
-              </div>
-            </div>
-            <div className={resultSortRow}>
-              {onOpenFilter ? (
-                <ControlChip
-                  className={filterChip}
-                  onPress={onOpenFilter}
-                  variant="filter"
-                  label={m.search_filter_dropdown_place_type()}
-                  isActive={isFilterActive}
-                  isOpen={isFilterOpen}
-                  isLabelVisible={false}
-                  showsIndicator={false}
-                  leadingIcon={<IconFilter14 />}
-                />
-              ) : null}
-              {(["distance", "updatedAt", "price"] as const).map((sortKey) => (
-                <ControlChip
-                  key={sortKey}
-                  className={dropdownCompact}
-                  onPress={() => handleSortPress(sortKey)}
-                  variant="sort"
-                  label={sortLabels[sortKey]}
-                  isActive={activeSort?.key === sortKey}
-                  sortDirection={
-                    activeSort?.key === sortKey ? activeSort.direction : "none"
-                  }
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        <div
-          ref={scrollAreaRef}
-          className={[listScrollArea, hasResult ? resultScrollArea : ""]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {children ??
-            (isLoading ? (
-              <SearchResultListSkeleton />
-            ) : isError ? (
-              <div className={emptyState}>
-                <SearchAsyncFeedback variant="result-error" onRetry={onRetry} />
-              </div>
-            ) : hasResult ? (
-              <div ref={listMeasureRef} className={listStack}>
-                <SearchListResults
-                  items={visibleItems}
-                  onLockerPress={onLockerPress}
-                  onPlacePress={onPlacePress}
-                  onFavoriteChange={onFavoriteChange}
-                  favoriteAddLabel={m.search_favorite_add()}
-                  favoriteRemoveLabel={m.search_favorite_remove()}
-                />
-              </div>
-            ) : showEmpty ? (
-              <div className={emptyState}>
-                <div className={emptyStateStack}>
-                  <NonSearch
-                    query={searchQuery}
-                    showEnglishSub={showEnglishSub}
-                  />
-                  {showFilterEmpty && onResetFilter ? (
-                    <Button
-                      className={emptyStateResetButton}
-                      variant="filled"
-                      intent="neutral"
-                      size="S"
-                      onPress={onResetFilter}
-                    >
-                      {m.search_filter_reset()}
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            ) : null)}
-        </div>
-      </div>
+      <SearchListScreen
+        searchQuery={searchQuery}
+        items={items}
+        placeName={placeName}
+        appLanguage={appLanguage}
+        englishSubPolicy={englishSubPolicy}
+        isFilterActive={isFilterActive}
+        isFilterOpen={isFilterOpen}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={onRetry}
+        onOpenFilter={onOpenFilter}
+        onResetFilter={onResetFilter}
+        onLockerPress={onLockerPress}
+        onPlacePress={onPlacePress}
+        onFavoriteChange={onFavoriteChange}
+        onContentHeightChange={setFullContentHeight}
+        expandedProgress={expandedProgress}
+      >
+        {children}
+      </SearchListScreen>
     </DraggableBottomSheet>
   );
 }
