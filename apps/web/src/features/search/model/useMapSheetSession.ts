@@ -24,7 +24,13 @@ export interface MapSheetSessionInput {
   hasSearchQueryEntry: boolean;
   hasSearchPlaceEntry: boolean;
   searchPlaceIdFromUrl: number | undefined;
-  /** 탭을 떠났다 돌아왔을 때 되살릴 세션. 딥링크로 들어오면 `null` 이다. */
+  /**
+   * 탭을 떠났다 돌아왔을 때 되살릴 세션.
+   *
+   * **딥링크로 들어오면 호출부가 `null` 을 넘긴다.** 이 함수가 걸러내는 것이 아니라,
+   * 세션을 읽는 자리에서 이미 `hasExplicitLockerEntry` 로 막는다. 여기서 한 번 더
+   * 막지 않는 이유는 판단이 두 곳으로 갈리면 어느 쪽이 참인지 알 수 없어서다.
+   */
   restoredSession: MapSheetRestorableSession | null;
 }
 
@@ -46,14 +52,19 @@ export interface InitialMapSheetSession {
  *
  * 들어오는 길이 셋이고 서열이 있다.
  *
- * 1. **딥링크**(`?locker=` + 로더가 채운 상세) — 상세를 연 채로 시작한다. 이때는 되살릴
- *    세션을 보지 않는다. 사용자가 특정 보관함을 가리켜 들어온 것이라, 지난번에 보던
- *    화면으로 되돌리면 요청한 것과 다른 것을 보여 주게 된다.
+ * 1. **딥링크**(`?locker=` + 로더가 채운 상세) — 상세를 연 채로 시작한다. 사용자가 특정
+ *    보관함을 가리켜 들어온 것이라, 지난번에 보던 화면으로 되돌리면 요청한 것과 다른
+ *    것을 보여 주게 된다. 그래서 호출부가 이때 `restoredSession` 을 `null` 로 넘긴다.
  * 2. **검색 주소**(`?q=` · `?searchPlaceId=`) — 결과 목록을 연 채로 시작한다.
  * 3. **되살린 세션** — 위 둘이 아닐 때만. 탭을 떠났다 돌아온 경우다.
  *
  * `?locker=` 가 있어도 로더가 상세를 못 채웠으면(없는 번호이거나 서버가 실패) 딥링크로
  * 치지 않는다. 열 것이 없는데 상세 화면으로 시작하면 빈 시트가 뜬다.
+ *
+ * **되살린 세션은 시트를 열지 않는다.** `MapSheetRestorableSession` 이 `sheetMode` 와
+ * `context` 를 일부러 빼고 있다 — 탭에 돌아왔을 때 되살리는 것은 "어느 목록·장소를 보고
+ * 있었나"뿐이고, 시트를 여는 일은 주소가 정한다. 세션만으로 시트가 열리면 주소가
+ * 요구하지 않은 화면이 뜬다.
  */
 export const resolveInitialMapSheetSession = ({
   lockerIdFromQuery,

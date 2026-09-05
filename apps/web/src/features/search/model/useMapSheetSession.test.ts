@@ -129,6 +129,48 @@ describe("resolveInitialMapSheetSession", () => {
   });
 
   /**
+   * MapSheetRestorableSession 이 sheetMode·context 를 일부러 빼고 있다. 탭에 돌아왔을 때
+   * 되살리는 것은 "어느 목록·장소를 보고 있었나"뿐이고, 시트를 여는 일은 주소가 정한다.
+   * 세션만으로 시트가 열리면 주소가 요구하지 않은 화면이 뜬다.
+   */
+  it("되살린 세션만으로는 시트를 열지 않는다", () => {
+    const initial = resolveInitialMapSheetSession(
+      input({
+        restoredSession: session({
+          listKind: "place",
+          searchPlaceId: 900,
+          mapPlaceId: 900,
+          mapDetailBack: "idle",
+        }),
+      }),
+    );
+
+    expect(initial.sheetMode).toBe("idle");
+    expect(initial.context).toBe("idle");
+    expect(initial.activeLockerId).toBeNull();
+    expect(initial.selectedLockerDetail).toBeNull();
+  });
+
+  /**
+   * 딥링크 진입에서 되살린 세션이 섞이지 않는 것은 호출부가 null 을 넘겨 지켜진다.
+   * 이 함수는 받은 것을 그대로 쓰므로, 계약이 지켜졌을 때의 결과를 고정해 둔다.
+   */
+  it("딥링크 진입에 세션이 없으면 복원 필드가 비어 있다", () => {
+    const initial = resolveInitialMapSheetSession(
+      input({
+        lockerIdFromQuery: 164,
+        deepLinkDetail: detail(),
+        restoredSession: null,
+      }),
+    );
+
+    expect(initial.mapPlaceId).toBeNull();
+    expect(initial.searchDetailBack).toBeNull();
+    expect(initial.listKind).toBeNull();
+    expect(initial.searchPlaceId).toBeNull();
+  });
+
+  /**
    * 특정 보관함을 가리켜 들어온 사람에게 지난번 화면을 되돌려 주면, 요청한 것과 다른
    * 것을 보여 주게 된다. 딥링크가 되살린 세션을 이긴다.
    */
