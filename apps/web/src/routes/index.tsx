@@ -1339,6 +1339,11 @@ export function IndexPage() {
     }
   }, [locationRequestStatus, permission, openLocationPopup]);
 
+  const { persistMapViewport, saveMapViewport } = useMapViewportPersistence({
+    map: mapInstance,
+    getMap: () => mapInstanceRef.current,
+  });
+
   // 리프레시 버튼 관련 상태
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
@@ -1346,7 +1351,7 @@ export function IndexPage() {
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
 
-    useMapViewportStore.getState().saveFromMap(mapInstanceRef.current);
+    saveMapViewport();
 
     setIsRefreshing(true);
     setRefreshCooldownRemaining(5);
@@ -1373,12 +1378,7 @@ export function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing, queryClient]);
-
-  const { persistMapViewport } = useMapViewportPersistence({
-    map: mapInstance,
-    getMap: () => mapInstanceRef.current,
-  });
+  }, [isRefreshing, queryClient, saveMapViewport]);
 
   const clearPendingLockerDetailOpen = useCallback(() => {
     window.clearTimeout(pendingLockerDetailOpenTimerRef.current);

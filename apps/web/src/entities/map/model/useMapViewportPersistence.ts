@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef } from "react";
-import { subscribeMapIdle } from "#/entities/map/model/map-idle-controller";
-import { useMapViewportStore } from "#/entities/map/model/map-viewport-store";
+import { subscribeMapIdle } from "./map-idle-controller";
+import { useMapViewportStore } from "./map-viewport-store";
 
 /**
  * 지도 카메라를 잃지 않게 붙잡아 두는 자리.
  *
- * 저장해야 할 순간이 셋인데 서로 다른 곳에서 온다. 사용자가 지도를 옮기고 멈췄을 때
- * (idle), 탭을 가리거나 페이지를 떠날 때, 그리고 지도가 곧 버려질 때다. 셋 다 목적이
- * 같은데 index.tsx 안에 흩어져 있어 하나로 모은다.
+ * 저장해야 할 순간이 넷인데 서로 다른 곳에서 온다. 사용자가 지도를 옮기고 멈췄을 때
+ * (idle), 탭을 가리거나 페이지를 떠날 때, 리프레시로 지도를 다시 만들기 직전, 그리고
+ * 지도가 곧 버려질 때다. 넷 다 목적이 같은데 index.tsx 안에 흩어져 있어 하나로 모은다.
+ *
+ * 앞의 셋은 훅이 직접 붙잡고, 리프레시는 호출자가 자기 흐름 안에서 saveMapViewport 를
+ * 부른다. 저장하는 코드가 한 벌이면 지도가 옮겨갈 때 함께 따라간다.
  *
  * 경로 라우트 전환(#215)에서 지도는 레이아웃 라우트로 올라간다. 카메라를 지키는 일도
  * 지도와 함께 움직여야 하므로, 옮길 것을 미리 한 덩어리로 묶어 둔다.
