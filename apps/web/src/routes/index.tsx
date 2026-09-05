@@ -91,6 +91,7 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
+import { useMapInstance } from "#/entities/map/model/useMapInstance";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
@@ -608,7 +609,6 @@ export function IndexPage() {
   const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
     null,
   );
-  const [mapRemountKey, setMapRemountKey] = useState(0);
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [lockerDetailAnimatesOnMount, setLockerDetailAnimatesOnMount] =
@@ -690,6 +690,16 @@ export function IndexPage() {
     [setSearchQuery, syncSearchQueryUrl],
   );
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
+  const {
+    map: mapInstance,
+    isLoading: isMapLoading,
+    hasError: hasMapError,
+    remountKey: mapRemountKey,
+    attach: attachMapInstance,
+    remount: remountMap,
+    setIsLoading: setIsMapLoading,
+    setHasError: setHasMapError,
+  } = useMapInstance({ mapRef: mapInstanceRef });
   const isCameraCenteredRef = useRef(false);
   const didApplyInitialGpsCenterRef = useRef(false);
   const hasUserMovedMapBeforeInitialGpsRef = useRef(false);
@@ -709,11 +719,6 @@ export function IndexPage() {
   // handleFirstLocation(deps [])에서 최신값을 읽기 위한 ref
   const isOrientationSupportedRef = useRef<boolean | null>(null);
   const isPendingFocusRef = useRef<boolean>(false);
-  const [mapInstance, setMapInstance] = useState<naver.maps.Map | null>(null);
-  // 지도 SDK 로딩 상태(NaverMapCanvas에서 끌어올림).
-  // 로딩 중에는 실제 컨트롤 대신 같은 위치/계층의 스켈레톤을 보여준다.
-  const [isMapLoading, setIsMapLoading] = useState(true);
-  const [hasMapError, setHasMapError] = useState(false);
   const windowHeight = useViewportHeight();
   /**
    * 실제 뷰포트 높이를 재기 전인지.
@@ -1369,7 +1374,7 @@ export function IndexPage() {
       500,
     );
 
-    setMapRemountKey((key) => key + 1);
+    remountMap();
     void queryClient.invalidateQueries({
       queryKey: [LOCKER_PINS_QUERY_KEY],
       refetchType: "active",
@@ -1385,7 +1390,7 @@ export function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing, queryClient, saveMapViewport]);
+  }, [isRefreshing, queryClient, remountMap, saveMapViewport]);
 
   const clearPendingLockerDetailOpen = useCallback(() => {
     window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
@@ -1538,8 +1543,7 @@ export function IndexPage() {
 
   const handleMapLoad = useCallback(
     (map: naver.maps.Map | null) => {
-      mapInstanceRef.current = map;
-      setMapInstance(map);
+      attachMapInstance(map);
 
       // 딥링크로 연 상세는 처음 한 번만 카메라를 맞춘다. 테마를 바꾸면 지도를
       // 다시 만드는데, 그때마다 다시 맞추면 사용자가 옮겨 둔 위치를 덮어쓴다.
@@ -1574,7 +1578,7 @@ export function IndexPage() {
       });
       pendingDeepLinkFocusPinRef.current = null;
     },
-    [lockerIdFromQuery, loaderData],
+    [attachMapInstance, lockerIdFromQuery, loaderData],
   );
 
   // 상세를 닫으면 파라미터가 사라진다. 그때 표시를 지워야 같은 보관함을 다시
