@@ -58,7 +58,6 @@ import {
   resolveMapBootstrapViewport,
   useMapColorScheme,
   useMapViewportStore,
-  useNaverMapSdk,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
@@ -74,30 +73,25 @@ import {
   getPinId,
   type LockerMarkerOffset,
 } from "#/entities/map/model/map-marker";
-import {
-  applyFavoriteOverlayToPins,
-  type ResolvePinFavorite,
-} from "#/entities/map/model/map-pin-favorite";
+import { applyFavoriteOverlayToPins } from "#/entities/map/model/map-pin-favorite";
 import { useHasRequestedHomeLocationInSession } from "#/entities/map/model/useHomeLocationRequestSession";
 import {
   type LocationData,
   type LocationRequestOutcome,
   useLocationTracking,
 } from "#/entities/map/model/useLocationTracking";
-import {
-  LOCKER_PINS_QUERY_KEY,
-  useLockerMarkers,
-} from "#/entities/map/model/useLockerMarkers";
+import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import { useMapCamera } from "#/entities/map/model/useMapCamera";
 import { useMapInstance } from "#/entities/map/model/useMapInstance";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
-import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
+import { LockerMarkersLayer } from "#/entities/map/ui/LockerMarkersLayer";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import {
   MAP_CONTROL_FALLBACK_BOTTOM_PX,
   MAP_CONTROL_SHEET_GAP_PX,
   resolveMapControlTopReservedPx,
 } from "#/entities/map/ui/map-control-stack-fallback";
+import { SearchResultMarkersLayer } from "#/entities/map/ui/SearchResultMarkersLayer";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useUser } from "#/entities/user/hooks/useUser";
 import {
@@ -212,7 +206,6 @@ import {
   getSeoLocale,
   getSeoPathname,
 } from "#/features/seo/model/localized-seo-head";
-import type { LockerPinSearchParams } from "#/shared/api/lockers";
 import {
   getLockerDetail,
   type LockerBoundsRaw,
@@ -3846,82 +3839,4 @@ export function IndexPage() {
       />
     </main>
   );
-}
-
-function LockerMarkersLayer({
-  map,
-  searchParams,
-  selectedPinId,
-  selectedPin,
-  onSelectPin,
-  onClusterClick,
-  spreadCenter,
-  resolveEffectiveFavorite,
-}: {
-  map: naver.maps.Map | null;
-  searchParams?: LockerPinSearchParams | null;
-  selectedPinId?: string | null;
-  selectedPin?: LockerPinItemResponse | null;
-  onSelectPin?: (
-    pinType: "LOCKER" | "PLACE",
-    id: number,
-    pin: LockerPinItemResponse,
-    offset: LockerMarkerOffset,
-  ) => void;
-  onClusterClick?: (
-    bounds: import("#/shared/api/lockers").LockerBoundsRaw,
-  ) => void;
-  spreadCenter?: { lat: number; lng: number } | null;
-  resolveEffectiveFavorite?: ResolvePinFavorite;
-}) {
-  const { maps } = useNaverMapSdk();
-
-  useLockerMarkers({
-    map,
-    maps,
-    searchParams,
-    selectedPinId,
-    selectedPin,
-    onSelectLocker: onSelectPin,
-    onClusterClick,
-    spreadCenter,
-    resolveEffectiveFavorite,
-  });
-
-  return null;
-}
-
-function SearchResultMarkersLayer({
-  map,
-  pins,
-  selectedPinId,
-  onSelectLocker,
-  spreadCenter,
-  preservedOffsets,
-}: {
-  map: naver.maps.Map | null;
-  pins: ReturnType<typeof searchResultItemsToPins>;
-  selectedPinId?: string | null;
-  onSelectLocker: (
-    pinType: "LOCKER" | "PLACE",
-    id: number,
-    pin: LockerPinItemResponse,
-    offset: LockerMarkerOffset,
-  ) => void;
-  spreadCenter?: { lat: number; lng: number } | null;
-  preservedOffsets?: ReadonlyMap<string, LockerMarkerOffset>;
-}) {
-  const { maps } = useNaverMapSdk();
-
-  useSearchResultMarkers({
-    map,
-    maps,
-    pins,
-    selectedPinId,
-    onSelectLocker,
-    spreadCenter,
-    preservedOffsets,
-  });
-
-  return null;
 }
