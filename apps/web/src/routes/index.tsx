@@ -68,10 +68,7 @@ import {
 } from "#/entities/map/model/home-location-request-session";
 import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import { resolveLocationRequestSettlement } from "#/entities/map/model/location-request-settlement";
-import {
-  fitNaverMapToBounds,
-  focusNaverMapOnClusterBounds,
-} from "#/entities/map/model/map-bounds";
+import { focusNaverMapOnClusterBounds } from "#/entities/map/model/map-bounds";
 import { createBottomMapInset } from "#/entities/map/model/map-inset";
 import {
   getPinId,
@@ -91,6 +88,7 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
+import { useMapCamera } from "#/entities/map/model/useMapCamera";
 import { useMapInstance } from "#/entities/map/model/useMapInstance";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
@@ -700,6 +698,9 @@ export function IndexPage() {
     setIsLoading: setIsMapLoading,
     setHasError: setHasMapError,
   } = useMapInstance({ mapRef: mapInstanceRef });
+  const mapCamera = useMapCamera({
+    getMap: () => mapInstanceRef.current,
+  });
   const isCameraCenteredRef = useRef(false);
   const didApplyInitialGpsCenterRef = useRef(false);
   const hasUserMovedMapBeforeInitialGpsRef = useRef(false);
@@ -958,26 +959,29 @@ export function IndexPage() {
   // setIsCameraCentered는 useState dispatch로 stable하므로 deps [] 안전
   // requestOrientationPermissionRef / startOrientationTrackingRef는
   // render마다 갱신되는 ref이므로 deps []가 안전하다.
-  const handleFirstLocation = useCallback((firstLocation: LocationData) => {
-    // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
-    // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
-    // 항상 최신 함수를 참조하므로 deps []가 안전하다.
-    if (pendingOrientationStartRef.current) {
-      pendingOrientationStartRef.current = false;
-      setIsCameraCentered(true);
-      // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
-      startOrientationTrackingRef.current();
-      return;
-    }
+  const handleFirstLocation = useCallback(
+    (firstLocation: LocationData) => {
+      // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
+      // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
+      // 항상 최신 함수를 참조하므로 deps []가 안전하다.
+      if (pendingOrientationStartRef.current) {
+        pendingOrientationStartRef.current = false;
+        setIsCameraCentered(true);
+        // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
+        startOrientationTrackingRef.current();
+        return;
+      }
 
-    if (hasPendingOneTimeLocationCenterRef.current && mapInstanceRef.current) {
-      hasPendingOneTimeLocationCenterRef.current = false;
-      focusNaverMapOnCoordinates({
-        map: mapInstanceRef.current,
-        coordinates: firstLocation,
-      });
-    }
-  }, []);
+      if (
+        hasPendingOneTimeLocationCenterRef.current &&
+        mapInstanceRef.current
+      ) {
+        hasPendingOneTimeLocationCenterRef.current = false;
+        mapCamera.focusOn(firstLocation);
+      }
+    },
+    [mapCamera],
+  );
 
   const handleLocationRequestSettled = useCallback(
     (outcome: LocationRequestOutcome) => {
@@ -1283,11 +1287,7 @@ export function IndexPage() {
     }
 
     didApplyInitialGpsCenterRef.current = true;
-    focusNaverMapOnCoordinates({
-      map: mapInstance,
-      coordinates: location,
-      zoom: mapBootstrap.zoom,
-    });
+    mapCamera.focusOn(location, { zoom: mapBootstrap.zoom });
   }, [
     context,
     focusLat,
@@ -1298,6 +1298,7 @@ export function IndexPage() {
     mapInstance,
     permission,
     sheetMode,
+    mapCamera.focusOn,
   ]);
 
   const {
@@ -1435,10 +1436,7 @@ export function IndexPage() {
       if (!isHomeContext) {
         // 비홈 컨텍스트: isCameraCentered 변경 없이 단순 위치 이동만 수행
         if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
+          mapCamera.focusOn(location);
         } else if (!isTracking) {
           // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
           hasPendingMyLocationRequestRef.current = true;
@@ -1454,10 +1452,7 @@ export function IndexPage() {
       // isCameraCentered를 세팅하지 않아 카메라 추적 상태로 진입하지 않는다.
       if (isOrientationSupported === false) {
         if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
+          mapCamera.focusOn(location);
         } else if (!isTracking) {
           hasPendingMyLocationRequestRef.current = true;
           hasPendingOneTimeLocationCenterRef.current = true;
@@ -1505,10 +1500,7 @@ export function IndexPage() {
         // GPS 이미 켜진 경우: 즉시 방향 트래킹 시작 (지원 환경)
         // → 중간 단계(카메라 고정만) 없이 바로 방향 트래킹까지 진입
         if (location && mapInstanceRef.current) {
-          focusNaverMapOnCoordinates({
-            map: mapInstanceRef.current,
-            coordinates: location,
-          });
+          mapCamera.focusOn(location);
         }
         setIsCameraCentered(true);
         const granted = await requestOrientationPermission();
@@ -1535,6 +1527,7 @@ export function IndexPage() {
     requestOrientationPermission,
     startOrientationTracking,
     stopOrientationTracking,
+    mapCamera.focusOn,
   ]);
 
   const handleDismissLocationRecoveryNotice = useCallback(() => {
@@ -2031,15 +2024,16 @@ export function IndexPage() {
             mapInstanceRef.current
           ) {
             lastFocusedLockerIdRef.current = lockerId;
-            focusNaverMapOnCoordinates({
-              map: mapInstanceRef.current,
-              coordinates: {
+            mapCamera.focusOn(
+              {
                 lat: optimisticDetail.latitude,
                 lng: optimisticDetail.longitude,
               },
-              bottomInsetPx: getDetailFocusBottomInsetPx(),
-              zoom: DETAIL_FOCUS_ZOOM,
-            });
+              {
+                bottomInsetPx: getDetailFocusBottomInsetPx(),
+                zoom: DETAIL_FOCUS_ZOOM,
+              },
+            );
           }
         }
       }, 0);
@@ -2051,6 +2045,7 @@ export function IndexPage() {
       searchCoordinates.lat,
       searchCoordinates.lng,
       syncLockerDetailUrl,
+      mapCamera.focusOn,
     ],
   );
 
@@ -2275,14 +2270,12 @@ export function IndexPage() {
         lastFocusedLockerIdRef.current = pin.lockerId;
       }
 
-      focusNaverMapOnCoordinates({
-        map: mapInstanceRef.current,
-        coordinates: { lat: pin.latitude, lng: pin.longitude },
-        bottomInsetPx: getDetailFocusBottomInsetPx(),
-        zoom,
-      });
+      mapCamera.focusOn(
+        { lat: pin.latitude, lng: pin.longitude },
+        { bottomInsetPx: getDetailFocusBottomInsetPx(), zoom },
+      );
     },
-    [],
+    [mapCamera.focusOn],
   );
 
   const handleOpenLockerDetail = useCallback(
@@ -2578,9 +2571,7 @@ export function IndexPage() {
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       const shouldDelayDetailOpen =
         pin != null &&
-        mapInstanceRef.current != null &&
-        (mapInstanceRef.current.getZoom?.() ?? DETAIL_FOCUS_ZOOM) <
-          DETAIL_FOCUS_ZOOM;
+        (mapCamera.getZoom() ?? DETAIL_FOCUS_ZOOM) < DETAIL_FOCUS_ZOOM;
       focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
       openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
     },
@@ -2593,6 +2584,7 @@ export function IndexPage() {
       openMapPlaceList,
       sheetMode,
       suppressNextMapPressForMarkerInteraction,
+      mapCamera.getZoom,
     ],
   );
 
@@ -2629,9 +2621,7 @@ export function IndexPage() {
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       const shouldDelayDetailOpen =
         pin != null &&
-        mapInstanceRef.current != null &&
-        (mapInstanceRef.current.getZoom?.() ?? DETAIL_FOCUS_ZOOM) <
-          DETAIL_FOCUS_ZOOM;
+        (mapCamera.getZoom() ?? DETAIL_FOCUS_ZOOM) < DETAIL_FOCUS_ZOOM;
       focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
       openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
     },
@@ -2644,6 +2634,7 @@ export function IndexPage() {
       raiseSelectedPinFromMini,
       shouldRaiseSelectedPinFromMini,
       suppressNextMapPressForMarkerInteraction,
+      mapCamera.getZoom,
     ],
   );
 
@@ -2705,9 +2696,7 @@ export function IndexPage() {
       });
       const shouldDelayDetailOpen =
         pin != null &&
-        mapInstanceRef.current != null &&
-        (mapInstanceRef.current.getZoom?.() ?? DETAIL_FOCUS_ZOOM) <
-          DETAIL_FOCUS_ZOOM;
+        (mapCamera.getZoom() ?? DETAIL_FOCUS_ZOOM) < DETAIL_FOCUS_ZOOM;
       focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
       openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen, {
         searchDetailBack: nextSearchDetailBack,
@@ -2725,6 +2714,7 @@ export function IndexPage() {
       searchPlaceId,
       shouldRaiseSelectedPinFromMini,
       suppressNextMapPressForMarkerInteraction,
+      mapCamera.getZoom,
     ],
   );
 
@@ -2992,14 +2982,10 @@ export function IndexPage() {
     ) {
       isPendingFocusRef.current = false;
       lastFocusedLockerIdRef.current = lockerDetail.lockerId;
-      focusNaverMapOnCoordinates({
-        map: mapInstance,
-        coordinates: {
-          lat: lockerDetail.latitude,
-          lng: lockerDetail.longitude,
-        },
-        bottomInsetPx: getDetailFocusBottomInsetPx(),
-      });
+      mapCamera.focusOn(
+        { lat: lockerDetail.latitude, lng: lockerDetail.longitude },
+        { bottomInsetPx: getDetailFocusBottomInsetPx() },
+      );
     }
   }, [
     lockerDetail,
@@ -3007,6 +2993,7 @@ export function IndexPage() {
     syncLockerDetailUrl,
     sheetMode,
     activeLockerId,
+    mapCamera.focusOn,
   ]);
 
   useEffect(() => {
@@ -3089,7 +3076,7 @@ export function IndexPage() {
       sheetMode === "idle" &&
       !isSearchOpen
     ) {
-      focusNaverMapOnCoordinates({ map: mapInstance, coordinates: location });
+      mapCamera.focusOn(location);
     }
   }, [
     isCameraCentered,
@@ -3098,8 +3085,13 @@ export function IndexPage() {
     context,
     sheetMode,
     isSearchOpen,
+    mapCamera.focusOn,
   ]);
 
+  // mapInstance 는 본문에서 읽지 않는다. 지도가 뒤늦게 준비됐을 때 이 이펙트를 다시
+  // 돌리려고 넣은 트리거다. 빼면 검색 결과가 SDK 보다 먼저 온 화면이 결과 범위에 영영
+  // 맞지 않는다 — 아래 주석이 말하는 그 경우다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mapInstance 는 재실행 트리거다
   useEffect(() => {
     if (sheetMode !== "list" && sheetMode !== "filter") {
       fittedSearchBoundsRef.current = null;
@@ -3145,11 +3137,7 @@ export function IndexPage() {
     // 검색 결과가 SDK 보다 먼저 오면 지도가 아직 없어 범위를 못 맞춘다. 그때도
     // 기록해 버리면 지도가 준비돼 다시 돌 때 같은 시그니처로 걸러져, ?q= 로 연
     // 화면이 결과 범위에 영영 맞지 않는다.
-    const didFitBounds = fitNaverMapToBounds({
-      map: mapInstance,
-      bounds,
-      bottomPadding,
-    });
+    const didFitBounds = mapCamera.fitBounds(bounds, { bottomPadding });
     if (!didFitBounds) {
       return;
     }
@@ -3157,7 +3145,6 @@ export function IndexPage() {
     fittedSearchBoundsRef.current = fitSignature;
   }, [
     keywordSearchResults?.bounds,
-    mapInstance,
     placeLockersResults?.bounds,
     activePlaceId,
     effectiveSearchQuery,
@@ -3165,6 +3152,8 @@ export function IndexPage() {
     sheetMode,
     windowHeight,
     context,
+    mapInstance,
+    mapCamera.fitBounds,
   ]);
 
   const shouldRenderMapControls = shouldShowMapControls({
