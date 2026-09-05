@@ -1,4 +1,5 @@
 import { useNaverMapSdk } from "#/entities/map";
+import { useMapRuntime } from "#/entities/map/model/MapRuntimeProvider";
 import type { LockerMarkerOffset } from "#/entities/map/model/map-marker";
 import type { ResolvePinFavorite } from "#/entities/map/model/map-pin-favorite";
 import { useLockerMarkers } from "#/entities/map/model/useLockerMarkers";
@@ -9,7 +10,6 @@ import type {
 } from "#/shared/api/lockers";
 
 export interface LockerMarkersLayerProps {
-  map: naver.maps.Map | null;
   searchParams?: LockerPinSearchParams | null;
   selectedPinId?: string | null;
   selectedPin?: LockerPinItemResponse | null;
@@ -32,7 +32,6 @@ export interface LockerMarkersLayerProps {
  * 컴포넌트로 두는 이유는 마운트·언마운트가 곧 층의 생몰이 되기 때문이다.
  */
 export function LockerMarkersLayer({
-  map,
   searchParams,
   selectedPinId,
   selectedPin,
@@ -42,6 +41,7 @@ export function LockerMarkersLayer({
   resolveEffectiveFavorite,
 }: LockerMarkersLayerProps) {
   const { maps } = useNaverMapSdk();
+  const { map } = useMapRuntime();
 
   useLockerMarkers({
     map,
