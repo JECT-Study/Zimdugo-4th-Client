@@ -185,24 +185,23 @@ import {
   withSearchQueryParam,
 } from "#/features/search/model/search-url-state";
 import {
-  type AppMapContext,
   createKeywordDetailBackTarget,
   createPlaceDetailBackTarget,
   createSearchDetailBackTarget,
   isRenderableSheetSession,
-  type MapDetailBack,
-  type OverlayReturnContext,
   resolveActivePlaceId,
   resolveOverlayReturnContext,
   resolveSearchBarBackAction,
   type SearchDetailBackTarget,
-  type SearchListKind,
-  type SheetModeForContext,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
   shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
+import {
+  DEFAULT_SEARCH_COORDINATES,
+  useMapSheetSession,
+} from "#/features/search/model/useMapSheetSession";
 import { useSheetStageSession } from "#/features/search/model/useSheetStageSession";
 import {
   createAlternateLinksForPathname,
@@ -265,8 +264,6 @@ const SHEET_OFFSET_NONE_PX = 1_000_000;
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
   DETAIL_FOCUS_MORPH_DURATION_MS + 40;
-
-const DEFAULT_SEARCH_COORDINATES = { lat: 37.498095, lng: 127.02761 };
 
 const reloadForLocationRecovery = () => {
   window.location.reload();
@@ -832,15 +829,38 @@ export function IndexPage() {
   const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
     loadSearchFiltersFromSession,
   );
-  const [sheetMode, setSheetMode] = useState<SheetModeForContext>(() => {
-    if (lockerIdFromQuery !== undefined && loaderData?.detail) return "detail";
-    if (hasSearchQueryEntry) return "list";
-    return "idle";
-  });
-  const [activeLockerId, setActiveLockerId] = useState<number | null>(() => {
-    if (lockerIdFromQuery !== undefined && loaderData?.detail)
-      return lockerIdFromQuery;
-    return null;
+  const {
+    sheetMode,
+    setSheetMode,
+    context,
+    setContext,
+    activeLockerId,
+    setActiveLockerId,
+    selectedLockerDetail,
+    setSelectedLockerDetail,
+    selectedMapPin,
+    setSelectedMapPin,
+    selectedMapPinOffset,
+    setSelectedMapPinOffset,
+    overlayReturnContext,
+    setOverlayReturnContext,
+    listKind,
+    setListKind,
+    searchPlaceId,
+    setSearchPlaceId,
+    mapPlaceId,
+    setMapPlaceId,
+    searchDetailBack,
+    setSearchDetailBack,
+    mapDetailBack,
+    setMapDetailBack,
+  } = useMapSheetSession({
+    lockerIdFromQuery,
+    deepLinkDetail: loaderData?.detail,
+    hasSearchQueryEntry,
+    hasSearchPlaceEntry,
+    searchPlaceIdFromUrl,
+    restoredSession,
   });
   const {
     snapStage: listSheetSnapStage,
@@ -871,69 +891,6 @@ export function IndexPage() {
     initialStage: "half",
     initialVisibleHeightPx: resolveDetailSheetVisibleHeight("half"),
   });
-  const [selectedLockerDetail, setSelectedLockerDetail] =
-    useState<LockerDetailItem | null>(() => {
-      if (lockerIdFromQuery !== undefined) {
-        return loaderData?.detail ?? null;
-      }
-      return null;
-    });
-  const [selectedMapPin, setSelectedMapPin] =
-    useState<LockerPinItemResponse | null>(() => {
-      if (lockerIdFromQuery !== undefined) {
-        if (loaderData?.detail) {
-          return {
-            pinType: "LOCKER",
-            lockerId: lockerIdFromQuery,
-            placeId: null,
-            latitude:
-              loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
-            longitude:
-              loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
-            isFavorite: null,
-            lockerCount: null,
-            pinCount: null,
-            bounds: null,
-          };
-        }
-        return null;
-      }
-      return null;
-    });
-  const [selectedMapPinOffset, setSelectedMapPinOffset] =
-    useState<LockerMarkerOffset | null>(null);
-  const [context, setContext] = useState<AppMapContext>(() => {
-    if (lockerIdFromQuery !== undefined && loaderData?.detail) return "map";
-    if (hasSearchQueryEntry) return "search";
-    return "idle";
-  });
-  const [overlayReturnContext, setOverlayReturnContext] =
-    useState<OverlayReturnContext>("idle");
-  const [listKind, setListKind] = useState<SearchListKind | null>(() =>
-    hasSearchPlaceEntry
-      ? "place"
-      : hasSearchQueryEntry
-        ? "keyword"
-        : (restoredSession?.listKind ?? null),
-  );
-  const [searchPlaceId, setSearchPlaceId] = useState<number | null>(() =>
-    hasSearchPlaceEntry
-      ? (searchPlaceIdFromUrl ?? null)
-      : (restoredSession?.searchPlaceId ?? null),
-  );
-  const [mapPlaceId, setMapPlaceId] = useState<number | null>(
-    () => restoredSession?.mapPlaceId ?? null,
-  );
-  const [searchDetailBack, setSearchDetailBack] =
-    useState<SearchDetailBackTarget | null>(
-      () => restoredSession?.searchDetailBack ?? null,
-    );
-  const [mapDetailBack, setMapDetailBack] = useState<MapDetailBack | null>(
-    () =>
-      lockerIdFromQuery !== undefined && loaderData?.detail
-        ? "idle"
-        : (restoredSession?.mapDetailBack ?? null),
-  );
   const [searchDraft, setSearchDraft] = useState(
     () => searchQueryFromUrl ?? "",
   );
@@ -1132,7 +1089,13 @@ export function IndexPage() {
     setSearchPlaceId((previousPlaceId) =>
       previousPlaceId === null ? previousPlaceId : null,
     );
-  }, [hasExplicitLockerEntry, searchPlaceIdFromUrl, searchQueryFromUrl]);
+  }, [
+    hasExplicitLockerEntry,
+    searchPlaceIdFromUrl,
+    searchQueryFromUrl,
+    setListKind,
+    setSearchPlaceId,
+  ]);
 
   useEffect(() => {
     if (
@@ -1162,6 +1125,14 @@ export function IndexPage() {
     searchPlaceIdFromUrl,
     searchQueryFromUrl,
     setIsSearchOpen,
+    setActiveLockerId,
+    setContext,
+    setMapDetailBack,
+    setSearchDetailBack,
+    setSelectedLockerDetail,
+    setSelectedMapPin,
+    setSelectedMapPinOffset,
+    setSheetMode,
   ]);
 
   useEffect(() => {
@@ -1624,6 +1595,14 @@ export function IndexPage() {
     clearLockerDetailUrl,
     clearPendingLockerDetailOpen,
     flushLockerSheetMutations,
+    setActiveLockerId,
+    setContext,
+    setMapDetailBack,
+    setMapPlaceId,
+    setSelectedLockerDetail,
+    setSelectedMapPin,
+    setSelectedMapPinOffset,
+    setSheetMode,
   ]);
 
   const resetSearchContext = useCallback(() => {
@@ -1667,6 +1646,15 @@ export function IndexPage() {
     navigate,
     setIsSearchOpen,
     setSearchQuery,
+    setActiveLockerId,
+    setContext,
+    setListKind,
+    setSearchDetailBack,
+    setSearchPlaceId,
+    setSelectedLockerDetail,
+    setSelectedMapPin,
+    setSelectedMapPinOffset,
+    setSheetMode,
   ]);
 
   const handleOpenSearch = useCallback(() => {
@@ -1683,7 +1671,13 @@ export function IndexPage() {
     setIsCameraCentered(false);
     setOverlayReturnContext(returnContext);
     setIsSearchOpen(true);
-  }, [clearPendingLockerDetailOpen, context, resetMapContext, setIsSearchOpen]);
+  }, [
+    clearPendingLockerDetailOpen,
+    context,
+    resetMapContext,
+    setIsSearchOpen,
+    setOverlayReturnContext,
+  ]);
 
   const handleCloseSearch = useCallback(
     (draft?: string) => {
@@ -2053,6 +2047,10 @@ export function IndexPage() {
       searchCoordinates.lng,
       syncLockerDetailUrl,
       mapCamera.focusOn,
+      setActiveLockerId,
+      setSearchDetailBack,
+      setSelectedLockerDetail,
+      setSheetMode,
     ],
   );
 
@@ -2114,6 +2112,13 @@ export function IndexPage() {
       searchDraft,
       setConfirmedSearchQuery,
       setIsSearchOpen,
+      setActiveLockerId,
+      setContext,
+      setListKind,
+      setSearchDetailBack,
+      setSearchPlaceId,
+      setSelectedLockerDetail,
+      setSheetMode,
     ],
   );
 
@@ -2133,7 +2138,18 @@ export function IndexPage() {
       setIsSearchOpen(false);
       setSheetMode("list");
     },
-    [clearPendingLockerDetailOpen, setIsSearchOpen],
+    [
+      clearPendingLockerDetailOpen,
+      setIsSearchOpen,
+      setActiveLockerId,
+      setContext,
+      setMapDetailBack,
+      setMapPlaceId,
+      setSelectedLockerDetail,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
+      setSheetMode,
+    ],
   );
 
   const handleSelectSearch = useCallback(
@@ -2164,6 +2180,15 @@ export function IndexPage() {
       clearPendingLockerDetailOpen,
       recordSearchHistory,
       setIsSearchOpen,
+      setActiveLockerId,
+      setContext,
+      setListKind,
+      setSearchDetailBack,
+      setSearchPlaceId,
+      setSelectedLockerDetail,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
+      setSheetMode,
     ],
   );
 
@@ -2208,6 +2233,10 @@ export function IndexPage() {
       openSearchPlaceList,
       recordSearchHistory,
       setConfirmedSearchQuery,
+      setContext,
+      setListKind,
+      setSearchDetailBack,
+      setSearchPlaceId,
     ],
   );
 
@@ -2264,6 +2293,10 @@ export function IndexPage() {
       queryClient,
       recordSearchHistory,
       setConfirmedSearchQuery,
+      setContext,
+      setListKind,
+      setSearchDetailBack,
+      setSearchPlaceId,
     ],
   );
 
@@ -2330,6 +2363,10 @@ export function IndexPage() {
       searchCoordinates.lat,
       searchCoordinates.lng,
       searchPlaceId,
+      setMapDetailBack,
+      setSearchDetailBack,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
     ],
   );
 
@@ -2423,7 +2460,13 @@ export function IndexPage() {
 
       requestListSheetSnap("half");
     },
-    [requestDetailSheetSnap, requestListSheetSnap, sheetMode],
+    [
+      requestDetailSheetSnap,
+      requestListSheetSnap,
+      sheetMode,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
+    ],
   );
 
   const openLockerFromDeepLink = useCallback(
@@ -2468,7 +2511,14 @@ export function IndexPage() {
         { detailSnap: options.detailSnap ?? "half" },
       );
     },
-    [focusMapOnLockerPin, openLockerDetailById],
+    [
+      focusMapOnLockerPin,
+      openLockerDetailById,
+      setContext,
+      setMapDetailBack,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
+    ],
   );
 
   useEffect(() => {
@@ -2592,6 +2642,10 @@ export function IndexPage() {
       sheetMode,
       suppressNextMapPressForMarkerInteraction,
       mapCamera.getZoom,
+      setContext,
+      setMapDetailBack,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
     ],
   );
 
@@ -2642,6 +2696,9 @@ export function IndexPage() {
       shouldRaiseSelectedPinFromMini,
       suppressNextMapPressForMarkerInteraction,
       mapCamera.getZoom,
+      setMapDetailBack,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
     ],
   );
 
@@ -2722,6 +2779,14 @@ export function IndexPage() {
       shouldRaiseSelectedPinFromMini,
       suppressNextMapPressForMarkerInteraction,
       mapCamera.getZoom,
+      setActiveLockerId,
+      setListKind,
+      setSearchDetailBack,
+      setSearchPlaceId,
+      setSelectedLockerDetail,
+      setSelectedMapPin,
+      setSelectedMapPinOffset,
+      setSheetMode,
     ],
   );
 
@@ -2899,6 +2964,13 @@ export function IndexPage() {
     searchDetailBack,
     search.locker,
     navigate,
+    setActiveLockerId,
+    setListKind,
+    setSearchPlaceId,
+    setSelectedLockerDetail,
+    setSelectedMapPin,
+    setSelectedMapPinOffset,
+    setSheetMode,
   ]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
@@ -2915,15 +2987,22 @@ export function IndexPage() {
     setListKind("keyword");
     setSearchPlaceId(null);
     setSheetMode("list");
-  }, [flushLockerSheetMutations, searchDraft, setConfirmedSearchQuery]);
+  }, [
+    flushLockerSheetMutations,
+    searchDraft,
+    setConfirmedSearchQuery,
+    setListKind,
+    setSearchPlaceId,
+    setSheetMode,
+  ]);
 
   const handleBackFromSearchFilter = useCallback(() => {
     setSheetMode("list");
-  }, []);
+  }, [setSheetMode]);
 
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
-  }, []);
+  }, [setSheetMode]);
 
   const handleResetSearchFilter = useCallback(() => {
     const defaultFilters = createDefaultSearchFilters();
@@ -2937,7 +3016,7 @@ export function IndexPage() {
       syncSearchFilterSession(filters);
       setSheetMode("list");
     },
-    [syncSearchFilterSession],
+    [syncSearchFilterSession, setSheetMode],
   );
 
   const searchBarBackAction = resolveSearchBarBackAction({
@@ -3001,6 +3080,7 @@ export function IndexPage() {
     sheetMode,
     activeLockerId,
     mapCamera.focusOn,
+    setSelectedLockerDetail,
   ]);
 
   useEffect(() => {
