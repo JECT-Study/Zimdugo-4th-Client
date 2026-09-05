@@ -1339,15 +1339,22 @@ export function IndexPage() {
     }
   }, [locationRequestStatus, permission, openLocationPopup]);
 
+  // 리프레시 버튼 관련 상태
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
+  const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
+
+  /**
+   * mapInstance 선언 자리까지 끌어올리지 않는다. subscribeMapIdle 이 구독 즉시
+   * handler 를 한 번 부르므로, 초기 GPS 센터링 이펙트보다 앞서면 첫 저장이 GPS
+   * 적용 전 카메라를 잡는다. 지도 생명주기를 한곳에 모으는 일은 지도가 레이아웃
+   * 라우트로 올라갈 때(#215) 함께 정리한다.
+   */
   const { persistMapViewport, saveMapViewport } = useMapViewportPersistence({
     map: mapInstance,
     getMap: () => mapInstanceRef.current,
   });
 
-  // 리프레시 버튼 관련 상태
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
-  const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
 
