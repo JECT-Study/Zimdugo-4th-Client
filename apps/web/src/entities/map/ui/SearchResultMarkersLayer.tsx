@@ -1,10 +1,10 @@
 import { useNaverMapSdk } from "#/entities/map";
+import { useMapRuntime } from "#/entities/map/model/MapRuntimeProvider";
 import type { LockerMarkerOffset } from "#/entities/map/model/map-marker";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 export interface SearchResultMarkersLayerProps {
-  map: naver.maps.Map | null;
   pins: LockerPinItemResponse[];
   selectedPinId?: string | null;
   onSelectLocker: (
@@ -25,7 +25,6 @@ export interface SearchResultMarkersLayerProps {
  * 검색 쪽이 알고, 이 층은 그것을 지도에 얹는 일만 안다.
  */
 export function SearchResultMarkersLayer({
-  map,
   pins,
   selectedPinId,
   onSelectLocker,
@@ -33,6 +32,7 @@ export function SearchResultMarkersLayer({
   preservedOffsets,
 }: SearchResultMarkersLayerProps) {
   const { maps } = useNaverMapSdk();
+  const { map } = useMapRuntime();
 
   useSearchResultMarkers({
     map,
