@@ -56,7 +56,6 @@ import {
   NaverMapCanvas,
   NaverMapProvider,
   resolveMapBootstrapViewport,
-  subscribeMapIdle,
   useMapColorScheme,
   useMapViewportStore,
   useNaverMapSdk,
@@ -92,6 +91,7 @@ import {
   LOCKER_PINS_QUERY_KEY,
   useLockerMarkers,
 } from "#/entities/map/model/useLockerMarkers";
+import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { useSearchResultMarkers } from "#/entities/map/model/useSearchResultMarkers";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import {
@@ -1343,10 +1343,22 @@ export function IndexPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
   const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
+
+  /**
+   * mapInstance 선언 자리까지 끌어올리지 않는다. subscribeMapIdle 이 구독 즉시
+   * handler 를 한 번 부르므로, 초기 GPS 센터링 이펙트보다 앞서면 첫 저장이 GPS
+   * 적용 전 카메라를 잡는다. 지도 생명주기를 한곳에 모으는 일은 지도가 레이아웃
+   * 라우트로 올라갈 때(#215) 함께 정리한다.
+   */
+  const { persistMapViewport, saveMapViewport } = useMapViewportPersistence({
+    map: mapInstance,
+    getMap: () => mapInstanceRef.current,
+  });
+
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
 
-    useMapViewportStore.getState().saveFromMap(mapInstanceRef.current);
+    saveMapViewport();
 
     setIsRefreshing(true);
     setRefreshCooldownRemaining(5);
@@ -1373,18 +1385,7 @@ export function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing, queryClient]);
-
-  const persistMapViewport = useCallback((map: naver.maps.Map) => {
-    useMapViewportStore.getState().saveFromMap(map);
-  }, []);
-
-  const saveMapViewport = useCallback(() => {
-    const map = mapInstanceRef.current;
-    if (map) {
-      persistMapViewport(map);
-    }
-  }, [persistMapViewport]);
+  }, [isRefreshing, queryClient, saveMapViewport]);
 
   const clearPendingLockerDetailOpen = useCallback(() => {
     window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
@@ -1399,36 +1400,6 @@ export function IndexPage() {
       window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
     };
   }, []);
-
-  // 탭 전환·백그라운드 이탈 직전 viewport 저장
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        saveMapViewport();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("pagehide", saveMapViewport);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pagehide", saveMapViewport);
-    };
-  }, [saveMapViewport]);
-
-  useEffect(() => {
-    if (!mapInstance) return;
-
-    const maps = window.naver?.maps;
-    if (!maps) return;
-
-    return subscribeMapIdle({
-      map: mapInstance,
-      maps,
-      onSettle: saveMapViewport,
-    });
-  }, [mapInstance, saveMapViewport]);
 
   const handleMyLocation = useCallback(async () => {
     setIsMyLocationPending(true);
