@@ -294,7 +294,7 @@ const withoutOpenLockerParams = ({
   ...rest
 }: HomeSearchParams) => rest;
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_map/")({
   validateSearch: (
     search: Record<string, unknown> | undefined,
   ): HomeSearchParams => {

@@ -9,12 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as MapRouteImport } from './routes/_map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as MapIndexRouteImport } from './routes/_map.index'
 import { Route as MyIndexRouteImport } from './routes/my.index'
 import { Route as MyFavoritesRouteImport } from './routes/my.favorites'
 import { Route as MyReportsRouteImport } from './routes/my.reports'
@@ -25,9 +26,8 @@ import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
 import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as SettingsThemeRouteImport } from './routes/settings.theme'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const MapRoute = MapRouteImport.update({
+  id: '/_map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -54,6 +54,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MapIndexRoute = MapIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MapRoute,
 } as any)
 const MyIndexRoute = MyIndexRouteImport.update({
   id: '/my/',
@@ -102,7 +107,7 @@ const SettingsThemeRoute = SettingsThemeRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof MapIndexRoute
   '/login': typeof LoginRoute
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
@@ -119,7 +124,6 @@ export interface FileRoutesByFullPath {
   '/my/': typeof MyIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
@@ -133,11 +137,12 @@ export interface FileRoutesByTo {
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
+  '/': typeof MapIndexRoute
   '/my': typeof MyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_map': typeof MapRouteWithChildren
   '/login': typeof LoginRoute
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
@@ -151,6 +156,7 @@ export interface FileRoutesById {
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
+  '/_map/': typeof MapIndexRoute
   '/my/': typeof MyIndexRoute
 }
 export interface FileRouteTypes {
@@ -173,7 +179,6 @@ export interface FileRouteTypes {
     | '/my/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/login'
     | '/notices'
     | '/report'
@@ -187,10 +192,11 @@ export interface FileRouteTypes {
     | '/settings/privacy'
     | '/settings/terms'
     | '/settings/theme'
+    | '/'
     | '/my'
   id:
     | '__root__'
-    | '/'
+    | '/_map'
     | '/login'
     | '/notices'
     | '/report'
@@ -204,11 +210,12 @@ export interface FileRouteTypes {
     | '/settings/privacy'
     | '/settings/terms'
     | '/settings/theme'
+    | '/_map/'
     | '/my/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  MapRoute: typeof MapRouteWithChildren
   LoginRoute: typeof LoginRoute
   NoticesRoute: typeof NoticesRouteWithChildren
   ReportRoute: typeof ReportRoute
@@ -221,11 +228,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_map': {
+      id: '/_map'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -262,6 +269,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_map/': {
+      id: '/_map/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof MapIndexRouteImport
+      parentRoute: typeof MapRoute
     }
     '/my/': {
       id: '/my/'
@@ -329,6 +343,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MapRouteChildren {
+  MapIndexRoute: typeof MapIndexRoute
+}
+
+const MapRouteChildren: MapRouteChildren = {
+  MapIndexRoute: MapIndexRoute,
+}
+
+const MapRouteWithChildren = MapRoute._addFileChildren(MapRouteChildren)
+
 interface NoticesRouteChildren {
   NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
 }
@@ -361,7 +385,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  MapRoute: MapRouteWithChildren,
   LoginRoute: LoginRoute,
   NoticesRoute: NoticesRouteWithChildren,
   ReportRoute: ReportRoute,
