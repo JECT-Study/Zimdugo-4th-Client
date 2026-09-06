@@ -51,7 +51,6 @@ import type {
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
-  NaverMapProvider,
   resolveMapBootstrapViewport,
   useMapColorScheme,
   useMapViewportStore,
@@ -3567,81 +3566,77 @@ export function IndexPage() {
         />
       ) : null}
 
-      <NaverMapProvider colorScheme={mapColorScheme} language={languageTag()}>
-        <MapRuntimeProvider value={mapRuntime}>
-          <MapSelectionProvider value={mapSelection}>
-            <NaverMapCanvas
-              key={mapRemountKey}
-              onLoad={handleMapLoad}
-              onWillDestroy={persistMapViewport}
-              onLoadingChange={setIsMapLoading}
-              onErrorChange={setHasMapError}
-              onMapPress={mapPressBus.notify}
-              initialCenter={mapBootstrap.center}
-              initialZoom={mapBootstrap.zoom}
+      <MapRuntimeProvider value={mapRuntime}>
+        <MapSelectionProvider value={mapSelection}>
+          <NaverMapCanvas
+            key={mapRemountKey}
+            onLoad={handleMapLoad}
+            onWillDestroy={persistMapViewport}
+            onLoadingChange={setIsMapLoading}
+            onErrorChange={setHasMapError}
+            onMapPress={mapPressBus.notify}
+            initialCenter={mapBootstrap.center}
+            initialZoom={mapBootstrap.zoom}
+          />
+          <MyLocationMarker
+            map={mapInstance}
+            location={location}
+            deviceHeading={deviceHeading}
+            isOrientationTracking={isOrientationTracking}
+          />
+          {!isMapLoading && markerLayer === "idle" && (
+            <LockerMarkersLayer
+              onSelectPin={handleIdlePinSelect}
+              onClusterClick={handleClusterClick}
             />
-            <MyLocationMarker
-              map={mapInstance}
-              location={location}
-              deviceHeading={deviceHeading}
-              isOrientationTracking={isOrientationTracking}
+          )}
+          {!isMapLoading && shouldUseKeywordSearchPinLayer && (
+            <LockerMarkersLayer
+              searchParams={keywordSearchParams}
+              onSelectPin={handleSearchMarkerSelect}
+              onClusterClick={handleClusterClick}
+              resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
             />
-            {!isMapLoading && markerLayer === "idle" && (
-              <LockerMarkersLayer
-                onSelectPin={handleIdlePinSelect}
-                onClusterClick={handleClusterClick}
-              />
-            )}
-            {!isMapLoading && shouldUseKeywordSearchPinLayer && (
-              <LockerMarkersLayer
-                searchParams={keywordSearchParams}
-                onSelectPin={handleSearchMarkerSelect}
-                onClusterClick={handleClusterClick}
-                resolveEffectiveFavorite={
-                  favoriteSession.getEffectiveIsFavorite
+          )}
+          {!isMapLoading &&
+            !shouldUseKeywordSearchPinLayer &&
+            (markerLayer === "search" ||
+              markerLayer === "mapPlace" ||
+              markerLayer === "selectedMapDetail") && (
+              <SearchResultMarkersLayer
+                pins={
+                  markerLayer === "search"
+                    ? searchResultPins
+                    : markerLayer === "mapPlace"
+                      ? mapPlacePins
+                      : selectedMapDetailPins
+                }
+                onSelectLocker={
+                  markerLayer === "search"
+                    ? handleSearchMarkerSelect
+                    : markerLayer === "mapPlace"
+                      ? handleMapPlaceMarkerSelect
+                      : handleSelectedMapDetailMarkerSelect
+                }
+                spreadCenter={
+                  (markerLayer === "mapPlace" ||
+                    (markerLayer === "search" && listKind === "place")) &&
+                  lastValidSpreadCenterRef.current?.placeId === activePlaceId
+                    ? {
+                        lat: lastValidSpreadCenterRef.current.latitude,
+                        lng: lastValidSpreadCenterRef.current.longitude,
+                      }
+                    : undefined
+                }
+                preservedOffsets={
+                  markerLayer === "selectedMapDetail"
+                    ? selectedPinPreservedOffsets
+                    : undefined
                 }
               />
             )}
-            {!isMapLoading &&
-              !shouldUseKeywordSearchPinLayer &&
-              (markerLayer === "search" ||
-                markerLayer === "mapPlace" ||
-                markerLayer === "selectedMapDetail") && (
-                <SearchResultMarkersLayer
-                  pins={
-                    markerLayer === "search"
-                      ? searchResultPins
-                      : markerLayer === "mapPlace"
-                        ? mapPlacePins
-                        : selectedMapDetailPins
-                  }
-                  onSelectLocker={
-                    markerLayer === "search"
-                      ? handleSearchMarkerSelect
-                      : markerLayer === "mapPlace"
-                        ? handleMapPlaceMarkerSelect
-                        : handleSelectedMapDetailMarkerSelect
-                  }
-                  spreadCenter={
-                    (markerLayer === "mapPlace" ||
-                      (markerLayer === "search" && listKind === "place")) &&
-                    lastValidSpreadCenterRef.current?.placeId === activePlaceId
-                      ? {
-                          lat: lastValidSpreadCenterRef.current.latitude,
-                          lng: lastValidSpreadCenterRef.current.longitude,
-                        }
-                      : undefined
-                  }
-                  preservedOffsets={
-                    markerLayer === "selectedMapDetail"
-                      ? selectedPinPreservedOffsets
-                      : undefined
-                  }
-                />
-              )}
-          </MapSelectionProvider>
-        </MapRuntimeProvider>
-      </NaverMapProvider>
+        </MapSelectionProvider>
+      </MapRuntimeProvider>
       {/*
         배치 불가(null)면 스켈레톤도 내보내지 않는다. 실제 컨트롤은 바로 아래
         분기에서 숨겨지므로, 스켈레톤만 남기면 지도가 준비되는 순간 버튼이 사라진다.
