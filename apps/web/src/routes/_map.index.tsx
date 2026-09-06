@@ -80,7 +80,6 @@ import type {
 } from "#/entities/map/model/useLocationTracking";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import { LockerMarkersLayer } from "#/entities/map/ui/LockerMarkersLayer";
-import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import {
   MAP_CONTROL_FALLBACK_BOTTOM_PX,
   MAP_CONTROL_SHEET_GAP_PX,
@@ -204,7 +203,6 @@ import {
   type LockerBoundsRaw,
   type LockerPinItemResponse,
 } from "#/shared/api/lockers";
-import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
@@ -893,6 +891,11 @@ export function IndexPage() {
     startTracking,
     subscribeFirstLocation,
     subscribeRequestSettled,
+    isOrientationTracking,
+    isOrientationSupported,
+    requestOrientationPermission,
+    startOrientationTracking,
+    stopOrientationTracking,
   } = useMapLocation();
 
   const handleFirstLocationRef = useRef(handleFirstLocation);
@@ -1157,15 +1160,6 @@ export function IndexPage() {
     mapCamera.focusOn,
   ]);
 
-  const {
-    heading: deviceHeading,
-    isTracking: isOrientationTracking,
-    isSupported: isOrientationSupported,
-    requestPermission: requestOrientationPermission,
-    startTracking: startOrientationTracking,
-    stopTracking: stopOrientationTracking,
-  } = useDeviceOrientation();
-
   // 방향 트래킹 함수/값을 ref로 최신 참조 유지 (handleFirstLocation deps [] 유지 목적)
   requestOrientationPermissionRef.current = requestOrientationPermission;
   startOrientationTrackingRef.current = startOrientationTracking;
@@ -1178,14 +1172,6 @@ export function IndexPage() {
 
   const [isOrientationDeniedPopupOpen, setIsOrientationDeniedPopupOpen] =
     useState(false);
-
-  // 방향 센서 미지원 확정 시 진행 중인 방향 트래킹 정리
-  // isCameraCentered는 건드리지 않아 카메라 추적(2단계)은 유지된다.
-  useEffect(() => {
-    if (isOrientationSupported !== false) return;
-    if (!isOrientationTracking) return;
-    stopOrientationTracking();
-  }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
 
   // 위치 권한 거부 시 카메라 추적을 해제하고 설정 안내를 연다.
   useEffect(() => {
@@ -3509,12 +3495,6 @@ export function IndexPage() {
       ) : null}
 
       <MapSelectionProvider value={mapSelection}>
-        <MyLocationMarker
-          map={mapInstance}
-          location={location}
-          deviceHeading={deviceHeading}
-          isOrientationTracking={isOrientationTracking}
-        />
         {!isMapLoading && markerLayer === "idle" && (
           <LockerMarkersLayer
             onSelectPin={handleIdlePinSelect}

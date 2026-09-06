@@ -23,6 +23,7 @@ import { useMapInstance } from "#/entities/map/model/useMapInstance";
 import { useMapLocationValue } from "#/entities/map/model/useMapLocationValue";
 import { useMapPressBus } from "#/entities/map/model/useMapPressBus";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
+import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
 import { DEFAULT_SEARCH_COORDINATES } from "#/features/search/model/useMapSheetSession";
 import { mapLayoutShell } from "./_map.css";
@@ -154,6 +155,16 @@ function MapLayout() {
               onMapPress={mapPressBus.notify}
               initialCenter={initialCamera.center}
               initialZoom={initialCamera.zoom}
+            />
+            {/*
+              내 위치는 지도 위에 그려지므로 지도와 같은 자리에서 얹는다. 어느 화면을
+              보고 있든 같으니 `<Outlet />` 안에 둘 이유가 없다.
+            */}
+            <MyLocationMarker
+              map={map}
+              location={mapLocation.location}
+              deviceHeading={mapLocation.deviceHeading}
+              isOrientationTracking={mapLocation.isOrientationTracking}
             />
             <Outlet />
           </div>

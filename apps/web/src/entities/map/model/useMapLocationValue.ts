@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useDeviceOrientation } from "#/shared/hooks/useDeviceOrientation";
 import type { MapLocationValue } from "./MapLocationProvider";
 import { useLocationEventBus } from "./useLocationEventBus";
 import { useLocationTracking } from "./useLocationTracking";
@@ -28,6 +29,29 @@ export function useMapLocationValue(): MapLocationValue {
     onRequestSettled: locationEventBus.notifyRequestSettled,
   });
 
+  const {
+    heading: deviceHeading,
+    isTracking: isOrientationTracking,
+    isSupported: isOrientationSupported,
+    requestPermission: requestOrientationPermission,
+    startTracking: startOrientationTracking,
+    stopTracking: stopOrientationTracking,
+  } = useDeviceOrientation();
+
+  /*
+   * 센서가 없다고 확정되면 켜 둔 방향 추적을 스스로 끈다. 센서에만 딸린 규칙이라
+   * 센서를 쥔 쪽에서 한다.
+   *
+   * 카메라 추적(`isCameraCentered`)은 건드리지 않는다. 방향을 모른다고 해서 내 위치를
+   * 따라가는 것까지 멈출 이유는 없다.
+   */
+  useEffect(() => {
+    if (isOrientationSupported !== false) return;
+    if (!isOrientationTracking) return;
+
+    stopOrientationTracking();
+  }, [isOrientationSupported, isOrientationTracking, stopOrientationTracking]);
+
   return useMemo(
     () => ({
       permission,
@@ -39,8 +63,20 @@ export function useMapLocationValue(): MapLocationValue {
       startTracking,
       subscribeFirstLocation: locationEventBus.subscribeFirstLocation,
       subscribeRequestSettled: locationEventBus.subscribeRequestSettled,
+      deviceHeading,
+      isOrientationTracking,
+      isOrientationSupported,
+      requestOrientationPermission,
+      startOrientationTracking,
+      stopOrientationTracking,
     }),
     [
+      deviceHeading,
+      isOrientationTracking,
+      isOrientationSupported,
+      requestOrientationPermission,
+      startOrientationTracking,
+      stopOrientationTracking,
       permission,
       isTracking,
       isLocating,
