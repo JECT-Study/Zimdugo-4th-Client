@@ -91,6 +91,7 @@ import {
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import { useMapCamera } from "#/entities/map/model/useMapCamera";
 import { useMapInstance } from "#/entities/map/model/useMapInstance";
+import { useMapPressBus } from "#/entities/map/model/useMapPressBus";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { LockerMarkersLayer } from "#/entities/map/ui/LockerMarkersLayer";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
@@ -699,6 +700,7 @@ export function IndexPage() {
   const mapCamera = useMapCamera({
     getMap: () => mapInstanceRef.current,
   });
+  const mapPressBus = useMapPressBus();
 
   const mapRuntime = useMemo<MapRuntimeValue>(
     () => ({
@@ -706,8 +708,17 @@ export function IndexPage() {
       isLoading: isMapLoading,
       hasError: hasMapError,
       camera: mapCamera,
+      remount: remountMap,
+      subscribeMapPress: mapPressBus.subscribe,
     }),
-    [mapInstance, isMapLoading, hasMapError, mapCamera],
+    [
+      mapInstance,
+      isMapLoading,
+      hasMapError,
+      mapCamera,
+      remountMap,
+      mapPressBus.subscribe,
+    ],
   );
   const isCameraCenteredRef = useRef(false);
   const didApplyInitialGpsCenterRef = useRef(false);
@@ -3601,6 +3612,13 @@ export function IndexPage() {
   const handleMapPressRef = useRef(handleMapPress);
   handleMapPressRef.current = handleMapPress;
 
+  // 지도가 알리는 누름을 듣는다. 지도에게 이 핸들러를 직접 건네지 않는 이유는
+  // useMapPressBus 주석에 적었다.
+  useEffect(
+    () => mapPressBus.subscribe(() => handleMapPressRef.current()),
+    [mapPressBus.subscribe],
+  );
+
   // 지도 드래그 시 카메라 고정 해제 (GPS 유지), 바텀시트 snap 다운
   // 방향 트래킹은 드래그 후에도 유지된다 (Q1 결정 사항: 아이콘 방향 표시 유지).
   useEffect(() => {
@@ -3661,7 +3679,7 @@ export function IndexPage() {
               onWillDestroy={persistMapViewport}
               onLoadingChange={setIsMapLoading}
               onErrorChange={setHasMapError}
-              onMapPress={handleMapPress}
+              onMapPress={mapPressBus.notify}
               initialCenter={mapBootstrap.center}
               initialZoom={mapBootstrap.zoom}
             />

@@ -41,6 +41,8 @@ const runtime = (map: naver.maps.Map | null): MapRuntimeValue => ({
   isLoading: false,
   hasError: false,
   camera: { focusOn: vi.fn(), fitBounds: vi.fn(), getZoom: vi.fn() },
+  remount: vi.fn(),
+  subscribeMapPress: vi.fn(() => () => {}),
 });
 
 const noSelection: MapSelectionValue = {
