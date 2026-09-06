@@ -138,10 +138,7 @@ import {
   mergeStoredLockerDetailWithPreviousDistance,
 } from "#/features/search/model/locker-detail-display";
 import { resolveMapMarkerLayer } from "#/features/search/model/map-marker-layer-policy";
-import {
-  readRestoredSessionForTabReturn,
-  writeMapSheetSessionSnapshot,
-} from "#/features/search/model/map-sheet-session-storage";
+import { writeMapSheetSessionSnapshot } from "#/features/search/model/map-sheet-session-storage";
 import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
@@ -186,6 +183,7 @@ import {
   shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
+import { useMapEntryInputs } from "#/features/search/model/useMapEntryInputs";
 import {
   DEFAULT_SEARCH_COORDINATES,
   useMapSheetSession,
@@ -468,22 +466,23 @@ export function IndexPage() {
     toggleColorScheme: toggleMapColorScheme,
   } = useMapColorScheme();
 
-  const lockerIdFromQuery = parseLockerSearchParam(search.locker);
-  const openLockerId = lockerIdFromQuery ?? search.openLockerId;
-  const hasExplicitLockerEntry = openLockerId != null;
-  const restoredSession = useMemo(
-    () => (hasExplicitLockerEntry ? null : readRestoredSessionForTabReturn()),
-    [hasExplicitLockerEntry],
-  );
-  const { detailSnap, focusLat, focusLng } = search;
-  const searchQueryFromUrl =
-    typeof search.q === "string" ? search.q : undefined;
-  const searchPlaceIdFromUrl = readSearchPlaceIdParam(search.searchPlaceId);
-  const hasSearchPlaceEntry =
-    searchPlaceIdFromUrl !== undefined && !hasExplicitLockerEntry;
-  const hasSearchQueryEntry =
-    (searchQueryFromUrl !== undefined || hasSearchPlaceEntry) &&
-    !hasExplicitLockerEntry;
+  /*
+   * 주소가 지시하는 첫 화면의 조건. 레이아웃도 같은 값을 봐야 해서 훅 하나로 뒀다.
+   * 두 곳에서 따로 파생시키면 조건이 갈라진다.
+   */
+  const {
+    lockerIdFromQuery,
+    openLockerId,
+    hasExplicitLockerEntry,
+    detailSnap,
+    focusLat,
+    focusLng,
+    searchQueryFromUrl,
+    searchPlaceIdFromUrl,
+    hasSearchPlaceEntry,
+    hasSearchQueryEntry,
+    restoredSession,
+  } = useMapEntryInputs();
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pinSelectedInAppRef = useRef(false);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);

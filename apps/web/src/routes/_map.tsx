@@ -1,10 +1,5 @@
 import { languageTag } from "@repo/i18n";
-import {
-  createFileRoute,
-  Outlet,
-  useMatches,
-  useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef } from "react";
 import {
   NaverMapCanvas,
@@ -24,7 +19,7 @@ import { useMapLocationValue } from "#/entities/map/model/useMapLocationValue";
 import { useMapPressBus } from "#/entities/map/model/useMapPressBus";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
-import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
+import { useMapEntryInputs } from "#/features/search/model/useMapEntryInputs";
 import { DEFAULT_SEARCH_COORDINATES } from "#/features/search/model/useMapSheetSession";
 import { mapLayoutShell } from "./_map.css";
 import { pickMapLoaderDetail } from "./-map-loader-detail";
@@ -51,14 +46,9 @@ function MapLayout() {
    * 자식의 `loaderData` 는 통로를 내지 않고 `useMatches()` 로 읽는다. 라우터가 주는
    * 매치 목록에 자식 것이 이미 들어 있어, 지도를 올리려고 새 prop 을 뚫을 필요가 없다.
    */
-  const search = (useSearch({ strict: false }) || {}) as {
-    locker?: unknown;
-    focusLat?: number | null;
-    focusLng?: number | null;
-  };
+  const { lockerIdFromQuery, focusLat, focusLng } = useMapEntryInputs();
   const matches = useMatches();
   const detail = useMemo(() => pickMapLoaderDetail(matches), [matches]);
-  const lockerId = parseLockerSearchParam(search.locker);
 
   /*
    * 지도는 레이아웃이 쥔다.
@@ -96,9 +86,9 @@ function MapLayout() {
   });
 
   const initialCamera = useMapInitialCamera({
-    lockerId,
-    focusLat: search.focusLat,
-    focusLng: search.focusLng,
+    lockerId: lockerIdFromQuery,
+    focusLat,
+    focusLng,
     detail,
     fallbackCenter: DEFAULT_SEARCH_COORDINATES,
     detailZoom: DETAIL_FOCUS_ZOOM,
