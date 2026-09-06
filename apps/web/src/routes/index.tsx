@@ -1,9 +1,5 @@
 import { languageTag, m } from "@repo/i18n";
-import {
-  IconNavigationCrosshair24,
-  IconNavigationRefresh24,
-  IconX24,
-} from "@repo/ui/assets/icons";
+import { IconX24 } from "@repo/ui/assets/icons";
 import { Popup } from "@repo/ui/components/popup";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,9 +7,10 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { motion, useMotionTemplate, useMotionValue } from "motion/react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMotionTemplate, useMotionValue } from "motion/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
+import { HomeMapControls } from "#/composites/home/HomeMapControls";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
@@ -109,7 +106,6 @@ import {
 } from "#/features/locker-correction/api/create-locker-issue-report";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { useHasActiveLockerTimer } from "#/features/locker-timer/hooks/useActiveLockerTimer";
-import { LockerTimerMapControl } from "#/features/locker-timer/ui/LockerTimerMapControl";
 import { LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX } from "#/features/locker-timer/ui/LockerTimerMapControl.css";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
@@ -231,19 +227,12 @@ import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
 import {
-  locationButton,
-  locationControlStack,
-  locationLoadingBadge,
   locationRecoveryNotice,
   locationRecoveryNoticeAction,
   locationRecoveryNoticeClose,
   locationRecoveryNoticeMessage,
   locationRecoveryNoticePositioner,
-  myLocationIcon,
   pageWrapper,
-  refreshButtonDisabled,
-  refreshCooldownBadge,
-  refreshIconSpinning,
 } from "./-index.css";
 import {
   resolveMapControlBottomPx,
@@ -481,92 +470,6 @@ export const Route = createFileRoute("/")({
     };
   },
   component: IndexPage,
-});
-
-interface RefreshButtonProps {
-  isRefreshing: boolean;
-  isMapReady: boolean;
-  /** 다른 컨트롤이 동작 중이면 같이 잠근다 */
-  isOtherControlBusy: boolean;
-  isRefreshSpinning: boolean;
-  refreshCooldownRemaining: number;
-  onRefresh: () => void;
-}
-
-const RefreshButton = memo(function RefreshButton({
-  isRefreshing,
-  isMapReady,
-  isOtherControlBusy,
-  isRefreshSpinning,
-  refreshCooldownRemaining,
-  onRefresh,
-}: RefreshButtonProps) {
-  const isDisabled = isRefreshing || !isMapReady || isOtherControlBusy;
-  return (
-    <button
-      type="button"
-      className={[locationButton, isDisabled ? refreshButtonDisabled : ""]
-        .filter(Boolean)
-        .join(" ")}
-      onClick={onRefresh}
-      aria-label={m.home_map_refresh_aria()}
-      disabled={isDisabled}
-    >
-      <IconNavigationRefresh24
-        state={isDisabled ? "refresh" : "refreshActive"}
-        className={isRefreshSpinning ? refreshIconSpinning : ""}
-      />
-      {isRefreshing && !isRefreshSpinning && refreshCooldownRemaining > 0 && (
-        <div className={refreshCooldownBadge}>{refreshCooldownRemaining}</div>
-      )}
-    </button>
-  );
-});
-
-interface MyLocationButtonProps {
-  permission: PermissionState;
-  /** 다른 컨트롤이 동작 중이면 같이 잠근다 */
-  isOtherControlBusy: boolean;
-  isCameraCentered: boolean;
-  isLocating: boolean;
-  isOrientationTracking: boolean;
-  onMyLocation: () => void;
-}
-
-const MyLocationButton = memo(function MyLocationButton({
-  permission,
-  isOtherControlBusy,
-  isCameraCentered,
-  isLocating,
-  isOrientationTracking,
-  onMyLocation,
-}: MyLocationButtonProps) {
-  return (
-    <button
-      type="button"
-      className={locationButton}
-      onClick={onMyLocation}
-      disabled={isLocating || isOtherControlBusy}
-      aria-busy={isLocating}
-      aria-label={
-        isLocating ? m.location_loading_aria() : m.home_my_location_aria()
-      }
-    >
-      <IconNavigationCrosshair24
-        className={myLocationIcon}
-        state={
-          permission === "denied"
-            ? "denied"
-            : isCameraCentered || isOrientationTracking
-              ? "active"
-              : "default"
-        }
-      />
-      {isLocating ? (
-        <span className={locationLoadingBadge} aria-hidden="true" />
-      ) : null}
-    </button>
-  );
 });
 
 export function IndexPage() {
@@ -3756,42 +3659,21 @@ export function IndexPage() {
         <MapControlsSkeleton bottomPx={mapControlBottom} />
       ) : (shouldRenderMapControls || isRefreshing) &&
         mapControlBottom !== null ? (
-        <motion.div
-          className={locationControlStack}
-          // E2E 가 위치를 재는 앵커. 스켈레톤과 구분되도록 실제 컨트롤에만 둔다.
-          data-map-control-stack=""
-          initial={false}
-          /*
-            바닥 위치는 늘 같은 모션 값이 쥔다. 시트가 없으면 그 값이 기본 자리를
-            가리키므로 따로 갈아끼울 필요가 없다.
-
-            모션 값과 정적 값을 오가게 두면, 전환하는 순간 DOM 에 남은 인라인
-            스타일이 갱신되지 않고 굳는 경우가 있었다. 시트가 사라졌는데 컨트롤만
-            시트 윗변에 남는 화면이 그것이다. 한쪽만 쓰면 그 틈이 없다.
-          */
-          style={{ bottom: mapControlRaisedBottom }}
-        >
-          <LockerTimerMapControl
-            buttonClassName={locationButton}
-            onSelect={handleTimerControlSelect}
-          />
-          <RefreshButton
-            isRefreshing={isRefreshing}
-            isMapReady={!!mapInstance}
-            isOtherControlBusy={isLocating || isMyLocationPending}
-            isRefreshSpinning={isRefreshSpinning}
-            refreshCooldownRemaining={refreshCooldownRemaining}
-            onRefresh={handleRefreshMap}
-          />
-          <MyLocationButton
-            permission={permission}
-            isOtherControlBusy={isRefreshing}
-            isCameraCentered={isCameraCentered}
-            isLocating={isLocating || isMyLocationPending}
-            isOrientationTracking={isOrientationTracking}
-            onMyLocation={handleMyLocation}
-          />
-        </motion.div>
+        <HomeMapControls
+          bottom={mapControlRaisedBottom}
+          isMapReady={!!mapInstance}
+          isRefreshing={isRefreshing}
+          isRefreshSpinning={isRefreshSpinning}
+          refreshCooldownRemaining={refreshCooldownRemaining}
+          onRefresh={handleRefreshMap}
+          permission={permission}
+          isCameraCentered={isCameraCentered}
+          isLocating={isLocating}
+          isMyLocationPending={isMyLocationPending}
+          isOrientationTracking={isOrientationTracking}
+          onMyLocation={handleMyLocation}
+          onTimerSelect={handleTimerControlSelect}
+        />
       ) : null}
 
       {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (

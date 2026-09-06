@@ -1,23 +1,15 @@
-import {
-  IconNavigationCrosshair24,
-  IconNavigationRefresh24,
-} from "@repo/ui/assets/icons";
 import type { Meta, StoryObj } from "@storybook/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMotionValue } from "motion/react";
+import { useEffect, useMemo } from "react";
 import { resolveDetailSheetVisibleHeight } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { createBottomMapInset } from "#/entities/map/model/map-inset";
 import { MAP_CONTROL_FALLBACK_BOTTOM_PX } from "#/entities/map/ui/map-control-stack-fallback";
 import { PUSH_REMINDER_QUERY_KEY } from "#/features/locker-timer/model/push-reminder-queries";
-import { LockerTimerMapControl } from "#/features/locker-timer/ui/LockerTimerMapControl";
-import {
-  locationButton,
-  locationControlStack,
-  myLocationIcon,
-} from "#/routes/-index.css";
 import { resolveMapControlBottomPx } from "#/routes/-map-control-visibility";
 import { HomeHeader } from "./HomeHeader";
+import { HomeMapControls } from "./HomeMapControls";
 
 const createStoryQueryClient = (hasActiveTimer: boolean) => {
   const client = new QueryClient({
@@ -90,6 +82,18 @@ function HomeMapChromePreview({
     [hasActiveTimer],
   );
 
+  /**
+   * 실제 앱은 늘 모션 값으로 바닥을 쥔다(HomeMapControls 주석 참고). 스토리도 같은
+   * 모양으로 넘겨야 같은 코드를 본다. useMotionValue 는 첫 값만 받으므로 args 가
+   * 바뀌면 set 으로 따라간다.
+   */
+  const controlBottomValue = useMotionValue(controlBottom ?? 0);
+  useEffect(() => {
+    if (controlBottom !== null) {
+      controlBottomValue.set(controlBottom);
+    }
+  }, [controlBottom, controlBottomValue]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <main
@@ -115,29 +119,21 @@ function HomeMapChromePreview({
         <HomeSearchBar onOpenSearch={() => undefined} />
         {/* null 은 놓을 자리가 없다는 뜻이다. 실제 앱도 이때 렌더하지 않는다. */}
         {controlBottom !== null && (
-          <div
-            className={locationControlStack}
-            style={{ bottom: controlBottom }}
-          >
-            <LockerTimerMapControl
-              buttonClassName={locationButton}
-              onSelect={() => {}}
-            />
-            <button
-              type="button"
-              className={locationButton}
-              aria-label="지도 새로고침"
-            >
-              <IconNavigationRefresh24 />
-            </button>
-            <button
-              type="button"
-              className={locationButton}
-              aria-label="내 위치"
-            >
-              <IconNavigationCrosshair24 className={myLocationIcon} />
-            </button>
-          </div>
+          <HomeMapControls
+            bottom={controlBottomValue}
+            isMapReady
+            isRefreshing={false}
+            isRefreshSpinning={false}
+            refreshCooldownRemaining={0}
+            onRefresh={() => undefined}
+            permission="granted"
+            isCameraCentered={false}
+            isLocating={false}
+            isMyLocationPending={false}
+            isOrientationTracking={false}
+            onMyLocation={() => undefined}
+            onTimerSelect={() => undefined}
+          />
         )}
       </main>
     </QueryClientProvider>
