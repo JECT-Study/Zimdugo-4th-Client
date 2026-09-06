@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { MapViewportCoord } from "./map-idle-controller";
 import {
   type ResolvedMapBootstrapViewport,
@@ -63,11 +63,24 @@ export function useMapInitialCamera({
 }: UseMapInitialCameraOptions): ResolvedMapBootstrapViewport {
   const rememberedDeepLinkCenterRef = useRef<MapViewportCoord | null>(null);
 
-  if (focusLat != null && focusLng != null) {
-    rememberedDeepLinkCenterRef.current = { lat: focusLat, lng: focusLng };
-  } else if (lockerId === undefined) {
-    rememberedDeepLinkCenterRef.current = null;
-  }
+  /*
+   * 렌더 중에 쓰지 않는다. 라우터 전환의 렌더는 버려질 수 있는데, 그때 이 ref 는
+   * 살아 있는 트리와 공유되므로 버려진 렌더가 기억을 지워 버린다.
+   *
+   * 대신 한 렌더 늦는다. 상세를 닫은 그 렌더에서는 아직 옛 좌표를 들고 있다.
+   * 이 값은 **지도를 만드는 순간에만** 읽히고, 지도를 다시 만드는 계기(테마 변경·
+   * 새로고침)는 상세를 닫는 것과 다른 동작이라 같은 렌더에 겹치지 않는다.
+   */
+  useEffect(() => {
+    if (focusLat != null && focusLng != null) {
+      rememberedDeepLinkCenterRef.current = { lat: focusLat, lng: focusLng };
+      return;
+    }
+
+    if (lockerId === undefined) {
+      rememberedDeepLinkCenterRef.current = null;
+    }
+  }, [focusLat, focusLng, lockerId]);
 
   /**
    * 상세를 보고 있지 않을 때만 저장된 뷰포트를 쓴다. 딥링크로 연 상세는 그 자리를

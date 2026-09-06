@@ -112,7 +112,12 @@ describe("useMapInitialCamera", () => {
     expect(result.current.center).toEqual(DEEP_LINK);
   });
 
-  it("상세를 닫으면 딥링크 좌표를 잊는다", () => {
+  /**
+   * 잊는 것은 커밋된 뒤다. 상세를 닫은 그 렌더에서는 아직 들고 있고, 그다음 지도를
+   * 다시 만들 때 비로소 잊혀 있다. 두 동작이 같은 렌더에 겹치지 않으므로 카메라에는
+   * 닿지 않는다.
+   */
+  it("상세를 닫은 뒤 지도를 다시 만들면 딥링크 좌표를 잊는다", () => {
     const { result, rerender } = renderHook(
       (props: Options) => useMapInitialCamera(props),
       {
@@ -124,6 +129,7 @@ describe("useMapInitialCamera", () => {
       },
     );
 
+    rerender(options({}));
     rerender(options({ remountKey: 1 }));
 
     expect(result.current.center).toEqual(DEFAULT_MAP_CENTER);
