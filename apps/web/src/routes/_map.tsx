@@ -1,8 +1,32 @@
 import { languageTag } from "@repo/i18n";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { NaverMapProvider, useMapColorScheme } from "#/entities/map";
+import {
+  createFileRoute,
+  Outlet,
+  useMatches,
+  useSearch,
+} from "@tanstack/react-router";
+import { useCallback, useMemo, useRef } from "react";
+import {
+  NaverMapCanvas,
+  NaverMapProvider,
+  useMapColorScheme,
+} from "#/entities/map";
 import { MapLocationProvider } from "#/entities/map/model/MapLocationProvider";
+import {
+  MapRuntimeProvider,
+  type MapRuntimeValue,
+} from "#/entities/map/model/MapRuntimeProvider";
+import { DETAIL_FOCUS_ZOOM } from "#/entities/map/model/map-viewport-bootstrap";
+import { useMapCamera } from "#/entities/map/model/useMapCamera";
+import { useMapInitialCamera } from "#/entities/map/model/useMapInitialCamera";
+import { useMapInstance } from "#/entities/map/model/useMapInstance";
 import { useMapLocationValue } from "#/entities/map/model/useMapLocationValue";
+import { useMapPressBus } from "#/entities/map/model/useMapPressBus";
+import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
+import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
+import { DEFAULT_SEARCH_COORDINATES } from "#/features/search/model/useMapSheetSession";
+import { mapLayoutShell } from "./_map.css";
+import { pickMapLoaderDetail } from "./-map-loader-detail";
 
 /**
  * 지도를 얹는 화면들이 공유하는 레이아웃.
@@ -19,29 +43,114 @@ export const Route = createFileRoute("/_map")({
 
 function MapLayout() {
   const { colorScheme } = useMapColorScheme();
-
-  /*
-   * 위치는 레이아웃이 쥔다. 지도의 초기 카메라(`resolveMapBootstrapViewport`)가
-   * 권한과 GPS 를 보므로, 지도가 이 자리로 올라오려면 위치가 먼저 와 있어야 한다.
-   *
-   * 화면의 일은 하나도 하지 않는다. 첫 위치에 카메라를 옮기고 오류 팝업을 여는 것은
-   * 여전히 화면의 몫이라, #242 에서 뒤집어 둔 알림 둘을 그대로 흘려보내고 화면이
-   * 듣는다. 그래서 이 훅은 어떤 화면이 `<Outlet />` 에 있든 같은 인자로 돈다.
-   */
   const mapLocation = useMapLocationValue();
+  /*
+   * 초기 카메라가 보는 것은 URL 과 자식의 로더뿐이다(#245).
+   *
+   * 자식의 `loaderData` 는 통로를 내지 않고 `useMatches()` 로 읽는다. 라우터가 주는
+   * 매치 목록에 자식 것이 이미 들어 있어, 지도를 올리려고 새 prop 을 뚫을 필요가 없다.
+   */
+  const search = (useSearch({ strict: false }) || {}) as {
+    locker?: unknown;
+    focusLat?: number | null;
+    focusLng?: number | null;
+  };
+  const matches = useMatches();
+  const detail = useMemo(() => pickMapLoaderDetail(matches), [matches]);
+  const lockerId = parseLockerSearchParam(search.locker);
 
   /*
-   * SDK 는 레이아웃이 쥔다. 스크립트 로딩·인증·스타일 옵션은 어느 화면을 보고 있든
-   * 같고, 화면에서 오는 값이 하나도 없다(#215 의 1-3 에서 지도가 올라올 자리).
+   * 지도는 레이아웃이 쥔다.
    *
-   * 지도 인스턴스와 마커는 아직 자식에 있다. 그쪽은 검색·선택 상태를 보므로 함께
-   * 올라가야 하고, 그건 다음 조각이다. 자식이 `<Outlet />` 안에 있으므로 이 프로바이더
-   * 아래에 놓여 `useNaverMapSdk` 는 그대로 동작한다.
+   * 지도가 화면에서 받던 것을 하나씩 끊어 왔다 — #236 이 `onMapPress`, #242 가 위치
+   * 콜백, #244 가 `onLoad`, #245 가 `initialCenter` 다. 이제 지도가 받는 값 중 화면
+   * 상태를 보는 것은 하나도 없어서, 어떤 화면이 `<Outlet />` 에 있든 같은 지도가 뜬다.
    */
+  const mapInstanceRef = useRef<naver.maps.Map | null>(null);
+  const getMap = useCallback(() => mapInstanceRef.current, []);
+  const {
+    map,
+    isLoading,
+    hasError,
+    remountKey,
+    attach,
+    remount,
+    setIsLoading,
+    setHasError,
+  } = useMapInstance({ mapRef: mapInstanceRef });
+  const camera = useMapCamera({ getMap });
+  const mapPressBus = useMapPressBus();
+
+  /*
+   * 카메라 저장이 초기 GPS 센터링보다 뒤에 붙어야 한다. `subscribeMapIdle` 이 구독
+   * 즉시 handler 를 한 번 부르므로, 앞서면 첫 저장이 GPS 적용 전 카메라를 잡는다.
+   *
+   * 이 자리가 그 순서를 지킨다. 센터링은 `<Outlet />` 자식의 이펙트고 React 는 자식의
+   * 이펙트를 먼저 돌리므로, 레이아웃에 있는 이 훅은 언제나 그 뒤다. 예전에는 같은
+   * 컴포넌트 안에서 선언 순서로 지키던 것이라 주석으로 붙들어야 했다.
+   */
+  const { persistMapViewport, saveMapViewport } = useMapViewportPersistence({
+    map,
+    getMap,
+  });
+
+  const initialCamera = useMapInitialCamera({
+    lockerId,
+    focusLat: search.focusLat,
+    focusLng: search.focusLng,
+    detail,
+    fallbackCenter: DEFAULT_SEARCH_COORDINATES,
+    detailZoom: DETAIL_FOCUS_ZOOM,
+    permission: mapLocation.permission,
+    location: mapLocation.location,
+    remountKey,
+  });
+
+  /** 다시 만들기 전에 보던 자리를 저장한다. 카메라를 지키는 것은 쥔 쪽의 일이다. */
+  const remountWithSavedViewport = useCallback(() => {
+    saveMapViewport();
+    remount();
+  }, [remount, saveMapViewport]);
+
+  const mapRuntime = useMemo<MapRuntimeValue>(
+    () => ({
+      map,
+      isLoading,
+      hasError,
+      camera,
+      initialCamera,
+      remount: remountWithSavedViewport,
+      subscribeMapPress: mapPressBus.subscribe,
+    }),
+    [
+      map,
+      isLoading,
+      hasError,
+      camera,
+      initialCamera,
+      remountWithSavedViewport,
+      mapPressBus.subscribe,
+    ],
+  );
+
   return (
     <NaverMapProvider colorScheme={colorScheme} language={languageTag()}>
       <MapLocationProvider value={mapLocation}>
-        <Outlet />
+        <MapRuntimeProvider value={mapRuntime}>
+          <div className={mapLayoutShell}>
+            <NaverMapCanvas
+              key={remountKey}
+              onLoad={attach}
+              onWillDestroy={persistMapViewport}
+              onLoadingChange={setIsLoading}
+              onErrorChange={setHasError}
+              onMapPress={mapPressBus.notify}
+              initialCenter={initialCamera.center}
+              initialZoom={initialCamera.zoom}
+            />
+            <Outlet />
+          </div>
+        </MapRuntimeProvider>
       </MapLocationProvider>
     </NaverMapProvider>
   );

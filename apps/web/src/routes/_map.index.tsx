@@ -48,11 +48,7 @@ import type {
   LockerDetailItem,
   LockerDetailLoadState,
 } from "#/entities/locker/model/locker-detail";
-import {
-  MapControlsSkeleton,
-  NaverMapCanvas,
-  useMapColorScheme,
-} from "#/entities/map";
+import { MapControlsSkeleton, useMapColorScheme } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
   clearHomeLocationRequestedInSession,
@@ -62,10 +58,7 @@ import {
 import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import { resolveLocationRequestSettlement } from "#/entities/map/model/location-request-settlement";
 import { useMapLocation } from "#/entities/map/model/MapLocationProvider";
-import {
-  MapRuntimeProvider,
-  type MapRuntimeValue,
-} from "#/entities/map/model/MapRuntimeProvider";
+import { useMapRuntime } from "#/entities/map/model/MapRuntimeProvider";
 import {
   MapSelectionProvider,
   type MapSelectionValue,
@@ -78,6 +71,7 @@ import {
   type LockerMarkerOffset,
 } from "#/entities/map/model/map-marker";
 import { applyFavoriteOverlayToPins } from "#/entities/map/model/map-pin-favorite";
+import { DETAIL_FOCUS_ZOOM } from "#/entities/map/model/map-viewport-bootstrap";
 import { useHasRequestedHomeLocationInSession } from "#/entities/map/model/useHomeLocationRequestSession";
 import { useLocationIntent } from "#/entities/map/model/useLocationIntent";
 import type {
@@ -85,11 +79,6 @@ import type {
   LocationRequestOutcome,
 } from "#/entities/map/model/useLocationTracking";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
-import { useMapCamera } from "#/entities/map/model/useMapCamera";
-import { useMapInitialCamera } from "#/entities/map/model/useMapInitialCamera";
-import { useMapInstance } from "#/entities/map/model/useMapInstance";
-import { useMapPressBus } from "#/entities/map/model/useMapPressBus";
-import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { LockerMarkersLayer } from "#/entities/map/ui/LockerMarkersLayer";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import {
@@ -241,7 +230,6 @@ import {
   shouldShowMapControls,
 } from "./-map-control-visibility";
 
-export const DETAIL_FOCUS_ZOOM = 17;
 /**
  * 서버·프리렌더에서 뷰포트 높이를 알 수 없을 때 쓰는 값.
  * 클라이언트 첫 렌더도 이 값으로 시작해야 하이드레이션이 어긋나지 않는다.
@@ -586,40 +574,27 @@ export function IndexPage() {
     },
     [setSearchQuery, syncSearchQueryUrl],
   );
-  const mapInstanceRef = useRef<naver.maps.Map | null>(null);
+  /*
+   * 지도는 `_map` 레이아웃이 쥔다(#215 의 1-3). 이 화면은 읽고, 카메라에 명령하고,
+   * 다시 만들어 달라고 부탁하고, 누름을 들을 뿐이다.
+   */
   const {
     map: mapInstance,
     isLoading: isMapLoading,
     hasError: hasMapError,
-    remountKey: mapRemountKey,
-    attach: attachMapInstance,
+    camera: mapCamera,
+    initialCamera: mapBootstrap,
     remount: remountMap,
-    setIsLoading: setIsMapLoading,
-    setHasError: setHasMapError,
-  } = useMapInstance({ mapRef: mapInstanceRef });
-  const mapCamera = useMapCamera({
-    getMap: () => mapInstanceRef.current,
-  });
-  const mapPressBus = useMapPressBus();
+    subscribeMapPress,
+  } = useMapRuntime();
 
-  const mapRuntime = useMemo<MapRuntimeValue>(
-    () => ({
-      map: mapInstance,
-      isLoading: isMapLoading,
-      hasError: hasMapError,
-      camera: mapCamera,
-      remount: remountMap,
-      subscribeMapPress: mapPressBus.subscribe,
-    }),
-    [
-      mapInstance,
-      isMapLoading,
-      hasMapError,
-      mapCamera,
-      remountMap,
-      mapPressBus.subscribe,
-    ],
-  );
+  /*
+   * 콜백 열댓 군데가 "지금 지도"를 동기로 읽는다. 그 자리들이 의존성 배열까지 함께
+   * 바뀌지 않도록 렌더마다 갱신하는 거울을 둔다. 소유는 여전히 레이아웃에 있고
+   * 이쪽은 마지막 렌더의 지도를 비출 뿐이다.
+   */
+  const mapInstanceRef = useRef<naver.maps.Map | null>(null);
+  mapInstanceRef.current = mapInstance;
   const isCameraCenteredRef = useRef(false);
   const didApplyInitialGpsCenterRef = useRef(false);
   const hasUserMovedMapBeforeInitialGpsRef = useRef(false);
@@ -1144,18 +1119,6 @@ export function IndexPage() {
     startTracking,
   ]);
 
-  const mapBootstrap = useMapInitialCamera({
-    lockerId: lockerIdFromQuery,
-    focusLat,
-    focusLng,
-    detail: loaderData?.detail,
-    fallbackCenter: DEFAULT_SEARCH_COORDINATES,
-    detailZoom: DETAIL_FOCUS_ZOOM,
-    permission,
-    location,
-    remountKey: mapRemountKey,
-  });
-
   useEffect(() => {
     if (
       didApplyInitialGpsCenterRef.current ||
@@ -1243,21 +1206,8 @@ export function IndexPage() {
   const [refreshCooldownRemaining, setRefreshCooldownRemaining] = useState(0);
   const [isRefreshSpinning, setIsRefreshSpinning] = useState(false);
 
-  /**
-   * mapInstance 선언 자리까지 끌어올리지 않는다. subscribeMapIdle 이 구독 즉시
-   * handler 를 한 번 부르므로, 초기 GPS 센터링 이펙트보다 앞서면 첫 저장이 GPS
-   * 적용 전 카메라를 잡는다. 지도 생명주기를 한곳에 모으는 일은 지도가 레이아웃
-   * 라우트로 올라갈 때(#215) 함께 정리한다.
-   */
-  const { persistMapViewport, saveMapViewport } = useMapViewportPersistence({
-    map: mapInstance,
-    getMap: () => mapInstanceRef.current,
-  });
-
   const handleRefreshMap = useCallback(() => {
     if (!mapInstanceRef.current || isRefreshing) return;
-
-    saveMapViewport();
 
     setIsRefreshing(true);
     setRefreshCooldownRemaining(5);
@@ -1284,7 +1234,9 @@ export function IndexPage() {
         return prev - 1;
       });
     }, 1000);
-  }, [isRefreshing, queryClient, remountMap, saveMapViewport]);
+    // 보던 자리를 저장하는 것은 remountMap 이 함께 한다. 카메라를 지키는 일은
+    // 지도를 쥔 쪽의 몫이다.
+  }, [isRefreshing, queryClient, remountMap]);
 
   const clearPendingLockerDetailOpen = useCallback(() => {
     window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
@@ -3501,8 +3453,8 @@ export function IndexPage() {
   // 지도가 알리는 누름을 듣는다. 지도에게 이 핸들러를 직접 건네지 않는 이유는
   // useMapPressBus 주석에 적었다.
   useEffect(
-    () => mapPressBus.subscribe(() => handleMapPressRef.current()),
-    [mapPressBus.subscribe],
+    () => subscribeMapPress(() => handleMapPressRef.current()),
+    [subscribeMapPress],
   );
 
   // 지도 드래그 시 카메라 고정 해제 (GPS 유지), 바텀시트 snap 다운
@@ -3556,77 +3508,65 @@ export function IndexPage() {
         />
       ) : null}
 
-      <MapRuntimeProvider value={mapRuntime}>
-        <MapSelectionProvider value={mapSelection}>
-          <NaverMapCanvas
-            key={mapRemountKey}
-            onLoad={attachMapInstance}
-            onWillDestroy={persistMapViewport}
-            onLoadingChange={setIsMapLoading}
-            onErrorChange={setHasMapError}
-            onMapPress={mapPressBus.notify}
-            initialCenter={mapBootstrap.center}
-            initialZoom={mapBootstrap.zoom}
+      <MapSelectionProvider value={mapSelection}>
+        <MyLocationMarker
+          map={mapInstance}
+          location={location}
+          deviceHeading={deviceHeading}
+          isOrientationTracking={isOrientationTracking}
+        />
+        {!isMapLoading && markerLayer === "idle" && (
+          <LockerMarkersLayer
+            onSelectPin={handleIdlePinSelect}
+            onClusterClick={handleClusterClick}
           />
-          <MyLocationMarker
-            map={mapInstance}
-            location={location}
-            deviceHeading={deviceHeading}
-            isOrientationTracking={isOrientationTracking}
+        )}
+        {!isMapLoading && shouldUseKeywordSearchPinLayer && (
+          <LockerMarkersLayer
+            searchParams={keywordSearchParams}
+            onSelectPin={handleSearchMarkerSelect}
+            onClusterClick={handleClusterClick}
+            resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
           />
-          {!isMapLoading && markerLayer === "idle" && (
-            <LockerMarkersLayer
-              onSelectPin={handleIdlePinSelect}
-              onClusterClick={handleClusterClick}
+        )}
+        {!isMapLoading &&
+          !shouldUseKeywordSearchPinLayer &&
+          (markerLayer === "search" ||
+            markerLayer === "mapPlace" ||
+            markerLayer === "selectedMapDetail") && (
+            <SearchResultMarkersLayer
+              pins={
+                markerLayer === "search"
+                  ? searchResultPins
+                  : markerLayer === "mapPlace"
+                    ? mapPlacePins
+                    : selectedMapDetailPins
+              }
+              onSelectLocker={
+                markerLayer === "search"
+                  ? handleSearchMarkerSelect
+                  : markerLayer === "mapPlace"
+                    ? handleMapPlaceMarkerSelect
+                    : handleSelectedMapDetailMarkerSelect
+              }
+              spreadCenter={
+                (markerLayer === "mapPlace" ||
+                  (markerLayer === "search" && listKind === "place")) &&
+                lastValidSpreadCenterRef.current?.placeId === activePlaceId
+                  ? {
+                      lat: lastValidSpreadCenterRef.current.latitude,
+                      lng: lastValidSpreadCenterRef.current.longitude,
+                    }
+                  : undefined
+              }
+              preservedOffsets={
+                markerLayer === "selectedMapDetail"
+                  ? selectedPinPreservedOffsets
+                  : undefined
+              }
             />
           )}
-          {!isMapLoading && shouldUseKeywordSearchPinLayer && (
-            <LockerMarkersLayer
-              searchParams={keywordSearchParams}
-              onSelectPin={handleSearchMarkerSelect}
-              onClusterClick={handleClusterClick}
-              resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
-            />
-          )}
-          {!isMapLoading &&
-            !shouldUseKeywordSearchPinLayer &&
-            (markerLayer === "search" ||
-              markerLayer === "mapPlace" ||
-              markerLayer === "selectedMapDetail") && (
-              <SearchResultMarkersLayer
-                pins={
-                  markerLayer === "search"
-                    ? searchResultPins
-                    : markerLayer === "mapPlace"
-                      ? mapPlacePins
-                      : selectedMapDetailPins
-                }
-                onSelectLocker={
-                  markerLayer === "search"
-                    ? handleSearchMarkerSelect
-                    : markerLayer === "mapPlace"
-                      ? handleMapPlaceMarkerSelect
-                      : handleSelectedMapDetailMarkerSelect
-                }
-                spreadCenter={
-                  (markerLayer === "mapPlace" ||
-                    (markerLayer === "search" && listKind === "place")) &&
-                  lastValidSpreadCenterRef.current?.placeId === activePlaceId
-                    ? {
-                        lat: lastValidSpreadCenterRef.current.latitude,
-                        lng: lastValidSpreadCenterRef.current.longitude,
-                      }
-                    : undefined
-                }
-                preservedOffsets={
-                  markerLayer === "selectedMapDetail"
-                    ? selectedPinPreservedOffsets
-                    : undefined
-                }
-              />
-            )}
-        </MapSelectionProvider>
-      </MapRuntimeProvider>
+      </MapSelectionProvider>
       {/*
         배치 불가(null)면 스켈레톤도 내보내지 않는다. 실제 컨트롤은 바로 아래
         분기에서 숨겨지므로, 스켈레톤만 남기면 지도가 준비되는 순간 버튼이 사라진다.

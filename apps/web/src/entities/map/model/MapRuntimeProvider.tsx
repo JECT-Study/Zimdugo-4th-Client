@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useContext } from "react";
+import type { ResolvedMapBootstrapViewport } from "./map-viewport-bootstrap";
 import type { useMapCamera } from "./useMapCamera";
 import type { MapPressBus } from "./useMapPressBus";
 
@@ -11,6 +12,13 @@ export interface MapRuntimeValue {
   hasError: boolean;
   /** 카메라에 내리는 명령. */
   camera: ReturnType<typeof useMapCamera>;
+  /**
+   * 이 지도가 뜬 자리와 배율.
+   *
+   * 지도를 만들 때 쓴 값이지 지금 카메라가 아니다. 첫 GPS 를 받았을 때 그동안
+   * 사용자가 지도를 옮겼는지 가리려면 출발점을 알아야 해서 내려 준다.
+   */
+  initialCamera: ResolvedMapBootstrapViewport;
   /**
    * 지도를 다시 만든다.
    *
