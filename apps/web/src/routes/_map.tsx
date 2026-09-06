@@ -1,6 +1,8 @@
 import { languageTag } from "@repo/i18n";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { NaverMapProvider, useMapColorScheme } from "#/entities/map";
+import { MapLocationProvider } from "#/entities/map/model/MapLocationProvider";
+import { useMapLocationValue } from "#/entities/map/model/useMapLocationValue";
 
 /**
  * 지도를 얹는 화면들이 공유하는 레이아웃.
@@ -9,7 +11,7 @@ import { NaverMapProvider, useMapColorScheme } from "#/entities/map";
  * 설정(`vite.config.ts` 의 `prerenderRoutes`)도 경로 문자열 기준이라 그대로 맞는다.
  *
  * `settings` · `notices` · `my` · `report` · `login` 은 지도를 쓰지 않으므로 이 아래에
- * 두지 않는다. 나중에 위치 추적이 이 자리로 올라오면 그 화면들에서도 GPS 가 켜진다.
+ * 두지 않는다. 위치 추적이 이 자리에 있어, 아래에 두면 그 화면들에서도 GPS 가 켜진다.
  */
 export const Route = createFileRoute("/_map")({
   component: MapLayout,
@@ -17,6 +19,16 @@ export const Route = createFileRoute("/_map")({
 
 function MapLayout() {
   const { colorScheme } = useMapColorScheme();
+
+  /*
+   * 위치는 레이아웃이 쥔다. 지도의 초기 카메라(`resolveMapBootstrapViewport`)가
+   * 권한과 GPS 를 보므로, 지도가 이 자리로 올라오려면 위치가 먼저 와 있어야 한다.
+   *
+   * 화면의 일은 하나도 하지 않는다. 첫 위치에 카메라를 옮기고 오류 팝업을 여는 것은
+   * 여전히 화면의 몫이라, #242 에서 뒤집어 둔 알림 둘을 그대로 흘려보내고 화면이
+   * 듣는다. 그래서 이 훅은 어떤 화면이 `<Outlet />` 에 있든 같은 인자로 돈다.
+   */
+  const mapLocation = useMapLocationValue();
 
   /*
    * SDK 는 레이아웃이 쥔다. 스크립트 로딩·인증·스타일 옵션은 어느 화면을 보고 있든
@@ -28,7 +40,9 @@ function MapLayout() {
    */
   return (
     <NaverMapProvider colorScheme={colorScheme} language={languageTag()}>
-      <Outlet />
+      <MapLocationProvider value={mapLocation}>
+        <Outlet />
+      </MapLocationProvider>
     </NaverMapProvider>
   );
 }
