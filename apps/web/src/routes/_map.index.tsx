@@ -11,6 +11,7 @@ import { useMotionTemplate, useMotionValue } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HomeHeader } from "#/composites/home/HomeHeader";
 import { HomeMapControls } from "#/composites/home/HomeMapControls";
+import { HomeMapMarkers } from "#/composites/home/HomeMapMarkers";
 import {
   LOCKER_DETAIL_FULL_TOP_OFFSET,
   LockerDetailBottomSheet,
@@ -79,13 +80,11 @@ import type {
   LocationRequestOutcome,
 } from "#/entities/map/model/useLocationTracking";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
-import { LockerMarkersLayer } from "#/entities/map/ui/LockerMarkersLayer";
 import {
   MAP_CONTROL_FALLBACK_BOTTOM_PX,
   MAP_CONTROL_SHEET_GAP_PX,
   resolveMapControlTopReservedPx,
 } from "#/entities/map/ui/map-control-stack-fallback";
-import { SearchResultMarkersLayer } from "#/entities/map/ui/SearchResultMarkersLayer";
 import type { SearchAutocompleteItemData } from "#/entities/search";
 import { useUser } from "#/entities/user/hooks/useUser";
 import {
@@ -3495,57 +3494,37 @@ export function IndexPage() {
       ) : null}
 
       <MapSelectionProvider value={mapSelection}>
-        {!isMapLoading && markerLayer === "idle" && (
-          <LockerMarkersLayer
-            onSelectPin={handleIdlePinSelect}
-            onClusterClick={handleClusterClick}
-          />
-        )}
-        {!isMapLoading && shouldUseKeywordSearchPinLayer && (
-          <LockerMarkersLayer
-            searchParams={keywordSearchParams}
-            onSelectPin={handleSearchMarkerSelect}
-            onClusterClick={handleClusterClick}
-            resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
-          />
-        )}
-        {!isMapLoading &&
-          !shouldUseKeywordSearchPinLayer &&
-          (markerLayer === "search" ||
-            markerLayer === "mapPlace" ||
-            markerLayer === "selectedMapDetail") && (
-            <SearchResultMarkersLayer
-              pins={
-                markerLayer === "search"
-                  ? searchResultPins
-                  : markerLayer === "mapPlace"
-                    ? mapPlacePins
-                    : selectedMapDetailPins
-              }
-              onSelectLocker={
-                markerLayer === "search"
-                  ? handleSearchMarkerSelect
-                  : markerLayer === "mapPlace"
-                    ? handleMapPlaceMarkerSelect
-                    : handleSelectedMapDetailMarkerSelect
-              }
-              spreadCenter={
-                (markerLayer === "mapPlace" ||
-                  (markerLayer === "search" && listKind === "place")) &&
-                lastValidSpreadCenterRef.current?.placeId === activePlaceId
-                  ? {
-                      lat: lastValidSpreadCenterRef.current.latitude,
-                      lng: lastValidSpreadCenterRef.current.longitude,
-                    }
-                  : undefined
-              }
-              preservedOffsets={
-                markerLayer === "selectedMapDetail"
-                  ? selectedPinPreservedOffsets
-                  : undefined
-              }
-            />
-          )}
+        <HomeMapMarkers
+          layer={markerLayer}
+          isMapReady={!isMapLoading}
+          keywordSearchParams={
+            shouldUseKeywordSearchPinLayer ? keywordSearchParams : null
+          }
+          pins={{
+            search: searchResultPins,
+            mapPlace: mapPlacePins,
+            selectedMapDetail: selectedMapDetailPins,
+          }}
+          onSelectPin={{
+            idle: handleIdlePinSelect,
+            search: handleSearchMarkerSelect,
+            mapPlace: handleMapPlaceMarkerSelect,
+            selectedMapDetail: handleSelectedMapDetailMarkerSelect,
+          }}
+          onClusterClick={handleClusterClick}
+          resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
+          spreadCenter={
+            (markerLayer === "mapPlace" ||
+              (markerLayer === "search" && listKind === "place")) &&
+            lastValidSpreadCenterRef.current?.placeId === activePlaceId
+              ? {
+                  lat: lastValidSpreadCenterRef.current.latitude,
+                  lng: lastValidSpreadCenterRef.current.longitude,
+                }
+              : undefined
+          }
+          preservedOffsets={selectedPinPreservedOffsets}
+        />
       </MapSelectionProvider>
       {/*
         배치 불가(null)면 스켈레톤도 내보내지 않는다. 실제 컨트롤은 바로 아래
