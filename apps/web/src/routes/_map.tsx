@@ -106,7 +106,14 @@ function MapLayout() {
     remountKey,
   });
 
-  /** 다시 만들기 전에 보던 자리를 저장한다. 카메라를 지키는 것은 쥔 쪽의 일이다. */
+  /*
+   * 다시 만들기 전에 보던 자리를 저장한다. 예전에는 호출자가 두 번 부르던 것을 하나로
+   * 묶었다. 저장하는 것은 지도를 쥔 쪽의 일이라 짝을 맞출 이유가 없다.
+   *
+   * 저장은 하되 새 지도가 그것을 쓸지는 `useMapInitialCamera` 가 정한다. 지금은 상세를
+   * 보고 있을 때만 쓰고, 홈에서는 무시하고 GPS·기본 자리로 간다. #215 보다 먼저부터
+   * 그랬고 이 조각은 그 판단을 건드리지 않는다.
+   */
   const remountWithSavedViewport = useCallback(() => {
     saveMapViewport();
     remount();
