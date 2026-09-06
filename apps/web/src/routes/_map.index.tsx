@@ -51,9 +51,7 @@ import type {
 import {
   MapControlsSkeleton,
   NaverMapCanvas,
-  resolveMapBootstrapViewport,
   useMapColorScheme,
-  useMapViewportStore,
 } from "#/entities/map";
 import { focusNaverMapOnCoordinates } from "#/entities/map/model/current-location";
 import {
@@ -88,6 +86,7 @@ import type {
 } from "#/entities/map/model/useLocationTracking";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import { useMapCamera } from "#/entities/map/model/useMapCamera";
+import { useMapInitialCamera } from "#/entities/map/model/useMapInitialCamera";
 import { useMapInstance } from "#/entities/map/model/useMapInstance";
 import { useMapPressBus } from "#/entities/map/model/useMapPressBus";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
@@ -507,9 +506,6 @@ export function IndexPage() {
   const focusedDeepLinkLockerIdRef = useRef<number | undefined>(undefined);
   /** 검색 범위를 이미 맞춘 조건. 지도를 다시 만들었다는 이유만으로 되풀이하지 않는다. */
   const fittedSearchBoundsRef = useRef<string | null>(null);
-  const deepLinkMapCenterRef = useRef<{ lat: number; lng: number } | null>(
-    null,
-  );
   const [lockerDetailOpensFull, setLockerDetailOpensFull] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [lockerDetailAnimatesOnMount, setLockerDetailAnimatesOnMount] =
@@ -1148,43 +1144,17 @@ export function IndexPage() {
     startTracking,
   ]);
 
-  // mapRemountKey 는 본문에서 읽지 않는다. 지도를 다시 마운트할 때 초기
-  // 카메라를 새로 계산하려고 넣은 트리거다.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: mapRemountKey 는 재계산 트리거다
-  const mapBootstrap = useMemo(() => {
-    if (lockerIdFromQuery !== undefined && loaderData?.detail) {
-      return {
-        center: {
-          lat: loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
-          lng: loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
-        },
-        zoom: DETAIL_FOCUS_ZOOM,
-      };
-    }
-
-    const deepLinkCenter =
-      focusLat != null && focusLng != null
-        ? { lat: focusLat, lng: focusLng }
-        : deepLinkMapCenterRef.current;
-
-    return resolveMapBootstrapViewport({
-      deepLinkCenter,
-      cache: shouldPreferHomeLocation
-        ? null
-        : useMapViewportStore.getState().cache,
-      permission,
-      gps: permission === "granted" && location ? location : null,
-    });
-  }, [
+  const mapBootstrap = useMapInitialCamera({
+    lockerId: lockerIdFromQuery,
     focusLat,
     focusLng,
-    mapRemountKey,
+    detail: loaderData?.detail,
+    fallbackCenter: DEFAULT_SEARCH_COORDINATES,
+    detailZoom: DETAIL_FOCUS_ZOOM,
     permission,
     location,
-    lockerIdFromQuery,
-    loaderData,
-    shouldPreferHomeLocation,
-  ]);
+    remountKey: mapRemountKey,
+  });
 
   useEffect(() => {
     if (
@@ -2393,10 +2363,6 @@ export function IndexPage() {
       pinSelectedInAppRef.current = false;
 
       if (pin) {
-        deepLinkMapCenterRef.current = {
-          lat: pin.latitude,
-          lng: pin.longitude,
-        };
         setSelectedMapPin(pin);
         setSelectedMapPinOffset(null);
         setLockerDetailQueryOrigin({
@@ -2527,7 +2493,6 @@ export function IndexPage() {
     }
 
     setLockerDetailQueryOrigin(null);
-    deepLinkMapCenterRef.current = null;
   }, [activeLockerId, sheetMode]);
 
   const handleIdlePinSelect = useCallback(
