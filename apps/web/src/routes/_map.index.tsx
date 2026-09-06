@@ -63,6 +63,7 @@ import {
 } from "#/entities/map/model/home-location-request-session";
 import { postLocationDiagnostic } from "#/entities/map/model/location-diagnostics";
 import { resolveLocationRequestSettlement } from "#/entities/map/model/location-request-settlement";
+import { useMapLocation } from "#/entities/map/model/MapLocationProvider";
 import {
   MapRuntimeProvider,
   type MapRuntimeValue,
@@ -79,12 +80,10 @@ import {
 } from "#/entities/map/model/map-marker";
 import { applyFavoriteOverlayToPins } from "#/entities/map/model/map-pin-favorite";
 import { useHasRequestedHomeLocationInSession } from "#/entities/map/model/useHomeLocationRequestSession";
-import { useLocationEventBus } from "#/entities/map/model/useLocationEventBus";
 import { useLocationIntent } from "#/entities/map/model/useLocationIntent";
-import {
-  type LocationData,
-  type LocationRequestOutcome,
-  useLocationTracking,
+import type {
+  LocationData,
+  LocationRequestOutcome,
 } from "#/entities/map/model/useLocationTracking";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
 import { useMapCamera } from "#/entities/map/model/useMapCamera";
@@ -820,7 +819,6 @@ export function IndexPage() {
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
 
   // 위치 및 방향 트래킹 — 위치 관련 훅과 콜백은 side effect보다 먼저 선언한다.
-  const locationEventBus = useLocationEventBus();
   const [isCameraCentered, setIsCameraCentered] = useState(false);
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
@@ -909,18 +907,21 @@ export function IndexPage() {
   // isCameraCentered는 handleFirstLocation 위에서 선언됨
   isCameraCenteredRef.current = isCameraCentered;
 
+  /*
+   * 위치는 `_map` 레이아웃이 쥔다(#215 의 1-3). 지도의 초기 카메라가 권한과 GPS 를
+   * 보므로 지도보다 먼저 올라갔다. 이 화면은 읽고, 켜 달라고 부탁하고, 알림을 들을 뿐이다.
+   */
   const {
     permission,
     isTracking,
     isLocating,
     location,
     error,
-    locationRequestStatus,
+    requestStatus: locationRequestStatus,
     startTracking,
-  } = useLocationTracking({
-    onFirstLocation: locationEventBus.notifyFirstLocation,
-    onRequestSettled: locationEventBus.notifyRequestSettled,
-  });
+    subscribeFirstLocation,
+    subscribeRequestSettled,
+  } = useMapLocation();
 
   const handleFirstLocationRef = useRef(handleFirstLocation);
   handleFirstLocationRef.current = handleFirstLocation;
@@ -928,23 +929,24 @@ export function IndexPage() {
   handleLocationRequestSettledRef.current = handleLocationRequestSettled;
 
   // 위치 추적이 내는 알림을 듣는다. 위치 추적에게 이 핸들러들을 직접 건네지 않는
-  // 이유는 useLocationEventBus 주석에 적었다.
+  // 이유는 useLocationEventBus 주석에 적었다. 이제 위치 추적은 레이아웃에 있어,
+  // 건넬 길 자체가 없다.
   //
   // 이 구독은 startTracking 을 부르는 어떤 이펙트보다 위에 있어야 한다. 지오로케이션이
   // 없는 기기에서 startTracking 은 그 자리에서 "unsupported" 를 알리기 때문이다.
   useEffect(
     () =>
-      locationEventBus.subscribeFirstLocation((firstLocation) =>
+      subscribeFirstLocation((firstLocation) =>
         handleFirstLocationRef.current(firstLocation),
       ),
-    [locationEventBus.subscribeFirstLocation],
+    [subscribeFirstLocation],
   );
   useEffect(
     () =>
-      locationEventBus.subscribeRequestSettled((outcome) =>
+      subscribeRequestSettled((outcome) =>
         handleLocationRequestSettledRef.current(outcome),
       ),
-    [locationEventBus.subscribeRequestSettled],
+    [subscribeRequestSettled],
   );
 
   const shouldPreferHomeLocation =
