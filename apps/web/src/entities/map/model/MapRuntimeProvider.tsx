@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext } from "react";
 import type { useMapCamera } from "./useMapCamera";
+import type { MapPressBus } from "./useMapPressBus";
 
 export interface MapRuntimeValue {
   /** 지금 떠 있는 지도. 아직 만들어지지 않았으면 `null`. */
@@ -10,6 +11,17 @@ export interface MapRuntimeValue {
   hasError: boolean;
   /** 카메라에 내리는 명령. */
   camera: ReturnType<typeof useMapCamera>;
+  /**
+   * 지도를 다시 만든다.
+   *
+   * `attach` 와 달리 넣는 이유가 있다. `attach` 는 "이것이 지금 지도다"라고 정하는
+   * 것이라 소유고, 아래에서 부를 수 있으면 소유가 두 곳이 된다. `remount` 는 지도를
+   * 쥔 쪽에게 다시 만들어 달라고 **부탁하는 명령**이라 카메라 명령과 같은 갈래다.
+   * 누가 부르든 지도를 만드는 것은 여전히 쥔 쪽이다.
+   */
+  remount: () => void;
+  /** 지도 누름을 듣는다. 반환값으로 정리한다. */
+  subscribeMapPress: MapPressBus["subscribe"];
 }
 
 const MapRuntimeContext = createContext<MapRuntimeValue | null>(null);
