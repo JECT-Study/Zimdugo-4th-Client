@@ -8,6 +8,9 @@ export const DEFAULT_MAP_CENTER = {
 
 export const DEFAULT_MAP_ZOOM = 15;
 
+/** 보관함 하나를 볼 때 쓰는 배율. 기본 배율보다 바싹 당긴다. */
+export const DETAIL_FOCUS_ZOOM = 17;
+
 export const MAP_VIEWPORT_STALE_MS = 30 * 60 * 1000;
 export const MAP_VIEWPORT_STALE_DISTANCE_M = 2000;
 

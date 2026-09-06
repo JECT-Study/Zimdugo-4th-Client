@@ -41,6 +41,7 @@ const runtime = (map: naver.maps.Map | null): MapRuntimeValue => ({
   isLoading: false,
   hasError: false,
   camera: { focusOn: vi.fn(), fitBounds: vi.fn(), getZoom: vi.fn() },
+  initialCamera: { center: { lat: 37.4979, lng: 127.0276 }, zoom: 15 },
   remount: vi.fn(),
   subscribeMapPress: vi.fn(() => () => {}),
 });

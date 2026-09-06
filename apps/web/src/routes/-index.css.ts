@@ -16,13 +16,26 @@ export const mapContainer = style({
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 });
 
+/**
+ * 지도 위에 얹히는 화면.
+ *
+ * 지도가 레이아웃 라우트로 올라가면서(#215 의 1-3) 이 상자 바깥에 놓였다. 흐름을
+ * 차지하면 지도와 높이를 나눠 가지므로, 지도를 덮는 층으로 띄운다.
+ *
+ * 직계 자식은 전부 스스로 자리를 잡는 오버레이(헤더·검색바·시트 셋·컨트롤·팝업·
+ * 안내)라, 이 상자 자체는 아무 데도 닿지 않아야 한다. 닿으면 지도를 끌 수 없다.
+ * 그래서 상자는 포인터를 흘려보내고 자식만 되살린다.
+ */
 export const pageWrapper = style({
   display: "flex",
   flexDirection: "column",
-  height: "100%",
-  width: "100%",
-  flex: 1,
-  position: "relative",
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+});
+
+globalStyle(`${pageWrapper} > *`, {
+  pointerEvents: "auto",
 });
 
 // 우측 상단 컨트롤 스택 (검색창 아래)
