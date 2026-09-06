@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MapRuntimeValue } from "#/entities/map/model/MapRuntimeProvider";
 import { MapRuntimeProvider } from "#/entities/map/model/MapRuntimeProvider";
+import type { MapSelectionValue } from "#/entities/map/model/MapSelectionProvider";
+import { MapSelectionProvider } from "#/entities/map/model/MapSelectionProvider";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const useLockerMarkers = vi.fn();
@@ -41,9 +43,20 @@ const runtime = (map: naver.maps.Map | null): MapRuntimeValue => ({
   camera: { focusOn: vi.fn(), fitBounds: vi.fn(), getZoom: vi.fn() },
 });
 
-const withMap = (map: naver.maps.Map | null, children: ReactNode) =>
+const noSelection: MapSelectionValue = {
+  selectedPinId: null,
+  selectedPin: null,
+};
+
+const withMap = (
+  map: naver.maps.Map | null,
+  children: ReactNode,
+  selection: MapSelectionValue = noSelection,
+) =>
   render(
-    <MapRuntimeProvider value={runtime(map)}>{children}</MapRuntimeProvider>,
+    <MapRuntimeProvider value={runtime(map)}>
+      <MapSelectionProvider value={selection}>{children}</MapSelectionProvider>
+    </MapRuntimeProvider>,
   );
 
 describe("LockerMarkersLayer", () => {
@@ -81,6 +94,26 @@ describe("LockerMarkersLayer", () => {
     );
   });
 
+  /**
+   * 선택은 화면이 정하고 지도가 그린다. 경로가 나뉘면 시트와 마커 층이 다른 라우트에
+   * 놓여 prop 으로 건널 수 없으므로, 컨텍스트를 보는 것이 계약이다.
+   */
+  it("선택된 핀을 컨텍스트에서 읽어 훅에 넘긴다", () => {
+    const selectedPin = {
+      pinType: "LOCKER",
+      lockerId: 164,
+    } as unknown as LockerPinItemResponse;
+
+    withMap(fakeMap(), <LockerMarkersLayer />, {
+      selectedPinId: "LOCKER-164",
+      selectedPin,
+    });
+
+    expect(useLockerMarkers).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedPinId: "LOCKER-164", selectedPin }),
+    );
+  });
+
   it("지도가 없어도 훅을 부른다", () => {
     withMap(null, <LockerMarkersLayer />);
 
@@ -100,6 +133,18 @@ describe("SearchResultMarkersLayer", () => {
     );
 
     expect(container.innerHTML).toBe("");
+  });
+
+  it("선택된 핀 id 를 컨텍스트에서 읽어 훅에 넘긴다", () => {
+    withMap(
+      fakeMap(),
+      <SearchResultMarkersLayer pins={pins} onSelectLocker={vi.fn()} />,
+      { selectedPinId: "PLACE-900", selectedPin: null },
+    );
+
+    expect(useSearchResultMarkers).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedPinId: "PLACE-900" }),
+    );
   });
 
   it("받은 핀 목록과 컨텍스트의 지도를 함께 훅에 넘긴다", () => {

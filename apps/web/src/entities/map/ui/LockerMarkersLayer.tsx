@@ -1,5 +1,6 @@
 import { useNaverMapSdk } from "#/entities/map";
 import { useMapRuntime } from "#/entities/map/model/MapRuntimeProvider";
+import { useMapSelection } from "#/entities/map/model/MapSelectionProvider";
 import type { LockerMarkerOffset } from "#/entities/map/model/map-marker";
 import type { ResolvePinFavorite } from "#/entities/map/model/map-pin-favorite";
 import { useLockerMarkers } from "#/entities/map/model/useLockerMarkers";
@@ -11,8 +12,6 @@ import type {
 
 export interface LockerMarkersLayerProps {
   searchParams?: LockerPinSearchParams | null;
-  selectedPinId?: string | null;
-  selectedPin?: LockerPinItemResponse | null;
   onSelectPin?: (
     pinType: "LOCKER" | "PLACE",
     id: number,
@@ -33,8 +32,6 @@ export interface LockerMarkersLayerProps {
  */
 export function LockerMarkersLayer({
   searchParams,
-  selectedPinId,
-  selectedPin,
   onSelectPin,
   onClusterClick,
   spreadCenter,
@@ -42,6 +39,7 @@ export function LockerMarkersLayer({
 }: LockerMarkersLayerProps) {
   const { maps } = useNaverMapSdk();
   const { map } = useMapRuntime();
+  const { selectedPinId, selectedPin } = useMapSelection();
 
   useLockerMarkers({
     map,
