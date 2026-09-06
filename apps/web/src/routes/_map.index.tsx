@@ -79,6 +79,7 @@ import {
 } from "#/entities/map/model/map-marker";
 import { applyFavoriteOverlayToPins } from "#/entities/map/model/map-pin-favorite";
 import { useHasRequestedHomeLocationInSession } from "#/entities/map/model/useHomeLocationRequestSession";
+import { useLocationEventBus } from "#/entities/map/model/useLocationEventBus";
 import { useLocationIntent } from "#/entities/map/model/useLocationIntent";
 import {
   type LocationData,
@@ -819,6 +820,7 @@ export function IndexPage() {
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
 
   // 위치 및 방향 트래킹 — 위치 관련 훅과 콜백은 side effect보다 먼저 선언한다.
+  const locationEventBus = useLocationEventBus();
   const [isCameraCentered, setIsCameraCentered] = useState(false);
   const [isLocationErrorPopupOpen, setIsLocationErrorPopupOpen] =
     useState(false);
@@ -916,9 +918,34 @@ export function IndexPage() {
     locationRequestStatus,
     startTracking,
   } = useLocationTracking({
-    onFirstLocation: handleFirstLocation,
-    onRequestSettled: handleLocationRequestSettled,
+    onFirstLocation: locationEventBus.notifyFirstLocation,
+    onRequestSettled: locationEventBus.notifyRequestSettled,
   });
+
+  const handleFirstLocationRef = useRef(handleFirstLocation);
+  handleFirstLocationRef.current = handleFirstLocation;
+  const handleLocationRequestSettledRef = useRef(handleLocationRequestSettled);
+  handleLocationRequestSettledRef.current = handleLocationRequestSettled;
+
+  // 위치 추적이 내는 알림을 듣는다. 위치 추적에게 이 핸들러들을 직접 건네지 않는
+  // 이유는 useLocationEventBus 주석에 적었다.
+  //
+  // 이 구독은 startTracking 을 부르는 어떤 이펙트보다 위에 있어야 한다. 지오로케이션이
+  // 없는 기기에서 startTracking 은 그 자리에서 "unsupported" 를 알리기 때문이다.
+  useEffect(
+    () =>
+      locationEventBus.subscribeFirstLocation((firstLocation) =>
+        handleFirstLocationRef.current(firstLocation),
+      ),
+    [locationEventBus.subscribeFirstLocation],
+  );
+  useEffect(
+    () =>
+      locationEventBus.subscribeRequestSettled((outcome) =>
+        handleLocationRequestSettledRef.current(outcome),
+      ),
+    [locationEventBus.subscribeRequestSettled],
+  );
 
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
