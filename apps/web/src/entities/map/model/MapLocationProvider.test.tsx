@@ -154,9 +154,7 @@ describe("MapLocationProvider", () => {
       </MapLocationProvider>,
     );
 
-    expect(screen.getByTestId("orientation").textContent).toBe(
-      "137/true/true",
-    );
+    expect(screen.getByTestId("orientation").textContent).toBe("137/true/true");
   });
 
   it("감싸지 않고 쓰면 그 자리에서 알려 준다", () => {
