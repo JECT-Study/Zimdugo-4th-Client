@@ -72,6 +72,7 @@ import {
   MapSelectionProvider,
   type MapSelectionValue,
 } from "#/entities/map/model/MapSelectionProvider";
+import { resolveMapAttachFocus } from "#/entities/map/model/map-attach-focus";
 import { focusNaverMapOnClusterBounds } from "#/entities/map/model/map-bounds";
 import { createBottomMapInset } from "#/entities/map/model/map-inset";
 import {
@@ -1452,46 +1453,6 @@ export function IndexPage() {
     setIsLocationRecoveryNoticeDismissed(true);
   }, []);
 
-  const handleMapLoad = useCallback(
-    (map: naver.maps.Map | null) => {
-      attachMapInstance(map);
-
-      // 딥링크로 연 상세는 처음 한 번만 카메라를 맞춘다. 테마를 바꾸면 지도를
-      // 다시 만드는데, 그때마다 다시 맞추면 사용자가 옮겨 둔 위치를 덮어쓴다.
-      const isNewDeepLinkFocus =
-        lockerIdFromQuery !== undefined &&
-        focusedDeepLinkLockerIdRef.current !== lockerIdFromQuery;
-
-      if (map && isNewDeepLinkFocus && loaderData?.detail) {
-        focusedDeepLinkLockerIdRef.current = lockerIdFromQuery;
-        focusNaverMapOnCoordinates({
-          map,
-          coordinates: {
-            lat: loaderData.detail.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
-            lng: loaderData.detail.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
-          },
-          bottomInsetPx: getDetailFocusBottomInsetPx(),
-          zoom: DETAIL_FOCUS_ZOOM,
-        });
-        return;
-      }
-
-      const pin = pendingDeepLinkFocusPinRef.current;
-      if (!map || !pin) {
-        return;
-      }
-
-      focusNaverMapOnCoordinates({
-        map,
-        coordinates: { lat: pin.latitude, lng: pin.longitude },
-        bottomInsetPx: getDetailFocusBottomInsetPx(),
-        zoom: DETAIL_FOCUS_ZOOM,
-      });
-      pendingDeepLinkFocusPinRef.current = null;
-    },
-    [attachMapInstance, lockerIdFromQuery, loaderData],
-  );
-
   // 상세를 닫으면 파라미터가 사라진다. 그때 표시를 지워야 같은 보관함을 다시
   // 열었을 때 카메라를 다시 맞춘다.
   useEffect(() => {
@@ -2515,15 +2476,48 @@ export function IndexPage() {
     openLockerId,
   ]);
 
+  /*
+   * 지도가 붙으면 딥링크가 가리키는 곳으로 카메라를 맞춘다.
+   *
+   * 지도에게 `onLoad` 콜백으로 건네지 않는다. 어디를 비출지는 "무엇을 보고 있나"에
+   * 딸린 화면의 일이고, 지도가 그것을 받으면 화면 상태에 묶인다. #215 의 1-3 에서
+   * 지도는 레이아웃 라우트로 올라가고 이 화면은 `<Outlet>` 자식에 남는다.
+   *
+   * 붙는 순간 대신 붙은 뒤 한 박자에 맞춘다. 초기 카메라(`mapBootstrap`)가 이미 상세
+   * 좌표를 쓰고 있어, 여기서 더하는 것은 시트에 가릴 만큼의 오프셋과 줌이다.
+   */
   useEffect(() => {
-    const pin = pendingDeepLinkFocusPinRef.current;
-    if (!pin || !mapInstance) {
+    if (!mapInstance) {
       return;
     }
 
-    pendingDeepLinkFocusPinRef.current = null;
-    focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
-  }, [focusMapOnLockerPin, mapInstance]);
+    const focus = resolveMapAttachFocus({
+      lockerId: lockerIdFromQuery,
+      focusedLockerId: focusedDeepLinkLockerIdRef.current,
+      hasDetail: loaderData?.detail != null,
+      hasPendingPin: pendingDeepLinkFocusPinRef.current != null,
+    });
+
+    if (focus === "detail") {
+      focusedDeepLinkLockerIdRef.current = lockerIdFromQuery;
+      focusNaverMapOnCoordinates({
+        map: mapInstance,
+        coordinates: {
+          lat: loaderData?.detail?.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
+          lng: loaderData?.detail?.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
+        },
+        bottomInsetPx: getDetailFocusBottomInsetPx(),
+        zoom: DETAIL_FOCUS_ZOOM,
+      });
+      return;
+    }
+
+    if (focus === "pin") {
+      const pin = pendingDeepLinkFocusPinRef.current;
+      pendingDeepLinkFocusPinRef.current = null;
+      focusMapOnLockerPin(pin ?? undefined, DETAIL_FOCUS_ZOOM);
+    }
+  }, [focusMapOnLockerPin, mapInstance, lockerIdFromQuery, loaderData]);
 
   useEffect(() => {
     if (sheetMode === "detail" && activeLockerId != null) {
@@ -3599,7 +3593,7 @@ export function IndexPage() {
         <MapSelectionProvider value={mapSelection}>
           <NaverMapCanvas
             key={mapRemountKey}
-            onLoad={handleMapLoad}
+            onLoad={attachMapInstance}
             onWillDestroy={persistMapViewport}
             onLoadingChange={setIsMapLoading}
             onErrorChange={setHasMapError}
