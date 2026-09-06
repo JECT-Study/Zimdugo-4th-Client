@@ -31,6 +31,24 @@ export interface MapLocationValue {
   subscribeFirstLocation: LocationEventBus["subscribeFirstLocation"];
   /** 위치 요청의 결말을 듣는다. 반환값으로 정리한다. */
   subscribeRequestSettled: LocationEventBus["subscribeRequestSettled"];
+
+  /** 기기가 향한 방향. 아직 모르면 `null`. */
+  deviceHeading: number | null;
+  /** 방향을 지켜보는 중인지. */
+  isOrientationTracking: boolean;
+  /** 방향 센서를 쓸 수 있는지. `null` 은 아직 판단 전이다(PC 는 `false`). */
+  isOrientationSupported: boolean | null;
+  /**
+   * 방향 센서 권한을 묻는다.
+   *
+   * iOS 13+ 는 사용자 제스처 안에서만 물을 수 있어, 부르는 자리가 화면에 있어야 한다.
+   * 그래서 다른 명령들과 달리 결과를 돌려준다.
+   */
+  requestOrientationPermission: () => Promise<boolean>;
+  /** 방향 추적을 켠다. */
+  startOrientationTracking: () => void;
+  /** 방향 추적을 끈다. */
+  stopOrientationTracking: () => void;
 }
 
 const MapLocationContext = createContext<MapLocationValue | null>(null);
@@ -47,8 +65,8 @@ const MapLocationContext = createContext<MapLocationValue | null>(null);
  * 적었다. 알림 둘은 #242 에서 뒤집어 둔 것을 그대로 흘려보낸다 — 위치 추적이 자식의
  * 핸들러를 받지 않고, 자식이 듣는다.
  *
- * 방향 센서(`useDeviceOrientation`)는 아직 여기 없다. 내 위치 마커가 방향을 보므로
- * 마커가 올라갈 때 함께 온다.
+ * 방향 센서도 여기 있다. 내 위치 마커가 방향을 보고 그 마커는 지도 위에 그려지므로,
+ * 지도와 같은 자리에서 쥐어야 한다.
  */
 export function MapLocationProvider({
   value,

@@ -22,6 +22,19 @@ vi.mock("./location-diagnostics", () => ({
   postLocationDiagnostic: vi.fn(),
 }));
 
+const orientation = vi.hoisted(() => ({
+  heading: null as number | null,
+  isTracking: false,
+  isSupported: null as boolean | null,
+  requestPermission: vi.fn(async () => false),
+  startTracking: vi.fn(),
+  stopTracking: vi.fn(),
+}));
+
+vi.mock("#/shared/hooks/useDeviceOrientation", () => ({
+  useDeviceOrientation: () => orientation,
+}));
+
 /**
  * 위치를 쥔 쪽(레이아웃)과 듣는 쪽(`<Outlet />` 의 화면)을 실제로 갈라 놓고 잰다.
  *
@@ -33,6 +46,16 @@ function Owner({ children }: { children: React.ReactNode }) {
     <MapLocationProvider value={useMapLocationValue()}>
       {children}
     </MapLocationProvider>
+  );
+}
+
+function OrientationScreen() {
+  const { deviceHeading, isOrientationTracking, isOrientationSupported } =
+    useMapLocation();
+  return (
+    <span data-testid="orientation">
+      {`${deviceHeading}/${isOrientationTracking}/${isOrientationSupported}`}
+    </span>
   );
 }
 
@@ -89,6 +112,10 @@ describe("useMapLocationValue", () => {
   let watchPosition: Mock;
 
   beforeEach(() => {
+    orientation.heading = null;
+    orientation.isTracking = false;
+    orientation.isSupported = null;
+    orientation.stopTracking.mockClear();
     watchPosition = vi.fn().mockReturnValue(123);
     Object.defineProperty(global.navigator, "geolocation", {
       value: { watchPosition, clearWatch: vi.fn() },
@@ -158,6 +185,51 @@ describe("useMapLocationValue", () => {
     });
 
     expect(watchPosition).toHaveBeenCalledTimes(1);
+  });
+
+  it("쥔 쪽이 읽은 방향이 아래 화면까지 닿는다", () => {
+    orientation.heading = 137;
+    orientation.isTracking = true;
+    orientation.isSupported = true;
+
+    render(
+      <Owner>
+        <OrientationScreen />
+      </Owner>,
+    );
+
+    expect(screen.getByTestId("orientation").textContent).toBe("137/true/true");
+  });
+
+  /**
+   * 센서에만 딸린 규칙이라 센서를 쥔 쪽에서 스스로 한다. PC 처럼 방향을 알 수 없는
+   * 기기에서 추적이 켜진 채 남으면 마커가 마지막 방향을 계속 가리킨다.
+   */
+  it("센서가 없다고 확정되면 켜 둔 방향 추적을 스스로 끈다", () => {
+    orientation.isTracking = true;
+    orientation.isSupported = false;
+
+    renderSplit();
+
+    expect(orientation.stopTracking).toHaveBeenCalledTimes(1);
+  });
+
+  it("아직 판단 전이면 방향 추적을 끄지 않는다", () => {
+    orientation.isTracking = true;
+    orientation.isSupported = null;
+
+    renderSplit();
+
+    expect(orientation.stopTracking).not.toHaveBeenCalled();
+  });
+
+  it("켜 둔 방향 추적이 없으면 끄러 들지 않는다", () => {
+    orientation.isTracking = false;
+    orientation.isSupported = false;
+
+    renderSplit();
+
+    expect(orientation.stopTracking).not.toHaveBeenCalled();
   });
 
   /**

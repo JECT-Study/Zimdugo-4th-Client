@@ -24,6 +24,12 @@ const createValue = (
   startTracking: () => {},
   subscribeFirstLocation: () => () => {},
   subscribeRequestSettled: () => () => {},
+  deviceHeading: null,
+  isOrientationTracking: false,
+  isOrientationSupported: null,
+  requestOrientationPermission: async () => false,
+  startOrientationTracking: () => {},
+  stopOrientationTracking: () => {},
   ...overrides,
 });
 
@@ -122,6 +128,35 @@ describe("MapLocationProvider", () => {
 
     expect(subscribeFirstLocation).toHaveBeenCalled();
     expect(subscribeRequestSettled).toHaveBeenCalled();
+  });
+
+  /** 내 위치 마커가 방향을 본다. 위치와 같은 창구로 내려가야 한 곳만 보면 된다. */
+  it("방향도 같은 창구로 내려간다", () => {
+    function OrientationReader() {
+      const { deviceHeading, isOrientationTracking, isOrientationSupported } =
+        useMapLocation();
+      return (
+        <span data-testid="orientation">
+          {`${deviceHeading}/${isOrientationTracking}/${isOrientationSupported}`}
+        </span>
+      );
+    }
+
+    render(
+      <MapLocationProvider
+        value={createValue({
+          deviceHeading: 137,
+          isOrientationTracking: true,
+          isOrientationSupported: true,
+        })}
+      >
+        <OrientationReader />
+      </MapLocationProvider>,
+    );
+
+    expect(screen.getByTestId("orientation").textContent).toBe(
+      "137/true/true",
+    );
   });
 
   it("감싸지 않고 쓰면 그 자리에서 알려 준다", () => {
