@@ -80,6 +80,7 @@ import {
 } from "#/entities/map/model/map-marker";
 import { applyFavoriteOverlayToPins } from "#/entities/map/model/map-pin-favorite";
 import { useHasRequestedHomeLocationInSession } from "#/entities/map/model/useHomeLocationRequestSession";
+import { useLocationIntent } from "#/entities/map/model/useLocationIntent";
 import {
   type LocationData,
   type LocationRequestOutcome,
@@ -632,9 +633,7 @@ export function IndexPage() {
 
   // 방향 트래킹 pending 처리용 refs
   // GPS 첫 위치 수신 후 자동으로 방향 트래킹을 시작해야 할 때 사용
-  const pendingOrientationStartRef = useRef(false);
-  const hasPendingOneTimeLocationCenterRef = useRef(false);
-  const hasPendingMyLocationRequestRef = useRef(false);
+  const locationIntent = useLocationIntent();
   const requestOrientationPermissionRef = useRef<() => Promise<boolean>>(
     async () => false,
   );
@@ -846,34 +845,31 @@ export function IndexPage() {
       // 버튼 클릭 시 GPS가 꺼진 상태였다면 첫 위치 수신 후 방향 트래킹을 시작한다.
       // requestOrientationPermissionRef / startOrientationTrackingRef는 안정적인 ref로
       // 항상 최신 함수를 참조하므로 deps []가 안전하다.
-      if (pendingOrientationStartRef.current) {
-        pendingOrientationStartRef.current = false;
+      if (locationIntent.consumeOrientationStart()) {
         setIsCameraCentered(true);
         // 권한은 handleMyLocation(사용자 제스처 컨텍스트)에서 이미 획득됨
         startOrientationTrackingRef.current();
         return;
       }
 
-      if (
-        hasPendingOneTimeLocationCenterRef.current &&
-        mapInstanceRef.current
-      ) {
-        hasPendingOneTimeLocationCenterRef.current = false;
+      // 지도가 아직 없으면 요청을 남겨 둔다. 꺼내 쓰면 사라져, 지도가 준비된 뒤에도
+      // 비추지 못한 채 요청만 없어진다.
+      if (mapInstanceRef.current && locationIntent.consumeCenterOnce()) {
         mapCamera.focusOn(firstLocation);
       }
     },
-    [mapCamera],
+    [locationIntent, mapCamera],
   );
 
   const handleLocationRequestSettled = useCallback(
     (outcome: LocationRequestOutcome) => {
       const settlement = resolveLocationRequestSettlement({
         outcome,
-        isUserInitiated: hasPendingMyLocationRequestRef.current,
+        isUserInitiated: locationIntent.isUserInitiated(),
       });
 
       if (outcome === "success") {
-        hasPendingMyLocationRequestRef.current = false;
+        locationIntent.clearUserInitiated();
       }
 
       if (outcome === "interrupted") {
@@ -882,9 +878,7 @@ export function IndexPage() {
       }
 
       if (settlement.isPendingIntentClearRequired) {
-        hasPendingMyLocationRequestRef.current = false;
-        pendingOrientationStartRef.current = false;
-        hasPendingOneTimeLocationCenterRef.current = false;
+        locationIntent.clear();
       }
 
       if (settlement.isCameraCenterResetRequired) {
@@ -904,7 +898,11 @@ export function IndexPage() {
 
       clearHomeLocationRequestedInSession();
     },
-    [],
+    [
+      locationIntent.clear,
+      locationIntent.clearUserInitiated,
+      locationIntent.isUserInitiated,
+    ],
   );
 
   // isCameraCentered는 handleFirstLocation 위에서 선언됨
@@ -1313,13 +1311,10 @@ export function IndexPage() {
         return;
       }
 
-      hasPendingMyLocationRequestRef.current = false;
-      pendingOrientationStartRef.current = false;
-      hasPendingOneTimeLocationCenterRef.current = false;
+      locationIntent.clear();
 
       if (permission === "denied") {
-        hasPendingMyLocationRequestRef.current = true;
-        hasPendingOneTimeLocationCenterRef.current = true;
+        locationIntent.requestCenterOnce();
         startTracking();
         return;
       }
@@ -1335,8 +1330,7 @@ export function IndexPage() {
           mapCamera.focusOn(location);
         } else if (!isTracking) {
           // GPS가 꺼진 경우: 켜고 첫 위치 수신 후 이동 (단순 이동, 상태 변경 없음)
-          hasPendingMyLocationRequestRef.current = true;
-          hasPendingOneTimeLocationCenterRef.current = true;
+          locationIntent.requestCenterOnce();
           startTracking();
         }
         return;
@@ -1350,8 +1344,7 @@ export function IndexPage() {
         if (location && mapInstanceRef.current) {
           mapCamera.focusOn(location);
         } else if (!isTracking) {
-          hasPendingMyLocationRequestRef.current = true;
-          hasPendingOneTimeLocationCenterRef.current = true;
+          locationIntent.requestCenterOnce();
           startTracking();
         }
         return;
@@ -1377,8 +1370,7 @@ export function IndexPage() {
           setIsOrientationDeniedPopupOpen(true);
           return;
         }
-        hasPendingMyLocationRequestRef.current = true;
-        pendingOrientationStartRef.current = true;
+        locationIntent.requestOrientationStart();
         startTracking();
         // 권한은 이미 위에서 획득 — handleFirstLocation에서 startOrientationTracking 직접 호출
       } else {
@@ -1388,8 +1380,7 @@ export function IndexPage() {
             setIsOrientationDeniedPopupOpen(true);
             return;
           }
-          hasPendingMyLocationRequestRef.current = true;
-          pendingOrientationStartRef.current = true;
+          locationIntent.requestOrientationStart();
           return;
         }
 
@@ -1424,6 +1415,9 @@ export function IndexPage() {
     startOrientationTracking,
     stopOrientationTracking,
     mapCamera.focusOn,
+    locationIntent.clear,
+    locationIntent.requestCenterOnce,
+    locationIntent.requestOrientationStart,
   ]);
 
   const handleDismissLocationRecoveryNotice = useCallback(() => {
