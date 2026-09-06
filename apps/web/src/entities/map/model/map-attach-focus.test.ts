@@ -55,9 +55,10 @@ describe("resolveMapAttachFocus", () => {
   });
 
   /**
-   * 상세를 열고는 있지만 좌표를 모르는 상태다. 미뤄 둔 핀이 있으면 그쪽이 더 나은 답이다.
+   * 상세를 열고는 있지만 무엇인지 아직 모르는 상태다. 미뤄 둔 핀이 있으면 그쪽이 더
+   * 나은 답이다.
    */
-  it("상세의 좌표가 아직 없으면 미뤄 둔 핀으로 내려간다", () => {
+  it("로더가 상세를 아직 못 가져왔으면 미뤄 둔 핀으로 내려간다", () => {
     expect(
       resolveMapAttachFocus(
         options({ lockerId: 164, hasDetail: false, hasPendingPin: true }),

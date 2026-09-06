@@ -2494,6 +2494,8 @@ export function IndexPage() {
     const focus = resolveMapAttachFocus({
       lockerId: lockerIdFromQuery,
       focusedLockerId: focusedDeepLinkLockerIdRef.current,
+      // 좌표가 있는지까지 보지 않는다. 비어 있으면 아래에서 기본 좌표로 떨어지는데,
+      // 그 판단은 이 조각보다 먼저부터 있던 것이라 여기서 바꾸지 않는다.
       hasDetail: loaderData?.detail != null,
       hasPendingPin: pendingDeepLinkFocusPinRef.current != null,
     });
