@@ -71,6 +71,10 @@ import {
   MapRuntimeProvider,
   type MapRuntimeValue,
 } from "#/entities/map/model/MapRuntimeProvider";
+import {
+  MapSelectionProvider,
+  type MapSelectionValue,
+} from "#/entities/map/model/MapSelectionProvider";
 import { focusNaverMapOnClusterBounds } from "#/entities/map/model/map-bounds";
 import { createBottomMapInset } from "#/entities/map/model/map-inset";
 import {
@@ -2414,6 +2418,11 @@ export function IndexPage() {
     return null;
   }, [selectedMapPin, activeLockerId, openLockerId, sheetMode]);
 
+  const mapSelection = useMemo<MapSelectionValue>(
+    () => ({ selectedPinId, selectedPin: selectedMapPin }),
+    [selectedPinId, selectedMapPin],
+  );
+
   const shouldRaiseSelectedPinFromMini = useCallback(
     (pin: LockerPinItemResponse | undefined) =>
       sheetMode === "detail" &&
@@ -3645,78 +3654,77 @@ export function IndexPage() {
 
       <NaverMapProvider colorScheme={mapColorScheme} language={languageTag()}>
         <MapRuntimeProvider value={mapRuntime}>
-          <NaverMapCanvas
-            key={mapRemountKey}
-            onLoad={handleMapLoad}
-            onWillDestroy={persistMapViewport}
-            onLoadingChange={setIsMapLoading}
-            onErrorChange={setHasMapError}
-            onMapPress={handleMapPress}
-            initialCenter={mapBootstrap.center}
-            initialZoom={mapBootstrap.zoom}
-          />
-          <MyLocationMarker
-            map={mapInstance}
-            location={location}
-            deviceHeading={deviceHeading}
-            isOrientationTracking={isOrientationTracking}
-          />
-          {!isMapLoading && markerLayer === "idle" && (
-            <LockerMarkersLayer
-              selectedPinId={selectedPinId}
-              selectedPin={selectedMapPin}
-              onSelectPin={handleIdlePinSelect}
-              onClusterClick={handleClusterClick}
+          <MapSelectionProvider value={mapSelection}>
+            <NaverMapCanvas
+              key={mapRemountKey}
+              onLoad={handleMapLoad}
+              onWillDestroy={persistMapViewport}
+              onLoadingChange={setIsMapLoading}
+              onErrorChange={setHasMapError}
+              onMapPress={handleMapPress}
+              initialCenter={mapBootstrap.center}
+              initialZoom={mapBootstrap.zoom}
             />
-          )}
-          {!isMapLoading && shouldUseKeywordSearchPinLayer && (
-            <LockerMarkersLayer
-              searchParams={keywordSearchParams}
-              selectedPinId={selectedPinId}
-              selectedPin={selectedMapPin}
-              onSelectPin={handleSearchMarkerSelect}
-              onClusterClick={handleClusterClick}
-              resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
+            <MyLocationMarker
+              map={mapInstance}
+              location={location}
+              deviceHeading={deviceHeading}
+              isOrientationTracking={isOrientationTracking}
             />
-          )}
-          {!isMapLoading &&
-            !shouldUseKeywordSearchPinLayer &&
-            (markerLayer === "search" ||
-              markerLayer === "mapPlace" ||
-              markerLayer === "selectedMapDetail") && (
-              <SearchResultMarkersLayer
-                pins={
-                  markerLayer === "search"
-                    ? searchResultPins
-                    : markerLayer === "mapPlace"
-                      ? mapPlacePins
-                      : selectedMapDetailPins
-                }
-                selectedPinId={selectedPinId}
-                onSelectLocker={
-                  markerLayer === "search"
-                    ? handleSearchMarkerSelect
-                    : markerLayer === "mapPlace"
-                      ? handleMapPlaceMarkerSelect
-                      : handleSelectedMapDetailMarkerSelect
-                }
-                spreadCenter={
-                  (markerLayer === "mapPlace" ||
-                    (markerLayer === "search" && listKind === "place")) &&
-                  lastValidSpreadCenterRef.current?.placeId === activePlaceId
-                    ? {
-                        lat: lastValidSpreadCenterRef.current.latitude,
-                        lng: lastValidSpreadCenterRef.current.longitude,
-                      }
-                    : undefined
-                }
-                preservedOffsets={
-                  markerLayer === "selectedMapDetail"
-                    ? selectedPinPreservedOffsets
-                    : undefined
+            {!isMapLoading && markerLayer === "idle" && (
+              <LockerMarkersLayer
+                onSelectPin={handleIdlePinSelect}
+                onClusterClick={handleClusterClick}
+              />
+            )}
+            {!isMapLoading && shouldUseKeywordSearchPinLayer && (
+              <LockerMarkersLayer
+                searchParams={keywordSearchParams}
+                onSelectPin={handleSearchMarkerSelect}
+                onClusterClick={handleClusterClick}
+                resolveEffectiveFavorite={
+                  favoriteSession.getEffectiveIsFavorite
                 }
               />
             )}
+            {!isMapLoading &&
+              !shouldUseKeywordSearchPinLayer &&
+              (markerLayer === "search" ||
+                markerLayer === "mapPlace" ||
+                markerLayer === "selectedMapDetail") && (
+                <SearchResultMarkersLayer
+                  pins={
+                    markerLayer === "search"
+                      ? searchResultPins
+                      : markerLayer === "mapPlace"
+                        ? mapPlacePins
+                        : selectedMapDetailPins
+                  }
+                  onSelectLocker={
+                    markerLayer === "search"
+                      ? handleSearchMarkerSelect
+                      : markerLayer === "mapPlace"
+                        ? handleMapPlaceMarkerSelect
+                        : handleSelectedMapDetailMarkerSelect
+                  }
+                  spreadCenter={
+                    (markerLayer === "mapPlace" ||
+                      (markerLayer === "search" && listKind === "place")) &&
+                    lastValidSpreadCenterRef.current?.placeId === activePlaceId
+                      ? {
+                          lat: lastValidSpreadCenterRef.current.latitude,
+                          lng: lastValidSpreadCenterRef.current.longitude,
+                        }
+                      : undefined
+                  }
+                  preservedOffsets={
+                    markerLayer === "selectedMapDetail"
+                      ? selectedPinPreservedOffsets
+                      : undefined
+                  }
+                />
+              )}
+          </MapSelectionProvider>
         </MapRuntimeProvider>
       </NaverMapProvider>
       {/*
