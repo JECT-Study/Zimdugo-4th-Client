@@ -23,7 +23,9 @@ export const header = style({
   maxWidth: vars.layout.appMaxWidth,
   height: HEADER_HEIGHT,
   margin: "0 auto",
-  padding: `0 ${vars.spacing[16]} 0 30px`,
+  // 가로모드에서는 노치(다이내믹 아일랜드)가 좌우로 온다. 세로에서는 inset 이
+  // 0 이라 지금 여백 그대로고, 가로에서만 노치만큼 안으로 들어온다.
+  padding: `0 ${vars.layout.safeAreaInlineEnd} 0 max(30px, env(safe-area-inset-left, 0px))`,
   boxSizing: "border-box",
   backgroundColor: vars.color.bg.default,
   selectors: {

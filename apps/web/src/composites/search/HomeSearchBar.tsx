@@ -42,8 +42,9 @@ export interface HomeSearchBarProps {
 const searchBarLayerFallbackStyle: CSSProperties = {
   position: "absolute",
   top: "calc(env(safe-area-inset-top, 0px) + 60px)",
-  left: "16px",
-  right: "16px",
+  // searchBarLayer 와 같은 값. 가로모드 첫 페인트에서도 노치를 피한다.
+  left: "max(16px, env(safe-area-inset-left, 0px))",
+  right: "max(16px, env(safe-area-inset-right, 0px))",
   zIndex: 10,
   display: "flex",
 };

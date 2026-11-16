@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getMapContainerSize,
   hasUsableMapContainerSize,
+  type MapContainerSize,
   waitForUsableMapContainerSize,
 } from "../model/map-container-layout";
 import {
@@ -75,6 +76,7 @@ export function NaverMapCanvas({
   initialCenter = null,
   initialZoom = DEFAULT_MAP_ZOOM,
 }: NaverMapCanvasProps) {
+  const rootRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
   const { status, isReady, maps, error, reload, styleOptions } =
@@ -149,9 +151,10 @@ export function NaverMapCanvas({
   }, []);
 
   useEffect(() => {
-    if (!isReady || !maps || !containerRef.current) return;
+    if (!isReady || !maps || !containerRef.current || !rootRef.current) return;
 
     const container = containerRef.current;
+    const rootElement = rootRef.current;
     let cancelled = false;
     let resizeObserver: ResizeObserver | null = null;
     let refreshFrameId = 0;
@@ -164,15 +167,24 @@ export function NaverMapCanvas({
       setIsMapBootstrapping(false);
     };
 
+    // 지도 상자의 크기는 언제나 section 에서 받는다. 상자는 CSS 로 크기를
+    // 갖지 않는다(NaverMapCanvas.css.ts 의 canvas 참고).
+    const applyContainerSize = ({ width, height }: MapContainerSize) => {
+      container.style.width = `${width}px`;
+      container.style.height = `${height}px`;
+    };
+
     const initMap = async () => {
       setMapInitError(null);
       setIsMapBootstrapping(true);
 
-      let size = getMapContainerSize(container);
+      let size = getMapContainerSize(rootElement);
       if (!hasUsableMapContainerSize(size)) {
-        size = await waitForUsableMapContainerSize(container);
+        size = await waitForUsableMapContainerSize(rootElement);
       }
       if (cancelled) return;
+
+      applyContainerSize(size);
 
       try {
         const restoredViewport = lastViewportRef.current;
@@ -224,15 +236,20 @@ export function NaverMapCanvas({
           map.refresh();
         });
 
+        // 지도 상자가 아니라 바깥 section 을 본다. iOS 는 회전할 때 뷰포트를
+        // 여러 번 바꾸는데(PWA 는 화면 전체 높이로 한 번 커졌다 줄어든다), 그 사이
+        // SDK 가 붙은 상자만 퍼센트 크기를 다시 계산받지 못하고 이전 크기에
+        // 남았다. 상자를 보던 관찰자는 깨어나지 않았고 지도는 이전 방향 크기로
+        // 잘렸다. section 은 매번 제 크기로 돌아오므로 그 값을 상자와 지도에 준다.
         resizeObserver = new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            if (mapRef.current) {
-              const { width, height } = entry.contentRect;
-              mapRef.current.setSize(new maps.Size(width, height));
-            }
-          }
+          const entry = entries.at(-1);
+          if (!entry || !mapRef.current) return;
+
+          const { width, height } = entry.contentRect;
+          applyContainerSize({ width, height });
+          mapRef.current.setSize(new maps.Size(width, height));
         });
-        resizeObserver.observe(container);
+        resizeObserver.observe(rootElement);
       } catch (nextError) {
         if (cancelled) return;
         window.clearTimeout(bootstrapTimeoutId);
@@ -269,6 +286,10 @@ export function NaverMapCanvas({
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
+      // 다음 지도는 CSS 크기에서 다시 시작한다. 박아 둔 px 가 남으면 그사이
+      // 바뀐 레이아웃을 모른 채 예전 크기로 만들어진다.
+      container.style.width = "";
+      container.style.height = "";
       if (mapRef.current) {
         const center = mapRef.current.getCenter();
         lastViewportRef.current = {
@@ -296,6 +317,7 @@ export function NaverMapCanvas({
 
   return (
     <section
+      ref={rootRef}
       className={root}
       aria-label={m.map_area_aria()}
       // 지도 SDK 가 붙고 부트스트랩까지 끝났는지. E2E 가 컨트롤과 무관한

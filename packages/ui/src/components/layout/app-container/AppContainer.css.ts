@@ -14,8 +14,11 @@ export const container = style({
   width: "100%",
   maxWidth: appShellMaxWidth,
   margin: "0 auto",
-  height: "100svh",
-  minHeight: "100svh",
+  // 뷰포트 단위를 쓰지 않는다. html·body 가 이미 화면 높이(100%)로 고정돼
+  // 있어 같은 값이 나오고, iOS 가 회전 중 뷰포트를 여러 번 바꿀 때 뷰포트
+  // 단위가 이전 값에 남는 WebKit 문제를 피한다.
+  height: "100%",
+  minHeight: "100%",
   backgroundColor: vars.color.bg.default,
   boxShadow: vars.shadow[1],
   position: "relative",

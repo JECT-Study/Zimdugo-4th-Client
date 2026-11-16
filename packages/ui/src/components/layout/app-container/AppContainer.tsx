@@ -25,8 +25,9 @@ const fallbackContainerStyle: CSSProperties & Record<`--${string}`, string> = {
   maxWidth: appShellMaxWidth,
   margin: "0 auto",
   boxSizing: "border-box",
-  height: "100svh",
-  minHeight: "100svh",
+  // container 클래스와 같은 값. 이유는 AppContainer.css.ts 참고.
+  height: "100%",
+  minHeight: "100%",
   backgroundColor: "#ffffff",
   position: "relative",
   overflow: "hidden",
