@@ -75,6 +75,7 @@ export function NaverMapCanvas({
   initialCenter = null,
   initialZoom = DEFAULT_MAP_ZOOM,
 }: NaverMapCanvasProps) {
+  const rootRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
   const { status, isReady, maps, error, reload, styleOptions } =
@@ -149,9 +150,10 @@ export function NaverMapCanvas({
   }, []);
 
   useEffect(() => {
-    if (!isReady || !maps || !containerRef.current) return;
+    if (!isReady || !maps || !containerRef.current || !rootRef.current) return;
 
     const container = containerRef.current;
+    const rootElement = rootRef.current;
     let cancelled = false;
     let resizeObserver: ResizeObserver | null = null;
     let refreshFrameId = 0;
@@ -224,15 +226,22 @@ export function NaverMapCanvas({
           map.refresh();
         });
 
+        // 지도 컨테이너가 아니라 바깥 section 을 본다. iOS 홈 화면 앱(PWA)은
+        // 회전할 때 화면 전체 높이로 한 번 커졌다가 줄어드는데, 그 사이 SDK 가
+        // 붙은 컨테이너만 퍼센트 크기를 다시 계산받지 못하고 이전 크기에 남는다.
+        // 컨테이너 크기가 그대로니 컨테이너를 보는 관찰자는 깨어나지 않고, 지도는
+        // 가로모드 크기로 그려진 채 잘린다. section 은 매번 제 크기로 돌아오므로
+        // 그 값을 컨테이너에 px 로 박고 지도에도 알린다.
         resizeObserver = new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            if (mapRef.current) {
-              const { width, height } = entry.contentRect;
-              mapRef.current.setSize(new maps.Size(width, height));
-            }
-          }
+          const entry = entries.at(-1);
+          if (!entry || !mapRef.current) return;
+
+          const { width, height } = entry.contentRect;
+          container.style.width = `${width}px`;
+          container.style.height = `${height}px`;
+          mapRef.current.setSize(new maps.Size(width, height));
         });
-        resizeObserver.observe(container);
+        resizeObserver.observe(rootElement);
       } catch (nextError) {
         if (cancelled) return;
         window.clearTimeout(bootstrapTimeoutId);
@@ -269,6 +278,10 @@ export function NaverMapCanvas({
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
+      // 다음 지도는 CSS 크기에서 다시 시작한다. 박아 둔 px 가 남으면 그사이
+      // 바뀐 레이아웃을 모른 채 예전 크기로 만들어진다.
+      container.style.width = "";
+      container.style.height = "";
       if (mapRef.current) {
         const center = mapRef.current.getCenter();
         lastViewportRef.current = {
@@ -296,6 +309,7 @@ export function NaverMapCanvas({
 
   return (
     <section
+      ref={rootRef}
       className={root}
       aria-label={m.map_area_aria()}
       // 지도 SDK 가 붙고 부트스트랩까지 끝났는지. E2E 가 컨트롤과 무관한

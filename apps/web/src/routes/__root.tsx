@@ -23,6 +23,7 @@ import {
 } from "#/features/seo/model/localized-seo-head";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
+import { useResetAppScrollOnResize } from "#/shared/hooks/useResetAppScrollOnResize";
 import { useServiceWorker } from "#/shared/hooks/useServiceWorker";
 import {
   BASE_LOCALE,
@@ -303,6 +304,8 @@ function RootDocument({ children }: { children: ReactNode }) {
   const normalizedPath = stripLocalePathPrefix(pathname);
   const isDocumentScrollPage =
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
+
+  useResetAppScrollOnResize(!isDocumentScrollPage);
 
   return (
     <html
