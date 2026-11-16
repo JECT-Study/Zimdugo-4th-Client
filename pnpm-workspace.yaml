@@ -29,7 +29,9 @@ overrides:
   nanoid: ^3.3.18
   picomatch@4: ^4.0.4
   postcss: ^8.5.23
-  seroval: ^1.5.3
+  # @tanstack/router-core 가 끌어오는 seroval-plugins 1.8 이 seroval ^1.8.0 을
+  # 요구한다(seroval/shared 하위 경로). 하한이 낮으면 seroval 이 1.6 에 남아 빌드가 깨진다.
+  seroval: ^1.8.0
   shell-quote: ^1.9.0
   # uuid 10 은 10.0.0 하나뿐이라 그 줄기에는 고칠 버전이 없다. 소비자인
   # @lix-js/sdk 가 ^10.0.0 을 선언하고 있어 메이저를 넘기는 셈인데, 쓰는 건
