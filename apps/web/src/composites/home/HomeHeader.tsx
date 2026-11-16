@@ -64,7 +64,10 @@ const headerFallbackStyle: CSSProperties = {
   // 반응형으로 정하게 두고 폴백은 위치·높이만 잡는다. (HomeSearchBar 와 동일)
   height: "48px",
   margin: "0 auto",
-  padding: "0 16px 0 30px",
+  // styles.header 와 같은 값. 인라인이라 클래스보다 우선하므로, 여기서 노치를
+  // 빼먹으면 CSS 가 붙은 뒤에도 가로모드 로고가 노치에 가린다.
+  padding:
+    "0 max(16px, env(safe-area-inset-right, 0px)) 0 max(30px, env(safe-area-inset-left, 0px))",
   boxSizing: "border-box",
   backgroundColor: "#ffffff",
 };
@@ -115,6 +118,9 @@ const circleActionFallbackStyle: CSSProperties = {
 /**
  * 프로브 엘리먼트는 width/height 를 인라인으로 0 으로 덮어쓰므로 그 두 값은 보지
  * 않는다. 헤더 클래스에서만 나오는 정렬과 좌측 패딩으로 판정한다.
+ *
+ * 좌측 패딩은 가로모드에서 노치만큼 30px 보다 커진다. 정확히 30px 로 비교하면
+ * 가로로 연 첫 화면에서 CSS 가 붙었는데도 준비되지 않았다고 본다.
  */
 const isHomeHeaderStyleReady = (element: HTMLElement) => {
   const style = window.getComputedStyle(element);
@@ -123,7 +129,7 @@ const isHomeHeaderStyleReady = (element: HTMLElement) => {
     style.display === "flex" &&
     style.alignItems === "center" &&
     style.justifyContent === "space-between" &&
-    style.paddingLeft === "30px"
+    Number.parseFloat(style.paddingLeft) >= 30
   );
 };
 

@@ -9,8 +9,10 @@ export const searchBarLayer = style({
   position: "absolute",
   // 헤더(높이 48px) 바로 아래. 헤더는 검색 여부와 상관없이 늘 서 있다.
   top: "calc(env(safe-area-inset-top, 0px) + 60px)",
-  left: vars.spacing[16],
-  right: vars.spacing[16],
+  // 가로모드에서 노치에 돋보기 아이콘이 가리지 않도록 좌우 inset 을 따른다.
+  // 세로에서는 inset 이 0 이라 16px 그대로다.
+  left: vars.layout.safeAreaInlineStart,
+  right: vars.layout.safeAreaInlineEnd,
   zIndex: vars.zIndex.ui,
   display: "flex",
   flexDirection: "column",
