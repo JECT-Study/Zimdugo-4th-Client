@@ -12,7 +12,7 @@
 const LOGIN_POPUP_CHANNEL = "zimdugo:social-login-popup";
 
 /** 팝업이 원래 창의 수신 확인을 기다리는 시간. 같은 기기 안의 통신이라 넉넉하다. */
-export const LOGIN_POPUP_ACK_TIMEOUT_MS = 1_000;
+const LOGIN_POPUP_ACK_TIMEOUT_MS = 1_000;
 
 export interface LoginPopupResult {
   popupId: string;
