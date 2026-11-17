@@ -277,15 +277,16 @@ describe("라우터가 주소를 읽는 방식과 어긋나지 않는지", () =>
 
   /**
    * 두 파라미터는 판정하는 함수가 다르다. 딥링크 파서는 정수를 요구하지 않아
-   * `12.5` 도 홈에서는 상세로 간다. 규칙만 `locker` 문법으로 다시 재면 그런 주소가
-   * 여기서만 탈락한다. 각자의 파서가 낸 결과를 그대로 쓴다.
+   * `12.5` 도 홈에서는 상세로 간다. 하지만 새 경로는 정수 id 만 상세로 열므로,
+   * 옮기면 열리지 않는 주소로 301 을 보내게 된다. 그런 주소는 옮기지 않는다.
    */
-  it("openLockerId 는 슬러그 문법이 아니라 딥링크 파서를 따른다", () => {
+  it("새 경로가 열지 못하는 딥링크 id 는 옮기지 않는다", () => {
     expect(
       parseOpenLockerDeepLinkSearch({ openLockerId: "12.5" }).openLockerId,
     ).toBe(12.5);
-    expect(resolveLegacyLockerPath(at("/?openLockerId=12.5"))).toBe(
-      "/lockers/12.5",
+    expect(resolveLegacyLockerPath(at("/?openLockerId=12.5"))).toBeNull();
+    expect(resolveLegacyLockerPath(at("/?openLockerId=164"))).toBe(
+      "/lockers/164",
     );
   });
 

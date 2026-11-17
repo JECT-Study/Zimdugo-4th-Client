@@ -90,9 +90,16 @@ export const parseLegacyLockerUrl = (url: URL): LegacyLockerUrl | null => {
 
   if (rawSlug === null || lockerId === undefined) return null;
 
-  // 경로에 실을 모양은 라우터가 내보내는 주소와 같은 함수로 정한다. 갈라지면
-  // 리다이렉트한 주소를 라우터가 다시 한 번 고쳐 쓰게 된다.
-  const slug = toLockerPathSlug(rawSlug) ?? String(lockerId);
+  /*
+   * 경로에 실을 모양은 라우터가 내보내는 주소와 같은 함수로 정한다. 갈라지면
+   * 리다이렉트한 주소를 라우터가 다시 한 번 고쳐 쓰게 된다.
+   *
+   * 그 함수가 받지 않는 값은 옮기지 않는다. 딥링크 파서는 `openLockerId=12.5` 도
+   * 받지만 새 경로는 정수 id 만 상세로 연다. 그대로 옮기면 열리지 않는 주소로 301 을
+   * 보내게 되므로, 그런 주소는 옮기지 않고 홈이 지금처럼 처리하게 둔다.
+   */
+  const slug = toLockerPathSlug(rawSlug);
+  if (slug === null) return null;
 
   for (const param of CONSUMED_DETAIL_PARAMS) delete search[param];
   for (const param of CONFLICTING_SCREEN_PARAMS) delete search[param];
