@@ -14,7 +14,18 @@ import {
   type LoginProvider,
 } from "#/features/auth/sign-in/model/social-login-url";
 
-export const LOGIN_POPUP_WINDOW_NAME = "zimdugo-social-login";
+const LOGIN_POPUP_WINDOW_NAME_PREFIX = "zimdugo-social-login";
+
+/**
+ * 팝업마다 다른 창 이름을 쓴다.
+ *
+ * 같은 이름으로 window.open 을 부르면 그 이름의 창이 이미 있을 때 새 창을 열지
+ * 않고 그 창으로 이동시킨다. 다시 누를 때 앞의 팝업을 close() 로 닫아도 닫기는
+ * 바로 끝나지 않아, iOS Safari 에서는 닫히는 중인 뒤쪽 탭이 새 주소를 받고
+ * 화면에는 아무 변화가 없었다. 이름이 다르면 언제나 새 탭이 열린다.
+ */
+export const getLoginPopupWindowName = (popupId: string) =>
+  `${LOGIN_POPUP_WINDOW_NAME_PREFIX}-${popupId}`;
 const LOGIN_POPUP_FEATURES = "popup=yes,width=480,height=720";
 
 interface PendingLoginPopups {
@@ -79,7 +90,7 @@ export const useSocialLoginPopup = ({ returnPath }: { returnPath: string }) => {
               popupId,
             }),
           ),
-          LOGIN_POPUP_WINDOW_NAME,
+          getLoginPopupWindowName(popupId),
           LOGIN_POPUP_FEATURES,
         );
 

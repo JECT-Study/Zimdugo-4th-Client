@@ -43,7 +43,7 @@ vi.mock("#/features/auth/sign-in/model/login-popup-channel", () => ({
 
 import type { LoginProvider } from "#/features/auth/sign-in/model/social-login-url";
 import {
-  LOGIN_POPUP_WINDOW_NAME,
+  getLoginPopupWindowName,
   useSocialLoginPopup,
 } from "./useSocialLoginPopup";
 
@@ -112,7 +112,7 @@ describe("useSocialLoginPopup", () => {
     expect(openSpy).toHaveBeenCalledTimes(1);
     const [openedUrl, windowName] = openSpy.mock.calls[0] as [string, string];
     expect(openedUrl).toContain("/oauth2/authorization/google?callbackUrl=");
-    expect(windowName).toBe(LOGIN_POPUP_WINDOW_NAME);
+    expect(windowName).toBe(getLoginPopupWindowName("popup-1"));
 
     const callbackUrl = getCallbackUrl(openedUrl);
     expect(callbackUrl.pathname).toBe("/login");
@@ -134,6 +134,10 @@ describe("useSocialLoginPopup", () => {
       "iOS Safari 는 팝업이 탭이라 focus() 로 전환되지 않는다. 새로 열지 않으면 눌러도 아무 일이 없다",
     ).toHaveBeenCalledTimes(2);
     expect(firstPopup.close).toHaveBeenCalledTimes(1);
+    expect(
+      openSpy.mock.calls[1]?.[1],
+      "같은 이름이면 닫히는 중인 앞의 탭이 새 주소를 받아, 화면에는 새 팝업이 뜨지 않는다",
+    ).not.toBe(openSpy.mock.calls[0]?.[1]);
     expect(
       getCallbackUrl(openSpy.mock.calls[1]?.[0] as string).searchParams.get(
         "popupId",
