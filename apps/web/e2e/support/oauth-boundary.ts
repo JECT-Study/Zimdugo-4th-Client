@@ -58,12 +58,14 @@ export const stubOAuthBoundary = async (
 ) => {
   let callbackUrl: string | null = null;
   let hasPendingAuthRequest = false;
+  let authorizationRequestCount = 0;
 
   await context.route("**/oauth2/authorization/**", (route) => {
     callbackUrl = new URL(route.request().url()).searchParams.get(
       "callbackUrl",
     );
     hasPendingAuthRequest = true;
+    authorizationRequestCount += 1;
 
     // 실제 백엔드처럼 제공자 주소로 넘긴다. 뒤로가기는 제공자 페이지만 다시
     // 불러야 한다. 여기서 바로 페이지를 돌려주면 뒤로가기가 이 시작 요청을 다시
@@ -101,6 +103,17 @@ export const stubOAuthBoundary = async (
       headers: { location: location.toString() },
     });
   });
+
+  return {
+    /**
+     * 받은 OAuth 시작 요청 수.
+     *
+     * 이 경계는 시작 요청이 몇 번 오든 마지막 것으로 성공시킨다. 한 번의 클릭이
+     * 시작 요청을 둘 보내도 로그인은 통과하므로, 요청 수를 따로 세어 확인한다.
+     * 실제 서버는 마지막 요청만 기억해 앞의 로그인이 실패한다.
+     */
+    getAuthorizationRequestCount: () => authorizationRequestCount,
+  };
 };
 
 /**

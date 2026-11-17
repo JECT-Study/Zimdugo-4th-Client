@@ -47,13 +47,14 @@ test.describe("팝업 로그인", () => {
     page,
   }) => {
     await stubApi(context);
-    await stubOAuthBoundary(context);
+    const oauth = await stubOAuthBoundary(context);
     await recordFailureModal(context);
 
     await page.goto("/login?returnPath=%2Fsettings");
     const mainNavigations = recordMainNavigations(page);
 
     const popup = await openLoginPopup(page);
+    expect(oauth.getAuthorizationRequestCount()).toBe(1);
     const popupClosed = popup.waitForEvent("close");
     await popup.getByRole("link", { name: PROVIDER_BUTTON }).click();
     await popupClosed;
@@ -68,6 +69,10 @@ test.describe("팝업 로그인", () => {
       ),
       "원래 창이 제공자나 결과 주소를 거치면 뒤로가기로 그 페이지에 돌아갈 수 있다",
     ).toEqual([]);
+    expect(
+      oauth.getAuthorizationRequestCount(),
+      "한 번의 클릭이 시작 요청을 둘 보내면 실제 서버에서는 앞의 로그인이 실패한다",
+    ).toBe(1);
   });
 
   test("팝업에서 로그인이 실패하면 팝업이 닫히고 원래 창이 실패를 알린 채 로그인 화면에 남는다", async ({
@@ -121,11 +126,12 @@ test.describe("팝업 로그인", () => {
     page,
   }) => {
     await stubApi(context);
-    await stubOAuthBoundary(context);
+    const oauth = await stubOAuthBoundary(context);
     await recordFailureModal(context);
 
     await page.goto("/login?returnPath=%2Fsettings");
     const firstPopup = await openLoginPopup(page);
+    expect(oauth.getAuthorizationRequestCount()).toBe(1);
     const firstPopupClosed = firstPopup.waitForEvent("close");
 
     // 모바일에서는 팝업이 탭이라, 사용자가 실수로 원래 탭에 돌아와 다시 누를 수 있다.
@@ -146,5 +152,6 @@ test.describe("팝업 로그인", () => {
     await expect.poll(() => currentPath(page)).toBe("/settings");
     await expect(page.getByRole("button", { name: /로그아웃/ })).toBeVisible();
     expect(await hasFailureModalShown(page)).toBe(false);
+    expect(oauth.getAuthorizationRequestCount()).toBe(2);
   });
 });

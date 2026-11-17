@@ -29,9 +29,11 @@ import {
 // 화면 문구로 모달을 찾으므로 언어를 고정한다. 기기 기본값(영어)이면 다른 문구가 뜬다.
 test.use({ locale: "ko-KR" });
 
+let oauth: Awaited<ReturnType<typeof stubOAuthBoundary>>;
+
 test.beforeEach(async ({ context }) => {
   await stubApi(context);
-  await stubOAuthBoundary(context);
+  oauth = await stubOAuthBoundary(context);
   await recordFailureModal(context);
   await blockPopups(context);
 });
@@ -44,6 +46,9 @@ test.describe("팝업이 막혀 같은 창에서 로그인할 때", () => {
     await page.getByRole("link", { name: /구글 1초 로그인/ }).click();
 
     // 첫 로그인: 제공자 페이지에서 계정을 고르면 성공해 목적지에 닿는다.
+    // 팝업이 막혀 같은 창으로 넘어가는 길에서도 시작 요청은 한 번이어야 한다.
+    await expect(page.getByRole("link", { name: PROVIDER_BUTTON })).toBeVisible();
+    expect(oauth.getAuthorizationRequestCount()).toBe(1);
     await page.getByRole("link", { name: PROVIDER_BUTTON }).click();
     await expect.poll(() => currentPath(page)).toBe("/settings");
     await expect(page.getByText(LOGIN_SUCCESS_TITLE)).toBeVisible();
