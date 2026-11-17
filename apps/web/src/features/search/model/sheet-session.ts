@@ -2,12 +2,6 @@ import { getValidatedSearchQuery } from "#/features/search/lib/sanitize-search-q
 
 export type AppMapContext = "idle" | "map" | "search";
 
-export type OverlayReturnContext = "idle" | "search";
-
-export const resolveOverlayReturnContext = (
-  context: AppMapContext,
-): OverlayReturnContext => (context === "search" ? "search" : "idle");
-
 export type SearchListKind = "keyword" | "place";
 
 /** search detail ‹ — idle 분기 없음 */
@@ -26,26 +20,10 @@ export type SearchBarBackAction =
   | "searchKeywordList"
   | "searchPlaceList";
 
-export const createKeywordDetailBackTarget = (): SearchDetailBackTarget => ({
-  listKind: "keyword",
-  placeId: null,
-});
-
-export const createPlaceDetailBackTarget = (
-  placeId: number,
-): SearchDetailBackTarget => ({
-  listKind: "place",
-  placeId,
-});
-
-export const createSearchDetailBackTarget = (input: {
-  listKind: SearchListKind;
-  placeId: number | null;
-}): SearchDetailBackTarget => ({
-  listKind: input.listKind,
-  placeId: input.listKind === "place" ? input.placeId : null,
-});
-
+/**
+ * 그려진 시트. 주소가 정하는 화면(`map-screen` 의 target)을 따라가지만, 필터처럼
+ * 주소에 없는 단계도 있다.
+ */
 export type SheetModeForContext =
   | "idle"
   | "list"
@@ -69,15 +47,6 @@ export const resolveActivePlaceId = (input: {
 
   return null;
 };
-
-export const shouldRestoreSearchListFromUrl = (input: {
-  hasExplicitLockerEntry: boolean;
-  searchQueryFromUrl: string | undefined;
-  searchPlaceIdFromUrl: number | undefined;
-}): boolean =>
-  !input.hasExplicitLockerEntry &&
-  (input.searchQueryFromUrl !== undefined ||
-    input.searchPlaceIdFromUrl !== undefined);
 
 export const shouldFetchKeywordSearch = (input: {
   context: AppMapContext;

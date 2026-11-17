@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  createKeywordDetailBackTarget,
-  createPlaceDetailBackTarget,
-  createSearchDetailBackTarget,
   isRenderableSheetSession,
   resolveActivePlaceId,
-  resolveOverlayReturnContext,
   resolveSearchBarBackAction,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
-  shouldRestoreSearchListFromUrl,
   shouldShowIdleMarkers,
   shouldShowSearchListLoading,
   shouldShowSearchMarkers,
@@ -36,26 +31,6 @@ describe("sheet-session v2", () => {
         mapPlaceId: 42,
       }),
     ).toBe(42);
-  });
-
-  it("search detail back target을 생성한다", () => {
-    expect(createPlaceDetailBackTarget(158)).toEqual({
-      listKind: "place",
-      placeId: 158,
-    });
-    expect(createKeywordDetailBackTarget()).toEqual({
-      listKind: "keyword",
-      placeId: null,
-    });
-    expect(
-      createSearchDetailBackTarget({
-        listKind: "place",
-        placeId: 9,
-      }),
-    ).toEqual({
-      listKind: "place",
-      placeId: 9,
-    });
   });
 
   it("keyword 검색 fetch 조건을 판별한다", () => {
@@ -94,7 +69,7 @@ describe("sheet-session v2", () => {
         context: "search",
         listKind: "keyword",
         sheetMode: "detail",
-        searchDetailBack: createKeywordDetailBackTarget(),
+        searchDetailBack: { listKind: "keyword", placeId: null },
         searchQuery: "강남",
       }),
     ).toBe(true);
@@ -137,17 +112,11 @@ describe("sheet-session v2", () => {
         context: "search",
         listKind: "place",
         sheetMode: "detail",
-        searchDetailBack: createPlaceDetailBackTarget(158),
+        searchDetailBack: { listKind: "place", placeId: 158 },
         mapDetailBack: null,
         activePlaceId: 158,
       }),
     ).toBe(true);
-  });
-
-  it("Overlay 복귀 context를 해석한다", () => {
-    expect(resolveOverlayReturnContext("search")).toBe("search");
-    expect(resolveOverlayReturnContext("idle")).toBe("idle");
-    expect(resolveOverlayReturnContext("map")).toBe("idle");
   });
 
   it("마커 표시 조건을 판별한다", () => {
@@ -182,7 +151,7 @@ describe("sheet-session v2", () => {
       shouldShowSearchMarkers({
         context: "search",
         sheetMode: "detail",
-        searchDetailBack: createKeywordDetailBackTarget(),
+        searchDetailBack: { listKind: "keyword", placeId: null },
       }),
     ).toBe(true);
   });
@@ -308,7 +277,7 @@ describe("sheet-session v2", () => {
         context: "search",
         listKind: "keyword",
         sheetMode: "detail",
-        searchDetailBack: createKeywordDetailBackTarget(),
+        searchDetailBack: { listKind: "keyword", placeId: null },
       }),
     ).toBe("searchDetail");
     expect(
@@ -319,31 +288,5 @@ describe("sheet-session v2", () => {
         searchDetailBack: null,
       }),
     ).toBeNull();
-  });
-
-  it("주소에 검색 파라미터만 있으면 목록 상태를 되살린다", () => {
-    expect(
-      shouldRestoreSearchListFromUrl({
-        hasExplicitLockerEntry: false,
-        searchQueryFromUrl: "coex",
-        searchPlaceIdFromUrl: undefined,
-      }),
-    ).toBe(true);
-
-    expect(
-      shouldRestoreSearchListFromUrl({
-        hasExplicitLockerEntry: false,
-        searchQueryFromUrl: undefined,
-        searchPlaceIdFromUrl: 7,
-      }),
-    ).toBe(true);
-
-    expect(
-      shouldRestoreSearchListFromUrl({
-        hasExplicitLockerEntry: true,
-        searchQueryFromUrl: "coex",
-        searchPlaceIdFromUrl: undefined,
-      }),
-    ).toBe(false);
   });
 });

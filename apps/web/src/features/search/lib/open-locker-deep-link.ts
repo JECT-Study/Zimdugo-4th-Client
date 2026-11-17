@@ -1,6 +1,6 @@
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 import { type AppLocale, BASE_LOCALE } from "#/shared/i18n/locales";
-import { createLockerPath } from "#/shared/lib/locker-path-url";
+import { createLockerPath } from "#/shared/lib/map-path-url";
 import { SITE_ORIGIN } from "#/shared/lib/site-url";
 
 export type LockerDetailSnap = "full" | "half";

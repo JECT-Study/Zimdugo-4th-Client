@@ -139,7 +139,11 @@ import {
   mergeStoredLockerDetailWithPreviousDistance,
 } from "#/features/search/model/locker-detail-display";
 import { resolveMapMarkerLayer } from "#/features/search/model/map-marker-layer-policy";
-import { writeMapSheetSessionSnapshot } from "#/features/search/model/map-sheet-session-storage";
+import {
+  resolveMapScreen,
+  resolveParentMapScreen,
+} from "#/features/search/model/map-screen";
+import { toMapScreenKey } from "#/features/search/model/map-screen-history";
 import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
@@ -167,24 +171,19 @@ import {
   withLockerDetailParam,
   withoutLockerDetailParams,
   withoutSearchContextParams,
-  withSearchPlaceIdParam,
+  withPlaceParam,
   withSearchQueryParam,
 } from "#/features/search/model/search-url-state";
 import {
-  createKeywordDetailBackTarget,
-  createPlaceDetailBackTarget,
-  createSearchDetailBackTarget,
   isRenderableSheetSession,
   resolveActivePlaceId,
-  resolveOverlayReturnContext,
   resolveSearchBarBackAction,
-  type SearchDetailBackTarget,
   shouldFetchKeywordSearch,
   shouldFetchPlaceLockers,
-  shouldRestoreSearchListFromUrl,
   shouldShowSearchListLoading,
 } from "#/features/search/model/sheet-session";
 import { useMapEntryInputs } from "#/features/search/model/useMapEntryInputs";
+import { useMapScreenNavigation } from "#/features/search/model/useMapScreenNavigation";
 import {
   DEFAULT_SEARCH_COORDINATES,
   useMapSheetSession,
@@ -261,12 +260,12 @@ export interface HomeSearchParams {
   focusLat?: number;
   focusLng?: number;
   q?: string;
-  searchPlaceId?: number;
+  /** 장소 목록. 바깥 주소로는 `/places/<id>` 다. */
+  place?: number;
 }
 
-/** 보관함 딥링크 파라미터만 걷어 낸다. 열고 나면 주소에 남길 이유가 없다. */
-const withoutLockerParam = ({ locker: _locker, ...rest }: HomeSearchParams) =>
-  rest;
+/** 주소의 검색 값을 받아 다음 값을 돌려주는 함수. */
+type SearchUrlUpdate = (search: SearchUrlParams) => SearchUrlParams;
 
 /** openLockerId 계열 딥링크 파라미터를 걷어 낸다. */
 const withoutOpenLockerParams = ({
@@ -275,7 +274,7 @@ const withoutOpenLockerParams = ({
   focusLat: _focusLat,
   focusLng: _focusLng,
   ...rest
-}: HomeSearchParams) => rest;
+}: SearchUrlParams) => rest;
 
 /**
  * 딥링크 옵션만 남긴다.
@@ -312,12 +311,12 @@ export const Route = createFileRoute("/_map/")({
     const locker =
       lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
     const q = readSearchQueryParam(safeSearch.q);
-    const searchPlaceId = readSearchPlaceIdParam(safeSearch.searchPlaceId);
+    const place = readSearchPlaceIdParam(safeSearch.place);
     return {
       ...parsed,
       locker,
       q,
-      searchPlaceId,
+      place,
     };
   },
   /**
@@ -504,16 +503,41 @@ export function IndexPage() {
   const {
     lockerIdFromQuery,
     openLockerId,
-    hasExplicitLockerEntry,
     detailSnap,
     focusLat,
     focusLng,
     searchQueryFromUrl,
-    searchPlaceIdFromUrl,
-    hasSearchPlaceEntry,
-    hasSearchQueryEntry,
-    restoredSession,
+    placeIdFromUrl,
   } = useMapEntryInputs();
+  /*
+   * 어느 화면에 있어야 하는지는 주소가 정한다(#215). 지금 화면·돌아갈 곳·상세 아래
+   * 깔린 목록을 전부 여기서 계산하고, 상태로 따로 들지 않는다.
+   *
+   * 화면을 바꾸는 길은 `mapScreenNavigation` 하나다. 상태를 바꾸고 주소를 따라
+   * 쓰는 대신 주소를 바꾸면 화면이 따라온다.
+   */
+  const mapScreenParams = useMemo(
+    () => ({
+      searchQuery: readSearchQueryParam(searchQueryFromUrl),
+      placeId: placeIdFromUrl,
+      lockerId: openLockerId,
+    }),
+    [openLockerId, placeIdFromUrl, searchQueryFromUrl],
+  );
+  const mapScreen = useMemo(
+    () => resolveMapScreen(mapScreenParams),
+    [mapScreenParams],
+  );
+  const {
+    context,
+    listKind,
+    searchPlaceId,
+    mapPlaceId,
+    searchDetailBack,
+    mapDetailBack,
+  } = mapScreen;
+  const activeLockerId = mapScreen.lockerId ?? null;
+  const mapScreenNavigation = useMapScreenNavigation();
   const handledOpenLockerIdRef = useRef<number | null>(null);
   const pinSelectedInAppRef = useRef(false);
   const pendingDeepLinkFocusPinRef = useRef<LockerPinItemResponse | null>(null);
@@ -556,50 +580,25 @@ export function IndexPage() {
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
   const effectiveSearchQuery =
-    searchQueryFromUrl ?? (hasSearchPlaceEntry ? "" : searchQuery);
-  const syncSearchQueryUrl = useCallback(
-    (
-      query: string | null | undefined,
-      options: { searchPlaceId?: number | null } = {},
-    ) => {
-      const nextQuery = readSearchQueryParam(query);
-      const currentQuery = searchQueryFromUrl;
-      const nextSearchPlaceId = options.searchPlaceId ?? null;
-      const currentSearchPlaceId = searchPlaceIdFromUrl ?? null;
-
-      if (
-        nextQuery === currentQuery &&
-        nextSearchPlaceId === currentSearchPlaceId
-      ) {
-        return;
-      }
-
-      void navigate({
-        to: ".",
-        search: (prev: SearchUrlParams) =>
-          withSearchPlaceIdParam(
-            withSearchQueryParam(prev, nextQuery),
-            nextSearchPlaceId,
-          ),
-        // 홈은 시트·컨텍스트 상태를 URL 파라미터로 표현할 뿐이라 push 하면
-        // 검색어를 바꿀 때마다 히스토리가 쌓인다. 상태 표현은 항상 replace 다.
-        replace: true,
-      });
-    },
-    [navigate, searchPlaceIdFromUrl, searchQueryFromUrl],
-  );
+    searchQueryFromUrl ?? (placeIdFromUrl !== undefined ? "" : searchQuery);
   const syncSearchFilterSession = useCallback(
     (filters: SearchFilterAppliedState) => {
       saveSearchFiltersToSession(filters);
     },
     [],
   );
+  /**
+   * 확정된 검색어를 스토어에 둔다. 주소는 화면을 바꾸는 쪽이 한 번에 쓴다.
+   *
+   * 예전에는 여기서 주소도 따로 썼다. 그러면 검색어를 쓰는 이동과 상세를 붙이는 이동이
+   * 한 이벤트 안에서 따로 일어나, 뒤엣것이 앞엣것의 결과를 못 보고 덮어쓸 수 있었다.
+   * 스토어와 주소가 같은 값을 들고 있는 것은 2단계에서 하나로 줄인다.
+   */
   const setConfirmedSearchQuery = useCallback(
-    (query: string, options: { searchPlaceId?: number | null } = {}) => {
+    (query: string) => {
       setSearchQuery(query);
-      syncSearchQueryUrl(query, options);
     },
-    [setSearchQuery, syncSearchQueryUrl],
+    [setSearchQuery],
   );
   /*
    * 지도는 `_map` 레이아웃이 쥔다(#215 의 1-3). 이 화면은 읽고, 카메라에 명령하고,
@@ -727,6 +726,8 @@ export function IndexPage() {
   );
 
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
+  /** 상세 열기 작업의 세대. 무효화할 때마다 올라간다(`clearPendingLockerDetailOpen`). */
+  const lockerDetailOpenGenerationRef = useRef(0);
   /** 지도 타이머 컨트롤로 연 보관함. 시트가 타이머 모달까지 열면 비운다. */
   const [timerAutoOpenLockerId, setTimerAutoOpenLockerId] = useState<
     number | null
@@ -747,35 +748,15 @@ export function IndexPage() {
   const {
     sheetMode,
     setSheetMode,
-    context,
-    setContext,
-    activeLockerId,
-    setActiveLockerId,
     selectedLockerDetail,
     setSelectedLockerDetail,
     selectedMapPin,
     setSelectedMapPin,
     selectedMapPinOffset,
     setSelectedMapPinOffset,
-    overlayReturnContext,
-    setOverlayReturnContext,
-    listKind,
-    setListKind,
-    searchPlaceId,
-    setSearchPlaceId,
-    mapPlaceId,
-    setMapPlaceId,
-    searchDetailBack,
-    setSearchDetailBack,
-    mapDetailBack,
-    setMapDetailBack,
   } = useMapSheetSession({
-    lockerIdFromQuery,
+    screen: mapScreen,
     deepLinkDetail: loaderData?.detail,
-    hasSearchQueryEntry,
-    hasSearchPlaceEntry,
-    searchPlaceIdFromUrl,
-    restoredSession,
   });
   const {
     snapStage: listSheetSnapStage,
@@ -955,16 +936,15 @@ export function IndexPage() {
 
   const shouldPreferHomeLocation =
     lockerIdFromQuery === undefined && focusLat == null && focusLng == null;
+  /*
+   * 주소를 다듬는다. 검증을 통과하지 못한 검색어가 들어오면 검증된 값으로 바꾸고,
+   * 필터가 주소에 실리던 시절의 파라미터는 걷어 낸다. 화면은 그대로라 칸을 바꾼다.
+   */
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const urlParams = new URLSearchParams(window.location.search);
     const rawSearchQueryFromUrl = urlParams.get("q") ?? undefined;
-    const rawSearchPlaceIdFromUrl = urlParams.get("searchPlaceId") ?? undefined;
-    const normalizedSearchPlaceIdFromUrl =
-      searchPlaceIdFromUrl !== undefined
-        ? String(searchPlaceIdFromUrl)
-        : undefined;
     const hasLegacyFilterParams =
       urlParams.has("filterSizes") ||
       urlParams.has("filterIndoorOutdoor") ||
@@ -973,26 +953,17 @@ export function IndexPage() {
     if (
       (rawSearchQueryFromUrl !== undefined &&
         rawSearchQueryFromUrl !== searchQueryFromUrl) ||
-      (rawSearchPlaceIdFromUrl !== undefined &&
-        rawSearchPlaceIdFromUrl !== normalizedSearchPlaceIdFromUrl) ||
       hasLegacyFilterParams
     ) {
-      void navigate({
-        to: ".",
-        search: (prev: SearchUrlParams) => {
-          const next = withSearchPlaceIdParam(
-            withSearchQueryParam(prev, searchQueryFromUrl),
-            searchPlaceIdFromUrl,
-          );
-          delete next.filterSizes;
-          delete next.filterIndoorOutdoor;
-          delete next.filterPlaceTypes;
-          return next;
-        },
-        replace: true,
+      mapScreenNavigation.replaceSearch((prev) => {
+        const next = withSearchQueryParam(prev, searchQueryFromUrl);
+        delete next.filterSizes;
+        delete next.filterIndoorOutdoor;
+        delete next.filterPlaceTypes;
+        return next;
       });
     }
-  }, [navigate, searchPlaceIdFromUrl, searchQueryFromUrl]);
+  }, [mapScreenNavigation.replaceSearch, searchQueryFromUrl]);
 
   useEffect(() => {
     const nextSearchQuery = searchQueryFromUrl ?? "";
@@ -1005,83 +976,6 @@ export function IndexPage() {
       previousDraft === nextSearchQuery ? previousDraft : nextSearchQuery,
     );
   }, [searchQueryFromUrl, setSearchQuery]);
-
-  useEffect(() => {
-    if (hasExplicitLockerEntry) return;
-
-    if (searchPlaceIdFromUrl !== undefined) {
-      setListKind((previousListKind) =>
-        previousListKind === "place" ? previousListKind : "place",
-      );
-      setSearchPlaceId((previousPlaceId) =>
-        previousPlaceId === searchPlaceIdFromUrl
-          ? previousPlaceId
-          : searchPlaceIdFromUrl,
-      );
-      return;
-    }
-
-    if (searchQueryFromUrl !== undefined) {
-      setListKind((previousListKind) =>
-        previousListKind === "keyword" ? previousListKind : "keyword",
-      );
-      setSearchPlaceId((previousPlaceId) =>
-        previousPlaceId === null ? previousPlaceId : null,
-      );
-      return;
-    }
-
-    setListKind((previousListKind) =>
-      previousListKind === null ? previousListKind : null,
-    );
-    setSearchPlaceId((previousPlaceId) =>
-      previousPlaceId === null ? previousPlaceId : null,
-    );
-  }, [
-    hasExplicitLockerEntry,
-    searchPlaceIdFromUrl,
-    searchQueryFromUrl,
-    setListKind,
-    setSearchPlaceId,
-  ]);
-
-  useEffect(() => {
-    if (
-      !shouldRestoreSearchListFromUrl({
-        hasExplicitLockerEntry,
-        searchQueryFromUrl,
-        searchPlaceIdFromUrl,
-      })
-    ) {
-      return;
-    }
-
-    window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
-    pendingLockerDetailOpenTimerRef.current = undefined;
-    setContext("search");
-    setSheetMode("list");
-    setActiveLockerId(null);
-    setSelectedLockerDetail(null);
-    setSelectedMapPin(null);
-    setSelectedMapPinOffset(null);
-    setSearchDetailBack(null);
-    setMapDetailBack(null);
-    setIsNavigationPopupOpen(false);
-    setIsSearchOpen(false);
-  }, [
-    hasExplicitLockerEntry,
-    searchPlaceIdFromUrl,
-    searchQueryFromUrl,
-    setIsSearchOpen,
-    setActiveLockerId,
-    setContext,
-    setMapDetailBack,
-    setSearchDetailBack,
-    setSelectedLockerDetail,
-    setSelectedMapPin,
-    setSelectedMapPinOffset,
-    setSheetMode,
-  ]);
 
   useEffect(() => {
     if (activeLockerId === null) {
@@ -1253,9 +1147,18 @@ export function IndexPage() {
     // 지도를 쥔 쪽의 몫이다.
   }, [isRefreshing, queryClient, remountMap]);
 
+  /**
+   * 진행 중인 상세 열기를 무효화한다.
+   *
+   * 예약된 타이머를 지우는 것만으로는 모자라다. 상세 열기는 즐겨찾기 변경을 서버에
+   * 보내는 동안 기다리는데, 이미 그 기다림에 들어간 작업은 타이머가 아니라서 지울
+   * 수 없다. 그래서 세대 번호를 올린다. 작업은 기다림이 끝난 뒤와 타이머 안에서 자기
+   * 번호가 아직 최신인지 보고, 아니면 아무것도 바꾸지 않는다.
+   */
   const clearPendingLockerDetailOpen = useCallback(() => {
     window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
     pendingLockerDetailOpenTimerRef.current = undefined;
+    lockerDetailOpenGenerationRef.current += 1;
   }, []);
 
   // 언마운트 시 리프레시 타이머 클린업
@@ -1398,106 +1301,65 @@ export function IndexPage() {
     }
   }, [lockerIdFromQuery]);
 
-  const clearLockerDetailUrl = useCallback(() => {
-    // 상세를 닫는 동작이다. push 하면 뒤로가기를 눌렀는데 앞으로 한 칸
-    // 나아가는 꼴이 되어, 되돌아가려면 그만큼 더 눌러야 한다.
-    void navigate({
-      to: ".",
-      search: withoutLockerDetailParams,
-      replace: true,
-    });
-  }, [navigate]);
-
-  const resetMapContext = useCallback(() => {
+  /**
+   * 그려진 시트에 딸린 표현 상태를 비운다. 주소는 건드리지 않는다.
+   *
+   * 화면을 떠나는 길은 둘이다. 앱 안 버튼은 주소를 바꾸고 이 함수로 표현을 비운다.
+   * 기기 뒤로가기는 주소가 먼저 바뀌고, 화면이 그것을 따라가며 이 함수를 부른다.
+   */
+  const clearMapPresentation = useCallback(() => {
     clearPendingLockerDetailOpen();
-    // 상세를 열 때 붙은 파라미터를 그대로 두면, 뒤로 나온 화면을 새로고침했을 때
-    // 닫았던 상세가 다시 열린다.
-    clearLockerDetailUrl();
-    void flushLockerSheetMutations();
-    // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
+    // 맥락이 바뀌면 카메라 고정을 푼다. 남아 있으면 GPS 갱신이 지도를 끌고 간다.
     setIsCameraCentered(false);
-    setMapPlaceId(null);
-    setActiveLockerId(null);
     setSelectedLockerDetail(null);
     setSelectedMapPin(null);
     setSelectedMapPinOffset(null);
     pinSelectedInAppRef.current = false;
-    setMapDetailBack(null);
-    setSearchFilters(createDefaultSearchFilters());
-    clearSearchFiltersFromSession();
     setIsNavigationPopupOpen(false);
-    setSheetMode("idle");
-    setContext("idle");
-    writeMapSheetSessionSnapshot(null);
   }, [
-    clearLockerDetailUrl,
     clearPendingLockerDetailOpen,
-    flushLockerSheetMutations,
-    setActiveLockerId,
-    setContext,
-    setMapDetailBack,
-    setMapPlaceId,
     setSelectedLockerDetail,
     setSelectedMapPin,
     setSelectedMapPinOffset,
+  ]);
+
+  /** 지도에서 연 장소 목록·상세를 닫고 홈으로 나간다. */
+  const resetMapContext = useCallback(() => {
+    clearMapPresentation();
+    void flushLockerSheetMutations();
+    setSearchFilters(createDefaultSearchFilters());
+    clearSearchFiltersFromSession();
+    setSheetMode("idle");
+    mapScreenNavigation.exitToHome();
+  }, [
+    clearMapPresentation,
+    flushLockerSheetMutations,
+    mapScreenNavigation.exitToHome,
     setSheetMode,
   ]);
 
+  /** 검색을 끝내고 홈으로 나간다. 검색이 쌓은 칸을 모두 되감는다. */
   const resetSearchContext = useCallback(() => {
-    clearPendingLockerDetailOpen();
+    clearMapPresentation();
     void flushLockerSheetMutations();
-    // 보맨 컨텍스트로 복귀 시 컨텍스트 전환에 따른 카메라 고정 해제
-    setIsCameraCentered(false);
     setSearchQuery("");
-    void navigate({
-      to: ".",
-      search: (prev: SearchUrlParams) => {
-        const next = withoutSearchContextParams(prev);
-        delete next.locker;
-        delete next.openLockerId;
-        delete next.detailSnap;
-        delete next.focusLat;
-        delete next.focusLng;
-        return next;
-      },
-      // 검색 컨텍스트를 빠져나오는 정리 동작이라 되돌아갈 지점이 아니다.
-      replace: true,
-    });
     setSearchDraft("");
     setSearchFilters(createDefaultSearchFilters());
     clearSearchFiltersFromSession();
-    setListKind(null);
-    setSearchPlaceId(null);
-    setSearchDetailBack(null);
-    setActiveLockerId(null);
-    setSelectedLockerDetail(null);
-    setSelectedMapPin(null);
-    setSelectedMapPinOffset(null);
-    setIsNavigationPopupOpen(false);
     setSheetMode("idle");
-    setContext("idle");
     setIsSearchOpen(false);
-    writeMapSheetSessionSnapshot(null);
+    mapScreenNavigation.exitToHome();
   }, [
-    clearPendingLockerDetailOpen,
+    clearMapPresentation,
     flushLockerSheetMutations,
-    navigate,
+    mapScreenNavigation.exitToHome,
     setIsSearchOpen,
     setSearchQuery,
-    setActiveLockerId,
-    setContext,
-    setListKind,
-    setSearchDetailBack,
-    setSearchPlaceId,
-    setSelectedLockerDetail,
-    setSelectedMapPin,
-    setSelectedMapPinOffset,
     setSheetMode,
   ]);
 
   const handleOpenSearch = useCallback(() => {
     clearPendingLockerDetailOpen();
-    const returnContext = resolveOverlayReturnContext(context);
 
     if (context === "map") {
       resetMapContext();
@@ -1507,15 +1369,8 @@ export function IndexPage() {
     // isSearchOpen이 false로 바뀔 때 카메라 추적 effect가 재발동해
     // 지도가 강제로 현재 위치로 이동하는 버그를 방지한다.
     setIsCameraCentered(false);
-    setOverlayReturnContext(returnContext);
     setIsSearchOpen(true);
-  }, [
-    clearPendingLockerDetailOpen,
-    context,
-    resetMapContext,
-    setIsSearchOpen,
-    setOverlayReturnContext,
-  ]);
+  }, [clearPendingLockerDetailOpen, context, resetMapContext, setIsSearchOpen]);
 
   const handleCloseSearch = useCallback(
     (draft?: string) => {
@@ -1523,10 +1378,8 @@ export function IndexPage() {
         setSearchDraft(draft.trim());
       }
       setIsSearchOpen(false);
-      // overlayReturnContext === "search" → 시트·query 유지 (state 변경 없음)
-      void overlayReturnContext;
     },
-    [overlayReturnContext, setIsSearchOpen],
+    [setIsSearchOpen],
   );
 
   const handleExitSearchContext = resetSearchContext;
@@ -1788,22 +1641,50 @@ export function IndexPage() {
     [setConfirmedSearchQuery],
   );
 
+  /**
+   * 상세 주소로 간다. 아래 깔린 목록(`q`·`place`)은 그대로 둔다.
+   *
+   * 목록이나 홈에서 열면 더 깊은 화면이라 칸이 생기고, 상세를 연 채 다른 보관함을
+   * 고르면 형제라 칸이 바뀐다(`map-screen`). 같은 보관함의 슬러그만 다듬을 때는
+   * 아무 일도 하지 않는다.
+   *
+   * `base` 는 상세를 붙이기 전에 아래 목록을 바꿔야 할 때 쓴다. 자동완성으로 검색
+   * 결과를 건너뛰고 바로 상세를 여는 경우다.
+   */
   const syncLockerDetailUrl = useCallback(
+    (lockerId: number, title?: string, base?: SearchUrlUpdate) => {
+      const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
+
+      mapScreenNavigation.goTo((prev) => {
+        const next = base ? base(prev) : prev;
+        return !base && String(next.locker ?? "") === lockerSlug
+          ? prev
+          : withLockerDetailParam(next, lockerSlug);
+      });
+    },
+    [mapScreenNavigation.goTo],
+  );
+
+  /**
+   * 상세 주소의 슬러그를 다듬는다. 보관함 이름을 받은 뒤 `164` 를 `164-강남역-…` 으로.
+   *
+   * 화면 이동이 아니라 같은 화면의 주소 정리라 칸을 바꾸기만 한다. 그리고 **지금
+   * 주소가 아직 그 보관함일 때만** 바꾼다. 기기 뒤로가기 직후에는 라우터의 최신 주소가
+   * 이미 목록인데 화면은 아직 상세를 그리는 순간이 있다. 그때 다른 화면으로 가는 길
+   * (`goTo`)을 쓰면 목록 위에 상세를 다시 쌓아, 뒤로가기가 상세에 갇힌다.
+   */
+  const normalizeLockerDetailSlug = useCallback(
     (lockerId: number, title?: string) => {
       const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
 
-      void navigate({
-        to: ".",
-        search: (prev: SearchUrlParams) =>
-          String(prev.locker ?? "") === lockerSlug
-            ? prev
-            : withLockerDetailParam(prev, lockerSlug),
-        // push 하면 뒤로가기가 이 항목으로 되돌아오고, 복원된 URL 을 보고
-        // 상세가 다시 열리면서 또 push 한다. 뒤로가기가 제자리를 맴돌게 된다.
-        replace: true,
-      });
+      mapScreenNavigation.replaceSearch((prev) =>
+        parseLockerSearchParam(prev.locker) === lockerId &&
+        String(prev.locker) !== lockerSlug
+          ? withLockerDetailParam(prev, lockerSlug)
+          : prev,
+      );
     },
-    [navigate],
+    [mapScreenNavigation.replaceSearch],
   );
 
   const openLockerDetailById = useCallback(
@@ -1813,8 +1694,9 @@ export function IndexPage() {
       options?: {
         detailSnap?: LockerDetailSnap;
         animateOnMount?: boolean;
-        searchDetailBack?: SearchDetailBackTarget | null;
         syncUrl?: boolean;
+        /** 상세를 붙이기 전에 아래 목록을 바꿀 때. `syncLockerDetailUrl` 의 `base`. */
+        urlBase?: SearchUrlUpdate;
       },
     ) => {
       clearPendingLockerDetailOpen();
@@ -1827,25 +1709,33 @@ export function IndexPage() {
         lat: searchCoordinates.lat,
         lng: searchCoordinates.lng,
       });
+      const generation = lockerDetailOpenGenerationRef.current;
       await flushLockerSheetMutations();
 
-      // URL에 보관함 상세 주소를 연동합니다 (쿼리 파라미터 슬러그 반영).
+      // 기다리는 동안 주소가 상세를 벗어났거나 다른 화면으로 갔으면 열지 않는다.
+      if (lockerDetailOpenGenerationRef.current !== generation) {
+        return false;
+      }
+
       if (options?.syncUrl !== false) {
-        syncLockerDetailUrl(lockerId, optimisticDetail?.title);
+        syncLockerDetailUrl(
+          lockerId,
+          optimisticDetail?.title,
+          options?.urlBase,
+        );
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
       pendingLockerDetailOpenTimerRef.current = window.setTimeout(() => {
         pendingLockerDetailOpenTimerRef.current = undefined;
+        if (lockerDetailOpenGenerationRef.current !== generation) {
+          return;
+        }
         setSelectedLockerDetail(
           optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
         );
-        setActiveLockerId(lockerId);
         setIsNavigationPopupOpen(false);
         setIsSearchOpen(false);
-        if (options?.searchDetailBack !== undefined) {
-          setSearchDetailBack(options.searchDetailBack);
-        }
         setLockerDetailOpensFull(options?.detailSnap === "full");
         setLockerDetailAnimatesOnMount(options?.animateOnMount ?? true);
         setSheetMode("detail");
@@ -1876,6 +1766,8 @@ export function IndexPage() {
           }
         }
       }, 0);
+
+      return true;
     },
     [
       flushLockerSheetMutations,
@@ -1885,8 +1777,6 @@ export function IndexPage() {
       searchCoordinates.lng,
       syncLockerDetailUrl,
       mapCamera.focusOn,
-      setActiveLockerId,
-      setSearchDetailBack,
       setSelectedLockerDetail,
       setSheetMode,
     ],
@@ -1913,6 +1803,12 @@ export function IndexPage() {
     setTimerAutoOpenLockerId(null);
   }, []);
 
+  /**
+   * 검색에서 장소의 보관함 목록을 연다. 검색 결과보다 한 칸 깊다.
+   *
+   * 자동완성·검색 기록에서 고르면 검색어를 그 장소 이름으로 바꾼다. 검색창에는 사용자가
+   * 친 글자(`draft`)가 남는다.
+   */
   const openSearchPlaceList = useCallback(
     (
       placeId: number,
@@ -1924,22 +1820,27 @@ export function IndexPage() {
     ) => {
       clearPendingLockerDetailOpen();
 
+      let nextQuery: string | undefined;
       if (options.applySelection && options.placeName) {
         const selection = createPlaceSearchSelection(
           options.draft ?? searchDraft,
           options.placeName,
         );
         setSearchDraft(selection.searchDraft);
-        setConfirmedSearchQuery(selection.searchQuery, {
-          searchPlaceId: placeId,
-        });
+        setConfirmedSearchQuery(selection.searchQuery);
+        nextQuery = selection.searchQuery;
       }
 
-      setContext("search");
-      setListKind("place");
-      setSearchPlaceId(placeId);
-      setSearchDetailBack(null);
-      setActiveLockerId(null);
+      mapScreenNavigation.goTo((prev) => {
+        const base = withoutLockerDetailParams(prev);
+        return withPlaceParam(
+          nextQuery !== undefined
+            ? withSearchQueryParam(base, nextQuery)
+            : base,
+          placeId,
+        );
+      });
+
       setSelectedLockerDetail(null);
       setIsNavigationPopupOpen(false);
       setIsSearchOpen(false);
@@ -1947,28 +1848,29 @@ export function IndexPage() {
     },
     [
       clearPendingLockerDetailOpen,
+      mapScreenNavigation.goTo,
       searchDraft,
       setConfirmedSearchQuery,
       setIsSearchOpen,
-      setActiveLockerId,
-      setContext,
-      setListKind,
-      setSearchDetailBack,
-      setSearchPlaceId,
       setSelectedLockerDetail,
       setSheetMode,
     ],
   );
 
+  /** 지도에서 장소 핀을 눌러 그 장소의 보관함 목록을 연다. 검색 맥락을 벗어난다. */
   const openMapPlaceList = useCallback(
     (placeId: number) => {
       clearPendingLockerDetailOpen();
       // 맨 컨텍스트로 전환 시 카메라 고정 해제
       setIsCameraCentered(false);
-      setContext("map");
-      setMapPlaceId(placeId);
-      setMapDetailBack(null);
-      setActiveLockerId(null);
+
+      mapScreenNavigation.goTo((prev) =>
+        withPlaceParam(
+          withoutSearchContextParams(withoutLockerDetailParams(prev)),
+          placeId,
+        ),
+      );
+
       setSelectedLockerDetail(null);
       setSelectedMapPin(null);
       setSelectedMapPinOffset(null);
@@ -1978,11 +1880,8 @@ export function IndexPage() {
     },
     [
       clearPendingLockerDetailOpen,
+      mapScreenNavigation.goTo,
       setIsSearchOpen,
-      setActiveLockerId,
-      setContext,
-      setMapDetailBack,
-      setMapPlaceId,
       setSelectedLockerDetail,
       setSelectedMapPin,
       setSelectedMapPinOffset,
@@ -1990,6 +1889,7 @@ export function IndexPage() {
     ],
   );
 
+  /** 검색어로 검색 결과를 연다. 홈에서는 칸을 만들고, 검색 중에는 칸을 바꾼다. */
   const handleSelectSearch = useCallback(
     (query: string) => {
       const attempt = resolveSearchQuerySubmitAttempt(query);
@@ -2001,11 +1901,14 @@ export function IndexPage() {
       clearPendingLockerDetailOpen();
       recordSearchHistory({ kind: "keyword", query: attempt.query });
       applySearchSelection(createKeywordSearchSelection(attempt.query));
-      setContext("search");
-      setListKind("keyword");
-      setSearchPlaceId(null);
-      setSearchDetailBack(null);
-      setActiveLockerId(null);
+
+      mapScreenNavigation.goTo((prev) =>
+        withSearchQueryParam(
+          withoutSearchContextParams(withoutLockerDetailParams(prev)),
+          attempt.query,
+        ),
+      );
+
       setSelectedLockerDetail(null);
       setSelectedMapPin(null);
       setSelectedMapPinOffset(null);
@@ -2016,18 +1919,40 @@ export function IndexPage() {
     [
       applySearchSelection,
       clearPendingLockerDetailOpen,
+      mapScreenNavigation.goTo,
       recordSearchHistory,
       setIsSearchOpen,
-      setActiveLockerId,
-      setContext,
-      setListKind,
-      setSearchDetailBack,
-      setSearchPlaceId,
       setSelectedLockerDetail,
       setSelectedMapPin,
       setSelectedMapPinOffset,
       setSheetMode,
     ],
+  );
+
+  /**
+   * 자동완성·검색 기록에서 보관함을 골랐을 때. 검색 결과를 건너뛰고 바로 상세를 연다.
+   *
+   * 상세 아래에는 그 검색어의 결과 목록이 깔린다. 그래서 상세에서 돌아가면 검색
+   * 결과가 나온다. 주소 한 번에 검색어와 상세를 함께 쓴다.
+   */
+  const openLockerFromSearchSelection = useCallback(
+    (
+      lockerId: number,
+      sourceQuery: string,
+      optimisticDetail: LockerDetailItem,
+    ) => {
+      const lockerSearchSelection = applyLockerSearchDraft(sourceQuery);
+      setSearchDraft(lockerSearchSelection.searchDraft);
+      setConfirmedSearchQuery(lockerSearchSelection.searchQuery);
+      void openLockerDetailById(lockerId, optimisticDetail, {
+        urlBase: (prev) =>
+          withSearchQueryParam(
+            withoutSearchContextParams(withoutLockerDetailParams(prev)),
+            lockerSearchSelection.searchQuery,
+          ),
+      });
+    },
+    [openLockerDetailById, setConfirmedSearchQuery],
   );
 
   const handleSelectSearchAutocomplete = useCallback(
@@ -2039,17 +1964,10 @@ export function IndexPage() {
           title: item.title,
           searchDraft: sourceQuery,
         });
-        setContext("search");
-        setListKind("keyword");
-        setSearchPlaceId(null);
-        const lockerSearchSelection = applyLockerSearchDraft(sourceQuery);
-        setSearchDraft(lockerSearchSelection.searchDraft);
-        setConfirmedSearchQuery(lockerSearchSelection.searchQuery);
-        setSearchDetailBack(createKeywordDetailBackTarget());
-        openLockerDetailById(
+        openLockerFromSearchSelection(
           item.lockerId,
+          sourceQuery,
           createLockerDetailFromAutocompleteItem(item),
-          { searchDetailBack: createKeywordDetailBackTarget() },
         );
         return;
       }
@@ -2066,16 +1984,7 @@ export function IndexPage() {
         placeName: item.title,
       });
     },
-    [
-      openLockerDetailById,
-      openSearchPlaceList,
-      recordSearchHistory,
-      setConfirmedSearchQuery,
-      setContext,
-      setListKind,
-      setSearchDetailBack,
-      setSearchPlaceId,
-    ],
+    [openLockerFromSearchSelection, openSearchPlaceList, recordSearchHistory],
   );
 
   const handleSelectSearchHistory = useCallback(
@@ -2093,17 +2002,10 @@ export function IndexPage() {
           title: entry.title,
           searchDraft: sourceQuery,
         });
-        setContext("search");
-        setListKind("keyword");
-        setSearchPlaceId(null);
-        const lockerSearchSelection = applyLockerSearchDraft(sourceQuery);
-        setSearchDraft(lockerSearchSelection.searchDraft);
-        setConfirmedSearchQuery(lockerSearchSelection.searchQuery);
-        setSearchDetailBack(createKeywordDetailBackTarget());
-        openLockerDetailById(
+        openLockerFromSearchSelection(
           entry.lockerId,
+          sourceQuery,
           createLockerDetailFromHistoryEntry(entry),
-          { searchDetailBack: createKeywordDetailBackTarget() },
         );
         void queryClient.invalidateQueries({
           queryKey: [LOCKER_DETAIL_QUERY_KEY, entry.lockerId],
@@ -2126,15 +2028,10 @@ export function IndexPage() {
     },
     [
       handleSelectSearch,
-      openLockerDetailById,
+      openLockerFromSearchSelection,
       openSearchPlaceList,
       queryClient,
       recordSearchHistory,
-      setConfirmedSearchQuery,
-      setContext,
-      setListKind,
-      setSearchDetailBack,
-      setSearchPlaceId,
     ],
   );
 
@@ -2156,19 +2053,10 @@ export function IndexPage() {
     [mapCamera.focusOn],
   );
 
+  /** 목록 항목을 눌러 상세를 연다. 목록은 상세 아래에 깔린 채 주소에 남는다. */
   const handleOpenLockerDetail = useCallback(
     (item: SearchLockerResultItem) => {
       const pin = searchLockerItemToPin(item);
-
-      if (context === "map") {
-        setMapDetailBack("placeList");
-      } else if (context === "search") {
-        setSearchDetailBack(
-          listKind === "place" && searchPlaceId != null
-            ? createPlaceDetailBackTarget(searchPlaceId)
-            : createKeywordDetailBackTarget(),
-        );
-      }
 
       setSelectedMapPin(pin);
       setSelectedMapPinOffset(null);
@@ -2180,48 +2068,42 @@ export function IndexPage() {
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
       }
 
-      openLockerDetailById(
+      void openLockerDetailById(
         item.lockerId,
         createLockerDetailFromSearchItem(item),
-        {
-          searchDetailBack:
-            context === "search"
-              ? listKind === "place" && searchPlaceId != null
-                ? createPlaceDetailBackTarget(searchPlaceId)
-                : createKeywordDetailBackTarget()
-              : undefined,
-        },
       );
     },
     [
-      context,
       focusMapOnLockerPin,
-      listKind,
       openLockerDetailById,
       searchCoordinates.lat,
       searchCoordinates.lng,
-      searchPlaceId,
-      setMapDetailBack,
-      setSearchDetailBack,
       setSelectedMapPin,
       setSelectedMapPinOffset,
     ],
   );
 
+  /**
+   * 핀을 눌러 상세를 연다. 주소는 바로 바꾸고, 시트는 핀이 커지는 애니메이션이 끝난
+   * 뒤에 연다.
+   *
+   * 주소가 먼저 상세를 가리키므로 "주소의 보관함을 아직 안 열었으면 연다" 는
+   * 딥링크 처리가 끼어들 수 있다. 그래서 주소를 바꾸기 전에 이 보관함을 처리 중으로
+   * 표시해 둔다. 빠뜨리면 애니메이션을 기다리지 않고 시트가 바로 열린다.
+   */
   const openLockerDetailAfterPinFocus = useCallback(
     (
       lockerId: number,
       detail: LockerDetailItem | undefined,
       shouldDelay: boolean,
-      options?: { searchDetailBack?: SearchDetailBackTarget | null },
     ) => {
       clearPendingLockerDetailOpen();
+      handledOpenLockerIdRef.current = lockerId;
       syncLockerDetailUrl(lockerId, detail?.title);
 
       if (!shouldDelay) {
-        openLockerDetailById(lockerId, detail, {
+        void openLockerDetailById(lockerId, detail, {
           animateOnMount: true,
-          searchDetailBack: options?.searchDetailBack,
           syncUrl: false,
         });
         return;
@@ -2229,9 +2111,8 @@ export function IndexPage() {
 
       pendingLockerDetailOpenTimerRef.current = window.setTimeout(() => {
         pendingLockerDetailOpenTimerRef.current = undefined;
-        openLockerDetailById(lockerId, detail, {
+        void openLockerDetailById(lockerId, detail, {
           animateOnMount: true,
-          searchDetailBack: options?.searchDetailBack,
           syncUrl: false,
         });
       }, DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS);
@@ -2325,8 +2206,6 @@ export function IndexPage() {
           ? createLockerPinAt(lockerId, options.focus.lat, options.focus.lng)
           : undefined;
 
-      setContext("map");
-      setMapDetailBack("idle");
       pinSelectedInAppRef.current = false;
 
       if (pin) {
@@ -2344,22 +2223,27 @@ export function IndexPage() {
         }
       }
 
-      await openLockerDetailById(
+      return openLockerDetailById(
         lockerId,
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined,
-        { detailSnap: options.detailSnap ?? "half" },
+        { detailSnap: options.detailSnap ?? "half", syncUrl: false },
       );
     },
     [
       focusMapOnLockerPin,
       openLockerDetailById,
-      setContext,
-      setMapDetailBack,
       setSelectedMapPin,
       setSelectedMapPinOffset,
     ],
   );
 
+  /*
+   * 주소가 가리키는 보관함을 아직 열지 않았으면 연다.
+   *
+   * 링크로 들어왔을 때, 앱 안 딥링크(즐겨찾기 등)로 왔을 때, 기기의 앞으로가기로
+   * 상세 칸에 다시 왔을 때가 모두 이 길이다. 앱 안에서 직접 연 상세는 여는 쪽이
+   * 먼저 처리 표시를 해 두어 여기서 되풀이하지 않는다.
+   */
   useEffect(() => {
     if (openLockerId == null) {
       handledOpenLockerIdRef.current = null;
@@ -2376,37 +2260,35 @@ export function IndexPage() {
       focusLat != null && focusLng != null
         ? { lat: focusLat, lng: focusLng }
         : undefined;
+    // 딥링크가 붙인 일회용 값이 있을 때만 주소를 다듬는다. 없으면 이미 상세 주소다.
+    const hasDeepLinkParams =
+      search.openLockerId != null || search.detailSnap != null || focus != null;
 
     openLockerFromDeepLink(openLockerId, { detailSnap, focus })
-      .then(() => {
-        void navigate({
-          to: ".",
-          search: (prev: HomeSearchParams) => {
-            const rest = withoutOpenLockerParams(prev);
-            return rest.locker
-              ? rest
-              : { ...rest, locker: String(openLockerId) };
-          },
-          replace: true,
+      .then((opened) => {
+        // 여는 동안 다른 화면으로 갔으면 주소를 상세로 되돌리지 않는다.
+        if (!opened || !hasDeepLinkParams) return;
+
+        mapScreenNavigation.replaceSearch((prev) => {
+          const rest = withoutOpenLockerParams(prev);
+          return rest.locker ? rest : { ...rest, locker: String(openLockerId) };
         });
       })
       .catch((error) => {
         console.error("Failed to open locker detail from deep link:", error);
         handledOpenLockerIdRef.current = null;
         setLockerDetailQueryOrigin(null);
-        void navigate({
-          to: ".",
-          search: withoutOpenLockerParams,
-          replace: true,
-        });
+        mapScreenNavigation.replaceSearch(withoutLockerDetailParams);
       });
   }, [
     detailSnap,
     focusLat,
     focusLng,
-    navigate,
+    mapScreenNavigation.replaceSearch,
     openLockerFromDeepLink,
     openLockerId,
+    search.detailSnap,
+    search.openLockerId,
   ]);
 
   /*
@@ -2482,9 +2364,6 @@ export function IndexPage() {
       suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
-        clearLockerDetailUrl();
-        setSelectedMapPin(null);
-        setSelectedMapPinOffset(null);
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
         openMapPlaceList(id);
         return;
@@ -2495,8 +2374,6 @@ export function IndexPage() {
       pinSelectedInAppRef.current = pin != null;
       // 맵 컨텍스트로 진입 시 카메라 고정 해제 (GPS 업데이트에 의한 강제 이동 방지)
       setIsCameraCentered(false);
-      setContext("map");
-      setMapDetailBack("idle");
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       const shouldDelayDetailOpen =
@@ -2506,7 +2383,6 @@ export function IndexPage() {
       openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
     },
     [
-      clearLockerDetailUrl,
       context,
       focusMapOnLockerPin,
       mapDetailBack,
@@ -2515,8 +2391,6 @@ export function IndexPage() {
       sheetMode,
       suppressNextMapPressForMarkerInteraction,
       mapCamera.getZoom,
-      setContext,
-      setMapDetailBack,
       setSelectedMapPin,
       setSelectedMapPinOffset,
     ],
@@ -2536,8 +2410,6 @@ export function IndexPage() {
       suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
-        clearLockerDetailUrl();
-        setSelectedMapPinOffset(null);
         focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
         openMapPlaceList(id);
         return;
@@ -2550,7 +2422,6 @@ export function IndexPage() {
 
       setSelectedMapPin(pin ?? null);
       setSelectedMapPinOffset(offset ?? null);
-      setMapDetailBack("placeList");
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       const shouldDelayDetailOpen =
@@ -2560,7 +2431,6 @@ export function IndexPage() {
       openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
     },
     [
-      clearLockerDetailUrl,
       context,
       focusMapOnLockerPin,
       openLockerDetailAfterPinFocus,
@@ -2569,7 +2439,6 @@ export function IndexPage() {
       shouldRaiseSelectedPinFromMini,
       suppressNextMapPressForMarkerInteraction,
       mapCamera.getZoom,
-      setMapDetailBack,
       setSelectedMapPin,
       setSelectedMapPinOffset,
     ],
@@ -2589,21 +2458,12 @@ export function IndexPage() {
       suppressNextMapPressForMarkerInteraction();
 
       if (pinType === "PLACE") {
-        setListKind("place");
-        setSearchPlaceId(id);
-        void navigate({
-          to: ".",
-          // 상세에서 장소 목록으로 갈아탄다. 상세 파라미터를 함께 걷어내지
-          // 않으면 주소는 상세인데 화면은 목록이 되어, 새로고침에 닫았던
-          // 상세가 되살아난다.
-          search: (prev: SearchUrlParams) =>
-            withSearchPlaceIdParam(withoutLockerDetailParams(prev), id),
-          // 목록으로 돌아가는 길은 handleBackToKeywordList 가 맡는다.
-          // 여기서 push 하면 핀을 고를 때마다 히스토리만 쌓인다.
-          replace: true,
-        });
-        setActiveLockerId(null);
-        setSearchDetailBack(null);
+        // 목록에서는 한 칸 들어가고, 상세에서는 형제로 갈아탄다. 상세 값을 함께
+        // 걷어내지 않으면 주소는 상세인데 화면은 목록이 된다.
+        mapScreenNavigation.goTo((prev) =>
+          withPlaceParam(withoutLockerDetailParams(prev), id),
+        );
+        clearPendingLockerDetailOpen();
         setSelectedLockerDetail(null);
         setSelectedMapPin(null);
         setSelectedMapPinOffset(null);
@@ -2617,11 +2477,6 @@ export function IndexPage() {
         return;
       }
 
-      const nextSearchDetailBack = createSearchDetailBackTarget({
-        listKind: listKind ?? "keyword",
-        placeId: listKind === "place" ? searchPlaceId : null,
-      });
-      setSearchDetailBack(nextSearchDetailBack);
       const detail =
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined;
       setSelectedMapPin(pin ?? null);
@@ -2635,27 +2490,20 @@ export function IndexPage() {
         pin != null &&
         (mapCamera.getZoom() ?? DETAIL_FOCUS_ZOOM) < DETAIL_FOCUS_ZOOM;
       focusMapOnLockerPin(pin, DETAIL_FOCUS_ZOOM);
-      openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen, {
-        searchDetailBack: nextSearchDetailBack,
-      });
+      openLockerDetailAfterPinFocus(id, detail, shouldDelayDetailOpen);
     },
     [
+      clearPendingLockerDetailOpen,
       context,
       focusMapOnLockerPin,
-      listKind,
-      navigate,
+      mapScreenNavigation.goTo,
       openLockerDetailAfterPinFocus,
       raiseSelectedPinFromMini,
       searchCoordinates.lat,
       searchCoordinates.lng,
-      searchPlaceId,
       shouldRaiseSelectedPinFromMini,
       suppressNextMapPressForMarkerInteraction,
       mapCamera.getZoom,
-      setActiveLockerId,
-      setListKind,
-      setSearchDetailBack,
-      setSearchPlaceId,
       setSelectedLockerDetail,
       setSelectedMapPin,
       setSelectedMapPinOffset,
@@ -2775,71 +2623,41 @@ export function IndexPage() {
     setIsNavigationPopupOpen(isOpen);
   }, []);
 
+  /**
+   * 상세에서 한 칸 위로. 상세 아래 깔린 화면(목록이나 홈)으로 돌아간다.
+   *
+   * 돌아갈 곳을 상태로 들지 않는다. 주소의 `q`·`place` 가 상세 아래 깔린 목록이고,
+   * 히스토리를 되감으면 그 화면이 나온다.
+   */
   const handleBackFromDetail = useCallback(() => {
-    const willResetMapContext = context === "map" && mapDetailBack === "idle";
-
-    if (!willResetMapContext) {
-      void flushLockerSheetMutations();
-    }
+    const parentTarget = resolveMapScreen(
+      resolveParentMapScreen(mapScreenParams),
+    ).target;
 
     setLockerDetailOpensFull(false);
-    setActiveLockerId(null);
+    clearPendingLockerDetailOpen();
     setSelectedLockerDetail(null);
     setSelectedMapPin(null);
     setSelectedMapPinOffset(null);
     setIsNavigationPopupOpen(false);
 
-    // 이 핸들러는 "뒤로"다. push 하면 뒤로가기를 누를수록 히스토리가 늘어
-    // 원래 화면으로 돌아가려면 그만큼 더 눌러야 한다. 상세를 여닫는 것은
-    // 히스토리 단계가 아니라 같은 화면의 상태 변화이므로 replace 로 되돌린다.
-    if (context === "map") {
-      if (mapDetailBack === "idle") {
-        resetMapContext();
-        if (search.locker) {
-          void navigate({
-            to: ".",
-            search: withoutLockerParam,
-            replace: true,
-          });
-        }
-        return;
-      }
-
+    if (parentTarget === "idle") {
+      clearMapPresentation();
+      setSearchFilters(createDefaultSearchFilters());
+      clearSearchFiltersFromSession();
+      setSheetMode("idle");
+    } else {
+      void flushLockerSheetMutations();
       setSheetMode("list");
-      if (search.locker) {
-        void navigate({
-          to: ".",
-          search: withoutLockerParam,
-          replace: true,
-        });
-      }
-      return;
     }
 
-    if (searchDetailBack) {
-      setListKind(searchDetailBack.listKind);
-      setSearchPlaceId(searchDetailBack.placeId);
-    }
-
-    setSheetMode("list");
-    if (search.locker) {
-      void navigate({
-        to: ".",
-        search: withoutLockerParam,
-        replace: true,
-      });
-    }
+    mapScreenNavigation.goBack();
   }, [
-    context,
+    clearMapPresentation,
+    clearPendingLockerDetailOpen,
     flushLockerSheetMutations,
-    mapDetailBack,
-    resetMapContext,
-    searchDetailBack,
-    search.locker,
-    navigate,
-    setActiveLockerId,
-    setListKind,
-    setSearchPlaceId,
+    mapScreenNavigation.goBack,
+    mapScreenParams,
     setSelectedLockerDetail,
     setSelectedMapPin,
     setSelectedMapPinOffset,
@@ -2850,22 +2668,86 @@ export function IndexPage() {
     resetMapContext();
   }, [resetMapContext]);
 
+  /**
+   * 검색에서 연 장소 목록에서 검색 결과로. 히스토리를 되감으면 장소를 고르기 전의
+   * 검색 결과가 나온다.
+   *
+   * 링크로 바로 들어와 되감을 곳이 없으면 검색창에 남은 글자로 검색 결과를 연다.
+   * 장소를 고르며 검색어가 장소 이름으로 바뀌었기 때문이다.
+   */
   const handleBackToKeywordList = useCallback(() => {
     void flushLockerSheetMutations();
-    if (getSearchQueryIssue(searchDraft) === null) {
-      setConfirmedSearchQuery(trimSearchQueryDraft(searchDraft));
-    } else {
-      setConfirmedSearchQuery("");
-    }
-    setListKind("keyword");
-    setSearchPlaceId(null);
+    const fallbackQuery =
+      getSearchQueryIssue(searchDraft) === null
+        ? trimSearchQueryDraft(searchDraft)
+        : "";
     setSheetMode("list");
+    mapScreenNavigation.goBack((parent) =>
+      withSearchQueryParam(parent, fallbackQuery),
+    );
   }, [
     flushLockerSheetMutations,
+    mapScreenNavigation.goBack,
     searchDraft,
-    setConfirmedSearchQuery,
-    setListKind,
-    setSearchPlaceId,
+    setSheetMode,
+  ]);
+
+  /*
+   * 주소가 바뀌면 그려진 시트를 따라 맞춘다.
+   *
+   * 앱 안 버튼은 시트를 먼저 바꾸고 주소를 바꾸므로 여기 올 때는 이미 맞춰져 있다.
+   * 기기의 뒤로·앞으로가기는 주소만 바뀌므로 여기서 시트를 맞춘다. 상세는 위의
+   * 딥링크 처리가 연다.
+   *
+   * 주소가 바뀐 순간에만 돈다. 시트가 주소를 잠깐 늦게 따라가는 동안(핀 애니메이션을
+   * 기다리는 동안)에 끼어들면 그 지연을 없애 버린다.
+   */
+  const mapScreenKey = toMapScreenKey(mapScreenParams);
+  const appliedMapScreenKeyRef = useRef(mapScreenKey);
+  const sheetModeRef = useRef(sheetMode);
+  sheetModeRef.current = sheetMode;
+  useEffect(() => {
+    if (appliedMapScreenKeyRef.current === mapScreenKey) return;
+    appliedMapScreenKeyRef.current = mapScreenKey;
+
+    /*
+     * 화면을 떠나면 그 화면에서 바꾼 즐겨찾기를 서버에 보낸다. 즐겨찾기는 모아 두었다
+     * 화면을 떠날 때 보내는데, 앱 안 버튼만 그 일을 하면 기기 뒤로가기로 떠난 변경은
+     * 다른 탭으로 가거나 새로고침할 때 사라진다. 보낼 것이 없으면 아무 일도 없다.
+     */
+    void flushLockerSheetMutations();
+
+    if (mapScreen.target === "detail") return;
+
+    /*
+     * 상세가 아닌 주소로 왔으면 기다리던 상세 열기를 취소한다. 핀이 커지는 애니메이션을
+     * 기다리는 동안에는 시트가 아직 목록·홈이라 아래 분기를 모두 건너뛴다. 그때 남은
+     * 예약이 나중에 돌아, 뒤로가기로 취소한 상세가 목록·홈 위에 다시 열린다.
+     */
+    clearPendingLockerDetailOpen();
+
+    if (mapScreen.target === "list") {
+      if (
+        sheetModeRef.current === "detail" ||
+        sheetModeRef.current === "idle"
+      ) {
+        clearMapPresentation();
+        setLockerDetailOpensFull(false);
+        setSheetMode("list");
+      }
+      return;
+    }
+
+    if (sheetModeRef.current !== "idle") {
+      clearMapPresentation();
+      setSheetMode("idle");
+    }
+  }, [
+    clearMapPresentation,
+    clearPendingLockerDetailOpen,
+    flushLockerSheetMutations,
+    mapScreen.target,
+    mapScreenKey,
     setSheetMode,
   ]);
 
@@ -2931,7 +2813,7 @@ export function IndexPage() {
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title);
+    normalizeLockerDetailSlug(lockerDetail.lockerId, lockerDetail.title);
 
     if (
       isPendingFocusRef.current &&
@@ -2949,46 +2831,27 @@ export function IndexPage() {
   }, [
     lockerDetail,
     mapInstance,
-    syncLockerDetailUrl,
+    normalizeLockerDetailSlug,
     sheetMode,
     activeLockerId,
     mapCamera.focusOn,
     setSelectedLockerDetail,
   ]);
 
+  /*
+   * 시트에 그릴 것이 없으면 나간다. 검증을 통과하지 못한 검색어로 들어온 주소 같은
+   * 경우다.
+   *
+   * 시트와 주소가 같은 화면을 가리킬 때만 판단한다. 앱 안 버튼은 시트를 먼저 바꾸고
+   * 주소는 다음 커밋에 바뀌어, 그 사이 한 번의 렌더에서는 시트가 목록인데 주소는 아직
+   * 홈이다. 그때 판단하면 "그릴 목록이 없다" 로 보고 방금 쌓은 칸까지 되감는다.
+   */
+  const isSheetOnAddressScreen =
+    sheetMode === "detail"
+      ? mapScreen.target === "detail"
+      : mapScreen.target === "list";
   useEffect(() => {
-    if (sheetMode === "idle") {
-      writeMapSheetSessionSnapshot(null);
-      return;
-    }
-
-    writeMapSheetSessionSnapshot({
-      sheetMode,
-      context,
-      activeLockerId,
-      selectedLockerDetail,
-      selectedMapPin,
-      mapPlaceId,
-      mapDetailBack,
-      listKind,
-      searchPlaceId,
-      searchDetailBack,
-    });
-  }, [
-    activeLockerId,
-    context,
-    listKind,
-    mapDetailBack,
-    mapPlaceId,
-    searchDetailBack,
-    searchPlaceId,
-    selectedLockerDetail,
-    selectedMapPin,
-    sheetMode,
-  ]);
-
-  useEffect(() => {
-    if (sheetMode === "idle") {
+    if (sheetMode === "idle" || !isSheetOnAddressScreen) {
       return;
     }
 
@@ -3015,6 +2878,7 @@ export function IndexPage() {
     resetMapContext();
   }, [
     context,
+    isSheetOnAddressScreen,
     resetMapContext,
     resetSearchContext,
     selectedLockerDetail,

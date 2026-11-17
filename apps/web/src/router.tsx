@@ -2,10 +2,7 @@ import { deLocalizeUrl, localizeUrl } from "@repo/i18n";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
-import {
-  toInternalLockerUrl,
-  toPublicLockerUrl,
-} from "#/shared/lib/locker-path-url";
+import { toInternalMapUrl, toPublicMapUrl } from "#/shared/lib/map-path-url";
 import {
   parseSearchString,
   stringifySearchParams,
@@ -30,8 +27,8 @@ export function getRouter() {
      * `/?locker=164` 로 보이고 다시 같은 주소로 나간다.
      */
     rewrite: {
-      input: ({ url }) => toInternalLockerUrl(deLocalizeUrl(url)),
-      output: ({ url }) => localizeUrl(toPublicLockerUrl(url)),
+      input: ({ url }) => toInternalMapUrl(deLocalizeUrl(url)),
+      output: ({ url }) => localizeUrl(toPublicMapUrl(url)),
     },
   });
 

@@ -148,7 +148,17 @@ const pressCloseButton = async (page: Page) => {
   expect(pressed, "닫기 버튼을 찾지 못했다").toBe(true);
 };
 
-const historyLength = (page: Page) => page.evaluate(() => history.length);
+/**
+ * 지금 히스토리 칸의 위치. 앞에서부터 몇 번째 칸인지다.
+ *
+ * `history.length` 는 앞으로가기로 갈 칸까지 센다. 상세를 열었다 뒤로 닫으면 위치는
+ * 제자리인데 길이는 하나 늘어난 채로 남아, "뒤로가기를 몇 번 눌러야 하나" 를 재지
+ * 못한다. 라우터가 칸마다 적는 위치를 읽는다.
+ */
+const historyIndex = (page: Page) =>
+  page.evaluate(
+    () => (history.state as { __TSR_index?: number } | null)?.__TSR_index ?? 0,
+  );
 
 /** 마커들의 화면 자리. 카메라가 움직이면 함께 움직인다. */
 const markerPositions = (page: Page) =>
@@ -214,6 +224,30 @@ test.describe("보관함 상세 주소", () => {
     ).toBe(true);
   });
 
+  /**
+   * 낮은 배율에서 핀을 누르면 핀이 커지는 애니메이션을 기다린 뒤 시트를 연다. 주소는
+   * 먼저 상세가 된다. 그 사이에 뒤로 가면 시트는 아직 열리지 않았으므로, 예약된 열기를
+   * 따로 취소하지 않으면 뒤늦게 홈 위에 상세가 뜬다.
+   */
+  test("상세가 열리기를 기다리는 동안 뒤로 가면 상세가 뜨지 않는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await page.goBack();
+    await expect.poll(() => lockerPath(page)).toBeNull();
+
+    // 애니메이션 대기(840ms)보다 길게 기다린 뒤에도 상세가 없어야 한다.
+    await page.waitForTimeout(1_500);
+    await expect(page.getByRole("button", { name: "길찾기" })).toHaveCount(0);
+  });
+
   test("구 주소 ?locker= 로 들어오면 보관함 경로에서 상세가 뜬다", async ({
     page,
   }) => {
@@ -245,7 +279,7 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       .poll(() => page.locator(".map-marker-offset-wrapper").count())
       .toBeGreaterThan(0);
 
-    const baseline = await historyLength(page);
+    const baseline = await historyIndex(page);
 
     for (let round = 0; round < 3; round += 1) {
       await pressMarker(page, 0);
@@ -258,7 +292,7 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     }
 
     expect(
-      await historyLength(page),
+      await historyIndex(page),
       "상세를 여닫을 때마다 히스토리가 쌓이면 뒤로가기를 그만큼 더 눌러야 한다",
     ).toBe(baseline);
   });
@@ -275,7 +309,7 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     await pressMarker(page, 0);
     await expect.poll(() => lockerPath(page)).not.toBeNull();
 
-    const baseline = await historyLength(page);
+    const baseline = await historyIndex(page);
     const before = await markerPositions(page);
 
     for (let round = 0; round < 3; round += 1) {
@@ -292,7 +326,7 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
     ).not.toEqual(before);
 
     expect(
-      await historyLength(page),
+      await historyIndex(page),
       "핀을 고를 때마다 쌓이면 뒤로가기를 그만큼 더 눌러야 한다",
     ).toBe(baseline);
   });

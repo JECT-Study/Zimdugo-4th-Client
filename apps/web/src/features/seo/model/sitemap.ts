@@ -1,7 +1,7 @@
 import { createLockerDeepLinkSlug } from "#/features/search/lib/open-locker-deep-link";
 import type { ClientDocumentResponse } from "#/shared/api/documents";
 import type { SeoLockerItem } from "#/shared/api/lockers";
-import { createLockerPath } from "#/shared/lib/locker-path-url";
+import { createLockerPath } from "#/shared/lib/map-path-url";
 import {
   SEO_LOCALE_PREFIXES,
   type SeoLocalePrefix,
