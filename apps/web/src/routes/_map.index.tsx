@@ -305,12 +305,17 @@ export const Route = createFileRoute("/_map/")({
    * 서빙된다. 개인화가 필요하면 클라이언트에서 채우고, SSR 로 다뤄야 한다면
    * 서버가 신원을 확인할 수단을 먼저 만들어야 한다.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack 의 LoaderFnContext 에는
-  // search 가 없다. 이 로더는 타입에 없는 필드를 읽고 있는데, 제대로 고치려면
-  // loaderDeps 로 옮겨야 해서 별도로 다룬다.
-  loader: async ({ search }: any) => {
-    const lockerParam = search?.locker;
-    const lockerId = parseLockerSearchParam(lockerParam);
+  /*
+   * 로더는 검색 파라미터를 직접 받지 못한다. TanStack 의 로더 컨텍스트에는 `search`
+   * 가 없어서, 예전처럼 `({ search })` 로 읽으면 늘 `undefined` 가 되고 상세를 한 번도
+   * 가져오지 못했다. 그 결과 딥링크로 들어온 상세의 지도는 기본 좌표에서 뜨고, 상세
+   * 메타 태그도 나가지 않았다.
+   *
+   * `loaderDeps` 로 필요한 값만 건넨다. 보관함이 바뀔 때만 로더가 다시 돈다.
+   */
+  loaderDeps: ({ search }) => ({ locker: search.locker }),
+  loader: async ({ deps }) => {
+    const lockerId = parseLockerSearchParam(deps.locker);
     if (lockerId !== undefined) {
       try {
         const rawDetail = await getLockerDetail({
