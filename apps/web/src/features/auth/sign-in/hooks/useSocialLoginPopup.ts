@@ -24,6 +24,16 @@ interface PendingLoginPopups {
   latestPopupWindow: Window | null;
 }
 
+const closeLatestPopup = (pending: PendingLoginPopups) => {
+  const { latestPopupId, latestPopupWindow } = pending;
+  if (!latestPopupId || !latestPopupWindow || latestPopupWindow.closed) return;
+
+  latestPopupWindow.close();
+  pending.returnPathById.delete(latestPopupId);
+  pending.latestPopupId = null;
+  pending.latestPopupWindow = null;
+};
+
 /**
  * 소셜 로그인을 팝업 창에서 진행하고, 끝나면 이 창에서 결과를 반영한다.
  *
@@ -46,13 +56,14 @@ export const useSocialLoginPopup = ({ returnPath }: { returnPath: string }) => {
   const startLogin = useCallback(
     (provider: LoginProvider) => {
       const pending = pendingRef.current;
-      // 서버는 마지막 시작 요청만 기억하므로 팝업을 새로 열면 앞의 것이 실패한다.
-      // 열려 있는 게 확실한 팝업은 앞으로 가져온다. 참조가 끊겼으면 확인할 수
-      // 없으니, 사용자가 닫았을 수도 있다고 보고 새로 연다.
-      if (pending.latestPopupWindow && !pending.latestPopupWindow.closed) {
-        pending.latestPopupWindow.focus();
-        return;
-      }
+      // 다시 누르면 언제나 로그인을 처음부터 새 창으로 시작한다.
+      // 열린 팝업을 focus() 로 앞으로 가져오는 방식은 iOS Safari 에서 통하지 않는다.
+      // 팝업이 새 탭으로 열려 다른 탭의 focus() 로는 전환되지 않으므로, 누르면
+      // 아무 일도 일어나지 않는다. 서버는 마지막 시작 요청만 기억하므로 앞의
+      // 팝업은 어차피 쓸 수 없다. 닫을 수 있으면 닫고 기억에서도 지운다.
+      // 참조가 끊겨 닫을 수 없는 팝업은 남는다. 그 팝업의 실패는 가장 최근
+      // 팝업의 것이 아니므로 결과를 받을 때 무시된다.
+      closeLatestPopup(pending);
 
       const safeReturnPath = resolveSafeReturnPath(returnPath);
       const origin = window.location.origin;

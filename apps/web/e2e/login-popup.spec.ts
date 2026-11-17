@@ -116,33 +116,35 @@ test.describe("팝업 로그인", () => {
     expect(isPopupClosed).toBe(false);
   });
 
-  test("팝업이 열려 있을 때 다시 눌러도 새 팝업을 열지 않는다", async ({
+  test("팝업이 열려 있을 때 다시 누르면 앞의 팝업을 닫고 새 팝업으로 로그인을 마친다", async ({
     context,
     page,
   }) => {
     await stubApi(context);
     await stubOAuthBoundary(context);
-
-    let authorizationRequestCount = 0;
-    context.on("request", (request) => {
-      if (request.url().includes("/oauth2/authorization/")) {
-        authorizationRequestCount += 1;
-      }
-    });
+    await recordFailureModal(context);
 
     await page.goto("/login?returnPath=%2Fsettings");
-    const popup = await openLoginPopup(page);
+    const firstPopup = await openLoginPopup(page);
+    const firstPopupClosed = firstPopup.waitForEvent("close");
 
+    // 모바일에서는 팝업이 탭이라, 사용자가 실수로 원래 탭에 돌아와 다시 누를 수 있다.
+    // 열린 팝업을 앞으로 가져오는 방식은 iOS Safari 에서 아무 반응이 없으므로
+    // 다시 누르면 언제나 새 팝업이 떠야 한다.
+    const secondPopupPromise = page.waitForEvent("popup");
     await page.getByRole("link", { name: /카카오 1초 로그인/ }).click();
-    // 같은 이름으로 window.open 을 다시 부르면 새 창 대신 열린 팝업이 다른
-    // 제공자로 옮겨 간다. 창 수만 보면 그 경우도 통과하므로 시작 요청 수를 센다.
-    await page.waitForTimeout(1_000);
+    const secondPopup = await secondPopupPromise;
+    await firstPopupClosed;
+    await expect(
+      secondPopup.getByRole("link", { name: PROVIDER_BUTTON }),
+    ).toBeVisible();
 
-    expect(
-      authorizationRequestCount,
-      "서버는 마지막 시작 요청만 기억하므로 다시 보내면 진행 중인 로그인이 실패한다",
-    ).toBe(1);
-    expect(context.pages()).toHaveLength(2);
-    await expect(popup.getByRole("link", { name: PROVIDER_BUTTON })).toBeVisible();
+    const secondPopupClosed = secondPopup.waitForEvent("close");
+    await secondPopup.getByRole("link", { name: PROVIDER_BUTTON }).click();
+    await secondPopupClosed;
+
+    await expect.poll(() => currentPath(page)).toBe("/settings");
+    await expect(page.getByRole("button", { name: /로그아웃/ })).toBeVisible();
+    expect(await hasFailureModalShown(page)).toBe(false);
   });
 });

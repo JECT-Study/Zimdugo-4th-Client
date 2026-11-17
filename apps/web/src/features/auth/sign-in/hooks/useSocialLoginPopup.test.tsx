@@ -55,11 +55,19 @@ function Probe({ returnPath = "/my" }: { returnPath?: string }) {
   return null;
 }
 
-const createPopupWindow = () =>
-  ({ closed: false, focus: vi.fn() }) as unknown as Window & {
-    closed: boolean;
-    focus: ReturnType<typeof vi.fn>;
+const createPopupWindow = () => {
+  const popupWindow = {
+    closed: false,
+    close: vi.fn(() => {
+      popupWindow.closed = true;
+    }),
   };
+
+  return popupWindow as unknown as Window & {
+    closed: boolean;
+    close: ReturnType<typeof vi.fn>;
+  };
+};
 
 /** window.open 에 넘긴 OAuth 주소에서 서버에 맡긴 callbackUrl 을 꺼낸다. */
 const getCallbackUrl = (openedUrl: string) =>
@@ -112,16 +120,44 @@ describe("useSocialLoginPopup", () => {
     expect(callbackUrl.searchParams.get("popupId")).toBe("popup-1");
   });
 
-  it("열어 둔 팝업이 있으면 새로 열지 않고 그 창을 앞으로 가져온다", () => {
-    const popupWindow = createPopupWindow();
-    openSpy.mockReturnValue(popupWindow);
+  it("열어 둔 팝업이 있어도 다시 누르면 그 팝업을 닫고 새로 연다", () => {
+    const firstPopup = createPopupWindow();
+    openSpy.mockReturnValueOnce(firstPopup);
+    openSpy.mockReturnValueOnce(createPopupWindow());
     render(<Probe />);
 
     startLogin("google");
     startLogin("kakao");
 
-    expect(openSpy).toHaveBeenCalledTimes(1);
-    expect(popupWindow.focus).toHaveBeenCalledTimes(1);
+    expect(
+      openSpy,
+      "iOS Safari 는 팝업이 탭이라 focus() 로 전환되지 않는다. 새로 열지 않으면 눌러도 아무 일이 없다",
+    ).toHaveBeenCalledTimes(2);
+    expect(firstPopup.close).toHaveBeenCalledTimes(1);
+    expect(
+      getCallbackUrl(openSpy.mock.calls[1]?.[0] as string).searchParams.get(
+        "popupId",
+      ),
+    ).toBe("popup-2");
+  });
+
+  it("닫고 새로 연 뒤에는 닫힌 앞 팝업의 결과를 받지 않는다", () => {
+    openSpy.mockReturnValueOnce(createPopupWindow());
+    openSpy.mockReturnValueOnce(createPopupWindow());
+    render(<Probe returnPath="/my" />);
+
+    startLogin("google");
+    startLogin("google");
+
+    expect(sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" })).toBe(
+      false,
+    );
+    expect(mocks.applyLoginResult).not.toHaveBeenCalled();
+
+    expect(sendResult({ popupId: "popup-2", code: "LOGIN_SUCCESS" })).toBe(
+      true,
+    );
+    expect(mocks.applyLoginResult).toHaveBeenCalledTimes(1);
   });
 
   it("앞의 팝업이 닫혔으면 다시 누를 때 새 팝업을 연다", () => {
