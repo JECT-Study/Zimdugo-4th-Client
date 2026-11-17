@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   search: {} as Record<string, unknown>,
   refresh: vi.fn(),
   invalidate: vi.fn(),
+  handOffLoginPopupResult: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -27,9 +28,17 @@ vi.mock("../../features/auth/sign-in/api/authService", () => ({
   authService: { refresh: mocks.refresh },
 }));
 
+vi.mock("#/features/auth/sign-in/model/login-popup-channel", () => ({
+  isLoginPopupSupported: () => true,
+  handOffLoginPopupResult: mocks.handOffLoginPopupResult,
+}));
+
 import { useAuthStore } from "../store/authStore";
 import { useLoginResultStore } from "../store/loginResultStore";
-import { useLoginResultHandler } from "./useLoginResultHandler";
+import {
+  LOGIN_POPUP_CLOSE_FALLBACK_MS,
+  useLoginResultHandler,
+} from "./useLoginResultHandler";
 
 function Probe() {
   useLoginResultHandler();
@@ -57,6 +66,7 @@ describe("useLoginResultHandler", () => {
     mocks.navigate.mockReset().mockResolvedValue(undefined);
     mocks.refresh.mockReset();
     mocks.invalidate.mockReset().mockResolvedValue(undefined);
+    mocks.handOffLoginPopupResult.mockReset();
     useAuthStore.getState().clearAuth();
     useLoginResultStore.getState().forceClose();
   });
@@ -127,5 +137,100 @@ describe("useLoginResultHandler", () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my", replace: true });
     expect(useLoginResultStore.getState().type).toBe("success");
+  });
+});
+
+describe("useLoginResultHandler 팝업 안", () => {
+  let closeSpy: ReturnType<typeof vi.spyOn>;
+
+  const setWindowClosed = (isClosed: boolean) => {
+    Object.defineProperty(window, "closed", {
+      configurable: true,
+      get: () => isClosed,
+    });
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mocks.navigate.mockReset().mockResolvedValue(undefined);
+    mocks.refresh.mockReset();
+    mocks.handOffLoginPopupResult.mockReset();
+    closeSpy = vi.spyOn(window, "close").mockImplementation(() => {});
+    useAuthStore.getState().clearAuth();
+    useLoginResultStore.getState().forceClose();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    closeSpy.mockRestore();
+    setWindowClosed(false);
+    useAuthStore.getState().clearAuth();
+    useLoginResultStore.getState().forceClose();
+  });
+
+  const LOGGED_IN = {
+    accessToken: "token",
+    userId: 1,
+    email: "user@example.com",
+    provider: "google",
+  };
+
+  it("원래 창이 받았다고 확인하면 스스로 닫히고 토큰 발급과 이동은 하지 않는다", async () => {
+    setWindowClosed(true);
+    mocks.handOffLoginPopupResult.mockResolvedValue(true);
+
+    await renderWithSearch({
+      code: "LOGIN_SUCCESS",
+      returnPath: "/my",
+      popupId: "popup-1",
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(LOGIN_POPUP_CLOSE_FALLBACK_MS);
+    });
+
+    expect(mocks.handOffLoginPopupResult).toHaveBeenCalledWith({
+      popupId: "popup-1",
+      code: "LOGIN_SUCCESS",
+    });
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.refresh).not.toHaveBeenCalled();
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it("원래 창의 확인이 없으면 닫히지 않고 그 창에서 로그인을 마친다", async () => {
+    mocks.handOffLoginPopupResult.mockResolvedValue(false);
+    mocks.refresh.mockResolvedValue(LOGGED_IN);
+
+    await renderWithSearch({
+      code: "LOGIN_SUCCESS",
+      returnPath: "/my",
+      popupId: "popup-1",
+    });
+
+    expect(closeSpy).not.toHaveBeenCalled();
+    expect(mocks.refresh).toHaveBeenCalledTimes(1);
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my", replace: true });
+  });
+
+  it("확인을 받았는데 창이 닫히지 않으면 그 창도 로그인을 마친다", async () => {
+    setWindowClosed(false);
+    mocks.handOffLoginPopupResult.mockResolvedValue(true);
+    mocks.refresh.mockResolvedValue(LOGGED_IN);
+
+    await renderWithSearch({
+      code: "LOGIN_SUCCESS",
+      returnPath: "/my",
+      popupId: "popup-1",
+    });
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.refresh).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(LOGIN_POPUP_CLOSE_FALLBACK_MS);
+    });
+
+    expect(mocks.refresh).toHaveBeenCalledTimes(1);
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my", replace: true });
   });
 });

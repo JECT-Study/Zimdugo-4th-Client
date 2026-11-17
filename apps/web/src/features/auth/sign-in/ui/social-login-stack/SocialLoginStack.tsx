@@ -2,6 +2,12 @@ import { languageTag, m } from "@repo/i18n";
 import { IconGoogle24, IconKakao24, IconNaver19 } from "@repo/ui/assets/icons";
 import { type CSSProperties, useEffect, useState } from "react";
 import {
+  buildLoginCallbackUrl,
+  buildSocialLoginUrl,
+  getSocialLoginBaseUrl,
+  type LoginProvider,
+} from "#/features/auth/sign-in/model/social-login-url";
+import {
   isSubgridSupported,
   loginSocialButtonFlexInlineFallbackStyle,
   loginSocialButtonInlineFallbackStyle,
@@ -21,8 +27,6 @@ import {
   row,
   stack,
 } from "./SocialLoginStack.css.ts";
-
-type LoginProvider = "naver" | "kakao" | "google";
 
 // CSS의 row와 마찬가지로 아이콘·라벨이 버튼의 subgrid 열에 직접 놓이게 한다.
 const rowFallbackStyle: CSSProperties = {
@@ -117,15 +121,6 @@ export function SocialLoginStack({
     ? loginSocialButtonInlineFallbackStyle
     : loginSocialButtonFlexInlineFallbackStyle;
 
-  const getHref = (provider: LoginProvider) => {
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL ??
-      (import.meta.env.DEV ? "http://localhost:8080" : "");
-    // SSR 렌더링 시에는 브라우저 환경 변수 차이로 인한 Hydration Mismatch를 방지하기 위해
-    // 기본 OAuth 주소만 렌더링하고, 실제 콜백 경로는 클릭 이벤트에서 동적으로 주입합니다.
-    return `${baseUrl}/oauth2/authorization/${provider}`;
-  };
-
   const handleClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     provider: LoginProvider,
@@ -136,16 +131,12 @@ export function SocialLoginStack({
       return;
     }
 
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL ??
-      (import.meta.env.DEV ? "http://localhost:8080" : "");
-
-    const encodedReturnPath = encodeURIComponent(
-      returnPath.startsWith("/") ? returnPath : `/${returnPath}`,
+    // SSR 과 첫 렌더가 어긋나지 않도록 href 에는 기본 OAuth 주소만 두고,
+    // 실제 콜백 경로는 클릭 시점에 브라우저 출처로 만든다.
+    window.location.href = buildSocialLoginUrl(
+      provider,
+      buildLoginCallbackUrl({ origin: window.location.origin, returnPath }),
     );
-    const absoluteCallbackUrl = `${window.location.origin}/login?returnPath=${encodedReturnPath}`;
-
-    window.location.href = `${baseUrl}/oauth2/authorization/${provider}?callbackUrl=${encodeURIComponent(absoluteCallbackUrl)}`;
   };
 
   useEffect(() => {
@@ -172,7 +163,7 @@ export function SocialLoginStack({
           return (
             <a
               key={provider}
-              href={getHref(provider)}
+              href={getSocialLoginBaseUrl(provider)}
               className={buttonClassName}
               style={applyFallbackStyle ? buttonFallbackStyle : undefined}
               onClick={(e) => handleClick(e, provider)}
