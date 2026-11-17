@@ -28,7 +28,7 @@ import {
  */
 
 /** 보관함 상세 주소의 경로 뿌리. */
-export const LOCKER_ROUTE_BASE = "/lockers";
+const LOCKER_ROUTE_BASE = "/lockers";
 
 const LOCKER_PATH_PATTERN = /^\/lockers\/([^/]+)\/?$/;
 
