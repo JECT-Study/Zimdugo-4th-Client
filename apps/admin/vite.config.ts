@@ -1,11 +1,11 @@
 import { fileURLToPath } from "node:url";
+import babel from "@rolldown/plugin-babel";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
-import viteReact from "@vitejs/plugin-react";
+import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 const locales = ["ko", "en", "ja", "zh"] as const;
 const appI18nEntry = fileURLToPath(new URL("./src/i18n.ts", import.meta.url));
@@ -28,6 +28,7 @@ const prerenderRoutes = ["/"].flatMap((path) =>
 
 const config = defineConfig({
   resolve: {
+    tsconfigPaths: true,
     alias: [
       { find: "@repo/i18n/server", replacement: appI18nServerEntry },
       { find: "@repo/i18n", replacement: appI18nEntry },
@@ -37,18 +38,16 @@ const config = defineConfig({
     devtools(),
     vanillaExtractPlugin(),
     nitro({ rollupConfig: { external: [/^@sentry\//] } }),
-    tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tanstackStart({
       prerender: {
         enabled: true,
       },
       pages: prerenderRoutes,
     }),
-    viteReact({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
-    }),
+    viteReact(),
+    // plugin-react 6 부터 babel 옵션이 없어 React Compiler 는 Babel 플러그인을 따로 건다.
+    // 컴파일러 자체는 그대로 babel-plugin-react-compiler 다.
+    babel({ presets: [reactCompilerPreset()] }),
   ],
 });
 

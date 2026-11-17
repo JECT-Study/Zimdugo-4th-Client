@@ -3,7 +3,6 @@ import { fileURLToPath } from "node:url";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 const appI18nEntry = fileURLToPath(new URL("./src/i18n.ts", import.meta.url));
 const appI18nServerEntry = fileURLToPath(
@@ -12,6 +11,7 @@ const appI18nServerEntry = fileURLToPath(
 
 export default defineConfig({
   resolve: {
+    tsconfigPaths: true,
     dedupe: ["react", "react-dom"],
     alias: [
       { find: "@repo/i18n/server", replacement: appI18nServerEntry },
@@ -19,7 +19,6 @@ export default defineConfig({
     ],
   },
   plugins: [
-    tsconfigPaths({ projects: ["./tsconfig.json"] }),
     vanillaExtractPlugin(),
     viteReact(),
   ],
