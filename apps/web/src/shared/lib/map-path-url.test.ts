@@ -88,6 +88,20 @@ describe("toInternalMapUrl 의 검색과 장소", () => {
     ).toEqual({ q: "a" });
   });
 
+  it("장소·검색 경로에 붙은 앱 안 딥링크 상세는 버린다", () => {
+    // openLockerId 가 남으면 화면 계산이 상세로 보고, 장소 목록 주소가 상세를 연다.
+    expect(
+      parseSearchString(
+        toInternalMapUrl(at("/places/9?openLockerId=164")).search,
+      ),
+    ).toEqual({ place: 9 });
+    expect(
+      parseSearchString(
+        toInternalMapUrl(at("/search?q=a&openLockerId=164")).search,
+      ),
+    ).toEqual({ q: "a" });
+  });
+
   it("예전 searchPlaceId 주소를 장소로 옮긴다", () => {
     const url = toInternalMapUrl(at("/?q=강남&searchPlaceId=9"));
 

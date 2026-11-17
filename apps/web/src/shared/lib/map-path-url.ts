@@ -115,7 +115,15 @@ export const toInternalMapUrl = (url: URL): URL => {
     const placeId = readSearchPlaceIdParam(decodePathSegment(placeMatch[1]));
     if (placeId === undefined) return url;
 
-    const { locker: _locker, ...rest } = parseSearchString(url.search);
+    /*
+     * 경로가 화면을 정한다. 상세를 가리키는 값(`locker`, 앱 안 딥링크의
+     * `openLockerId`)이 쿼리에 남으면 장소 목록 주소가 상세를 연다.
+     */
+    const {
+      locker: _locker,
+      openLockerId: _openLockerId,
+      ...rest
+    } = parseSearchString(url.search);
     return withInternalSearch(url, { ...rest, place: placeId });
   }
 
@@ -123,6 +131,7 @@ export const toInternalMapUrl = (url: URL): URL => {
     const {
       locker: _locker,
       place: _place,
+      openLockerId: _openLockerId,
       ...rest
     } = parseSearchString(url.search);
     return withInternalSearch(url, rest);

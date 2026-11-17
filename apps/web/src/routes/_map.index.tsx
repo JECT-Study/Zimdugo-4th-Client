@@ -726,6 +726,8 @@ export function IndexPage() {
   );
 
   const pendingLockerDetailOpenTimerRef = useRef<number | undefined>(undefined);
+  /** 상세 열기 작업의 세대. 무효화할 때마다 올라간다(`clearPendingLockerDetailOpen`). */
+  const lockerDetailOpenGenerationRef = useRef(0);
   /** 지도 타이머 컨트롤로 연 보관함. 시트가 타이머 모달까지 열면 비운다. */
   const [timerAutoOpenLockerId, setTimerAutoOpenLockerId] = useState<
     number | null
@@ -1145,9 +1147,18 @@ export function IndexPage() {
     // 지도를 쥔 쪽의 몫이다.
   }, [isRefreshing, queryClient, remountMap]);
 
+  /**
+   * 진행 중인 상세 열기를 무효화한다.
+   *
+   * 예약된 타이머를 지우는 것만으로는 모자라다. 상세 열기는 즐겨찾기 변경을 서버에
+   * 보내는 동안 기다리는데, 이미 그 기다림에 들어간 작업은 타이머가 아니라서 지울
+   * 수 없다. 그래서 세대 번호를 올린다. 작업은 기다림이 끝난 뒤와 타이머 안에서 자기
+   * 번호가 아직 최신인지 보고, 아니면 아무것도 바꾸지 않는다.
+   */
   const clearPendingLockerDetailOpen = useCallback(() => {
     window.clearTimeout(pendingLockerDetailOpenTimerRef.current);
     pendingLockerDetailOpenTimerRef.current = undefined;
+    lockerDetailOpenGenerationRef.current += 1;
   }, []);
 
   // 언마운트 시 리프레시 타이머 클린업
@@ -1654,6 +1665,28 @@ export function IndexPage() {
     [mapScreenNavigation.goTo],
   );
 
+  /**
+   * 상세 주소의 슬러그를 다듬는다. 보관함 이름을 받은 뒤 `164` 를 `164-강남역-…` 으로.
+   *
+   * 화면 이동이 아니라 같은 화면의 주소 정리라 칸을 바꾸기만 한다. 그리고 **지금
+   * 주소가 아직 그 보관함일 때만** 바꾼다. 기기 뒤로가기 직후에는 라우터의 최신 주소가
+   * 이미 목록인데 화면은 아직 상세를 그리는 순간이 있다. 그때 다른 화면으로 가는 길
+   * (`goTo`)을 쓰면 목록 위에 상세를 다시 쌓아, 뒤로가기가 상세에 갇힌다.
+   */
+  const normalizeLockerDetailSlug = useCallback(
+    (lockerId: number, title?: string) => {
+      const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
+
+      mapScreenNavigation.replaceSearch((prev) =>
+        parseLockerSearchParam(prev.locker) === lockerId &&
+        String(prev.locker) !== lockerSlug
+          ? withLockerDetailParam(prev, lockerSlug)
+          : prev,
+      );
+    },
+    [mapScreenNavigation.replaceSearch],
+  );
+
   const openLockerDetailById = useCallback(
     async (
       lockerId: number,
@@ -1676,7 +1709,13 @@ export function IndexPage() {
         lat: searchCoordinates.lat,
         lng: searchCoordinates.lng,
       });
+      const generation = lockerDetailOpenGenerationRef.current;
       await flushLockerSheetMutations();
+
+      // 기다리는 동안 주소가 상세를 벗어났거나 다른 화면으로 갔으면 열지 않는다.
+      if (lockerDetailOpenGenerationRef.current !== generation) {
+        return false;
+      }
 
       if (options?.syncUrl !== false) {
         syncLockerDetailUrl(
@@ -1689,6 +1728,9 @@ export function IndexPage() {
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
       pendingLockerDetailOpenTimerRef.current = window.setTimeout(() => {
         pendingLockerDetailOpenTimerRef.current = undefined;
+        if (lockerDetailOpenGenerationRef.current !== generation) {
+          return;
+        }
         setSelectedLockerDetail(
           optimisticDetail ?? createLockerDetailPlaceholder(lockerId),
         );
@@ -1724,6 +1766,8 @@ export function IndexPage() {
           }
         }
       }, 0);
+
+      return true;
     },
     [
       flushLockerSheetMutations,
@@ -2179,7 +2223,7 @@ export function IndexPage() {
         }
       }
 
-      await openLockerDetailById(
+      return openLockerDetailById(
         lockerId,
         pin?.pinType === "LOCKER" ? createLockerDetailFromPin(pin) : undefined,
         { detailSnap: options.detailSnap ?? "half", syncUrl: false },
@@ -2221,8 +2265,9 @@ export function IndexPage() {
       search.openLockerId != null || search.detailSnap != null || focus != null;
 
     openLockerFromDeepLink(openLockerId, { detailSnap, focus })
-      .then(() => {
-        if (!hasDeepLinkParams) return;
+      .then((opened) => {
+        // 여는 동안 다른 화면으로 갔으면 주소를 상세로 되돌리지 않는다.
+        if (!opened || !hasDeepLinkParams) return;
 
         mapScreenNavigation.replaceSearch((prev) => {
           const rest = withoutOpenLockerParams(prev);
@@ -2768,7 +2813,7 @@ export function IndexPage() {
     );
 
     // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    syncLockerDetailUrl(lockerDetail.lockerId, lockerDetail.title);
+    normalizeLockerDetailSlug(lockerDetail.lockerId, lockerDetail.title);
 
     if (
       isPendingFocusRef.current &&
@@ -2786,7 +2831,7 @@ export function IndexPage() {
   }, [
     lockerDetail,
     mapInstance,
-    syncLockerDetailUrl,
+    normalizeLockerDetailSlug,
     sheetMode,
     activeLockerId,
     mapCamera.focusOn,

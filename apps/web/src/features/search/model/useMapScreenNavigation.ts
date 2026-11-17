@@ -1,4 +1,9 @@
-import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import {
+  useNavigate,
+  useRouter,
+  useRouterState,
+  useSearch,
+} from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
 import {
   type MapScreenHistoryState,
@@ -84,10 +89,13 @@ export function useMapScreenNavigation() {
   const replaceSearch = useCallback(
     (update: SearchUpdate) => {
       const current = readCurrent();
+      const nextSearch = update(current.search);
+      // 받은 값을 그대로 돌려주면 다듬을 것이 없다는 뜻이다.
+      if (nextSearch === current.search) return;
 
       void navigate({
         to: ".",
-        search: update(current.search) as never,
+        search: nextSearch as never,
         replace: true,
         state: keepState(current.state) as never,
       });
@@ -140,8 +148,18 @@ export function useMapScreenNavigation() {
   /*
    * 되감아 닿은 첫 칸이 홈이 아닐 수 있다. 검색 결과 주소로 바로 들어와 그 위에
    * 상세를 쌓았다면 첫 칸은 검색 결과다. 그때는 그 칸을 홈으로 바꾼다.
+   *
+   * 화면이 바뀐 것만 보면 놓치는 경우가 있다. 첫 칸과 떠나기 직전 칸이 같은 주소면
+   * (검색 결과로 들어와 같은 검색어로 다시 검색한 경우) 되감아도 화면 키가 그대로라
+   * 이 이펙트가 다시 돌지 않는다. 그래서 히스토리 칸의 위치도 함께 본다.
    */
   const screenKey = toMapScreenKey(readMapScreenParams(search));
+  const historyEntryIndex = useRouterState({
+    select: (state) =>
+      (state.location.state as { __TSR_index?: number } | undefined)
+        ?.__TSR_index,
+  });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: historyEntryIndex 는 같은 주소의 다른 칸에 닿았을 때 다시 돌리는 트리거다
   useEffect(() => {
     if (!isExitingToHomeRef.current) return;
 
@@ -157,7 +175,7 @@ export function useMapScreenNavigation() {
       replace: true,
       state: keepState(current.state) as never,
     });
-  }, [keepState, navigate, readCurrent, screenKey]);
+  }, [historyEntryIndex, keepState, navigate, readCurrent, screenKey]);
 
   return { goTo, replaceSearch, goBack, exitToHome };
 }

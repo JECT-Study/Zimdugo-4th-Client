@@ -173,6 +173,12 @@ const submitSearch = async (page: Page, keyword: string) => {
 test.use({
   permissions: ["geolocation"],
   geolocation: { latitude: 37.4979, longitude: 127.0276 },
+  /*
+   * 화면 문구("길찾기", "홈으로 돌아가기")로 요소를 찾으므로 언어를 고정한다. 기기
+   * 기본값(영어)이면 서버가 `/search` 같은 경로를 `/en/…` 으로 보낸다. 홈(`/`)은
+   * 프리렌더된 한국어 파일이 바로 응답해 이 판정을 거치지 않는다.
+   */
+  locale: "ko-KR",
 });
 
 test.beforeEach(async ({ page }) => {
@@ -311,5 +317,34 @@ test.describe("검색 경로", () => {
       await historyIndex(page),
       "검색을 끝내면 검색이 쌓은 칸을 모두 되감아 홈 칸으로 돌아온다",
     ).toBe(homeIndex);
+  });
+
+  /**
+   * 검색을 끝내면 검색이 쌓은 칸을 되감고, 닿은 첫 칸이 홈이 아니면 홈으로 바꾼다.
+   *
+   * 첫 칸과 떠나기 직전 칸이 같은 주소일 수 있다. 검색 결과 주소로 바로 들어와 상세를
+   * 연 뒤 같은 검색어로 다시 검색하면, 되감아 닿은 첫 칸도 같은 검색 결과다. 화면이
+   * 바뀐 것만 보고 홈으로 바꾸면 이 경우를 놓쳐 검색 결과에 남는다.
+   */
+  test("같은 주소의 첫 칸으로 되감겨도 검색을 끝내면 홈이 된다", async ({
+    page,
+  }) => {
+    await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}`);
+    await waitForMapReady(page);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(KEYWORD);
+    await overlaySearchInput(page).press("Enter");
+    await expect.poll(() => lockerPath(page)).toBeNull();
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+
+    await searchBarBackButton(page).click();
+
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(page.getByText(searchItemRaw.lockerName)).toHaveCount(0);
   });
 });
