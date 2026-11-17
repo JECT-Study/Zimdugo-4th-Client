@@ -52,6 +52,15 @@ function handleFailure(
   returnPath: string,
   navigate: ReturnType<typeof useNavigate>,
 ) {
+  // 이미 로그인한 사용자가 뒤로가기로 히스토리에 남은 제공자 페이지에 돌아가
+  // 다시 누르면, 서버의 인증 요청은 이미 소멸해 LOGIN_FAILED 로 돌아온다.
+  // 로그인 상태는 그대로이므로 실패를 알리지 않고 목적지로만 보낸다.
+  // refresh 실패는 authService 가 먼저 로그인 상태를 지우므로 여기서 걸러지지 않는다.
+  if (useAuthStore.getState().isAuthenticated) {
+    navigate({ to: returnPath as never, replace: true });
+    return;
+  }
+
   useLoginResultStore.getState().open("failure");
 
   // 실패 시에는 사용자가 다시 로그인할 수 있도록 무조건 로그인 폼을 보여주어야 하므로
