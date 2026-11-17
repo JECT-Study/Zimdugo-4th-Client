@@ -43,8 +43,8 @@ describe("createSitemapXml", () => {
     expect(xml).toContain("<loc>https://zimdugo.com/notices/12</loc>");
     expect(xml).not.toContain("/settings/terms");
     expect(xml).not.toContain("/settings/privacy");
-    expect(xml).toContain("https://zimdugo.com/?locker=515-");
-    expect(xml).toContain("https://zimdugo.com/en/?locker=515-");
+    expect(xml).toContain("https://zimdugo.com/lockers/515-");
+    expect(xml).toContain("https://zimdugo.com/en/lockers/515-");
     expect(xml).not.toContain("zimdugo-web.vercel.app");
   });
 
@@ -59,11 +59,11 @@ describe("createSitemapXml", () => {
     expect(xml).toContain('hreflang="x-default"');
   });
 
-  it("XML 속성에 안전하도록 쿼리 구분자를 이스케이프한다", () => {
+  it("hreflang 대체 주소에도 보관함 경로를 싣는다", () => {
     const xml = createSitemapXml(SEO_LOCKERS);
 
     expect(xml).toContain(
-      'href="https://zimdugo.com/?locker=515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5"',
+      'href="https://zimdugo.com/lockers/515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5"',
     );
   });
 
@@ -75,7 +75,7 @@ describe("createSitemapXml", () => {
       } as unknown as SeoLockerItem,
     ]);
 
-    expect(xml).toContain("https://zimdugo.com/?locker=77");
-    expect(xml).toContain("https://zimdugo.com/en/?locker=77");
+    expect(xml).toContain("https://zimdugo.com/lockers/77");
+    expect(xml).toContain("https://zimdugo.com/en/lockers/77");
   });
 });

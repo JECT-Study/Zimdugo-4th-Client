@@ -159,11 +159,82 @@ const markerPositions = (page: Page) =>
     }),
   );
 
-const lockerParam = (page: Page) =>
-  page.evaluate(() => new URLSearchParams(location.search).get("locker"));
+/** 주소가 가리키는 보관함 상세. 상세는 `/lockers/<slug>` 경로로 나타난다. */
+const lockerPath = (page: Page) =>
+  page.evaluate(
+    () => location.pathname.match(/^\/lockers\/([^/]+)$/)?.[1] ?? null,
+  );
+
+/*
+ * 화면 문구("닫기", "길찾기")로 요소를 찾으므로 언어를 고정한다. 기기 기본값(영어)이면
+ * 서버가 보관함 경로를 `/en/lockers/…` 로 보내 다른 문구가 뜬다. 홈(`/`)은 프리렌더된
+ * 한국어 파일이 바로 응답해 이 판정을 거치지 않던 것이라 그동안 드러나지 않았다.
+ */
+test.use({ locale: "ko-KR" });
 
 test.beforeEach(async ({ page }) => {
   await stubApi(page);
+});
+
+/**
+ * 상세는 경로(`/lockers/<slug>`)로 나타나지만 화면은 여전히 홈 하나다. 경로가 바뀔
+ * 때 화면이나 지도가 다시 만들어지면 카메라·시트 상태를 잃는다.
+ */
+test.describe("보관함 상세 주소", () => {
+  test("상세를 여닫아도 지도를 다시 만들지 않는다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    // 지금 지도 노드에 표시를 남긴다. 다시 만들어지면 새 노드에는 표시가 없다.
+    await page.evaluate(() => {
+      const map = document.querySelector("[data-map-state]");
+      if (map) (map as HTMLElement & { __probe?: true }).__probe = true;
+    });
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+
+    await pressCloseButton(page);
+    await expect.poll(() => lockerPath(page)).toBeNull();
+
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            document.querySelector("[data-map-state]") as
+              | (HTMLElement & { __probe?: true })
+              | null
+          )?.__probe === true,
+      ),
+      "상세 경로를 오가는 동안 지도가 다시 만들어졌다",
+    ).toBe(true);
+  });
+
+  test("구 주소 ?locker= 로 들어오면 보관함 경로에서 상세가 뜬다", async ({
+    page,
+  }) => {
+    await page.goto(`/?locker=${LOCKER_ID}`);
+    await waitForMapReady(page);
+
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    expect(new URL(page.url()).searchParams.get("locker")).toBeNull();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+  });
+
+  test("구 딥링크 ?openLockerId= 로 들어오면 보관함 경로에서 상세가 뜬다", async ({
+    page,
+  }) => {
+    await page.goto(`/?openLockerId=${LOCKER_ID}`);
+    await waitForMapReady(page);
+
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    expect(new URL(page.url()).searchParams.get("openLockerId")).toBeNull();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+  });
 });
 
 test.describe("홈 화면과 브라우저 히스토리", () => {
@@ -178,10 +249,10 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
 
     for (let round = 0; round < 3; round += 1) {
       await pressMarker(page, 0);
-      await expect.poll(() => lockerParam(page)).not.toBeNull();
+      await expect.poll(() => lockerPath(page)).not.toBeNull();
 
       await pressCloseButton(page);
-      await expect.poll(() => lockerParam(page)).toBeNull();
+      await expect.poll(() => lockerPath(page)).toBeNull();
       // 시트 닫힘 애니메이션이 끝나고 마커가 기본 상태로 돌아와야 다시 눌린다.
       await page.waitForTimeout(1_000);
     }
@@ -202,7 +273,7 @@ test.describe("홈 화면과 브라우저 히스토리", () => {
       .toBeGreaterThan(1);
 
     await pressMarker(page, 0);
-    await expect.poll(() => lockerParam(page)).not.toBeNull();
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
 
     const baseline = await historyLength(page);
     const before = await markerPositions(page);

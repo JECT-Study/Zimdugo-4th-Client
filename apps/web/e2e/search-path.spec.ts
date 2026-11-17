@@ -130,6 +130,12 @@ const queryParam = (page: Page, name: string) =>
     name,
   );
 
+/** 주소가 가리키는 보관함 상세. 상세는 `/lockers/<slug>` 경로로 나타난다. */
+const lockerPath = (page: Page) =>
+  page.evaluate(
+    () => location.pathname.match(/^\/lockers\/([^/]+)$/)?.[1] ?? null,
+  );
+
 const historyLength = (page: Page) => page.evaluate(() => history.length);
 
 const openSearchOverlay = async (page: Page) => {
@@ -196,9 +202,9 @@ test.describe("검색 경로", () => {
   /**
    * 주소만 보면 모자란다.
    *
-   * openLockerDetailById 는 locker 파라미터를 먼저 붙이고 상세 상태는 다음
+   * openLockerDetailById 는 상세 주소를 먼저 붙이고 상세 상태는 다음
    * 이벤트 루프에서 세운다. 그래서 시트가 뜨지 않거나 상세 데이터가 안 와도
-   * 파라미터 단언은 통과한다. 상세에만 있는 값까지 봐야 길이 이어진 것이다.
+   * 주소 단언은 통과한다. 상세에만 있는 값까지 봐야 길이 이어진 것이다.
    */
   test("결과 항목을 누르면 상세가 열린다", async ({ page }) => {
     await page.goto("/");
@@ -208,7 +214,7 @@ test.describe("검색 경로", () => {
 
     await page.getByText(searchItemRaw.lockerName).first().click();
 
-    await expect.poll(() => queryParam(page, "locker")).not.toBeNull();
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
 
     // 상세 시트가 실제로 떴는지. 길찾기는 상세에만 있는 동작이다.
     await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();

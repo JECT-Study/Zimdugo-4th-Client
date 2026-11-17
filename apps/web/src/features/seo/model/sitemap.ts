@@ -1,6 +1,7 @@
 import { createLockerDeepLinkSlug } from "#/features/search/lib/open-locker-deep-link";
 import type { ClientDocumentResponse } from "#/shared/api/documents";
 import type { SeoLockerItem } from "#/shared/api/lockers";
+import { createLockerPath } from "#/shared/lib/locker-path-url";
 import {
   SEO_LOCALE_PREFIXES,
   type SeoLocalePrefix,
@@ -38,16 +39,15 @@ const createLockerUrl = (
   locker: SeoLockerItem,
   localePrefix: SeoLocalePrefix,
 ): string => {
-  const url = new URL(localePrefix ? `${localePrefix}/` : "/", SITE_ORIGIN);
-  url.searchParams.set(
-    "locker",
-    createLockerDeepLinkSlug({
-      lockerId: locker.lockerId,
-      title: getLockerTitleByLocalePrefix(locker.names, localePrefix),
-    }),
-  );
+  const slug = createLockerDeepLinkSlug({
+    lockerId: locker.lockerId,
+    title: getLockerTitleByLocalePrefix(locker.names, localePrefix),
+  });
 
-  return url.toString();
+  return new URL(
+    `${localePrefix}${createLockerPath(slug)}`,
+    SITE_ORIGIN,
+  ).toString();
 };
 
 const getHrefLang = (localePrefix: SeoLocalePrefix): string =>

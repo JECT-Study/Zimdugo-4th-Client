@@ -31,7 +31,7 @@ describe("createLockerDeepLinkUrl", () => {
         lockerId: 515,
         title: "Gangnam Station Locker",
       }),
-    ).toBe("https://zimdugo-web.vercel.app/?locker=515-Gangnam-Station-Locker");
+    ).toBe("https://zimdugo-web.vercel.app/lockers/515-Gangnam-Station-Locker");
   });
 
   it("로케일이 오면 접두사를 붙인 보관함 주소를 만든다", () => {
@@ -42,7 +42,7 @@ describe("createLockerDeepLinkUrl", () => {
         title: "Gangnam Station Locker",
         locale: "en",
       }),
-    ).toBe("https://zimdugo.com/en?locker=515-Gangnam-Station-Locker");
+    ).toBe("https://zimdugo.com/en/lockers/515-Gangnam-Station-Locker");
   });
 
   it("한글 이름을 인코딩하되 풀었을 때 읽히게 남긴다", () => {
@@ -54,8 +54,8 @@ describe("createLockerDeepLinkUrl", () => {
     });
 
     expect(shareUrl).toContain("%EA%B0%95%EB%82%A8%EC%97%AD");
-    expect(decodeURIComponent(new URL(shareUrl).search)).toBe(
-      "?\u006C\u006F\u0063\u006B\u0065\u0072=515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C-B1\uCE35-ES-34-\uD558\uB2E8",
+    expect(decodeURIComponent(new URL(shareUrl).pathname)).toBe(
+      "/lockers/515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C-B1\uCE35-ES-34-\uD558\uB2E8",
     );
   });
 });
@@ -69,7 +69,7 @@ describe("createLockerCanonicalUrl", () => {
           "\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C B1\uCE35 ES-34 \uD558\uB2E8",
       }),
     ).toBe(
-      "https://zimdugo.com/?locker=515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5-ES-34-%ED%95%98%EB%8B%A8",
+      "https://zimdugo.com/lockers/515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5-ES-34-%ED%95%98%EB%8B%A8",
     );
   });
 
@@ -80,7 +80,7 @@ describe("createLockerCanonicalUrl", () => {
         title: "Gangnam Station Locker",
         locale: "en",
       }),
-    ).toBe("https://zimdugo.com/en?locker=515-Gangnam-Station-Locker");
+    ).toBe("https://zimdugo.com/en/lockers/515-Gangnam-Station-Locker");
   });
 });
 
@@ -89,27 +89,27 @@ describe("createLockerShareText", () => {
     expect(
       createLockerShareText({
         locale: "ko",
-        url: "https://zimdugo-web.vercel.app/?locker=515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC",
+        url: "https://zimdugo-web.vercel.app/lockers/515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC",
         title: "\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C \uBCF4\uAD00\uD568",
         address: "\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123",
       }),
     ).toBe(
-      "[\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C \uBCF4\uAD00\uD568]\n\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123\n\nhttps://zimdugo-web.vercel.app/?locker=515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C\n\n\uC9D0\uB450\uACE0\uC5D0\uC11C \uC704 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
+      "[\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C \uBCF4\uAD00\uD568]\n\uC11C\uC6B8 \uAC15\uB0A8\uAD6C \uD14C\uD5E4\uB780\uB85C 123\n\nhttps://zimdugo-web.vercel.app/lockers/515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C\n\n\uC9D0\uB450\uACE0\uC5D0\uC11C \uC704 \uBCF4\uAD00\uD568 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.",
     );
     expect(
       createLockerShareText({
         locale: "en",
-        url: "https://zimdugo-web.vercel.app/?locker=515",
+        url: "https://zimdugo-web.vercel.app/lockers/515",
         title: "Gangnam Station Locker",
         address: "123 Teheran-ro, Gangnam-gu, Seoul",
       }),
     ).toBe(
-      "[Gangnam Station Locker]\n123 Teheran-ro, Gangnam-gu, Seoul\n\nhttps://zimdugo-web.vercel.app/?locker=515\n\nView this locker on Zimdugo.",
+      "[Gangnam Station Locker]\n123 Teheran-ro, Gangnam-gu, Seoul\n\nhttps://zimdugo-web.vercel.app/lockers/515\n\nView this locker on Zimdugo.",
     );
     expect(
       createLockerShareText({
         locale: "ja",
-        url: "https://zimdugo-web.vercel.app/?locker=515",
+        url: "https://zimdugo-web.vercel.app/lockers/515",
         title: "Gangnam Station Locker",
         address: "123 Teheran-ro, Gangnam-gu, Seoul",
       }).endsWith(
@@ -119,7 +119,7 @@ describe("createLockerShareText", () => {
     expect(
       createLockerShareText({
         locale: "zh",
-        url: "https://zimdugo-web.vercel.app/?locker=515",
+        url: "https://zimdugo-web.vercel.app/lockers/515",
         title: "Gangnam Station Locker",
         address: "123 Teheran-ro, Gangnam-gu, Seoul",
       }).endsWith(
@@ -129,7 +129,7 @@ describe("createLockerShareText", () => {
     expect(
       createLockerShareText({
         locale: "zh-TW",
-        url: "https://zimdugo-web.vercel.app/?locker=515",
+        url: "https://zimdugo-web.vercel.app/lockers/515",
         title: "Gangnam Station Locker",
         address: "123 Teheran-ro, Gangnam-gu, Seoul",
       }).endsWith(
@@ -141,13 +141,13 @@ describe("createLockerShareText", () => {
   it("주소에 비 ASCII 가 있어도 읽히게 남기고 끝에 빈 줄을 두지 않는다", () => {
     const shareText = createLockerShareText({
       locale: "en",
-      url: "https://zimdugo-web.vercel.app/?locker=77-%E6%96%B0%E5%AE%BF-%E3%83%AD%E3%83%83%E3%82%AB%E3%83%BC",
+      url: "https://zimdugo-web.vercel.app/lockers/77-%E6%96%B0%E5%AE%BF-%E3%83%AD%E3%83%83%E3%82%AB%E3%83%BC",
       title: "Shinjuku Locker",
       address: "Shinjuku Station",
     });
 
     expect(shareText).toBe(
-      "[Shinjuku Locker]\nShinjuku Station\n\nhttps://zimdugo-web.vercel.app/?locker=77-\u65B0\u5BBF-\u30ED\u30C3\u30AB\u30FC\n\nView this locker on Zimdugo.",
+      "[Shinjuku Locker]\nShinjuku Station\n\nhttps://zimdugo-web.vercel.app/lockers/77-\u65B0\u5BBF-\u30ED\u30C3\u30AB\u30FC\n\nView this locker on Zimdugo.",
     );
     expect(shareText.endsWith("\n")).toBe(false);
     expect(shareText.endsWith(" ")).toBe(false);
