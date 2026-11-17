@@ -52,7 +52,7 @@ export const resultHeader = style({
   gap: "15px",
 });
 
-export const resultSortRow = style({
+export const resultControlRow = style({
   display: "flex",
   alignItems: "center",
   gap: vars.spacing[8],
@@ -66,16 +66,6 @@ export const resultSortRow = style({
       display: "none",
     },
   },
-});
-
-export const dropdownCompact = style({
-  display: "flex",
-  height: "32px",
-  padding: `0 ${vars.spacing[12]}`,
-  justifyContent: "center",
-  alignItems: "center",
-  gap: vars.spacing[2],
-  flexShrink: 0,
 });
 
 export const filterChip = style({

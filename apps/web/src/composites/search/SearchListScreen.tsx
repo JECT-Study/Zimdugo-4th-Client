@@ -2,13 +2,7 @@ import { m } from "@repo/i18n";
 import { IconFilter14 } from "@repo/ui/assets/icons";
 import { Button } from "@repo/ui/components/button";
 import { ControlChip } from "@repo/ui/components/control-chip";
-import {
-  type CSSProperties,
-  type ReactNode,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type CSSProperties, type ReactNode, useMemo, useRef } from "react";
 import { NonSearch, SearchListResults } from "#/entities/search";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
@@ -20,8 +14,8 @@ import {
   resolveEnglishSubVisibility,
 } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
+import { markOperatingStatus } from "./operating-status";
 import {
-  dropdownCompact,
   emptyState,
   emptyStateResetButton,
   emptyStateStack,
@@ -30,28 +24,16 @@ import {
   headerTitleSlot,
   listScrollArea,
   listStack,
+  resultControlRow,
   resultHeader,
   resultScrollArea,
-  resultSortRow,
   sheetColumn,
 } from "./SearchListBottomSheet.css.ts";
 import type {
   SearchLockerResultItem,
   SearchPlaceResultItem,
   SearchResultItem,
-  SearchSortDirection,
-  SearchSortKey,
 } from "./search-list-model";
-import {
-  type LockerPrimarySortType,
-  type LockerSortDirection,
-  sortLockerData,
-} from "./sort-locker-data";
-
-interface ActiveSort {
-  key: SearchSortKey;
-  direction: SearchSortDirection;
-}
 
 /**
  * 검색 결과 목록 화면. 무엇을 담고 있는지만 안다.
@@ -115,7 +97,6 @@ export function SearchListScreen({
   onContentHeightChange,
   expandedProgress = 1,
 }: SearchListScreenProps) {
-  const [activeSort, setActiveSort] = useState<ActiveSort | null>(null);
   const headerMeasureRef = useRef<HTMLDivElement | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   /** 늘어나지 않는 목록 자체. 스크롤 영역을 재면 시트가 준 높이가 돌아온다. */
@@ -126,28 +107,11 @@ export function SearchListScreen({
    */
   const contentHeightChangeRef = useRef(onContentHeightChange);
   contentHeightChangeRef.current = onContentHeightChange;
-  const visibleItems = useMemo(() => {
-    const primarySortType: Record<SearchSortKey, LockerPrimarySortType> = {
-      distance: "DISTANCE",
-      updatedAt: "UPDATED_AT",
-      price: "PRICE",
-    };
-    const sortDirection: Record<SearchSortDirection, LockerSortDirection> = {
-      asc: "ASC",
-      desc: "DESC",
-    };
-    const resolvedSort: ActiveSort = activeSort ?? {
-      key: "distance",
-      direction: "asc",
-    };
-
-    return sortLockerData(
-      items,
-      primarySortType[resolvedSort.key],
-      sortDirection[resolvedSort.direction],
-      new Date(),
-    );
-  }, [activeSort, items]);
+  /** 순서는 서버가 준 그대로 둔다. 화면은 운영 여부만 붙인다. */
+  const visibleItems = useMemo(
+    () => markOperatingStatus(items, new Date()),
+    [items],
+  );
   const isPlaceScope = Boolean(placeName);
   const hasResult = !isLoading && !isError && visibleItems.length > 0;
   const showEmpty = !isLoading && !isError && visibleItems.length === 0;
@@ -161,25 +125,9 @@ export function SearchListScreen({
     opacity: 0.84 + expandedProgress * 0.16,
     transform: `translateY(${(1 - expandedProgress) * 6}px)`,
   };
-  const sortLabels: Record<SearchSortKey, string> = {
-    distance: m.search_sort_distance(),
-    updatedAt: m.search_sort_recent(),
-    price: m.search_sort_price(),
-  };
   const resultTitleText = placeName
     ? m.search_place_lockers_title({ place: placeName })
     : undefined;
-  const handleSortPress = (key: SearchSortKey) => {
-    setActiveSort((previousSort) => {
-      if (!previousSort || previousSort.key !== key) {
-        return { key, direction: "asc" };
-      }
-      if (previousSort.direction === "asc") {
-        return { key, direction: "desc" };
-      }
-      return null;
-    });
-  };
   /**
    * full 로 올렸을 때 필요한 높이.
    *
@@ -260,8 +208,8 @@ export function SearchListScreen({
               />
             </div>
           </div>
-          <div className={resultSortRow}>
-            {onOpenFilter ? (
+          {onOpenFilter ? (
+            <div className={resultControlRow}>
               <ControlChip
                 className={filterChip}
                 onPress={onOpenFilter}
@@ -273,21 +221,8 @@ export function SearchListScreen({
                 showsIndicator={false}
                 leadingIcon={<IconFilter14 />}
               />
-            ) : null}
-            {(["distance", "updatedAt", "price"] as const).map((sortKey) => (
-              <ControlChip
-                key={sortKey}
-                className={dropdownCompact}
-                onPress={() => handleSortPress(sortKey)}
-                variant="sort"
-                label={sortLabels[sortKey]}
-                isActive={activeSort?.key === sortKey}
-                sortDirection={
-                  activeSort?.key === sortKey ? activeSort.direction : "none"
-                }
-              />
-            ))}
-          </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

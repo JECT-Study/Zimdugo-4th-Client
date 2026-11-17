@@ -1,5 +1,3 @@
-export type SearchSortKey = "distance" | "updatedAt" | "price";
-export type SearchSortDirection = "asc" | "desc";
 export interface OperatingHours {
   open: string;
   close: string;
@@ -93,28 +91,4 @@ export const filterSearchResults = (
       normalizeSearchText(target).includes(normalizedQuery),
     );
   });
-};
-
-export const sortSearchResults = (
-  items: SearchResultItem[],
-  key: SearchSortKey | null,
-  direction: SearchSortDirection = "asc",
-): SearchResultItem[] => {
-  if (!key) return items;
-
-  const directionMultiplier = direction === "asc" ? 1 : -1;
-  const getSortValue = (item: SearchResultItem): number => {
-    if (key === "distance") {
-      return item.distanceMeters ?? Number.MAX_SAFE_INTEGER;
-    }
-    if (key === "price") {
-      return item.minPrice ?? Number.MAX_SAFE_INTEGER;
-    }
-    return item.updatedAt ? Date.parse(item.updatedAt) : 0;
-  };
-
-  return [...items].sort(
-    (left, right) =>
-      (getSortValue(left) - getSortValue(right)) * directionMultiplier,
-  );
 };

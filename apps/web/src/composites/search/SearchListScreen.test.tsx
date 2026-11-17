@@ -34,17 +34,38 @@ const renderScreen = (element: ReactElement) =>
     </QueryClientProvider>,
   );
 
-const getResultHeader = () =>
-  screen.getByText(m.search_sort_distance()).closest("div")?.parentElement;
+/** 결과 헤더는 펼침 정도에 따라 transform 을 받는 유일한 요소다. */
+const getResultHeader = (container: HTMLElement) =>
+  container.querySelector<HTMLElement>('[style*="translateY"]');
 
 describe("SearchListScreen", () => {
   it("표면 없이 혼자 선다", () => {
     setLanguageTag("ko");
 
-    renderScreen(<SearchListScreen searchQuery="강남" isFilterActive />);
+    const { container } = renderScreen(
+      <SearchListScreen searchQuery="강남" isFilterActive />,
+    );
 
-    expect(screen.getByText(m.search_sort_distance())).toBeTruthy();
-    expect(screen.getByText(m.search_sort_recent())).toBeTruthy();
+    expect(getResultHeader(container)).toBeTruthy();
+  });
+
+  it("정렬 칩 없이 필터 칩만 그린다", () => {
+    setLanguageTag("ko");
+
+    renderScreen(
+      <SearchListScreen
+        searchQuery="강남"
+        isFilterActive
+        onOpenFilter={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(
+      screen.getByRole("button", {
+        name: m.search_filter_dropdown_place_type(),
+      }),
+    ).toBeTruthy();
   });
 
   /**
@@ -69,16 +90,18 @@ describe("SearchListScreen", () => {
   it("펼침 정도를 주지 않으면 결과 헤더를 그대로 보인다", () => {
     setLanguageTag("ko");
 
-    renderScreen(<SearchListScreen searchQuery="강남" isFilterActive />);
+    const { container } = renderScreen(
+      <SearchListScreen searchQuery="강남" isFilterActive />,
+    );
 
-    expect(getResultHeader()?.style.opacity).toBe("1");
-    expect(getResultHeader()?.style.transform).toBe("translateY(0px)");
+    expect(getResultHeader(container)?.style.opacity).toBe("1");
+    expect(getResultHeader(container)?.style.transform).toBe("translateY(0px)");
   });
 
   it("접힌 표면이 준 값만큼 결과 헤더를 내린다", () => {
     setLanguageTag("ko");
 
-    renderScreen(
+    const { container } = renderScreen(
       <SearchListScreen
         searchQuery="강남"
         isFilterActive
@@ -86,6 +109,6 @@ describe("SearchListScreen", () => {
       />,
     );
 
-    expect(getResultHeader()?.style.transform).toBe("translateY(6px)");
+    expect(getResultHeader(container)?.style.transform).toBe("translateY(6px)");
   });
 });

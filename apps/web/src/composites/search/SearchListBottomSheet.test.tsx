@@ -342,7 +342,7 @@ describe("SearchListBottomSheet", () => {
     );
   });
 
-  it("적용한 필터의 결과가 비어도 필터·정렬 컨트롤은 남긴다", () => {
+  it("적용한 필터의 결과가 비어도 필터 컨트롤은 남긴다", () => {
     setLanguageTag("ko");
     const handleResetFilter = vi.fn();
 
@@ -356,9 +356,11 @@ describe("SearchListBottomSheet", () => {
       />,
     );
 
-    expect(screen.getByText(m.search_sort_distance())).toBeTruthy();
-    expect(screen.getByText(m.search_sort_recent())).toBeTruthy();
-    expect(screen.getByText(m.search_sort_price())).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: m.search_filter_dropdown_place_type(),
+      }),
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByText(m.search_filter_reset()));
 

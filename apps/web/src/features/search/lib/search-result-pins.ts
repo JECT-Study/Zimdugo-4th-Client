@@ -1,8 +1,8 @@
+import { isOperatingNow } from "#/composites/search/operating-status";
 import type {
   SearchLockerResultItem,
   SearchResultItem,
 } from "#/composites/search/search-list-model";
-import { isOperatingNow } from "#/composites/search/sort-locker-data";
 import type { LockerPinItemResponse } from "#/shared/api/lockers";
 
 const toLockerPin = (

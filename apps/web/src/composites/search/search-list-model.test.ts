@@ -7,7 +7,6 @@ import {
   type SearchLockerResultItem,
   type SearchPlaceResultItem,
   type SearchResultItem,
-  sortSearchResults,
 } from "./search-list-model";
 
 const RESULTS: SearchPlaceResultItem[] = [
@@ -102,19 +101,7 @@ describe("search-list-model", () => {
     expect(filterSearchResults(mixedItems, "독립")).toEqual([standalone]);
   });
 
-  it("선택한 기준과 방향으로 장소 결과를 정렬하고 원본을 보존한다", () => {
-    expect(sortSearchResults(RESULTS, "distance", "asc")).toEqual([
-      RESULTS[1],
-      RESULTS[0],
-    ]);
-    expect(sortSearchResults(RESULTS, "updatedAt", "desc")).toEqual([
-      RESULTS[1],
-      RESULTS[0],
-    ]);
-    expect(sortSearchResults(RESULTS, "price", "asc")).toEqual([
-      RESULTS[1],
-      RESULTS[0],
-    ]);
+  it("결과 종류에 맞는 id 를 꺼낸다", () => {
     expect(getSearchResultEntityId(RESULTS[0]!)).toBe(100);
   });
 
