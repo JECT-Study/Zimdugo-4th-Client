@@ -11,6 +11,14 @@ allowBuilds:
   esbuild: true
   prisma: true
 
+# @hookform/resolvers 5 는 zod/v4/core 를 import 하면서 zod 를 의존성으로도 피어로도
+# 선언하지 않는다(7.x 부터 피어로 선언). 선언이 없으면 hoist 된 zod 에 우연히 기대게 되고,
+# zod 버전이 바뀐 뒤 캐시를 복원한 설치에서 그 링크가 끊겨 빌드가 깨진다.
+packageExtensions:
+  '@hookform/resolvers@5':
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+
 minimumReleaseAgeExclude:
   - '@tanstack/react-router-ssr-query@1.167.2'
   - '@tanstack/router-ssr-query-core@1.169.2'
