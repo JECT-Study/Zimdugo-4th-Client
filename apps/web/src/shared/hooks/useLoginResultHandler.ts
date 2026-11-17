@@ -1,11 +1,16 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { applyLoginResult } from "#/features/auth/sign-in/model/apply-login-result";
+import {
+  isLoginPopupSupported,
+  postLoginPopupResult,
+} from "#/features/auth/sign-in/model/login-popup-channel";
 import { resolveSafeReturnPath } from "#/features/auth/sign-in/model/safe-return-path";
-import { invalidatePersonalizedQueries } from "#/shared/lib/invalidate-personalized-queries";
-import { authService } from "../../features/auth/sign-in/api/authService";
-import { useAuthStore } from "../store/authStore";
-import { useLoginResultStore } from "../store/loginResultStore";
+import { LOGIN_POPUP_ID_PARAM } from "#/features/auth/sign-in/model/social-login-url";
+
+/** 팝업이 닫히지 않았다고 보고 이 창에서 직접 처리하기까지 기다리는 시간. */
+export const LOGIN_POPUP_CLOSE_FALLBACK_MS = 500;
 
 export const useLoginResultHandler = () => {
   const navigate = useNavigate();
@@ -13,61 +18,31 @@ export const useLoginResultHandler = () => {
   // @tanstack/react-router의 useSearch는 strict: false일 때 location.search 전체를 반환합니다.
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const code = search.code as string | undefined;
+  const popupId = search[LOGIN_POPUP_ID_PARAM] as string | undefined;
   const returnPath = resolveSafeReturnPath(search.returnPath);
 
   useEffect(() => {
-    if (code) {
-      const handleLoginResult = async () => {
-        if (code === "LOGIN_SUCCESS") {
-          try {
-            // 소셜 인증 후 받아온 쿠키(RT)를 이용해 즉시 AT 발급 시도
-            const authData = await authService.refresh();
-            useAuthStore.getState().setAuth(authData);
-            await invalidatePersonalizedQueries(queryClient);
+    if (!code) return;
 
-            // 성공 시: 즉시 목적지(없으면 메인 "/")로 완전히 이동한 후 팝업 표출
-            // biome-ignore lint/suspicious/noExplicitAny: returnPath 는 런타임에
-            // 정해지는 경로라 라우터의 리터럴 유니온으로 표현할 수 없다.
-            await navigate({ to: returnPath as any, replace: true });
-            useLoginResultStore.getState().open("success");
-          } catch {
-            handleFailure(returnPath, navigate);
-          }
-        } else if (code === "LOGIN_FAILED") {
-          handleFailure(returnPath, navigate);
-        } else {
-          // LOGIN_SUCCESS나 LOGIN_FAILED가 아닌 알 수 없는 code 값이 들어온 경우 (예: 인증 서버 에러 등)
-          // 처리되지 않고 URL에 code가 남아서 무한 대기하는 현상을 방지하기 위해 실패로 간주하고 초기화합니다.
-          handleFailure(returnPath, navigate);
-        }
-      };
+    const handleInPlace = () =>
+      applyLoginResult({ code, returnPath, navigate, queryClient });
 
-      handleLoginResult();
+    if (!popupId || !isLoginPopupSupported()) {
+      handleInPlace();
+      return;
     }
-  }, [code, navigate, queryClient, returnPath]);
+
+    // 팝업 안으로 돌아온 결과다. 팝업을 연 창에 알리고 닫힌다.
+    // 토큰 발급과 이동은 그 창이 맡는다.
+    postLoginPopupResult({ popupId, code });
+    window.close();
+
+    // 사용자가 주소를 직접 열었거나 브라우저가 닫기를 막으면 창이 남는다.
+    // 그때는 이 창에서 직접 처리해 빈 화면에 갇히지 않게 한다.
+    const timer = window.setTimeout(() => {
+      if (!window.closed) handleInPlace();
+    }, LOGIN_POPUP_CLOSE_FALLBACK_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [code, popupId, navigate, queryClient, returnPath]);
 };
-
-// ... 외부 헬퍼 함수
-function handleFailure(
-  returnPath: string,
-  navigate: ReturnType<typeof useNavigate>,
-) {
-  // 이미 로그인한 사용자가 뒤로가기로 히스토리에 남은 제공자 페이지에 돌아가
-  // 다시 누르면, 서버의 인증 요청은 이미 소멸해 LOGIN_FAILED 로 돌아온다.
-  // 로그인 상태는 그대로이므로 실패를 알리지 않고 목적지로만 보낸다.
-  // refresh 실패는 authService 가 먼저 로그인 상태를 지우므로 여기서 걸러지지 않는다.
-  if (useAuthStore.getState().isAuthenticated) {
-    navigate({ to: returnPath as never, replace: true });
-    return;
-  }
-
-  useLoginResultStore.getState().open("failure");
-
-  // 실패 시에는 사용자가 다시 로그인할 수 있도록 무조건 로그인 폼을 보여주어야 하므로
-  // URL에서 code 파라미터를 명확히 제거(undefined)하여 무한 루프를 방지하고 /login 경로로 렌더링을 갱신합니다.
-  navigate({
-    to: "/login",
-    search: { returnPath, code: undefined },
-    replace: true,
-  });
-}

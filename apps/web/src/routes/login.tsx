@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
 import { useRedirectWhenAuthenticated } from "#/features/auth/sign-in/hooks/useRedirectWhenAuthenticated";
+import { useSocialLoginPopup } from "#/features/auth/sign-in/hooks/useSocialLoginPopup";
 import { resolveSafeReturnPath } from "#/features/auth/sign-in/model/safe-return-path";
 import {
   loginBackButtonInlineFallbackStyle,
@@ -46,11 +47,19 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   validateSearch: (
     search: Record<string, unknown>,
-  ): { returnPath: string; code?: string } => {
+  ): { returnPath: string; code?: string; popupId?: string } => {
     const returnPath = (search.returnPath as string) || "/";
     const code = search.code as string | undefined;
+    // 팝업 안으로 돌아온 결과를 구분한다. 지우면 팝업이 결과를 알리지 못하고
+    // 제 창에서 로그인을 마쳐 버린다.
+    const popupId =
+      typeof search.popupId === "string" ? search.popupId : undefined;
 
-    return code ? { returnPath, code } : { returnPath };
+    return {
+      returnPath,
+      ...(code ? { code } : {}),
+      ...(popupId ? { popupId } : {}),
+    };
   },
 });
 
@@ -124,6 +133,8 @@ function LoginPageContent({
   applyFallbackStyle: boolean;
   returnPath: string;
 }) {
+  const { startLogin } = useSocialLoginPopup({ returnPath });
+
   return (
     <>
       <LoginBackButton
@@ -146,6 +157,7 @@ function LoginPageContent({
       <SocialLoginStack
         className={loginStack}
         returnPath={returnPath}
+        onLogin={startLogin}
         stackFallbackStyle={
           applyFallbackStyle ? loginStackInlineFallbackStyle : undefined
         }
