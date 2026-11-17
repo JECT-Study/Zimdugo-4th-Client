@@ -2,7 +2,6 @@ import { expect, type Page, test } from "@playwright/test";
 import {
   currentPath,
   hasFailureModalShown,
-  LOGIN_FAILURE_TITLE,
   LOGIN_SUCCESS_TITLE,
   PROVIDER_BUTTON,
   recordFailureModal,
@@ -86,9 +85,35 @@ test.describe("팝업 로그인", () => {
     await popup.getByRole("link", { name: PROVIDER_BUTTON }).click();
     await popupClosed;
 
-    await expect(page.getByText(LOGIN_FAILURE_TITLE)).toBeVisible();
+    // 실패 모달은 2초 뒤 저절로 닫힌다. 화면이 늦게 뜨면 보이는 순간을 놓치므로
+    // 떴던 기록으로 확인한다.
+    await expect.poll(() => hasFailureModalShown(page)).toBe(true);
     await expect.poll(() => currentPath(page)).toBe("/login");
-    expect(await hasFailureModalShown(page)).toBe(true);
+  });
+
+  test("팝업에서 로그인하는 동안 원래 창이 로그인 화면을 떠나면 팝업이 직접 로그인을 마친다", async ({
+    context,
+    page,
+  }) => {
+    await stubApi(context);
+    await stubOAuthBoundary(context);
+
+    await page.goto("/login?returnPath=%2Fsettings");
+    const popup = await openLoginPopup(page);
+
+    // 결과를 받을 화면이 사라진다. 팝업이 확인 없이 닫히면 로그인이 사라진다.
+    await page.goto("/notices");
+
+    let isPopupClosed = false;
+    popup.on("close", () => {
+      isPopupClosed = true;
+    });
+    await popup.getByRole("link", { name: PROVIDER_BUTTON }).click();
+
+    await expect.poll(() => currentPath(popup)).toBe("/settings");
+    await expect(popup.getByText(LOGIN_SUCCESS_TITLE)).toBeVisible();
+    await expect(popup.getByRole("button", { name: /로그아웃/ })).toBeVisible();
+    expect(isPopupClosed).toBe(false);
   });
 
   test("팝업이 열려 있을 때 다시 눌러도 새 팝업을 열지 않는다", async ({

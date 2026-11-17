@@ -2,15 +2,13 @@
 
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { LoginPopupResultMessage } from "#/features/auth/sign-in/model/login-popup-channel";
+import type { LoginPopupResult } from "#/features/auth/sign-in/model/login-popup-channel";
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   applyLoginResult: vi.fn(),
   isSupported: true,
-  listener: null as
-    | ((message: Omit<LoginPopupResultMessage, "type">) => void)
-    | null,
+  listener: null as ((result: LoginPopupResult) => boolean) | null,
   popupIds: [] as string[],
 }));
 
@@ -34,7 +32,7 @@ vi.mock("#/features/auth/sign-in/model/login-popup-channel", () => ({
     return id;
   },
   subscribeLoginPopupResult: (
-    listener: (message: Omit<LoginPopupResultMessage, "type">) => void,
+    listener: (result: LoginPopupResult) => boolean,
   ) => {
     mocks.listener = listener;
     return () => {
@@ -71,10 +69,14 @@ const getCallbackUrl = (openedUrl: string) =>
     ) ?? "",
   );
 
-const sendResult = (message: Omit<LoginPopupResultMessage, "type">) => {
+/** 팝업이 결과를 보낸 것처럼 전한다. 돌려준 값은 이 창이 수신을 확인했는지다. */
+const sendResult = (result: LoginPopupResult) => {
+  let isAcknowledged = false;
   act(() => {
-    mocks.listener?.(message);
+    isAcknowledged = mocks.listener?.(result) ?? false;
   });
+
+  return isAcknowledged;
 };
 
 describe("useSocialLoginPopup", () => {
@@ -135,30 +137,92 @@ describe("useSocialLoginPopup", () => {
     expect(openSpy).toHaveBeenCalledTimes(2);
   });
 
-  it("자기가 연 팝업의 결과만 반영한다", () => {
+  it("자기가 연 팝업의 결과만 반영하고 수신을 확인한다", () => {
     openSpy.mockReturnValue(createPopupWindow());
     render(<Probe returnPath="/my" />);
 
     startLogin("google");
-    sendResult({ popupId: "other-tab-popup", code: "LOGIN_SUCCESS" });
+    expect(
+      sendResult({ popupId: "other-tab-popup", code: "LOGIN_SUCCESS" }),
+      "다른 탭의 팝업에 확인을 보내면 그 팝업이 닫혀 로그인이 사라진다",
+    ).toBe(false);
     expect(mocks.applyLoginResult).not.toHaveBeenCalled();
 
-    sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" });
+    expect(sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" })).toBe(
+      true,
+    );
     expect(mocks.applyLoginResult).toHaveBeenCalledTimes(1);
     expect(mocks.applyLoginResult).toHaveBeenCalledWith(
       expect.objectContaining({ code: "LOGIN_SUCCESS", returnPath: "/my" }),
     );
   });
 
-  it("같은 결과가 두 번 와도 한 번만 반영한다", () => {
+  it("같은 결과가 두 번 오면 두 번째는 확인하지 않고 반영도 한 번만 한다", () => {
     openSpy.mockReturnValue(createPopupWindow());
     render(<Probe />);
 
     startLogin("google");
-    sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" });
-    sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" });
+    expect(sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" })).toBe(
+      true,
+    );
+    expect(sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" })).toBe(
+      false,
+    );
 
     expect(mocks.applyLoginResult).toHaveBeenCalledTimes(1);
+  });
+
+  describe("COOP 로 팝업 참조가 끊겼을 때", () => {
+    /** 제공자 페이지가 창을 떼어 내면 팝업이 열려 있어도 closed 가 true 가 된다. */
+    const startTwoPopups = () => {
+      const firstPopup = createPopupWindow();
+      openSpy.mockReturnValueOnce(firstPopup);
+      openSpy.mockReturnValueOnce(createPopupWindow());
+      render(<Probe returnPath="/my" />);
+
+      startLogin("google");
+      firstPopup.closed = true;
+      startLogin("google");
+    };
+
+    it("앞의 팝업이 성공하면 그 결과를 반영한다", () => {
+      startTwoPopups();
+
+      expect(sendResult({ popupId: "popup-1", code: "LOGIN_SUCCESS" })).toBe(
+        true,
+      );
+      expect(mocks.applyLoginResult).toHaveBeenCalledWith(
+        expect.objectContaining({ code: "LOGIN_SUCCESS", returnPath: "/my" }),
+      );
+    });
+
+    it("앞의 팝업이 실패하면 팝업은 닫히게 하되 실패를 알리지 않는다", () => {
+      startTwoPopups();
+
+      expect(sendResult({ popupId: "popup-1", code: "LOGIN_FAILED" })).toBe(
+        true,
+      );
+      expect(
+        mocks.applyLoginResult,
+        "뒤의 팝업이 진행 중인데 실패를 알리면 사용자는 로그인이 끝난 줄 안다",
+      ).not.toHaveBeenCalled();
+
+      expect(sendResult({ popupId: "popup-2", code: "LOGIN_SUCCESS" })).toBe(
+        true,
+      );
+      expect(mocks.applyLoginResult).toHaveBeenCalledTimes(1);
+    });
+
+    it("가장 최근 팝업의 실패는 알린다", () => {
+      startTwoPopups();
+
+      expect(sendResult({ popupId: "popup-2", code: "LOGIN_FAILED" })).toBe(
+        true,
+      );
+      expect(mocks.applyLoginResult).toHaveBeenCalledWith(
+        expect.objectContaining({ code: "LOGIN_FAILED" }),
+      );
+    });
   });
 
   describe("팝업을 쓸 수 없을 때", () => {

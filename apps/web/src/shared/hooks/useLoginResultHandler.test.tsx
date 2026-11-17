@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   search: {} as Record<string, unknown>,
   refresh: vi.fn(),
   invalidate: vi.fn(),
-  postLoginPopupResult: vi.fn(),
+  handOffLoginPopupResult: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -30,7 +30,7 @@ vi.mock("../../features/auth/sign-in/api/authService", () => ({
 
 vi.mock("#/features/auth/sign-in/model/login-popup-channel", () => ({
   isLoginPopupSupported: () => true,
-  postLoginPopupResult: mocks.postLoginPopupResult,
+  handOffLoginPopupResult: mocks.handOffLoginPopupResult,
 }));
 
 import { useAuthStore } from "../store/authStore";
@@ -66,7 +66,7 @@ describe("useLoginResultHandler", () => {
     mocks.navigate.mockReset().mockResolvedValue(undefined);
     mocks.refresh.mockReset();
     mocks.invalidate.mockReset().mockResolvedValue(undefined);
-    mocks.postLoginPopupResult.mockReset();
+    mocks.handOffLoginPopupResult.mockReset();
     useAuthStore.getState().clearAuth();
     useLoginResultStore.getState().forceClose();
   });
@@ -154,7 +154,7 @@ describe("useLoginResultHandler 팝업 안", () => {
     vi.useFakeTimers();
     mocks.navigate.mockReset().mockResolvedValue(undefined);
     mocks.refresh.mockReset();
-    mocks.postLoginPopupResult.mockReset();
+    mocks.handOffLoginPopupResult.mockReset();
     closeSpy = vi.spyOn(window, "close").mockImplementation(() => {});
     useAuthStore.getState().clearAuth();
     useLoginResultStore.getState().forceClose();
@@ -169,8 +169,16 @@ describe("useLoginResultHandler 팝업 안", () => {
     useLoginResultStore.getState().forceClose();
   });
 
-  it("결과를 연 창에 알리고 스스로 닫으며 토큰 발급과 이동은 하지 않는다", async () => {
+  const LOGGED_IN = {
+    accessToken: "token",
+    userId: 1,
+    email: "user@example.com",
+    provider: "google",
+  };
+
+  it("원래 창이 받았다고 확인하면 스스로 닫히고 토큰 발급과 이동은 하지 않는다", async () => {
     setWindowClosed(true);
+    mocks.handOffLoginPopupResult.mockResolvedValue(true);
 
     await renderWithSearch({
       code: "LOGIN_SUCCESS",
@@ -181,7 +189,7 @@ describe("useLoginResultHandler 팝업 안", () => {
       vi.advanceTimersByTime(LOGIN_POPUP_CLOSE_FALLBACK_MS);
     });
 
-    expect(mocks.postLoginPopupResult).toHaveBeenCalledWith({
+    expect(mocks.handOffLoginPopupResult).toHaveBeenCalledWith({
       popupId: "popup-1",
       code: "LOGIN_SUCCESS",
     });
@@ -190,20 +198,32 @@ describe("useLoginResultHandler 팝업 안", () => {
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
 
-  it("창이 닫히지 않으면 그 창에서 직접 로그인을 마친다", async () => {
-    setWindowClosed(false);
-    mocks.refresh.mockResolvedValue({
-      accessToken: "token",
-      userId: 1,
-      email: "user@example.com",
-      provider: "google",
-    });
+  it("원래 창의 확인이 없으면 닫히지 않고 그 창에서 로그인을 마친다", async () => {
+    mocks.handOffLoginPopupResult.mockResolvedValue(false);
+    mocks.refresh.mockResolvedValue(LOGGED_IN);
 
     await renderWithSearch({
       code: "LOGIN_SUCCESS",
       returnPath: "/my",
       popupId: "popup-1",
     });
+
+    expect(closeSpy).not.toHaveBeenCalled();
+    expect(mocks.refresh).toHaveBeenCalledTimes(1);
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my", replace: true });
+  });
+
+  it("확인을 받았는데 창이 닫히지 않으면 그 창도 로그인을 마친다", async () => {
+    setWindowClosed(false);
+    mocks.handOffLoginPopupResult.mockResolvedValue(true);
+    mocks.refresh.mockResolvedValue(LOGGED_IN);
+
+    await renderWithSearch({
+      code: "LOGIN_SUCCESS",
+      returnPath: "/my",
+      popupId: "popup-1",
+    });
+    expect(closeSpy).toHaveBeenCalledTimes(1);
     expect(mocks.refresh).not.toHaveBeenCalled();
 
     await act(async () => {
