@@ -2,6 +2,7 @@
   "name": "zimdugo",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:admin": "pnpm --filter admin dev",
