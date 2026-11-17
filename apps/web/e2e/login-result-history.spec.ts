@@ -3,7 +3,6 @@ import {
   blockPopups,
   currentPath,
   hasFailureModalShown,
-  LOGIN_FAILURE_TITLE,
   LOGIN_SUCCESS_TITLE,
   PROVIDER_BUTTON,
   recordFailureModal,
@@ -72,8 +71,9 @@ test.describe("팝업이 막혀 같은 창에서 로그인할 때", () => {
     // 위 테스트가 실패 모달을 못 잡아서 통과하는 것이 아님을 확인한다.
     await page.goto("/login?returnPath=%2Fsettings&code=LOGIN_FAILED");
 
-    await expect(page.getByText(LOGIN_FAILURE_TITLE)).toBeVisible();
+    // 실패 모달은 2초 뒤 저절로 닫힌다. 화면이 늦게 뜨면 보이는 순간을 놓치므로
+    // 떴던 기록으로 확인한다.
+    await expect.poll(() => hasFailureModalShown(page)).toBe(true);
     await expect.poll(() => currentPath(page)).toBe("/login");
-    expect(await hasFailureModalShown(page)).toBe(true);
   });
 });
