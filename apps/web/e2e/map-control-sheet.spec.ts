@@ -108,13 +108,20 @@ const expectControlClearsSheet = async (page: Page) => {
   ).toBeLessThanOrEqual(sheet.y + 1);
 };
 
+/*
+ * 화면 문구("닫기", "길찾기")로 요소를 찾으므로 언어를 고정한다. 기기 기본값(영어)이면
+ * 서버가 보관함 경로를 `/en/lockers/…` 로 보내 다른 문구가 뜬다. 홈(`/`)은 프리렌더된
+ * 한국어 파일이 바로 응답해 이 판정을 거치지 않던 것이라 그동안 드러나지 않았다.
+ */
+test.use({ locale: "ko-KR" });
+
 test.beforeEach(async ({ page }) => {
   await stubApi(page);
 });
 
 test.describe("상세 시트와 지도 컨트롤", () => {
   test("하프 시트 위로 밀어 올린다", async ({ page }) => {
-    await page.goto(`/?locker=${LOCKER_ID}`);
+    await page.goto(`/lockers/${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
     await expectSheetSettledAt(page, DETAIL_HALF_VISIBLE_HEIGHT);
@@ -130,7 +137,7 @@ test.describe("상세 시트와 지도 컨트롤", () => {
   test("시트를 끌어올리는 동안에도 시트 뒤로 들어가지 않는다", async ({
     page,
   }) => {
-    await page.goto(`/?locker=${LOCKER_ID}`);
+    await page.goto(`/lockers/${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
     // 올라오는 도중에 끌기 시작하면 시작 좌표가 시트를 벗어난다.
@@ -158,7 +165,7 @@ test.describe("상세 시트와 지도 컨트롤", () => {
   }) => {
     // 넉넉한 화면에서 시트와 컨트롤이 모두 뜬 것을 먼저 확인한다. 곧장 낮은
     // 화면으로 열고 "0개" 를 세면 아직 안 그려진 것과 구분되지 않는다.
-    await page.goto(`/?locker=${LOCKER_ID}`);
+    await page.goto(`/lockers/${LOCKER_ID}`);
     await expect(sheetSurface(page)).toBeVisible();
     await expect(mapControlStack(page)).toBeVisible();
 
@@ -169,7 +176,7 @@ test.describe("상세 시트와 지도 컨트롤", () => {
 
   test("경계 높이에서는 상단 선에 맞춰 올린다", async ({ page }) => {
     await page.setViewportSize({ width: 430, height: 498 });
-    await page.goto(`/?locker=${LOCKER_ID}`);
+    await page.goto(`/lockers/${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
     // 시트가 제자리에 설 때까지 기다린다. 여는 동안 읽으면 애니메이션 중간값이
@@ -187,7 +194,7 @@ test.describe("상세 시트와 지도 컨트롤", () => {
   });
 
   test("시트를 닫으면 기본 자리로 돌아온다", async ({ page }) => {
-    await page.goto(`/?locker=${LOCKER_ID}`);
+    await page.goto(`/lockers/${LOCKER_ID}`);
     await waitForMapReady(page);
     await expect(mapControlStack(page)).toBeVisible();
 

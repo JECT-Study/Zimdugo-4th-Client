@@ -15,6 +15,10 @@ const appI18nServerEntry = fileURLToPath(
 );
 // 로케일 prefix 가 없는 문서 경로. 프리렌더 대상과 겹치는 주 진입 경로들이다.
 const LOCALE_LESS_DOCUMENT_SRC = "^/(login|my|notices|report|settings)?(/.*)?$";
+// 로케일별 홈 문서 경로. 프리렌더된 정적 파일이 있는 자리다.
+const HOME_DOCUMENT_SRC = "^/(?:(?:en|ja|zh|zh-TW)/?)?$";
+// 구 상세 주소를 이루는 쿼리 키. `shared/lib/legacy-locker-url` 이 읽는 것과 같다.
+const LEGACY_LOCKER_QUERY_KEYS = ["locker", "openLockerId"] as const;
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ??
   process.env.API_BASE_URL ??
@@ -99,6 +103,18 @@ const config = defineConfig({
               headers: { "cache-control": "no-cache" },
               continue: true,
             },
+            ...LEGACY_LOCKER_QUERY_KEYS.map((key) => ({
+              // 구 상세 주소(`/?locker=…`, `/en?openLockerId=…`)는 홈의 정적 파일이
+              // 먼저 응답해 server.ts 의 301 리다이렉트가 불리지 않는다. 쿼리는 별도
+              // 파일을 만들지 않으므로 `/` 의 프리렌더 결과가 그대로 나간다.
+              // 상세 파라미터가 붙은 홈 문서 요청만 함수로 보낸다. 조건이 없는 홈
+              // 요청은 이 규칙에 걸리지 않고 계속 CDN 에서 나간다.
+              //
+              // has 는 AND 라서 두 키를 한 규칙에 담을 수 없어 키마다 하나씩 둔다.
+              src: HOME_DOCUMENT_SRC,
+              has: [{ type: "query", key }],
+              dest: "/__server",
+            })),
             {
               // 프리렌더된 정적 HTML 은 Vercel 엣지가 바로 서빙해서 Nitro 핸들러가
               // 아예 실행되지 않는다. 그래서 server-locale-guard 의 Accept-Language

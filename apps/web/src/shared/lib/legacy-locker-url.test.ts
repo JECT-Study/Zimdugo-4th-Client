@@ -113,13 +113,15 @@ describe("parseLegacyLockerUrl", () => {
 });
 
 /**
- * 손으로 적은 주소가 아니라 실제로 색인된 주소에 대고 검증한다.
+ * 구 주소가 리다이렉트로 닿는 곳이 지금 내보내는 새 주소와 같은지 확인한다.
  *
- * 규칙이 맞는지는 사이트맵과 canonical 이 지금 뱉는 모양으로만 확인할 수 있다.
- * 생성 쪽이 바뀌면 이 테스트가 먼저 깨져야 한다.
+ * 둘이 어긋나면 리다이렉트한 주소가 canonical 과 달라 검색엔진이 또 다른 중복으로
+ * 본다. 새 주소는 사이트맵과 canonical 이 실제로 뱉는 값을 쓰고, 구 주소는 그 둘이
+ * 전환 전에 뱉던 모양을 그대로 적어 둔다. 이미 색인된 주소라 바뀌지 않는다.
  */
-describe("실제로 내보내는 주소로 왕복해 본다", () => {
+describe("구 주소가 새로 내보내는 주소로 이어진다", () => {
   const LOCKER_TITLE = "강남역 4번 출구 B1층";
+  const LOCALE_PREFIXES = ["", "/en", "/ja", "/zh", "/zh-TW"] as const;
 
   const SEO_LOCKERS: SeoLockerItem[] = [
     {
@@ -134,42 +136,61 @@ describe("실제로 내보내는 주소로 왕복해 본다", () => {
     },
   ];
 
-  it("사이트맵의 보관함 주소를 모두 보관함 경로로 옮긴다", () => {
+  const titleFor = (prefix: (typeof LOCALE_PREFIXES)[number]) => {
+    const names = SEO_LOCKERS[0].names;
+    if (prefix === "") return names.ko;
+    return names[prefix.slice(1) as keyof typeof names] ?? names.ko;
+  };
+
+  it("전환 전 사이트맵 주소는 지금 사이트맵의 주소로 간다", () => {
     const xml = createSitemapXml(SEO_LOCKERS, []);
-    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
-      (match) => match[1],
-    );
-    const lockerLocs = locs.filter((loc) => loc.includes("locker="));
+    const lockerLocs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+      .map((match) => match[1])
+      .filter((loc) => loc.includes("/lockers/"));
 
     // 로케일 5종이 모두 나와야 한다. 하나라도 빠지면 검증이 헐거워진다.
-    expect(lockerLocs).toHaveLength(5);
+    expect(lockerLocs).toHaveLength(LOCALE_PREFIXES.length);
 
-    for (const loc of lockerLocs) {
-      const url = new URL(loc.replace(/&amp;/g, "&"));
-      const path = resolveLegacyLockerPath(url);
+    for (const prefix of LOCALE_PREFIXES) {
+      const slug = createLockerDeepLinkSlug({
+        lockerId: 515,
+        title: titleFor(prefix),
+      });
+      // 전환 전 사이트맵은 `/{locale}/?locker=` 로 냈다.
+      const legacy = new URL(
+        `https://zimdugo.com${prefix}/?locker=${encodeURIComponent(slug)}`,
+      );
+      const current = lockerLocs.find(
+        (loc) =>
+          new URL(loc).pathname ===
+          `${prefix}/lockers/${encodeURIComponent(slug)}`,
+      );
 
-      expect(path).not.toBeNull();
-      expect(parseLegacyLockerUrl(url)?.lockerId).toBe(515);
-      expect(path).toContain("/lockers/");
-      expect(path).not.toContain("locker=");
+      expect(current).toBeDefined();
+      expect(resolveLegacyLockerPath(legacy)).toBe(
+        new URL(current as string).pathname,
+      );
     }
   });
 
-  it("모든 로케일의 canonical 주소를 보관함 경로로 옮긴다", () => {
+  it("전환 전 canonical 주소는 지금 canonical 주소로 간다", () => {
     for (const locale of ["ko", "en", "ja", "zh", "zh-TW"] as const) {
-      const canonical = createLockerCanonicalUrl({
-        lockerId: 515,
-        title: LOCKER_TITLE,
-        locale,
-      });
+      const prefix = locale === "ko" ? "" : `/${locale}`;
       const slug = createLockerDeepLinkSlug({
         lockerId: 515,
         title: LOCKER_TITLE,
       });
-
-      expect(resolveLegacyLockerPath(new URL(canonical))).toBe(
-        `${locale === "ko" ? "" : `/${locale}`}/lockers/${encodeURIComponent(slug)}`,
+      // 전환 전 canonical 은 `/{locale}?locker=` 로 냈다.
+      const legacy = new URL(
+        `https://zimdugo.com${prefix || "/"}?locker=${encodeURIComponent(slug)}`,
       );
+      const current = createLockerCanonicalUrl({
+        lockerId: 515,
+        title: LOCKER_TITLE,
+        locale,
+      });
+
+      expect(resolveLegacyLockerPath(legacy)).toBe(new URL(current).pathname);
     }
   });
 });
@@ -256,15 +277,16 @@ describe("라우터가 주소를 읽는 방식과 어긋나지 않는지", () =>
 
   /**
    * 두 파라미터는 판정하는 함수가 다르다. 딥링크 파서는 정수를 요구하지 않아
-   * `12.5` 도 홈에서는 상세로 간다. 규칙만 `locker` 문법으로 다시 재면 그런 주소가
-   * 여기서만 탈락한다. 각자의 파서가 낸 결과를 그대로 쓴다.
+   * `12.5` 도 홈에서는 상세로 간다. 하지만 새 경로는 정수 id 만 상세로 열므로,
+   * 옮기면 열리지 않는 주소로 301 을 보내게 된다. 그런 주소는 옮기지 않는다.
    */
-  it("openLockerId 는 슬러그 문법이 아니라 딥링크 파서를 따른다", () => {
+  it("새 경로가 열지 못하는 딥링크 id 는 옮기지 않는다", () => {
     expect(
       parseOpenLockerDeepLinkSearch({ openLockerId: "12.5" }).openLockerId,
     ).toBe(12.5);
-    expect(resolveLegacyLockerPath(at("/?openLockerId=12.5"))).toBe(
-      "/lockers/12.5",
+    expect(resolveLegacyLockerPath(at("/?openLockerId=12.5"))).toBeNull();
+    expect(resolveLegacyLockerPath(at("/?openLockerId=164"))).toBe(
+      "/lockers/164",
     );
   });
 

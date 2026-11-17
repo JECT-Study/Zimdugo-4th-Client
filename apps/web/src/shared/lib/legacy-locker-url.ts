@@ -2,6 +2,10 @@ import { parseOpenLockerDeepLinkSearch } from "#/features/search/lib/open-locker
 import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
 import { LOCALE_PATH_PREFIX } from "#/shared/i18n/locales";
 import {
+  createLockerPath,
+  toLockerPathSlug,
+} from "#/shared/lib/locker-path-url";
+import {
   parseSearchString,
   stringifySearchParams,
 } from "#/shared/lib/search-serialization";
@@ -13,8 +17,7 @@ import {
  * 전환하는 동안 이 대응이 끊기면 유입이 그대로 사라진다(#215). 규칙을 라우트보다
  * 먼저 세워 두고 검증한 뒤에 목적지를 만든다.
  *
- * 이 모듈은 순수 함수만 둔다. 실제 리다이렉트 응답을 내는 것은 목적지 라우트가
- * 생긴 뒤의 일이다.
+ * 이 모듈은 순수 함수만 둔다. 리다이렉트 응답은 `server.ts` 가 낸다.
  *
  * 규칙이 홈 라우트보다 엄격하면 오늘 열리던 주소가 전환 뒤 조용히 홈으로 떨어지고,
  * 느슨하면 열리지 않던 주소에 목적지가 생긴다. 그래서 주소를 읽는 세 단계 — 쿼리
@@ -33,22 +36,6 @@ const CONSUMED_DETAIL_PARAMS = ["locker", "openLockerId"] as const;
  * 하나여야 하므로, 더 깊은 화면인 상세를 남기고 장소 목록 쪽을 뗀다.
  */
 const CONFLICTING_SCREEN_PARAMS = ["searchPlaceId"] as const;
-
-/** 새 상세 주소의 경로 뿌리. 목적지 라우트가 생기면 그쪽과 함께 쓴다. */
-const LOCKER_ROUTE_BASE = "/lockers";
-
-/**
- * 경로 조각으로 그대로 써도 되는 슬러그 모양.
- *
- * 상세 판정(`parseLockerSearchParam`)은 하이픈 뒤를 무엇이든 받는다. `?locker=164-a/b`
- * 도 오늘 상세로 열린다는 뜻이다. 그 모양을 경로에 그대로 붙이면 `/lockers/164-a/b` 가
- * 되어 다른 라우트로 새어 나가므로, 정규 슬러그(`createLockerDeepLinkSlug` 가 내는
- * 문자·숫자·하이픈)만 통과시킨다.
- *
- * 통과하지 못하면 이름을 버리고 id 만 남긴다. 이름은 장식이고 정체성은 id 다.
- * 주소를 버리지 않으면서 경로를 안전하게 만드는 길이다.
- */
-const CANONICAL_LOCKER_SLUG_PATTERN = /^\d+(?:-[\p{L}\p{N}-]*)?$/u;
 
 export interface LegacyLockerUrl {
   /** 원래 주소가 달고 있던 로케일 접두사. 목적지에도 그대로 붙는다. */
@@ -103,9 +90,16 @@ export const parseLegacyLockerUrl = (url: URL): LegacyLockerUrl | null => {
 
   if (rawSlug === null || lockerId === undefined) return null;
 
-  const slug = CANONICAL_LOCKER_SLUG_PATTERN.test(rawSlug)
-    ? rawSlug
-    : String(lockerId);
+  /*
+   * 경로에 실을 모양은 라우터가 내보내는 주소와 같은 함수로 정한다. 갈라지면
+   * 리다이렉트한 주소를 라우터가 다시 한 번 고쳐 쓰게 된다.
+   *
+   * 그 함수가 받지 않는 값은 옮기지 않는다. 딥링크 파서는 `openLockerId=12.5` 도
+   * 받지만 새 경로는 정수 id 만 상세로 연다. 그대로 옮기면 열리지 않는 주소로 301 을
+   * 보내게 되므로, 그런 주소는 옮기지 않고 홈이 지금처럼 처리하게 둔다.
+   */
+  const slug = toLockerPathSlug(rawSlug);
+  if (slug === null) return null;
 
   for (const param of CONSUMED_DETAIL_PARAMS) delete search[param];
   for (const param of CONFLICTING_SCREEN_PARAMS) delete search[param];
@@ -113,19 +107,12 @@ export const parseLegacyLockerUrl = (url: URL): LegacyLockerUrl | null => {
   return { localePrefix, slug, lockerId, search };
 };
 
-/**
- * 구 주소에 대응하는 새 경로. 대상이 아니면 null 이다.
- *
- * 슬러그는 검증을 통과한 모양이라도 인코딩해서 붙인다. 검증이 나중에 느슨해져도
- * 경로가 새어 나가지 않게 하는 쪽이 싸다.
- */
+/** 구 주소에 대응하는 새 경로. 대상이 아니면 null 이다. */
 export const resolveLegacyLockerPath = (url: URL): string | null => {
   const parsed = parseLegacyLockerUrl(url);
   if (!parsed) return null;
 
   const { localePrefix, slug, search } = parsed;
 
-  return `${localePrefix}${LOCKER_ROUTE_BASE}/${encodeURIComponent(
-    slug,
-  )}${stringifySearchParams(search)}`;
+  return `${localePrefix}${createLockerPath(slug)}${stringifySearchParams(search)}`;
 };

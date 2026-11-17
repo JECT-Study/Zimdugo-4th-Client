@@ -116,6 +116,7 @@ import {
   createLockerPinAt,
   createLockerShareText,
   type LockerDetailSnap,
+  type OpenLockerDeepLinkSearch,
   parseOpenLockerDeepLinkSearch,
 } from "#/features/search/lib/open-locker-deep-link";
 import {
@@ -276,13 +277,38 @@ const withoutOpenLockerParams = ({
   ...rest
 }: HomeSearchParams) => rest;
 
+/**
+ * 딥링크 옵션만 남긴다.
+ *
+ * 구 딥링크(`/?openLockerId=164&detailSnap=full&focusLat=…`)는 서버가
+ * `/lockers/164?detailSnap=full&focusLat=…` 로 옮기고, 라우터 안쪽에서는
+ * `?locker=164&detailSnap=full&…` 이 된다. 딥링크 파서는 `openLockerId` 가 없으면
+ * 옵션을 통째로 버리므로, `locker` 로 들어온 상세에서도 옵션을 읽어야 한다.
+ *
+ * 다만 `openLockerId` 자체는 남기지 않는다. 검증된 검색 값은 다음 이동의 `prev` 가
+ * 되므로, 여기에 넣으면 그 뒤로 모든 주소에 `openLockerId` 가 따라붙는다.
+ */
+const withoutOpenLockerId = ({
+  openLockerId: _openLockerId,
+  ...options
+}: OpenLockerDeepLinkSearch) => options;
+
 export const Route = createFileRoute("/_map/")({
   validateSearch: (
     search: Record<string, unknown> | undefined,
   ): HomeSearchParams => {
     const safeSearch = search || {};
-    const parsed = parseOpenLockerDeepLinkSearch(safeSearch);
     const lockerNum = parseLockerSearchParam(safeSearch.locker);
+    const deepLink = parseOpenLockerDeepLinkSearch(safeSearch);
+    const parsed =
+      deepLink.openLockerId === undefined && lockerNum !== undefined
+        ? withoutOpenLockerId(
+            parseOpenLockerDeepLinkSearch({
+              ...safeSearch,
+              openLockerId: lockerNum,
+            }),
+          )
+        : deepLink;
     const locker =
       lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
     const q = readSearchQueryParam(safeSearch.q);
