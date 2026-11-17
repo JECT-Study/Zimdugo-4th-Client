@@ -22,7 +22,6 @@ import {
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
-  createDefaultSearchFilters,
   type SearchFilterAppliedState,
   SearchFilterBottomSheet,
 } from "#/composites/search/SearchFilterBottomSheet";
@@ -149,11 +148,6 @@ import {
   getSearchBoundsBottomPadding,
 } from "#/features/search/model/map-viewport-policy";
 import {
-  clearSearchFiltersFromSession,
-  loadSearchFiltersFromSession,
-  saveSearchFiltersToSession,
-} from "#/features/search/model/search-filter-session";
-import {
   resolveSearchHistorySelectionQuery,
   type SearchHistoryEntry,
 } from "#/features/search/model/search-history";
@@ -188,6 +182,7 @@ import {
   DEFAULT_SEARCH_COORDINATES,
   useMapSheetSession,
 } from "#/features/search/model/useMapSheetSession";
+import { useSearchFilters } from "#/features/search/model/useSearchFilters";
 import { useSheetStageSession } from "#/features/search/model/useSheetStageSession";
 import {
   createAlternateLinksForPathname,
@@ -577,29 +572,13 @@ export function IndexPage() {
   }, []);
   const isSearchOpen = useSearchStore((state) => state.isSearchOpen);
   const setIsSearchOpen = useSearchStore((state) => state.setIsSearchOpen);
-  const searchQuery = useSearchStore((state) => state.searchQuery);
-  const setSearchQuery = useSearchStore((state) => state.setSearchQuery);
-  const effectiveSearchQuery =
-    searchQueryFromUrl ?? (placeIdFromUrl !== undefined ? "" : searchQuery);
-  const syncSearchFilterSession = useCallback(
-    (filters: SearchFilterAppliedState) => {
-      saveSearchFiltersToSession(filters);
-    },
-    [],
-  );
-  /**
-   * 확정된 검색어를 스토어에 둔다. 주소는 화면을 바꾸는 쪽이 한 번에 쓴다.
+  /*
+   * 확정된 검색어. 주소의 `q` 가 원본이다.
    *
-   * 예전에는 여기서 주소도 따로 썼다. 그러면 검색어를 쓰는 이동과 상세를 붙이는 이동이
-   * 한 이벤트 안에서 따로 일어나, 뒤엣것이 앞엣것의 결과를 못 보고 덮어쓸 수 있었다.
-   * 스토어와 주소가 같은 값을 들고 있는 것은 2단계에서 하나로 줄인다.
+   * 예전에는 스토어에도 같은 값을 두고 둘을 이펙트로 맞췄다. 원본이 둘이면 한쪽만
+   * 바뀐 순간이 생기고, 그 사이를 메우는 동기화 코드가 늘어난다.
    */
-  const setConfirmedSearchQuery = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
-    },
-    [setSearchQuery],
-  );
+  const effectiveSearchQuery = searchQueryFromUrl ?? "";
   /*
    * 지도는 `_map` 레이아웃이 쥔다(#215 의 1-3). 이 화면은 읽고, 카메라에 명령하고,
    * 다시 만들어 달라고 부탁하고, 누름을 들을 뿐이다.
@@ -742,9 +721,8 @@ export function IndexPage() {
     interval?: number;
   }>({});
 
-  const [searchFilters, setSearchFilters] = useState<SearchFilterAppliedState>(
-    loadSearchFiltersFromSession,
-  );
+  const { searchFilters, applySearchFilters, resetSearchFilters } =
+    useSearchFilters();
   const {
     sheetMode,
     setSheetMode,
@@ -965,17 +943,17 @@ export function IndexPage() {
     }
   }, [mapScreenNavigation.replaceSearch, searchQueryFromUrl]);
 
+  /*
+   * 검색창에 남은 글자를 주소의 검색어에 맞춘다. 뒤로가기로 다른 검색 결과에 돌아오면
+   * 검색창도 그 검색어를 보여야 한다.
+   */
   useEffect(() => {
     const nextSearchQuery = searchQueryFromUrl ?? "";
-
-    if (useSearchStore.getState().searchQuery !== nextSearchQuery) {
-      setSearchQuery(nextSearchQuery);
-    }
 
     setSearchDraft((previousDraft) =>
       previousDraft === nextSearchQuery ? previousDraft : nextSearchQuery,
     );
-  }, [searchQueryFromUrl, setSearchQuery]);
+  }, [searchQueryFromUrl]);
 
   useEffect(() => {
     if (activeLockerId === null) {
@@ -1327,8 +1305,7 @@ export function IndexPage() {
   const resetMapContext = useCallback(() => {
     clearMapPresentation();
     void flushLockerSheetMutations();
-    setSearchFilters(createDefaultSearchFilters());
-    clearSearchFiltersFromSession();
+    resetSearchFilters();
     setSheetMode("idle");
     mapScreenNavigation.exitToHome();
   }, [
@@ -1336,16 +1313,15 @@ export function IndexPage() {
     flushLockerSheetMutations,
     mapScreenNavigation.exitToHome,
     setSheetMode,
+    resetSearchFilters,
   ]);
 
   /** 검색을 끝내고 홈으로 나간다. 검색이 쌓은 칸을 모두 되감는다. */
   const resetSearchContext = useCallback(() => {
     clearMapPresentation();
     void flushLockerSheetMutations();
-    setSearchQuery("");
     setSearchDraft("");
-    setSearchFilters(createDefaultSearchFilters());
-    clearSearchFiltersFromSession();
+    resetSearchFilters();
     setSheetMode("idle");
     setIsSearchOpen(false);
     mapScreenNavigation.exitToHome();
@@ -1354,8 +1330,8 @@ export function IndexPage() {
     flushLockerSheetMutations,
     mapScreenNavigation.exitToHome,
     setIsSearchOpen,
-    setSearchQuery,
     setSheetMode,
+    resetSearchFilters,
   ]);
 
   const handleOpenSearch = useCallback(() => {
@@ -1636,9 +1612,8 @@ export function IndexPage() {
   const applySearchSelection = useCallback(
     (selection: SearchSelectionState) => {
       setSearchDraft(selection.searchDraft);
-      setConfirmedSearchQuery(selection.searchQuery);
     },
-    [setConfirmedSearchQuery],
+    [],
   );
 
   /**
@@ -1827,7 +1802,6 @@ export function IndexPage() {
           options.placeName,
         );
         setSearchDraft(selection.searchDraft);
-        setConfirmedSearchQuery(selection.searchQuery);
         nextQuery = selection.searchQuery;
       }
 
@@ -1850,7 +1824,6 @@ export function IndexPage() {
       clearPendingLockerDetailOpen,
       mapScreenNavigation.goTo,
       searchDraft,
-      setConfirmedSearchQuery,
       setIsSearchOpen,
       setSelectedLockerDetail,
       setSheetMode,
@@ -1943,7 +1916,6 @@ export function IndexPage() {
     ) => {
       const lockerSearchSelection = applyLockerSearchDraft(sourceQuery);
       setSearchDraft(lockerSearchSelection.searchDraft);
-      setConfirmedSearchQuery(lockerSearchSelection.searchQuery);
       void openLockerDetailById(lockerId, optimisticDetail, {
         urlBase: (prev) =>
           withSearchQueryParam(
@@ -1952,7 +1924,7 @@ export function IndexPage() {
           ),
       });
     },
-    [openLockerDetailById, setConfirmedSearchQuery],
+    [openLockerDetailById],
   );
 
   const handleSelectSearchAutocomplete = useCallback(
@@ -2643,8 +2615,7 @@ export function IndexPage() {
 
     if (parentTarget === "idle") {
       clearMapPresentation();
-      setSearchFilters(createDefaultSearchFilters());
-      clearSearchFiltersFromSession();
+      resetSearchFilters();
       setSheetMode("idle");
     } else {
       void flushLockerSheetMutations();
@@ -2662,6 +2633,7 @@ export function IndexPage() {
     setSelectedMapPin,
     setSelectedMapPinOffset,
     setSheetMode,
+    resetSearchFilters,
   ]);
 
   const handleBackFromMapPlaceSheet = useCallback(() => {
@@ -2759,19 +2731,14 @@ export function IndexPage() {
     setSheetMode("filter");
   }, [setSheetMode]);
 
-  const handleResetSearchFilter = useCallback(() => {
-    const defaultFilters = createDefaultSearchFilters();
-    setSearchFilters(defaultFilters);
-    clearSearchFiltersFromSession();
-  }, []);
+  const handleResetSearchFilter = resetSearchFilters;
 
   const handleApplySearchFilter = useCallback(
     (filters: SearchFilterAppliedState) => {
-      setSearchFilters(filters);
-      syncSearchFilterSession(filters);
+      applySearchFilters(filters);
       setSheetMode("list");
     },
-    [syncSearchFilterSession, setSheetMode],
+    [applySearchFilters, setSheetMode],
   );
 
   const searchBarBackAction = resolveSearchBarBackAction({
