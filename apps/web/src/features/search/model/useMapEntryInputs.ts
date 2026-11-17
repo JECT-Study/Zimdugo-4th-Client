@@ -1,6 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { readMapScreenSearch } from "#/shared/lib/map-path-url";
+import { validateMapScreenSearch } from "./map-screen-search";
 import {
   parseLockerSearchParam,
   readSearchPlaceIdParam,
@@ -53,7 +54,13 @@ export function useMapEntryInputs(): MapEntryInputs {
     () =>
       readMapScreenSearch({
         pathname: location.pathname,
-        search: location.search as Record<string, unknown>,
+        /*
+         * 위치의 쿼리는 검증 전 원시 값이다. 라우트가 쓰는 것과 같은 검증을 거쳐야
+         * 숫자가 아닌 좌표나 검증을 통과하지 못한 검색어가 지도까지 흘러가지 않는다.
+         */
+        search: validateMapScreenSearch(
+          location.search as Record<string, unknown>,
+        ) as Record<string, unknown>,
       }),
     [location],
   ) as MapEntrySearchParams;

@@ -8,7 +8,9 @@ vi.mock("#/shared/api/lockers", async (importOriginal) => ({
 }));
 
 const { Route: LockerRoute } = await import("./_map._screen.lockers.$slug");
-const { validateMapScreenSearch } = await import("./_map._screen");
+const { validateMapScreenSearch } = await import(
+  "#/features/search/model/map-screen-search"
+);
 const { resolveLegacyLockerPath } = await import(
   "#/shared/lib/legacy-locker-url"
 );

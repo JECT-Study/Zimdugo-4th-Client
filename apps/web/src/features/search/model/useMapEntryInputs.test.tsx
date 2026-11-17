@@ -69,6 +69,22 @@ describe("useMapEntryInputs", () => {
     expect(inputs.searchQueryFromUrl).toBe("강남");
   });
 
+  it("위치의 쿼리는 검증을 거쳐 잘못된 값을 넘기지 않는다", () => {
+    // 위치의 쿼리는 검증 전 원시 값이다. 숫자가 아닌 좌표가 지도 카메라까지 가면 안 된다.
+    const inputs = read("/lockers/164", {
+      focusLat: "abc",
+      focusLng: 127,
+      detailSnap: "wide",
+      place: "x",
+    });
+
+    expect(inputs.focusLat).toBeUndefined();
+    expect(inputs.focusLng).toBeUndefined();
+    expect(inputs.detailSnap).toBeUndefined();
+    expect(inputs.placeIdFromUrl).toBeUndefined();
+    expect(inputs.lockerIdFromQuery).toBe(164);
+  });
+
   it("딥링크가 들고 온 좌표와 펼침 요청을 그대로 넘긴다", () => {
     const inputs = read("/lockers/164", {
       detailSnap: "full",
