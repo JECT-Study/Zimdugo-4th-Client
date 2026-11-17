@@ -3,7 +3,8 @@
   "workspaces": {
     ".": {
       "entry": [],
-      "project": []
+      "project": [],
+      "ignoreDependencies": ["zod"]
     },
     "apps/web": {
       "entry": [
