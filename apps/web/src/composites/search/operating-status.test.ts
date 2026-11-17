@@ -26,11 +26,15 @@ const createLocker = (
 };
 
 const CLOSED_AT_NOON = { open: "13:00", close: "18:00" };
-const NOON = new Date("2026-06-07T12:00:00+09:00");
+/*
+ * isOperatingNow 는 getHours() 로 실행 환경의 현지 시각을 읽는다. 오프셋을 박은
+ * 문자열로 만들면 한국 밖에서 돌릴 때 시각이 밀리므로 현지 시각으로 만든다.
+ */
+const NOON = new Date(2026, 5, 7, 12);
 
 describe("isOperatingNow", () => {
   it("누락된 운영시간은 운영 중, 24시나 자정을 넘는 시간은 운영 종료로 판정한다", () => {
-    const currentTime = new Date("2026-06-07T23:00:00+09:00");
+    const currentTime = new Date(2026, 5, 7, 23);
 
     expect(isOperatingNow(null, currentTime)).toBe(true);
     expect(isOperatingNow({ open: "05:00", close: "24:00" }, currentTime)).toBe(
