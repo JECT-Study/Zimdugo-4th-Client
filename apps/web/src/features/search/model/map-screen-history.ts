@@ -122,23 +122,46 @@ export const planForwardMapScreenNavigation = (
 };
 
 /**
+ * 화면의 모양. 검색 중인지와 어떤 장소·보관함을 보는지만 남기고 검색어 값은 뺀다.
+ *
+ * `toMapScreenKey` 의 값을 받는다. 읽을 수 없으면 null 이다.
+ */
+const toMapScreenShape = (key: string | undefined): string | null => {
+  if (key === undefined) return null;
+
+  try {
+    const [searchQuery, placeId, lockerId] = JSON.parse(key) as unknown[];
+    return JSON.stringify([searchQuery != null, placeId, lockerId]);
+  } catch {
+    return null;
+  }
+};
+
+/**
  * 한 칸 위로 돌아가는 방법.
  *
- * 이 칸을 만들 때 떠나온 화면이 바로 부모 화면이면 히스토리를 되감는다. 기기의
- * 뒤로가기와 같은 결과가 되고 히스토리도 늘지 않는다.
+ * 이 칸을 만들 때 떠나온 화면이 부모 화면과 같은 모양이면 히스토리를 되감는다.
+ * 기기의 뒤로가기와 같은 결과가 되고 히스토리도 늘지 않는다.
  *
- * 아니면(링크로 바로 들어왔거나, 자동완성처럼 여러 단계를 한 번에 건너 왔으면) 지금
- * 칸을 부모 화면으로 바꾼다. 표시는 그대로 둔다. 이 칸 앞에 있는 항목은 바뀌지
- * 않았기 때문이다.
+ * 검색어 값은 비교하지 않는다. 검색 결과에서 자동완성으로 장소를 고르면 검색어가 그
+ * 장소 이름으로 바뀌어, 부모(검색 결과)를 계산하면 고르기 전과 다른 검색어가 나온다.
+ * 그래도 사용자가 떠나온 칸은 검색 결과이고, 그 칸으로 되감는 것이 맞다. 검색어까지
+ * 비교하면 되감지 못하고 지금 칸을 검색 결과로 바꿔, 같은 검색 결과가 두 칸 남는다.
+ *
+ * 떠나온 화면이 부모가 아니면(링크로 바로 들어왔거나, 자동완성처럼 여러 단계를 한
+ * 번에 건너 왔으면) 지금 칸을 부모 화면으로 바꾼다. 표시는 그대로 둔다. 이 칸 앞에
+ * 있는 항목은 바뀌지 않았기 때문이다.
  */
 export const planBackMapScreenNavigation = (
   search: SearchUrlParams,
   currentState: MapScreenHistoryState,
 ): { kind: "history-back" } | { kind: "replace"; search: SearchUrlParams } => {
   const parentSearch = toParentMapScreenSearch(search);
-  const parentKey = toMapScreenKey(readMapScreenParams(parentSearch));
+  const parentShape = toMapScreenShape(
+    toMapScreenKey(readMapScreenParams(parentSearch)),
+  );
 
-  if (currentState.mapBackTo === parentKey) {
+  if (toMapScreenShape(currentState.mapBackTo) === parentShape) {
     return { kind: "history-back" };
   }
 

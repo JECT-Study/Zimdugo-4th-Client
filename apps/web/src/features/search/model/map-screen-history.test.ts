@@ -117,6 +117,34 @@ describe("planBackMapScreenNavigation", () => {
     ).toEqual({ kind: "replace", search: { q: "강남" } });
   });
 
+  it("장소를 고르며 검색어가 바뀌었어도 떠나온 검색 결과로 되감는다", () => {
+    // 검색 결과(q=강남)에서 자동완성으로 장소를 골랐다. 검색어는 장소 이름이 됐다.
+    expect(
+      planBackMapScreenNavigation(
+        { q: "강남역 1번 출구", place: 9 },
+        { mapBackTo: keyOf({ q: "강남" }), mapStackDepth: 2 },
+      ),
+    ).toEqual({ kind: "history-back" });
+  });
+
+  it("떠나온 화면이 다른 보관함이면 되감지 않는다", () => {
+    expect(
+      planBackMapScreenNavigation(
+        { q: "강남", locker: "164" },
+        { mapBackTo: keyOf({ q: "강남", locker: "165" }), mapStackDepth: 2 },
+      ),
+    ).toEqual({ kind: "replace", search: { q: "강남" } });
+  });
+
+  it("떠나온 화면이 다른 장소면 되감지 않는다", () => {
+    expect(
+      planBackMapScreenNavigation(
+        { place: 9, locker: "164" },
+        { mapBackTo: keyOf({ place: 8 }), mapStackDepth: 1 },
+      ),
+    ).toEqual({ kind: "replace", search: { place: 9 } });
+  });
+
   it("여러 단계를 한 번에 건너 왔으면 되감지 않고 부모로 바꾼다", () => {
     // 홈에서 자동완성으로 바로 상세를 열었다. 되감으면 검색 결과를 건너뛰고 홈이 된다.
     expect(

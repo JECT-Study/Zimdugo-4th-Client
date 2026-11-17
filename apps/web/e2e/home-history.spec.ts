@@ -224,6 +224,30 @@ test.describe("보관함 상세 주소", () => {
     ).toBe(true);
   });
 
+  /**
+   * 낮은 배율에서 핀을 누르면 핀이 커지는 애니메이션을 기다린 뒤 시트를 연다. 주소는
+   * 먼저 상세가 된다. 그 사이에 뒤로 가면 시트는 아직 열리지 않았으므로, 예약된 열기를
+   * 따로 취소하지 않으면 뒤늦게 홈 위에 상세가 뜬다.
+   */
+  test("상세가 열리기를 기다리는 동안 뒤로 가면 상세가 뜨지 않는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await expect
+      .poll(() => page.locator(".map-marker-offset-wrapper").count())
+      .toBeGreaterThan(0);
+
+    await pressMarker(page, 0);
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await page.goBack();
+    await expect.poll(() => lockerPath(page)).toBeNull();
+
+    // 애니메이션 대기(840ms)보다 길게 기다린 뒤에도 상세가 없어야 한다.
+    await page.waitForTimeout(1_500);
+    await expect(page.getByRole("button", { name: "길찾기" })).toHaveCount(0);
+  });
+
   test("구 주소 ?locker= 로 들어오면 보관함 경로에서 상세가 뜬다", async ({
     page,
   }) => {

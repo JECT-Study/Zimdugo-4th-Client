@@ -2665,7 +2665,21 @@ export function IndexPage() {
     if (appliedMapScreenKeyRef.current === mapScreenKey) return;
     appliedMapScreenKeyRef.current = mapScreenKey;
 
+    /*
+     * 화면을 떠나면 그 화면에서 바꾼 즐겨찾기를 서버에 보낸다. 즐겨찾기는 모아 두었다
+     * 화면을 떠날 때 보내는데, 앱 안 버튼만 그 일을 하면 기기 뒤로가기로 떠난 변경은
+     * 다른 탭으로 가거나 새로고침할 때 사라진다. 보낼 것이 없으면 아무 일도 없다.
+     */
+    void flushLockerSheetMutations();
+
     if (mapScreen.target === "detail") return;
+
+    /*
+     * 상세가 아닌 주소로 왔으면 기다리던 상세 열기를 취소한다. 핀이 커지는 애니메이션을
+     * 기다리는 동안에는 시트가 아직 목록·홈이라 아래 분기를 모두 건너뛴다. 그때 남은
+     * 예약이 나중에 돌아, 뒤로가기로 취소한 상세가 목록·홈 위에 다시 열린다.
+     */
+    clearPendingLockerDetailOpen();
 
     if (mapScreen.target === "list") {
       if (
@@ -2683,7 +2697,14 @@ export function IndexPage() {
       clearMapPresentation();
       setSheetMode("idle");
     }
-  }, [clearMapPresentation, mapScreen.target, mapScreenKey, setSheetMode]);
+  }, [
+    clearMapPresentation,
+    clearPendingLockerDetailOpen,
+    flushLockerSheetMutations,
+    mapScreen.target,
+    mapScreenKey,
+    setSheetMode,
+  ]);
 
   const handleBackFromSearchFilter = useCallback(() => {
     setSheetMode("list");
