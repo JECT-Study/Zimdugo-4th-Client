@@ -1,11 +1,13 @@
-import { useSearch } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { readMapScreenSearch } from "#/shared/lib/map-path-url";
 import {
   parseLockerSearchParam,
   readSearchPlaceIdParam,
 } from "./search-url-state";
 
 export interface MapEntryInputs {
-  /** `locker` 로 가리킨 보관함 번호. 바깥 주소로는 `/lockers/<slug>` 다. */
+  /** 가리킨 보관함 번호. `/lockers/<slug>` 경로의 슬러그다. */
   lockerIdFromQuery: number | undefined;
   /** 열어야 할 보관함. `locker` 든 앱 안 딥링크의 `openLockerId` 든. */
   openLockerId: number | undefined;
@@ -16,7 +18,7 @@ export interface MapEntryInputs {
   focusLng: number | undefined;
   /** `q` 로 들어온 검색어. 검증 전 값이다. */
   searchQueryFromUrl: string | undefined;
-  /** `place` 로 가리킨 장소. 바깥 주소로는 `/places/<id>` 다. */
+  /** 가리킨 장소. `/places/<id>` 경로이거나, 상세 아래 깔린 장소(`?place=`)다. */
   placeIdFromUrl: number | undefined;
 }
 
@@ -42,7 +44,19 @@ interface MapEntrySearchParams {
  * 필요 없다.
  */
 export function useMapEntryInputs(): MapEntryInputs {
-  const search = (useSearch({ strict: false }) || {}) as MapEntrySearchParams;
+  /*
+   * 무엇을 보고 있는지는 경로가, 나머지는 쿼리가 담는다. 둘을 화면 값 한 벌로 합쳐
+   * 읽는다. 화면 코드는 경로를 모르고 이 값만 본다.
+   */
+  const location = useRouterState({ select: (state) => state.location });
+  const search = useMemo(
+    () =>
+      readMapScreenSearch({
+        pathname: location.pathname,
+        search: location.search as Record<string, unknown>,
+      }),
+    [location],
+  ) as MapEntrySearchParams;
 
   const lockerIdFromQuery = parseLockerSearchParam(search.locker);
 
