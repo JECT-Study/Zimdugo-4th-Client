@@ -57,18 +57,24 @@ export const withSearchQueryParam = (
   return next;
 };
 
-export const withSearchPlaceIdParam = (
+/**
+ * 장소 목록을 가리키는 `place` 를 붙이거나 뗀다. 바깥 주소로는 `/places/<id>` 다.
+ *
+ * 검색에서 연 목록이든 지도에서 연 목록이든 같은 값이다. 둘은 검색어(`q`)가 함께
+ * 있는지로 갈린다(`map-screen`).
+ */
+export const withPlaceParam = (
   params: SearchUrlParams,
   placeId: number | null | undefined,
 ): SearchUrlParams => {
   const next = { ...params };
 
   if (typeof placeId === "number" && Number.isInteger(placeId) && placeId > 0) {
-    next.searchPlaceId = placeId;
+    next.place = placeId;
     return next;
   }
 
-  delete next.searchPlaceId;
+  delete next.place;
   return next;
 };
 
@@ -78,7 +84,7 @@ export const withoutSearchContextParams = (
   const next = { ...params };
 
   delete next.q;
-  delete next.searchPlaceId;
+  delete next.place;
 
   return next;
 };

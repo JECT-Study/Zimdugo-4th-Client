@@ -1,10 +1,7 @@
 import { parseOpenLockerDeepLinkSearch } from "#/features/search/lib/open-locker-deep-link";
 import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
 import { LOCALE_PATH_PREFIX } from "#/shared/i18n/locales";
-import {
-  createLockerPath,
-  toLockerPathSlug,
-} from "#/shared/lib/locker-path-url";
+import { createLockerPath, toLockerPathSlug } from "#/shared/lib/map-path-url";
 import {
   parseSearchString,
   stringifySearchParams,

@@ -136,7 +136,20 @@ const lockerPath = (page: Page) =>
     () => location.pathname.match(/^\/lockers\/([^/]+)$/)?.[1] ?? null,
   );
 
-const historyLength = (page: Page) => page.evaluate(() => history.length);
+/**
+ * 지금 히스토리 칸의 위치. 앞에서부터 몇 번째 칸인지다.
+ *
+ * `history.length` 는 앞으로가기로 갈 칸까지 세서, 뒤로 돌아온 뒤에도 줄지 않는다.
+ * 라우터가 칸마다 적는 위치를 읽는다.
+ */
+const historyIndex = (page: Page) =>
+  page.evaluate(
+    () => (history.state as { __TSR_index?: number } | null)?.__TSR_index ?? 0,
+  );
+
+/** 검색창 왼쪽의 앱 안 되돌아가기 버튼. */
+const searchBarBackButton = (page: Page) =>
+  page.getByRole("button", { name: "홈으로 돌아가기" });
 
 const openSearchOverlay = async (page: Page) => {
   await homeSearchBar(page).click();
@@ -226,36 +239,13 @@ test.describe("검색 경로", () => {
   /**
    * #215 의 수용 기준이 서는 자리.
    *
-   * 지금은 검색 진입이 replace 라 검색을 끝내고 뒤로 가면 홈이 아니라 직전 항목으로
-   * 간다. 전환 뒤에는 `/` ▸ `/search?q=…` ▸ `/lockers/…` 가 각자 한 칸을 차지해야
-   * 한다. 지금 값을 고정해 두면 전환에서 무엇이 달라지는지 이 스펙이 말해 준다.
-   */
-  test("검색을 여닫아도 히스토리가 쌓이지 않는다", async ({ page }) => {
-    await page.goto("/");
-    await waitForMapReady(page);
-
-    const baseline = await historyLength(page);
-
-    await openSearchOverlay(page);
-    await submitSearch(page, KEYWORD);
-
-    expect(
-      await historyLength(page),
-      "검색 진입이 칸을 만들면 뒤로가기를 그만큼 더 눌러야 한다",
-    ).toBe(baseline);
-  });
-
-  /**
-   * 지금 상태를 있는 그대로 박아 둔다. #215 가 바꾸려는 자리다.
+   * 화면 하나가 히스토리 한 칸이다. 홈 ▸ 검색 결과 ▸ 상세가 각자 칸을 차지하므로,
+   * 뒤로가기는 들어온 순서를 그대로 되짚고 홈에서 한 번 더 누르면 앱을 떠난다.
    *
-   * 검색 진입이 replace 라 홈은 자기 칸을 갖지 못한다. 그래서 검색을 끝내고 뒤로
-   * 가면 홈이 아니라 홈보다 앞에 있던 화면으로 간다. 전환 뒤에는 `/` 로 돌아와야
-   * 하고, 그때 이 테스트가 깨지면서 무엇이 달라졌는지 알려 준다.
-   *
-   * 홈 앞에 칸을 하나 만들어 두고 시작한다. 홈에서 바로 열면 뒤로가기가 문서 밖
-   * (about:blank)으로 나가 버려, "홈으로 돌아오지 못했다" 를 주소로 가릴 수 없다.
+   * 홈 앞에 칸을 하나 만들어 두고 시작한다. 홈에서 바로 열면 마지막 뒤로가기가 문서
+   * 밖(about:blank)으로 나가, "앱을 떠났다" 를 주소로 가릴 수 없다.
    */
-  test("검색을 끝내고 뒤로 가면 홈이 아니라 그 전 화면으로 간다", async ({
+  test("검색 결과와 상세에서 뒤로 가면 들어온 순서대로 되짚고 홈 다음에 앱을 떠난다", async ({
     page,
   }) => {
     await page.goto("/settings");
@@ -263,11 +253,63 @@ test.describe("검색 경로", () => {
 
     await page.goto("/");
     await waitForMapReady(page);
+    const homeIndex = await historyIndex(page);
+
     await openSearchOverlay(page);
     await submitSearch(page, KEYWORD);
+    expect(new URL(page.url()).pathname).toBe("/search");
+    expect(await historyIndex(page), "검색 결과는 홈 위에 칸을 만든다").toBe(
+      homeIndex + 1,
+    );
+
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+    expect(await historyIndex(page), "상세는 검색 결과 위에 칸을 만든다").toBe(
+      homeIndex + 2,
+    );
 
     await page.goBack();
+    await expect.poll(() => lockerPath(page)).toBeNull();
+    await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
+    // 검색 결과 시트가 다시 그려졌는지. 목록 항목은 결과 화면에만 있다.
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeHidden();
 
-    await expect.poll(() => new URL(page.url()).pathname).toBe("/settings");
+    await page.goBack();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(page.getByText(searchItemRaw.lockerName)).toHaveCount(0);
+
+    await page.goBack();
+    await expect.poll(() => new URL(page.url()).pathname).toMatch(/\/settings$/);
+  });
+
+  /**
+   * 앱 안 되돌아가기 버튼도 기기 뒤로가기와 같은 결과여야 한다. 히스토리를 되감지 않고
+   * 새 칸을 만들면, 그 뒤 기기 뒤로가기가 방금 닫은 화면을 다시 연다(#214).
+   */
+  test("앱 안 되돌아가기는 칸을 만들지 않고 히스토리를 되감는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    const homeIndex = await historyIndex(page);
+
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+
+    await searchBarBackButton(page).click();
+    await expect.poll(() => lockerPath(page)).toBeNull();
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+    expect(await historyIndex(page)).toBe(homeIndex + 1);
+
+    await searchBarBackButton(page).click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    expect(
+      await historyIndex(page),
+      "검색을 끝내면 검색이 쌓은 칸을 모두 되감아 홈 칸으로 돌아온다",
+    ).toBe(homeIndex);
   });
 });

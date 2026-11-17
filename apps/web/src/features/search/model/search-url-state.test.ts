@@ -5,7 +5,7 @@ import {
   withLockerDetailParam,
   withoutLockerDetailParams,
   withoutSearchContextParams,
-  withSearchPlaceIdParam,
+  withPlaceParam,
   withSearchQueryParam,
 } from "./search-url-state";
 
@@ -58,7 +58,7 @@ describe("search-url-state", () => {
     });
   });
 
-  it("주소의 searchPlaceId 를 양의 정수로 읽는다", () => {
+  it("주소의 장소 번호를 양의 정수로 읽는다", () => {
     expect(readSearchPlaceIdParam("123")).toBe(123);
     expect(readSearchPlaceIdParam(456)).toBe(456);
     expect(readSearchPlaceIdParam("0")).toBeUndefined();
@@ -67,17 +67,17 @@ describe("search-url-state", () => {
     expect(readSearchPlaceIdParam("123abc")).toBeUndefined();
   });
 
-  it("주소에 searchPlaceId 를 붙이거나 뗀다", () => {
-    expect(withSearchPlaceIdParam({ q: "코엑스" }, 7)).toEqual({
+  it("주소에 place 를 붙이거나 뗀다", () => {
+    expect(withPlaceParam({ q: "코엑스" }, 7)).toEqual({
       q: "코엑스",
-      searchPlaceId: 7,
+      place: 7,
     });
 
     expect(
-      withSearchPlaceIdParam(
+      withPlaceParam(
         {
           q: "코엑스",
-          searchPlaceId: 7,
+          place: 7,
           locker: "1",
         },
         null,
@@ -88,11 +88,11 @@ describe("search-url-state", () => {
     });
   });
 
-  it("상세 파라미터를 지키면서 q 와 searchPlaceId 를 걷어낸다", () => {
+  it("상세 파라미터를 지키면서 q 와 place 를 걷어낸다", () => {
     expect(
       withoutSearchContextParams({
         q: "coex",
-        searchPlaceId: 7,
+        place: 7,
         locker: "1-coex-locker",
         detailSnap: "full",
       }),
@@ -107,13 +107,13 @@ describe("search-url-state", () => {
       withLockerDetailParam(
         {
           q: "coex",
-          searchPlaceId: 7,
+          place: 7,
         },
         "123-coex-locker",
       ),
     ).toEqual({
       q: "coex",
-      searchPlaceId: 7,
+      place: 7,
       locker: "123-coex-locker",
     });
   });
@@ -136,9 +136,10 @@ describe("withoutLockerDetailParams", () => {
   });
 
   it("검색 컨텍스트 파라미터는 건드리지 않는다", () => {
-    expect(
-      withoutLockerDetailParams({ q: "강남역", searchPlaceId: 42 }),
-    ).toEqual({ q: "강남역", searchPlaceId: 42 });
+    expect(withoutLockerDetailParams({ q: "강남역", place: 42 })).toEqual({
+      q: "강남역",
+      place: 42,
+    });
   });
 
   it("원본을 바꾸지 않는다", () => {

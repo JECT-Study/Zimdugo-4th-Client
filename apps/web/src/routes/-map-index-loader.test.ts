@@ -11,7 +11,7 @@ const { Route } = await import("./_map.index");
 const { resolveLegacyLockerPath } = await import(
   "#/shared/lib/legacy-locker-url"
 );
-const { toInternalLockerUrl } = await import("#/shared/lib/locker-path-url");
+const { toInternalMapUrl } = await import("#/shared/lib/map-path-url");
 const { parseSearchString } = await import("#/shared/lib/search-serialization");
 
 /**
@@ -80,7 +80,7 @@ describe("홈 라우트 validateSearch", () => {
       resolveLegacyLockerPath(legacy) as string,
       "https://zimdugo.com",
     );
-    return validate(parseSearchString(toInternalLockerUrl(target).search));
+    return validate(parseSearchString(toInternalMapUrl(target).search));
   };
 
   it("구 딥링크의 상세 단계와 좌표를 리다이렉트 뒤에도 남긴다", () => {
