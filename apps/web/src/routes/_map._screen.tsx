@@ -189,6 +189,7 @@ import type {
   LockerBoundsRaw,
   LockerPinItemResponse,
 } from "#/shared/api/lockers";
+import { useDocumentTitle } from "#/shared/hooks/useDocumentTitle";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
@@ -2809,6 +2810,31 @@ export function IndexPage() {
     lockerDetail,
     selectedLockerDetail,
   ]);
+
+  /*
+   * 앱 안에서 연 상세의 탭 제목. 상세 라우트의 머리는 서버에서만 가져온 상세로
+   * 만들어, 앱 안 이동에서는 서비스 공통 제목이 남는다. 화면이 받은 상세로 채운다.
+   * 서버가 그린 첫 화면의 제목과 같은 문구를 쓴다.
+   */
+  const lockerDetailDocumentTitle =
+    mapScreen.target === "detail" &&
+    displayedLockerDetail?.lockerId === activeLockerId &&
+    displayedLockerDetail.title
+      ? m.seo_locker_detail_title(
+          { name: displayedLockerDetail.title },
+          { locale: normalizeLocale(languageTag()) ?? BASE_LOCALE },
+        )
+      : null;
+  /*
+   * 같은 상세 안의 이동(슬러그 정리)에도 라우터가 공통 제목으로 머리를 다시 그린다.
+   * 머리는 이동이 끝난 뒤에 다시 그려지므로, 시작할 때 바뀌는 위치가 아니라 끝나서
+   * 확정된 위치를 계기로 삼는다. 앞의 것을 쓰면 제목을 먼저 적용하고 라우터가 덮는다.
+   */
+  const resolvedHistoryEntryKey = useRouterState({
+    select: (state) =>
+      (state.resolvedLocation?.state as { key?: string } | undefined)?.key,
+  });
+  useDocumentTitle(lockerDetailDocumentTitle, resolvedHistoryEntryKey);
 
   /**
    * 지금 화면에 실제로 떠 있는 시트. 시트 렌더 조건과 같은 함수를 쓴다.
