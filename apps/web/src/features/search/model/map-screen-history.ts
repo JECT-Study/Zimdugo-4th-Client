@@ -94,6 +94,35 @@ export const toHomeMapScreenSearch = (
   return next;
 };
 
+/**
+ * 링크로 바로 들어온 칸의 검색 값. 상세·장소 목록이면 검색어를 걷어 낸다.
+ *
+ * 상세·장소 목록의 `q` 는 "이 화면을 어떤 검색에서 열었는지" 다. 앱 안에서 연 칸에는
+ * 떠나온 화면(`mapBackTo`)이 적혀 있어 그 맥락이 사용자 자신의 것이다. 링크로 바로
+ * 들어온 칸에는 그 표시가 없다. 주소창을 복사해 받은 링크라면 `q` 는 보낸 사람의
+ * 검색어라, 받은 사람의 검색창에 그 글자가 뜨고 되돌아가기가 그 검색 결과를 연다.
+ * 그래서 지도에서 연 화면으로 다룬다.
+ *
+ * 새로고침이나 탭 복원은 히스토리 칸의 표시를 그대로 돌려주므로 걸리지 않는다.
+ * 검색 결과(`/search?q=`)는 검색어 자체가 화면의 내용이라 그대로 둔다.
+ */
+export const toLandingMapScreenSearch = (
+  search: SearchUrlParams,
+  currentState: MapScreenHistoryState,
+): SearchUrlParams => {
+  if (currentState.mapBackTo !== undefined) return search;
+  if (search.q === undefined) return search;
+
+  const params = readMapScreenParams(search);
+  if (params.lockerId === undefined && params.placeId === undefined) {
+    return search;
+  }
+
+  const next = { ...search };
+  delete next.q;
+  return next;
+};
+
 export interface MapScreenNavigationPlan {
   replace: boolean;
   state: MapScreenHistoryState;

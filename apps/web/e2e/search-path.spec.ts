@@ -407,6 +407,78 @@ test.describe("검색 경로", () => {
   });
 
   /**
+   * 주소창을 복사해 받은 링크에는 보낸 사람의 검색어(`q`)가 붙어 있을 수 있다. 앱 안에서
+   * 온 표시가 없는 칸이면 그 검색어를 걷어 내고 지도에서 연 화면으로 다룬다. 받은
+   * 사람의 검색창에 남의 검색어가 뜨거나, 되돌아가기가 남의 검색 결과를 열지 않는다.
+   */
+  test("검색어가 붙은 상세 링크로 들어오면 검색어를 걷고 닫으면 홈으로 간다", async ({
+    page,
+  }) => {
+    await page.goto(`/lockers/${LOCKER_ID}?q=${encodeURIComponent(KEYWORD)}`);
+    await waitForMapReady(page);
+
+    await expect.poll(() => queryParam(page, "q")).toBeNull();
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
+    await expect(homeSearchBar(page)).toHaveValue("");
+
+    await page.getByRole("button", { name: "닫기" }).click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(page.getByText(searchItemRaw.lockerName)).toHaveCount(0);
+  });
+
+  test("검색어가 붙은 장소 목록 링크로 들어오면 검색어를 걷고 되돌아가기는 홈으로 간다", async ({
+    page,
+  }) => {
+    await page.goto(`/places/${searchItemRaw.placeId}?q=${encodeURIComponent(KEYWORD)}`);
+    await waitForMapReady(page);
+
+    await expect.poll(() => queryParam(page, "q")).toBeNull();
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe(`/places/${searchItemRaw.placeId}`);
+    await expect(homeSearchBar(page)).not.toHaveValue(KEYWORD);
+
+    await searchBarBackButton(page).click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(searchBarBackButton(page)).toBeHidden();
+  });
+
+  /**
+   * 앱 안에서 검색해 연 상세는 표시가 있어 검색어가 남는다. 새로고침해도 히스토리 칸의
+   * 표시가 그대로라 검색 맥락을 잃지 않는다.
+   */
+  test("앱 안에서 검색해 연 상세는 새로고침해도 검색어가 남는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
+    /*
+     * 상세를 받으면 슬러그가 상세 이름으로 다듬어진다. 그 전에 새로고침하면 다듬기가
+     * 새로고침 도중 칸의 주소를 바꿔, 브라우저가 칸의 표시를 버린다. 사용자가 화면이
+     * 다 뜬 뒤 새로고침하는 것과 같게 기다린다.
+     */
+    await expect
+      .poll(() => lockerPath(page))
+      .toBe(`${LOCKER_ID}-${encodeURIComponent("상세-강남역-보관함")}`);
+    expect(await queryParam(page, "q")).toBe(KEYWORD);
+
+    await page.reload();
+    await waitForMapReady(page);
+    await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
+    expect(await queryParam(page, "q")).toBe(KEYWORD);
+
+    await page.goBack();
+    await expect.poll(() => lockerPath(page)).toBeNull();
+    await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+  });
+
+  /**
    * 검색 입력 오버레이도 주소를 바꾸지 않고 칸을 하나 만든다. 그래서 기기 뒤로가기가
    * 오버레이를 닫는다.
    */

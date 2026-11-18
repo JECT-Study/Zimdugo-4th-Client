@@ -11,6 +11,7 @@ import {
   planForwardMapScreenNavigation,
   readMapScreenParams,
   toHomeMapScreenSearch,
+  toLandingMapScreenSearch,
   toMapScreenKey,
 } from "./map-screen-history";
 import type { SearchUrlParams } from "./search-url-state";
@@ -379,6 +380,30 @@ export function useMapScreenNavigation() {
       state: keepState(current.state),
     });
   }, [keepState, navigateToScreen, readCurrent, router, settledHomeSearch]);
+
+  /*
+   * 링크로 바로 들어온 상세·장소 목록에서 검색어를 걷어 낸다(`toLandingMapScreenSearch`).
+   *
+   * 홈 경로의 정리처럼 이동이 끝나 확정된 위치에서만 본다. 홈 경로에 화면 값을 달고
+   * 들어오면 그 정리가 경로를 옮긴 뒤에 여기 닿는다. 되감는 중에는 손대지 않는다.
+   */
+  const settledHref = useRouterState({
+    select: (state) =>
+      state.status === "idle" ? (state.resolvedLocation?.href ?? null) : null,
+  });
+  useEffect(() => {
+    if (settledHref === null) return;
+    if (isTraversingRef.current || isExitingToHomeRef.current) return;
+
+    const current = readCurrent();
+    const nextSearch = toLandingMapScreenSearch(current.search, current.state);
+    if (nextSearch === current.search) return;
+
+    navigateToScreen(nextSearch, {
+      replace: true,
+      state: keepState(current.state),
+    });
+  }, [keepState, navigateToScreen, readCurrent, settledHref]);
 
   /**
    * 화면 위에 시트를 연다. 주소는 그대로 두고 같은 주소로 칸을 하나 만든다.
