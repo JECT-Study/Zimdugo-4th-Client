@@ -109,6 +109,7 @@ import {
   applyFavoriteOverlayToLockerItems,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
+import { hasNavigationDestination } from "#/features/search/lib/navigation-platform-links";
 import {
   createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
@@ -232,6 +233,18 @@ const SHEET_OFFSET_NONE_PX = 1_000_000;
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
   DETAIL_FOCUS_MORPH_DURATION_MS + 40;
+
+/**
+ * 길찾기 팝업을 다시 열어도 되는 상세인지. 지금 주소의 보관함이어야 하고, 좌표가 아직
+ * 없는 자리표시 상세면 열지 않는다(팝업이 목적지 없이 뜬다).
+ */
+const canOpenNavigationPopupFor = (
+  detail: LockerDetailItem | null,
+  lockerId: number | null,
+) =>
+  detail !== null &&
+  detail.lockerId === lockerId &&
+  hasNavigationDestination(detail);
 
 const reloadForLocationRecovery = () => {
   window.location.reload();
@@ -1148,12 +1161,33 @@ export function IndexPage() {
       resetMapContext();
     }
 
+    /*
+     * 시트는 겹쳐 열지 않는다. 필터가 열려 있으면 닫고 오버레이를 연다. 히스토리의
+     * 필터 칸은 오버레이 칸을 만들 때 함께 되감는다(`pushSheetEntry`).
+     */
+    if (sheetMode === "filter") {
+      setSheetMode("list");
+    }
+
     // 검색 오버레이 진입 시 카메라 고정 해제:
     // isSearchOpen이 false로 바뀔 때 카메라 추적 effect가 재발동해
     // 지도가 강제로 현재 위치로 이동하는 버그를 방지한다.
     setIsCameraCentered(false);
     setIsSearchOpen(true);
-  }, [clearPendingLockerDetailOpen, context, resetMapContext, setIsSearchOpen]);
+    /*
+     * 오버레이도 히스토리 칸을 하나 만들어 기기 뒤로가기로 닫힌다. 지도 맥락을 닫느라
+     * 히스토리를 되감는 중이면, 칸은 되감기가 끝난 뒤에 만든다.
+     */
+    mapScreenNavigation.pushSheetEntry("searchOverlay");
+  }, [
+    clearPendingLockerDetailOpen,
+    context,
+    mapScreenNavigation.pushSheetEntry,
+    resetMapContext,
+    setIsSearchOpen,
+    setSheetMode,
+    sheetMode,
+  ]);
 
   const handleCloseSearch = useCallback(
     (draft?: string) => {
@@ -1161,8 +1195,9 @@ export function IndexPage() {
         setSearchDraft(draft.trim());
       }
       setIsSearchOpen(false);
+      mapScreenNavigation.closeSheetEntry("searchOverlay");
     },
-    [setIsSearchOpen],
+    [mapScreenNavigation.closeSheetEntry, setIsSearchOpen],
   );
 
   const handleExitSearchContext = resetSearchContext;
@@ -2324,9 +2359,11 @@ export function IndexPage() {
     ],
   );
 
+  /** 길찾기 팝업도 히스토리 칸을 하나 만들어 기기 뒤로가기로 닫힌다. */
   const handleOpenNavigationPopup = useCallback(() => {
     setIsNavigationPopupOpen(true);
-  }, []);
+    mapScreenNavigation.pushSheetEntry("navigationPopup");
+  }, [mapScreenNavigation.pushSheetEntry]);
 
   const handleCorrectionSubmit = useCallback(
     async (item: LockerDetailItem, request: LockerCorrectionRequest) => {
@@ -2398,9 +2435,17 @@ export function IndexPage() {
     [permission, location],
   );
 
-  const handleNavigationPopupOpenChange = useCallback((isOpen: boolean) => {
-    setIsNavigationPopupOpen(isOpen);
-  }, []);
+  const handleNavigationPopupOpenChange = useCallback(
+    (isOpen: boolean) => {
+      setIsNavigationPopupOpen(isOpen);
+      if (isOpen) {
+        mapScreenNavigation.pushSheetEntry("navigationPopup");
+      } else {
+        mapScreenNavigation.closeSheetEntry("navigationPopup");
+      }
+    },
+    [mapScreenNavigation.closeSheetEntry, mapScreenNavigation.pushSheetEntry],
+  );
 
   /**
    * 상세에서 한 칸 위로. 상세 아래 깔린 화면(목록이나 홈)으로 돌아간다.
@@ -2530,23 +2575,104 @@ export function IndexPage() {
     setSheetMode,
   ]);
 
-  const handleBackFromSearchFilter = useCallback(() => {
+  /*
+   * 필터 시트는 주소를 바꾸지 않고 히스토리 칸만 하나 만든다. 그래서 기기 뒤로가기가
+   * 필터를 닫는다. 필터는 화면의 정체성이 아니라 결과를 거르는 조건이라 주소에 두지
+   * 않는다.
+   *
+   * 앱 안에서 닫을 때(뒤로 버튼, 끌어내리기, 적용)도 그 칸을 되감는다. 새 칸을 만들거나
+   * 칸을 남겨 두면, 그 뒤 기기 뒤로가기가 닫은 필터를 다시 열거나 헛걸음한다.
+   */
+  const closeSearchFilter = useCallback(() => {
     setSheetMode("list");
-  }, [setSheetMode]);
+    mapScreenNavigation.closeSheetEntry("filter");
+  }, [mapScreenNavigation.closeSheetEntry, setSheetMode]);
+
+  const handleBackFromSearchFilter = closeSearchFilter;
 
   const handleOpenSearchFilter = useCallback(() => {
     setSheetMode("filter");
-  }, [setSheetMode]);
+    mapScreenNavigation.pushSheetEntry("filter");
+  }, [mapScreenNavigation.pushSheetEntry, setSheetMode]);
 
   const handleResetSearchFilter = resetSearchFilters;
 
   const handleApplySearchFilter = useCallback(
     (filters: SearchFilterAppliedState) => {
       applySearchFilters(filters);
-      setSheetMode("list");
+      closeSearchFilter();
     },
-    [applySearchFilters, setSheetMode],
+    [applySearchFilters, closeSearchFilter],
   );
+
+  /*
+   * 기기 뒤로·앞으로가기로 칸이 바뀌면 화면 위의 시트(필터, 검색 오버레이, 길찾기
+   * 팝업)를 따라 맞춘다. 떠난 칸의 시트는 닫고, 닿은 칸의 시트는 연다.
+   *
+   * 칸이 바뀐 순간에만 맞춘다. 첫 렌더의 칸은 건너뛴다. 시트 칸에서 새로고침하면 표시는
+   * 남지만 시트는 닫힌 채로 여는 쪽이 자연스럽다.
+   */
+  const sheetEntry = mapScreenNavigation.sheetEntry;
+  const appliedSheetEntryRef = useRef(sheetEntry);
+  /** 아래에서 계산하는 표시 중인 상세. 이펙트 안에서 최신 값을 읽으려고 둔다. */
+  const displayedLockerDetailRef = useRef<LockerDetailItem | null>(null);
+  /**
+   * 상세가 뜨면 열어야 하는 길찾기 팝업.
+   *
+   * 상세 위 팝업 칸으로 여러 칸을 한 번에 건너오면(`history.go(2)`, 브라우저 히스토리
+   * 메뉴) 상세는 딥링크 처리가 비동기로 연다. 칸이 바뀐 순간에는 상세가 아직 없어
+   * 바로 열면 빈 팝업이 뜨므로, 기억해 두었다가 상세가 뜨면 연다.
+   */
+  const isNavigationPopupPendingRef = useRef(false);
+  useEffect(() => {
+    const previous = appliedSheetEntryRef.current;
+    if (previous === sheetEntry) return;
+    appliedSheetEntryRef.current = sheetEntry;
+    isNavigationPopupPendingRef.current = false;
+
+    /*
+     * 필터 칸을 떠나 같은 목록으로 돌아올 때만 목록으로 되돌린다. 홈이나 상세로 여러 칸을
+     * 건너가면 화면을 맞추는 이펙트가 이미 그 화면의 시트를 정했으니 덮지 않는다.
+     */
+    if (
+      previous === "filter" &&
+      sheetModeRef.current === "filter" &&
+      mapScreen.target === "list"
+    ) {
+      setSheetMode("list");
+    }
+    if (previous === "searchOverlay") setIsSearchOpen(false);
+    if (previous === "navigationPopup") setIsNavigationPopupOpen(false);
+
+    /*
+     * 다시 열지는 지금 그려진 시트가 아니라 주소가 가리키는 화면으로 판단한다. 아래
+     * 화면까지 바뀌는 이동(홈 → 검색 결과 위 필터로 두 칸 앞으로)에서는 같은 렌더에서
+     * 화면을 맞추는 이펙트가 시트를 목록으로 바꾸는 중이라, 그려진 시트는 아직 홈이다.
+     */
+    if (sheetEntry === "filter" && mapScreen.target === "list") {
+      setSheetMode("filter");
+    }
+    if (sheetEntry === "searchOverlay") setIsSearchOpen(true);
+    if (sheetEntry === "navigationPopup" && mapScreen.target === "detail") {
+      if (
+        sheetModeRef.current === "detail" &&
+        canOpenNavigationPopupFor(
+          displayedLockerDetailRef.current,
+          activeLockerId,
+        )
+      ) {
+        setIsNavigationPopupOpen(true);
+      } else {
+        isNavigationPopupPendingRef.current = true;
+      }
+    }
+  }, [
+    activeLockerId,
+    mapScreen.target,
+    setIsSearchOpen,
+    setSheetMode,
+    sheetEntry,
+  ]);
 
   const searchBarBackAction = resolveSearchBarBackAction({
     context,
@@ -2810,6 +2936,19 @@ export function IndexPage() {
     lockerDetail,
     selectedLockerDetail,
   ]);
+  displayedLockerDetailRef.current = displayedLockerDetail;
+
+  // 기다리던 길찾기 팝업을 상세가 뜨면 연다(위 시트 이펙트 참고).
+  useEffect(() => {
+    if (!isNavigationPopupPendingRef.current) return;
+    if (sheetMode !== "detail") return;
+    if (!canOpenNavigationPopupFor(displayedLockerDetail, activeLockerId)) {
+      return;
+    }
+
+    isNavigationPopupPendingRef.current = false;
+    setIsNavigationPopupOpen(true);
+  }, [activeLockerId, displayedLockerDetail, sheetMode]);
 
   /*
    * 앱 안에서 연 상세의 탭 제목. 상세 라우트의 머리는 서버에서만 가져온 상세로
@@ -3377,7 +3516,7 @@ export function IndexPage() {
       {!isMapLoading && sheetMode === "filter" && !isSearchOpen ? (
         <SearchFilterBottomSheet
           initialFilters={searchFilters}
-          onCollapseToResults={() => setSheetMode("list")}
+          onCollapseToResults={closeSearchFilter}
           onReset={handleResetSearchFilter}
           onApply={handleApplySearchFilter}
           animateOnMount
