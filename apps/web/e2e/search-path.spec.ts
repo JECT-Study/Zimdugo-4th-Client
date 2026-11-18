@@ -34,6 +34,22 @@ const suggestItemRaw = {
   updatedAt: "2026-08-01T00:00:00",
 };
 
+/**
+ * 자동완성의 장소 항목. 고르면 검색에서 연 장소 목록으로 바로 간다. 검색어는 장소
+ * 이름으로 바뀌므로 입력한 검색어와 다른 이름을 둔다.
+ */
+const suggestPlaceRaw = {
+  type: "PLACE",
+  placeId: 900,
+  placeName: "강남역 1번 출구",
+  lockerId: null,
+  lockerName: null,
+  roadAddress: "서울 강남구 강남대로 지하 396",
+  lockerType: "SUBWAY",
+  distanceMeters: 120,
+  updatedAt: "2026-08-01T00:00:00",
+};
+
 const searchItemRaw = {
   type: "LOCKER",
   placeId: 900,
@@ -95,7 +111,7 @@ const stubApi = async (page: Page) => {
     const lockerIdMatch = url.match(/\/lockers\/(\d+)/);
 
     const data = url.includes("/lockers/suggest")
-      ? { count: 1, items: [suggestItemRaw] }
+      ? { count: 2, items: [suggestItemRaw, suggestPlaceRaw] }
       : url.includes("/lockers/search")
         ? { count: 1, bounds: boundsRaw, items: [searchItemRaw] }
         : url.includes("/lockers/pins")
@@ -160,6 +176,17 @@ const filterApplyButton = (page: Page) =>
 /** 검색창 왼쪽의 앱 안 되돌아가기 버튼. */
 const searchBarBackButton = (page: Page) =>
   page.getByRole("button", { name: "홈으로 돌아가기" });
+
+/**
+ * 검색 오버레이 왼쪽 위의 앱 안 닫기 버튼.
+ *
+ * 검색 결과 위에서는 검색 바에도 "닫기" 버튼이 있어서, 오버레이 입력이 든 헤더 안으로 좁힌다.
+ */
+const overlayCloseButton = (page: Page) =>
+  page
+    .locator("header")
+    .filter({ has: overlaySearchInput(page) })
+    .getByRole("button", { name: "닫기", exact: true });
 
 const openSearchOverlay = async (page: Page) => {
   await homeSearchBar(page).click();
@@ -494,6 +521,77 @@ test.describe("검색 경로", () => {
     await page.goBack();
     await expect(overlaySearchInput(page)).toBeHidden();
     expect(await historyIndex(page)).toBe(homeIndex);
+  });
+
+  /**
+   * 확정하지 않은 초안은 어느 길로 닫아도 남기지 않는다. 기기 뒤로가기는 원래
+   * 남기지 않았고, 앱 안 닫기 버튼만 남겼다. 다시 열면 확정된 검색어만 보인다.
+   */
+  test("앱 안 닫기 버튼으로 닫아도 확정하지 않은 초안은 남지 않는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(SECOND_KEYWORD);
+    await overlayCloseButton(page).click();
+    await expect(overlaySearchInput(page)).toBeHidden();
+
+    await openSearchOverlay(page);
+    await expect(overlaySearchInput(page)).toHaveValue("");
+  });
+
+  test("검색 결과 위에서 초안을 쓰다 닫으면 확정된 검색어로 돌아온다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(SECOND_KEYWORD);
+    await overlayCloseButton(page).click();
+    await expect(overlaySearchInput(page)).toBeHidden();
+    expect(await queryParam(page, "q")).toBe(KEYWORD);
+
+    await openSearchOverlay(page);
+    await expect(overlaySearchInput(page)).toHaveValue(KEYWORD);
+  });
+
+  /**
+   * 홈에서 자동완성으로 장소를 고르면 검색 결과를 건너뛰고 장소 목록이 열린다. 떠나온
+   * 칸이 홈이라 되돌아가기가 히스토리를 되감지 못하고, 검색창에 남은 글자로 검색
+   * 결과를 연다. 초안이 남으면 한 번도 검색하지 않은 글자로 결과가 열린다.
+   */
+  test("자동완성으로 연 장소 목록에서 초안을 쓰다 닫고 되돌아가면 확정된 검색어로 결과가 열린다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(KEYWORD);
+    await page.getByText(suggestPlaceRaw.placeName).first().click();
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe(`/places/${suggestPlaceRaw.placeId}`);
+    await expect
+      .poll(() => queryParam(page, "q"))
+      .toBe(suggestPlaceRaw.placeName);
+
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(SECOND_KEYWORD);
+    await overlayCloseButton(page).click();
+    await expect(overlaySearchInput(page)).toBeHidden();
+
+    await searchBarBackButton(page).click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/search");
+    await expect
+      .poll(() => queryParam(page, "q"))
+      .toBe(suggestPlaceRaw.placeName);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
   });
 
   /**
