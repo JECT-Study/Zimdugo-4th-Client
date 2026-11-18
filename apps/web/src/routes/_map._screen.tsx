@@ -2593,10 +2593,19 @@ export function IndexPage() {
   const appliedSheetEntryRef = useRef(sheetEntry);
   /** 아래에서 계산하는 표시 중인 상세. 이펙트 안에서 최신 값을 읽으려고 둔다. */
   const displayedLockerDetailRef = useRef<LockerDetailItem | null>(null);
+  /**
+   * 상세가 뜨면 열어야 하는 길찾기 팝업.
+   *
+   * 상세 위 팝업 칸으로 여러 칸을 한 번에 건너오면(`history.go(2)`, 브라우저 히스토리
+   * 메뉴) 상세는 딥링크 처리가 비동기로 연다. 칸이 바뀐 순간에는 상세가 아직 없어
+   * 바로 열면 빈 팝업이 뜨므로, 기억해 두었다가 상세가 뜨면 연다.
+   */
+  const isNavigationPopupPendingRef = useRef(false);
   useEffect(() => {
     const previous = appliedSheetEntryRef.current;
     if (previous === sheetEntry) return;
     appliedSheetEntryRef.current = sheetEntry;
+    isNavigationPopupPendingRef.current = false;
 
     if (previous === "filter" && sheetModeRef.current === "filter") {
       setSheetMode("list");
@@ -2604,19 +2613,26 @@ export function IndexPage() {
     if (previous === "searchOverlay") setIsSearchOpen(false);
     if (previous === "navigationPopup") setIsNavigationPopupOpen(false);
 
-    if (sheetEntry === "filter" && sheetModeRef.current === "list") {
+    /*
+     * 다시 열지는 지금 그려진 시트가 아니라 주소가 가리키는 화면으로 판단한다. 아래
+     * 화면까지 바뀌는 이동(홈 → 검색 결과 위 필터로 두 칸 앞으로)에서는 같은 렌더에서
+     * 화면을 맞추는 이펙트가 시트를 목록으로 바꾸는 중이라, 그려진 시트는 아직 홈이다.
+     */
+    if (sheetEntry === "filter" && mapScreen.target === "list") {
       setSheetMode("filter");
     }
     if (sheetEntry === "searchOverlay") setIsSearchOpen(true);
-    // 팝업은 상세가 떠 있을 때만 다시 연다. 상세 없이 열면 빈 팝업이 뜬다.
-    if (
-      sheetEntry === "navigationPopup" &&
-      sheetModeRef.current === "detail" &&
-      displayedLockerDetailRef.current !== null
-    ) {
-      setIsNavigationPopupOpen(true);
+    if (sheetEntry === "navigationPopup" && mapScreen.target === "detail") {
+      if (
+        sheetModeRef.current === "detail" &&
+        displayedLockerDetailRef.current !== null
+      ) {
+        setIsNavigationPopupOpen(true);
+      } else {
+        isNavigationPopupPendingRef.current = true;
+      }
     }
-  }, [setIsSearchOpen, setSheetMode, sheetEntry]);
+  }, [mapScreen.target, setIsSearchOpen, setSheetMode, sheetEntry]);
 
   const searchBarBackAction = resolveSearchBarBackAction({
     context,
@@ -2881,6 +2897,15 @@ export function IndexPage() {
     selectedLockerDetail,
   ]);
   displayedLockerDetailRef.current = displayedLockerDetail;
+
+  // 기다리던 길찾기 팝업을 상세가 뜨면 연다(위 시트 이펙트 참고).
+  useEffect(() => {
+    if (!isNavigationPopupPendingRef.current) return;
+    if (sheetMode !== "detail" || displayedLockerDetail === null) return;
+
+    isNavigationPopupPendingRef.current = false;
+    setIsNavigationPopupOpen(true);
+  }, [displayedLockerDetail, sheetMode]);
 
   /*
    * 앱 안에서 연 상세의 탭 제목. 상세 라우트의 머리는 서버에서만 가져온 상세로

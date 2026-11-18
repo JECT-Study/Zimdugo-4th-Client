@@ -463,4 +463,49 @@ test.describe("검색 경로", () => {
     expect(await lockerPath(page)).not.toBeNull();
     expect(await historyIndex(page)).toBe(detailIndex);
   });
+
+  /**
+   * 여러 칸을 한 번에 건너와도(브라우저 히스토리 메뉴, `history.go(2)`) 닿은 칸의 시트를
+   * 연다. 아래 화면까지 바뀌는 이동이라, 화면을 맞추는 일과 시트를 여는 일이 같은
+   * 렌더에서 겹친다.
+   */
+  test("여러 칸을 한 번에 앞으로 건너와도 필터가 다시 열린다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await searchFilterChip(page).click();
+    await expect(filterApplyButton(page)).toBeVisible();
+
+    await page.evaluate(() => history.go(-2));
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(filterApplyButton(page)).toBeHidden();
+
+    await page.evaluate(() => history.go(2));
+    await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
+    await expect(filterApplyButton(page)).toBeVisible();
+  });
+
+  test("여러 칸을 한 번에 앞으로 건너와도 상세 위 길찾기 팝업이 다시 열린다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+    await page.getByRole("button", { name: "길찾기" }).click();
+    await expect(page.getByText("어떤 지도로 길찾기 할까요?")).toBeVisible();
+
+    await page.evaluate(() => history.go(-2));
+    await expect.poll(() => lockerPath(page)).toBeNull();
+    await expect(page.getByText("어떤 지도로 길찾기 할까요?")).toBeHidden();
+
+    await page.evaluate(() => history.go(2));
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await expect(page.getByText("어떤 지도로 길찾기 할까요?")).toBeVisible();
+  });
 });
