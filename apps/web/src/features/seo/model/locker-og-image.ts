@@ -1,8 +1,10 @@
 import { DEFAULT_SEARCH_COORDINATES } from "#/features/search/model/useMapSheetSession";
 import { getLockerDetail } from "#/shared/api/lockers";
+import { SITE_ORIGIN } from "#/shared/lib/site-url";
 
 const NAVER_STATIC_MAP_ENDPOINT =
   "https://maps.apigw.ntruss.com/map-static/v2/raster";
+const NAVER_STATIC_MAP_MARKER_URL = `${SITE_ORIGIN}/icons/map-marker-128x128.png`;
 const DEFAULT_OG_IMAGE_PATH = "/images/og-default.png";
 const REQUEST_TIMEOUT_MS = 5_000;
 const SUCCESS_CACHE_CONTROL =
@@ -86,7 +88,7 @@ const createStaticMapUrl = ({
     format: "png",
     scale: "2",
     lang: "ko",
-    markers: `type:d|size:mid|color:0x3BD569|pos:${longitude} ${latitude}|viewSizeRatio:1.5`,
+    markers: `type:e|anchor:center|icon:${NAVER_STATIC_MAP_MARKER_URL}|pos:${longitude} ${latitude}`,
   }).toString();
   return url;
 };
