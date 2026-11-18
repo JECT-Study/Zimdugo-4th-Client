@@ -41,7 +41,8 @@ import {
 } from "./SearchOverlay.css.ts";
 
 export interface SearchOverlayProps {
-  onClose: (draft?: string) => void;
+  /** 확정하지 않은 입력은 넘기지 않는다. 다시 열면 확정된 검색어만 보인다. */
+  onClose: () => void;
   onSelect: (query: string) => void;
   onSelectAutocomplete?: (
     item: SearchAutocompleteItemData,
@@ -173,7 +174,7 @@ export function SearchOverlay({
   };
 
   const handleBack = () => {
-    onClose(query);
+    onClose();
   };
 
   const handleRemoveRecent = (id: string) => {

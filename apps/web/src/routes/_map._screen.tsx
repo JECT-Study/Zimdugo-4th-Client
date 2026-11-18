@@ -1189,16 +1189,15 @@ export function IndexPage() {
     sheetMode,
   ]);
 
-  const handleCloseSearch = useCallback(
-    (draft?: string) => {
-      if (draft !== undefined) {
-        setSearchDraft(draft.trim());
-      }
-      setIsSearchOpen(false);
-      mapScreenNavigation.closeSheetEntry("searchOverlay");
-    },
-    [mapScreenNavigation.closeSheetEntry, setIsSearchOpen],
-  );
+  /*
+   * 확정하지 않은 초안은 남기지 않는다. 기기 뒤로가기로 닫을 때와 같게 맞춘다.
+   * 초안을 남기면 되감을 곳이 없을 때 검색 결과를 다시 여는 길이 한 번도 검색하지
+   * 않은 글자로 결과를 연다. 이미 검색한 값은 주소의 q 로 돌아온다.
+   */
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchOpen(false);
+    mapScreenNavigation.closeSheetEntry("searchOverlay");
+  }, [mapScreenNavigation.closeSheetEntry, setIsSearchOpen]);
 
   const handleExitSearchContext = resetSearchContext;
 
