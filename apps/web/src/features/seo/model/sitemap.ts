@@ -1,4 +1,3 @@
-import { createLockerDeepLinkSlug } from "#/features/search/lib/open-locker-deep-link";
 import type { ClientDocumentResponse } from "#/shared/api/documents";
 import type { SeoLockerItem } from "#/shared/api/lockers";
 import { createLockerPath } from "#/shared/lib/map-path-url";
@@ -18,37 +17,18 @@ const escapeXml = (value: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-const getLockerTitleByLocalePrefix = (
-  names: SeoLockerItem["names"] | null | undefined,
-  localePrefix: SeoLocalePrefix,
-): string => {
-  if (!names) return "";
-  if (localePrefix === "/en") return names.en || names.ko || "";
-  if (localePrefix === "/ja") return names.ja || names.ko || "";
-  if (localePrefix === "/zh") return names.zh || names.ko || "";
-  if (localePrefix === "/zh-TW") {
-    return names["zh-TW"] || names["zh-tw"] || names.ko || "";
-  }
-  return names.ko || "";
-};
-
 const createStaticUrl = (localePrefix: SeoLocalePrefix, path: string): string =>
   `${SITE_ORIGIN}${localePrefix}${path}`;
 
+/** 보관함 상세의 주소. 로케일마다 경로 접두사만 다르고 경로는 id 다. */
 const createLockerUrl = (
   locker: SeoLockerItem,
   localePrefix: SeoLocalePrefix,
-): string => {
-  const slug = createLockerDeepLinkSlug({
-    lockerId: locker.lockerId,
-    title: getLockerTitleByLocalePrefix(locker.names, localePrefix),
-  });
-
-  return new URL(
-    `${localePrefix}${createLockerPath(slug)}`,
+): string =>
+  new URL(
+    `${localePrefix}${createLockerPath(String(locker.lockerId))}`,
     SITE_ORIGIN,
   ).toString();
-};
 
 const getHrefLang = (localePrefix: SeoLocalePrefix): string =>
   localePrefix === "" ? "ko" : localePrefix.slice(1);

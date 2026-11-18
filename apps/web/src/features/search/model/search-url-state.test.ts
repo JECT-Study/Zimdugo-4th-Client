@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseLockerSearchParam,
   readSearchPlaceIdParam,
   readSearchQueryParam,
   withLockerDetailParam,
@@ -148,5 +149,22 @@ describe("withoutLockerDetailParams", () => {
     withoutLockerDetailParams(params);
 
     expect(params.locker).toBe("500-강남역");
+  });
+});
+
+describe("parseLockerSearchParam", () => {
+  it("이름이 붙은 값에서도 앞의 id 를 읽는다", () => {
+    expect(parseLockerSearchParam("164-강남역")).toBe(164);
+    expect(parseLockerSearchParam("0164")).toBe(164);
+  });
+
+  it("안전한 정수를 넘는 id 는 상세로 보지 않는다", () => {
+    // 받으면 `String(id)` 가 `1e+21` 이 되어, 그 값으로 만든 상세 주소가 열리지 않는다.
+    expect(
+      parseLockerSearchParam("1000000000000000000000-old"),
+    ).toBeUndefined();
+    expect(parseLockerSearchParam(String(Number.MAX_SAFE_INTEGER))).toBe(
+      Number.MAX_SAFE_INTEGER,
+    );
   });
 });

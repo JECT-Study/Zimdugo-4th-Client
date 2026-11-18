@@ -12,17 +12,14 @@ export interface OpenLockerDeepLinkSearch {
   focusLng?: number;
 }
 
-export interface LockerDeepLinkSlugInput {
-  lockerId: number;
-  title?: string;
-}
-
-export interface LockerDeepLinkUrlInput extends LockerDeepLinkSlugInput {
+export interface LockerDeepLinkUrlInput {
   origin: string;
+  lockerId: number;
   locale?: AppLocale;
 }
 
-export interface LockerCanonicalUrlInput extends LockerDeepLinkSlugInput {
+export interface LockerCanonicalUrlInput {
+  lockerId: number;
   locale?: AppLocale;
 }
 
@@ -79,41 +76,27 @@ export const parseOpenLockerDeepLinkSearch = (
   };
 };
 
-export const createLockerDeepLinkSlug = ({
-  lockerId,
-  title,
-}: LockerDeepLinkSlugInput): string => {
-  const cleanName = title
-    ? title
-        .replace(/[^\p{L}\p{N}\s-]/gu, "")
-        .replace(/\s+/g, "-")
-        .replace(/^-+|-+$/g, "")
-    : "";
-
-  return cleanName ? `${lockerId}-${cleanName}` : String(lockerId);
-};
-
+/** 보관함 상세의 주소. 경로는 id 만 쓴다(`toLockerPathSlug`). */
 export const createLockerDeepLinkUrl = ({
   origin,
   lockerId,
-  title,
   locale,
 }: LockerDeepLinkUrlInput): string => {
   const localePrefix = locale && locale !== BASE_LOCALE ? `/${locale}` : "";
-  const slug = createLockerDeepLinkSlug({ lockerId, title });
 
-  return new URL(`${localePrefix}${createLockerPath(slug)}`, origin).toString();
+  return new URL(
+    `${localePrefix}${createLockerPath(String(lockerId))}`,
+    origin,
+  ).toString();
 };
 
 export const createLockerCanonicalUrl = ({
   lockerId,
-  title,
   locale,
 }: LockerCanonicalUrlInput): string =>
   createLockerDeepLinkUrl({
     origin: SITE_ORIGIN,
     lockerId,
-    title,
     locale,
   });
 

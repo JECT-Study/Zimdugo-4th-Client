@@ -37,7 +37,9 @@ export const parseLockerSearchParam = (raw: unknown): number | undefined => {
   if (!/^\d+(?:-.*)?$/.test(value)) return undefined;
 
   const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+  // 안전한 정수를 넘으면 `String(parsed)` 가 `1e+21` 처럼 바뀌어, 그 값으로 만든 상세
+  // 주소를 이 파서가 다시 받지 못한다. 보관함 id 는 그 범위를 넘지 않는다.
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
 };
 
 export const withSearchQueryParam = (
