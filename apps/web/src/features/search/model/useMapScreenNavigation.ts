@@ -6,6 +6,7 @@ import {
 } from "#/shared/lib/map-path-url";
 import {
   type MapScreenHistoryState,
+  type MapSheetEntry,
   planBackMapScreenNavigation,
   planForwardMapScreenNavigation,
   readMapScreenParams,
@@ -42,6 +43,32 @@ export function useMapScreenNavigation() {
   const navigate = useNavigate();
   /** 되감기가 끝났을 때 홈이 아니면 홈으로 바꿔야 하는지. */
   const isExitingToHomeRef = useRef(false);
+  /**
+   * 히스토리를 되감는 중인지와, 되감기가 끝난 뒤 할 일.
+   *
+   * 되감기(`history.back`·`go`)는 비동기다. 그 사이 다른 이동을 하면 되감기 전 칸
+   * 위에서 계산되어 어긋난다. 예를 들어 지도 맥락을 닫으며(되감기) 검색 오버레이를
+   * 열면(칸 만들기), 오버레이 칸이 되감기에 함께 사라진다. 그래서 되감는 동안 들어온
+   * 일은 모아 두었다가 되감기가 끝나면 차례로 한다.
+   */
+  const isTraversingRef = useRef(false);
+  const afterTraversalRef = useRef<Array<() => void>>([]);
+
+  const traverse = useCallback(
+    (delta: number) => {
+      isTraversingRef.current = true;
+      router.history.go(delta);
+    },
+    [router],
+  );
+
+  const runAfterTraversal = useCallback((task: () => void) => {
+    if (isTraversingRef.current) {
+      afterTraversalRef.current.push(task);
+      return true;
+    }
+    return false;
+  }, []);
 
   /*
    * 화면 값으로 읽는다. 경로(`/lockers/164`)와 쿼리를 합친 한 벌이다. 화면 코드는
@@ -82,13 +109,29 @@ export function useMapScreenNavigation() {
         ...previous,
         mapBackTo: state.mapBackTo,
         mapStackDepth: state.mapStackDepth,
+        // 넘긴 상태에 없으면 지운다. 다른 화면으로 가는 칸에 시트 표시가 따라가지 않게.
+        mapSheet: state.mapSheet,
       }),
     [],
   );
 
   const goTo = useCallback(
     (update: SearchUpdate) => {
+      if (runAfterTraversal(() => goTo(update))) return;
+
       const current = readCurrent();
+
+      /*
+       * 시트 칸(검색 오버레이 등)이 열린 채 다른 화면으로 가면, 먼저 그 칸을 되감고
+       * 나서 간다. 시트 칸 위에 새 칸을 쌓으면 새 화면에서 뒤로 갈 때 닫았던 시트가
+       * 다시 열린다. 히스토리에는 시트를 연 적이 없던 것처럼 남는다.
+       */
+      if (current.state.mapSheet !== undefined) {
+        traverse(-1);
+        afterTraversalRef.current.push(() => goTo(update));
+        return;
+      }
+
       const nextSearch = update(current.search);
       // 받은 값을 그대로 돌려주면 바꿀 것이 없다는 뜻이다. 같은 주소로 이동하지 않는다.
       if (nextSearch === current.search) return;
@@ -104,7 +147,7 @@ export function useMapScreenNavigation() {
         state: keepState(plan.state),
       });
     },
-    [keepState, navigateToScreen, readCurrent],
+    [keepState, navigateToScreen, readCurrent, runAfterTraversal, traverse],
   );
 
   const replaceSearch = useCallback(
@@ -128,7 +171,7 @@ export function useMapScreenNavigation() {
       const plan = planBackMapScreenNavigation(current.search, current.state);
 
       if (plan.kind === "history-back") {
-        router.history.back();
+        traverse(-1);
         return;
       }
 
@@ -137,7 +180,7 @@ export function useMapScreenNavigation() {
         state: keepState(current.state),
       });
     },
-    [keepState, navigateToScreen, readCurrent, router],
+    [keepState, navigateToScreen, readCurrent, traverse],
   );
 
   const exitToHome = useCallback(() => {
@@ -150,7 +193,7 @@ export function useMapScreenNavigation() {
      */
     if (depth > 0) {
       isExitingToHomeRef.current = true;
-      router.history.go(-depth);
+      traverse(-depth);
       return;
     }
 
@@ -158,7 +201,7 @@ export function useMapScreenNavigation() {
       replace: true,
       state: keepState(current.state),
     });
-  }, [keepState, navigateToScreen, readCurrent, router]);
+  }, [keepState, navigateToScreen, readCurrent, traverse]);
 
   /*
    * 되감아 닿은 첫 칸이 홈이 아닐 수 있다. 검색 결과 주소로 바로 들어와 그 위에
@@ -236,5 +279,77 @@ export function useMapScreenNavigation() {
     });
   }, [keepState, navigateToScreen, readCurrent, router, settledHomeSearch]);
 
-  return { goTo, replaceSearch, goBack, exitToHome };
+  /**
+   * 화면 위에 시트를 연다. 주소는 그대로 두고 같은 주소로 칸을 하나 만든다.
+   *
+   * 칸 수(`mapStackDepth`)도 하나 늘린다. 홈으로 나가기가 이 칸까지 되감아야 한다.
+   */
+  const pushSheetEntry = useCallback(
+    (sheet: MapSheetEntry) => {
+      if (runAfterTraversal(() => pushSheetEntry(sheet))) return;
+
+      const current = readCurrent();
+      if (current.state.mapSheet === sheet) return;
+
+      navigateToScreen(current.search, {
+        replace: false,
+        state: keepState({
+          mapBackTo: toMapScreenKey(readMapScreenParams(current.search)),
+          mapStackDepth: (current.state.mapStackDepth ?? 0) + 1,
+          mapSheet: sheet,
+        }),
+      });
+    },
+    [keepState, navigateToScreen, readCurrent, runAfterTraversal],
+  );
+
+  /**
+   * 시트의 칸을 되감아 닫는다. 지금 칸이 그 시트의 칸이 아니면(새로고침 등으로 칸 없이
+   * 열려 있었다면) 아무것도 하지 않는다. 화면이 시트를 닫는 것은 호출하는 쪽의 일이다.
+   */
+  const closeSheetEntry = useCallback(
+    (sheet: MapSheetEntry) => {
+      if (readCurrent().state.mapSheet !== sheet) return;
+      traverse(-1);
+    },
+    [readCurrent, traverse],
+  );
+
+  /** 지금 칸의 시트 표시. 이동이 끝나 확정된 칸을 본다. */
+  const sheetEntry = useRouterState({
+    select: (state) =>
+      (state.resolvedLocation?.state as MapScreenHistoryState | undefined)
+        ?.mapSheet,
+  });
+
+  /*
+   * 되감기가 끝나면 모아 둔 일을 한다. 확정된 칸이 바뀐 것으로 끝을 안다.
+   *
+   * 홈으로 나가기의 정리(위 이펙트)가 먼저 돌도록 그보다 뒤에 둔다. 그 정리가 다시
+   * 칸을 바꾸면 그것도 되감기처럼 기다린다.
+   */
+  const resolvedEntryKey = useRouterState({
+    select: (state) =>
+      (state.resolvedLocation?.state as { key?: string } | undefined)?.key,
+  });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resolvedEntryKey 는 되감기가 끝났음을 알리는 트리거다
+  useEffect(() => {
+    if (!isTraversingRef.current) return;
+    if (isExitingToHomeRef.current) return;
+
+    isTraversingRef.current = false;
+    const tasks = afterTraversalRef.current;
+    afterTraversalRef.current = [];
+    for (const task of tasks) task();
+  }, [resolvedEntryKey]);
+
+  return {
+    goTo,
+    replaceSearch,
+    goBack,
+    exitToHome,
+    pushSheetEntry,
+    closeSheetEntry,
+    sheetEntry,
+  };
 }

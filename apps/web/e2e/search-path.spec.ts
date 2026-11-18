@@ -147,6 +147,14 @@ const historyIndex = (page: Page) =>
     () => (history.state as { __TSR_index?: number } | null)?.__TSR_index ?? 0,
   );
 
+/** 검색 결과 목록의 필터 칩. 이름은 시각적으로 숨긴 글자에서 온다. */
+const searchFilterChip = (page: Page) =>
+  page.getByRole("button", { name: "장소 유형", exact: true });
+
+/** 필터 시트의 적용 버튼. 필터 시트에만 있다. */
+const filterApplyButton = (page: Page) =>
+  page.getByRole("button", { name: "보관함 보기" });
+
 /** 검색창 왼쪽의 앱 안 되돌아가기 버튼. */
 const searchBarBackButton = (page: Page) =>
   page.getByRole("button", { name: "홈으로 돌아가기" });
@@ -346,5 +354,113 @@ test.describe("검색 경로", () => {
 
     await expect.poll(() => new URL(page.url()).pathname).toBe("/");
     await expect(page.getByText(searchItemRaw.lockerName)).toHaveCount(0);
+  });
+
+  /**
+   * 필터는 주소에 두지 않는다. 결과를 거르는 조건이지 화면의 정체성이 아니라서다.
+   * 대신 같은 주소로 히스토리 칸을 하나 만들어, 기기 뒤로가기가 필터를 닫게 한다.
+   */
+  test("필터는 주소를 바꾸지 않고 칸을 만들어 기기 뒤로가기로 닫힌다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+    const listUrl = page.url();
+    const listIndex = await historyIndex(page);
+
+    await searchFilterChip(page).click();
+    await expect(filterApplyButton(page)).toBeVisible();
+    expect(page.url(), "필터를 열어도 주소는 그대로다").toBe(listUrl);
+    expect(await historyIndex(page), "필터는 칸을 하나 만든다").toBe(
+      listIndex + 1,
+    );
+
+    await page.goBack();
+    await expect(filterApplyButton(page)).toBeHidden();
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+    expect(page.url()).toBe(listUrl);
+    expect(await historyIndex(page)).toBe(listIndex);
+  });
+
+  /**
+   * 앱 안에서 닫을 때도 필터의 칸을 되감아야 한다. 칸을 남겨 두면 그 뒤 기기
+   * 뒤로가기가 같은 결과 화면에서 한 번 헛걸음한다.
+   */
+  test("필터를 적용하면 필터의 칸을 되감는다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    const listIndex = await historyIndex(page);
+
+    await searchFilterChip(page).click();
+    await expect(filterApplyButton(page)).toBeVisible();
+
+    await filterApplyButton(page).click();
+    await expect(filterApplyButton(page)).toBeHidden();
+    expect(await historyIndex(page)).toBe(listIndex);
+  });
+
+  /**
+   * 검색 입력 오버레이도 주소를 바꾸지 않고 칸을 하나 만든다. 그래서 기기 뒤로가기가
+   * 오버레이를 닫는다.
+   */
+  test("검색 오버레이는 칸을 만들어 기기 뒤로가기로 닫힌다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    const homeIndex = await historyIndex(page);
+
+    await openSearchOverlay(page);
+    expect(new URL(page.url()).pathname).toBe("/");
+    expect(await historyIndex(page)).toBe(homeIndex + 1);
+
+    await page.goBack();
+    await expect(overlaySearchInput(page)).toBeHidden();
+    expect(await historyIndex(page)).toBe(homeIndex);
+  });
+
+  /**
+   * 오버레이에서 검색하면 오버레이의 칸을 먼저 되감고 검색 결과로 간다. 오버레이 칸
+   * 위에 쌓으면 검색 결과에서 뒤로 갈 때 닫았던 오버레이가 다시 열린다.
+   */
+  test("오버레이에서 검색하면 검색 결과가 홈 바로 위에 놓인다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    const homeIndex = await historyIndex(page);
+
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+    expect(await historyIndex(page)).toBe(homeIndex + 1);
+
+    await page.goBack();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(overlaySearchInput(page)).toBeHidden();
+  });
+
+  /** 길찾기 팝업도 칸을 하나 만들어, 기기 뒤로가기가 팝업만 닫고 상세는 남긴다. */
+  test("길찾기 팝업은 기기 뒤로가기로 닫히고 상세는 남는다", async ({ page }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+    const detailIndex = await historyIndex(page);
+
+    await page.getByRole("button", { name: "길찾기" }).click();
+    await expect(page.getByText("어떤 지도로 길찾기 할까요?")).toBeVisible();
+    expect(await historyIndex(page)).toBe(detailIndex + 1);
+
+    await page.goBack();
+    await expect(page.getByText("어떤 지도로 길찾기 할까요?")).toBeHidden();
+    await expect(page.getByRole("button", { name: "길찾기" })).toBeVisible();
+    expect(await lockerPath(page)).not.toBeNull();
+    expect(await historyIndex(page)).toBe(detailIndex);
   });
 });

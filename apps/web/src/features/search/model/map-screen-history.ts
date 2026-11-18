@@ -23,7 +23,17 @@ export interface MapScreenHistoryState {
   mapBackTo?: string;
   /** 이 칸까지 지도 화면이 만든 칸 수. 처음 들어온 칸이 0 이다. */
   mapStackDepth?: number;
+  /**
+   * 화면 위에 잠깐 뜬 시트. 주소는 아래 화면과 같고 이 표시만 다르다.
+   *
+   * 필터처럼 주소에 둘 이유는 없지만 기기 뒤로가기로 닫히길 기대하는 것들이다.
+   * 열 때 같은 주소로 칸을 하나 만들고, 뒤로가기로 그 칸을 벗어나면 닫힌다.
+   */
+  mapSheet?: MapSheetEntry;
 }
+
+/** 히스토리 칸으로 여닫는 시트. */
+export type MapSheetEntry = "filter" | "searchOverlay" | "navigationPopup";
 
 /** 화면을 비교할 수 있는 문자열. 슬러그의 이름처럼 화면과 무관한 값은 넣지 않는다. */
 export const toMapScreenKey = ({
