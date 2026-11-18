@@ -109,6 +109,7 @@ import {
   applyFavoriteOverlayToLockerItems,
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
+import { hasNavigationDestination } from "#/features/search/lib/navigation-platform-links";
 import {
   createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
@@ -232,6 +233,18 @@ const SHEET_OFFSET_NONE_PX = 1_000_000;
 const DETAIL_FOCUS_MORPH_DURATION_MS = 800;
 const DETAIL_SHEET_OPEN_AFTER_MORPH_DELAY_MS =
   DETAIL_FOCUS_MORPH_DURATION_MS + 40;
+
+/**
+ * 길찾기 팝업을 다시 열어도 되는 상세인지. 지금 주소의 보관함이어야 하고, 좌표가 아직
+ * 없는 자리표시 상세면 열지 않는다(팝업이 목적지 없이 뜬다).
+ */
+const canOpenNavigationPopupFor = (
+  detail: LockerDetailItem | null,
+  lockerId: number | null,
+) =>
+  detail !== null &&
+  detail.lockerId === lockerId &&
+  hasNavigationDestination(detail);
 
 const reloadForLocationRecovery = () => {
   window.location.reload();
@@ -2607,7 +2620,15 @@ export function IndexPage() {
     appliedSheetEntryRef.current = sheetEntry;
     isNavigationPopupPendingRef.current = false;
 
-    if (previous === "filter" && sheetModeRef.current === "filter") {
+    /*
+     * 필터 칸을 떠나 같은 목록으로 돌아올 때만 목록으로 되돌린다. 홈이나 상세로 여러 칸을
+     * 건너가면 화면을 맞추는 이펙트가 이미 그 화면의 시트를 정했으니 덮지 않는다.
+     */
+    if (
+      previous === "filter" &&
+      sheetModeRef.current === "filter" &&
+      mapScreen.target === "list"
+    ) {
       setSheetMode("list");
     }
     if (previous === "searchOverlay") setIsSearchOpen(false);
@@ -2625,14 +2646,23 @@ export function IndexPage() {
     if (sheetEntry === "navigationPopup" && mapScreen.target === "detail") {
       if (
         sheetModeRef.current === "detail" &&
-        displayedLockerDetailRef.current !== null
+        canOpenNavigationPopupFor(
+          displayedLockerDetailRef.current,
+          activeLockerId,
+        )
       ) {
         setIsNavigationPopupOpen(true);
       } else {
         isNavigationPopupPendingRef.current = true;
       }
     }
-  }, [mapScreen.target, setIsSearchOpen, setSheetMode, sheetEntry]);
+  }, [
+    activeLockerId,
+    mapScreen.target,
+    setIsSearchOpen,
+    setSheetMode,
+    sheetEntry,
+  ]);
 
   const searchBarBackAction = resolveSearchBarBackAction({
     context,
@@ -2901,11 +2931,14 @@ export function IndexPage() {
   // 기다리던 길찾기 팝업을 상세가 뜨면 연다(위 시트 이펙트 참고).
   useEffect(() => {
     if (!isNavigationPopupPendingRef.current) return;
-    if (sheetMode !== "detail" || displayedLockerDetail === null) return;
+    if (sheetMode !== "detail") return;
+    if (!canOpenNavigationPopupFor(displayedLockerDetail, activeLockerId)) {
+      return;
+    }
 
     isNavigationPopupPendingRef.current = false;
     setIsNavigationPopupOpen(true);
-  }, [displayedLockerDetail, sheetMode]);
+  }, [activeLockerId, displayedLockerDetail, sheetMode]);
 
   /*
    * 앱 안에서 연 상세의 탭 제목. 상세 라우트의 머리는 서버에서만 가져온 상세로

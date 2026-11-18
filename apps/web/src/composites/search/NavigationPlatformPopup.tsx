@@ -1,7 +1,7 @@
 import { languageTag, m } from "@repo/i18n";
 import { Button as UiButton } from "@repo/ui/components/button";
 import { Popup } from "@repo/ui/components/popup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button as AriaButton,
   Dialog,
@@ -95,6 +95,14 @@ export function NavigationPlatformPopup({
 
     openPlatformNavigation(platform);
   };
+
+  /*
+   * 팝업이 닫히면 그 위의 언어 확인창도 닫는다. 기기 뒤로가기로 팝업만 닫히면 확인창
+   * 상태가 남아, 앞으로가기로 팝업을 다시 열 때 확인창까지 함께 열린다.
+   */
+  useEffect(() => {
+    if (!isOpen) setIsNaverLanguageWarningOpen(false);
+  }, [isOpen]);
 
   return (
     <>

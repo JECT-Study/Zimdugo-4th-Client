@@ -52,7 +52,9 @@ export function useMapScreenNavigation() {
    * 일은 모아 두었다가 되감기가 끝나면 차례로 한다.
    */
   const isTraversingRef = useRef(false);
-  const afterTraversalRef = useRef<Array<() => void>>([]);
+  const afterTraversalRef = useRef<
+    Array<{ task: () => void; sheet?: MapSheetEntry }>
+  >([]);
 
   const traverse = useCallback(
     (delta: number) => {
@@ -62,13 +64,20 @@ export function useMapScreenNavigation() {
     [router],
   );
 
-  const runAfterTraversal = useCallback((task: () => void) => {
-    if (isTraversingRef.current) {
-      afterTraversalRef.current.push(task);
-      return true;
-    }
-    return false;
-  }, []);
+  /**
+   * 되감는 중이면 일을 모아 두고 참을 돌려준다. 시트를 여는 일은 어느 시트인지 함께
+   * 적어 둔다. 열리기 전에 닫히면 그 일을 지워야 한다(`closeSheetEntry`).
+   */
+  const runAfterTraversal = useCallback(
+    (task: () => void, sheet?: MapSheetEntry) => {
+      if (isTraversingRef.current) {
+        afterTraversalRef.current.push({ task, sheet });
+        return true;
+      }
+      return false;
+    },
+    [],
+  );
 
   /*
    * 화면 값으로 읽는다. 경로(`/lockers/164`)와 쿼리를 합친 한 벌이다. 화면 코드는
@@ -128,7 +137,7 @@ export function useMapScreenNavigation() {
        */
       if (current.state.mapSheet !== undefined) {
         traverse(-1);
-        afterTraversalRef.current.push(() => goTo(update));
+        afterTraversalRef.current.push({ task: () => goTo(update) });
         return;
       }
 
@@ -286,7 +295,7 @@ export function useMapScreenNavigation() {
    */
   const pushSheetEntry = useCallback(
     (sheet: MapSheetEntry) => {
-      if (runAfterTraversal(() => pushSheetEntry(sheet))) return;
+      if (runAfterTraversal(() => pushSheetEntry(sheet), sheet)) return;
 
       const current = readCurrent();
       if (current.state.mapSheet === sheet) return;
@@ -306,9 +315,19 @@ export function useMapScreenNavigation() {
   /**
    * 시트의 칸을 되감아 닫는다. 지금 칸이 그 시트의 칸이 아니면(새로고침 등으로 칸 없이
    * 열려 있었다면) 아무것도 하지 않는다. 화면이 시트를 닫는 것은 호출하는 쪽의 일이다.
+   *
+   * 칸을 만드는 일이 아직 되감기를 기다리고 있으면 그 일을 지운다. 화면은 시트를 먼저
+   * 보여 주므로, 칸이 생기기 전에 닫을 수 있다. 그 일을 남기면 닫은 시트가 다시 열린다.
    */
   const closeSheetEntry = useCallback(
     (sheet: MapSheetEntry) => {
+      const pending = afterTraversalRef.current;
+      const remaining = pending.filter((entry) => entry.sheet !== sheet);
+      if (remaining.length !== pending.length) {
+        afterTraversalRef.current = remaining;
+        return;
+      }
+
       if (readCurrent().state.mapSheet !== sheet) return;
       traverse(-1);
     },
@@ -340,7 +359,7 @@ export function useMapScreenNavigation() {
     isTraversingRef.current = false;
     const tasks = afterTraversalRef.current;
     afterTraversalRef.current = [];
-    for (const task of tasks) task();
+    for (const { task } of tasks) task();
   }, [resolvedEntryKey]);
 
   return {

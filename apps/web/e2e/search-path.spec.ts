@@ -401,7 +401,7 @@ test.describe("검색 경로", () => {
 
     await filterApplyButton(page).click();
     await expect(filterApplyButton(page)).toBeHidden();
-    expect(await historyIndex(page)).toBe(listIndex);
+    await expect.poll(() => historyIndex(page)).toBe(listIndex);
   });
 
   /**
@@ -482,6 +482,8 @@ test.describe("검색 경로", () => {
     await page.evaluate(() => history.go(-2));
     await expect.poll(() => new URL(page.url()).pathname).toBe("/");
     await expect(filterApplyButton(page)).toBeHidden();
+    // 필터를 닫으며 목록으로 되돌리면 홈 위에 결과 목록 시트가 남는다.
+    await expect(page.getByText(searchItemRaw.lockerName)).toHaveCount(0);
 
     await page.evaluate(() => history.go(2));
     await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
