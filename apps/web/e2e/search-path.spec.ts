@@ -34,6 +34,22 @@ const suggestItemRaw = {
   updatedAt: "2026-08-01T00:00:00",
 };
 
+/**
+ * 자동완성의 장소 항목. 고르면 검색에서 연 장소 목록으로 바로 간다. 검색어는 장소
+ * 이름으로 바뀌므로 입력한 검색어와 다른 이름을 둔다.
+ */
+const suggestPlaceRaw = {
+  type: "PLACE",
+  placeId: 900,
+  placeName: "강남역 1번 출구",
+  lockerId: null,
+  lockerName: null,
+  roadAddress: "서울 강남구 강남대로 지하 396",
+  lockerType: "SUBWAY",
+  distanceMeters: 120,
+  updatedAt: "2026-08-01T00:00:00",
+};
+
 const searchItemRaw = {
   type: "LOCKER",
   placeId: 900,
@@ -95,7 +111,7 @@ const stubApi = async (page: Page) => {
     const lockerIdMatch = url.match(/\/lockers\/(\d+)/);
 
     const data = url.includes("/lockers/suggest")
-      ? { count: 1, items: [suggestItemRaw] }
+      ? { count: 2, items: [suggestItemRaw, suggestPlaceRaw] }
       : url.includes("/lockers/search")
         ? { count: 1, bounds: boundsRaw, items: [searchItemRaw] }
         : url.includes("/lockers/pins")
@@ -474,14 +490,24 @@ test.describe("검색 경로", () => {
   });
 
   /**
-   * 링크로 장소 목록에 바로 들어오면 되감을 칸이 없어, 되돌아가기가 검색창에 남은
-   * 글자로 검색 결과를 연다. 초안이 남으면 한 번도 검색하지 않은 글자로 결과가 열린다.
+   * 홈에서 자동완성으로 장소를 고르면 검색 결과를 건너뛰고 장소 목록이 열린다. 떠나온
+   * 칸이 홈이라 되돌아가기가 히스토리를 되감지 못하고, 검색창에 남은 글자로 검색
+   * 결과를 연다. 초안이 남으면 한 번도 검색하지 않은 글자로 결과가 열린다.
    */
-  test("장소 목록에 바로 들어와 초안을 쓰다 닫고 되돌아가면 확정된 검색어로 결과가 열린다", async ({
+  test("자동완성으로 연 장소 목록에서 초안을 쓰다 닫고 되돌아가면 확정된 검색어로 결과가 열린다", async ({
     page,
   }) => {
-    await page.goto(`/places/${searchItemRaw.placeId}?q=${encodeURIComponent(KEYWORD)}`);
+    await page.goto("/");
     await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(KEYWORD);
+    await page.getByText(suggestPlaceRaw.placeName).first().click();
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe(`/places/${suggestPlaceRaw.placeId}`);
+    await expect
+      .poll(() => queryParam(page, "q"))
+      .toBe(suggestPlaceRaw.placeName);
 
     await openSearchOverlay(page);
     await overlaySearchInput(page).fill(SECOND_KEYWORD);
@@ -490,7 +516,9 @@ test.describe("검색 경로", () => {
 
     await searchBarBackButton(page).click();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/search");
-    await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
+    await expect
+      .poll(() => queryParam(page, "q"))
+      .toBe(suggestPlaceRaw.placeName);
     await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
   });
 
