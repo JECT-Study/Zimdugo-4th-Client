@@ -63,6 +63,12 @@ describe("readMapScreenSearch", () => {
     });
   });
 
+  it("경로의 고정 부분은 라우터처럼 대소문자를 가리지 않고 슬러그는 보존한다", () => {
+    expect(read("/PLACES/9")).toEqual({ place: 9 });
+    expect(read("/Lockers/164-Gangnam")).toEqual({ locker: "164-Gangnam" });
+    expect(read("/SEARCH?q=a")).toEqual({ q: "a" });
+  });
+
   it("인정하지 않는 보관함·장소 값은 화면 값으로 읽지 않는다", () => {
     expect(read("/lockers/abc")).toEqual({});
     expect(read("/places/1.5")).toEqual({});

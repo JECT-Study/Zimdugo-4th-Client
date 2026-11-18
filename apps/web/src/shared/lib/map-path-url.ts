@@ -22,9 +22,14 @@ import {
  * 화면 코드는 그대로다.
  */
 
-const LOCKER_PATH_PATTERN = /^\/lockers\/([^/]+)\/?$/;
-const PLACE_PATH_PATTERN = /^\/places\/([^/]+)\/?$/;
-const SEARCH_PATH_PATTERN = /^\/search\/?$/;
+/*
+ * 고정 부분은 대소문자를 가리지 않는다. 라우터가 기본으로 대소문자를 가리지 않아
+ * `/PLACES/9` 도 장소 라우트에 닿는데, 여기서만 가리면 그 주소에서 홈을 그린다.
+ * 슬러그는 붙잡은 그대로 두므로 대소문자가 보존된다.
+ */
+const LOCKER_PATH_PATTERN = /^\/lockers\/([^/]+)\/?$/i;
+const PLACE_PATH_PATTERN = /^\/places\/([^/]+)\/?$/i;
+const SEARCH_PATH_PATTERN = /^\/search\/?$/i;
 
 /**
  * 경로 조각으로 그대로 써도 되는 슬러그 모양.

@@ -1,3 +1,7 @@
+// @vitest-environment node
+// 로더는 서버와 클라이언트에서 다르게 돈다. 서버(window 없음)를 기본으로 두고,
+// 클라이언트 경우만 window 를 흉내 낸다.
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getLockerDetail = vi.hoisted(() => vi.fn());
@@ -39,6 +43,17 @@ describe("보관함 상세 라우트 로더", () => {
     expect(getLockerDetail).toHaveBeenCalledWith(
       expect.objectContaining({ lockerId: 521 }),
     );
+  });
+
+  it("클라이언트 이동에서는 상세를 다시 가져오지 않는다", async () => {
+    // 화면이 클라이언트 쿼리로 상세를 채운다. 로더는 서버의 메타 태그용이다.
+    vi.stubGlobal("window", {});
+    try {
+      expect(await runLoader("521")).toEqual({ detail: null });
+      expect(getLockerDetail).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("상세를 못 가져오면 없다고 답한다", async () => {

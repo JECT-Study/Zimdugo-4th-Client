@@ -29,8 +29,15 @@ export const Route = createFileRoute("/_map/_screen/lockers/$slug")({
       } as never);
     }
   },
+  /*
+   * 서버에서만 가져온다. 이 로더의 목적은 서버가 상세 메타 태그를 내는 것이다.
+   * 클라이언트 이동에서도 돌면 화면이 따로 묻는 상세를 한 번 더 요청하고, 그 응답을
+   * 기다리느라 이동이 늦어진다. 화면은 클라이언트 쿼리로 상세를 채운다.
+   */
   loader: ({ params }) =>
-    loadLockerDetail(parseLockerSearchParam(params.slug) as number),
+    typeof window === "undefined"
+      ? loadLockerDetail(parseLockerSearchParam(params.slug) as number)
+      : { detail: null },
   head: (context) =>
     createLockerDetailHead(context, context.loaderData?.detail),
 });

@@ -21,6 +21,19 @@ export interface InitialMapSheetSession {
 }
 
 /**
+ * 서버가 잰 거리를 뺀다.
+ *
+ * 서버는 방문자의 위치를 모르니 기본 좌표에서 거리를 잰다. 그 값을 그대로 그리면
+ * 클라이언트가 실제 위치로 다시 물은 결과가 올 때까지 틀린 거리가 보이고, 그 결과에
+ * 거리가 비어 있으면 틀린 값이 남는다. 거리는 비워 두고 클라이언트 결과로 채운다.
+ */
+const withoutServerDistance = (detail: LockerDetailItem): LockerDetailItem => ({
+  ...detail,
+  distanceLabel: "",
+  distanceMeters: undefined,
+});
+
+/**
  * 첫 렌더에 그릴 시트.
  *
  * 화면은 주소가 정하므로 여기서는 "처음 그릴 것" 만 고른다. 상세는 로더가 내용을
@@ -43,7 +56,9 @@ export const resolveInitialMapSheetSession = ({
         ? "list"
         : "idle",
     selectedLockerDetail:
-      screen.lockerId !== undefined ? (deepLinkDetail ?? null) : null,
+      screen.lockerId !== undefined && deepLinkDetail
+        ? withoutServerDistance(deepLinkDetail)
+        : null,
     selectedMapPin:
       hasDetailContent && deepLinkDetail
         ? {

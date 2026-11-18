@@ -53,6 +53,16 @@ describe("resolveInitialMapSheetSession", () => {
     });
   });
 
+  it("서버가 기본 좌표에서 잰 거리는 그리지 않는다", () => {
+    const session = resolveInitialMapSheetSession({
+      screen: { target: "detail", lockerId: 164 },
+      deepLinkDetail: detail({ distanceLabel: "31km", distanceMeters: 31_000 }),
+    });
+
+    expect(session.selectedLockerDetail?.distanceLabel).toBe("");
+    expect(session.selectedLockerDetail?.distanceMeters).toBeUndefined();
+  });
+
   it("좌표가 비어 있으면 기본 좌표에 핀을 둔다", () => {
     const session = resolveInitialMapSheetSession({
       screen: { target: "detail", lockerId: 164 },
