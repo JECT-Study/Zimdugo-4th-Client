@@ -8,6 +8,7 @@ import {
   isSearchQuerySubmittable,
   resolveSearchQuerySubmitAttempt,
   SEARCH_QUERY_MAX_LENGTH,
+  toSearchQueryFromName,
   trimSearchQueryDraft,
 } from "./sanitize-search-query";
 
@@ -132,5 +133,30 @@ describe("sanitize-search-query", () => {
       ok: true,
       query: "강남",
     });
+  });
+});
+
+describe("toSearchQueryFromName", () => {
+  it("검색어로 쓸 수 있는 이름은 그대로 쓴다", () => {
+    expect(toSearchQueryFromName("강남역 4번 출구 보관함")).toBe(
+      "강남역 4번 출구 보관함",
+    );
+  });
+
+  it("받지 않는 글자는 공백으로 바꾸고 공백을 하나로 줄인다", () => {
+    expect(toSearchQueryFromName("강남역 1, 12번 출구")).toBe(
+      "강남역 1 12번 출구",
+    );
+    expect(toSearchQueryFromName("B1층 / ES-34 #2")).toBe("B1층 ES-34 2");
+  });
+
+  it("길이를 넘으면 자르고 끝의 공백을 지운다", () => {
+    const name = `${"가".repeat(29)} 나다라`;
+    expect(toSearchQueryFromName(name)).toBe("가".repeat(29));
+  });
+
+  it("남는 글자가 없으면 null 이다", () => {
+    expect(toSearchQueryFromName("###")).toBeNull();
+    expect(toSearchQueryFromName("")).toBeNull();
   });
 });

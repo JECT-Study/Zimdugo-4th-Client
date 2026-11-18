@@ -2,6 +2,7 @@ import {
   capSearchQueryDraft,
   getValidatedSearchQuery,
 } from "../lib/sanitize-search-query";
+import { resolveSelectedItemSearchQuery } from "./search-selection";
 
 export const SEARCH_HISTORY_STORAGE_KEY = "search_history";
 const SEARCH_HISTORY_MAX_ENTRIES = 20;
@@ -36,6 +37,11 @@ export type SearchHistoryEntry =
   | SearchHistoryLockerEntry
   | SearchHistoryPlaceEntry;
 
+/**
+ * 기록할 값. 보관함·장소의 `searchDraft` 는 고를 때 입력해 두었던 검색어이고, 이름이
+ * 검색어가 될 수 없을 때만 쓴다(`resolveSelectedItemSearchQuery`). 고를 때 검색창에
+ * 보인 검색어와 같은 값을 남겨, 다시 열 때도 같은 검색어로 돌아온다.
+ */
 export type SearchHistoryInput =
   | { kind: "keyword"; query: string }
   | {
@@ -90,7 +96,10 @@ export const createSearchHistoryEntry = (
         id,
         lockerId: input.lockerId,
         title: input.title,
-        searchDraft: capSearchQueryDraft(input.searchDraft),
+        searchDraft: resolveSelectedItemSearchQuery(
+          input.title,
+          input.searchDraft,
+        ),
         searchedAt,
       };
     case "place":
@@ -99,7 +108,10 @@ export const createSearchHistoryEntry = (
         id,
         placeId: input.placeId,
         title: input.title,
-        searchDraft: capSearchQueryDraft(input.searchDraft),
+        searchDraft: resolveSelectedItemSearchQuery(
+          input.title,
+          input.searchDraft,
+        ),
         searchedAt,
       };
   }

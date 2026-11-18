@@ -154,8 +154,8 @@ import {
   type SearchHistoryEntry,
 } from "#/features/search/model/search-history";
 import {
-  applyLockerSearchDraft,
   createKeywordSearchSelection,
+  createLockerSearchSelection,
   createPlaceSearchSelection,
   type SearchSelectionState,
 } from "#/features/search/model/search-selection";
@@ -1729,7 +1729,10 @@ export function IndexPage() {
       sourceQuery: string,
       optimisticDetail: LockerDetailItem,
     ) => {
-      const lockerSearchSelection = applyLockerSearchDraft(sourceQuery);
+      const lockerSearchSelection = createLockerSearchSelection(
+        sourceQuery,
+        optimisticDetail.title,
+      );
       setSearchDraft(lockerSearchSelection.searchDraft);
       void openLockerDetailById(lockerId, optimisticDetail, {
         urlBase: (prev) =>

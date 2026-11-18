@@ -118,3 +118,21 @@ export const resolveSearchQuerySubmitAttempt = (
 
   return { ok: true, query: validated };
 };
+
+/**
+ * 보관함·장소 이름을 검색어로 쓸 수 있는 모양으로 바꾼다.
+ *
+ * 이름에는 검색어가 받지 않는 글자(`,` `/` `#` 등)가 섞여 있다. 그런 글자는 공백으로
+ * 바꾸고, 공백을 하나로 줄이고, 길이를 자른다. 그래도 검색어가 되지 못하면 null 이다.
+ *
+ * "강남역 1, 12번 출구" → "강남역 1 12번 출구"
+ */
+export const toSearchQueryFromName = (name: string): string | null => {
+  const replaced = [...name]
+    .map((char) => (isAllowedSearchQueryChar(char) ? char : " "))
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return getValidatedSearchQuery(capSearchQueryLength(replaced).trim());
+};

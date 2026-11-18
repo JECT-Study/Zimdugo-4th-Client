@@ -584,6 +584,80 @@ test.describe("검색 경로", () => {
   });
 
   /**
+   * 자동완성에서 항목을 고르면 검색창은 입력하던 글자가 아니라 고른 이름을 보인다.
+   * 아래 깔린 검색 결과도 그 이름으로 맞춘다.
+   */
+  test("자동완성에서 보관함을 고르면 검색창이 고른 보관함 이름이 된다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill("강남");
+    await page.getByText(suggestItemRaw.lockerName).first().click();
+
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await expect
+      .poll(() => queryParam(page, "q"))
+      .toBe(suggestItemRaw.lockerName);
+    await expect(homeSearchBar(page)).toHaveValue(suggestItemRaw.lockerName);
+  });
+
+  test("자동완성에서 장소를 고르면 검색창이 고른 장소 이름이 된다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill("강남");
+    await page.getByText(suggestPlaceRaw.placeName).first().click();
+
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe(`/places/${suggestPlaceRaw.placeId}`);
+    await expect
+      .poll(() => queryParam(page, "q"))
+      .toBe(suggestPlaceRaw.placeName);
+    await expect(homeSearchBar(page)).toHaveValue(suggestPlaceRaw.placeName);
+  });
+
+  /**
+   * 자동완성으로 보관함을 고르면 최근 검색어에 입력하던 글자가 아니라 고른 이름을
+   * 검색어로 남긴다. 그 최근 검색어를 다시 누르면 고른 이름으로 검색 맥락이 열린다.
+   */
+  test("자동완성으로 고른 보관함은 최근 검색어에서 다시 열어도 고른 이름이 검색어가 된다", async ({
+    page,
+  }) => {
+    const TYPED = "강남";
+
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(TYPED);
+    await page.getByText(suggestItemRaw.lockerName).first().click();
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+
+    const savedDraft = await page.evaluate(() => {
+      const raw = localStorage.getItem("search_history") ?? "[]";
+      return (JSON.parse(raw) as Array<{ searchDraft?: string }>)[0]
+        ?.searchDraft;
+    });
+    expect(savedDraft).toBe(suggestItemRaw.lockerName);
+
+    // 새 문서로 홈에 들어와 최근 검색어만 남은 상태에서 다시 고른다.
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await page.getByText(suggestItemRaw.lockerName).first().click();
+
+    await expect.poll(() => lockerPath(page)).not.toBeNull();
+    await expect
+      .poll(() => queryParam(page, "q"))
+      .toBe(suggestItemRaw.lockerName);
+    await expect(homeSearchBar(page)).toHaveValue(suggestItemRaw.lockerName);
+  });
+
+  /**
    * 검색 입력 오버레이도 주소를 바꾸지 않고 칸을 하나 만든다. 그래서 기기 뒤로가기가
    * 오버레이를 닫는다.
    */
