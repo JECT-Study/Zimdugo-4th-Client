@@ -13,6 +13,8 @@ import { expect, type Page, test } from "@playwright/test";
 
 const LOCKER_ID = 500;
 const KEYWORD = "강남역";
+/** 검색 결과 위에서 다시 검색할 때 쓰는 다른 검색어. */
+const SECOND_KEYWORD = "역삼역";
 
 /**
  * 자동완성과 결과 목록이 서로 다른 이름을 낸다.
@@ -440,6 +442,58 @@ test.describe("검색 경로", () => {
 
     await page.goBack();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(overlaySearchInput(page)).toBeHidden();
+  });
+
+  /**
+   * 검색 결과 위에서 다시 검색하면 결과 칸을 바꾸는 것이 맞다. 다만 오버레이 칸만
+   * 되감고 바꾸면, 바꾸기는 앞쪽 칸을 지우지 않아 오버레이 칸이 남는다. 그러면
+   * 앞으로가기가 이미 끝난 검색의 오버레이를 다시 연다.
+   */
+  test("검색 결과에서 다시 검색하면 앞으로가기로 지난 오버레이가 열리지 않는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    const homeIndex = await historyIndex(page);
+
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+
+    await openSearchOverlay(page);
+    await submitSearch(page, SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+    await expect.poll(() => historyIndex(page)).toBe(homeIndex + 1);
+
+    await page.goForward();
+    await expect.poll(() => queryParam(page, "q")).toBe(SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+
+    await page.goBack();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+  });
+
+  test("검색 결과로 바로 들어와 다시 검색해도 앞으로가기로 지난 오버레이가 열리지 않는다", async ({
+    page,
+  }) => {
+    await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}`);
+    await waitForMapReady(page);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+    const entryIndex = await historyIndex(page);
+
+    await openSearchOverlay(page);
+    await submitSearch(page, SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+
+    await page.goForward();
+    await expect.poll(() => queryParam(page, "q")).toBe(SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+
+    // 되감을 부모가 없어 들어온 검색 결과 위에 새 결과가 한 칸 쌓인다.
+    await page.goBack();
+    await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
+    await expect.poll(() => historyIndex(page)).toBe(entryIndex);
     await expect(overlaySearchInput(page)).toBeHidden();
   });
 
