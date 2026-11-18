@@ -474,6 +474,27 @@ test.describe("검색 경로", () => {
   });
 
   /**
+   * 링크로 장소 목록에 바로 들어오면 되감을 칸이 없어, 되돌아가기가 검색창에 남은
+   * 글자로 검색 결과를 연다. 초안이 남으면 한 번도 검색하지 않은 글자로 결과가 열린다.
+   */
+  test("장소 목록에 바로 들어와 초안을 쓰다 닫고 되돌아가면 확정된 검색어로 결과가 열린다", async ({
+    page,
+  }) => {
+    await page.goto(`/places/${searchItemRaw.placeId}?q=${encodeURIComponent(KEYWORD)}`);
+    await waitForMapReady(page);
+
+    await openSearchOverlay(page);
+    await overlaySearchInput(page).fill(SECOND_KEYWORD);
+    await overlayCloseButton(page).click();
+    await expect(overlaySearchInput(page)).toBeHidden();
+
+    await searchBarBackButton(page).click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/search");
+    await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+  });
+
+  /**
    * 오버레이에서 검색하면 오버레이의 칸을 먼저 되감고 검색 결과로 간다. 오버레이 칸
    * 위에 쌓으면 검색 결과에서 뒤로 갈 때 닫았던 오버레이가 다시 열린다.
    */
