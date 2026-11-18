@@ -12,6 +12,7 @@ import {
 
 import { resolveLegacyLockerPath } from "#/shared/lib/legacy-locker-url";
 import { handleLocationDiagnosticRequest } from "#/shared/lib/location-diagnostics-server";
+import { withLockerDetailCdnCache } from "#/shared/lib/locker-detail-cdn-cache";
 
 export default {
   async fetch(req: Request): Promise<Response> {
@@ -71,9 +72,13 @@ export default {
 
     // 라우터도 리다이렉트를 돌려준다(/my → /settings 등). 인증 가드와 같은
     // 이유로 목적지에 의도를 이어줘야 한다.
-    return withProtectedDocumentHeaders(
+    return withLockerDetailCdnCache(
       middlewareRequest,
-      forwardLocaleIntent(response),
+      guard.pathLocale,
+      withProtectedDocumentHeaders(
+        middlewareRequest,
+        forwardLocaleIntent(response),
+      ),
     );
   },
 };
