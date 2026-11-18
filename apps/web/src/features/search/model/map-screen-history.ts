@@ -30,6 +30,13 @@ export interface MapScreenHistoryState {
    * 열 때 같은 주소로 칸을 하나 만들고, 뒤로가기로 그 칸을 벗어나면 닫힌다.
    */
   mapSheet?: MapSheetEntry;
+  /**
+   * 시트 칸 아래 화면 칸의 `mapStackDepth`. 시트 칸에만 있다.
+   *
+   * 시트는 겹쳐 열릴 수 있다(필터 위 검색 오버레이). 지금 칸의 깊이에서 이 값을 빼면
+   * 화면 위에 쌓인 시트 칸 수가 된다.
+   */
+  mapSheetBaseDepth?: number;
 }
 
 /** 히스토리 칸으로 여닫는 시트. */

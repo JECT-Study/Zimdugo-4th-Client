@@ -18,6 +18,10 @@ import type { SearchUrlParams } from "./search-url-state";
 
 type SearchUpdate = (search: SearchUrlParams) => SearchUrlParams;
 
+/** 시트 칸 아래 화면의 깊이. 시트 칸이 아니거나 기록이 없으면 undefined 다. */
+const readSheetBaseDepth = (state: MapScreenHistoryState) =>
+  state.mapSheet === undefined ? undefined : state.mapSheetBaseDepth;
+
 const HOME_SCREEN_KEY = toMapScreenKey({
   searchQuery: undefined,
   placeId: undefined,
@@ -121,6 +125,7 @@ export function useMapScreenNavigation() {
         mapStackDepth: state.mapStackDepth,
         // 넘긴 상태에 없으면 지운다. 다른 화면으로 가는 칸에 시트 표시가 따라가지 않게.
         mapSheet: state.mapSheet,
+        mapSheetBaseDepth: state.mapSheetBaseDepth,
       }),
     [],
   );
@@ -134,9 +139,10 @@ export function useMapScreenNavigation() {
    * 연다. 그래서 아래 화면의 부모 칸까지 되감고 새 칸을 만든다. 새 칸은 앞쪽 칸을
    * 모두 지우고, 칸 수는 바꾸기와 같다.
    *
-   * 아래 화면이 첫 칸이면(링크로 바로 들어왔으면) 되감을 부모가 없다. 그때는 시트 칸을
-   * 새 화면으로 바꾼다. 아래 화면 위에 한 칸 쌓인 모양이 되어, 뒤로 가면 아래 화면이
-   * 나온다.
+   * 시트는 겹쳐 쌓일 수 있다(필터 위 검색 오버레이). 쌓인 시트 칸을 모두 되감는다.
+   *
+   * 아래 화면이 첫 칸이면(링크로 바로 들어왔으면) 되감을 부모가 없다. 그때는 아래
+   * 화면까지 되감고 그 위에 새 칸을 만든다. 뒤로 가면 아래 화면이 나온다.
    */
   const replaceSameLevelFromSheet = useCallback(
     (
@@ -153,9 +159,12 @@ export function useMapScreenNavigation() {
         resolveMapScreenNavigation(next, base) === "replace";
       if (!isSameLevel) return false;
 
-      const baseDepth = (current.state.mapStackDepth ?? 1) - 1;
+      const depth = current.state.mapStackDepth ?? 1;
+      const baseDepth = readSheetBaseDepth(current.state) ?? depth - 1;
+      const sheetCount = Math.max(depth - baseDepth, 1);
+
       if (baseDepth > 0) {
-        traverse(-2);
+        traverse(-(sheetCount + 1));
         afterTraversalRef.current.push({
           task: () => {
             const parent = readCurrent();
@@ -173,12 +182,18 @@ export function useMapScreenNavigation() {
         return true;
       }
 
-      navigateToScreen(nextSearch, {
-        replace: true,
-        state: keepState({
-          mapBackTo: current.state.mapBackTo,
-          mapStackDepth: current.state.mapStackDepth,
-        }),
+      traverse(-sheetCount);
+      afterTraversalRef.current.push({
+        task: () => {
+          const baseEntry = readCurrent();
+          navigateToScreen(nextSearch, {
+            replace: false,
+            state: keepState({
+              mapBackTo: toMapScreenKey(readMapScreenParams(baseEntry.search)),
+              mapStackDepth: (baseEntry.state.mapStackDepth ?? 0) + 1,
+            }),
+          });
+        },
       });
       return true;
     },
@@ -370,12 +385,15 @@ export function useMapScreenNavigation() {
       const current = readCurrent();
       if (current.state.mapSheet === sheet) return;
 
+      const depth = current.state.mapStackDepth ?? 0;
       navigateToScreen(current.search, {
         replace: false,
         state: keepState({
           mapBackTo: toMapScreenKey(readMapScreenParams(current.search)),
-          mapStackDepth: (current.state.mapStackDepth ?? 0) + 1,
+          mapStackDepth: depth + 1,
           mapSheet: sheet,
+          // 시트 위에 시트를 열면 아래 화면은 그대로다.
+          mapSheetBaseDepth: readSheetBaseDepth(current.state) ?? depth,
         }),
       });
     },

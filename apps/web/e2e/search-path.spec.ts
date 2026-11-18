@@ -474,6 +474,35 @@ test.describe("검색 경로", () => {
     await expect.poll(() => new URL(page.url()).pathname).toBe("/");
   });
 
+  /** 필터 위에 오버레이를 겹쳐 연 채 다시 검색하면, 쌓인 시트 칸을 모두 걷어 내야 한다. */
+  test("필터 위 오버레이에서 다시 검색해도 앞으로가기로 지난 시트가 열리지 않는다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    const homeIndex = await historyIndex(page);
+
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+    await searchFilterChip(page).click();
+    await expect(filterApplyButton(page)).toBeVisible();
+    await expect.poll(() => historyIndex(page)).toBe(homeIndex + 2);
+
+    await openSearchOverlay(page);
+    await expect.poll(() => historyIndex(page)).toBe(homeIndex + 3);
+    await submitSearch(page, SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+    await expect.poll(() => historyIndex(page)).toBe(homeIndex + 1);
+
+    await page.goForward();
+    await expect.poll(() => queryParam(page, "q")).toBe(SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+    await expect(filterApplyButton(page)).toBeHidden();
+
+    await page.goBack();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+  });
+
   test("검색 결과로 바로 들어와 다시 검색해도 앞으로가기로 지난 오버레이가 열리지 않는다", async ({
     page,
   }) => {
