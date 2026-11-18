@@ -487,20 +487,45 @@ test.describe("검색 경로", () => {
     await openSearchOverlay(page);
     await submitSearch(page, KEYWORD);
 
+    /*
+     * 순서를 시간이 아니라 요청으로 묶는다.
+     * 1. 첫 상세 요청은 새로고침 문서 요청이 나갈 때까지 답하지 않는다.
+     * 2. 새로고침 문서는 이전 문서가 상세 응답을 받은 뒤에 보낸다.
+     * 그러면 상세 응답은 언제나 "새로고침이 시작된 뒤, 새 문서가 오기 전" 에 닿는다.
+     */
+    let markReloadRequested = () => {};
+    const reloadRequested = new Promise<void>((resolve) => {
+      markReloadRequested = resolve;
+    });
+    let markDetailAnswered = () => {};
+    const detailAnswered = new Promise<void>((resolve) => {
+      markDetailAnswered = resolve;
+    });
+    let isFirstDetailRequest = true;
+
     await page.route(`**/api/v1/lockers/${LOCKER_ID}*`, async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (!isFirstDetailRequest) return route.fallback();
+      isFirstDetailRequest = false;
+      await reloadRequested;
       await route.fallback();
     });
-    await page.route("**/lockers/**", async (route) => {
-      if (route.request().resourceType() === "document") {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+    page.on("response", (response) => {
+      if (response.url().includes(`/api/v1/lockers/${LOCKER_ID}`)) {
+        markDetailAnswered();
       }
+    });
+    await page.route("**/lockers/**", async (route) => {
+      if (route.request().resourceType() !== "document") {
+        return route.fallback();
+      }
+      markReloadRequested();
+      await detailAnswered;
       await route.fallback();
     });
 
     await page.getByText(searchItemRaw.lockerName).first().click();
     await expect.poll(() => lockerPath(page)).toBe(String(LOCKER_ID));
-    await page.evaluate(() => location.reload());
+    await page.reload({ waitUntil: "commit" });
     await waitForMapReady(page);
     await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
 

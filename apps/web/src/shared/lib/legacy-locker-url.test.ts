@@ -135,14 +135,20 @@ describe("구 주소가 새로 내보내는 주소로 이어진다", () => {
     },
   ];
 
-  /** 전환 전에 내던 슬러그. 이름의 공백을 하이픈으로 바꿔 id 뒤에 붙였다. */
-  const legacySlugOf = (title: string) =>
-    `515-${title.trim().replace(/\s+/g, "-")}`;
-
-  const titleFor = (prefix: (typeof LOCALE_PREFIXES)[number]) => {
-    const names = SEO_LOCKERS[0].names;
-    if (prefix === "") return names.ko;
-    return names[prefix.slice(1) as keyof typeof names] ?? names.ko;
+  /**
+   * 전환 전에 실제로 내보낸 슬러그. 이름에서 문자·숫자·공백·하이픈 밖의 글자를 지우고
+   * 공백을 하이픈으로 바꿔 id 뒤에 붙였다. 함수로 다시 만들지 않고 적어 둔다. 그
+   * 함수가 바뀌거나 사라져도 이미 퍼진 주소의 호환은 그대로 확인해야 한다.
+   */
+  const LEGACY_SLUG_BY_PREFIX: Record<
+    (typeof LOCALE_PREFIXES)[number],
+    string
+  > = {
+    "": "515-강남역-4번-출구-B1층",
+    "/en": "515-Gangnam-Station-Exit-4-B1",
+    "/ja": "515-江南駅-4番出口-B1",
+    "/zh": "515-江南站-4号出口-B1",
+    "/zh-TW": "515-江南站-4號出口-B1",
   };
 
   it("전환 전 사이트맵 주소는 지금 사이트맵의 주소로 간다", () => {
@@ -155,7 +161,7 @@ describe("구 주소가 새로 내보내는 주소로 이어진다", () => {
     expect(lockerLocs).toHaveLength(LOCALE_PREFIXES.length);
 
     for (const prefix of LOCALE_PREFIXES) {
-      const slug = legacySlugOf(titleFor(prefix));
+      const slug = LEGACY_SLUG_BY_PREFIX[prefix];
       // 전환 전 사이트맵은 `/{locale}/?locker=` 로 냈다.
       const legacy = new URL(
         `https://zimdugo.com${prefix}/?locker=${encodeURIComponent(slug)}`,
@@ -174,7 +180,8 @@ describe("구 주소가 새로 내보내는 주소로 이어진다", () => {
   it("전환 전 canonical 주소는 지금 canonical 주소로 간다", () => {
     for (const locale of ["ko", "en", "ja", "zh", "zh-TW"] as const) {
       const prefix = locale === "ko" ? "" : `/${locale}`;
-      const slug = legacySlugOf(LOCKER_TITLE);
+      // 구 주소의 슬러그는 무엇이든 id 로 모인다. 한국어 이름 슬러그로 확인한다.
+      const slug = LEGACY_SLUG_BY_PREFIX[""];
       // 전환 전 canonical 은 `/{locale}?locker=` 로 냈다.
       const legacy = new URL(
         `https://zimdugo.com${prefix || "/"}?locker=${encodeURIComponent(slug)}`,
