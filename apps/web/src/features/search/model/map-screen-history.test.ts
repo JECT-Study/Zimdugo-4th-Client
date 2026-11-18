@@ -4,6 +4,7 @@ import {
   planForwardMapScreenNavigation,
   readMapScreenParams,
   toHomeMapScreenSearch,
+  toLandingMapScreenSearch,
   toMapScreenKey,
   toParentMapScreenSearch,
 } from "./map-screen-history";
@@ -68,6 +69,43 @@ describe("toHomeMapScreenSearch", () => {
     expect(
       toHomeMapScreenSearch({ q: "강남", place: 9, locker: "164", x: 1 }),
     ).toEqual({ x: 1 });
+  });
+});
+
+describe("toLandingMapScreenSearch", () => {
+  it("링크로 바로 들어온 상세에서는 검색어를 걷어 낸다", () => {
+    expect(
+      toLandingMapScreenSearch(
+        { q: "강남역", locker: "164-강남", detailSnap: "full" },
+        {},
+      ),
+    ).toEqual({ locker: "164-강남", detailSnap: "full" });
+  });
+
+  it("링크로 바로 들어온 장소 목록에서는 검색어만 걷고 장소는 남긴다", () => {
+    expect(toLandingMapScreenSearch({ q: "강남역", place: 900 }, {})).toEqual({
+      place: 900,
+    });
+  });
+
+  it("앱 안에서 연 상세는 검색어를 남긴다", () => {
+    const search = { q: "강남역", locker: "164-강남" };
+    expect(
+      toLandingMapScreenSearch(search, {
+        mapBackTo: keyOf({ q: "강남역" }),
+        mapStackDepth: 1,
+      }),
+    ).toBe(search);
+  });
+
+  it("검색 결과는 링크로 들어와도 검색어를 남긴다", () => {
+    const search = { q: "강남역" };
+    expect(toLandingMapScreenSearch(search, {})).toBe(search);
+  });
+
+  it("검색어가 없으면 그대로 둔다", () => {
+    const search = { locker: "164-강남" };
+    expect(toLandingMapScreenSearch(search, {})).toBe(search);
   });
 });
 
