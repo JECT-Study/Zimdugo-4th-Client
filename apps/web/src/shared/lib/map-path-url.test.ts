@@ -112,6 +112,12 @@ describe("toMapScreenRoute", () => {
     expect(toMapScreenRoute({ detailSnap: "full" }).to).toBe("/");
   });
 
+  it("이름이 붙은 상세 값도 경로에는 id 만 싣는다", () => {
+    expect(toMapScreenRoute({ locker: "164-강남역" }).params).toEqual({
+      slug: "164",
+    });
+  });
+
   it("경로에 위험한 슬러그는 이름을 버리고 id 만 남긴다", () => {
     expect(toMapScreenRoute({ locker: "164-a/b" }).params).toEqual({
       slug: "164",
@@ -125,11 +131,10 @@ describe("toMapScreenRoute", () => {
  */
 describe("주소의 왕복", () => {
   const PATHS = [
-    encoded("164-강남역-4번-출구"),
     "/lockers/164",
     "/lockers/164?q=gangnam",
     "/lockers/164?q=gangnam&place=9",
-    `${encoded("515-新宿-ロッカー")}?detailSnap=full`,
+    "/lockers/515?detailSnap=full",
     "/search?q=gangnam",
     `/search?q=${encodeURIComponent("강남")}`,
     "/places/9",
@@ -139,6 +144,16 @@ describe("주소의 왕복", () => {
 
   it.each(PATHS)("%s 는 같은 주소로 돌아온다", (path) => {
     expect(hrefOf(read(path))).toBe(path);
+  });
+
+  it.each([
+    [encoded("164-강남역-4번-출구"), "/lockers/164"],
+    [
+      `${encoded("515-新宿-ロッカー")}?detailSnap=full`,
+      "/lockers/515?detailSnap=full",
+    ],
+  ])("이름이 붙은 예전 주소 %s 는 id 경로 %s 로 돌아온다", (path, expected) => {
+    expect(hrefOf(read(path))).toBe(expected);
   });
 });
 

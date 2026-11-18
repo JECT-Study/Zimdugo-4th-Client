@@ -2,36 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import {
   createLockerCanonicalUrl,
-  createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
   createLockerShareText,
 } from "./open-locker-deep-link";
 
-describe("createLockerDeepLinkSlug", () => {
-  it("id 와 제목으로 공유용 보관함 슬러그를 만든다", () => {
-    expect(
-      createLockerDeepLinkSlug({
-        lockerId: 515,
-        title: "강남역 4번 출구 B1층 ES-34 하단",
-      }),
-    ).toBe("515-강남역-4번-출구-B1층-ES-34-하단");
-  });
-
-  it("제목이 없거나 정리 후 비면 보관함 id 만 쓴다", () => {
-    expect(createLockerDeepLinkSlug({ lockerId: 7 })).toBe("7");
-    expect(createLockerDeepLinkSlug({ lockerId: 7, title: "!!!" })).toBe("7");
-  });
-});
-
 describe("createLockerDeepLinkUrl", () => {
-  it("검색 컨텍스트 파라미터 없는 공유 주소를 만든다", () => {
+  it("검색 맥락 파라미터 없이 보관함 id 만 담은 공유 주소를 만든다", () => {
     expect(
       createLockerDeepLinkUrl({
         origin: "https://zimdugo-web.vercel.app",
         lockerId: 515,
-        title: "Gangnam Station Locker",
       }),
-    ).toBe("https://zimdugo-web.vercel.app/lockers/515-Gangnam-Station-Locker");
+    ).toBe("https://zimdugo-web.vercel.app/lockers/515");
   });
 
   it("로케일이 오면 접두사를 붙인 보관함 주소를 만든다", () => {
@@ -39,48 +21,23 @@ describe("createLockerDeepLinkUrl", () => {
       createLockerDeepLinkUrl({
         origin: "https://zimdugo.com",
         lockerId: 515,
-        title: "Gangnam Station Locker",
         locale: "en",
       }),
-    ).toBe("https://zimdugo.com/en/lockers/515-Gangnam-Station-Locker");
-  });
-
-  it("한글 이름을 인코딩하되 풀었을 때 읽히게 남긴다", () => {
-    const shareUrl = createLockerDeepLinkUrl({
-      origin: "https://zimdugo-web.vercel.app",
-      lockerId: 515,
-      title:
-        "\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C B1\uCE35 ES-34 \uD558\uB2E8",
-    });
-
-    expect(shareUrl).toContain("%EA%B0%95%EB%82%A8%EC%97%AD");
-    expect(decodeURIComponent(new URL(shareUrl).pathname)).toBe(
-      "/lockers/515-\uAC15\uB0A8\uC5ED-4\uBC88-\uCD9C\uAD6C-B1\uCE35-ES-34-\uD558\uB2E8",
-    );
+    ).toBe("https://zimdugo.com/en/lockers/515");
   });
 });
 
 describe("createLockerCanonicalUrl", () => {
-  it("검색 컨텍스트 없는 절대 canonical 주소를 만든다", () => {
-    expect(
-      createLockerCanonicalUrl({
-        lockerId: 515,
-        title:
-          "\uAC15\uB0A8\uC5ED 4\uBC88 \uCD9C\uAD6C B1\uCE35 ES-34 \uD558\uB2E8",
-      }),
-    ).toBe(
-      "https://zimdugo.com/lockers/515-%EA%B0%95%EB%82%A8%EC%97%AD-4%EB%B2%88-%EC%B6%9C%EA%B5%AC-B1%EC%B8%B5-ES-34-%ED%95%98%EB%8B%A8",
+  it("검색 맥락 없는 절대 canonical 주소를 id 로 만든다", () => {
+    expect(createLockerCanonicalUrl({ lockerId: 515 })).toBe(
+      "https://zimdugo.com/lockers/515",
     );
   });
 
   it("로케일이 오면 접두사를 붙인 canonical 주소를 만든다", () => {
-    expect(
-      createLockerCanonicalUrl({
-        lockerId: 515,
-        title: "Gangnam Station Locker",
-        locale: "en",
-      }),
-    ).toBe("https://zimdugo.com/en/lockers/515-Gangnam-Station-Locker");
+    expect(createLockerCanonicalUrl({ lockerId: 515, locale: "en" })).toBe(
+      "https://zimdugo.com/en/lockers/515",
+    );
   });
 });
 

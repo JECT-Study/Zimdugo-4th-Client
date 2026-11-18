@@ -101,7 +101,6 @@ export const createLockerDetailHead = (
   );
   const canonicalUrl = createLockerCanonicalUrl({
     lockerId: detail.lockerId,
-    title: detail.title ?? undefined,
     locale,
   });
 

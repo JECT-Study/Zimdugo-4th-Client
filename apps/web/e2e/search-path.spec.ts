@@ -474,35 +474,88 @@ test.describe("검색 경로", () => {
   /**
    * 앱 안에서 검색해 연 상세는 표시가 있어 검색어가 남는다. 새로고침해도 히스토리 칸의
    * 표시가 그대로라 검색 맥락을 잃지 않는다.
+   *
+   * 상세를 연 직후, 상세 응답이 오기 전에 새로고침하는 순서로 고정한다. 주소에 이름을
+   * 붙이던 때는 응답을 받은 뒤 주소를 고쳐 썼고, 그 고쳐 쓰기가 새로고침 도중에 끼면
+   * 브라우저가 칸의 표시를 버려 검색어까지 걷혔다. 상세 응답과 새로고침 문서를 늦춘다.
    */
-  test("앱 안에서 검색해 연 상세는 새로고침해도 검색어가 남는다", async ({
+  test("앱 안에서 검색해 연 상세는 응답 전에 새로고침해도 검색어가 남는다", async ({
     page,
   }) => {
     await page.goto("/");
     await waitForMapReady(page);
     await openSearchOverlay(page);
     await submitSearch(page, KEYWORD);
-    await page.getByText(searchItemRaw.lockerName).first().click();
-    await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
-    /*
-     * 상세를 받으면 슬러그가 상세 이름으로 다듬어진다. 그 전에 새로고침하면 다듬기가
-     * 새로고침 도중 칸의 주소를 바꿔, 브라우저가 칸의 표시를 버린다. 사용자가 화면이
-     * 다 뜬 뒤 새로고침하는 것과 같게 기다린다.
-     */
-    await expect
-      .poll(() => lockerPath(page))
-      .toBe(`${LOCKER_ID}-${encodeURIComponent("상세-강남역-보관함")}`);
-    expect(await queryParam(page, "q")).toBe(KEYWORD);
 
-    await page.reload();
+    await page.route(`**/api/v1/lockers/${LOCKER_ID}*`, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await route.fallback();
+    });
+    await page.route("**/lockers/**", async (route) => {
+      if (route.request().resourceType() === "document") {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      await route.fallback();
+    });
+
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect.poll(() => lockerPath(page)).toBe(String(LOCKER_ID));
+    await page.evaluate(() => location.reload());
     await waitForMapReady(page);
     await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
+
+    expect(
+      await page.evaluate(
+        () => (history.state as { mapBackTo?: string } | null)?.mapBackTo,
+        ),
+      "새로고침 뒤에도 칸의 표시가 남는다",
+    ).toBeDefined();
+    expect(await lockerPath(page)).toBe(String(LOCKER_ID));
     expect(await queryParam(page, "q")).toBe(KEYWORD);
 
     await page.goBack();
     await expect.poll(() => lockerPath(page)).toBeNull();
     await expect.poll(() => queryParam(page, "q")).toBe(KEYWORD);
     await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+  });
+
+  /**
+   * 상세 주소는 id 만 쓴다. 이름을 붙이던 때는 상세 응답을 받은 뒤 주소를 고쳐 썼고,
+   * 새로고침 도중 그 고쳐 쓰기가 끼면 칸의 표시가 사라졌다. 목록과 상세가 서로 다른
+   * 이름을 내도 주소가 그대로인지 본다.
+   */
+  test("목록에서 연 상세 주소는 상세 응답을 받은 뒤에도 id 그대로다", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForMapReady(page);
+    await openSearchOverlay(page);
+    await submitSearch(page, KEYWORD);
+
+    await page.getByText(searchItemRaw.lockerName).first().click();
+    await expect.poll(() => lockerPath(page)).toBe(String(LOCKER_ID));
+    await expect(page.getByText(lockerDetailRaw.detailInfo)).toBeVisible();
+    await expect(page.getByText(lockerDetailRaw.lockerName).first()).toBeVisible();
+
+    expect(await lockerPath(page)).toBe(String(LOCKER_ID));
+    expect(await queryParam(page, "q")).toBe(KEYWORD);
+  });
+
+  test("이름이 붙은 예전 상세 주소는 id 경로로 영구 이동한다", async ({
+    page,
+  }) => {
+    const response = await page.request.get(
+      `/lockers/${LOCKER_ID}-${encodeURIComponent("예전-이름")}?q=${encodeURIComponent(KEYWORD)}`,
+      { maxRedirects: 0 },
+    );
+
+    expect(response.status()).toBe(301);
+    const location = new URL(
+      response.headers().location ?? "",
+      "http://localhost",
+    );
+    expect(location.pathname).toBe(`/lockers/${LOCKER_ID}`);
+    expect(location.searchParams.get("q")).toBe(KEYWORD);
   });
 
   /**

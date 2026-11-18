@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   createLockerCanonicalUrl,
-  createLockerDeepLinkSlug,
   parseOpenLockerDeepLinkSearch,
 } from "#/features/search/lib/open-locker-deep-link";
 import { parseLockerSearchParam } from "#/features/search/model/search-url-state";
@@ -18,7 +17,7 @@ const at = (href: string) => new URL(href, "https://zimdugo.com");
 describe("resolveLegacyLockerPath", () => {
   it("사이트맵이 내는 모양을 보관함 경로로 옮긴다", () => {
     expect(resolveLegacyLockerPath(at("/?locker=164-강남역-4번-출구"))).toBe(
-      `/lockers/${encodeURIComponent("164-강남역-4번-출구")}`,
+      "/lockers/164",
     );
   });
 
@@ -52,7 +51,7 @@ describe("resolveLegacyLockerPath", () => {
   it("상세 파라미터가 둘 다 있으면 색인된 쪽을 고른다", () => {
     expect(
       resolveLegacyLockerPath(at("/?locker=164-강남&openLockerId=999")),
-    ).toBe(`/lockers/${encodeURIComponent("164-강남")}`);
+    ).toBe("/lockers/164");
   });
 
   it("구 상세 주소가 아니면 그대로 둔다", () => {
@@ -136,6 +135,10 @@ describe("구 주소가 새로 내보내는 주소로 이어진다", () => {
     },
   ];
 
+  /** 전환 전에 내던 슬러그. 이름의 공백을 하이픈으로 바꿔 id 뒤에 붙였다. */
+  const legacySlugOf = (title: string) =>
+    `515-${title.trim().replace(/\s+/g, "-")}`;
+
   const titleFor = (prefix: (typeof LOCALE_PREFIXES)[number]) => {
     const names = SEO_LOCKERS[0].names;
     if (prefix === "") return names.ko;
@@ -152,18 +155,13 @@ describe("구 주소가 새로 내보내는 주소로 이어진다", () => {
     expect(lockerLocs).toHaveLength(LOCALE_PREFIXES.length);
 
     for (const prefix of LOCALE_PREFIXES) {
-      const slug = createLockerDeepLinkSlug({
-        lockerId: 515,
-        title: titleFor(prefix),
-      });
+      const slug = legacySlugOf(titleFor(prefix));
       // 전환 전 사이트맵은 `/{locale}/?locker=` 로 냈다.
       const legacy = new URL(
         `https://zimdugo.com${prefix}/?locker=${encodeURIComponent(slug)}`,
       );
       const current = lockerLocs.find(
-        (loc) =>
-          new URL(loc).pathname ===
-          `${prefix}/lockers/${encodeURIComponent(slug)}`,
+        (loc) => new URL(loc).pathname === `${prefix}/lockers/515`,
       );
 
       expect(current).toBeDefined();
@@ -176,19 +174,12 @@ describe("구 주소가 새로 내보내는 주소로 이어진다", () => {
   it("전환 전 canonical 주소는 지금 canonical 주소로 간다", () => {
     for (const locale of ["ko", "en", "ja", "zh", "zh-TW"] as const) {
       const prefix = locale === "ko" ? "" : `/${locale}`;
-      const slug = createLockerDeepLinkSlug({
-        lockerId: 515,
-        title: LOCKER_TITLE,
-      });
+      const slug = legacySlugOf(LOCKER_TITLE);
       // 전환 전 canonical 은 `/{locale}?locker=` 로 냈다.
       const legacy = new URL(
         `https://zimdugo.com${prefix || "/"}?locker=${encodeURIComponent(slug)}`,
       );
-      const current = createLockerCanonicalUrl({
-        lockerId: 515,
-        title: LOCKER_TITLE,
-        locale,
-      });
+      const current = createLockerCanonicalUrl({ lockerId: 515, locale });
 
       expect(resolveLegacyLockerPath(legacy)).toBe(new URL(current).pathname);
     }

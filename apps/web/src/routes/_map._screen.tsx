@@ -111,7 +111,6 @@ import {
 } from "#/features/search/lib/apply-favorite-overlay";
 import { hasNavigationDestination } from "#/features/search/lib/navigation-platform-links";
 import {
-  createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
   createLockerPinAt,
   createLockerShareText,
@@ -1461,46 +1460,25 @@ export function IndexPage() {
    * 상세 주소로 간다. 아래 깔린 목록(`q`·`place`)은 그대로 둔다.
    *
    * 목록이나 홈에서 열면 더 깊은 화면이라 칸이 생기고, 상세를 연 채 다른 보관함을
-   * 고르면 형제라 칸이 바뀐다(`map-screen`). 같은 보관함의 슬러그만 다듬을 때는
-   * 아무 일도 하지 않는다.
+   * 고르면 형제라 칸이 바뀐다(`map-screen`). 이미 그 보관함이면 아무 일도 하지 않는다.
+   *
+   * 주소는 id 만 쓴다(`toLockerPathSlug`). 이름을 붙이던 때는 상세 응답을 받은 뒤
+   * 주소를 한 번 더 고쳐 썼는데, 새로고침 도중 그 고쳐 쓰기가 끼면 브라우저가 칸의
+   * 표시를 버렸다. id 만 쓰면 연 뒤에 주소가 바뀔 일이 없다.
    *
    * `base` 는 상세를 붙이기 전에 아래 목록을 바꿔야 할 때 쓴다. 자동완성으로 검색
    * 결과를 건너뛰고 바로 상세를 여는 경우다.
    */
   const syncLockerDetailUrl = useCallback(
-    (lockerId: number, title?: string, base?: SearchUrlUpdate) => {
-      const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
-
+    (lockerId: number, base?: SearchUrlUpdate) => {
       mapScreenNavigation.goTo((prev) => {
         const next = base ? base(prev) : prev;
-        return !base && String(next.locker ?? "") === lockerSlug
+        return !base && parseLockerSearchParam(next.locker) === lockerId
           ? prev
-          : withLockerDetailParam(next, lockerSlug);
+          : withLockerDetailParam(next, String(lockerId));
       });
     },
     [mapScreenNavigation.goTo],
-  );
-
-  /**
-   * 상세 주소의 슬러그를 다듬는다. 보관함 이름을 받은 뒤 `164` 를 `164-강남역-…` 으로.
-   *
-   * 화면 이동이 아니라 같은 화면의 주소 정리라 칸을 바꾸기만 한다. 그리고 **지금
-   * 주소가 아직 그 보관함일 때만** 바꾼다. 기기 뒤로가기 직후에는 라우터의 최신 주소가
-   * 이미 목록인데 화면은 아직 상세를 그리는 순간이 있다. 그때 다른 화면으로 가는 길
-   * (`goTo`)을 쓰면 목록 위에 상세를 다시 쌓아, 뒤로가기가 상세에 갇힌다.
-   */
-  const normalizeLockerDetailSlug = useCallback(
-    (lockerId: number, title?: string) => {
-      const lockerSlug = createLockerDeepLinkSlug({ lockerId, title });
-
-      mapScreenNavigation.replaceSearch((prev) =>
-        parseLockerSearchParam(prev.locker) === lockerId &&
-        String(prev.locker) !== lockerSlug
-          ? withLockerDetailParam(prev, lockerSlug)
-          : prev,
-      );
-    },
-    [mapScreenNavigation.replaceSearch],
   );
 
   const openLockerDetailById = useCallback(
@@ -1534,11 +1512,7 @@ export function IndexPage() {
       }
 
       if (options?.syncUrl !== false) {
-        syncLockerDetailUrl(
-          lockerId,
-          optimisticDetail?.title,
-          options?.urlBase,
-        );
+        syncLockerDetailUrl(lockerId, options?.urlBase);
       }
 
       // 상태 변경 및 UI 언마운트를 다음 이벤트 루프로 연기하여 클릭 액션 소실 방지
@@ -1912,7 +1886,7 @@ export function IndexPage() {
     ) => {
       clearPendingLockerDetailOpen();
       handledOpenLockerIdRef.current = lockerId;
-      syncLockerDetailUrl(lockerId, detail?.title);
+      syncLockerDetailUrl(lockerId);
 
       if (!shouldDelay) {
         void openLockerDetailById(lockerId, detail, {
@@ -2382,7 +2356,6 @@ export function IndexPage() {
     const shareUrl = createLockerDeepLinkUrl({
       origin: window.location.origin,
       lockerId: item.lockerId,
-      title: item.title,
     });
     const shareLocale = normalizeLocale(languageTag()) ?? BASE_LOCALE;
     const shareText = createLockerShareText({
@@ -2711,9 +2684,6 @@ export function IndexPage() {
       mergeStoredLockerDetailWithPreviousDistance(lockerDetail, previousDetail),
     );
 
-    // API 응답을 받아 보관함 이름이 확보되면 URL을 슬러그 형태로 정규화하여 업데이트함
-    normalizeLockerDetailSlug(lockerDetail.lockerId, lockerDetail.title);
-
     if (
       isPendingFocusRef.current &&
       mapInstance &&
@@ -2730,7 +2700,6 @@ export function IndexPage() {
   }, [
     lockerDetail,
     mapInstance,
-    normalizeLockerDetailSlug,
     sheetMode,
     activeLockerId,
     mapCamera.focusOn,

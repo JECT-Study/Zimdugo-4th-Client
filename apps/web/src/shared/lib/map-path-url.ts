@@ -32,28 +32,17 @@ const PLACE_PATH_PATTERN = /^\/places\/([^/]+)\/?$/i;
 const SEARCH_PATH_PATTERN = /^\/search\/?$/i;
 
 /**
- * 경로 조각으로 그대로 써도 되는 슬러그 모양.
+ * 경로에 실을 상세 값. 보관함 id 만 남긴다.
  *
- * 상세 판정(`parseLockerSearchParam`)은 하이픈 뒤를 무엇이든 받는다. `?locker=164-a/b`
- * 도 상세로 열린다는 뜻이다. 그 모양을 경로에 그대로 붙이면 `/lockers/164-a/b` 가
- * 되어 다른 라우트로 새어 나가므로, 정규 슬러그(`createLockerDeepLinkSlug` 가 내는
- * 문자·숫자·하이픈)만 통과시킨다.
- *
- * 통과하지 못하면 이름을 버리고 id 만 남긴다. 이름은 장식이고 정체성은 id 다.
- */
-const CANONICAL_LOCKER_SLUG_PATTERN = /^\d+(?:-[\p{L}\p{N}-]*)?$/u;
-
-/**
- * 경로에 실을 슬러그. 정규 모양이면 그대로, 아니면 id 만 남긴다.
+ * 주소는 보관함을 가리키기만 하면 된다. 이름을 붙이면 이름이 바뀔 때 주소가 바뀌고,
+ * 한글은 복사하면 인코딩되어 읽히지도 않는다. 링크 미리보기는 상세의 메타 태그가
+ * 맡는다. 예전에 퍼진 `/lockers/164-강남역-…` 은 라우트가 `/lockers/164` 로 옮긴다.
  *
  * 상세로 인정하지 않는 값이면 null 이다.
  */
 export const toLockerPathSlug = (raw: unknown): string | null => {
   const lockerId = parseLockerSearchParam(raw);
-  if (lockerId === undefined) return null;
-
-  const value = String(raw).trim();
-  return CANONICAL_LOCKER_SLUG_PATTERN.test(value) ? value : String(lockerId);
+  return lockerId === undefined ? null : String(lockerId);
 };
 
 /**
