@@ -30,6 +30,7 @@ import {
   normalizeLocale,
   stripLocalePathPrefix,
 } from "#/shared/i18n/locales";
+import { SITE_ORIGIN } from "#/shared/lib/site-url";
 import { isPathnameTransitionPending } from "#/shared/model/page-transition";
 import { GtmBodyNoscript, GtmHeadScript } from "#/shared/ui/GtmContainer";
 import { NotFoundComponent } from "#/shared/ui/NotFound";
@@ -39,6 +40,7 @@ import {
 } from "#/shared/ui/PageTransitionOverlay";
 
 const GTM_CONTAINER_ID = import.meta.env.VITE_GTM_CONTAINER_ID;
+const DEFAULT_OG_IMAGE_URL = `${SITE_ORIGIN}/images/og-default.png`;
 
 /**
  * manifest 는 기본적으로 credentials 없이 요청된다. Vercel Deployment Protection 이
@@ -209,8 +211,40 @@ export const Route = createRootRouteWithContext<{
           content: "website",
         },
         {
+          property: "og:image",
+          content: DEFAULT_OG_IMAGE_URL,
+        },
+        {
+          property: "og:image:secure_url",
+          content: DEFAULT_OG_IMAGE_URL,
+        },
+        {
+          property: "og:image:type",
+          content: "image/png",
+        },
+        {
+          property: "og:image:width",
+          content: "1200",
+        },
+        {
+          property: "og:image:height",
+          content: "630",
+        },
+        {
+          property: "og:image:alt",
+          content: siteName,
+        },
+        {
           name: "twitter:card",
-          content: "summary",
+          content: "summary_large_image",
+        },
+        {
+          name: "twitter:image",
+          content: DEFAULT_OG_IMAGE_URL,
+        },
+        {
+          name: "twitter:image:alt",
+          content: siteName,
         },
         {
           name: "theme-color",
