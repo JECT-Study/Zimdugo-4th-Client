@@ -76,6 +76,18 @@ describe("withLockerDetailCdnCache", () => {
     ).toBeNull();
   });
 
+  it("상세를 못 가져와 공통 머리로 떨어진 200 문서는 담지 않는다", () => {
+    expect(
+      cdnCacheOf(
+        withLockerDetailCdnCache(
+          new Request("https://zimdugo.com/en/lockers/1326"),
+          "en",
+          html({ headers: { "cache-control": "no-store" } }),
+        ),
+      ),
+    ).toBeNull();
+  });
+
   it("GET 이 아닌 요청은 담지 않는다", () => {
     expect(
       cdnCacheOf(

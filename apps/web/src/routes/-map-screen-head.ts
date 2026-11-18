@@ -13,6 +13,7 @@ import {
 import { createLockerOgImageUrl } from "#/features/seo/model/locker-og-image-url";
 import { getLockerDetail } from "#/shared/api/lockers";
 import { isApiNotFoundError } from "#/shared/lib/api-error-status";
+import { markResponseUncacheable } from "#/shared/lib/uncacheable-response";
 
 /**
  * 지도 화면 라우트들이 함께 쓰는 SEO 머리와 상세 로더.
@@ -143,7 +144,8 @@ export const createLockerDetailHead = (
  * 남는다.
  *
  * 그 밖의 이유로 못 가져오면(네트워크, 5xx) `{ detail: null }` 이다. 보관함이 있는지
- * 알 수 없으니 404 로 단정하지 않고, 화면이 클라이언트에서 다시 물어 채운다.
+ * 알 수 없으니 404 로 단정하지 않고, 화면이 클라이언트에서 다시 물어 채운다. 이
+ * 대체 문서는 캐시하지 않는다(`markResponseUncacheable`).
  */
 export const loadLockerDetail = async (
   lockerId: number,
@@ -160,6 +162,8 @@ export const loadLockerDetail = async (
       throw notFound();
     }
     console.error(`Failed to load locker ${lockerId} in route loader:`, error);
+    // 공통 머리로 떨어진 문서다. CDN 에 담기면 API 가 복구돼도 10분 동안 이 문서가 나간다.
+    markResponseUncacheable();
     return { detail: null };
   }
 };

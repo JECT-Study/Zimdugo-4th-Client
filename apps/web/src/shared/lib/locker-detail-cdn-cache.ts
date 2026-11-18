@@ -43,6 +43,8 @@ const isCacheableLockerDetailResponse = ({
   }
   // 404(없는 보관함)·5xx·리다이렉트는 담지 않는다. 일시 오류가 10분 동안 굳는다.
   if (response.status !== 200) return false;
+  // 로더가 데이터를 못 가져와 대체 문서를 그린 응답이다(`markResponseUncacheable`).
+  if (response.headers.get("cache-control")?.includes("no-store")) return false;
   // 사용자별 쿠키가 실린 응답을 공용 캐시에 담으면 다른 사람에게 건너간다.
   if (response.headers.has("set-cookie")) return false;
   return response.headers.get("content-type")?.includes("text/html") ?? false;
