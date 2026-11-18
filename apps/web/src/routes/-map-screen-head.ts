@@ -9,6 +9,7 @@ import {
   getSeoLocale,
   getSeoPathname,
 } from "#/features/seo/model/localized-seo-head";
+import { createLockerOgImageUrl } from "#/features/seo/model/locker-og-image-url";
 import { getLockerDetail } from "#/shared/api/lockers";
 
 /**
@@ -103,6 +104,7 @@ export const createLockerDetailHead = (
     lockerId: detail.lockerId,
     locale,
   });
+  const ogImageUrl = createLockerOgImageUrl(detail.lockerId);
 
   return {
     meta: [
@@ -111,8 +113,13 @@ export const createLockerDetailHead = (
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:url", content: canonicalUrl },
+      { property: "og:image", content: ogImageUrl },
+      { property: "og:image:secure_url", content: ogImageUrl },
+      { property: "og:image:alt", content: name },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
+      { name: "twitter:image", content: ogImageUrl },
+      { name: "twitter:image:alt", content: name },
     ],
     links: [{ rel: "canonical", href: canonicalUrl }],
   };

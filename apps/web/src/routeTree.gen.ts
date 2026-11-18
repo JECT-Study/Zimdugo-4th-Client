@@ -29,6 +29,7 @@ import { Route as MapScreenIndexRouteImport } from './routes/_map._screen.index'
 import { Route as MapScreenSearchRouteImport } from './routes/_map._screen.search'
 import { Route as MapScreenLockersSlugRouteImport } from './routes/_map._screen.lockers.$slug'
 import { Route as MapScreenPlacesPlaceIdRouteImport } from './routes/_map._screen.places.$placeId'
+import { Route as OgLockersLockerIdMapDotpngRouteImport } from './routes/og.lockers.$lockerId.map[.]png'
 
 const MapRoute = MapRouteImport.update({
   id: '/_map',
@@ -128,6 +129,12 @@ const MapScreenPlacesPlaceIdRoute = MapScreenPlacesPlaceIdRouteImport.update({
   path: '/places/$placeId',
   getParentRoute: () => MapScreenRoute,
 } as any)
+const OgLockersLockerIdMapDotpngRoute =
+  OgLockersLockerIdMapDotpngRouteImport.update({
+    id: '/og/lockers/$lockerId/map.png',
+    path: '/og/lockers/$lockerId/map.png',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof MapScreenIndexRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof MapScreenSearchRoute
   '/lockers/$slug': typeof MapScreenLockersSlugRoute
   '/places/$placeId': typeof MapScreenPlacesPlaceIdRoute
+  '/og/lockers/$lockerId/map.png': typeof OgLockersLockerIdMapDotpngRoute
 }
 export interface FileRoutesByTo {
   '/': typeof MapScreenIndexRoute
@@ -168,6 +176,7 @@ export interface FileRoutesByTo {
   '/search': typeof MapScreenSearchRoute
   '/lockers/$slug': typeof MapScreenLockersSlugRoute
   '/places/$placeId': typeof MapScreenPlacesPlaceIdRoute
+  '/og/lockers/$lockerId/map.png': typeof OgLockersLockerIdMapDotpngRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -191,6 +200,7 @@ export interface FileRoutesById {
   '/_map/_screen/': typeof MapScreenIndexRoute
   '/_map/_screen/lockers/$slug': typeof MapScreenLockersSlugRoute
   '/_map/_screen/places/$placeId': typeof MapScreenPlacesPlaceIdRoute
+  '/og/lockers/$lockerId/map.png': typeof OgLockersLockerIdMapDotpngRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/lockers/$slug'
     | '/places/$placeId'
+    | '/og/lockers/$lockerId/map.png'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/lockers/$slug'
     | '/places/$placeId'
+    | '/og/lockers/$lockerId/map.png'
   id:
     | '__root__'
     | '/_map'
@@ -255,6 +267,7 @@ export interface FileRouteTypes {
     | '/_map/_screen/'
     | '/_map/_screen/lockers/$slug'
     | '/_map/_screen/places/$placeId'
+    | '/og/lockers/$lockerId/map.png'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -267,6 +280,7 @@ export interface RootRouteChildren {
   MyFavoritesRoute: typeof MyFavoritesRoute
   MyReportsRoute: typeof MyReportsRoute
   MyIndexRoute: typeof MyIndexRoute
+  OgLockersLockerIdMapDotpngRoute: typeof OgLockersLockerIdMapDotpngRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -411,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapScreenPlacesPlaceIdRouteImport
       parentRoute: typeof MapScreenRoute
     }
+    '/og/lockers/$lockerId/map.png': {
+      id: '/og/lockers/$lockerId/map.png'
+      path: '/og/lockers/$lockerId/map.png'
+      fullPath: '/og/lockers/$lockerId/map.png'
+      preLoaderRoute: typeof OgLockersLockerIdMapDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -483,6 +504,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyFavoritesRoute: MyFavoritesRoute,
   MyReportsRoute: MyReportsRoute,
   MyIndexRoute: MyIndexRoute,
+  OgLockersLockerIdMapDotpngRoute: OgLockersLockerIdMapDotpngRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
