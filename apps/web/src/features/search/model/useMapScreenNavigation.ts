@@ -1,10 +1,9 @@
-import {
-  useNavigate,
-  useRouter,
-  useRouterState,
-  useSearch,
-} from "@tanstack/react-router";
+import { useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
+import {
+  readMapScreenSearch,
+  toMapScreenRoute,
+} from "#/shared/lib/map-path-url";
 import {
   type MapScreenHistoryState,
   planBackMapScreenNavigation,
@@ -41,17 +40,41 @@ const HOME_SCREEN_KEY = toMapScreenKey({
 export function useMapScreenNavigation() {
   const router = useRouter();
   const navigate = useNavigate();
-  const search = (useSearch({ strict: false }) || {}) as SearchUrlParams;
   /** 되감기가 끝났을 때 홈이 아니면 홈으로 바꿔야 하는지. */
   const isExitingToHomeRef = useRef(false);
 
+  /*
+   * 화면 값으로 읽는다. 경로(`/lockers/164`)와 쿼리를 합친 한 벌이다. 화면 코드는
+   * 이 모양으로만 생각하고, 라우트와의 변환은 `map-path-url` 이 한다.
+   */
   const readCurrent = useCallback(() => {
     const location = router.latestLocation;
     return {
-      search: (location.search ?? {}) as SearchUrlParams,
+      search: readMapScreenSearch({
+        pathname: location.pathname,
+        search: (location.search ?? {}) as SearchUrlParams,
+      }),
       state: (location.state ?? {}) as MapScreenHistoryState,
     };
   }, [router]);
+
+  /** 화면 값이 사는 라우트로 이동한다. */
+  const navigateToScreen = useCallback(
+    (
+      search: SearchUrlParams,
+      options: { replace: boolean; state: (previous: object) => object },
+    ) => {
+      const route = toMapScreenRoute(search);
+      void navigate({
+        to: route.to,
+        params: route.params,
+        search: route.search,
+        replace: options.replace,
+        state: options.state,
+      } as never);
+    },
+    [navigate],
+  );
 
   const keepState = useCallback(
     (state: MapScreenHistoryState) =>
@@ -76,14 +99,12 @@ export function useMapScreenNavigation() {
         current.state,
       );
 
-      void navigate({
-        to: ".",
-        search: nextSearch as never,
+      navigateToScreen(nextSearch, {
         replace: plan.replace,
-        state: keepState(plan.state) as never,
+        state: keepState(plan.state),
       });
     },
-    [keepState, navigate, readCurrent],
+    [keepState, navigateToScreen, readCurrent],
   );
 
   const replaceSearch = useCallback(
@@ -93,14 +114,12 @@ export function useMapScreenNavigation() {
       // 받은 값을 그대로 돌려주면 다듬을 것이 없다는 뜻이다.
       if (nextSearch === current.search) return;
 
-      void navigate({
-        to: ".",
-        search: nextSearch as never,
+      navigateToScreen(nextSearch, {
         replace: true,
-        state: keepState(current.state) as never,
+        state: keepState(current.state),
       });
     },
-    [keepState, navigate, readCurrent],
+    [keepState, navigateToScreen, readCurrent],
   );
 
   const goBack = useCallback(
@@ -113,14 +132,12 @@ export function useMapScreenNavigation() {
         return;
       }
 
-      void navigate({
-        to: ".",
-        search: (fallback ? fallback(plan.search) : plan.search) as never,
+      navigateToScreen(fallback ? fallback(plan.search) : plan.search, {
         replace: true,
-        state: keepState(current.state) as never,
+        state: keepState(current.state),
       });
     },
-    [keepState, navigate, readCurrent, router],
+    [keepState, navigateToScreen, readCurrent, router],
   );
 
   const exitToHome = useCallback(() => {
@@ -137,13 +154,11 @@ export function useMapScreenNavigation() {
       return;
     }
 
-    void navigate({
-      to: ".",
-      search: toHomeMapScreenSearch(current.search) as never,
+    navigateToScreen(toHomeMapScreenSearch(current.search), {
       replace: true,
-      state: keepState(current.state) as never,
+      state: keepState(current.state),
     });
-  }, [keepState, navigate, readCurrent, router]);
+  }, [keepState, navigateToScreen, readCurrent, router]);
 
   /*
    * 되감아 닿은 첫 칸이 홈이 아닐 수 있다. 검색 결과 주소로 바로 들어와 그 위에
@@ -153,7 +168,17 @@ export function useMapScreenNavigation() {
    * (검색 결과로 들어와 같은 검색어로 다시 검색한 경우) 되감아도 화면 키가 그대로라
    * 이 이펙트가 다시 돌지 않는다. 그래서 히스토리 칸의 위치도 함께 본다.
    */
-  const screenKey = toMapScreenKey(readMapScreenParams(search));
+  const screenKey = useRouterState({
+    select: (state) =>
+      toMapScreenKey(
+        readMapScreenParams(
+          readMapScreenSearch({
+            pathname: state.location.pathname,
+            search: state.location.search as SearchUrlParams,
+          }),
+        ),
+      ),
+  });
   const historyEntryIndex = useRouterState({
     select: (state) =>
       (state.location.state as { __TSR_index?: number } | undefined)
@@ -169,13 +194,47 @@ export function useMapScreenNavigation() {
     isExitingToHomeRef.current = false;
     if (screenKey === HOME_SCREEN_KEY) return;
 
-    void navigate({
-      to: ".",
-      search: toHomeMapScreenSearch(current.search) as never,
+    navigateToScreen(toHomeMapScreenSearch(current.search), {
       replace: true,
-      state: keepState(current.state) as never,
+      state: keepState(current.state),
     });
-  }, [historyEntryIndex, keepState, navigate, readCurrent, screenKey]);
+  }, [historyEntryIndex, keepState, navigateToScreen, readCurrent, screenKey]);
+
+  /*
+   * 홈 경로에 화면 값이 남아 있으면 그 화면의 경로로 옮긴다.
+   *
+   * 홈 라우트도 같은 일을 하지만(`beforeLoad`) 서버에서만 확실히 돈다. 홈은 프리렌더된
+   * 정적 파일이라, `/?q=…` 로 들어오면 그 파일로 하이드레이션하고 클라이언트는
+   * `beforeLoad` 를 다시 돌리지 않는다. 그러면 화면은 검색 결과인데 주소는 홈인
+   * 상태가 되어, 홈으로 나가기가 같은 주소로 가려다 아무것도 하지 못한다.
+   *
+   * 앱 안 딥링크(`/?openLockerId=…`)는 화면 값을 만들지 않아 여기 걸리지 않는다.
+   * 화면이 보관함을 연 뒤 상세 경로로 바꾼다.
+   */
+  /*
+   * 이동이 끝나 확정된 위치만 본다. 이동 중에는 라우터 상태의 위치가 목적지로 먼저
+   * 바뀌는데, 그 순간 이 정리가 돌면 아직 떠나지 않은 주소를 읽고 되돌려 보내, 홈으로
+   * 나가기와 이 정리가 서로를 되돌리는 루프에 빠졌다.
+   */
+  const settledHomeSearch = useRouterState({
+    select: (state) =>
+      state.status === "idle" && state.resolvedLocation?.pathname === "/"
+        ? (state.resolvedLocation.searchStr ?? "")
+        : null,
+  });
+  useEffect(() => {
+    if (settledHomeSearch === null) return;
+
+    const current = readCurrent();
+    const location = router.latestLocation;
+    if (location.pathname !== "/") return;
+    if (toMapScreenRoute(current.search).to === "/") return;
+
+    navigateToScreen(current.search, {
+      replace: true,
+      state: keepState(current.state),
+    });
+  }, [keepState, navigateToScreen, readCurrent, router, settledHomeSearch]);
 
   return { goTo, replaceSearch, goBack, exitToHome };
 }

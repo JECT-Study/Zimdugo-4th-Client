@@ -19,6 +19,15 @@ export const parseSearchString = (
    * `URLSearchParams.get` 은 반대로 첫 값을 준다.
    */
   params.forEach((value, key) => {
+    /*
+     * 검색어는 사용자가 친 글자 그대로다. JSON 으로 읽으면 `?q=123` 이 숫자가 되어
+     * 검색어 검증에서 탈락하고, 검색 결과 주소가 홈으로 튕긴다.
+     */
+    if (key === "q") {
+      result[key] = value;
+      return;
+    }
+
     try {
       result[key] = JSON.parse(value);
     } catch {

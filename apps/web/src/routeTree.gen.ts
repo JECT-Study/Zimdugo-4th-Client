@@ -15,7 +15,7 @@ import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as MapIndexRouteImport } from './routes/_map.index'
+import { Route as MapScreenRouteImport } from './routes/_map._screen'
 import { Route as MyIndexRouteImport } from './routes/my.index'
 import { Route as MyFavoritesRouteImport } from './routes/my.favorites'
 import { Route as MyReportsRouteImport } from './routes/my.reports'
@@ -25,6 +25,10 @@ import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
 import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
 import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as SettingsThemeRouteImport } from './routes/settings.theme'
+import { Route as MapScreenIndexRouteImport } from './routes/_map._screen.index'
+import { Route as MapScreenSearchRouteImport } from './routes/_map._screen.search'
+import { Route as MapScreenLockersSlugRouteImport } from './routes/_map._screen.lockers.$slug'
+import { Route as MapScreenPlacesPlaceIdRouteImport } from './routes/_map._screen.places.$placeId'
 
 const MapRoute = MapRouteImport.update({
   id: '/_map',
@@ -55,9 +59,8 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MapIndexRoute = MapIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const MapScreenRoute = MapScreenRouteImport.update({
+  id: '/_screen',
   getParentRoute: () => MapRoute,
 } as any)
 const MyIndexRoute = MyIndexRouteImport.update({
@@ -105,9 +108,29 @@ const SettingsThemeRoute = SettingsThemeRouteImport.update({
   path: '/theme',
   getParentRoute: () => SettingsRoute,
 } as any)
+const MapScreenIndexRoute = MapScreenIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MapScreenRoute,
+} as any)
+const MapScreenSearchRoute = MapScreenSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => MapScreenRoute,
+} as any)
+const MapScreenLockersSlugRoute = MapScreenLockersSlugRouteImport.update({
+  id: '/lockers/$slug',
+  path: '/lockers/$slug',
+  getParentRoute: () => MapScreenRoute,
+} as any)
+const MapScreenPlacesPlaceIdRoute = MapScreenPlacesPlaceIdRouteImport.update({
+  id: '/places/$placeId',
+  path: '/places/$placeId',
+  getParentRoute: () => MapScreenRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof MapIndexRoute
+  '/': typeof MapScreenIndexRoute
   '/login': typeof LoginRoute
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
@@ -122,8 +145,12 @@ export interface FileRoutesByFullPath {
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
   '/my/': typeof MyIndexRoute
+  '/search': typeof MapScreenSearchRoute
+  '/lockers/$slug': typeof MapScreenLockersSlugRoute
+  '/places/$placeId': typeof MapScreenPlacesPlaceIdRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof MapScreenIndexRoute
   '/login': typeof LoginRoute
   '/notices': typeof NoticesRouteWithChildren
   '/report': typeof ReportRoute
@@ -137,8 +164,10 @@ export interface FileRoutesByTo {
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
-  '/': typeof MapIndexRoute
   '/my': typeof MyIndexRoute
+  '/search': typeof MapScreenSearchRoute
+  '/lockers/$slug': typeof MapScreenLockersSlugRoute
+  '/places/$placeId': typeof MapScreenPlacesPlaceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -148,6 +177,7 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_map/_screen': typeof MapScreenRouteWithChildren
   '/my/favorites': typeof MyFavoritesRoute
   '/my/reports': typeof MyReportsRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
@@ -156,8 +186,11 @@ export interface FileRoutesById {
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
-  '/_map/': typeof MapIndexRoute
   '/my/': typeof MyIndexRoute
+  '/_map/_screen/search': typeof MapScreenSearchRoute
+  '/_map/_screen/': typeof MapScreenIndexRoute
+  '/_map/_screen/lockers/$slug': typeof MapScreenLockersSlugRoute
+  '/_map/_screen/places/$placeId': typeof MapScreenPlacesPlaceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,8 +210,12 @@ export interface FileRouteTypes {
     | '/settings/terms'
     | '/settings/theme'
     | '/my/'
+    | '/search'
+    | '/lockers/$slug'
+    | '/places/$placeId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/login'
     | '/notices'
     | '/report'
@@ -192,8 +229,10 @@ export interface FileRouteTypes {
     | '/settings/privacy'
     | '/settings/terms'
     | '/settings/theme'
-    | '/'
     | '/my'
+    | '/search'
+    | '/lockers/$slug'
+    | '/places/$placeId'
   id:
     | '__root__'
     | '/_map'
@@ -202,6 +241,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/settings'
     | '/sitemap.xml'
+    | '/_map/_screen'
     | '/my/favorites'
     | '/my/reports'
     | '/notices/$noticeId'
@@ -210,8 +250,11 @@ export interface FileRouteTypes {
     | '/settings/privacy'
     | '/settings/terms'
     | '/settings/theme'
-    | '/_map/'
     | '/my/'
+    | '/_map/_screen/search'
+    | '/_map/_screen/'
+    | '/_map/_screen/lockers/$slug'
+    | '/_map/_screen/places/$placeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -270,11 +313,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_map/': {
-      id: '/_map/'
-      path: '/'
+    '/_map/_screen': {
+      id: '/_map/_screen'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof MapIndexRouteImport
+      preLoaderRoute: typeof MapScreenRouteImport
       parentRoute: typeof MapRoute
     }
     '/my/': {
@@ -340,15 +383,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsThemeRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/_map/_screen/': {
+      id: '/_map/_screen/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof MapScreenIndexRouteImport
+      parentRoute: typeof MapScreenRoute
+    }
+    '/_map/_screen/search': {
+      id: '/_map/_screen/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof MapScreenSearchRouteImport
+      parentRoute: typeof MapScreenRoute
+    }
+    '/_map/_screen/lockers/$slug': {
+      id: '/_map/_screen/lockers/$slug'
+      path: '/lockers/$slug'
+      fullPath: '/lockers/$slug'
+      preLoaderRoute: typeof MapScreenLockersSlugRouteImport
+      parentRoute: typeof MapScreenRoute
+    }
+    '/_map/_screen/places/$placeId': {
+      id: '/_map/_screen/places/$placeId'
+      path: '/places/$placeId'
+      fullPath: '/places/$placeId'
+      preLoaderRoute: typeof MapScreenPlacesPlaceIdRouteImport
+      parentRoute: typeof MapScreenRoute
+    }
   }
 }
 
+interface MapScreenRouteChildren {
+  MapScreenSearchRoute: typeof MapScreenSearchRoute
+  MapScreenIndexRoute: typeof MapScreenIndexRoute
+  MapScreenLockersSlugRoute: typeof MapScreenLockersSlugRoute
+  MapScreenPlacesPlaceIdRoute: typeof MapScreenPlacesPlaceIdRoute
+}
+
+const MapScreenRouteChildren: MapScreenRouteChildren = {
+  MapScreenSearchRoute: MapScreenSearchRoute,
+  MapScreenIndexRoute: MapScreenIndexRoute,
+  MapScreenLockersSlugRoute: MapScreenLockersSlugRoute,
+  MapScreenPlacesPlaceIdRoute: MapScreenPlacesPlaceIdRoute,
+}
+
+const MapScreenRouteWithChildren = MapScreenRoute._addFileChildren(
+  MapScreenRouteChildren,
+)
+
 interface MapRouteChildren {
-  MapIndexRoute: typeof MapIndexRoute
+  MapScreenRoute: typeof MapScreenRouteWithChildren
 }
 
 const MapRouteChildren: MapRouteChildren = {
-  MapIndexRoute: MapIndexRoute,
+  MapScreenRoute: MapScreenRouteWithChildren,
 }
 
 const MapRouteWithChildren = MapRoute._addFileChildren(MapRouteChildren)

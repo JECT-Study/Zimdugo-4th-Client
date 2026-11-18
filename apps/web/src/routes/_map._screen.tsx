@@ -4,7 +4,9 @@ import { Popup } from "@repo/ui/components/popup";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
+  useMatches,
   useNavigate,
+  useRouterState,
   useSearch,
 } from "@tanstack/react-router";
 import { useMotionTemplate, useMotionValue } from "motion/react";
@@ -43,7 +45,6 @@ import {
   createLockerDetailFromSearchItem,
   createLockerDetailPlaceholder,
 } from "#/entities/locker/lib/create-locker-detail";
-import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
 import type {
   LockerDetailItem,
   LockerDetailLoadState,
@@ -109,14 +110,11 @@ import {
   applyFavoriteOverlayToSearchResultItems,
 } from "#/features/search/lib/apply-favorite-overlay";
 import {
-  createLockerCanonicalUrl,
   createLockerDeepLinkSlug,
   createLockerDeepLinkUrl,
   createLockerPinAt,
   createLockerShareText,
   type LockerDetailSnap,
-  type OpenLockerDeepLinkSearch,
-  parseOpenLockerDeepLinkSearch,
 } from "#/features/search/lib/open-locker-deep-link";
 import {
   getSearchQueryIssue,
@@ -144,6 +142,10 @@ import {
 } from "#/features/search/model/map-screen";
 import { toMapScreenKey } from "#/features/search/model/map-screen-history";
 import {
+  type MapScreenSearchParams,
+  validateMapScreenSearch,
+} from "#/features/search/model/map-screen-search";
+import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
 } from "#/features/search/model/map-viewport-policy";
@@ -159,7 +161,6 @@ import {
 } from "#/features/search/model/search-selection";
 import {
   parseLockerSearchParam,
-  readSearchPlaceIdParam,
   readSearchQueryParam,
   type SearchUrlParams,
   withLockerDetailParam,
@@ -184,17 +185,11 @@ import {
 } from "#/features/search/model/useMapSheetSession";
 import { useSearchFilters } from "#/features/search/model/useSearchFilters";
 import { useSheetStageSession } from "#/features/search/model/useSheetStageSession";
-import {
-  createAlternateLinksForPathname,
-  createLocalizedUrl,
-  getSeoLocale,
-  getSeoPathname,
-} from "#/features/seo/model/localized-seo-head";
-import {
-  getLockerDetail,
-  type LockerBoundsRaw,
-  type LockerPinItemResponse,
+import type {
+  LockerBoundsRaw,
+  LockerPinItemResponse,
 } from "#/shared/api/lockers";
+import { useDocumentTitle } from "#/shared/hooks/useDocumentTitle";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
@@ -219,6 +214,7 @@ import {
   shouldShowHomeSearchBar,
   shouldShowMapControls,
 } from "./-map-control-visibility";
+import { pickMapLoaderDetail } from "./-map-loader-detail";
 
 /**
  * 서버·프리렌더에서 뷰포트 높이를 알 수 없을 때 쓰는 값.
@@ -241,24 +237,6 @@ const reloadForLocationRecovery = () => {
   window.location.reload();
 };
 
-type SeoHeadLocationContext = {
-  location?: {
-    publicHref?: string;
-  };
-};
-
-/** 홈 라우트가 다루는 검색 파라미터. validateSearch 가 이 모양으로 정규화한다. */
-export interface HomeSearchParams {
-  locker?: string;
-  openLockerId?: number;
-  detailSnap?: LockerDetailSnap;
-  focusLat?: number;
-  focusLng?: number;
-  q?: string;
-  /** 장소 목록. 바깥 주소로는 `/places/<id>` 다. */
-  place?: number;
-}
-
 /** 주소의 검색 값을 받아 다음 값을 돌려주는 함수. */
 type SearchUrlUpdate = (search: SearchUrlParams) => SearchUrlParams;
 
@@ -272,218 +250,30 @@ const withoutOpenLockerParams = ({
 }: SearchUrlParams) => rest;
 
 /**
- * 딥링크 옵션만 남긴다.
+ * 홈·검색·장소·상세가 함께 쓰는 지도 화면.
  *
- * 구 딥링크(`/?openLockerId=164&detailSnap=full&focusLat=…`)는 서버가
- * `/lockers/164?detailSnap=full&focusLat=…` 로 옮기고, 라우터 안쪽에서는
- * `?locker=164&detailSnap=full&…` 이 된다. 딥링크 파서는 `openLockerId` 가 없으면
- * 옵션을 통째로 버리므로, `locker` 로 들어온 상세에서도 옵션을 읽어야 한다.
- *
- * 다만 `openLockerId` 자체는 남기지 않는다. 검증된 검색 값은 다음 이동의 `prev` 가
- * 되므로, 여기에 넣으면 그 뒤로 모든 주소에 `openLockerId` 가 따라붙는다.
+ * 경로를 더하지 않는 레이아웃 라우트다. 자식 라우트(`/`, `/search`,
+ * `/places/$placeId`, `/lockers/$slug`)가 바뀌어도 이 화면은 그대로 마운트되어
+ * 있어, 시트·검색 입력·선택한 핀 같은 상태를 잃지 않는다. 자식 라우트는 자기 경로의
+ * 로더와 SEO 머리만 갖는다.
  */
-const withoutOpenLockerId = ({
-  openLockerId: _openLockerId,
-  ...options
-}: OpenLockerDeepLinkSearch) => options;
-
-export const Route = createFileRoute("/_map/")({
-  validateSearch: (
-    search: Record<string, unknown> | undefined,
-  ): HomeSearchParams => {
-    const safeSearch = search || {};
-    const lockerNum = parseLockerSearchParam(safeSearch.locker);
-    const deepLink = parseOpenLockerDeepLinkSearch(safeSearch);
-    const parsed =
-      deepLink.openLockerId === undefined && lockerNum !== undefined
-        ? withoutOpenLockerId(
-            parseOpenLockerDeepLinkSearch({
-              ...safeSearch,
-              openLockerId: lockerNum,
-            }),
-          )
-        : deepLink;
-    const locker =
-      lockerNum !== undefined ? String(safeSearch.locker).trim() : undefined;
-    const q = readSearchQueryParam(safeSearch.q);
-    const place = readSearchPlaceIdParam(safeSearch.place);
-    return {
-      ...parsed,
-      locker,
-      q,
-      place,
-    };
-  },
-  /**
-   * 공개 데이터만 다룬다. 딥링크로 들어온 보관함의 메타 태그를 서버에서 만들기
-   * 위한 로더이고, 여기서 가져오는 값은 누구에게나 같다.
-   *
-   * ⚠️ 사용자별 데이터(즐겨찾기 여부, 알림 개수 등)를 여기에 넣으면 안 된다.
-   * 서버는 요청자가 누구인지 모른다 — 액세스 토큰은 쿠키에 저장되지 않고,
-   * 서버 가드가 읽는 `auth-storage` 는 클라이언트가 쓰는 위조 가능한 쿠키다.
-   * 게다가 홈은 프리렌더 대상이라 개인화 값이 정적 파일에 굳어 모든 방문자에게
-   * 서빙된다. 개인화가 필요하면 클라이언트에서 채우고, SSR 로 다뤄야 한다면
-   * 서버가 신원을 확인할 수단을 먼저 만들어야 한다.
-   */
-  /*
-   * 로더는 검색 파라미터를 직접 받지 못한다. TanStack 의 로더 컨텍스트에는 `search`
-   * 가 없어서, 예전처럼 `({ search })` 로 읽으면 늘 `undefined` 가 되고 상세를 한 번도
-   * 가져오지 못했다. 그 결과 딥링크로 들어온 상세의 지도는 기본 좌표에서 뜨고, 상세
-   * 메타 태그도 나가지 않았다.
-   *
-   * `loaderDeps` 로 필요한 값만 건넨다. 보관함이 바뀔 때만 로더가 다시 돈다.
-   */
-  loaderDeps: ({ search }) => ({ locker: search.locker }),
-  loader: async ({ deps }) => {
-    const lockerId = parseLockerSearchParam(deps.locker);
-    if (lockerId !== undefined) {
-      try {
-        const rawDetail = await getLockerDetail({
-          lockerId,
-          lat: DEFAULT_SEARCH_COORDINATES.lat,
-          lng: DEFAULT_SEARCH_COORDINATES.lng,
-        });
-        const detail = toLockerDetailItem(rawDetail);
-        return { detail };
-      } catch (error) {
-        console.error(
-          `Failed to load locker ${lockerId} in root loader:`,
-          error,
-        );
-        return { detail: null };
-      }
-    }
-    return { detail: null };
-  },
-  head: (context) => {
-    const { loaderData, match } = context;
-    const publicHref = (context as SeoHeadLocationContext).location?.publicHref;
-    const pathname = getSeoPathname({
-      publicHref,
-      pathname: match.pathname,
-    });
-    const locale = getSeoLocale({
-      publicHref,
-      pathname: match.pathname,
-      runtimeLocale: languageTag(),
-    });
-    const detail = loaderData?.detail;
-    if (detail) {
-      const name = detail.title || "물품보관함";
-      const address = detail.address || "";
-      const minPrice = detail.minPrice;
-
-      const priceText =
-        minPrice != null
-          ? m.seo_locker_detail_price_text(
-              { price: minPrice.toLocaleString() },
-              { locale },
-            )
-          : m.seo_locker_detail_price_unknown({}, { locale });
-      const title = m.seo_locker_detail_title({ name }, { locale });
-      const description = m.seo_locker_detail_description(
-        {
-          name,
-          address,
-          priceText,
-        },
-        { locale },
-      );
-      const canonicalUrl = createLockerCanonicalUrl({
-        lockerId: detail.lockerId,
-        title: detail.title ?? undefined,
-        locale,
-      });
-
-      return {
-        meta: [
-          {
-            title,
-          },
-          {
-            name: "description",
-            content: description,
-          },
-          {
-            property: "og:title",
-            content: title,
-          },
-          {
-            property: "og:description",
-            content: description,
-          },
-          {
-            property: "og:url",
-            content: canonicalUrl,
-          },
-          {
-            name: "twitter:title",
-            content: title,
-          },
-          {
-            name: "twitter:description",
-            content: description,
-          },
-        ],
-        links: [
-          {
-            rel: "canonical",
-            href: canonicalUrl,
-          },
-        ],
-      };
-    }
-
-    const title = m.seo_global_title({}, { locale });
-    const description = m.seo_global_description({}, { locale });
-    const canonicalUrl = createLocalizedUrl({ pathname, locale });
-
-    return {
-      meta: [
-        {
-          title,
-        },
-        {
-          name: "description",
-          content: description,
-        },
-        {
-          property: "og:title",
-          content: title,
-        },
-        {
-          property: "og:description",
-          content: description,
-        },
-        {
-          property: "og:url",
-          content: canonicalUrl,
-        },
-        {
-          name: "twitter:title",
-          content: title,
-        },
-        {
-          name: "twitter:description",
-          content: description,
-        },
-      ],
-      links: [
-        {
-          rel: "canonical",
-          href: canonicalUrl,
-        },
-        ...createAlternateLinksForPathname(pathname),
-      ],
-    };
-  },
+export const Route = createFileRoute("/_map/_screen")({
+  validateSearch: validateMapScreenSearch,
   component: IndexPage,
 });
 
 export function IndexPage() {
   const navigate = useNavigate();
-  const search = (useSearch({ strict: false }) || {}) as HomeSearchParams;
-  const loaderData = Route.useLoaderData();
+  const search = (useSearch({ strict: false }) || {}) as MapScreenSearchParams;
+  /*
+   * 상세 라우트의 로더가 서버에서 가져온 상세. 이 화면은 자식 라우트의 위에 있어
+   * 자기 로더 대신 매치 목록에서 꺼낸다.
+   */
+  const matches = useMatches();
+  const loaderData = useMemo(
+    () => ({ detail: pickMapLoaderDetail(matches) as LockerDetailItem | null }),
+    [matches],
+  );
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: user } = useUser(isAuthenticated);
   const {
@@ -918,30 +708,47 @@ export function IndexPage() {
    * 주소를 다듬는다. 검증을 통과하지 못한 검색어가 들어오면 검증된 값으로 바꾸고,
    * 필터가 주소에 실리던 시절의 파라미터는 걷어 낸다. 화면은 그대로라 칸을 바꾼다.
    */
+  /*
+   * 라우터가 보는 위치로 판단한다. `window.location` 을 읽으면 이동이 끝나기 전에는
+   * 브라우저 주소가 아직 떠나는 화면이라, 라우터 위치와 비교해 "어긋났다" 고 보고
+   * 계속 다시 이동시키는 루프에 빠졌다.
+   */
+  const searchQueryToNormalize = useRouterState({
+    select: (state) => {
+      const raw = (state.location.search as Record<string, unknown>).q;
+      if (typeof raw !== "string") return null;
+      const validated = readSearchQueryParam(raw);
+      return validated === raw ? null : (validated ?? "");
+    },
+  });
+  const hasLegacyFilterParams = useRouterState({
+    select: (state) => {
+      const search = state.location.search as Record<string, unknown>;
+      return (
+        "filterSizes" in search ||
+        "filterIndoorOutdoor" in search ||
+        "filterPlaceTypes" in search
+      );
+    },
+  });
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (searchQueryToNormalize === null && !hasLegacyFilterParams) return;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const rawSearchQueryFromUrl = urlParams.get("q") ?? undefined;
-    const hasLegacyFilterParams =
-      urlParams.has("filterSizes") ||
-      urlParams.has("filterIndoorOutdoor") ||
-      urlParams.has("filterPlaceTypes");
-
-    if (
-      (rawSearchQueryFromUrl !== undefined &&
-        rawSearchQueryFromUrl !== searchQueryFromUrl) ||
-      hasLegacyFilterParams
-    ) {
-      mapScreenNavigation.replaceSearch((prev) => {
-        const next = withSearchQueryParam(prev, searchQueryFromUrl);
-        delete next.filterSizes;
-        delete next.filterIndoorOutdoor;
-        delete next.filterPlaceTypes;
-        return next;
-      });
-    }
-  }, [mapScreenNavigation.replaceSearch, searchQueryFromUrl]);
+    mapScreenNavigation.replaceSearch((prev) => {
+      const next =
+        searchQueryToNormalize === null
+          ? { ...prev }
+          : withSearchQueryParam(prev, searchQueryToNormalize);
+      delete next.filterSizes;
+      delete next.filterIndoorOutdoor;
+      delete next.filterPlaceTypes;
+      return next;
+    });
+  }, [
+    hasLegacyFilterParams,
+    mapScreenNavigation.replaceSearch,
+    searchQueryToNormalize,
+  ]);
 
   /*
    * 검색창에 남은 글자를 주소의 검색어에 맞춘다. 뒤로가기로 다른 검색 결과에 돌아오면
@@ -3003,6 +2810,31 @@ export function IndexPage() {
     lockerDetail,
     selectedLockerDetail,
   ]);
+
+  /*
+   * 앱 안에서 연 상세의 탭 제목. 상세 라우트의 머리는 서버에서만 가져온 상세로
+   * 만들어, 앱 안 이동에서는 서비스 공통 제목이 남는다. 화면이 받은 상세로 채운다.
+   * 서버가 그린 첫 화면의 제목과 같은 문구를 쓴다.
+   */
+  const lockerDetailDocumentTitle =
+    mapScreen.target === "detail" &&
+    displayedLockerDetail?.lockerId === activeLockerId &&
+    displayedLockerDetail.title
+      ? m.seo_locker_detail_title(
+          { name: displayedLockerDetail.title },
+          { locale: normalizeLocale(languageTag()) ?? BASE_LOCALE },
+        )
+      : null;
+  /*
+   * 같은 상세 안의 이동(슬러그 정리)에도 라우터가 공통 제목으로 머리를 다시 그린다.
+   * 머리는 이동이 끝난 뒤에 다시 그려지므로, 시작할 때 바뀌는 위치가 아니라 끝나서
+   * 확정된 위치를 계기로 삼는다. 앞의 것을 쓰면 제목을 먼저 적용하고 라우터가 덮는다.
+   */
+  const resolvedHistoryEntryKey = useRouterState({
+    select: (state) =>
+      (state.resolvedLocation?.state as { key?: string } | undefined)?.key,
+  });
+  useDocumentTitle(lockerDetailDocumentTitle, resolvedHistoryEntryKey);
 
   /**
    * 지금 화면에 실제로 떠 있는 시트. 시트 렌더 조건과 같은 함수를 쓴다.
