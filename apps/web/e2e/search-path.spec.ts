@@ -474,8 +474,11 @@ test.describe("검색 경로", () => {
     await expect.poll(() => new URL(page.url()).pathname).toBe("/");
   });
 
-  /** 필터 위에 오버레이를 겹쳐 연 채 다시 검색하면, 쌓인 시트 칸을 모두 걷어 내야 한다. */
-  test("필터 위 오버레이에서 다시 검색해도 앞으로가기로 지난 시트가 열리지 않는다", async ({
+  /**
+   * 시트 칸은 겹치지 않는다. 필터가 열린 채 오버레이를 열면 필터 칸을 되감고 연다.
+   * 겹쳐 쌓으면 다시 검색한 뒤 앞으로가기가 지난 필터와 오버레이를 다시 열었다.
+   */
+  test("필터가 열린 채 오버레이를 열면 필터를 닫고 그 칸에 오버레이를 연다", async ({
     page,
   }) => {
     await page.goto("/");
@@ -489,7 +492,17 @@ test.describe("검색 경로", () => {
     await expect.poll(() => historyIndex(page)).toBe(homeIndex + 2);
 
     await openSearchOverlay(page);
-    await expect.poll(() => historyIndex(page)).toBe(homeIndex + 3);
+    await expect(filterApplyButton(page)).toBeHidden();
+    await expect.poll(() => historyIndex(page)).toBe(homeIndex + 2);
+
+    // 오버레이를 닫으면 필터 없이 결과 목록이 나온다.
+    await page.goBack();
+    await expect(overlaySearchInput(page)).toBeHidden();
+    await expect(filterApplyButton(page)).toBeHidden();
+    await expect(page.getByText(searchItemRaw.lockerName).first()).toBeVisible();
+    await expect.poll(() => historyIndex(page)).toBe(homeIndex + 1);
+
+    await openSearchOverlay(page);
     await submitSearch(page, SECOND_KEYWORD);
     await expect(overlaySearchInput(page)).toBeHidden();
     await expect.poll(() => historyIndex(page)).toBe(homeIndex + 1);
@@ -501,6 +514,34 @@ test.describe("검색 경로", () => {
 
     await page.goBack();
     await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+  });
+
+  /**
+   * 더 얕은 화면으로 가는 검색(장소 목록 → 검색 결과)도 같은 규칙을 따른다. 오버레이
+   * 칸을 되감고 칸을 바꾸면 오버레이 칸이 앞쪽에 남는다.
+   */
+  test("장소 목록에서 다시 검색해도 앞으로가기로 지난 오버레이가 열리지 않는다", async ({
+    page,
+  }) => {
+    await page.goto(`/places/${searchItemRaw.placeId}?q=${encodeURIComponent(KEYWORD)}`);
+    await waitForMapReady(page);
+    const entryIndex = await historyIndex(page);
+
+    await openSearchOverlay(page);
+    await submitSearch(page, SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/search");
+
+    await page.goForward();
+    await expect.poll(() => queryParam(page, "q")).toBe(SECOND_KEYWORD);
+    await expect(overlaySearchInput(page)).toBeHidden();
+
+    await page.goBack();
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe(`/places/${searchItemRaw.placeId}`);
+    await expect.poll(() => historyIndex(page)).toBe(entryIndex);
+    await expect(overlaySearchInput(page)).toBeHidden();
   });
 
   test("검색 결과로 바로 들어와 다시 검색해도 앞으로가기로 지난 오버레이가 열리지 않는다", async ({

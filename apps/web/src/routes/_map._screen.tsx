@@ -1161,6 +1161,14 @@ export function IndexPage() {
       resetMapContext();
     }
 
+    /*
+     * 시트는 겹쳐 열지 않는다. 필터가 열려 있으면 닫고 오버레이를 연다. 히스토리의
+     * 필터 칸은 오버레이 칸을 만들 때 함께 되감는다(`pushSheetEntry`).
+     */
+    if (sheetMode === "filter") {
+      setSheetMode("list");
+    }
+
     // 검색 오버레이 진입 시 카메라 고정 해제:
     // isSearchOpen이 false로 바뀔 때 카메라 추적 effect가 재발동해
     // 지도가 강제로 현재 위치로 이동하는 버그를 방지한다.
@@ -1177,6 +1185,8 @@ export function IndexPage() {
     mapScreenNavigation.pushSheetEntry,
     resetMapContext,
     setIsSearchOpen,
+    setSheetMode,
+    sheetMode,
   ]);
 
   const handleCloseSearch = useCallback(

@@ -4,7 +4,6 @@ import {
   readMapScreenSearch,
   toMapScreenRoute,
 } from "#/shared/lib/map-path-url";
-import { resolveMapScreenNavigation } from "./map-screen";
 import {
   type MapScreenHistoryState,
   type MapSheetEntry,
@@ -17,10 +16,6 @@ import {
 import type { SearchUrlParams } from "./search-url-state";
 
 type SearchUpdate = (search: SearchUrlParams) => SearchUrlParams;
-
-/** 시트 칸 아래 화면의 깊이. 시트 칸이 아니거나 기록이 없으면 undefined 다. */
-const readSheetBaseDepth = (state: MapScreenHistoryState) =>
-  state.mapSheet === undefined ? undefined : state.mapSheetBaseDepth;
 
 const HOME_SCREEN_KEY = toMapScreenKey({
   searchQuery: undefined,
@@ -42,6 +37,20 @@ const HOME_SCREEN_KEY = toMapScreenKey({
  *
  * 현재 주소는 렌더 때 값이 아니라 호출 순간의 라우터 값을 읽는다. 한 이벤트 안에서
  * 앞선 이동이 아직 렌더되지 않았더라도 그 결과 위에서 계산하기 위해서다.
+ *
+ * ## 시트 칸의 규칙
+ *
+ * 필터·검색 오버레이·길찾기 팝업은 주소를 바꾸지 않고 같은 주소로 칸을 하나 만든다
+ * (`pushSheetEntry`). 기기 뒤로가기가 그 칸을 벗어나면 시트가 닫힌다. 이 칸이
+ * 히스토리를 어지럽히지 않도록 세 가지를 지킨다.
+ *
+ * 1. 시트 칸은 겹치지 않는다. 다른 시트가 열려 있으면 그 칸을 되감고 연다.
+ * 2. 시트 칸에서 다른 화면으로 갈 때(`goTo`·`goBack`)는 먼저 시트 칸을 되감고,
+ *    아래 화면에서 이동을 계산한다. 남는 히스토리는 시트를 열지 않고 아래 화면에서
+ *    바로 이동했을 때와 같다.
+ * 3. 앞쪽 칸이 남지 않게 한다. 되감은 뒤 칸을 바꾸면(replace) 앞쪽의 시트 칸이
+ *    남아, 앞으로가기가 끝난 시트를 다시 연다. 바꾸는 이동이면 한 칸 더 되감아 부모
+ *    칸에서 같은 상태의 새 칸을 만든다. 새 칸은 앞쪽 칸을 모두 지운다.
  */
 export function useMapScreenNavigation() {
   const router = useRouter();
@@ -125,77 +134,67 @@ export function useMapScreenNavigation() {
         mapStackDepth: state.mapStackDepth,
         // 넘긴 상태에 없으면 지운다. 다른 화면으로 가는 칸에 시트 표시가 따라가지 않게.
         mapSheet: state.mapSheet,
-        mapSheetBaseDepth: state.mapSheetBaseDepth,
       }),
     [],
   );
 
   /**
-   * 시트 칸 위에서 아래 화면과 같은 깊이의 화면으로 간다(검색 결과에서 다시 검색).
-   * 그런 이동이 아니면 거짓을 돌려준다.
+   * 시트 칸을 되감은 뒤 아래 화면에서 다른 화면으로 간다(시트 칸의 규칙 2·3).
    *
-   * 시트 칸만 되감고 아래 화면 칸을 바꾸면 시트 칸이 앞쪽 히스토리에 남는다. 바꾸기는
-   * 앞쪽 칸을 지우지 않는다. 그러면 앞으로가기가 이미 끝난 시트를 예전 주소로 다시
-   * 연다. 그래서 아래 화면의 부모 칸까지 되감고 새 칸을 만든다. 새 칸은 앞쪽 칸을
-   * 모두 지우고, 칸 수는 바꾸기와 같다.
-   *
-   * 시트는 겹쳐 쌓일 수 있다(필터 위 검색 오버레이). 쌓인 시트 칸을 모두 되감는다.
-   *
-   * 아래 화면이 첫 칸이면(링크로 바로 들어왔으면) 되감을 부모가 없다. 그때는 아래
-   * 화면까지 되감고 그 위에 새 칸을 만든다. 뒤로 가면 아래 화면이 나온다.
+   * 바꾸는 이동이면 부모 칸까지 한 칸 더 되감고, 바꾸기가 남겼을 상태로 새 칸을
+   * 만든다. 칸 수와 되돌아갈 곳은 바꾸기와 같고, 앞쪽에 남은 시트 칸은 지워진다.
+   * 아래 화면이 첫 칸이면(링크로 바로 들어왔으면) 부모가 없어, 아래 화면 위에 새
+   * 칸을 만든다. 뒤로 가면 아래 화면이 나온다.
    */
-  const replaceSameLevelFromSheet = useCallback(
-    (
-      current: { search: SearchUrlParams; state: MapScreenHistoryState },
-      update: SearchUpdate,
-    ) => {
-      const nextSearch = update(current.search);
-      if (nextSearch === current.search) return false;
+  const goToFromSheetBase = useCallback(
+    (update: SearchUpdate) => {
+      const base = readCurrent();
 
-      const base = readMapScreenParams(current.search);
-      const next = readMapScreenParams(nextSearch);
-      const isSameLevel =
-        resolveMapScreenNavigation(base, next) === "replace" &&
-        resolveMapScreenNavigation(next, base) === "replace";
-      if (!isSameLevel) return false;
-
-      const depth = current.state.mapStackDepth ?? 1;
-      const baseDepth = readSheetBaseDepth(current.state) ?? depth - 1;
-      const sheetCount = Math.max(depth - baseDepth, 1);
-
-      if (baseDepth > 0) {
-        traverse(-(sheetCount + 1));
+      // 규칙 전에 겹쳐 쌓인 칸이 남아 있으면 마저 되감는다.
+      if (base.state.mapSheet !== undefined) {
+        traverse(-1);
         afterTraversalRef.current.push({
-          task: () => {
-            const parent = readCurrent();
-            const plan = planForwardMapScreenNavigation(
-              parent.search,
-              nextSearch,
-              parent.state,
-            );
-            navigateToScreen(nextSearch, {
-              replace: plan.replace,
-              state: keepState(plan.state),
-            });
-          },
+          task: () => goToFromSheetBase(update),
         });
-        return true;
+        return;
       }
 
-      traverse(-sheetCount);
-      afterTraversalRef.current.push({
-        task: () => {
-          const baseEntry = readCurrent();
-          navigateToScreen(nextSearch, {
-            replace: false,
-            state: keepState({
-              mapBackTo: toMapScreenKey(readMapScreenParams(baseEntry.search)),
-              mapStackDepth: (baseEntry.state.mapStackDepth ?? 0) + 1,
+      const nextSearch = update(base.search);
+      if (nextSearch === base.search) return;
+
+      const plan = planForwardMapScreenNavigation(
+        base.search,
+        nextSearch,
+        base.state,
+      );
+
+      if (!plan.replace) {
+        navigateToScreen(nextSearch, {
+          replace: false,
+          state: keepState(plan.state),
+        });
+        return;
+      }
+
+      if ((base.state.mapStackDepth ?? 0) > 0) {
+        traverse(-1);
+        afterTraversalRef.current.push({
+          task: () =>
+            navigateToScreen(nextSearch, {
+              replace: false,
+              state: keepState(plan.state),
             }),
-          });
-        },
+        });
+        return;
+      }
+
+      navigateToScreen(nextSearch, {
+        replace: false,
+        state: keepState({
+          mapBackTo: toMapScreenKey(readMapScreenParams(base.search)),
+          mapStackDepth: 1,
+        }),
       });
-      return true;
     },
     [keepState, navigateToScreen, readCurrent, traverse],
   );
@@ -206,16 +205,11 @@ export function useMapScreenNavigation() {
 
       const current = readCurrent();
 
-      /*
-       * 시트 칸(검색 오버레이 등)이 열린 채 다른 화면으로 가면, 먼저 그 칸을 되감고
-       * 나서 간다. 시트 칸 위에 새 칸을 쌓으면 새 화면에서 뒤로 갈 때 닫았던 시트가
-       * 다시 열린다. 히스토리에는 시트를 연 적이 없던 것처럼 남는다.
-       */
       if (current.state.mapSheet !== undefined) {
-        if (replaceSameLevelFromSheet(current, update)) return;
-
         traverse(-1);
-        afterTraversalRef.current.push({ task: () => goTo(update) });
+        afterTraversalRef.current.push({
+          task: () => goToFromSheetBase(update),
+        });
         return;
       }
 
@@ -235,10 +229,10 @@ export function useMapScreenNavigation() {
       });
     },
     [
+      goToFromSheetBase,
       keepState,
       navigateToScreen,
       readCurrent,
-      replaceSameLevelFromSheet,
       runAfterTraversal,
       traverse,
     ],
@@ -261,7 +255,20 @@ export function useMapScreenNavigation() {
 
   const goBack = useCallback(
     (fallback?: SearchUpdate) => {
+      if (runAfterTraversal(() => goBack(fallback))) return;
+
       const current = readCurrent();
+
+      /*
+       * 시트 칸에서 돌아가면 시트만 닫히고 화면은 그대로다. 시트 칸의 표시로 계산하면
+       * 시트 칸을 부모 화면으로 바꿔 아래 화면 칸이 남는다. 시트 칸을 먼저 되감는다.
+       */
+      if (current.state.mapSheet !== undefined) {
+        traverse(-1);
+        afterTraversalRef.current.push({ task: () => goBack(fallback) });
+        return;
+      }
+
       const plan = planBackMapScreenNavigation(current.search, current.state);
 
       if (plan.kind === "history-back") {
@@ -274,7 +281,7 @@ export function useMapScreenNavigation() {
         state: keepState(current.state),
       });
     },
-    [keepState, navigateToScreen, readCurrent, traverse],
+    [keepState, navigateToScreen, readCurrent, runAfterTraversal, traverse],
   );
 
   const exitToHome = useCallback(() => {
@@ -385,19 +392,26 @@ export function useMapScreenNavigation() {
       const current = readCurrent();
       if (current.state.mapSheet === sheet) return;
 
-      const depth = current.state.mapStackDepth ?? 0;
+      // 시트 칸은 겹치지 않는다(시트 칸의 규칙 1). 열린 시트 칸을 되감고 연다.
+      if (current.state.mapSheet !== undefined) {
+        traverse(-1);
+        afterTraversalRef.current.push({
+          task: () => pushSheetEntry(sheet),
+          sheet,
+        });
+        return;
+      }
+
       navigateToScreen(current.search, {
         replace: false,
         state: keepState({
           mapBackTo: toMapScreenKey(readMapScreenParams(current.search)),
-          mapStackDepth: depth + 1,
+          mapStackDepth: (current.state.mapStackDepth ?? 0) + 1,
           mapSheet: sheet,
-          // 시트 위에 시트를 열면 아래 화면은 그대로다.
-          mapSheetBaseDepth: readSheetBaseDepth(current.state) ?? depth,
         }),
       });
     },
-    [keepState, navigateToScreen, readCurrent, runAfterTraversal],
+    [keepState, navigateToScreen, readCurrent, runAfterTraversal, traverse],
   );
 
   /**
