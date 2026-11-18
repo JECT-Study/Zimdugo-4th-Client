@@ -16,6 +16,12 @@ export function NotFoundComponent() {
         boxSizing: "border-box",
       }}
     >
+      {/*
+       * React 19 는 컴포넌트 안의 <meta> 를 <head> 로 올린다. 404 상태 코드만으로도
+       * 색인되지 않지만, 상태 코드가 닿지 않는 클라이언트 이동 뒤의 화면에도 같은
+       * 신호를 남긴다.
+       */}
+      <meta name="robots" content="noindex" />
       <div
         style={{
           display: "flex",

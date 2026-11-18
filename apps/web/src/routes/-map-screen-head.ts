@@ -1,4 +1,5 @@
 import { languageTag, m } from "@repo/i18n";
+import { notFound } from "@tanstack/react-router";
 import { toLockerDetailItem } from "#/entities/locker/lib/locker-detail-adapters";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import { createLockerCanonicalUrl } from "#/features/search/lib/open-locker-deep-link";
@@ -11,6 +12,7 @@ import {
 } from "#/features/seo/model/localized-seo-head";
 import { createLockerOgImageUrl } from "#/features/seo/model/locker-og-image-url";
 import { getLockerDetail } from "#/shared/api/lockers";
+import { isApiNotFoundError } from "#/shared/lib/api-error-status";
 
 /**
  * 지도 화면 라우트들이 함께 쓰는 SEO 머리와 상세 로더.
@@ -136,7 +138,12 @@ export const createLockerDetailHead = (
  * 서버 가드가 읽는 `auth-storage` 는 클라이언트가 쓰는 위조 가능한 쿠키다.
  * 개인화가 필요하면 클라이언트에서 채운다.
  *
- * 못 가져오면 `{ detail: null }` 이다. 화면은 클라이언트에서 다시 물어 채운다.
+ * API 가 없는 보관함이라고 답하면(404) `notFound()` 를 던져 문서도 404 로 답한다.
+ * 200 으로 공통 머리를 내면 검색엔진이 soft 404 로 보고, 삭제된 보관함 주소가 색인에
+ * 남는다.
+ *
+ * 그 밖의 이유로 못 가져오면(네트워크, 5xx) `{ detail: null }` 이다. 보관함이 있는지
+ * 알 수 없으니 404 로 단정하지 않고, 화면이 클라이언트에서 다시 물어 채운다.
  */
 export const loadLockerDetail = async (
   lockerId: number,
@@ -149,6 +156,9 @@ export const loadLockerDetail = async (
     });
     return { detail: toLockerDetailItem(rawDetail) };
   } catch (error) {
+    if (isApiNotFoundError(error)) {
+      throw notFound();
+    }
     console.error(`Failed to load locker ${lockerId} in route loader:`, error);
     return { detail: null };
   }
