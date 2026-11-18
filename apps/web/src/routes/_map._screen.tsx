@@ -21,6 +21,7 @@ import {
   type LockerDetailSheetSnapStage,
   resolveDetailSheetVisibleHeight,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
+import { LockerDetailPreviewCard } from "#/composites/locker-detail/LockerDetailPreviewCard";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
@@ -3441,6 +3442,17 @@ export function IndexPage() {
           onSnapStageChange={handleListSheetSnapStageChange}
           onLiveOffsetChange={handleListSheetLiveOffsetChange}
         />
+      ) : null}
+
+      {/*
+        지도가 뜨기 전에는 상세 시트가 없다. 서버 로더가 가져온 상세가 있으면 그 자리에
+        요약을 보여 준다. 서버 HTML 에도 실려 크롤러가 읽는다. 시트가 올라오면 내린다.
+      */}
+      {isMapLoading &&
+      !hasMapError &&
+      visibleSheetKind !== "detail" &&
+      loaderData.detail ? (
+        <LockerDetailPreviewCard locker={loaderData.detail} />
       ) : null}
 
       {visibleSheetKind === "detail" && displayedLockerDetail ? (
