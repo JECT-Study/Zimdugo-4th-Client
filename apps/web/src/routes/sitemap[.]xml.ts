@@ -15,7 +15,10 @@ export const Route = createFileRoute("/sitemap.xml")({
           return new Response(createSitemapXml(seoLockers, notices), {
             headers: {
               "Content-Type": "application/xml; charset=utf-8",
-              "Cache-Control": "public, max-age=3600, s-maxage=3600",
+              // 한 시간이 지나도 하루 동안은 이전 사이트맵을 먼저 주고 뒤에서 새로 만든다.
+              // 크롤러가 갱신 순간의 API 지연을 기다리지 않는다.
+              "Cache-Control":
+                "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
             },
           });
         } catch (error) {

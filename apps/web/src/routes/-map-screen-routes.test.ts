@@ -5,10 +5,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getLockerDetail = vi.hoisted(() => vi.fn());
+const markResponseUncacheable = vi.hoisted(() => vi.fn());
 
 vi.mock("#/shared/api/lockers", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/shared/api/lockers")>()),
   getLockerDetail,
+}));
+
+// 응답 헤더는 서버 렌더링 요청 안에서만 쓸 수 있다. 부른 것만 확인한다.
+vi.mock("#/shared/lib/uncacheable-response", () => ({
+  markResponseUncacheable,
 }));
 
 const { Route: LockerRoute } = await import("./_map._screen.lockers.$slug");
@@ -33,6 +39,7 @@ const runLoader = (slug: string) =>
 describe("보관함 상세 라우트 로더", () => {
   beforeEach(() => {
     getLockerDetail.mockReset();
+    markResponseUncacheable.mockReset();
   });
 
   it("슬러그가 붙은 경로로 들어오면 그 보관함의 상세를 가져온다", async () => {
@@ -61,6 +68,23 @@ describe("보관함 상세 라우트 로더", () => {
     getLockerDetail.mockRejectedValue(new Error("network"));
 
     expect(await runLoader("521")).toEqual({ detail: null });
+  });
+
+  it("상세를 못 가져와 그린 대체 문서는 캐시하지 않게 표시한다", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    getLockerDetail.mockRejectedValue(new Error("network"));
+
+    await runLoader("521");
+
+    expect(markResponseUncacheable).toHaveBeenCalledTimes(1);
+  });
+
+  it("상세를 가져오면 캐시 표시를 하지 않는다", async () => {
+    getLockerDetail.mockResolvedValue({ lockerId: 521 });
+
+    await runLoader("521");
+
+    expect(markResponseUncacheable).not.toHaveBeenCalled();
   });
 });
 
