@@ -110,4 +110,30 @@ describe("createLockerOgImageResponse", () => {
       "https://zimdugo.com/images/og-default.png",
     );
   });
+
+  it("지도 이미지 본문을 읽는 중 실패하면 기본 이미지로 보낸다", async () => {
+    const failedBody = new ReadableStream({
+      start(controller) {
+        controller.error(new Error("stream failed"));
+      },
+    });
+    const dependencies = createDependencies({
+      fetchMap: vi.fn().mockResolvedValue(
+        new Response(failedBody, {
+          headers: { "Content-Type": "image/png" },
+        }),
+      ),
+    });
+
+    const response = await createLockerOgImageResponse({
+      rawLockerId: "164",
+      requestUrl: REQUEST_URL,
+      dependencies,
+    });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "https://zimdugo.com/images/og-default.png",
+    );
+  });
 });

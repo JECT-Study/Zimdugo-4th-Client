@@ -148,7 +148,9 @@ export const createLockerOgImageResponse = async ({
       );
     }
 
-    return new Response(mapResponse.body, {
+    const imageBytes = await mapResponse.arrayBuffer();
+
+    return new Response(imageBytes, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": SUCCESS_CACHE_CONTROL,
