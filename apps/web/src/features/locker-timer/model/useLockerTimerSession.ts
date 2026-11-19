@@ -150,7 +150,7 @@ export interface LockerTimerSessionState {
   stop: () => Promise<boolean>;
 }
 
-export interface LockerTimerStartOptions {
+interface LockerTimerStartOptions {
   /**
    * 다른 보관함에서 돌고 있는 타이머를 지우고 새로 만든다.
    *
