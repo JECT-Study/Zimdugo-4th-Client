@@ -23,6 +23,7 @@ import { Route as NoticesNoticeIdRouteImport } from './routes/notices.$noticeId'
 import { Route as SettingsLanguageRouteImport } from './routes/settings.language'
 import { Route as SettingsNoticesRouteImport } from './routes/settings.notices'
 import { Route as SettingsPrivacyRouteImport } from './routes/settings.privacy'
+import { Route as SettingsServiceGuideRouteImport } from './routes/settings.service-guide'
 import { Route as SettingsTermsRouteImport } from './routes/settings.terms'
 import { Route as SettingsThemeRouteImport } from './routes/settings.theme'
 import { Route as MapScreenIndexRouteImport } from './routes/_map._screen.index'
@@ -99,6 +100,11 @@ const SettingsPrivacyRoute = SettingsPrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsServiceGuideRoute = SettingsServiceGuideRouteImport.update({
+  id: '/service-guide',
+  path: '/service-guide',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsTermsRoute = SettingsTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
+  '/settings/service-guide': typeof SettingsServiceGuideRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
   '/my/': typeof MyIndexRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
+  '/settings/service-guide': typeof SettingsServiceGuideRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
   '/my': typeof MyIndexRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/settings/language': typeof SettingsLanguageRoute
   '/settings/notices': typeof SettingsNoticesRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
+  '/settings/service-guide': typeof SettingsServiceGuideRoute
   '/settings/terms': typeof SettingsTermsRoute
   '/settings/theme': typeof SettingsThemeRoute
   '/my/': typeof MyIndexRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
+    | '/settings/service-guide'
     | '/settings/terms'
     | '/settings/theme'
     | '/my/'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
+    | '/settings/service-guide'
     | '/settings/terms'
     | '/settings/theme'
     | '/my'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/settings/language'
     | '/settings/notices'
     | '/settings/privacy'
+    | '/settings/service-guide'
     | '/settings/terms'
     | '/settings/theme'
     | '/my/'
@@ -383,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsPrivacyRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/service-guide': {
+      id: '/settings/service-guide'
+      path: '/service-guide'
+      fullPath: '/settings/service-guide'
+      preLoaderRoute: typeof SettingsServiceGuideRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/terms': {
       id: '/settings/terms'
       path: '/terms'
@@ -478,6 +497,7 @@ interface SettingsRouteChildren {
   SettingsLanguageRoute: typeof SettingsLanguageRoute
   SettingsNoticesRoute: typeof SettingsNoticesRoute
   SettingsPrivacyRoute: typeof SettingsPrivacyRoute
+  SettingsServiceGuideRoute: typeof SettingsServiceGuideRoute
   SettingsTermsRoute: typeof SettingsTermsRoute
   SettingsThemeRoute: typeof SettingsThemeRoute
 }
@@ -486,6 +506,7 @@ const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsLanguageRoute: SettingsLanguageRoute,
   SettingsNoticesRoute: SettingsNoticesRoute,
   SettingsPrivacyRoute: SettingsPrivacyRoute,
+  SettingsServiceGuideRoute: SettingsServiceGuideRoute,
   SettingsTermsRoute: SettingsTermsRoute,
   SettingsThemeRoute: SettingsThemeRoute,
 }

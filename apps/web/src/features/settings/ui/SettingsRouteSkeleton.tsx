@@ -71,6 +71,7 @@ export function SettingsSkeleton({
       ) : null}
       <div style={{ display: "flex", flexDirection: "column" }}>
         <SettingsSkeletonRow width={124} />
+        <SettingsSkeletonRow attached width={96} />
         <SettingsSkeletonRow attached width={116} />
         <SettingsSkeletonRow attached width={108} />
         <SettingsSkeletonRow attached width={132} />

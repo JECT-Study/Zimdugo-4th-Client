@@ -139,6 +139,7 @@ export function SettingsPage() {
         languageValue={currentLanguageLabel}
         onThemePress={() => navigate({ to: "/settings/theme" })}
         themeValue={getMapColorSchemeLabel(mapColorSchemePreference)}
+        onServiceGuidePress={() => navigate({ to: "/settings/service-guide" })}
         onNoticePress={() => navigate({ to: "/notices" })}
         onTermsPress={() => navigate({ to: "/settings/terms" })}
         onPrivacyPress={() => navigate({ to: "/settings/privacy" })}
