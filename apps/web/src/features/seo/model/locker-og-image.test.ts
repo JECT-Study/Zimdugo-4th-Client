@@ -91,6 +91,24 @@ describe("createLockerOgImageResponse", () => {
     expect(headers.get("x-ncp-apigw-api-key")).toBe("client-secret");
   });
 
+  it("지도 API가 붙인 charset 은 떼고 이미지 미디어 타입만 낸다", async () => {
+    const dependencies = createDependencies({
+      fetchMap: vi.fn().mockResolvedValue(
+        new Response(new Uint8Array([137, 80, 78, 71]), {
+          headers: { "Content-Type": "image/png;charset=UTF-8" },
+        }),
+      ),
+    });
+
+    const response = await createLockerOgImageResponse({
+      rawLockerId: "164",
+      requestUrl: REQUEST_URL,
+      dependencies,
+    });
+
+    expect(response.headers.get("Content-Type")).toBe("image/png");
+  });
+
   it("지도 API가 이미지가 아닌 응답을 주면 기본 이미지로 보낸다", async () => {
     const dependencies = createDependencies({
       fetchMap: vi.fn().mockResolvedValue(
