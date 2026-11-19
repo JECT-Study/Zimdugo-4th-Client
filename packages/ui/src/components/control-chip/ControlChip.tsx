@@ -25,6 +25,8 @@ export interface ControlChipProps
   sortDirection?: SortDirection;
   className?: string;
   leadingIcon?: ReactNode;
+  /** 라벨 뒤에 붙는 아이콘. 지우기(×)처럼 칩 전체의 동작을 알리는 표시에 쓴다. */
+  trailingIcon?: ReactNode;
   isLabelVisible?: boolean;
   showsIndicator?: boolean;
 }
@@ -38,6 +40,7 @@ export function ControlChip({
   sortDirection = "none",
   className,
   leadingIcon,
+  trailingIcon,
   isLabelVisible = true,
   showsIndicator = true,
   ...props
@@ -81,6 +84,9 @@ export function ControlChip({
             tone={isVisuallyActive ? "active" : "default"}
           />
         </span>
+      ) : null}
+      {trailingIcon ? (
+        <span className={controlChipIcon}>{trailingIcon}</span>
       ) : null}
     </AriaButton>
   );
