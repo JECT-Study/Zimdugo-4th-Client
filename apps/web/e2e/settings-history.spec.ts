@@ -140,6 +140,9 @@ test.describe("설정 화면과 브라우저 히스토리", () => {
     // 설정에서 들어와야 뒤로 돌아갈 자리가 생긴다. 언어 화면부터 바로 열면
     // 되돌아갈 곳이 브라우저의 빈 문서라 무엇을 확인해도 뜻이 없다.
     await page.goto("/settings");
+    // 스크롤 복원은 항목 키로 자리를 찾는다. 주소를 고치며 키를 새로 만들면
+    // 돌아와도 예전 스크롤 위치를 잃는다.
+    const settingsKey = await page.evaluate(() => history.state?.__TSR_key);
     await openSettingsRow(page, /언어 설정/);
     await expect(page.getByRole("button", { name: /English/ })).toBeVisible();
 
@@ -161,10 +164,37 @@ test.describe("설정 화면과 브라우저 히스토리", () => {
     // 화면을 다시 연다.
     await pressHeaderBack(page);
     await page.waitForLoadState("domcontentloaded");
-    await expect.poll(() => currentPath(page)).toMatch(/\/settings$/);
+    // 주소 끝만 보면 예전 언어의 /settings 로 돌아가도 통과한다. 고른 언어의
+    // 주소인지, 화면도 그 언어로 그려졌는지 함께 본다.
+    await expect.poll(() => currentPath(page)).toBe("/en/settings");
+    await expect(page.getByRole("button", { name: /^Language/ })).toBeVisible();
+    expect(await historyLength(page)).toBe(baseline);
+    expect(await page.evaluate(() => history.state?.__TSR_key)).toBe(
+      settingsKey,
+    );
 
     await pressDeviceBack(page);
     await page.waitForLoadState("domcontentloaded");
     await expect.poll(() => currentPath(page)).not.toMatch(/settings/);
+  });
+
+  test("영어에서 한국어로 바꾸고 뒤로가면 한국어 설정 화면으로 돌아간다", async ({
+    page,
+  }) => {
+    await page.goto("/en/settings");
+    await openSettingsRow(page, /^Language/);
+    await expect(page.getByRole("button", { name: /한국어/ })).toBeVisible();
+
+    const baseline = await historyLength(page);
+
+    await page.getByRole("button", { name: /한국어/ }).first().click();
+    await page.waitForURL((url) => url.pathname === "/settings/language");
+    await page.waitForLoadState("domcontentloaded");
+
+    await pressHeaderBack(page);
+    await page.waitForLoadState("domcontentloaded");
+    await expect.poll(() => currentPath(page)).toBe("/settings");
+    await expect(page.getByRole("button", { name: /언어 설정/ })).toBeVisible();
+    expect(await historyLength(page)).toBe(baseline);
   });
 });
