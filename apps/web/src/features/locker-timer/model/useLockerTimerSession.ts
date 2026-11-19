@@ -143,8 +143,21 @@ export interface LockerTimerSessionState {
    * 불러야 안내가 제때 뜬다.
    */
   ensureEnvironment: () => boolean;
-  start: (durationInSeconds: number) => Promise<boolean>;
+  start: (
+    durationInSeconds: number,
+    options?: LockerTimerStartOptions,
+  ) => Promise<boolean>;
   stop: () => Promise<boolean>;
+}
+
+export interface LockerTimerStartOptions {
+  /**
+   * 다른 보관함에서 돌고 있는 타이머를 지우고 새로 만든다.
+   *
+   * 지우기는 권한과 푸시 구독이 준비된 뒤에 한다. 준비가 실패하면 기존 타이머는
+   * 그대로 남는다. 먼저 지우면 권한이 거부됐을 때 둘 다 잃는다.
+   */
+  shouldReplaceExisting?: boolean;
 }
 
 export const useLockerTimerSession = (
@@ -204,7 +217,10 @@ export const useLockerTimerSession = (
   }, []);
 
   const start = useCallback(
-    async (durationInSeconds: number) => {
+    async (
+      durationInSeconds: number,
+      { shouldReplaceExisting = false }: LockerTimerStartOptions = {},
+    ) => {
       if (isStartingRef.current) return false;
 
       // 권한 요청보다 먼저 잠근다. 권한이 아직 default 면 브라우저 팝업을
@@ -239,6 +255,20 @@ export const useLockerTimerSession = (
         await postPushDevice();
         await ensurePushSubscription();
 
+        // 새 타이머를 만들 준비가 다 된 뒤에야 기존 것을 지운다. 지우기 실패는
+        // 켜기가 아니라 끄기 실패로 알린다. 기존 타이머가 남아 있다는 뜻이다.
+        if (shouldReplaceExisting && reminder) {
+          isStoppingRef.current = true;
+          try {
+            await deleteReminder.mutateAsync(reminder.id);
+          } catch (error) {
+            setFailure({ operation: "stop", reason: toFailure(error) });
+            return false;
+          } finally {
+            isStoppingRef.current = false;
+          }
+        }
+
         const startedAt = new Date(Date.now() + START_BUFFER_MS);
         const endAt = new Date(Date.now() + durationInSeconds * 1000);
 
@@ -257,7 +287,7 @@ export const useLockerTimerSession = (
         setIsStarting(false);
       }
     },
-    [lockerId, createReminder, ensureEnvironment],
+    [lockerId, reminder, createReminder, deleteReminder, ensureEnvironment],
   );
 
   const clearFailure = useCallback(() => setFailure(null), []);

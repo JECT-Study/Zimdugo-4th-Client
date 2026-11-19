@@ -352,6 +352,42 @@ describe("LockerDetailBottomSheet", () => {
     );
   });
 
+  it("알림이 차단된 채 교체를 확인하면 기존 타이머를 남기고 차단을 알린다", async () => {
+    // 기존 타이머를 먼저 지우고 권한을 보면, 차단된 브라우저에서 둘 다 잃는다.
+    vi.stubGlobal("Notification", {
+      permission: "denied",
+      requestPermission: vi.fn(async () => "denied"),
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: 99,
+        startedAt: new Date().toISOString(),
+        endAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+        totalUsageMinutes: 60,
+        remainingMinutes: 60,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+    fireEvent.keyDown(screen.getByRole("listbox", { name: "보관 시간" }), {
+      key: "ArrowDown",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "타이머 켜기" }));
+    fireEvent.click(await screen.findByRole("button", { name: "예" }));
+
+    expect(await screen.findByText("타이머를 켜지 못했어요")).toBeTruthy();
+    expect(deletePushReminderMock).not.toHaveBeenCalled();
+    expect(postPushReminderMock).not.toHaveBeenCalled();
+  });
+
   it("다른 보관함으로 바꾸면 고르던 시간을 지운다", () => {
     // 시트는 보관함마다 새로 마운트되지 않는다. 남겨 두면 A 에서 고른 시간으로
     // B 에 리마인더가 만들어진다.

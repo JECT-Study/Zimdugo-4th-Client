@@ -405,12 +405,12 @@ export function LockerDetailScreen({
       (Number(timerHours) * 60 + Number(timerMinutes)) * 60;
     if (configuredTimeInSeconds <= 0) return;
 
-    if (shouldReplaceExistingTimer) {
-      const hasStopped = await timerSession.stop();
-      if (!hasStopped) return;
-    }
-
-    const hasStarted = await timerSession.start(configuredTimeInSeconds);
+    // 기존 타이머는 세션이 권한·구독을 확인한 뒤에 지운다. 여기서 먼저 지우면
+    // 권한이 거부됐을 때 기존 것만 사라진다. 권한 요청이 이 클릭 안에서 곧바로
+    // 일어나야 한다는 점에서도, 지우기를 기다린 뒤 시작하면 안 된다.
+    const hasStarted = await timerSession.start(configuredTimeInSeconds, {
+      shouldReplaceExisting: shouldReplaceExistingTimer,
+    });
     if (hasStarted) {
       setTimerNow(Date.now());
     }

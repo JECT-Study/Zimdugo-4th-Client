@@ -258,6 +258,104 @@ describe("useLockerTimerSession", () => {
     });
   });
 
+  describe("다른 보관함의 타이머 교체", () => {
+    const renderWithAnotherLockerTimer = () => {
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
+      queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+        {
+          id: 7,
+          lockerId: 999,
+          startedAt: new Date().toISOString(),
+          endAt: new Date(Date.now() + 600_000).toISOString(),
+          totalUsageMinutes: 10,
+          remainingMinutes: 10,
+          remindBeforeMinutes: null,
+        },
+      ]);
+      const seeded = ({ children }: { children?: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      );
+
+      return renderHook(() => useLockerTimerSession(171), { wrapper: seeded });
+    };
+
+    it("알림 권한이 거부되면 기존 타이머를 지우지 않는다", async () => {
+      vi.stubGlobal("Notification", {
+        permission: "default",
+        requestPermission: vi.fn(async () => "denied"),
+      });
+      const { result } = renderWithAnotherLockerTimer();
+
+      let hasStarted: boolean | undefined;
+      await act(async () => {
+        hasStarted = await result.current.start(600, {
+          shouldReplaceExisting: true,
+        });
+      });
+
+      expect(hasStarted).toBe(false);
+      expect(deletePushReminder).not.toHaveBeenCalled();
+      expect(postPushReminder).not.toHaveBeenCalled();
+      expect(result.current.failure).toEqual({
+        operation: "start",
+        reason: { kind: "permission-denied" },
+      });
+      expect(result.current.hasTimerForAnotherLocker).toBe(true);
+    });
+
+    it("푸시 구독 준비가 실패하면 기존 타이머를 지우지 않는다", async () => {
+      ensurePushSubscription.mockRejectedValueOnce(new Error("subscribe"));
+      const { result } = renderWithAnotherLockerTimer();
+
+      await act(async () => {
+        await result.current.start(600, { shouldReplaceExisting: true });
+      });
+
+      expect(deletePushReminder).not.toHaveBeenCalled();
+      expect(result.current.hasTimerForAnotherLocker).toBe(true);
+    });
+
+    it("구독 준비가 끝난 뒤 기존 타이머를 지우고 새로 만든다", async () => {
+      const { result } = renderWithAnotherLockerTimer();
+
+      let hasStarted: boolean | undefined;
+      await act(async () => {
+        hasStarted = await result.current.start(600, {
+          shouldReplaceExisting: true,
+        });
+      });
+
+      expect(hasStarted).toBe(true);
+      expect(deletePushReminder).toHaveBeenCalledWith(7);
+      expect(ensurePushSubscription.mock.invocationCallOrder[0]).toBeLessThan(
+        deletePushReminder.mock.invocationCallOrder[0],
+      );
+      expect(deletePushReminder.mock.invocationCallOrder[0]).toBeLessThan(
+        postPushReminder.mock.invocationCallOrder[0],
+      );
+    });
+
+    it("기존 타이머를 지우지 못하면 새로 만들지 않고 끄기 실패로 알린다", async () => {
+      deletePushReminder.mockRejectedValueOnce(new Error("network"));
+      const { result } = renderWithAnotherLockerTimer();
+
+      let hasStarted: boolean | undefined;
+      await act(async () => {
+        hasStarted = await result.current.start(600, {
+          shouldReplaceExisting: true,
+        });
+      });
+
+      expect(hasStarted).toBe(false);
+      expect(postPushReminder).not.toHaveBeenCalled();
+      expect(result.current.failure?.operation).toBe("stop");
+    });
+  });
+
   it("시작이 끝나면 다시 시작할 수 있다", async () => {
     const { result } = renderHook(() => useLockerTimerSession(171), {
       wrapper,
