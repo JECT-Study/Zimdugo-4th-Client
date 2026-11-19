@@ -162,7 +162,9 @@ export const createLockerOgImageResponse = async ({
 
     return new Response(imageBytes, {
       headers: {
-        "Content-Type": contentType,
+        // Static Map 은 `image/png;charset=UTF-8` 처럼 이미지에 charset 을 붙여 준다.
+        // 미리보기 스크래퍼가 엄격하게 볼 수 있어 미디어 타입만 남긴다.
+        "Content-Type": contentType.split(";")[0].trim(),
         "Cache-Control": SUCCESS_CACHE_CONTROL,
       },
     });
