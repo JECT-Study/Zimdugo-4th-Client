@@ -3,6 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = 4173;
 // Naver 지도 키가 도메인 화이트리스트로 묶여 있다. localhost 로 맞춰야 SDK 가 붙는다.
 const BASE_URL = `http://localhost:${PORT}`;
+/** 프리뷰 서버(SSR)가 부르는 가짜 백엔드 */
+const SSR_STUB_API_PORT = 4174;
 
 /**
  * 지도 컨트롤·바텀시트처럼 레이아웃과 애니메이션이 얽힌 동작을 검증한다.
@@ -49,12 +51,28 @@ export default defineConfig({
    * dev 서버는 첫 요청마다 모듈을 변환하느라 지도 SDK 가 붙기 전에 단언이 먼저
    * 끝나는 일이 잦다. 빌드 결과로 띄우면 프로덕션과 같은 번들을 보게 된다.
    */
-  webServer: {
-    command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 300_000,
-    stdout: "pipe",
-    stderr: "pipe",
-  },
+  webServer: [
+    /*
+     * 서버 로더가 부르는 API 를 받는다. 브라우저 요청은 스펙의 `page.route` 가
+     * 받으므로 여기에 오지 않는다. 자세한 사정은 e2e/support/ssr-stub-api.ts.
+     */
+    {
+      command: `node e2e/support/ssr-stub-api.ts`,
+      port: SSR_STUB_API_PORT,
+      env: { SSR_STUB_API_PORT: String(SSR_STUB_API_PORT) },
+      reuseExistingServer: !process.env.CI,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+    {
+      command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
+      url: BASE_URL,
+      // 서버 전용 이름이다. VITE_API_BASE_URL 은 클라이언트 번들에도 박힌다.
+      env: { API_BASE_URL: `http://localhost:${SSR_STUB_API_PORT}` },
+      reuseExistingServer: !process.env.CI,
+      timeout: 300_000,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+  ],
 });
