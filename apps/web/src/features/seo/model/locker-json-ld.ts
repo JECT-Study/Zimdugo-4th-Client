@@ -82,7 +82,7 @@ export const createLockerJsonLd = ({
     "@type": "Place",
     "@id": url,
     url,
-    name: detail.title,
+    ...(detail.title?.trim() ? { name: detail.title.trim() } : {}),
     ...(description ? { description } : {}),
     ...(imageUrl ? { image: imageUrl } : {}),
     ...(detail.address

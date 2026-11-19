@@ -73,6 +73,22 @@ describe("createLockerJsonLd", () => {
     expect(jsonLd).not.toHaveProperty("additionalProperty");
   });
 
+  it("이름이 비어 있으면 빈 name 을 내지 않고 키째 뺀다", () => {
+    expect(
+      createLockerJsonLd({ detail: { ...baseDetail, title: "" }, url: URL }),
+    ).not.toHaveProperty("name");
+    expect(
+      createLockerJsonLd({ detail: { ...baseDetail, title: "  " }, url: URL }),
+    ).not.toHaveProperty("name");
+  });
+
+  it("이름이 있으면 name 으로 싣는다", () => {
+    expect(createLockerJsonLd({ detail: baseDetail, url: URL })).toHaveProperty(
+      "name",
+      "9호선 중앙보훈병원",
+    );
+  });
+
   it("장소·운영 시간·가격대·이미지를 함께 싣는다", () => {
     const jsonLd = createLockerJsonLd({
       detail: {
