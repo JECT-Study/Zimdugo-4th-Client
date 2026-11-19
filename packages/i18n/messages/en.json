@@ -70,6 +70,8 @@
   "search_filter_place_train_short": "Train",
   "search_filter_place_other": "Other",
   "search_filter_place_other_short": "Other",
+  "search_filter_badge_remove": "Remove {label} filter",
+  "search_filter_badge_more": "Show {count} more filters",
   "search_filter_back_to_results": "Back to results",
   "search_filter_reset": "Reset",
   "search_filter_view_lockers": "View Lockers",

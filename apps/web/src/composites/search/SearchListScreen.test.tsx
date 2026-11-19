@@ -2,7 +2,7 @@
 
 import { m, setLanguageTag } from "@repo/i18n";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -19,6 +19,7 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   resolveBottomSheetExpandedProgress: () => 1,
 }));
 
+import { createDefaultSearchFilters } from "./SearchFilterScreen";
 import { SearchListScreen } from "./SearchListScreen";
 
 afterEach(cleanup);
@@ -66,6 +67,35 @@ describe("SearchListScreen", () => {
         name: m.search_filter_dropdown_place_type(),
       }),
     ).toBeTruthy();
+  });
+
+  it("필터 뱃지를 지우면 그 항목만 뺀 필터를 올려보낸다", () => {
+    setLanguageTag("ko");
+    const handleAppliedFiltersChange = vi.fn();
+
+    renderScreen(
+      <SearchListScreen
+        searchQuery="강남"
+        isFilterActive
+        onOpenFilter={vi.fn()}
+        appliedFilters={{
+          ...createDefaultSearchFilters(),
+          sizeActive: true,
+          placeTypeActive: true,
+          selectedSizes: ["S"],
+          placeTypeState: ["subway"],
+        }}
+        onAppliedFiltersChange={handleAppliedFiltersChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "소형 필터 해제" }));
+
+    expect(handleAppliedFiltersChange).toHaveBeenCalledWith({
+      ...createDefaultSearchFilters(),
+      placeTypeActive: true,
+      placeTypeState: ["subway"],
+    });
   });
 
   /**

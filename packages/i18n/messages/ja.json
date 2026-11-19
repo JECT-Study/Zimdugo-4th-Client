@@ -70,6 +70,8 @@
   "search_filter_place_train_short": "駅",
   "search_filter_place_other": "その他",
   "search_filter_place_other_short": "その他",
+  "search_filter_badge_remove": "{label}のフィルターを解除",
+  "search_filter_badge_more": "フィルターをあと{count}件表示",
   "search_filter_back_to_results": "結果に戻る",
   "search_filter_reset": "リセット",
   "search_filter_view_lockers": "ロッカーを見る",

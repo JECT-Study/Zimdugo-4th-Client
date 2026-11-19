@@ -19,6 +19,7 @@ import {
   DraggableBottomSheet,
   resolveBottomSheetExpandedProgress,
 } from "#/shared/ui/DraggableBottomSheet";
+import type { SearchFilterAppliedState } from "./SearchFilterScreen";
 import { SearchListScreen } from "./SearchListScreen";
 import type {
   SearchLockerResultItem,
@@ -44,6 +45,8 @@ export interface SearchListBottomSheetProps {
   onResetFilter?: () => void;
   isFilterActive?: boolean;
   isFilterOpen?: boolean;
+  appliedFilters?: SearchFilterAppliedState;
+  onAppliedFiltersChange?: (filters: SearchFilterAppliedState) => void;
   placeName?: string | null;
   onLockerPress?: (item: SearchLockerResultItem) => void;
   onPlacePress?: (item: SearchPlaceResultItem) => void;
@@ -317,6 +320,8 @@ export function SearchListBottomSheet({
   onResetFilter,
   isFilterActive = false,
   isFilterOpen = false,
+  appliedFilters,
+  onAppliedFiltersChange,
   placeName = null,
   onLockerPress,
   onPlacePress,
@@ -524,6 +529,8 @@ export function SearchListBottomSheet({
         englishSubPolicy={englishSubPolicy}
         isFilterActive={isFilterActive}
         isFilterOpen={isFilterOpen}
+        appliedFilters={appliedFilters}
+        onAppliedFiltersChange={onAppliedFiltersChange}
         isLoading={isLoading}
         isError={isError}
         onRetry={onRetry}
