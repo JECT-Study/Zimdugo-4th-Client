@@ -57,6 +57,7 @@ export interface SettingsPageViewProps {
   onThemePress?: () => void;
   /** 테마 행에 표시할 현재 선택값 */
   themeValue?: string;
+  onServiceGuidePress: () => void;
   onNoticePress: () => void;
   onTermsPress: () => void;
   onPrivacyPress: () => void;
@@ -71,6 +72,7 @@ export function SettingsPageView({
   languageValue,
   onThemePress,
   themeValue,
+  onServiceGuidePress,
   onNoticePress,
   onTermsPress,
   onPrivacyPress,
@@ -204,6 +206,10 @@ export function SettingsPageView({
 
         <section className={[group, groupGap].join(" ")}>
           <SettingsRow label={m.settings_notice()} onPress={onNoticePress} />
+          <SettingsRow
+            label={m.settings_service_guide()}
+            onPress={onServiceGuidePress}
+          />
           <SettingsRow label={m.settings_terms()} onPress={onTermsPress} />
           <SettingsRow label={m.settings_privacy()} onPress={onPrivacyPress} />
           {onWithdrawPress ? (

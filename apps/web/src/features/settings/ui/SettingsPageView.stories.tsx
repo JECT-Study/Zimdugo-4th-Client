@@ -42,6 +42,7 @@ const meta = {
     onBack: () => undefined,
     onLanguagePress: () => undefined,
     onThemePress: undefined,
+    onServiceGuidePress: () => undefined,
     onNoticePress: () => undefined,
     onTermsPress: () => undefined,
     onPrivacyPress: () => undefined,

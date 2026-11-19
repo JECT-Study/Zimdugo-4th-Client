@@ -35,6 +35,7 @@ const renderView = ({ isAuthenticated = true } = {}) => {
           appVersion="1.0.0"
           onBack={vi.fn()}
           onLanguagePress={vi.fn()}
+          onServiceGuidePress={vi.fn()}
           onNoticePress={vi.fn()}
           onTermsPress={vi.fn()}
           onPrivacyPress={vi.fn()}
