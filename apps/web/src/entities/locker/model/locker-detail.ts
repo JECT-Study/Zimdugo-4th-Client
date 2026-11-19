@@ -31,6 +31,9 @@ export interface LockerSummaryItem {
 }
 
 export interface LockerDetailItem extends LockerSummaryItem {
+  /** 보관함이 속한 장소(역 출구·건물 등). 검색 노출 문구에 지역명으로 쓴다. */
+  placeName?: string;
+  maxPrice?: number;
   operatingHoursLabel?: string;
   floorLabel?: string;
   priceLabel?: string;
