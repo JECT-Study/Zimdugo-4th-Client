@@ -4,7 +4,13 @@ import { Button } from "@repo/ui/components/button";
 import { ControlChip } from "@repo/ui/components/control-chip";
 import { type CSSProperties, type ReactNode, useMemo, useRef } from "react";
 import { NonSearch, SearchListResults } from "#/entities/search";
+import {
+  removeSearchFilterBadge,
+  type SearchFilterBadge,
+  toSearchFilterBadges,
+} from "#/features/search/model/search-filter-badges";
 import { SearchAsyncFeedback } from "#/features/search/ui/search-async-feedback/SearchAsyncFeedback";
+import { SearchFilterBadgeList } from "#/features/search/ui/search-filter-badges/SearchFilterBadgeList";
 import { SearchResultsHeading } from "#/features/search/ui/search-results-heading/SearchResultsHeading";
 import { inSheetHeader } from "#/features/search/ui/search-results-heading/SearchResultsHeading.css.ts";
 import { SearchResultListSkeleton } from "#/features/search/ui/search-skeleton/SearchResultListSkeleton";
@@ -15,6 +21,7 @@ import {
 } from "#/shared/i18n/english-sub-policy";
 import type { AppLocale } from "#/shared/i18n/locales";
 import { markOperatingStatus } from "./operating-status";
+import type { SearchFilterAppliedState } from "./SearchFilterScreen";
 import {
   emptyState,
   emptyStateResetButton,
@@ -52,6 +59,10 @@ export interface SearchListScreenProps {
   englishSubPolicy?: EnglishSubPolicy;
   isFilterActive?: boolean;
   isFilterOpen?: boolean;
+  /** 적용된 필터. 필터 아이콘 옆에 뱃지로 늘어놓는다. */
+  appliedFilters?: SearchFilterAppliedState;
+  /** 뱃지를 지워 바뀐 필터. 넘겨받지 않으면 뱃지를 그리지 않는다. */
+  onAppliedFiltersChange?: (filters: SearchFilterAppliedState) => void;
   isLoading?: boolean;
   isError?: boolean;
   onRetry?: () => void;
@@ -86,6 +97,8 @@ export function SearchListScreen({
   onResetFilter,
   isFilterActive = false,
   isFilterOpen = false,
+  appliedFilters,
+  onAppliedFiltersChange,
   placeName = null,
   onLockerPress,
   onPlacePress,
@@ -125,6 +138,16 @@ export function SearchListScreen({
     opacity: 0.84 + expandedProgress * 0.16,
     transform: `translateY(${(1 - expandedProgress) * 6}px)`,
   };
+  const filterBadges =
+    appliedFilters && onAppliedFiltersChange
+      ? toSearchFilterBadges(appliedFilters)
+      : [];
+  /*
+   * 필터 줄은 제목과 따로 보인다. 검색이 실패해도 걸린 필터를 빼고 다시 시도할 수
+   * 있어야 한다. 제목은 결과가 없으니 그대로 숨긴다.
+   */
+  const showFilterControls =
+    showResultHeader || (isError && filterBadges.length > 0);
   const resultTitleText = placeName
     ? m.search_place_lockers_title({ place: placeName })
     : undefined;
@@ -142,6 +165,12 @@ export function SearchListScreen({
    * 첫 페인트 전에 재는 이유는 필터 시트와 같다. 그 뒤에 재면 시트가 잘못된 자리에서
    * 올라오다 옮겨 앉는 게 보인다.
    */
+  const handleRemoveFilterBadge = (badge: SearchFilterBadge) => {
+    if (!appliedFilters) return;
+
+    onAppliedFiltersChange?.(removeSearchFilterBadge(appliedFilters, badge));
+  };
+
   useIsomorphicLayoutEffect(() => {
     const measure = () => {
       const list = listMeasureRef.current;
@@ -190,24 +219,28 @@ export function SearchListScreen({
 
   return (
     <div className={sheetColumn}>
-      {showResultHeader ? (
+      {showFilterControls ? (
         <div
           ref={headerMeasureRef}
           className={resultHeader}
           style={resultHeaderStyle}
         >
-          <div className={headerLeadingRow}>
-            <div className={headerTitleSlot}>
-              <SearchResultsHeading
-                className={inSheetHeader}
-                queryText={searchQuery}
-                titleText={resultTitleText}
-                resultCount={
-                  hasResult || showFilterEmpty ? visibleItems.length : undefined
-                }
-              />
+          {showResultHeader ? (
+            <div className={headerLeadingRow}>
+              <div className={headerTitleSlot}>
+                <SearchResultsHeading
+                  className={inSheetHeader}
+                  queryText={searchQuery}
+                  titleText={resultTitleText}
+                  resultCount={
+                    hasResult || showFilterEmpty
+                      ? visibleItems.length
+                      : undefined
+                  }
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
           {onOpenFilter ? (
             <div className={resultControlRow}>
               <ControlChip
@@ -220,6 +253,10 @@ export function SearchListScreen({
                 isLabelVisible={false}
                 showsIndicator={false}
                 leadingIcon={<IconFilter14 />}
+              />
+              <SearchFilterBadgeList
+                badges={filterBadges}
+                onRemove={handleRemoveFilterBadge}
               />
             </div>
           ) : null}

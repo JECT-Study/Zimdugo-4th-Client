@@ -2,6 +2,10 @@ import { vars } from "@repo/ui/vars";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect, useState } from "react";
 import { SearchListResult } from "#/entities/search";
+import {
+  createDefaultSearchFilters,
+  type SearchFilterAppliedState,
+} from "./SearchFilterScreen";
 import { SearchListBottomSheet } from "./SearchListBottomSheet";
 import type {
   SearchPlaceResultItem,
@@ -111,6 +115,43 @@ export const Default: Story = {
     return (
       <SearchListBottomSheet
         {...args}
+        minSnapPoint={0}
+        snapPoint={120}
+        maxSnapPoint={innerHeight - 24}
+      />
+    );
+  },
+};
+
+const STORY_APPLIED_FILTERS: SearchFilterAppliedState = {
+  ...createDefaultSearchFilters(),
+  sizeActive: true,
+  regionActive: true,
+  placeTypeActive: true,
+  selectedSizes: ["S", "L"],
+  indoorOutdoorState: ["indoor"],
+  placeTypeState: ["subway", "department", "other"],
+};
+
+export const WithFilterBadges: Story = {
+  args: {
+    searchQuery: "COEX",
+    appLanguage: "en",
+    items: STORY_LIST_ITEMS,
+  },
+  render: function Render(args) {
+    const innerHeight = useInnerHeight();
+    const [filters, setFilters] = useState(STORY_APPLIED_FILTERS);
+    const isFilterActive =
+      filters.sizeActive || filters.regionActive || filters.placeTypeActive;
+
+    return (
+      <SearchListBottomSheet
+        {...args}
+        isFilterActive={isFilterActive}
+        appliedFilters={filters}
+        onAppliedFiltersChange={setFilters}
+        onOpenFilter={() => setFilters(STORY_APPLIED_FILTERS)}
         minSnapPoint={0}
         snapPoint={120}
         maxSnapPoint={innerHeight - 24}

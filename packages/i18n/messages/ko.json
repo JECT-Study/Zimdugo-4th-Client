@@ -70,6 +70,8 @@
   "search_filter_place_train_short": "기차역",
   "search_filter_place_other": "기타",
   "search_filter_place_other_short": "기타",
+  "search_filter_badge_remove": "{label} 필터 해제",
+  "search_filter_badge_more": "필터 {count}개 더 보기",
   "search_filter_back_to_results": "결과로 돌아가기",
   "search_filter_reset": "초기화",
   "search_filter_view_lockers": "보관함 보기",

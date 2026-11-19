@@ -3428,6 +3428,8 @@ export function IndexPage() {
           placeName={activePlaceName}
           appLanguage={normalizeLocale(languageTag()) ?? BASE_LOCALE}
           isFilterActive={isSearchFilterActive}
+          appliedFilters={searchFilters}
+          onAppliedFiltersChange={applySearchFilters}
           isLoading={isSearchListLoading}
           isError={isSearchListError}
           onRetry={() => void refetchSearchList()}

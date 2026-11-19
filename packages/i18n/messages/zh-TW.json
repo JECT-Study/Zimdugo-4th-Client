@@ -70,6 +70,8 @@
   "search_filter_place_train_short": "火車站",
   "search_filter_place_other": "其他",
   "search_filter_place_other_short": "其他",
+  "search_filter_badge_remove": "移除{label}篩選",
+  "search_filter_badge_more": "顯示另外{count}個篩選條件",
   "search_filter_back_to_results": "返回結果",
   "search_filter_reset": "重置",
   "search_filter_view_lockers": "查看寄存櫃",
