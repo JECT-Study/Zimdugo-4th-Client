@@ -127,6 +127,8 @@
   "home_location_interrupted_notice": "位置情報の確認が中断されました",
   "home_location_interrupted_notice_action": "再試行",
   "home_location_interrupted_notice_close_aria": "位置情報の中断通知を閉じる",
+  "home_welcome_snackbar": "ようこそ！\n今日はどんなロッカーをお探しですか？",
+  "home_welcome_snackbar_close_aria": "初回案内を閉じる",
   "home_orientation_permission_title": "コンパスの権限が必要です",
   "home_orientation_permission_helper": "今どの方向を向いているか、\n地図でそのまま確認できます。",
   "map_area_aria": "Naver地図エリア",

@@ -67,6 +67,9 @@
     "./components/search-field": {
       "import": "./src/components/search-field/SearchField.tsx"
     },
+    "./components/snackbar": {
+      "import": "./src/components/snackbar/Snackbar.tsx"
+    },
     "./components/tab": {
       "import": "./src/components/tab/Tab.tsx"
     },

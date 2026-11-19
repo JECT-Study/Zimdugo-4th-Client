@@ -1,6 +1,6 @@
 import { languageTag, m } from "@repo/i18n";
-import { IconX24 } from "@repo/ui/assets/icons";
 import { Popup } from "@repo/ui/components/popup";
+import { Snackbar } from "@repo/ui/components/snackbar";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
@@ -95,6 +95,7 @@ import {
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { useHasActiveLockerTimer } from "#/features/locker-timer/hooks/useActiveLockerTimer";
 import { LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX } from "#/features/locker-timer/ui/LockerTimerMapControl.css";
+import { useWelcomeSnackbar } from "#/features/onboarding/hooks/useWelcomeSnackbar";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -201,14 +202,7 @@ import {
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
-import {
-  locationRecoveryNotice,
-  locationRecoveryNoticeAction,
-  locationRecoveryNoticeClose,
-  locationRecoveryNoticeMessage,
-  locationRecoveryNoticePositioner,
-  pageWrapper,
-} from "./-index.css";
+import { mapSnackbarPositioner, pageWrapper } from "./-index.css";
 import {
   resolveMapControlBottomPx,
   resolveVisibleSheetKind,
@@ -894,6 +888,25 @@ export function IndexPage() {
   const [isOrientationDeniedPopupOpen, setIsOrientationDeniedPopupOpen] =
     useState(false);
 
+  /*
+   * 첫 방문 안내는 아무것도 열려 있지 않은 홈에서만 띄운다. 시트나 검색 위에
+   * 뜨면 그 화면의 하단을 가리고, 권한 팝업보다 층이 높아 딤 위로 올라온다.
+   * 첫 방문은 권한을 묻는 때이기도 해서 팝업이 다 닫힌 뒤로 미룬다. 위치 복구
+   * 안내와는 같은 자리를 다투므로 그쪽이 먼저다.
+   */
+  const canShowWelcomeSnackbar =
+    context === "idle" &&
+    sheetMode === "idle" &&
+    !isSearchOpen &&
+    !isLocationPopupOpen &&
+    !isLocationErrorPopupOpen &&
+    !isOrientationDeniedPopupOpen &&
+    (!isLocationRequestInterrupted || isLocationRecoveryNoticeDismissed);
+  const {
+    isVisible: isWelcomeSnackbarVisible,
+    dismiss: dismissWelcomeSnackbar,
+  } = useWelcomeSnackbar(canShowWelcomeSnackbar);
+
   // 위치 권한 거부 시 카메라 추적을 해제하고 설정 안내를 연다.
   useEffect(() => {
     if (permission === "denied") {
@@ -1090,6 +1103,11 @@ export function IndexPage() {
   const handleDismissLocationRecoveryNotice = useCallback(() => {
     setIsLocationRecoveryNoticeDismissed(true);
   }, []);
+
+  const handleWelcomeSnackbarAction = useCallback(() => {
+    dismissWelcomeSnackbar();
+    void navigate({ to: "/settings/service-guide" });
+  }, [dismissWelcomeSnackbar, navigate]);
 
   // 상세를 닫으면 파라미터가 사라진다. 그때 표시를 지워야 같은 보관함을 다시
   // 열었을 때 카메라를 다시 맞춘다.
@@ -3359,27 +3377,29 @@ export function IndexPage() {
       ) : null}
 
       {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (
-        <div className={locationRecoveryNoticePositioner}>
-          <div className={locationRecoveryNotice} aria-live="polite">
-            <span className={locationRecoveryNoticeMessage}>
-              {m.home_location_interrupted_notice()}
-            </span>
-            <button
-              type="button"
-              className={locationRecoveryNoticeAction}
-              onClick={reloadForLocationRecovery}
-            >
-              {m.home_location_interrupted_notice_action()}
-            </button>
-            <button
-              type="button"
-              className={locationRecoveryNoticeClose}
-              aria-label={m.home_location_interrupted_notice_close_aria()}
-              onClick={handleDismissLocationRecoveryNotice}
-            >
-              <IconX24 />
-            </button>
-          </div>
+        <div className={mapSnackbarPositioner}>
+          <Snackbar
+            actionLabel={m.home_location_interrupted_notice_action()}
+            closeAriaLabel={m.home_location_interrupted_notice_close_aria()}
+            onAction={reloadForLocationRecovery}
+            onClose={handleDismissLocationRecoveryNotice}
+          >
+            {m.home_location_interrupted_notice()}
+          </Snackbar>
+        </div>
+      ) : null}
+
+      {isWelcomeSnackbarVisible ? (
+        <div className={mapSnackbarPositioner}>
+          <Snackbar
+            variant="light"
+            actionLabel={m.settings_service_guide()}
+            closeAriaLabel={m.home_welcome_snackbar_close_aria()}
+            onAction={handleWelcomeSnackbarAction}
+            onClose={dismissWelcomeSnackbar}
+          >
+            {m.home_welcome_snackbar()}
+          </Snackbar>
         </div>
       ) : null}
 

@@ -31,6 +31,10 @@ const timerPreview24Url = new URL(
 const timerEnd28Url = new URL("./assets/icon-timer-end-28.svg", import.meta.url)
   .href;
 const route20Url = new URL("./assets/icon-route-20.svg", import.meta.url).href;
+const snackbarClose12Url = new URL(
+  "./assets/icon-snackbar-close-12.svg",
+  import.meta.url,
+).href;
 /**
  * 내 위치 마커 도안.
  *
@@ -396,6 +400,18 @@ export function IconX16({ className }: { className?: string }) {
         strokeLinecap="round"
       />
     </svg>
+  );
+}
+
+export function IconSnackbarClose12() {
+  return (
+    <img
+      src={snackbarClose12Url}
+      alt=""
+      width={12}
+      height={12}
+      aria-hidden="true"
+    />
   );
 }
 

@@ -127,6 +127,8 @@
   "home_location_interrupted_notice": "Location check was interrupted",
   "home_location_interrupted_notice_action": "Try again",
   "home_location_interrupted_notice_close_aria": "Dismiss interrupted location notice",
+  "home_welcome_snackbar": "Welcome!\nWhat kind of locker are you looking for today?",
+  "home_welcome_snackbar_close_aria": "Dismiss welcome guide",
   "home_orientation_permission_title": "Compass permission required",
   "home_orientation_permission_helper": "See exactly which direction you're facing\nright on the map.",
   "map_area_aria": "Naver map area",

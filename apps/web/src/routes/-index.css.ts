@@ -123,7 +123,14 @@ const spin = keyframes({
   to: { transform: "rotate(360deg)" },
 });
 
-export const locationRecoveryNoticePositioner = style({
+/**
+ * 지도 위 스낵바(위치 복구 안내·첫 방문 안내)의 자리.
+ *
+ * 왼쪽은 상단 검색바와 같은 선에, 아랫변은 내 위치 버튼의 아랫변에 맞춘다.
+ * 오른쪽은 컨트롤 스택(버튼 42px + 간격 22px) 자리를 비워 둔다. 스낵바는 너비가
+ * 100% 라 자기 margin 으로는 줄어들지 않으므로 이 상자의 패딩으로 잡는다.
+ */
+export const mapSnackbarPositioner = style({
   position: "fixed",
   left: "50%",
   bottom: MAP_CONTROL_BOTTOM,
@@ -131,9 +138,9 @@ export const locationRecoveryNoticePositioner = style({
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,
   paddingLeft: vars.layout.safeAreaInlineStart,
-  paddingRight: vars.layout.safeAreaInlineEnd,
+  paddingRight: `calc(${vars.layout.safeAreaInlineEnd} + 64px)`,
   boxSizing: "border-box",
-  zIndex: 1200,
+  zIndex: vars.zIndex.toast,
   pointerEvents: "none",
   selectors: {
     [compactDeviceSelector]: {
@@ -148,99 +155,6 @@ export const locationRecoveryNoticePositioner = style({
           maxWidth: "100%",
         },
       },
-    },
-  },
-});
-
-export const locationRecoveryNotice = style({
-  position: "relative",
-  minHeight: "48px",
-  marginRight: "64px",
-  padding: `${vars.spacing[12]} 36px ${vars.spacing[12]} ${vars.spacing[16]}`,
-  border: `1px solid ${vars.color.palette.gray[200]}`,
-  borderRadius: vars.radius[8],
-  backgroundColor: vars.color.bg.default,
-  color: vars.color.text.title,
-  boxShadow: vars.shadow[2],
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: vars.spacing[12],
-  boxSizing: "border-box",
-  overflow: "visible",
-  pointerEvents: "auto",
-});
-
-export const locationRecoveryNoticeMessage = style({
-  minWidth: 0,
-  flex: 1,
-  fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: 1.4,
-  overflowWrap: "anywhere",
-});
-
-export const locationRecoveryNoticeAction = style({
-  flexShrink: 0,
-  padding: `${vars.spacing[8]} 0`,
-  border: 0,
-  background: "transparent",
-  color: vars.color.text.brand,
-  fontSize: vars.typography.fontSize[14],
-  fontWeight: vars.typography.fontWeight.SemiBold,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-  WebkitTapHighlightColor: "transparent",
-  touchAction: "manipulation",
-  selectors: {
-    "&:hover": {
-      textDecoration: "underline",
-    },
-    "&:active": {
-      opacity: 0.8,
-    },
-    "&:focus-visible": {
-      outline: `2px solid ${vars.color.focus}`,
-      outlineOffset: "2px",
-    },
-  },
-});
-
-/**
- * 상세 시트의 모달들과 같은 닫기 규격.
- *
- * 동그라미가 없는 x 라 카드 밖으로 걸치면 지도 위에 맨 아이콘만 떠서 잘 안 보인다.
- * 카드가 오른쪽에 비워 둔 36px 안으로 들여 세운다.
- */
-export const locationRecoveryNoticeClose = style({
-  position: "absolute",
-  top: "50%",
-  right: vars.spacing[8],
-  transform: "translateY(-50%)",
-  width: "28px",
-  height: "28px",
-  padding: 0,
-  border: 0,
-  borderRadius: vars.radius.max,
-  background: "transparent",
-  color: vars.color.icon.default,
-  cursor: "pointer",
-  WebkitTapHighlightColor: "transparent",
-  touchAction: "manipulation",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-  selectors: {
-    "&:hover": {
-      backgroundColor: vars.color.bg.surface,
-    },
-    "&:active": {
-      backgroundColor: vars.color.bg.active,
-    },
-    "&:focus-visible": {
-      outline: `2px solid ${vars.color.focus}`,
-      outlineOffset: "2px",
     },
   },
 });
