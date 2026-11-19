@@ -11,11 +11,11 @@ describe("첫 방문 안내 저장소", () => {
     vi.restoreAllMocks();
   });
 
-  it("현재 버전을 확인하기 전에는 안내를 노출한다", () => {
+  it("안내를 보기 전에는 노출한다", () => {
     expect(hasSeenWelcomeSnackbar()).toBe(false);
   });
 
-  it("현재 버전을 확인하면 다시 노출하지 않는다", () => {
+  it("안내를 본 것으로 기록하면 다시 노출하지 않는다", () => {
     markWelcomeSnackbarAsSeen();
 
     expect(window.localStorage.getItem(WELCOME_SNACKBAR_STORAGE_KEY)).toBe(

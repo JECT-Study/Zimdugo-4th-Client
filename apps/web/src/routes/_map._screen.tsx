@@ -202,13 +202,7 @@ import {
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
-import {
-  locationRecoveryNotice,
-  locationRecoveryNoticePositioner,
-  pageWrapper,
-  welcomeSnackbar,
-  welcomeSnackbarPositioner,
-} from "./-index.css";
+import { mapSnackbarPositioner, pageWrapper } from "./-index.css";
 import {
   resolveMapControlBottomPx,
   resolveVisibleSheetKind,
@@ -278,8 +272,6 @@ export const Route = createFileRoute("/_map/_screen")({
 export function IndexPage() {
   const navigate = useNavigate();
   const search = (useSearch({ strict: false }) || {}) as MapScreenSearchParams;
-  const { isOpen: isWelcomeSnackbarOpen, dismiss: dismissWelcomeSnackbar } =
-    useWelcomeSnackbar();
   /*
    * 상세 라우트의 로더가 서버에서 가져온 상세. 이 화면은 자식 라우트의 위에 있어
    * 자기 로더 대신 매치 목록에서 꺼낸다.
@@ -895,6 +887,25 @@ export function IndexPage() {
 
   const [isOrientationDeniedPopupOpen, setIsOrientationDeniedPopupOpen] =
     useState(false);
+
+  /*
+   * 첫 방문 안내는 아무것도 열려 있지 않은 홈에서만 띄운다. 시트나 검색 위에
+   * 뜨면 그 화면의 하단을 가리고, 권한 팝업보다 층이 높아 딤 위로 올라온다.
+   * 첫 방문은 권한을 묻는 때이기도 해서 팝업이 다 닫힌 뒤로 미룬다. 위치 복구
+   * 안내와는 같은 자리를 다투므로 그쪽이 먼저다.
+   */
+  const canShowWelcomeSnackbar =
+    context === "idle" &&
+    sheetMode === "idle" &&
+    !isSearchOpen &&
+    !isLocationPopupOpen &&
+    !isLocationErrorPopupOpen &&
+    !isOrientationDeniedPopupOpen &&
+    (!isLocationRequestInterrupted || isLocationRecoveryNoticeDismissed);
+  const {
+    isVisible: isWelcomeSnackbarVisible,
+    dismiss: dismissWelcomeSnackbar,
+  } = useWelcomeSnackbar(canShowWelcomeSnackbar);
 
   // 위치 권한 거부 시 카메라 추적을 해제하고 설정 안내를 연다.
   useEffect(() => {
@@ -3366,9 +3377,8 @@ export function IndexPage() {
       ) : null}
 
       {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (
-        <div className={locationRecoveryNoticePositioner}>
+        <div className={mapSnackbarPositioner}>
           <Snackbar
-            className={locationRecoveryNotice}
             actionLabel={m.home_location_interrupted_notice_action()}
             closeAriaLabel={m.home_location_interrupted_notice_close_aria()}
             onAction={reloadForLocationRecovery}
@@ -3379,12 +3389,9 @@ export function IndexPage() {
         </div>
       ) : null}
 
-      {isWelcomeSnackbarOpen &&
-      context === "idle" &&
-      (!isLocationRequestInterrupted || isLocationRecoveryNoticeDismissed) ? (
-        <div className={welcomeSnackbarPositioner}>
+      {isWelcomeSnackbarVisible ? (
+        <div className={mapSnackbarPositioner}>
           <Snackbar
-            className={welcomeSnackbar}
             variant="light"
             actionLabel={m.settings_service_guide()}
             closeAriaLabel={m.home_welcome_snackbar_close_aria()}

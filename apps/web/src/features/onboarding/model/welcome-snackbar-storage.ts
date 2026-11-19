@@ -1,6 +1,4 @@
-const WELCOME_SNACKBAR_VERSION = "v1";
-
-export const WELCOME_SNACKBAR_STORAGE_KEY = `zimdugo:welcome-snackbar:${WELCOME_SNACKBAR_VERSION}`;
+export const WELCOME_SNACKBAR_STORAGE_KEY = "zimdugo:welcome-snackbar";
 
 export const hasSeenWelcomeSnackbar = (): boolean => {
   if (typeof window === "undefined") return false;

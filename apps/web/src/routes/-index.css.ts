@@ -123,7 +123,14 @@ const spin = keyframes({
   to: { transform: "rotate(360deg)" },
 });
 
-export const locationRecoveryNoticePositioner = style({
+/**
+ * 지도 위 스낵바(위치 복구 안내·첫 방문 안내)의 자리.
+ *
+ * 왼쪽은 상단 검색바와 같은 선에, 아랫변은 내 위치 버튼의 아랫변에 맞춘다.
+ * 오른쪽은 컨트롤 스택(버튼 42px + 간격 22px) 자리를 비워 둔다. 스낵바는 너비가
+ * 100% 라 자기 margin 으로는 줄어들지 않으므로 이 상자의 패딩으로 잡는다.
+ */
+export const mapSnackbarPositioner = style({
   position: "fixed",
   left: "50%",
   bottom: MAP_CONTROL_BOTTOM,
@@ -131,40 +138,7 @@ export const locationRecoveryNoticePositioner = style({
   width: "100%",
   maxWidth: vars.layout.appMaxWidth,
   paddingLeft: vars.layout.safeAreaInlineStart,
-  paddingRight: vars.layout.safeAreaInlineEnd,
-  boxSizing: "border-box",
-  zIndex: 1200,
-  pointerEvents: "none",
-  selectors: {
-    [compactDeviceSelector]: {
-      maxWidth: "100%",
-    },
-  },
-  "@media": {
-    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
-      maxWidth: vars.layout.tabletAppMaxWidth,
-      selectors: {
-        [compactDeviceSelector]: {
-          maxWidth: "100%",
-        },
-      },
-    },
-  },
-});
-
-export const locationRecoveryNotice = style({
-  marginRight: "64px",
-});
-
-export const welcomeSnackbarPositioner = style({
-  position: "fixed",
-  left: "50%",
-  bottom: "max(28px, env(safe-area-inset-bottom, 0px))",
-  transform: "translateX(-50%)",
-  width: "100%",
-  maxWidth: vars.layout.appMaxWidth,
-  paddingLeft: "max(17px, env(safe-area-inset-left, 0px))",
-  paddingRight: "max(17px, env(safe-area-inset-right, 0px))",
+  paddingRight: `calc(${vars.layout.safeAreaInlineEnd} + 64px)`,
   boxSizing: "border-box",
   zIndex: vars.zIndex.toast,
   pointerEvents: "none",
@@ -183,11 +157,6 @@ export const welcomeSnackbarPositioner = style({
       },
     },
   },
-});
-
-export const welcomeSnackbar = style({
-  maxWidth: "341px",
-  margin: "0 auto",
 });
 
 export const refreshButtonDisabled = style({
