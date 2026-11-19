@@ -1,5 +1,5 @@
 import { createBrowserHistory } from "@tanstack/react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   getDocumentLocaleHref,
@@ -98,6 +98,54 @@ describe("keepDocumentLocaleOnTraverse", () => {
 
     expect(window.history.length).toBe(lengthBefore);
     expect(history.canGoBack()).toBe(true);
+  });
+
+  /** 제목 setter 로 들어간 값을 차례대로 모은다 */
+  const recordTitleWrites = () => {
+    const writes: string[] = [];
+    const descriptor = Object.getOwnPropertyDescriptor(
+      Document.prototype,
+      "title",
+    );
+    const setter = vi
+      .spyOn(document, "title", "set")
+      .mockImplementation(function (this: Document, value: string) {
+        writes.push(value);
+        descriptor?.set?.call(this, value);
+      });
+    cleanups.push(() => setter.mockRestore());
+
+    return writes;
+  };
+
+  it("되감아 주소를 고치면 지금 제목을 다른 값을 거쳐 다시 쓴다", async () => {
+    const { history } = createSwitchedHistory();
+    document.title = "Zimdugo";
+    const writes = recordTitleWrites();
+
+    const popped = waitForPopState();
+    history.back();
+    await popped;
+
+    // 같은 값만 다시 쓰면 Chrome 이 탭 제목을 다시 읽지 않는다.
+    expect(writes).toEqual(["Zimdugo\u200B", "Zimdugo"]);
+    expect(document.title).toBe("Zimdugo");
+  });
+
+  it("고칠 것이 없는 되감기에서는 제목을 건드리지 않는다", async () => {
+    window.history.replaceState(null, "", "/en/settings");
+    const history = createBrowserHistory();
+    cleanups.push(() => history.destroy());
+    history.push("/en/settings/language");
+    history.flush();
+    cleanups.push(keepDocumentLocaleOnTraverse(history, "en"));
+    const writes = recordTitleWrites();
+
+    const popped = waitForPopState();
+    history.back();
+    await popped;
+
+    expect(writes).toEqual([]);
   });
 
   it("앞으로 새로 여는 화면은 건드리지 않는다", () => {

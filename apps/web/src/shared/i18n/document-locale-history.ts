@@ -53,4 +53,26 @@ export const keepDocumentLocaleOnTraverse = (
 
     win.history.replaceState(win.history.state, "", localizedHref);
     history.notify({ type: "REPLACE" });
+    reannounceDocumentTitle(win.document);
   });
+
+/** 제목 정리 때 공백처럼 잘려 나가지 않는 폭 없는 문자 */
+const ZERO_WIDTH_SPACE = "​";
+
+/**
+ * Chrome 은 히스토리 항목마다 제목을 저장해 두고, 같은 문서 안에서 되감으면
+ * 탭에 그 항목의 저장 제목을 띄운다. 이 항목은 예전 언어일 때 방문해서 예전 언어
+ * 제목이 저장돼 있다.
+ *
+ * 다시 띄운 문서의 제목은 되감기 전후로 같은 문자열이라 바뀌지 않고, 바뀌지 않은
+ * 제목은 Chrome 에 다시 전달되지 않는다. 같은 값을 다시 쓰거나 뒤에 공백을 붙였다
+ * 떼는 것도 정리 후 같은 값이라 무시된다. 폭 없는 문자로 한 번 바꿨다 되돌려
+ * 지금 제목을 이 항목에 다시 싣는다.
+ */
+const reannounceDocumentTitle = (doc: Document) => {
+  const title = doc.title;
+  if (!title) return;
+
+  doc.title = `${title}${ZERO_WIDTH_SPACE}`;
+  doc.title = title;
+};
