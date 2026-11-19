@@ -354,6 +354,8 @@
   "locker_timer_start": "開始計時",
   "locker_timer_stop": "停止計時",
   "locker_timer_start_confirm": "要開始計時嗎？",
+  "locker_timer_replace_confirm_title": "計時器已設定",
+  "locker_timer_replace_confirm_helper": "要移除現有計時器並建立新計時器嗎？",
   "locker_timer_permission_notice_title": "請允許通知",
   "locker_timer_permission_notice_helper": "計時結束時我們會通知你。\n點選確認後，瀏覽器會詢問權限。",
   "locker_timer_finished_title": "計時已結束",

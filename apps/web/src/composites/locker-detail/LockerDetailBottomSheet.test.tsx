@@ -38,14 +38,40 @@ const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
  * 검증하려는 것이 가려진다.
  */
 const deletePushReminderMock = vi.hoisted(() => vi.fn(async () => {}));
+const postPushDeviceMock = vi.hoisted(() => vi.fn(async () => {}));
+const postPushReminderMock = vi.hoisted(() =>
+  vi.fn(
+    async (body: { lockerId: number; startedAt: string; endAt: string }) => ({
+      id: 2,
+      lockerId: body.lockerId,
+      startedAt: body.startedAt,
+      endAt: body.endAt,
+      totalUsageMinutes: 60,
+      remainingMinutes: 60,
+      remindBeforeMinutes: null,
+    }),
+  ),
+);
 
 vi.mock("#/shared/api/push", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/shared/api/push")>()),
   deletePushReminder: deletePushReminderMock,
+  postPushDevice: postPushDeviceMock,
+  postPushReminder: postPushReminderMock,
   // 삭제 뒤 invalidateQueries 가 재조회를 건다. 실제 구현이면 axios 가 네트워크를
   // 때리고, 그 대기가 다음 테스트의 프레임 기반 단언까지 늦춘다.
   getPushReminders: vi.fn(async () => []),
 }));
+
+vi.mock(
+  "#/features/locker-timer/lib/push-subscription",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("#/features/locker-timer/lib/push-subscription")
+    >()),
+    ensurePushSubscription: vi.fn(async () => undefined),
+  }),
+);
 
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   SHEET_SETTLE_SPRING: { type: "spring" },
@@ -139,6 +165,9 @@ const overlayBottomAt = (sheetOffset: number) =>
 describe("LockerDetailBottomSheet", () => {
   beforeEach(() => {
     setTestLanguage("ko");
+    deletePushReminderMock.mockClear();
+    postPushDeviceMock.mockClear();
+    postPushReminderMock.mockClear();
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -257,6 +286,106 @@ describe("LockerDetailBottomSheet", () => {
 
     expect(screen.getByRole("dialog", { name: "보관 타이머" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "타이머 켜기" })).toBeTruthy();
+  });
+
+  it("다른 보관함의 타이머가 있으면 새 설정 여부를 묻는다", async () => {
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: 99,
+        startedAt: new Date().toISOString(),
+        endAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+        totalUsageMinutes: 60,
+        remainingMinutes: 60,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+    fireEvent.keyDown(screen.getByRole("listbox", { name: "보관 시간" }), {
+      key: "ArrowDown",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "타이머 켜기" }));
+
+    expect(
+      await screen.findByText("이미 타이머가 설정되어 있어요"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("기존 타이머를 제거하고 새 타이머를 만들까요?"),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "아니오" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "예" })).toBeTruthy();
+    expect(
+      within(
+        screen.getByRole("dialog", {
+          name: "이미 타이머가 설정되어 있어요",
+        }),
+      )
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["예", "아니오"]);
+    expect(deletePushReminderMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "아니오" }));
+
+    expect(screen.queryByText("이미 타이머가 설정되어 있어요")).toBeNull();
+    expect(deletePushReminderMock).not.toHaveBeenCalled();
+    expect(postPushReminderMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "타이머 켜기" }));
+    fireEvent.click(screen.getByRole("button", { name: "예" }));
+
+    await waitFor(() => expect(deletePushReminderMock).toHaveBeenCalledWith(1));
+    await waitFor(() =>
+      expect(postPushReminderMock).toHaveBeenCalledWith(
+        expect.objectContaining({ lockerId: LOCKER_DETAIL.lockerId }),
+      ),
+    );
+    expect(deletePushReminderMock.mock.invocationCallOrder[0]).toBeLessThan(
+      postPushReminderMock.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("알림이 차단된 채 교체를 확인하면 기존 타이머를 남기고 차단을 알린다", async () => {
+    // 기존 타이머를 먼저 지우고 권한을 보면, 차단된 브라우저에서 둘 다 잃는다.
+    vi.stubGlobal("Notification", {
+      permission: "denied",
+      requestPermission: vi.fn(async () => "denied"),
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 1,
+        lockerId: 99,
+        startedAt: new Date().toISOString(),
+        endAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+        totalUsageMinutes: 60,
+        remainingMinutes: 60,
+        remindBeforeMinutes: null,
+      },
+    ]);
+
+    render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} onReport={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      getSheetRoot().getByRole("button", { name: "보관 타이머 설정" }),
+    );
+    fireEvent.keyDown(screen.getByRole("listbox", { name: "보관 시간" }), {
+      key: "ArrowDown",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "타이머 켜기" }));
+    fireEvent.click(await screen.findByRole("button", { name: "예" }));
+
+    expect(await screen.findByText("타이머를 켜지 못했어요")).toBeTruthy();
+    expect(deletePushReminderMock).not.toHaveBeenCalled();
+    expect(postPushReminderMock).not.toHaveBeenCalled();
   });
 
   it("다른 보관함으로 바꾸면 고르던 시간을 지운다", () => {

@@ -201,7 +201,13 @@ export function LockerDetailScreen({
   const [isTimerOpen, setIsTimerOpen] = useState(false);
   const [isTimerStartConfirmationOpen, setIsTimerStartConfirmationOpen] =
     useState(false);
+  const [
+    isTimerReplacementConfirmationOpen,
+    setIsTimerReplacementConfirmationOpen,
+  ] = useState(false);
   const [isPermissionNoticeOpen, setIsPermissionNoticeOpen] = useState(false);
+  const [isTimerReplacementPending, setIsTimerReplacementPending] =
+    useState(false);
   const [isTimerFinishedOpen, setIsTimerFinishedOpen] = useState(false);
   const [isAddressCopied, setIsAddressCopied] = useState(false);
   const [timerHours, setTimerHours] = useState("00");
@@ -340,6 +346,11 @@ export function LockerDetailScreen({
   };
 
   const handleTimerStartRequest = () => {
+    if (timerSession.hasTimerForAnotherLocker) {
+      setIsTimerReplacementConfirmationOpen(true);
+      return;
+    }
+
     setIsTimerStartConfirmationOpen(true);
   };
 
@@ -385,7 +396,7 @@ export function LockerDetailScreen({
       });
   };
 
-  const startTimer = async () => {
+  const startTimer = async (shouldReplaceExistingTimer = false) => {
     // 중복 실행은 세션이 시작 흐름 전체를 잠가 막는다. 여기서는 화면이 눌린
     // 상태를 더 만들지 않도록 일찍 접어 둔다.
     if (timerSession.isPending) return;
@@ -394,7 +405,12 @@ export function LockerDetailScreen({
       (Number(timerHours) * 60 + Number(timerMinutes)) * 60;
     if (configuredTimeInSeconds <= 0) return;
 
-    const hasStarted = await timerSession.start(configuredTimeInSeconds);
+    // 기존 타이머는 세션이 권한·구독을 확인한 뒤에 지운다. 여기서 먼저 지우면
+    // 권한이 거부됐을 때 기존 것만 사라진다. 권한 요청이 이 클릭 안에서 곧바로
+    // 일어나야 한다는 점에서도, 지우기를 기다린 뒤 시작하면 안 된다.
+    const hasStarted = await timerSession.start(configuredTimeInSeconds, {
+      shouldReplaceExisting: shouldReplaceExistingTimer,
+    });
     if (hasStarted) {
       setTimerNow(Date.now());
     }
@@ -407,19 +423,30 @@ export function LockerDetailScreen({
    * 사이트 설정에 들어가야 되돌릴 수 있다. 이미 정해진 권한(허용·거부)에는
    * 이 안내를 띄우지 않는다. 물어볼 것이 없다.
    */
-  const handleTimerStartConfirm = () => {
-    setIsTimerStartConfirmationOpen(false);
-
+  const requestTimerPermissionOrStart = (
+    shouldReplaceExistingTimer: boolean,
+  ) => {
     const needsPermissionNotice =
       typeof Notification !== "undefined" &&
       Notification.permission === "default";
 
     if (needsPermissionNotice) {
+      setIsTimerReplacementPending(shouldReplaceExistingTimer);
       setIsPermissionNoticeOpen(true);
       return;
     }
 
-    void startTimer();
+    void startTimer(shouldReplaceExistingTimer);
+  };
+
+  const handleTimerStartConfirm = () => {
+    setIsTimerStartConfirmationOpen(false);
+    requestTimerPermissionOrStart(false);
+  };
+
+  const handleTimerReplacementConfirm = () => {
+    setIsTimerReplacementConfirmationOpen(false);
+    requestTimerPermissionOrStart(true);
   };
 
   /**
@@ -430,7 +457,9 @@ export function LockerDetailScreen({
    */
   const handlePermissionNoticeConfirm = () => {
     setIsPermissionNoticeOpen(false);
-    void startTimer();
+    const shouldReplaceExistingTimer = isTimerReplacementPending;
+    setIsTimerReplacementPending(false);
+    void startTimer(shouldReplaceExistingTimer);
   };
 
   const handleTimerStop = async () => {
@@ -460,6 +489,7 @@ export function LockerDetailScreen({
     setTimerNow(Date.now());
     setIsTimerOpen(false);
     setIsTimerStartConfirmationOpen(false);
+    setIsTimerReplacementConfirmationOpen(false);
     /*
      * 정정 요청·더보기·주소 복사도 함께 접는다.
      *
@@ -471,6 +501,7 @@ export function LockerDetailScreen({
     setIsAddressCopied(false);
     // 팝업도 함께 접는다. 남겨 두면 A 의 종료·실패 알림이 B 위에 뜬다.
     setIsPermissionNoticeOpen(false);
+    setIsTimerReplacementPending(false);
     setIsTimerFinishedOpen(false);
     clearTimerFailure();
     setTimerHours("00");
@@ -671,6 +702,21 @@ export function LockerDetailScreen({
           label: m.common_confirm(),
           onPress: () => setIsTimerFinishedOpen(false),
         }}
+      />
+      <Popup
+        isOpen={isTimerReplacementConfirmationOpen}
+        onOpenChange={setIsTimerReplacementConfirmationOpen}
+        titleText={m.locker_timer_replace_confirm_title()}
+        helperText={m.locker_timer_replace_confirm_helper()}
+        primaryAction={{
+          label: m.common_yes(),
+          onPress: handleTimerReplacementConfirm,
+        }}
+        secondaryAction={{
+          label: m.common_no(),
+          onPress: () => setIsTimerReplacementConfirmationOpen(false),
+        }}
+        actionOrder="primary-secondary"
       />
       <Popup
         isOpen={isTimerStartConfirmationOpen}

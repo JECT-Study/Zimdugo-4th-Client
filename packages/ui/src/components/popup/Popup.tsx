@@ -50,6 +50,7 @@ export interface PopupProps {
   };
   width?: "default" | "wide";
   primaryActionLayout?: "fill" | "content";
+  actionOrder?: "primary-secondary" | "secondary-primary";
   className?: string;
 }
 
@@ -64,6 +65,7 @@ export function Popup({
   subAction,
   width = "default",
   primaryActionLayout = "fill",
+  actionOrder = "secondary-primary",
   className,
 }: PopupProps) {
   const hasHelper = !!helperText;
@@ -112,6 +114,34 @@ export function Popup({
               subAction?.onPress();
               close();
             };
+            const primaryActionButton = (
+              <Button
+                className={[
+                  primaryButtonItem,
+                  isContentPrimaryAction ? contentPrimaryButtonItem : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                variant="filled"
+                intent="primary"
+                size={primaryActionSize}
+                data-size={primaryActionSize}
+                onPress={handlePrimary}
+              >
+                {primaryAction.label}
+              </Button>
+            );
+            const secondaryActionButton = secondaryAction ? (
+              <Button
+                className={secondaryButtonItem}
+                variant="filled"
+                intent="neutral"
+                size="S"
+                onPress={handleSecondary}
+              >
+                {secondaryAction.label}
+              </Button>
+            ) : null;
 
             return (
               <div className={containerClassName}>
@@ -138,34 +168,17 @@ export function Popup({
 
                   <div className={actionsContainer}>
                     <div className={buttonRow}>
-                      {secondaryAction && (
-                        <Button
-                          className={secondaryButtonItem}
-                          variant="filled"
-                          intent="neutral"
-                          size="S"
-                          onPress={handleSecondary}
-                        >
-                          {secondaryAction.label}
-                        </Button>
+                      {actionOrder === "primary-secondary" ? (
+                        <>
+                          {primaryActionButton}
+                          {secondaryActionButton}
+                        </>
+                      ) : (
+                        <>
+                          {secondaryActionButton}
+                          {primaryActionButton}
+                        </>
                       )}
-                      <Button
-                        className={[
-                          primaryButtonItem,
-                          isContentPrimaryAction
-                            ? contentPrimaryButtonItem
-                            : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                        variant="filled"
-                        intent="primary"
-                        size={primaryActionSize}
-                        data-size={primaryActionSize}
-                        onPress={handlePrimary}
-                      >
-                        {primaryAction.label}
-                      </Button>
                     </div>
                   </div>
                 </div>
