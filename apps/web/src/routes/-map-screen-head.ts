@@ -10,9 +10,12 @@ import {
   getSeoLocale,
   getSeoPathname,
 } from "#/features/seo/model/localized-seo-head";
+import { createLockerJsonLd } from "#/features/seo/model/locker-json-ld";
 import { createLockerOgImageUrl } from "#/features/seo/model/locker-og-image-url";
 import { getLockerDetail } from "#/shared/api/lockers";
+import type { AppLocale } from "#/shared/i18n/locales";
 import { isApiNotFoundError } from "#/shared/lib/api-error-status";
+import { createLockerPath } from "#/shared/lib/map-path-url";
 import { markResponseUncacheable } from "#/shared/lib/uncacheable-response";
 
 /**
@@ -77,6 +80,28 @@ export const createGlobalMapScreenHead = (
   };
 };
 
+/**
+ * 상세 제목. 장소(역 출구·건물)를 알면 "{장소} 물품보관함" 을 앞에 둔다.
+ *
+ * "강남역 물품보관함" 처럼 지역명으로 찾는 검색어가 제목 앞쪽과 맞닿게 하려는 것이다.
+ * 보관함 이름이 이미 장소 이름을 품고 있으면 같은 말이 두 번 나오므로 이름만 쓴다.
+ */
+export const createLockerDetailTitle = ({
+  name,
+  placeName,
+  locale,
+}: {
+  name: string;
+  placeName?: string;
+  locale: AppLocale;
+}) => {
+  const place = placeName?.trim();
+  if (!place || name.includes(place)) {
+    return m.seo_locker_detail_title({ name }, { locale });
+  }
+  return m.seo_locker_detail_title_with_place({ place, name }, { locale });
+};
+
 /** 보관함 상세의 머리. 상세를 못 가져왔으면 서비스 전체의 머리로 떨어진다. */
 export const createLockerDetailHead = (
   context: unknown,
@@ -98,7 +123,11 @@ export const createLockerDetailHead = (
           { locale },
         )
       : m.seo_locker_detail_price_unknown({}, { locale });
-  const title = m.seo_locker_detail_title({ name }, { locale });
+  const title = createLockerDetailTitle({
+    name,
+    placeName: detail.placeName,
+    locale,
+  });
   const description = m.seo_locker_detail_description(
     { name, address, priceText },
     { locale },
@@ -123,8 +152,25 @@ export const createLockerDetailHead = (
       { name: "twitter:description", content: description },
       { name: "twitter:image", content: ogImageUrl },
       { name: "twitter:image:alt", content: name },
+      {
+        "script:ld+json": createLockerJsonLd({
+          detail,
+          url: canonicalUrl,
+          imageUrl: ogImageUrl,
+          description,
+        }),
+      },
     ],
-    links: [{ rel: "canonical", href: canonicalUrl }],
+    links: [
+      { rel: "canonical", href: canonicalUrl },
+      /*
+       * 상세 주소가 id 만 쓰게 되어(#268) 로케일마다 주소를 바로 만들 수 있다.
+       * 사이트맵의 hreflang 과 같은 짝을 페이지에도 선언한다.
+       */
+      ...createAlternateLinksForPathname(
+        createLockerPath(String(detail.lockerId)),
+      ),
+    ],
   };
 };
 

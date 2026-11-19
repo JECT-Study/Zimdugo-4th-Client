@@ -28,6 +28,15 @@ const formatOperatingHoursLabel = (raw: LockerDetailRaw): string => {
   return formatLockerOperatingHoursLabel();
 };
 
+const toOperatingHours = (
+  raw: LockerDetailRaw,
+): LockerDetailItem["operatingHours"] => {
+  if (raw.startTime && raw.endTime) {
+    return { open: raw.startTime, close: raw.endTime };
+  }
+  return raw.operatingHours ?? null;
+};
+
 /** 서버 순서를 그대로 두고 빈 문자열과 중복만 걷어낸다. */
 const normalizeImageUrls = (imageUrls: string[] | undefined): string[] => {
   if (!imageUrls) {
@@ -60,6 +69,9 @@ export const toLockerDetailItem = (raw: LockerDetailRaw): LockerDetailItem => ({
   distanceMeters: raw.distanceMeters,
   updatedAt: raw.updatedAt,
   minPrice: raw.minPrice,
+  maxPrice: raw.maxPrice,
+  placeName: raw.placeName || undefined,
+  operatingHours: toOperatingHours(raw),
   isFavorite: raw.isFavorite,
   operatingHoursLabel: formatOperatingHoursLabel(raw),
   floorLabel: formatLockerFloorLabel(
