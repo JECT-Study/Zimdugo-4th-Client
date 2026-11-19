@@ -67,6 +67,21 @@ const pressHeaderBack = async (page: Page) => {
   await page.getByRole("button", { name: "뒤로가기" }).first().click();
 };
 
+/**
+ * 브라우저 탭에 뜬 제목. document.title 과 다를 수 있다.
+ *
+ * Chrome 은 같은 문서 안에서 되감으면 그 항목에 저장해 둔 제목을 탭에 띄운다.
+ * 언어를 바꾼 뒤 되돌아간 항목에는 예전 언어 제목이 남아 있어, document.title 만
+ * 보면 탭이 예전 언어로 남아도 통과한다.
+ */
+const tabTitle = async (page: Page) => {
+  const session = await page.context().newCDPSession(page);
+  const { targetInfo } = await session.send("Target.getTargetInfo");
+  await session.detach();
+
+  return targetInfo.title;
+};
+
 /** 기기 뒤로가기. 화면 안 버튼과 결과가 같아야 한다. */
 const pressDeviceBack = async (page: Page) => {
   await page.evaluate(() => window.history.back());
@@ -172,6 +187,7 @@ test.describe("설정 화면과 브라우저 히스토리", () => {
     expect(await page.evaluate(() => history.state?.__TSR_key)).toBe(
       settingsKey,
     );
+    await expect.poll(() => tabTitle(page)).toMatch(/^Zimdugo \|/);
 
     await pressDeviceBack(page);
     await page.waitForLoadState("domcontentloaded");
@@ -196,5 +212,6 @@ test.describe("설정 화면과 브라우저 히스토리", () => {
     await expect.poll(() => currentPath(page)).toBe("/settings");
     await expect(page.getByRole("button", { name: /언어 설정/ })).toBeVisible();
     expect(await historyLength(page)).toBe(baseline);
+    await expect.poll(() => tabTitle(page)).toMatch(/^짐두고/);
   });
 });
