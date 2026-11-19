@@ -85,7 +85,7 @@ describe("createLockerOgImageResponse", () => {
     expect(url.searchParams.get("scale")).toBe("2");
     expect(url.searchParams.get("center")).toBe("126.978,37.5665");
     expect(url.searchParams.get("markers")).toBe(
-      "type:e|anchor:center|icon:https://zimdugo.com/icons/map-marker-128x128.png|pos:126.978 37.5665",
+      "type:e|anchor:center|icon:https://zimdugo.com/icons/map-marker-64x64.png|pos:126.978 37.5665",
     );
     expect(headers.get("x-ncp-apigw-api-key-id")).toBe("client-id");
     expect(headers.get("x-ncp-apigw-api-key")).toBe("client-secret");
