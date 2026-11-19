@@ -4,7 +4,15 @@ import { SITE_ORIGIN } from "#/shared/lib/site-url";
 
 const NAVER_STATIC_MAP_ENDPOINT =
   "https://maps.apigw.ntruss.com/map-static/v2/raster";
-const NAVER_STATIC_MAP_MARKER_URL = `${SITE_ORIGIN}/icons/map-marker-128x128.png`;
+/*
+ * 커스텀 마커 아이콘은 64×64px 이하여야 한다. 넘으면 Static Map 이 이미지 대신 빈 403 을
+ * 준다. 문서는 `scale=2` 면 128×128 까지 된다고 하지만 실제로는 scale 과 무관하게 64px 을
+ * 넘으면 거절한다(2026-11 확인: 60·64px 200, 76·96·114·128px 403).
+ *
+ * 마커는 scale=2 지도 위에 픽셀 그대로 찍혀서, 1200×630 이미지에서 64px 로 보인다.
+ * Static Map 은 같은 아이콘 주소를 하루까지 캐시하므로 그림을 바꾸면 파일 이름도 바꾼다.
+ */
+const NAVER_STATIC_MAP_MARKER_URL = `${SITE_ORIGIN}/icons/map-marker-64x64.png`;
 const DEFAULT_OG_IMAGE_PATH = "/images/og-default.png";
 const REQUEST_TIMEOUT_MS = 5_000;
 const SUCCESS_CACHE_CONTROL =
