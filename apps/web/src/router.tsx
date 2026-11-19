@@ -2,6 +2,8 @@ import { deLocalizeUrl, localizeUrl } from "@repo/i18n";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import { keepDocumentLocaleOnTraverse } from "#/shared/i18n/document-locale-history";
+import { BASE_LOCALE, parsePathLocale } from "#/shared/i18n/locales";
 import {
   parseSearchString,
   stringifySearchParams,
@@ -24,6 +26,13 @@ export function getRouter() {
       output: ({ url }) => localizeUrl(url),
     },
   });
+
+  if (typeof window !== "undefined") {
+    keepDocumentLocaleOnTraverse(
+      router.history,
+      parsePathLocale(window.location.pathname) ?? BASE_LOCALE,
+    );
+  }
 
   setupRouterSsrQueryIntegration({
     router,
