@@ -34,10 +34,16 @@ export const getDocumentLocaleHref = (
  *
  * 되감기로 도착한 항목만 지금 문서의 로케일 주소로 바꿔치운다. 새 항목을 밀지
  * 않으므로 히스토리 길이는 그대로다.
+ *
+ * `history.replace` 는 쓰지 않는다. 넘긴 state 와 상관없이 항목 키
+ * (`key`, `__TSR_key`)를 새로 만들어, 그 키로 저장된 스크롤 위치를 잃는다.
+ * 브라우저 주소만 기존 state 그대로 바꾸고, 라우터 히스토리에는 notify 로 알린다.
+ * 주소가 화면을 그리기 전에 바뀌므로 paraglide 도 고친 로케일을 읽는다.
  */
 export const keepDocumentLocaleOnTraverse = (
   history: RouterHistory,
   documentLocale: AppLocale,
+  win: Window = window,
 ) =>
   history.subscribe(({ location, action }) => {
     if (!TRAVERSE_ACTION_TYPES.has(action.type)) return;
@@ -45,7 +51,6 @@ export const keepDocumentLocaleOnTraverse = (
     const localizedHref = getDocumentLocaleHref(location.href, documentLocale);
     if (!localizedHref) return;
 
-    history.replace(localizedHref, location.state);
-    // 화면을 그리기 전에 주소를 맞춰야 paraglide 가 고친 로케일을 읽는다.
-    history.flush();
+    win.history.replaceState(win.history.state, "", localizedHref);
+    history.notify({ type: "REPLACE" });
   });

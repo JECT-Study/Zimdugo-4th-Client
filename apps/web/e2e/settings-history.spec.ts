@@ -140,6 +140,9 @@ test.describe("설정 화면과 브라우저 히스토리", () => {
     // 설정에서 들어와야 뒤로 돌아갈 자리가 생긴다. 언어 화면부터 바로 열면
     // 되돌아갈 곳이 브라우저의 빈 문서라 무엇을 확인해도 뜻이 없다.
     await page.goto("/settings");
+    // 스크롤 복원은 항목 키로 자리를 찾는다. 주소를 고치며 키를 새로 만들면
+    // 돌아와도 예전 스크롤 위치를 잃는다.
+    const settingsKey = await page.evaluate(() => history.state?.__TSR_key);
     await openSettingsRow(page, /언어 설정/);
     await expect(page.getByRole("button", { name: /English/ })).toBeVisible();
 
@@ -166,6 +169,9 @@ test.describe("설정 화면과 브라우저 히스토리", () => {
     await expect.poll(() => currentPath(page)).toBe("/en/settings");
     await expect(page.getByRole("button", { name: /^Language/ })).toBeVisible();
     expect(await historyLength(page)).toBe(baseline);
+    expect(await page.evaluate(() => history.state?.__TSR_key)).toBe(
+      settingsKey,
+    );
 
     await pressDeviceBack(page);
     await page.waitForLoadState("domcontentloaded");
