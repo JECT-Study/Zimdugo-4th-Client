@@ -7,7 +7,7 @@ import { useDragScroll } from "#/shared/hooks/useDragScroll";
 import { badge, badgeList, moreBadge } from "./SearchFilterBadgeList.css.ts";
 
 /** 이 개수를 넘으면 앞의 몇 개만 보이고 나머지는 `+N` 으로 접는다. */
-export const SEARCH_FILTER_BADGE_COLLAPSED_COUNT = 2;
+const SEARCH_FILTER_BADGE_COLLAPSED_COUNT = 2;
 
 export interface SearchFilterBadgeListProps {
   badges: SearchFilterBadge[];
