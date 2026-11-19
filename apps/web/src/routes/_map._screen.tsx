@@ -1,6 +1,6 @@
 import { languageTag, m } from "@repo/i18n";
-import { IconX24 } from "@repo/ui/assets/icons";
 import { Popup } from "@repo/ui/components/popup";
+import { Snackbar } from "@repo/ui/components/snackbar";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
@@ -95,6 +95,7 @@ import {
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
 import { useHasActiveLockerTimer } from "#/features/locker-timer/hooks/useActiveLockerTimer";
 import { LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX } from "#/features/locker-timer/ui/LockerTimerMapControl.css";
+import { useWelcomeSnackbar } from "#/features/onboarding/hooks/useWelcomeSnackbar";
 import { useFavoriteLockerSession } from "#/features/search/hooks/useFavoriteLockerSession";
 import {
   LOCKER_DETAIL_QUERY_KEY,
@@ -203,11 +204,10 @@ import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
 import {
   locationRecoveryNotice,
-  locationRecoveryNoticeAction,
-  locationRecoveryNoticeClose,
-  locationRecoveryNoticeMessage,
   locationRecoveryNoticePositioner,
   pageWrapper,
+  welcomeSnackbar,
+  welcomeSnackbarPositioner,
 } from "./-index.css";
 import {
   resolveMapControlBottomPx,
@@ -278,6 +278,8 @@ export const Route = createFileRoute("/_map/_screen")({
 export function IndexPage() {
   const navigate = useNavigate();
   const search = (useSearch({ strict: false }) || {}) as MapScreenSearchParams;
+  const { isOpen: isWelcomeSnackbarOpen, dismiss: dismissWelcomeSnackbar } =
+    useWelcomeSnackbar();
   /*
    * 상세 라우트의 로더가 서버에서 가져온 상세. 이 화면은 자식 라우트의 위에 있어
    * 자기 로더 대신 매치 목록에서 꺼낸다.
@@ -1090,6 +1092,11 @@ export function IndexPage() {
   const handleDismissLocationRecoveryNotice = useCallback(() => {
     setIsLocationRecoveryNoticeDismissed(true);
   }, []);
+
+  const handleWelcomeSnackbarAction = useCallback(() => {
+    dismissWelcomeSnackbar();
+    void navigate({ to: "/settings/service-guide" });
+  }, [dismissWelcomeSnackbar, navigate]);
 
   // 상세를 닫으면 파라미터가 사라진다. 그때 표시를 지워야 같은 보관함을 다시
   // 열었을 때 카메라를 다시 맞춘다.
@@ -3360,26 +3367,32 @@ export function IndexPage() {
 
       {isLocationRequestInterrupted && !isLocationRecoveryNoticeDismissed ? (
         <div className={locationRecoveryNoticePositioner}>
-          <div className={locationRecoveryNotice} aria-live="polite">
-            <span className={locationRecoveryNoticeMessage}>
-              {m.home_location_interrupted_notice()}
-            </span>
-            <button
-              type="button"
-              className={locationRecoveryNoticeAction}
-              onClick={reloadForLocationRecovery}
-            >
-              {m.home_location_interrupted_notice_action()}
-            </button>
-            <button
-              type="button"
-              className={locationRecoveryNoticeClose}
-              aria-label={m.home_location_interrupted_notice_close_aria()}
-              onClick={handleDismissLocationRecoveryNotice}
-            >
-              <IconX24 />
-            </button>
-          </div>
+          <Snackbar
+            className={locationRecoveryNotice}
+            actionLabel={m.home_location_interrupted_notice_action()}
+            closeAriaLabel={m.home_location_interrupted_notice_close_aria()}
+            onAction={reloadForLocationRecovery}
+            onClose={handleDismissLocationRecoveryNotice}
+          >
+            {m.home_location_interrupted_notice()}
+          </Snackbar>
+        </div>
+      ) : null}
+
+      {isWelcomeSnackbarOpen &&
+      context === "idle" &&
+      (!isLocationRequestInterrupted || isLocationRecoveryNoticeDismissed) ? (
+        <div className={welcomeSnackbarPositioner}>
+          <Snackbar
+            className={welcomeSnackbar}
+            variant="light"
+            actionLabel={m.settings_service_guide()}
+            closeAriaLabel={m.home_welcome_snackbar_close_aria()}
+            onAction={handleWelcomeSnackbarAction}
+            onClose={dismissWelcomeSnackbar}
+          >
+            {m.home_welcome_snackbar()}
+          </Snackbar>
         </div>
       ) : null}
 

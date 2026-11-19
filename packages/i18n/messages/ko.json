@@ -127,6 +127,8 @@
   "home_location_interrupted_notice": "위치 확인이 중단됐어요",
   "home_location_interrupted_notice_action": "다시 시도",
   "home_location_interrupted_notice_close_aria": "위치 확인 중단 안내 닫기",
+  "home_welcome_snackbar": "반가워요!\n오늘은 어떤 보관함을 찾으시나요?",
+  "home_welcome_snackbar_close_aria": "첫 방문 안내 닫기",
   "home_orientation_permission_title": "나침반 권한이 필요합니다",
   "home_orientation_permission_helper": "지금 내가 어느 방향을 보고 있는지\n지도에서 바로 확인할 수 있어요.",
   "map_area_aria": "네이버 지도 영역",
