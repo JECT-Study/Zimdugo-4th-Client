@@ -98,6 +98,28 @@ describe("SearchListScreen", () => {
     });
   });
 
+  it("검색이 실패해도 걸린 필터 뱃지는 남겨 제목 없이 보인다", () => {
+    setLanguageTag("ko");
+
+    renderScreen(
+      <SearchListScreen
+        searchQuery="강남"
+        isError
+        isFilterActive
+        onOpenFilter={vi.fn()}
+        appliedFilters={{
+          ...createDefaultSearchFilters(),
+          sizeActive: true,
+          selectedSizes: ["S"],
+        }}
+        onAppliedFiltersChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "소형 필터 해제" })).toBeTruthy();
+    expect(screen.queryByText(/강남/)).toBeNull();
+  });
+
   /**
    * 결과가 없는 화면은 잴 콘텐츠 길이가 없다. 0 을 올려보내면 표면이 "높이가 0 인
    * 콘텐츠" 로 알아듣고 시트를 바닥까지 내린다. 없다는 뜻은 null 이어야 한다.

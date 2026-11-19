@@ -142,6 +142,12 @@ export function SearchListScreen({
     appliedFilters && onAppliedFiltersChange
       ? toSearchFilterBadges(appliedFilters)
       : [];
+  /*
+   * 필터 줄은 제목과 따로 보인다. 검색이 실패해도 걸린 필터를 빼고 다시 시도할 수
+   * 있어야 한다. 제목은 결과가 없으니 그대로 숨긴다.
+   */
+  const showFilterControls =
+    showResultHeader || (isError && filterBadges.length > 0);
   const resultTitleText = placeName
     ? m.search_place_lockers_title({ place: placeName })
     : undefined;
@@ -213,24 +219,28 @@ export function SearchListScreen({
 
   return (
     <div className={sheetColumn}>
-      {showResultHeader ? (
+      {showFilterControls ? (
         <div
           ref={headerMeasureRef}
           className={resultHeader}
           style={resultHeaderStyle}
         >
-          <div className={headerLeadingRow}>
-            <div className={headerTitleSlot}>
-              <SearchResultsHeading
-                className={inSheetHeader}
-                queryText={searchQuery}
-                titleText={resultTitleText}
-                resultCount={
-                  hasResult || showFilterEmpty ? visibleItems.length : undefined
-                }
-              />
+          {showResultHeader ? (
+            <div className={headerLeadingRow}>
+              <div className={headerTitleSlot}>
+                <SearchResultsHeading
+                  className={inSheetHeader}
+                  queryText={searchQuery}
+                  titleText={resultTitleText}
+                  resultCount={
+                    hasResult || showFilterEmpty
+                      ? visibleItems.length
+                      : undefined
+                  }
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
           {onOpenFilter ? (
             <div className={resultControlRow}>
               <ControlChip
