@@ -27,9 +27,13 @@ export function Snackbar({
   return (
     <div
       className={[snackbar({ variant }), className].filter(Boolean).join(" ")}
-      aria-live="polite"
     >
-      <span className={message}>{children}</span>
+      {/*
+        내용과 함께 처음 그려지는 영역이라 aria-live 만으로는 읽히지 않는 경우가
+        많다. status 역할(output)은 삽입되는 순간에도 알리는 화면 낭독기가 많다.
+        버튼 이름까지 함께 읽히지 않도록 문구에만 둔다.
+      */}
+      <output className={message}>{children}</output>
       {actionLabel ? (
         <AriaButton className={action({ variant })} onPress={onAction}>
           {actionLabel}

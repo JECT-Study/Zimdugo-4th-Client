@@ -32,7 +32,7 @@ const timerEnd28Url = new URL("./assets/icon-timer-end-28.svg", import.meta.url)
   .href;
 const route20Url = new URL("./assets/icon-route-20.svg", import.meta.url).href;
 const snackbarClose12Url = new URL(
-  "./assets/icon-snackbar-close-18.svg",
+  "./assets/icon-snackbar-close-12.svg",
   import.meta.url,
 ).href;
 /**
