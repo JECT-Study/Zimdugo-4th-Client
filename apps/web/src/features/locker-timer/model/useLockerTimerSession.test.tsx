@@ -208,6 +208,33 @@ describe("useLockerTimerSession", () => {
     expect(result.current.endAt).not.toBeNull();
   });
 
+  it("다른 보관함에서 실행 중인 타이머를 구분한다", () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, [
+      {
+        id: 7,
+        lockerId: 999,
+        startedAt: new Date().toISOString(),
+        endAt: new Date(Date.now() + 600_000).toISOString(),
+        totalUsageMinutes: 10,
+        remainingMinutes: 10,
+        remindBeforeMinutes: null,
+      },
+    ]);
+    const seeded = ({ children }: { children?: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useLockerTimerSession(171), {
+      wrapper: seeded,
+    });
+
+    expect(result.current.endAt).toBeNull();
+    expect(result.current.hasTimerForAnotherLocker).toBe(true);
+  });
+
   it("생성 전에 진행 중인 조회를 끊는다", async () => {
     // 생성 전의 빈 목록을 읽은 응답이 늦게 도착하면 방금 넣은 값을 덮어쓴다.
     const queryClient = new QueryClient({

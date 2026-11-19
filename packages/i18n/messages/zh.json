@@ -354,6 +354,8 @@
   "locker_timer_start": "开始计时",
   "locker_timer_stop": "停止计时",
   "locker_timer_start_confirm": "要开始计时吗？",
+  "locker_timer_replace_confirm_title": "计时器已设置",
+  "locker_timer_replace_confirm_helper": "要删除现有计时器并创建新计时器吗？",
   "locker_timer_permission_notice_title": "请允许通知",
   "locker_timer_permission_notice_helper": "计时结束时我们会通知你。\n点击确认后，浏览器会询问权限。",
   "locker_timer_finished_title": "计时已结束",

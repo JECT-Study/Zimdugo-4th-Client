@@ -119,6 +119,8 @@ export interface LockerTimerSessionState {
   /** 이 보관함에서 돌고 있는 타이머. 다른 보관함 것이면 null */
   endAt: number | null;
   totalSeconds: number;
+  /** 다른 보관함에서 돌고 있는 타이머가 있는지 */
+  hasTimerForAnotherLocker: boolean;
   isPending: boolean;
   /** 끄기 요청이 아직 끝나지 않았는지. 종료 예약을 접어 두는 데 쓴다 */
   isStopping: boolean;
@@ -288,6 +290,7 @@ export const useLockerTimerSession = (
   return {
     endAt: isForThisLocker ? Date.parse(reminder.endAt) : null,
     totalSeconds: isForThisLocker ? reminder.totalUsageMinutes * 60 : 0,
+    hasTimerForAnotherLocker: reminder != null && !isForThisLocker,
     isPending:
       isStarting || createReminder.isPending || deleteReminder.isPending,
     isStopping: deleteReminder.isPending,

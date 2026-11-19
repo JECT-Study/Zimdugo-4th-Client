@@ -46,6 +46,28 @@ function SetupTimerStory({ isConfigured }: { isConfigured: boolean }) {
   );
 }
 
+function TimerReplacementConfirmationStory() {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <Popup
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      titleText={m.locker_timer_replace_confirm_title()}
+      helperText={m.locker_timer_replace_confirm_helper()}
+      primaryAction={{
+        label: m.common_yes(),
+        onPress: () => setIsOpen(false),
+      }}
+      secondaryAction={{
+        label: m.common_no(),
+        onPress: () => setIsOpen(false),
+      }}
+      actionOrder="primary-secondary"
+    />
+  );
+}
+
 const meta = {
   title: "Product/Locker Timer/Modal",
   parameters: {
@@ -94,4 +116,8 @@ export const Running: Story = {
       onStop={() => undefined}
     />
   ),
+};
+
+export const ReplacementConfirmation: Story = {
+  render: () => <TimerReplacementConfirmationStory />,
 };

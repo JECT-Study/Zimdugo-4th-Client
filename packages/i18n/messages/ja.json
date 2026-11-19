@@ -354,6 +354,8 @@
   "locker_timer_start": "タイマーを開始",
   "locker_timer_stop": "タイマーを停止",
   "locker_timer_start_confirm": "タイマーを開始しますか？",
+  "locker_timer_replace_confirm_title": "タイマーはすでに設定されています",
+  "locker_timer_replace_confirm_helper": "既存のタイマーを削除して新しいタイマーを作成しますか？",
   "locker_timer_permission_notice_title": "通知を許可してください",
   "locker_timer_permission_notice_helper": "タイマーが終わったら通知でお知らせします。\n確認を押すとブラウザが権限を尋ねます。",
   "locker_timer_finished_title": "タイマーが終了しました",

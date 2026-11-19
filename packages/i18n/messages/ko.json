@@ -354,6 +354,8 @@
   "locker_timer_start": "타이머 켜기",
   "locker_timer_stop": "타이머 끄기",
   "locker_timer_start_confirm": "타이머를 시작할까요?",
+  "locker_timer_replace_confirm_title": "이미 타이머가 설정되어 있어요",
+  "locker_timer_replace_confirm_helper": "기존 타이머를 제거하고 새 타이머를 만들까요?",
   "locker_timer_permission_notice_title": "알림을 허용해 주세요",
   "locker_timer_permission_notice_helper": "타이머가 끝나면 알림으로 알려드려요.\n확인을 누르면 브라우저가 권한을 물어봅니다.",
   "locker_timer_finished_title": "타이머가 끝났어요",
