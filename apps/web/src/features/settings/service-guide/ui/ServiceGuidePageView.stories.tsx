@@ -84,14 +84,16 @@ const meta = {
     layout: "fullscreen",
   },
   decorators: [
-    (Story) => (
+    (Story, { parameters }) => (
       <div
         style={{
           width: vars.layout.designWidth,
           maxWidth: "100%",
-          height: "812px",
+          height:
+            parameters.serviceGuideViewport === "fixed" ? "812px" : "auto",
           margin: "0 auto",
-          overflow: "hidden",
+          overflow:
+            parameters.serviceGuideViewport === "fixed" ? "hidden" : "visible",
           background: vars.color.bg.default,
         }}
       >
@@ -106,7 +108,11 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const FullPage: Story = {};
+export const FullPage: Story = {
+  parameters: {
+    serviceGuideViewport: "fixed",
+  },
+};
 
 export const Components: Story = {
   render: () => (
