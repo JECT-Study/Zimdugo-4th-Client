@@ -29,6 +29,10 @@ export const mapLayoutShell = style({
  *
  * 틀 자체의 클래스도 같은 변수를 미디어 쿼리로 정하므로, 순서에 기대지 않도록
  * `body &` 로 한 단계 더 구체적으로 쓴다.
+ *
+ * 좌우 테두리와 그림자는 가운데 열을 바탕과 구분하려는 장식인데, 화면을 꽉 채우면
+ * 양 끝에 1px 회색 선만 남는다. CSS 가 붙기 전 첫 페인트용으로 AppContainer 가
+ * 인라인으로 넣는 값이라 클래스로는 덮을 수 없어, 이 좁은 경우에만 !important 를 쓴다.
  */
 export const mapAppContainer = style({
   "@media": {
@@ -38,6 +42,9 @@ export const mapAppContainer = style({
           vars: {
             [appShellMaxWidthVar]: "100%",
           },
+          borderLeft: "0 !important",
+          borderRight: "0 !important",
+          boxShadow: "none !important",
         },
       },
     },

@@ -1,3 +1,7 @@
+import {
+  compactDeviceSelector,
+  layoutScale,
+} from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
@@ -137,11 +141,42 @@ export const realtimeAvailabilityDivider = style({
   backgroundColor: vars.color.border.default,
 });
 
+/**
+ * 시트 위에 뜨는 실시간 카드의 자리.
+ *
+ * 카드를 화면 왼쪽에서 재면 시트와 가로로 어긋난다. 시트(BottomSheetFrame)는
+ * 앱 열 폭(430/480px)으로 가운데 놓이는데, 지도 화면은 데스크톱에서 화면 전체를
+ * 쓰기 때문이다. 그래서 이 자리를 시트와 같은 폭·같은 가운데 정렬로 깔고, 카드는
+ * 그 안에서 시트 안쪽 여백(16px)만큼 들여 놓는다. 어느 폭에서든 시트 왼쪽 위에 붙는다.
+ */
 export const realtimeStatusCardOverlay = style({
   position: "absolute",
-  left: vars.spacing[16],
+  left: 0,
+  right: 0,
   zIndex: vars.zIndex.bottomSheet,
+  display: "flex",
+  justifyContent: "flex-start",
+  width: "100%",
+  maxWidth: vars.layout.appMaxWidth,
+  margin: "0 auto",
+  paddingLeft: vars.spacing[16],
+  boxSizing: "border-box",
   pointerEvents: "none",
+  selectors: {
+    [compactDeviceSelector]: {
+      maxWidth: "100%",
+    },
+  },
+  "@media": {
+    [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
+      maxWidth: vars.layout.tabletAppMaxWidth,
+      selectors: {
+        [compactDeviceSelector]: {
+          maxWidth: "100%",
+        },
+      },
+    },
+  },
 });
 
 export const summaryTextColumn = style({
