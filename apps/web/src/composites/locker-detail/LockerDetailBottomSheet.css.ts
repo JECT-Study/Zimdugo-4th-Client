@@ -163,6 +163,15 @@ export const realtimeStatusCardOverlay = style({
   boxSizing: "border-box",
   pointerEvents: "none",
   selectors: {
+    /*
+     * 이 자리는 지도 화면(pageWrapper)의 직계 자식이라 `pageWrapper > *` 의
+     * pointerEvents: auto 를 받는다. 그대로 두면 카드 옆 빈 자리까지 지도 조작을
+     * 막으므로 명시도를 한 단계 올려 투명한 부분은 지나가게 한다. 카드 자체는
+     * 예전처럼 아래 globalStyle 로 다시 받는다.
+     */
+    "&&": {
+      pointerEvents: "none",
+    },
     [compactDeviceSelector]: {
       maxWidth: "100%",
     },
@@ -177,6 +186,10 @@ export const realtimeStatusCardOverlay = style({
       },
     },
   },
+});
+
+globalStyle(`${realtimeStatusCardOverlay} > *`, {
+  pointerEvents: "auto",
 });
 
 export const summaryTextColumn = style({
