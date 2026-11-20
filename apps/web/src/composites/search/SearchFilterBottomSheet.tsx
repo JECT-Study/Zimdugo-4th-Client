@@ -11,6 +11,7 @@ import {
  */
 export { createDefaultSearchFilters, type SearchFilterAppliedState };
 
+import { useIsDesktopLayout } from "#/shared/hooks/useIsDesktopLayout";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import {
@@ -52,6 +53,8 @@ interface ResolveSearchFilterSnapPointsOptions {
   windowHeight: number;
   /** 노치에 덮이는 높이. full 상한을 그만큼 함께 내린다. */
   safeAreaInsetTopPx?: number;
+  /** 데스크톱이면 시트 윗변 경계를 왼쪽 위 카드 아래로 잡는다. */
+  isDesktopLayout?: boolean;
   behavior?: SearchBottomSheetSnapBehavior;
   minSnapPoint?: number;
   snapPoint?: number;
@@ -89,6 +92,7 @@ export const resolveSearchFilterSnapPoints = ({
   windowHeight,
   contentHeight,
   safeAreaInsetTopPx = 0,
+  isDesktopLayout = false,
 }: ResolveSearchFilterSnapPointsOptions) => {
   if (behavior === "legacy") {
     return resolveLegacySearchFilterSnapPoints({
@@ -105,7 +109,7 @@ export const resolveSearchFilterSnapPoints = ({
     minSnapPoint ??
     resolveSheetFullSnapPoint({
       contentHeight,
-      topLimitPx: resolveSheetTopLimitPx(safeAreaInsetTopPx),
+      topLimitPx: resolveSheetTopLimitPx(safeAreaInsetTopPx, isDesktopLayout),
       maxSnapPoint: resolvedMaxSnapPoint,
       windowHeight,
     });
@@ -142,6 +146,7 @@ export function SearchFilterBottomSheet({
 }: SearchFilterBottomSheetProps) {
   const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
+  const isDesktopLayout = useIsDesktopLayout();
   const [screenHeight, setScreenHeight] = useState<number | undefined>();
   const {
     maxSnapPoint: resolvedMaxSnapPoint,
@@ -159,6 +164,7 @@ export function SearchFilterBottomSheet({
         ? undefined
         : screenHeight + SEARCH_FILTER_SHEET_TOP_PADDING,
     safeAreaInsetTopPx: safeAreaInsetTop,
+    isDesktopLayout,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined

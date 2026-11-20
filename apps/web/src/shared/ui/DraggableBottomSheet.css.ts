@@ -1,18 +1,9 @@
 import {
   compactDeviceSelector,
-  desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
 import { style } from "@vanilla-extract/css";
-
-/**
- * 데스크톱 왼쪽 위 검색 카드의 아래 끝.
- *
- * 카드 위치(16) + 로고 줄(72) + 검색 입력(48) + 카드 아래 여백(20).
- * 바텀시트를 패널로 옮기기 전까지, 끝까지 올린 시트가 이 카드와 겹치지 않게 막는 데 쓴다.
- */
-const DESKTOP_SEARCH_CARD_BOTTOM = `calc(${vars.layout.desktopInset} + ${vars.layout.desktopHeader} + 48px + ${vars.spacing[20]})`;
 
 export const sheetWrapper = style({
   position: "absolute",
@@ -59,16 +50,6 @@ export const sheetSurface = style({
   overflow: "hidden",
   willChange: "height",
   pointerEvents: "none",
-  "@media": {
-    /*
-     * 데스크톱 임시 처리: 가운데 시트가 좁은 데스크톱 폭(1200~1311px)에서 왼쪽 위
-     * 검색 카드와 가로로 겹친다. 끝까지 올려도 카드 아래 간격(12px)에서 멈추게 한다.
-     * 목록·상세를 패널로 옮기면 이 규칙은 함께 지운다.
-     */
-    [desktopMediaQuery]: {
-      maxHeight: `calc(100dvh - ${DESKTOP_SEARCH_CARD_BOTTOM} - ${vars.layout.desktopPanelGap})`,
-    },
-  },
 });
 
 export const dragHandleZone = style({
