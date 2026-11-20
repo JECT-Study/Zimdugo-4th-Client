@@ -121,7 +121,12 @@ const circleActionFallbackStyle: CSSProperties = {
  *
  * 좌측 패딩은 가로모드에서 노치만큼 30px 보다 커진다. 정확히 30px 로 비교하면
  * 가로로 연 첫 화면에서 CSS 가 붙었는데도 준비되지 않았다고 본다.
+ *
+ * 데스크톱(1200px~)에서는 카드 안 로고 줄이라 좌측 패딩이 20px 이다. 기준을 그
+ * 아래로 두지 않으면 데스크톱에서는 CSS 가 붙어도 시간 초과까지 스켈레톤에 머문다.
  */
+const HOME_HEADER_MIN_PADDING_LEFT_PX = 20;
+
 const isHomeHeaderStyleReady = (element: HTMLElement) => {
   const style = window.getComputedStyle(element);
 
@@ -129,7 +134,7 @@ const isHomeHeaderStyleReady = (element: HTMLElement) => {
     style.display === "flex" &&
     style.alignItems === "center" &&
     style.justifyContent === "space-between" &&
-    Number.parseFloat(style.paddingLeft) >= 30
+    Number.parseFloat(style.paddingLeft) >= HOME_HEADER_MIN_PADDING_LEFT_PX
   );
 };
 
