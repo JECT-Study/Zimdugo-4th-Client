@@ -6,6 +6,7 @@ import type {
 } from "#/entities/locker/model/locker-detail";
 import { LockerRealtimeStatusCard } from "#/entities/locker/ui/realtime-availability";
 import type { LockerCorrectionRequest } from "#/features/locker-correction/model/locker-correction-types";
+import { useIsDesktopLayout } from "#/shared/hooks/useIsDesktopLayout";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import {
@@ -143,6 +144,8 @@ interface ResolveLockerDetailSnapPointsOptions {
   windowHeight: number;
   /** 노치에 덮이는 높이. full 상한을 그만큼 함께 내린다. */
   safeAreaInsetTopPx?: number;
+  /** 데스크톱이면 시트 윗변 경계를 왼쪽 위 카드 아래로 잡는다. */
+  isDesktopLayout?: boolean;
   minSnapPoint?: number;
   snapPoint?: number;
   maxSnapPoint?: number;
@@ -199,11 +202,21 @@ export const resolveLockerDetailSnapPoints = ({
   windowHeight,
   actionFooterHeightPx = DETAIL_ACTION_FOOTER_HEIGHT,
   safeAreaInsetTopPx = 0,
+  isDesktopLayout = false,
 }: ResolveLockerDetailSnapPointsOptions) => {
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - DETAIL_DISMISS_VISIBLE_HEIGHT;
+  const topLimitPx = resolveSheetTopLimitPx(
+    safeAreaInsetTopPx,
+    isDesktopLayout,
+  );
+  // 호출부가 full 자리를 직접 줘도(딥링크 full 열기 등) 데스크톱에서는 카드 아래를 넘지 않는다.
   const resolvedFullTopOffset =
-    minSnapPoint ?? resolveSheetTopLimitPx(safeAreaInsetTopPx);
+    minSnapPoint === undefined
+      ? topLimitPx
+      : isDesktopLayout
+        ? Math.max(minSnapPoint, topLimitPx)
+        : minSnapPoint;
   const resolvedMinSnapPoint = resolveSheetFullSnapPoint({
     contentHeight: fullContentHeight,
     topLimitPx: resolvedFullTopOffset,
@@ -264,6 +277,7 @@ export function LockerDetailBottomSheet({
 }: LockerDetailBottomSheetProps) {
   const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
+  const isDesktopLayout = useIsDesktopLayout();
   const [screenMetrics, setScreenMetrics] = useState<LockerDetailScreenMetrics>(
     {
       contentHeightPx: null,
@@ -290,6 +304,7 @@ export function LockerDetailBottomSheet({
         : fullContentHeight + DETAIL_CONTENT_TOP_PADDING,
     actionFooterHeightPx: actionFooterHeight,
     safeAreaInsetTopPx: safeAreaInsetTop,
+    isDesktopLayout,
   });
   const resolvedInitialSnapPoint =
     initialSnapPoint !== undefined

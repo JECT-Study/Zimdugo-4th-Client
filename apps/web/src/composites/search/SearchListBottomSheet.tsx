@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useIsDesktopLayout } from "#/shared/hooks/useIsDesktopLayout";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
 import { useViewportHeight } from "#/shared/hooks/useViewportHeight";
 import type { EnglishSubPolicy } from "#/shared/i18n/english-sub-policy";
@@ -108,6 +109,8 @@ interface ResolveSearchListSnapPointsOptions {
   maxSnapPoint?: number;
   /** 노치에 덮이는 높이. legacy 단계 계산에는 쓰지 않는다. */
   safeAreaInsetTopPx?: number;
+  /** 데스크톱이면 시트 윗변 경계를 왼쪽 위 카드 아래로 잡는다. */
+  isDesktopLayout?: boolean;
   /** 잰 콘텐츠 높이. full 을 이 높이만큼만 올린다. */
   fullContentHeight?: number | null;
 }
@@ -227,6 +230,7 @@ export const resolveSearchListSnapPoints = ({
   snapPoint,
   windowHeight,
   safeAreaInsetTopPx = 0,
+  isDesktopLayout = false,
   fullContentHeight,
 }: ResolveSearchListSnapPointsOptions) => {
   if (behavior === "legacy") {
@@ -240,7 +244,10 @@ export const resolveSearchListSnapPoints = ({
 
   const resolvedMaxSnapPoint =
     maxSnapPoint ?? windowHeight - SEARCH_LIST_DISMISS_VISIBLE_HEIGHT;
-  const topLimitPx = resolveSheetTopLimitPx(safeAreaInsetTopPx);
+  const topLimitPx = resolveSheetTopLimitPx(
+    safeAreaInsetTopPx,
+    isDesktopLayout,
+  );
   /*
    * 단계들이 넘어설 수 없는 바닥.
    *
@@ -344,6 +351,7 @@ export function SearchListBottomSheet({
 }: SearchListBottomSheetProps) {
   const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
+  const isDesktopLayout = useIsDesktopLayout();
   const [fullContentHeight, setFullContentHeight] = useState<number | null>(
     null,
   );
@@ -359,6 +367,7 @@ export function SearchListBottomSheet({
     snapPoint,
     windowHeight,
     safeAreaInsetTopPx: safeAreaInsetTop,
+    isDesktopLayout,
     fullContentHeight,
   });
   const resolvedInitialSnapPoint =

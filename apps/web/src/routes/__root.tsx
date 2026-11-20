@@ -38,6 +38,7 @@ import {
   PageTransitionContentBoundary,
   PageTransitionOverlay,
 } from "#/shared/ui/PageTransitionOverlay";
+import { mapAppContainer } from "./_map.css";
 
 const GTM_CONTAINER_ID = import.meta.env.VITE_GTM_CONTAINER_ID;
 const DEFAULT_OG_IMAGE_URL = `${SITE_ORIGIN}/images/og-default.png`;
@@ -341,6 +342,14 @@ function RootDocument({ children }: { children: ReactNode }) {
 
   useResetAppScrollOnResize(!isDocumentScrollPage);
 
+  /*
+   * 지도 레이아웃(`/_map`) 아래 화면인지. 경로 문자열을 다시 나열하지 않고 라우트
+   * 트리를 본다. 데스크톱에서 앱 틀의 폭 제한을 풀지 정하는 데만 쓴다.
+   */
+  const isMapPage = useRouterState({
+    select: (state) => state.matches.some((match) => match.routeId === "/_map"),
+  });
+
   return (
     <html
       lang={lang}
@@ -357,7 +366,10 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         <GtmBodyNoscript containerId={GTM_CONTAINER_ID} />
-        <AppContainer mode={isDocumentScrollPage ? "document" : "app"}>
+        <AppContainer
+          mode={isDocumentScrollPage ? "document" : "app"}
+          className={isMapPage ? mapAppContainer : undefined}
+        >
           <PageTransitionContentBoundary isBlocked={isPageTransitionPending}>
             <AppShell mode={isDocumentScrollPage ? "document" : "app"}>
               {children}

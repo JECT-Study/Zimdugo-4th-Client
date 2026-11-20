@@ -1,5 +1,6 @@
 import {
   compactDeviceSelector,
+  desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
@@ -28,6 +29,24 @@ export const searchBarLayer = style({
   "@media": {
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: `calc(${vars.layout.tabletAppMaxWidth} - 32px)`,
+    },
+    /*
+     * 데스크톱: 왼쪽 위 카드. 위쪽 여백만큼 로고 줄(헤더)까지 함께 덮어 그려서,
+     * 로고와 검색이 이음매 없는 카드 한 장으로 보이게 한다. 헤더는 이 위층에서
+     * 투명하게 로고와 버튼만 그린다.
+     */
+    [desktopMediaQuery]: {
+      top: vars.layout.desktopInset,
+      left: vars.layout.desktopInset,
+      right: "auto",
+      width: vars.layout.desktopPanelWidth,
+      maxWidth: "none",
+      margin: 0,
+      padding: `${vars.layout.desktopHeader} ${vars.spacing[20]} ${vars.spacing[20]}`,
+      boxSizing: "border-box",
+      borderRadius: vars.layout.desktopPanelRadius,
+      backgroundColor: vars.color.bg.default,
+      boxShadow: vars.shadow[2],
     },
   },
 });

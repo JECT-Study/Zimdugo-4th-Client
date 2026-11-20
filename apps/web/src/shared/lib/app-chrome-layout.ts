@@ -28,14 +28,32 @@ export const MAP_CONTROL_TOP_LIMIT_PX =
   APP_CHROME_BOTTOM_PX + MAP_CONTROL_GAP_PX;
 
 /**
+ * 데스크톱(1200px~)에서 시트가 올라갈 수 있는 끝.
+ *
+ * 데스크톱은 헤더·검색 바 대신 왼쪽 위 카드를 쓴다. 카드 위치(16) + 로고 줄(72) +
+ * 검색 입력(48) + 카드 아래 여백(20) 에 카드 간격(12) 을 둔 자리다. 가운데 시트가
+ * 좁은 데스크톱 폭에서 이 카드와 가로로 겹치므로, 끝까지 올려도 여기서 멈춘다.
+ * 목록·상세를 패널로 옮기면 함께 지운다.
+ */
+const DESKTOP_SHEET_TOP_LIMIT_PX = 16 + 72 + 48 + 20 + 12;
+
+/**
  * 노치에 덮이는 만큼 경계를 함께 내린다.
  *
  * 크롬은 CSS 로 `env(safe-area-inset-top)` 만큼 내려가는데 시트·컨트롤 위치는 JS 가
  * 숫자로 잡는다. 안전 영역을 안 더하면 노치 기기에서만 둘이 어긋나, z-index 가 높은
  * 시트가 검색 바를 덮어 아무것도 누를 수 없게 된다.
+ *
+ * 데스크톱이면 위 카드 아래가 경계다. 스냅·라이브 오프셋이 모두 이 값을 쓰므로
+ * 시트 윗변과 그 위에 붙는 것(실시간 카드 등)이 함께 멈춘다.
  */
-export const resolveSheetTopLimitPx = (safeAreaInsetTopPx: number) =>
-  SHEET_TOP_LIMIT_PX + Math.max(0, safeAreaInsetTopPx);
+export const resolveSheetTopLimitPx = (
+  safeAreaInsetTopPx: number,
+  isDesktopLayout = false,
+) =>
+  isDesktopLayout
+    ? DESKTOP_SHEET_TOP_LIMIT_PX
+    : SHEET_TOP_LIMIT_PX + Math.max(0, safeAreaInsetTopPx);
 
 export const resolveMapControlTopLimitPx = (safeAreaInsetTopPx: number) =>
   MAP_CONTROL_TOP_LIMIT_PX + Math.max(0, safeAreaInsetTopPx);
