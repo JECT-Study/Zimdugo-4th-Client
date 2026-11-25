@@ -1,5 +1,7 @@
 import {
   compactDeviceSelector,
+  desktopLayoutFlagSelector,
+  desktopLayoutSelector,
   desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
@@ -44,15 +46,19 @@ export const header = style({
      * 생기지 않게 한다. 유틸 버튼은 actions 가 화면 오른쪽 위로 따로 띄운다.
      */
     [desktopMediaQuery]: {
-      top: vars.layout.desktopInset,
-      left: vars.layout.desktopInset,
-      right: "auto",
-      width: vars.layout.desktopPanelWidth,
-      maxWidth: "none",
-      height: vars.layout.desktopHeader,
-      margin: 0,
-      padding: `0 ${vars.spacing[20]}`,
-      backgroundColor: "transparent",
+      selectors: {
+        [desktopLayoutSelector]: {
+          top: vars.layout.desktopInset,
+          left: vars.layout.desktopInset,
+          right: "auto",
+          width: vars.layout.desktopPanelWidth,
+          maxWidth: "none",
+          height: vars.layout.desktopHeader,
+          margin: 0,
+          padding: `0 ${vars.spacing[20]}`,
+          backgroundColor: "transparent",
+        },
+      },
     },
   },
 });
@@ -69,7 +75,11 @@ export const logoButton = style({
   cursor: "pointer",
   "@media": {
     [desktopMediaQuery]: {
-      height: vars.layout.desktopHeader,
+      selectors: {
+        [desktopLayoutSelector]: {
+          height: vars.layout.desktopHeader,
+        },
+      },
     },
   },
 });
@@ -81,8 +91,12 @@ export const logo = style({
   "@media": {
     // 원본 비율(78:16) 그대로 24px 높이로 키운다.
     [desktopMediaQuery]: {
-      width: "117px",
-      height: "24px",
+      selectors: {
+        [desktopLayoutSelector]: {
+          width: "117px",
+          height: "24px",
+        },
+      },
     },
   },
 });
@@ -99,24 +113,38 @@ export const actions = style({
      * 헤더는 transform 이 없어 fixed 가 뷰포트를 기준으로 잡힌다.
      */
     [desktopMediaQuery]: {
-      position: "fixed",
-      top: vars.layout.desktopInset,
-      right: vars.layout.desktopInset,
-      gap: vars.spacing[8],
-      padding: "6px",
-      borderRadius: vars.radius.max,
-      backgroundColor: vars.color.bg.default,
-      boxShadow: vars.shadow[2],
+      selectors: {
+        [desktopLayoutSelector]: {
+          position: "fixed",
+          top: vars.layout.desktopInset,
+          right: vars.layout.desktopInset,
+          gap: vars.spacing[8],
+          padding: "6px",
+          borderRadius: vars.radius.max,
+          backgroundColor: vars.color.bg.default,
+          boxShadow: vars.shadow[2],
+        },
+      },
     },
   },
 });
 
-/** 알약 안에서는 버튼마다 그림자를 빼고, 마우스를 올리면 바탕만 바꾼다. */
+/**
+ * 알약 안에서는 버튼마다 그림자를 빼고, 마우스를 올리면 바탕만 바꾼다.
+ *
+ * 플래그 셀렉터가 `&:focus-visible` 보다 구체적이라, 그림자를 빼는 규칙이 포커스 링까지
+ * 지운다. 포커스 링은 같은 명시도로 다시 건다.
+ */
 const desktopPillButton = {
-  boxShadow: "none",
   selectors: {
-    "&:hover": {
+    [desktopLayoutSelector]: {
+      boxShadow: "none",
+    },
+    [`${desktopLayoutFlagSelector} &:hover`]: {
       backgroundColor: vars.color.bg.surface,
+    },
+    [`${desktopLayoutFlagSelector} &:focus-visible`]: {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
     },
   },
 } as const;

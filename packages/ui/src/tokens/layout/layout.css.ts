@@ -45,6 +45,27 @@ export const layoutScale = {
 export const desktopMediaQuery =
   `screen and (min-width: ${layoutScale.desktopBreakpoint})` as const;
 
+/**
+ * 데스크톱 레이아웃 기능 플래그.
+ *
+ * 데스크톱 화면을 PR 단위로 나눠 main 에 머지하되, 전 화면이 갖춰지기 전에는 사용자에게
+ * 보이지 않게 한다. html 에 이 속성이 "true" 로 붙어 있을 때만 데스크톱 규칙이 켜진다.
+ * 속성은 앱이 첫 페인트 전에 붙인다(apps/web 의 desktop-layout-flag 참고).
+ * 전 화면 공개 후 안정되면 이 플래그와 desktopLayoutSelector 를 걷어 낸다.
+ */
+export const DESKTOP_LAYOUT_FLAG_ATTRIBUTE = "data-desktop-layout";
+export const desktopLayoutFlagSelector =
+  `html[${DESKTOP_LAYOUT_FLAG_ATTRIBUTE}="true"]` as const;
+
+/**
+ * 데스크톱 규칙을 거는 셀렉터. 반드시 `[desktopMediaQuery]` 안의 selectors 에 쓴다.
+ *
+ * ```ts
+ * "@media": { [desktopMediaQuery]: { selectors: { [desktopLayoutSelector]: { ... } } } }
+ * ```
+ */
+export const desktopLayoutSelector = `${desktopLayoutFlagSelector} &` as const;
+
 export const layoutTheme = createGlobalTheme(":root", {
   layout: layoutScale,
 });

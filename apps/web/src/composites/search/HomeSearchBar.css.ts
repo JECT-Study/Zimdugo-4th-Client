@@ -1,5 +1,6 @@
 import {
   compactDeviceSelector,
+  desktopLayoutSelector,
   desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
@@ -36,17 +37,21 @@ export const searchBarLayer = style({
      * 투명하게 로고와 버튼만 그린다.
      */
     [desktopMediaQuery]: {
-      top: vars.layout.desktopInset,
-      left: vars.layout.desktopInset,
-      right: "auto",
-      width: vars.layout.desktopPanelWidth,
-      maxWidth: "none",
-      margin: 0,
-      padding: `${vars.layout.desktopHeader} ${vars.spacing[20]} ${vars.spacing[20]}`,
-      boxSizing: "border-box",
-      borderRadius: vars.layout.desktopPanelRadius,
-      backgroundColor: vars.color.bg.default,
-      boxShadow: vars.shadow[2],
+      selectors: {
+        [desktopLayoutSelector]: {
+          top: vars.layout.desktopInset,
+          left: vars.layout.desktopInset,
+          right: "auto",
+          width: vars.layout.desktopPanelWidth,
+          maxWidth: "none",
+          margin: 0,
+          padding: `${vars.layout.desktopHeader} ${vars.spacing[20]} ${vars.spacing[20]}`,
+          boxSizing: "border-box",
+          borderRadius: vars.layout.desktopPanelRadius,
+          backgroundColor: vars.color.bg.default,
+          boxShadow: vars.shadow[2],
+        },
+      },
     },
   },
 });

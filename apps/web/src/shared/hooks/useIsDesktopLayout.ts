@@ -1,9 +1,13 @@
 import { desktopMediaQuery } from "@repo/ui/tokens/layout/layout.css";
 import { useState } from "react";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
+import { isDesktopLayoutFlagOn } from "#/shared/lib/desktop-layout-flag";
 
 /**
  * 데스크톱 레이아웃(1200px~)으로 그리는 중인지.
+ *
+ * 폭만 보지 않고 기능 플래그도 본다. 플래그가 꺼져 있으면 CSS 도 모바일 배치 그대로라,
+ * 여기서만 데스크톱이라고 하면 시트 경계 같은 숫자가 화면과 어긋난다.
  *
  * 배치는 CSS 미디어 쿼리가 정한다. 이 훅은 JS 가 숫자로 잡는 값(시트 스냅 경계 등)을
  * 같은 기준에 맞추는 데만 쓴다.
@@ -16,7 +20,7 @@ export const useIsDesktopLayout = () => {
   const [isDesktopLayout, setIsDesktopLayout] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
-    if (typeof window.matchMedia !== "function") {
+    if (typeof window.matchMedia !== "function" || !isDesktopLayoutFlagOn()) {
       return;
     }
 

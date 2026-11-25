@@ -30,6 +30,7 @@ import {
   normalizeLocale,
   stripLocalePathPrefix,
 } from "#/shared/i18n/locales";
+import { DESKTOP_LAYOUT_FLAG_SCRIPT } from "#/shared/lib/desktop-layout-flag";
 import { SITE_ORIGIN } from "#/shared/lib/site-url";
 import { isPathnameTransitionPending } from "#/shared/model/page-transition";
 import { GtmBodyNoscript, GtmHeadScript } from "#/shared/ui/GtmContainer";
@@ -360,6 +361,10 @@ function RootDocument({ children }: { children: ReactNode }) {
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script marks compact physical devices before first paint
           dangerouslySetInnerHTML={{ __html: COMPACT_DEVICE_LAYOUT_SCRIPT }}
+        />
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap script sets the desktop layout feature flag before first paint
+          dangerouslySetInnerHTML={{ __html: DESKTOP_LAYOUT_FLAG_SCRIPT }}
         />
         <style>{CRITICAL_LAYOUT_CSS}</style>
         <HeadContent />
