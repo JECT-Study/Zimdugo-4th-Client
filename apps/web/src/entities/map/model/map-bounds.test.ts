@@ -150,6 +150,45 @@ describe("focusNaverMapOnClusterBounds", () => {
     expect(center.longitude).toBeCloseTo(127 - 208 * degreesPerPixel, 10);
   });
 
+  it("보정 거리는 타일 크기가 아니라 지금 지도의 실제 축척으로 잰다", () => {
+    // GL(벡터) 지도처럼 같은 줌에서 래스터(256px 타일)와 축척이 다른 지도.
+    // 줌 10 에서 512px 타일 기준으로 1440px 폭이 보여 주는 경도 폭을 돌려준다.
+    const width = 1440;
+    const currentZoom = 10;
+    const glLongitudeSpan = width * (360 / (512 * 2 ** currentZoom));
+    const morph = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => currentZoom),
+      getSize: vi.fn(() => ({ width, height: 900 })),
+      getBounds: vi.fn(() => ({
+        getNE: () => ({
+          lat: () => 37.6,
+          lng: () => 127 + glLongitudeSpan / 2,
+        }),
+        getSW: () => ({
+          lat: () => 37.4,
+          lng: () => 127 - glLongitudeSpan / 2,
+        }),
+      })),
+      morph,
+    } as unknown as naver.maps.Map;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds: { swLat: 37.45, swLng: 126.95, neLat: 37.55, neLng: 127.05 },
+      leftPadding: CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX + 416,
+    });
+
+    const [latLng, zoom] = morph.mock.calls[0] ?? [];
+    const center = latLng as FakeLatLng;
+    // 지금 축척(경도 폭 ÷ 화면 폭)을 목표 줌까지 줄인 값으로 208px 를 옮긴다.
+    const degreesPerPixel =
+      (glLongitudeSpan / width) * 2 ** (currentZoom - (zoom as number));
+
+    expect(center.longitude).toBeCloseTo(127 - 208 * degreesPerPixel, 10);
+  });
+
   it("클러스터 범위가 아주 좁아도 최대 줌을 넘지 않는다", () => {
     const morph = vi.fn();
     const map = {

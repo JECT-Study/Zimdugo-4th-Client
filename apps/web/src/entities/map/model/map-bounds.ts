@@ -158,6 +158,40 @@ export const getFitBoundsZoom = ({
   return Number.isFinite(fitZoom) ? fitZoom : 0;
 };
 
+/**
+ * 목표 줌에서 화면 1px 이 가리키는 경도 폭.
+ *
+ * 타일 크기를 가정하지 않고 지금 지도가 실제로 보여 주는 범위에서 잰다. 커스텀 스타일을
+ * 쓰는 GL(벡터) 지도는 같은 줌 값의 축척이 래스터 지도와 달라, 256px 타일 공식으로
+ * 환산하면 보정 거리가 절반쯤으로 줄어든다. 지금 범위 ÷ 화면 폭을 목표 줌까지 2 배씩
+ * 줄이면 어느 방식이든 그 지도의 축척을 그대로 따른다.
+ *
+ * 범위를 읽지 못하면(SDK 초기화 전 등) 래스터 기준 공식으로 물러난다.
+ */
+const getLongitudeDegreesPerPixel = ({
+  map,
+  mapSize,
+  currentZoom,
+  targetZoom,
+}: {
+  map: naver.maps.Map;
+  mapSize: { width: number; height: number } | undefined;
+  currentZoom: number;
+  targetZoom: number;
+}) => {
+  const bounds = map.getBounds?.() as naver.maps.LatLngBounds | undefined;
+  const ne = bounds?.getNE?.();
+  const sw = bounds?.getSW?.();
+  const width = mapSize?.width ?? 0;
+  const longitudeSpan = ne && sw ? Math.abs(ne.lng() - sw.lng()) : 0;
+
+  if (longitudeSpan > 0 && width > 0) {
+    return (longitudeSpan / width) * 2 ** (currentZoom - targetZoom);
+  }
+
+  return 360 / (WEB_MERCATOR_TILE_SIZE_PX * 2 ** targetZoom);
+};
+
 export const focusNaverMapOnClusterBounds = ({
   map,
   bounds,
@@ -201,7 +235,12 @@ export const focusNaverMapOnClusterBounds = ({
    * 목표 줌의 경도 폭으로 환산해 중심을 옮긴다.
    */
   const horizontalShiftPx = (leftPadding - rightPadding) / 2;
-  const degreesPerPixel = 360 / (WEB_MERCATOR_TILE_SIZE_PX * 2 ** targetZoom);
+  const degreesPerPixel = getLongitudeDegreesPerPixel({
+    map,
+    mapSize,
+    currentZoom,
+    targetZoom,
+  });
   const targetLatLng = new maps.LatLng(
     centerLat,
     centerLng - horizontalShiftPx * degreesPerPixel,

@@ -2862,9 +2862,13 @@ export function IndexPage() {
     // 무엇을 찾은 결과인지도 함께 본다. 결과가 이전 검색과 같은 외곽 좌표로
     // 나오면 범위만으로는 구분되지 않는데, 두 훅 모두 placeholderData 로 이전
     // 결과를 들고 있어 그 사이 bounds 가 비어 ref 가 풀리는 순간도 없다.
+    //
+    // 왼쪽 가림 폭도 본다. 결과를 연 채 창을 데스크톱 폭으로 넓히면 카드가 생겨
+    // 왼쪽 끝 결과가 카드 밑으로 들어가므로, 새 여백으로 다시 맞춘다.
     const fitSignature = JSON.stringify({
       bounds,
       bottomPadding,
+      obscuredLeftPx: mapObscuredLeftPx,
       placeId: activePlaceId ?? null,
       keyword: effectiveSearchQuery,
       filters: searchFilters,
@@ -2889,6 +2893,7 @@ export function IndexPage() {
     searchFilters,
     sheetMode,
     windowHeight,
+    mapObscuredLeftPx,
     context,
     mapInstance,
     mapCamera.fitBounds,
