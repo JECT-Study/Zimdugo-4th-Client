@@ -16,6 +16,15 @@ import { DESKTOP_LAYOUT_FLAG_ATTRIBUTE } from "@repo/ui/tokens/layout/layout.css
 const DESKTOP_LAYOUT_STORAGE_KEY = "zimdugo:desktop-layout";
 const DESKTOP_LAYOUT_QUERY_PARAM = "desktop";
 
+/**
+ * 인라인 스크립트가 내린 결정을 담아 두는 window 속성 이름.
+ *
+ * html 의 플래그 속성만으로는 결정이 남지 않는다. 확장 프로그램 등이 첫 페인트 뒤 DOM 을
+ * 건드려 하이드레이션이 실패하면, React 가 html 부터 클라이언트에서 다시 그리며 React 가
+ * 모르는 속성을 지운다. 결정은 여기에 두고 속성은 거기서 다시 붙인다.
+ */
+const DESKTOP_LAYOUT_DECISION_KEY = "__zimdugoDesktopLayout";
+
 const isDesktopLayoutEnabledByEnv =
   import.meta.env.VITE_FEATURE_DESKTOP_LAYOUT === "true";
 
@@ -46,6 +55,7 @@ export const DESKTOP_LAYOUT_FLAG_SCRIPT = `
     var choice = param === "1" || param === "0" ? param : stored;
     if (choice === "1") enabled = true;
     if (choice === "0") enabled = false;
+    window[${JSON.stringify(DESKTOP_LAYOUT_DECISION_KEY)}] = enabled;
     if (enabled) {
       document.documentElement.setAttribute(${JSON.stringify(
         DESKTOP_LAYOUT_FLAG_ATTRIBUTE,
@@ -56,7 +66,36 @@ export const DESKTOP_LAYOUT_FLAG_SCRIPT = `
 })();
 `;
 
-/** 지금 문서에 데스크톱 레이아웃 플래그가 켜져 있는지. 클라이언트에서만 부른다. */
-export const isDesktopLayoutFlagOn = () =>
-  document.documentElement.getAttribute(DESKTOP_LAYOUT_FLAG_ATTRIBUTE) ===
-  "true";
+const readDesktopLayoutDecision = () =>
+  (window as unknown as Record<string, unknown>)[DESKTOP_LAYOUT_DECISION_KEY];
+
+/**
+ * 데스크톱 레이아웃 플래그가 켜져 있는지. 클라이언트에서만 부른다.
+ *
+ * 스크립트의 결정을 먼저 본다. 하이드레이션이 실패해 html 속성이 지워진 직후에도 같은
+ * 답을 내야 한다. 결정이 없을 때만(스크립트가 돌지 않은 환경) 속성을 본다.
+ */
+export const isDesktopLayoutFlagOn = () => {
+  const decision = readDesktopLayoutDecision();
+  if (typeof decision === "boolean") return decision;
+
+  return (
+    document.documentElement.getAttribute(DESKTOP_LAYOUT_FLAG_ATTRIBUTE) ===
+    "true"
+  );
+};
+
+/**
+ * 플래그가 켜져 있는데 html 속성이 빠져 있으면 다시 붙인다. 클라이언트에서만 부른다.
+ *
+ * 하이드레이션이 실패하면 React 가 html 을 다시 그리며 이 속성을 지운다. 그러면 CSS 의
+ * 데스크톱 규칙이 모두 풀려 넓은 화면에서도 모바일 배치로 보인다.
+ */
+export const restoreDesktopLayoutFlagAttribute = () => {
+  if (!isDesktopLayoutFlagOn()) return;
+
+  const root = document.documentElement;
+  if (root.getAttribute(DESKTOP_LAYOUT_FLAG_ATTRIBUTE) !== "true") {
+    root.setAttribute(DESKTOP_LAYOUT_FLAG_ATTRIBUTE, "true");
+  }
+};

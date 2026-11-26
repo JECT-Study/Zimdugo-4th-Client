@@ -20,6 +20,7 @@ describe("데스크톱 레이아웃 플래그", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     document.documentElement.removeAttribute("data-desktop-layout");
+    Reflect.deleteProperty(window, "__zimdugoDesktopLayout");
     window.localStorage.clear();
     window.history.replaceState(null, "", "/");
   });
@@ -88,5 +89,34 @@ describe("데스크톱 레이아웃 플래그", () => {
     document.documentElement.removeAttribute("data-desktop-layout");
     runFlagScript(DESKTOP_LAYOUT_FLAG_SCRIPT, "?desktop=0");
     expect(isDesktopLayoutFlagOn()).toBe(false);
+  });
+
+  it("하이드레이션 실패로 html 속성이 지워져도 켜진 상태를 유지하고 속성을 다시 붙인다", async () => {
+    const {
+      DESKTOP_LAYOUT_FLAG_SCRIPT,
+      isDesktopLayoutFlagOn,
+      restoreDesktopLayoutFlagAttribute,
+    } = await loadFlagModule("false");
+
+    runFlagScript(DESKTOP_LAYOUT_FLAG_SCRIPT, "?desktop=1");
+    // React 가 html 을 다시 그리며 모르는 속성을 지운 상황
+    document.documentElement.removeAttribute("data-desktop-layout");
+
+    expect(isDesktopLayoutFlagOn()).toBe(true);
+    restoreDesktopLayoutFlagAttribute();
+    expect(document.documentElement.getAttribute("data-desktop-layout")).toBe(
+      "true",
+    );
+  });
+
+  it("플래그가 꺼져 있으면 속성을 붙이지 않는다", async () => {
+    const { DESKTOP_LAYOUT_FLAG_SCRIPT, restoreDesktopLayoutFlagAttribute } =
+      await loadFlagModule("false");
+
+    runFlagScript(DESKTOP_LAYOUT_FLAG_SCRIPT, "?desktop=0");
+    restoreDesktopLayoutFlagAttribute();
+    expect(document.documentElement.hasAttribute("data-desktop-layout")).toBe(
+      false,
+    );
   });
 });
