@@ -39,7 +39,10 @@ export interface HomeHeaderProps {
   isMapColorSchemeResolved?: boolean;
   /**
    * 프로필 버튼에 무엇을 그릴지 정해졌는지. 로그인 여부는 서버가 모르고, 로그인했다면
-   * 사진을 받아 와야 한다. false 면 프로필 자리에 스켈레톤을 둔다.
+   * 사진을 받아 와야 한다. false 면 버튼 안의 그림만 스켈레톤으로 둔다.
+   *
+   * 버튼 자체는 늘 그린다. 설정으로 가는 데는 프로필이 필요 없고, 오프라인이면 조회가
+   * 멈춰 이 값이 계속 false 로 남는데 그동안 설정으로 갈 길이 없어지면 안 된다.
    */
   isProfileResolved?: boolean;
 }
@@ -459,23 +462,27 @@ export function HomeHeader({
         ) : (
           <HeaderActionSkeleton />
         )}
-        {isProfileResolved ? (
-          <button
-            type="button"
-            className={styles.profileButton}
-            style={fallbackStyle(circleActionFallbackStyle)}
-            aria-label={m.my_profile_aria()}
-            onClick={onProfilePress}
-          >
-            {profileImageUrl ? (
-              <ProfileImage src={profileImageUrl} size={32} />
-            ) : (
-              <IconHomeProfile32 />
-            )}
-          </button>
-        ) : (
-          <HeaderActionSkeleton />
-        )}
+        <button
+          type="button"
+          className={styles.profileButton}
+          style={fallbackStyle(circleActionFallbackStyle)}
+          aria-label={m.my_profile_aria()}
+          aria-busy={isProfileResolved ? undefined : true}
+          onClick={onProfilePress}
+        >
+          {!isProfileResolved ? (
+            <Skeleton
+              width={32}
+              height={32}
+              variant="circle"
+              style={SKELETON_SURFACE_STYLE}
+            />
+          ) : profileImageUrl ? (
+            <ProfileImage src={profileImageUrl} size={32} />
+          ) : (
+            <IconHomeProfile32 />
+          )}
+        </button>
       </div>
     </header>
   );
