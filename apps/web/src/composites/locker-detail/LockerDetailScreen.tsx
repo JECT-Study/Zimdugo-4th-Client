@@ -194,7 +194,7 @@ export interface LockerDetailScreenProps {
   variant?: LockerDetailScreenVariant;
 }
 
-export type LockerDetailScreenVariant = "sheet" | "panel";
+type LockerDetailScreenVariant = "sheet" | "panel";
 
 export function LockerDetailScreen({
   locker,

@@ -96,7 +96,7 @@ export interface LockerDetailBottomSheetProps {
   desktopPlacement?: LockerDetailDesktopPlacement;
 }
 
-export type LockerDetailDesktopPlacement = "attached" | "beside";
+type LockerDetailDesktopPlacement = "attached" | "beside";
 
 export { SHEET_TOP_LIMIT_PX as LOCKER_DETAIL_FULL_TOP_OFFSET } from "#/shared/lib/app-chrome-layout";
 
