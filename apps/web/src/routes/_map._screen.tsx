@@ -156,6 +156,7 @@ import {
 import {
   getSearchBoundsBottomPadding,
   hasListUnderDetail,
+  isDetailOverListScreen,
   resolveDetailFocusInsets,
 } from "#/features/search/model/map-viewport-policy";
 import {
@@ -464,7 +465,15 @@ export function IndexPage() {
    * 카메라를 거치지 않는 직접 호출과 컨트롤 위치에만 쓴다.
    */
   const isDesktopLayout = useIsDesktopLayout();
-  const mapObscuredLeftPx = resolveMapObscuredLeftPx(isDesktopLayout);
+  /*
+   * 목록 위에서 연 상세면 목록 옆에 상세 카드가 붙어 두 카드 폭이 가려진다. 레이아웃의
+   * 공통 카메라와 같은 판단(주소)을 써서, 카메라를 거치지 않는 직접 호출(클러스터 확대
+   * 등)도 같은 폭을 피한다.
+   */
+  const mapObscuredLeftPx = resolveMapObscuredLeftPx(
+    isDesktopLayout,
+    isDetailOverListScreen(mapScreenParams),
+  );
   /** 데스크톱 컨트롤은 시트를 따라 오르지 않고 기본 자리에 머문다. */
   const mapControlBaseBottom = useMotionValue(MAP_CONTROL_FALLBACK_BOTTOM_PX);
   const mapControlTopReserved = resolveMapControlTopReservedPx(
