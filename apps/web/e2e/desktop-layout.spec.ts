@@ -60,6 +60,19 @@ const searchItemRaw = {
 
 const boundsRaw = { swLat: 37.49, swLng: 127.01, neLat: 37.51, neLng: 127.04 };
 
+/** 결과 목록 항목과 출처가 갈리도록 이름을 다르게 둔다. */
+const suggestItemRaw = {
+  type: "LOCKER",
+  placeId: 900,
+  placeName: "강남역",
+  lockerId: LOCKER_ID,
+  lockerName: "자동완성 강남역 보관함",
+  roadAddress: "서울 강남구 강남대로 지하 396",
+  lockerType: "SUBWAY",
+  distanceMeters: 120,
+  updatedAt: "2026-08-01T00:00:00",
+};
+
 const stubApi = async (page: Page) => {
   await page.route("**/api/v1/**", async (route) => {
     const url = route.request().url();
@@ -70,7 +83,7 @@ const stubApi = async (page: Page) => {
         : url.includes(`/lockers/${LOCKER_ID}`)
           ? lockerDetailRaw
           : url.includes("/suggest")
-            ? { items: [], hasNext: false }
+            ? { count: 1, items: [suggestItemRaw] }
             : {};
 
     await route.fulfill({
@@ -92,6 +105,12 @@ const sheetSurface = (page: Page) => page.locator("[data-bottom-sheet-surface]")
 const searchInput = (page: Page) => page.getByLabel("검색어 입력");
 const desktopListPanel = (page: Page) =>
   page.locator("[data-desktop-list-panel]");
+const searchOverlay = (page: Page) => page.locator("[data-search-overlay]");
+/** 검색 카드의 입력창은 누르기만 하는 자리라 readonly, 타이핑은 오버레이가 받는다. */
+const homeSearchInput = (page: Page) =>
+  page.locator('input[aria-label="검색어 입력"][readonly]');
+const overlayInput = (page: Page) =>
+  searchOverlay(page).locator('input[aria-label="검색어 입력"]');
 
 const waitForMapReady = async (page: Page) => {
   await expect(page.locator('[data-map-state="ready"]')).toBeAttached();
@@ -243,5 +262,76 @@ test.describe("데스크톱 레이아웃 플래그", () => {
 
     await expect(sheetSurface(page)).toBeVisible();
     await expect(desktopListPanel(page)).toHaveCount(0);
+  });
+
+  test.describe("검색 오버레이", () => {
+    // 권한이 없으면 위치 안내 팝업이 화면 전체를 덮어 검색 카드가 눌리지 않는다.
+    test.use({
+      permissions: ["geolocation"],
+      geolocation: { latitude: 37.4979, longitude: 127.0276 },
+    });
+
+    test("데스크톱 검색 오버레이는 화면을 덮지 않고 검색 카드 자리의 패널로 열린다", async ({
+      page,
+    }) => {
+      await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}&desktop=1`);
+      await waitForMapReady(page);
+
+      // 결과 화면의 검색 카드에는 되돌아가기 버튼이 있다. 오버레이 입력창이 이 자리에
+      // 그대로 와야 열 때 튀지 않는다.
+      await expect(desktopListPanel(page)).toBeVisible();
+      const cardInput = await homeSearchInput(page).boundingBox();
+
+      await homeSearchInput(page).click();
+      await expect(overlayInput(page)).toBeVisible();
+      await overlayInput(page).fill("강남");
+      await expect(
+        searchOverlay(page).getByText("자동완성 강남역 보관함"),
+      ).toBeVisible();
+
+      const box = await searchOverlay(page).boundingBox();
+      expect(box?.x).toBe(DESKTOP_INSET_PX);
+      expect(box?.y).toBe(DESKTOP_INSET_PX);
+      expect(box?.width).toBe(DESKTOP_PANEL_WIDTH_PX);
+      expect((box?.y ?? 0) + (box?.height ?? 0)).toBe(
+        VIEWPORT.height - DESKTOP_INSET_PX,
+      );
+
+      const input = await overlayInput(page).boundingBox();
+      expect(input?.x).toBe(cardInput?.x);
+      expect(input?.y).toBe(cardInput?.y);
+
+      // 로고 줄은 헤더가 오버레이 위에서 그대로 그리고, 오른쪽 지도는 가리지 않는다.
+      const topAt = (x: number, y: number) =>
+        page.evaluate(
+          ([px, py]) => {
+            const element = document.elementFromPoint(px, py);
+            if (element?.closest("header")) return "header";
+            if (element?.closest("[data-search-overlay]")) return "overlay";
+            return "other";
+          },
+          [x, y] as const,
+        );
+      expect(await topAt(DESKTOP_INSET_PX + 30, DESKTOP_INSET_PX + 36)).toBe(
+        "header",
+      );
+      expect(await topAt(VIEWPORT.width / 2, VIEWPORT.height / 2)).toBe(
+        "other",
+      );
+    });
+
+    test("플래그가 꺼져 있으면 검색 오버레이는 화면 전체를 덮는다", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await waitForMapReady(page);
+
+      await homeSearchInput(page).click();
+      await expect(overlayInput(page)).toBeVisible();
+
+      const box = await searchOverlay(page).boundingBox();
+      expect(box?.y).toBe(0);
+      expect(box?.height).toBe(VIEWPORT.height);
+    });
   });
 });

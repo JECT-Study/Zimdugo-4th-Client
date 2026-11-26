@@ -1,5 +1,7 @@
 import {
   compactDeviceSelector,
+  desktopLayoutSelector,
+  desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
@@ -33,6 +35,33 @@ export const overlay = style({
         },
       },
     },
+    /*
+     * 데스크톱: 화면 전체를 덮지 않고 왼쪽 위 검색 카드 자리에서 화면 아래까지
+     * 이어지는 카드가 된다. 지도는 그대로 보이고 눌린다.
+     *
+     * 윗부분(로고 줄)은 비워 둔다. 헤더(ui + 1)가 이 위층에서 로고를 그대로
+     * 그리고, 이 카드는 검색 카드·결과 패널과 같은 ui 층에서 나중에 그려져 그
+     * 둘을 덮는다. 입력창은 검색 카드의 입력창과 같은 자리에 온다.
+     */
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          top: vars.layout.desktopInset,
+          bottom: vars.layout.desktopInset,
+          left: vars.layout.desktopInset,
+          transform: "none",
+          width: vars.layout.desktopPanelWidth,
+          maxWidth: "none",
+          height: "auto",
+          paddingTop: vars.layout.desktopHeader,
+          boxSizing: "border-box",
+          borderRadius: vars.layout.desktopPanelRadius,
+          boxShadow: vars.shadow[2],
+          overflow: "hidden",
+          zIndex: vars.zIndex.ui,
+        },
+      },
+    },
   },
 });
 
@@ -42,6 +71,17 @@ export const header = style({
   gap: vars.spacing[12],
   padding: `${vars.spacing[12]} ${vars.spacing[16]}`,
   paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
+  "@media": {
+    // 검색 카드의 입력 줄과 같은 여백·간격. 열 때 입력창이 제자리에 있다.
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          gap: vars.spacing[8],
+          padding: `0 ${vars.spacing[20]}`,
+        },
+      },
+    },
+  },
 });
 
 export const searchFieldSlot = style({
@@ -62,6 +102,22 @@ export const backButton = style({
   width: "24px",
   height: "24px",
   color: vars.color.palette.gray[800],
+  "@media": {
+    // 검색 카드의 되돌아가기 버튼(HomeSearchBar leadingBackButton)과 같은 원형.
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          flexShrink: 0,
+          width: "48px",
+          height: "48px",
+          border: `2px solid ${vars.color.border.hover}`,
+          borderRadius: vars.radius.max,
+          backgroundColor: vars.color.bg.default,
+          color: vars.color.text.surface,
+        },
+      },
+    },
+  },
 });
 
 export const backIcon = style({

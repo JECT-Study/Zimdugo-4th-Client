@@ -203,7 +203,7 @@ export function SearchOverlay({
   const hasQuery = query.length > 0;
 
   return (
-    <div className={overlay}>
+    <div className={overlay} data-search-overlay="">
       <header className={header}>
         <button
           type="button"
