@@ -3,13 +3,18 @@ import {
   IconCaution24,
   IconChevronLeft13,
   IconCopy16,
+  IconDirections16,
   IconDistanceRoute24,
+  IconFlag16,
   IconLockerDetailCapacity24,
   IconLockerDetailMapPin24,
   IconLockerDetailWallet24,
   IconMore24,
   IconNavigationClock24,
   IconRoute20,
+  IconShare16,
+  IconStarFilled24,
+  IconStarOutline24,
   IconTimerStart20,
   IconX24,
 } from "@repo/ui/assets/icons";
@@ -90,6 +95,10 @@ import {
   metaIconText,
   metaRow,
   metaTruncatedText,
+  panelActionChip,
+  panelActionRow,
+  panelColumn,
+  panelIconButton,
   primaryActionButton,
   realtimeAvailabilityDivider,
   sheetColumn,
@@ -175,7 +184,17 @@ export interface LockerDetailScreenProps {
   isScrollEnabled?: boolean;
   /** 실시간 카드를 콘텐츠 안에 넣을 것인가. 표면이 밖에 띄우는 동안에는 false 다. */
   isRealtimeCardVisible?: boolean;
+  /**
+   * 얹히는 표면의 모양.
+   *
+   * - `sheet`: 모바일 바텀시트. 더보기 메뉴와 아래 고정 버튼(타이머·길찾기)을 쓴다.
+   * - `panel`: 데스크톱 카드. ☆·✕ 를 요약 옆에, 길찾기·공유·신고를 요약 아래 칩
+   *   줄로 둔다. 보관 타이머는 데스크톱에서 열지 않는다.
+   */
+  variant?: LockerDetailScreenVariant;
 }
+
+export type LockerDetailScreenVariant = "sheet" | "panel";
 
 export function LockerDetailScreen({
   locker,
@@ -195,6 +214,7 @@ export function LockerDetailScreen({
   isSummaryOnly = false,
   isScrollEnabled = true,
   isRealtimeCardVisible = true,
+  variant = "sheet",
 }: LockerDetailScreenProps) {
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
@@ -593,7 +613,11 @@ export function LockerDetailScreen({
 
   return (
     <>
-      <div className={sheetColumn}>
+      <div
+        className={[sheetColumn, variant === "panel" ? panelColumn : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {loadState === "loading" ? (
           <LockerDetailLoadingContent />
         ) : loadState === "error" ? (
@@ -617,6 +641,12 @@ export function LockerDetailScreen({
             isScrollEnabled={isScrollEnabled}
             contentRef={handleFullContentMeasureRef}
             footerRef={handleActionFooterMeasureRef}
+            variant={variant}
+            canFavorite={canFavorite}
+            onFavoritePress={handleFavoritePress}
+            onShare={handleShare}
+            onReport={handleReport}
+            isReportOpen={isCorrectionOpen}
           />
         )}
       </div>
@@ -872,6 +902,12 @@ function FullDetailContent({
   isScrollEnabled,
   contentRef,
   footerRef,
+  variant,
+  canFavorite,
+  onFavoritePress,
+  onShare,
+  onReport,
+  isReportOpen,
 }: {
   locker: LockerDetailItem;
   images: string[];
@@ -890,7 +926,14 @@ function FullDetailContent({
   isScrollEnabled: boolean;
   contentRef?: (element: HTMLDivElement | null) => void;
   footerRef?: (element: HTMLDivElement | null) => void;
+  variant: LockerDetailScreenVariant;
+  canFavorite: boolean;
+  onFavoritePress: () => void;
+  onShare: () => void;
+  onReport: () => void;
+  isReportOpen: boolean;
 }) {
+  const isPanel = variant === "panel";
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);
@@ -948,7 +991,18 @@ function FullDetailContent({
             moreActionsButtonRef={moreActionsButtonRef}
             isSummaryOnly={isSummaryOnly}
             canExpandTitle={isScrollEnabled}
+            variant={variant}
+            canFavorite={canFavorite}
+            onFavoritePress={onFavoritePress}
           />
+          {isPanel ? (
+            <PanelActionRow
+              onNavigate={onNavigate}
+              onShare={onShare}
+              onReport={onReport}
+              isReportOpen={isReportOpen}
+            />
+          ) : null}
           {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
           {isRealtimeAvailable && isRealtimeCardVisible ? (
             <div data-realtime-status-card="">
@@ -1014,7 +1068,7 @@ function FullDetailContent({
         시트 높이가 곧 보이는 높이라 여기 두면 하프에서도 화면 안에 들어온다.
         미니(111px)에서는 요약만으로 자리가 차서 내린다.
       */}
-      {isActionFooterVisible ? (
+      {isActionFooterVisible && !isPanel ? (
         <div ref={footerRef} className={actionFooter}>
           <div className={actionDivider} />
           <ActionRow
@@ -1066,6 +1120,9 @@ function SummarySection({
   moreActionsButtonRef,
   isSummaryOnly,
   canExpandTitle,
+  variant,
+  canFavorite,
+  onFavoritePress,
 }: {
   locker: LockerDetailItem;
   isTimerRunning: boolean;
@@ -1074,6 +1131,9 @@ function SummarySection({
   moreActionsButtonRef: RefObject<HTMLButtonElement | null>;
   isSummaryOnly: boolean;
   canExpandTitle: boolean;
+  variant: LockerDetailScreenVariant;
+  canFavorite: boolean;
+  onFavoritePress: () => void;
 }) {
   const [isTitleExpanded, setIsTitleExpanded] = useState(false);
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
@@ -1189,27 +1249,100 @@ function SummarySection({
           <InlineMeta left={locker.categoryLabel} right={summaryTrailingNode} />
         </div>
 
-        <div className={summaryActions}>
-          <button
-            ref={moreActionsButtonRef}
-            type="button"
-            className={summaryIconButton}
-            onClick={onMoreActionsOpen}
-            aria-label={m.locker_detail_more_actions_open_aria()}
-          >
-            <IconMore24 />
-          </button>
-          <button
-            type="button"
-            className={summaryIconButton}
-            onClick={onClose}
-            aria-label={m.search_close_aria()}
-          >
-            <IconX24 />
-          </button>
-        </div>
+        {variant === "panel" ? (
+          <div className={summaryActions}>
+            {canFavorite ? (
+              <button
+                type="button"
+                className={panelIconButton}
+                onClick={onFavoritePress}
+                aria-pressed={locker.isFavorite === true}
+                aria-label={
+                  locker.isFavorite
+                    ? m.search_favorite_remove()
+                    : m.search_favorite_add()
+                }
+              >
+                {locker.isFavorite ? (
+                  <IconStarFilled24 />
+                ) : (
+                  <IconStarOutline24 />
+                )}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={panelIconButton}
+              onClick={onClose}
+              aria-label={m.search_close_aria()}
+            >
+              <IconX24 />
+            </button>
+          </div>
+        ) : (
+          <div className={summaryActions}>
+            <button
+              ref={moreActionsButtonRef}
+              type="button"
+              className={summaryIconButton}
+              onClick={onMoreActionsOpen}
+              aria-label={m.locker_detail_more_actions_open_aria()}
+            >
+              <IconMore24 />
+            </button>
+            <button
+              type="button"
+              className={summaryIconButton}
+              onClick={onClose}
+              aria-label={m.search_close_aria()}
+            >
+              <IconX24 />
+            </button>
+          </div>
+        )}
       </div>
     </section>
+  );
+}
+
+/**
+ * 데스크톱 카드의 동작 칩 줄. 요약 바로 아래에 둔다.
+ *
+ * 카드는 늘 다 보이므로 버튼을 아래에 고정할 까닭이 없고, 더보기 메뉴에 숨겨 둘
+ * 까닭도 없다. 신고하기는 정정 요청 창이 떠 있는 동안 눌린 상태로 보인다.
+ */
+function PanelActionRow({
+  onNavigate,
+  onShare,
+  onReport,
+  isReportOpen,
+}: {
+  onNavigate: () => void;
+  onShare: () => void;
+  onReport: () => void;
+  isReportOpen: boolean;
+}) {
+  return (
+    <div className={panelActionRow}>
+      <button type="button" className={panelActionChip} onClick={onNavigate}>
+        <IconDirections16 />
+        {m.locker_detail_navigate()}
+      </button>
+      <button type="button" className={panelActionChip} onClick={onShare}>
+        <IconShare16 />
+        {m.locker_detail_share_aria()}
+      </button>
+      <button
+        type="button"
+        className={panelActionChip}
+        onClick={onReport}
+        aria-haspopup="dialog"
+        aria-expanded={isReportOpen}
+      >
+        <IconFlag16 />
+        {m.locker_detail_report()}
+      </button>
+    </div>
   );
 }
 

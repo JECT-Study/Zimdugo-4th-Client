@@ -29,3 +29,25 @@ export const desktopSearchPanel = style({
   // 검색 카드(ui) 바로 아래, 지도 위.
   zIndex: `calc(${vars.zIndex.ui} - 1)`,
 });
+
+/**
+ * 목록 카드 오른쪽에 붙는 두 번째 카드. 검색 결과에서 연 보관함 상세가 쓴다.
+ *
+ * 목록과 같은 높이·폭에 카드 간격만큼 띄운다. 위에 얹히는 검색 카드가 없어 윗부분을
+ * 비우지 않는다.
+ */
+export const desktopBesidePanel = style({
+  position: "absolute",
+  top: vars.layout.desktopInset,
+  bottom: vars.layout.desktopInset,
+  left: `calc(${vars.layout.desktopInset} + ${vars.layout.desktopPanelWidth} + ${vars.layout.desktopPanelGap})`,
+  width: vars.layout.desktopPanelWidth,
+  boxSizing: "border-box",
+  display: "flex",
+  flexDirection: "column",
+  borderRadius: vars.layout.desktopPanelRadius,
+  backgroundColor: vars.color.bg.default,
+  boxShadow: vars.shadow[2],
+  overflow: "hidden",
+  zIndex: `calc(${vars.zIndex.ui} - 1)`,
+});

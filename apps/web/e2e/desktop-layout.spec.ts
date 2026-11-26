@@ -107,6 +107,8 @@ const desktopListPanel = (page: Page) =>
   page.locator("[data-desktop-list-panel]");
 const desktopFilterPanel = (page: Page) =>
   page.locator("[data-desktop-filter-panel]");
+const desktopDetailPanel = (page: Page) =>
+  page.locator("[data-desktop-detail-panel]");
 /** 검색 결과 목록의 필터 칩. 이름은 시각적으로 숨긴 글자에서 온다. */
 const searchFilterChip = (page: Page) =>
   page.getByRole("button", { name: "장소 유형", exact: true });
@@ -222,12 +224,12 @@ test.describe("데스크톱 레이아웃 플래그", () => {
     releaseSdk();
   });
 
-  test("데스크톱에서는 상세 시트가 열려도 컨트롤이 따라 오르지 않는다", async ({
+  test("데스크톱에서는 상세가 열려도 컨트롤이 따라 오르지 않는다", async ({
     page,
   }) => {
     await page.goto(`/lockers/${LOCKER_ID}?desktop=1`);
     await waitForMapReady(page);
-    await expect(sheetSurface(page)).toBeVisible();
+    await expect(desktopDetailPanel(page)).toBeVisible();
 
     const placement = await controlPlacementOf(page);
     expect(placement.right).toBe(VIEWPORT.width - DESKTOP_INSET_PX);
@@ -267,6 +269,86 @@ test.describe("데스크톱 레이아웃 플래그", () => {
 
     await expect(sheetSurface(page)).toBeVisible();
     await expect(desktopListPanel(page)).toHaveCount(0);
+  });
+
+  test.describe("보관함 상세", () => {
+    // 권한이 없으면 위치 안내 팝업이 화면 전체를 덮어 목록 행이 눌리지 않는다.
+    test.use({
+      permissions: ["geolocation"],
+      geolocation: { latitude: 37.4979, longitude: 127.0276 },
+    });
+
+    test("링크로 연 데스크톱 상세는 바텀시트가 아니라 검색 카드 아래 패널에 열린다", async ({
+      page,
+    }) => {
+      await page.goto(`/lockers/${LOCKER_ID}?desktop=1`);
+      await waitForMapReady(page);
+
+      const panel = desktopDetailPanel(page);
+      await expect(panel).toBeVisible();
+      await expect(panel).toHaveAttribute(
+        "data-desktop-detail-panel",
+        "attached",
+      );
+      await expect(
+        panel.getByRole("heading", { name: "강남역 4번 출구 물품보관함" }),
+      ).toBeVisible();
+      await expect(sheetSurface(page)).toHaveCount(0);
+      await expect(desktopListPanel(page)).toHaveCount(0);
+
+      const box = await panel.boundingBox();
+      expect(box?.x).toBe(DESKTOP_INSET_PX);
+      expect(box?.y).toBe(DESKTOP_INSET_PX);
+      expect(box?.width).toBe(DESKTOP_PANEL_WIDTH_PX);
+      expect((box?.y ?? 0) + (box?.height ?? 0)).toBe(
+        VIEWPORT.height - DESKTOP_INSET_PX,
+      );
+
+      // 동작은 요약 아래 칩 줄이다. 더보기 메뉴와 보관 타이머는 두지 않는다.
+      for (const name of ["길찾기", "공유하기", "신고하기"]) {
+        await expect(panel.getByRole("button", { name })).toBeVisible();
+      }
+      await expect(
+        panel.getByRole("button", { name: "더보기 메뉴 열기" }),
+      ).toHaveCount(0);
+      await expect(
+        panel.getByRole("button", { name: "보관 타이머 설정" }),
+      ).toHaveCount(0);
+    });
+
+    test("검색 결과에서 연 데스크톱 상세는 목록을 남긴 채 그 오른쪽 카드에 열린다", async ({
+      page,
+    }) => {
+      await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}&desktop=1`);
+      await waitForMapReady(page);
+      await desktopListPanel(page).getByText("결과 목록 강남역 보관함").click();
+
+      const panel = desktopDetailPanel(page);
+      await expect(panel).toBeVisible();
+      await expect(panel).toHaveAttribute("data-desktop-detail-panel", "beside");
+      // 상세 응답 이름이 보여야 목록 항목이 아니라 상세가 그려진 것이다.
+      await expect(
+        panel.getByRole("heading", { name: "강남역 4번 출구 물품보관함" }),
+      ).toBeVisible();
+      await expect(desktopListPanel(page)).toBeVisible();
+      await expect(sheetSurface(page)).toHaveCount(0);
+
+      // 목록 카드(16 + 400) 옆으로 카드 간격 12 를 띄운다.
+      const box = await panel.boundingBox();
+      expect(box?.x).toBe(DESKTOP_INSET_PX + DESKTOP_PANEL_WIDTH_PX + 12);
+      expect(box?.y).toBe(DESKTOP_INSET_PX);
+      expect(box?.width).toBe(DESKTOP_PANEL_WIDTH_PX);
+      expect((box?.y ?? 0) + (box?.height ?? 0)).toBe(
+        VIEWPORT.height - DESKTOP_INSET_PX,
+      );
+
+      // 닫으면 상세 카드만 걷히고 목록은 제자리에 남는다.
+      await panel.getByRole("button", { name: "닫기", exact: true }).click();
+      await expect(desktopDetailPanel(page)).toHaveCount(0);
+      await expect(
+        desktopListPanel(page).getByText("결과 목록 강남역 보관함"),
+      ).toBeVisible();
+    });
   });
 
   test.describe("검색 오버레이", () => {

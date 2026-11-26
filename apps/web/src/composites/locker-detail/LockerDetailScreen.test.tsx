@@ -151,3 +151,93 @@ describe("LockerDetailScreen", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+describe("LockerDetailScreen 데스크톱 패널", () => {
+  it("길찾기·공유하기·신고하기를 칩 줄로 두고 더보기와 타이머는 두지 않는다", () => {
+    render(<LockerDetailScreen locker={LOCKER_DETAIL} variant="panel" />);
+
+    expect(
+      screen.getByRole("button", { name: m.locker_detail_navigate() }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: m.locker_detail_share_aria() }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: m.locker_detail_report() }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", {
+        name: m.locker_detail_more_actions_open_aria(),
+      }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: m.locker_timer_set() }),
+    ).toBeNull();
+  });
+
+  it("공유하기와 길찾기 칩은 보고 있는 보관함을 넘긴다", () => {
+    const onShare = vi.fn();
+    const onNavigate = vi.fn();
+    render(
+      <LockerDetailScreen
+        locker={LOCKER_DETAIL}
+        variant="panel"
+        onShare={onShare}
+        onNavigate={onNavigate}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: m.locker_detail_share_aria() }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: m.locker_detail_navigate() }),
+    );
+
+    expect(onShare).toHaveBeenCalledWith(LOCKER_DETAIL);
+    expect(onNavigate).toHaveBeenCalledWith(LOCKER_DETAIL);
+  });
+
+  it("신고하기를 누르면 칩이 펼친 상태로 바뀐다", () => {
+    render(<LockerDetailScreen locker={LOCKER_DETAIL} variant="panel" />);
+    const reportChip = screen.getByRole("button", {
+      name: m.locker_detail_report(),
+    });
+
+    expect(reportChip.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(reportChip);
+    expect(reportChip.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("즐겨찾기를 쓸 수 있으면 요약 옆에 별 버튼을 두고 누르면 뒤집는다", () => {
+    const onFavoriteChange = vi.fn();
+    render(
+      <LockerDetailScreen
+        locker={{ ...LOCKER_DETAIL, isFavorite: false }}
+        variant="panel"
+        isFavoriteActionVisible
+        onFavoriteChange={onFavoriteChange}
+      />,
+    );
+
+    const star = screen.getByRole("button", { name: m.search_favorite_add() });
+    expect(star.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(star);
+
+    expect(onFavoriteChange).toHaveBeenCalledWith(
+      expect.objectContaining({ lockerId: LOCKER_DETAIL.lockerId }),
+      true,
+    );
+  });
+
+  it("즐겨찾기를 쓸 수 없으면 별 버튼을 두지 않는다", () => {
+    render(<LockerDetailScreen locker={LOCKER_DETAIL} variant="panel" />);
+
+    expect(
+      screen.queryByRole("button", { name: m.search_favorite_add() }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: m.search_close_aria() }),
+    ).toBeTruthy();
+  });
+});

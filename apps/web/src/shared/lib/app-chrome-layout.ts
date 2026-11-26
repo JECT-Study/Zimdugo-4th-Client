@@ -63,9 +63,28 @@ export const resolveSheetTopLimitPx = (
  */
 const DESKTOP_MAP_OBSCURED_LEFT_PX = 16 + 400;
 
-/** 지도 왼쪽이 화면 크롬에 가려지는 폭. 데스크톱이 아니면 0. */
-export const resolveMapObscuredLeftPx = (isDesktopLayout: boolean) =>
-  isDesktopLayout ? DESKTOP_MAP_OBSCURED_LEFT_PX : 0;
+/**
+ * 목록 카드 옆에 상세 카드가 하나 더 붙었을 때 가려지는 폭.
+ *
+ * 카드 간격(12) + 상세 카드 폭(400) 을 더한다.
+ */
+const DESKTOP_MAP_OBSCURED_LEFT_WITH_DETAIL_PX =
+  DESKTOP_MAP_OBSCURED_LEFT_PX + 12 + 400;
+
+/**
+ * 지도 왼쪽이 화면 크롬에 가려지는 폭. 데스크톱이 아니면 0.
+ *
+ * 데스크톱에서 목록 옆에 상세 카드가 떠 있으면 두 카드 폭을 함께 뺀다.
+ */
+export const resolveMapObscuredLeftPx = (
+  isDesktopLayout: boolean,
+  hasDetailBesideList = false,
+) => {
+  if (!isDesktopLayout) return 0;
+  return hasDetailBesideList
+    ? DESKTOP_MAP_OBSCURED_LEFT_WITH_DETAIL_PX
+    : DESKTOP_MAP_OBSCURED_LEFT_PX;
+};
 
 export const resolveMapControlTopLimitPx = (safeAreaInsetTopPx: number) =>
   MAP_CONTROL_TOP_LIMIT_PX + Math.max(0, safeAreaInsetTopPx);

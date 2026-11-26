@@ -625,3 +625,102 @@ export const actionIcon = style({
   height: "20px",
   flexShrink: 0,
 });
+
+/*
+ * 데스크톱 패널 변형.
+ *
+ * 끌어올리는 시트가 아니라 늘 다 보이는 카드라, 시트 아래 고정 버튼 대신 요약 아래에
+ * 동작 칩 줄을 두고 더보기 메뉴 대신 ☆·✕ 를 요약 오른쪽에 바로 놓는다(Figma
+ * 데스크톱 9). 안쪽 여백은 왼쪽 패널들과 같은 20px 이다.
+ */
+const PANEL_INLINE_PADDING = vars.spacing[20];
+
+export const panelColumn = style({
+  padding: `${vars.spacing[16]} ${PANEL_INLINE_PADDING} 0`,
+});
+
+globalStyle(`${panelColumn} ${realtimeAvailabilityDivider}`, {
+  width: `calc(100% + (${PANEL_INLINE_PADDING} * 2))`,
+  margin: `0 calc(${PANEL_INLINE_PADDING} * -1)`,
+});
+
+export const panelIconButton = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: "40px",
+  height: "40px",
+  padding: 0,
+  border: `1px solid ${vars.color.border.default}`,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.icon.lighten,
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&:hover": {
+      backgroundColor: vars.color.bg.surface,
+    },
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+    "&[aria-pressed='true']": {
+      color: vars.color.icon.primary,
+    },
+  },
+});
+
+globalStyle(`${panelIconButton} svg`, {
+  width: "20px",
+  height: "20px",
+});
+
+export const panelActionRow = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: vars.spacing[8],
+  padding: `${vars.spacing[4]} 0 ${vars.spacing[8]}`,
+});
+
+export const panelActionChip = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "6px",
+  height: "36px",
+  padding: `0 ${vars.spacing[12]}`,
+  border: `1px solid ${vars.color.border.default}`,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.content,
+  fontSize: "13px",
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  lineHeight: 1,
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&:hover": {
+      backgroundColor: vars.color.bg.surface,
+    },
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+    // 신고하기처럼 칩이 연 창이 떠 있는 동안은 연 칩을 브랜드색으로 표시한다.
+    "&[aria-expanded='true']": {
+      borderColor: vars.color.border.focus,
+      backgroundColor: vars.color.bg.brand.disable,
+      color: vars.color.bg.brand.active,
+    },
+  },
+});
+
+globalStyle(`${panelActionChip} svg`, {
+  width: "16px",
+  height: "16px",
+  flexShrink: 0,
+  color: vars.color.icon.lighten,
+});
+
+globalStyle(`${panelActionChip}[aria-expanded='true'] svg`, {
+  color: "currentColor",
+});

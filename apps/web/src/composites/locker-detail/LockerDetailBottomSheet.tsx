@@ -19,6 +19,10 @@ import {
   DraggableBottomSheet,
   SHEET_SETTLE_SPRING,
 } from "#/shared/ui/DraggableBottomSheet";
+import {
+  desktopBesidePanel,
+  desktopSearchPanel,
+} from "../search/desktop-search-panel.css";
 import { realtimeStatusCardOverlay } from "./LockerDetailBottomSheet.css.ts";
 
 import {
@@ -83,7 +87,16 @@ export interface LockerDetailBottomSheetProps {
    */
   shouldOpenTimer?: boolean;
   onTimerAutoOpenHandled?: () => void;
+  /**
+   * 데스크톱에서 카드를 놓을 자리.
+   *
+   * - `attached`: 아래 깔린 목록이 없을 때. 왼쪽 위 검색 카드 아래로 이어 붙인다.
+   * - `beside`: 검색 결과·장소 목록에서 열었을 때. 목록 카드 오른쪽에 둔다.
+   */
+  desktopPlacement?: LockerDetailDesktopPlacement;
 }
+
+export type LockerDetailDesktopPlacement = "attached" | "beside";
 
 export { SHEET_TOP_LIMIT_PX as LOCKER_DETAIL_FULL_TOP_OFFSET } from "#/shared/lib/app-chrome-layout";
 
@@ -274,6 +287,7 @@ export function LockerDetailBottomSheet({
   snapRequest,
   shouldOpenTimer = false,
   onTimerAutoOpenHandled,
+  desktopPlacement = "attached",
 }: LockerDetailBottomSheetProps) {
   const windowHeight = useViewportHeight();
   const safeAreaInsetTop = useSafeAreaInsetTop();
@@ -511,6 +525,41 @@ export function LockerDetailBottomSheet({
     resolvedSnapPoint,
     sheetOffsetValue.set,
   ]);
+
+  /*
+   * 데스크톱: 끌어올리는 시트 대신 늘 다 보이는 카드에 같은 화면을 패널 모양으로
+   * 놓는다. 실시간 카드는 본문 안에 들어가고, 스냅·라이브 오프셋은 쓰지 않는다.
+   * 보관 타이머는 데스크톱에서 열지 않는다.
+   */
+  if (isDesktopLayout) {
+    return (
+      <section
+        className={
+          desktopPlacement === "beside"
+            ? desktopBesidePanel
+            : desktopSearchPanel
+        }
+        data-desktop-detail-panel={desktopPlacement}
+      >
+        <LockerDetailScreen
+          locker={locker}
+          loadState={loadState}
+          onRetry={onRetry}
+          onBack={onBack}
+          onShare={onShare}
+          onNavigate={onNavigate}
+          onFavoriteChange={onFavoriteChange}
+          onReport={onReport}
+          onCorrectionSubmit={onCorrectionSubmit}
+          isFavoriteActionVisible={isFavoriteActionVisible}
+          variant="panel"
+          isActionFooterVisible={false}
+          isScrollEnabled
+          isRealtimeCardVisible
+        />
+      </section>
+    );
+  }
 
   return (
     <>

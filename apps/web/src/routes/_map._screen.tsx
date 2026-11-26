@@ -154,8 +154,9 @@ import {
   validateMapScreenSearch,
 } from "#/features/search/model/map-screen-search";
 import {
-  getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
+  hasListUnderDetail,
+  resolveDetailFocusInsets,
 } from "#/features/search/model/map-viewport-policy";
 import {
   resolveSearchHistorySelectionQuery,
@@ -573,6 +574,36 @@ export function IndexPage() {
       VIEWPORT_HEIGHT_FALLBACK_PX,
     ),
   });
+  /*
+   * 데스크톱에서 상세 카드를 목록 옆에 붙일지. 목록 위에서 연 상세면 목록을 그대로
+   * 두고 옆에 붙이고, 아래 깔린 목록이 없으면 검색 카드 아래에 이어 붙인다.
+   */
+  const isListUnderDetail = hasListUnderDetail({
+    sheetMode,
+    searchDetailBack,
+    mapDetailBack,
+  });
+  /**
+   * 상세 보관함을 비출 때 지도에서 비울 자리.
+   *
+   * 상세를 여는 콜백들이 의존성을 늘리지 않도록 렌더마다 갱신하는 거울로 둔다.
+   * 목록에서 상세를 여는 순간에도 목록이 깔려 있다고 답하므로, 상세 카드가 뜨기
+   * 전에 카메라가 미리 두 카드를 피한다.
+   */
+  const detailFocusInsetsRef = useRef(
+    resolveDetailFocusInsets({
+      isDesktopLayout,
+      isDetailBesideList: isListUnderDetail,
+    }),
+  );
+  detailFocusInsetsRef.current = resolveDetailFocusInsets({
+    isDesktopLayout,
+    isDetailBesideList: isListUnderDetail,
+  });
+  const getDetailFocusInsets = useCallback(
+    () => detailFocusInsetsRef.current,
+    [],
+  );
   const {
     snapStage: detailSheetSnapStage,
     setSnapStage: setDetailSheetSnapStage,
@@ -1592,7 +1623,7 @@ export function IndexPage() {
                 lng: optimisticDetail.longitude,
               },
               {
-                bottomInsetPx: getDetailFocusBottomInsetPx(),
+                ...getDetailFocusInsets(),
                 zoom: DETAIL_FOCUS_ZOOM,
               },
             );
@@ -1612,6 +1643,7 @@ export function IndexPage() {
       mapCamera.focusOn,
       setSelectedLockerDetail,
       setSheetMode,
+      getDetailFocusInsets,
     ],
   );
 
@@ -1880,10 +1912,10 @@ export function IndexPage() {
 
       mapCamera.focusOn(
         { lat: pin.latitude, lng: pin.longitude },
-        { bottomInsetPx: getDetailFocusBottomInsetPx(), zoom },
+        { ...getDetailFocusInsets(), zoom },
       );
     },
-    [mapCamera.focusOn],
+    [getDetailFocusInsets, mapCamera.focusOn],
   );
 
   /** 목록 항목을 눌러 상세를 연다. 목록은 상세 아래에 깔린 채 주소에 남는다. */
@@ -2156,8 +2188,7 @@ export function IndexPage() {
           lat: loaderData?.detail?.latitude ?? DEFAULT_SEARCH_COORDINATES.lat,
           lng: loaderData?.detail?.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
         },
-        bottomInsetPx: getDetailFocusBottomInsetPx(),
-        leftInsetPx: mapObscuredLeftPx,
+        ...getDetailFocusInsets(),
         zoom: DETAIL_FOCUS_ZOOM,
       });
       return;
@@ -2173,7 +2204,7 @@ export function IndexPage() {
     mapInstance,
     lockerIdFromQuery,
     loaderData,
-    mapObscuredLeftPx,
+    getDetailFocusInsets,
   ]);
 
   useEffect(() => {
@@ -2747,7 +2778,7 @@ export function IndexPage() {
       lastFocusedLockerIdRef.current = lockerDetail.lockerId;
       mapCamera.focusOn(
         { lat: lockerDetail.latitude, lng: lockerDetail.longitude },
-        { bottomInsetPx: getDetailFocusBottomInsetPx() },
+        getDetailFocusInsets(),
       );
     }
   }, [
@@ -2757,6 +2788,7 @@ export function IndexPage() {
     activeLockerId,
     mapCamera.focusOn,
     setSelectedLockerDetail,
+    getDetailFocusInsets,
   ]);
 
   /*
@@ -3018,6 +3050,12 @@ export function IndexPage() {
     isSearchOpen,
     hasDetailContent: displayedLockerDetail !== null,
   });
+  /*
+   * 데스크톱에서는 목록 위에서 연 상세를 목록 옆 카드로 띄우고 목록은 그대로 둔다.
+   * 모바일은 한 번에 시트 하나라 상세가 목록을 덮는다.
+   */
+  const isDesktopDetailBesideList =
+    isDesktopLayout && visibleSheetKind === "detail" && isListUnderDetail;
   // 스켈레톤은 하이드레이션 전에도 그려지므로 라이브 오프셋을 쓸 수 없다.
   // 시트가 아직 없는 단계라 정적 계산이 맞고, 실제 컨트롤로 넘어갈 때는 이미
   // 시트가 자리를 잡아 두 값이 같은 위치를 가리킨다.
@@ -3489,7 +3527,7 @@ export function IndexPage() {
         }}
       />
 
-      {visibleSheetKind === "list" ? (
+      {visibleSheetKind === "list" || isDesktopDetailBesideList ? (
         <SearchListBottomSheet
           key={searchListSheetKey}
           searchQuery={effectiveSearchQuery}
@@ -3557,6 +3595,7 @@ export function IndexPage() {
             timerAutoOpenLockerId === displayedLockerDetail.lockerId
           }
           onTimerAutoOpenHandled={handleTimerAutoOpenHandled}
+          desktopPlacement={isDesktopDetailBesideList ? "beside" : "attached"}
         />
       ) : null}
 
