@@ -73,6 +73,12 @@ vi.mock(
   }),
 );
 
+const desktopLayoutState = vi.hoisted(() => ({ isDesktopLayout: false }));
+
+vi.mock("#/shared/hooks/useIsDesktopLayout", () => ({
+  useIsDesktopLayout: () => desktopLayoutState.isDesktopLayout,
+}));
+
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   SHEET_SETTLE_SPRING: { type: "spring" },
   DraggableBottomSheet: (props: {
@@ -1502,5 +1508,100 @@ describe("LockerDetailBottomSheet", () => {
         .querySelector("[data-scroll-enabled]")
         ?.getAttribute("data-scroll-enabled"),
     ).toBe("true");
+  });
+});
+
+describe("LockerDetailBottomSheet 데스크톱 패널", () => {
+  beforeEach(() => {
+    setTestLanguage("ko");
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
+    desktopLayoutState.isDesktopLayout = true;
+  });
+
+  afterEach(() => {
+    desktopLayoutState.isDesktopLayout = false;
+    cleanup();
+  });
+
+  it("시트 대신 패널에 그리고 놓을 자리를 표식으로 남긴다", () => {
+    const { container } = render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        desktopPlacement="beside"
+      />,
+    );
+
+    expect(screen.queryByTestId("mock-draggable-bottom-sheet")).toBeNull();
+    expect(
+      container
+        .querySelector("[data-desktop-detail-panel]")
+        ?.getAttribute("data-desktop-detail-panel"),
+    ).toBe("beside");
+  });
+
+  it("다른 보관함으로 바뀌면 앞 보관함에서 내린 스크롤을 남기지 않는다", () => {
+    const { container, rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+    );
+    const scrollOf = () =>
+      container.querySelector<HTMLElement>("[data-scroll-enabled]");
+    const firstScroll = scrollOf();
+    if (!firstScroll) throw new Error("스크롤 영역이 없다");
+    firstScroll.scrollTop = 320;
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, lockerId: 12, title: "다른 보관함" }}
+      />,
+    );
+
+    expect(screen.getByText("다른 보관함")).toBeTruthy();
+    expect(scrollOf()).not.toBe(firstScroll);
+    expect(scrollOf()?.scrollTop).toBe(0);
+  });
+});
+
+describe("LockerDetailBottomSheet 레이아웃 전환", () => {
+  beforeEach(() => {
+    setTestLanguage("ko");
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
+    draggableBottomSheetMock.mockClear();
+    desktopLayoutState.isDesktopLayout = false;
+  });
+
+  afterEach(() => {
+    desktopLayoutState.isDesktopLayout = false;
+    cleanup();
+  });
+
+  it("데스크톱 패널에서 모바일 시트로 돌아오면 접어 둔 단계를 남기지 않고 다시 연 단계로 그린다", () => {
+    const { rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+    );
+    const navigateButton = () =>
+      screen.queryByRole("button", { name: m.locker_detail_navigate() });
+    expect(navigateButton()).not.toBeNull();
+
+    // mini 로 접으면 아래 버튼 줄이 빠진다.
+    act(() => {
+      const props = draggableBottomSheetMock.mock.lastCall?.[0];
+      props?.onSnapChange?.(props.miniSnapPoint);
+    });
+    expect(navigateButton()).toBeNull();
+
+    desktopLayoutState.isDesktopLayout = true;
+    rerender(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+    desktopLayoutState.isDesktopLayout = false;
+    rerender(<LockerDetailBottomSheet locker={LOCKER_DETAIL} />);
+
+    // 새로 마운트된 시트는 half 에 뜨므로 버튼 줄도 함께 보여야 한다.
+    expect(screen.getByTestId("mock-draggable-bottom-sheet")).toBeTruthy();
+    expect(navigateButton()).not.toBeNull();
   });
 });

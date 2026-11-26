@@ -29,9 +29,11 @@ import {
   IconCircleboxThumbUp32,
   IconCircleboxUnhappy32,
   IconCopy16,
+  IconDirections16,
   IconDistanceRoute24,
   IconFilter14,
   IconFilter20,
+  IconFlag16,
   IconFlagCircle24,
   IconGoogle24,
   IconHomeProfile32,
@@ -78,6 +80,7 @@ import {
   IconSearchLockerRow14,
   IconSearchPlaceRow14,
   IconSearchRecentItem24,
+  IconShare16,
   IconShare24,
   IconSizeL,
   IconSizeM,
@@ -711,6 +714,18 @@ const ICON_CATALOG = [
       {
         name: "copy",
         render: () => <IconCopy16 />,
+      },
+      {
+        name: "directions",
+        render: () => <IconDirections16 />,
+      },
+      {
+        name: "share-16",
+        render: () => <IconShare16 />,
+      },
+      {
+        name: "flag",
+        render: () => <IconFlag16 />,
       },
       {
         name: "check",

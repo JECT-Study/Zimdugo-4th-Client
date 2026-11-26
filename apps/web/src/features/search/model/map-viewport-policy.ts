@@ -1,4 +1,10 @@
-import type { SheetModeForContext } from "./sheet-session";
+import { resolveMapObscuredLeftPx } from "#/shared/lib/app-chrome-layout";
+import { type MapScreenParams, resolveMapScreen } from "./map-screen";
+import type {
+  MapDetailBack,
+  SearchDetailBackTarget,
+  SheetModeForContext,
+} from "./sheet-session";
 
 export const DETAIL_HALF_BOTTOM_INSET_PX = 380;
 const SEARCH_LIST_SNAP_POINT_PX = 331;
@@ -7,6 +13,68 @@ export const MIN_MAP_BOUNDS_BOTTOM_PADDING_PX = 64;
 
 export const getDetailFocusBottomInsetPx = (): number =>
   DETAIL_HALF_BOTTOM_INSET_PX;
+
+/**
+ * 상세가 열리면 그 아래에 목록이 깔려 있는가.
+ *
+ * 검색 결과·장소 목록에서 연 상세는 목록 위에 얹힌다. 데스크톱에서는 그 목록을
+ * 왼쪽에 그대로 두고 상세 카드를 옆에 붙인다.
+ *
+ * 상세를 여는 순간(아직 목록 화면)과 상세를 보는 동안 모두 같은 답을 준다. 목록에서
+ * 연 상세에서 다른 보관함으로 옮겨 가도 목록은 남는다.
+ */
+export const hasListUnderDetail = ({
+  sheetMode,
+  searchDetailBack,
+  mapDetailBack,
+}: {
+  sheetMode: SheetModeForContext;
+  searchDetailBack: SearchDetailBackTarget | null;
+  mapDetailBack: MapDetailBack | null;
+}): boolean => {
+  if (sheetMode === "list") return true;
+  if (sheetMode !== "detail") return false;
+  return searchDetailBack !== null || mapDetailBack === "placeList";
+};
+
+/**
+ * 주소만 보고 목록 위에 상세가 얹힌 화면인지 답한다.
+ *
+ * 지도 카메라는 레이아웃 라우트에 있어 화면의 시트 상태를 모른다. 주소가 화면의
+ * 원본이라(`map-screen`) 주소로 같은 답을 낸다. 데스크톱에서 이 화면이면 목록 옆에
+ * 상세 카드가 붙어, 카메라가 비추는 모든 좌표(내 위치 등)가 두 카드를 피해야 한다.
+ */
+export const isDetailOverListScreen = (params: MapScreenParams): boolean => {
+  const screen = resolveMapScreen(params);
+  return (
+    screen.target === "detail" &&
+    hasListUnderDetail({
+      sheetMode: "detail",
+      searchDetailBack: screen.searchDetailBack,
+      mapDetailBack: screen.mapDetailBack,
+    })
+  );
+};
+
+/**
+ * 상세 보관함을 비출 때 지도에서 비울 자리.
+ *
+ * 모바일은 아래 시트(하프)만큼 비운다. 데스크톱은 시트가 아니라 왼쪽 카드라 아래는
+ * 비우지 않고, 목록 옆에 상세 카드가 붙으면 두 카드 폭을 함께 비운다.
+ */
+export const resolveDetailFocusInsets = ({
+  isDesktopLayout,
+  isDetailBesideList,
+}: {
+  isDesktopLayout: boolean;
+  isDetailBesideList: boolean;
+}): { bottomInsetPx: number; leftInsetPx?: number } =>
+  isDesktopLayout
+    ? {
+        bottomInsetPx: 0,
+        leftInsetPx: resolveMapObscuredLeftPx(true, isDetailBesideList),
+      }
+    : { bottomInsetPx: getDetailFocusBottomInsetPx() };
 
 export const getSearchBoundsBottomPadding = ({
   sheetMode,

@@ -377,6 +377,11 @@ describe("크롬 아래 경계", () => {
     expect(resolveMapObscuredLeftPx(false)).toBe(0);
   });
 
+  it("데스크톱에서 목록 옆에 상세 카드가 붙으면 두 카드 폭만큼 가려진다", () => {
+    expect(resolveMapObscuredLeftPx(true, true)).toBe(828);
+    expect(resolveMapObscuredLeftPx(false, true)).toBe(0);
+  });
+
   it("데스크톱에서는 왼쪽 위 검색 카드 아래 간격까지만 올라간다", () => {
     // 카드 16 + 로고 줄 72 + 검색 48 + 아래 여백 20 + 간격 12.
     // 데스크톱에는 노치가 없으니 안전 영역은 보지 않는다.
