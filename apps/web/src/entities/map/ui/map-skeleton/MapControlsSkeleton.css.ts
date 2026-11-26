@@ -2,6 +2,8 @@ import {
   appShellMaxWidth,
   appShellMaxWidthVar,
   compactDeviceSelector,
+  desktopLayoutSelector,
+  desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
@@ -63,6 +65,21 @@ export const controlStack = style({
       },
       selectors: {
         [compactDeviceSelector]: {
+          vars: {
+            [appShellMaxWidthVar]: "100%",
+          },
+        },
+      },
+    },
+    /*
+     * 데스크톱: 실제 컨트롤(-index.css.ts 의 locationControlStack)처럼 가운데 열이
+     * 아니라 화면 오른쪽 끝에 둔다. 다르면 지도 SDK 가 붙는 순간 버튼이 오른쪽으로
+     * 480px 튄다. 인라인 폴백의 maxWidth 도 이 변수를 읽고, 오른쪽 여백은 인라인 값
+     * (16px)이 데스크톱 여백과 같아 변수만 바꾸면 된다.
+     */
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
           vars: {
             [appShellMaxWidthVar]: "100%",
           },

@@ -29,6 +29,9 @@ export function MapControlsSkeleton({ bottomPx }: MapControlsSkeletonProps) {
       className={controlStack}
       style={{ ...mapControlStackInlineFallbackStyle, bottom: bottomPx }}
       aria-hidden="true"
+      // 프로덕션 빌드는 클래스명이 해시라 e2e 가 찾을 전용 앵커를 둔다(실제 컨트롤의
+      // data-map-control-stack 과 같은 방식).
+      data-map-controls-skeleton=""
     >
       <Skeleton
         width={42}

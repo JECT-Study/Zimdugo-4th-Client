@@ -66,8 +66,14 @@ import {
   type MapSelectionValue,
 } from "#/entities/map/model/MapSelectionProvider";
 import { resolveMapAttachFocus } from "#/entities/map/model/map-attach-focus";
-import { focusNaverMapOnClusterBounds } from "#/entities/map/model/map-bounds";
-import { createBottomMapInset } from "#/entities/map/model/map-inset";
+import {
+  CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX,
+  focusNaverMapOnClusterBounds,
+} from "#/entities/map/model/map-bounds";
+import {
+  createBottomMapInset,
+  createMapInset,
+} from "#/entities/map/model/map-inset";
 import {
   getPinId,
   type LockerMarkerOffset,
@@ -192,6 +198,7 @@ import type {
   LockerPinItemResponse,
 } from "#/shared/api/lockers";
 import { useDocumentTitle } from "#/shared/hooks/useDocumentTitle";
+import { useIsDesktopLayout } from "#/shared/hooks/useIsDesktopLayout";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
@@ -200,6 +207,7 @@ import {
   VIEWPORT_HEIGHT_FALLBACK_PX,
 } from "#/shared/hooks/useViewportHeight";
 import { BASE_LOCALE, normalizeLocale } from "#/shared/i18n/locales";
+import { resolveMapObscuredLeftPx } from "#/shared/lib/app-chrome-layout";
 import { useAuthStore } from "#/shared/store/authStore";
 import { useSearchStore } from "#/shared/store/search";
 import { mapSnackbarPositioner, pageWrapper } from "./-index.css";
@@ -442,6 +450,15 @@ export function IndexPage() {
     ? LOCKER_TIMER_MAP_CONTROL_HEIGHT_PX
     : 0;
   const safeAreaInsetTop = useSafeAreaInsetTop();
+  /*
+   * 데스크톱이면 왼쪽 카드가 지도를 가리고, 가운데 시트는 오른쪽 아래 지도 컨트롤과
+   * 가로로 겹치지 않는다. 카메라는 레이아웃이 이미 이 폭을 피하게 해 두었고, 여기서는
+   * 카메라를 거치지 않는 직접 호출과 컨트롤 위치에만 쓴다.
+   */
+  const isDesktopLayout = useIsDesktopLayout();
+  const mapObscuredLeftPx = resolveMapObscuredLeftPx(isDesktopLayout);
+  /** 데스크톱 컨트롤은 시트를 따라 오르지 않고 기본 자리에 머문다. */
+  const mapControlBaseBottom = useMotionValue(MAP_CONTROL_FALLBACK_BOTTOM_PX);
   const mapControlTopReserved = resolveMapControlTopReservedPx(
     mapControlExtraStackHeight,
     safeAreaInsetTop,
@@ -2133,6 +2150,7 @@ export function IndexPage() {
           lng: loaderData?.detail?.longitude ?? DEFAULT_SEARCH_COORDINATES.lng,
         },
         bottomInsetPx: getDetailFocusBottomInsetPx(),
+        leftInsetPx: mapObscuredLeftPx,
         zoom: DETAIL_FOCUS_ZOOM,
       });
       return;
@@ -2143,7 +2161,13 @@ export function IndexPage() {
       pendingDeepLinkFocusPinRef.current = null;
       focusMapOnLockerPin(pin ?? undefined, DETAIL_FOCUS_ZOOM);
     }
-  }, [focusMapOnLockerPin, mapInstance, lockerIdFromQuery, loaderData]);
+  }, [
+    focusMapOnLockerPin,
+    mapInstance,
+    lockerIdFromQuery,
+    loaderData,
+    mapObscuredLeftPx,
+  ]);
 
   useEffect(() => {
     if (sheetMode === "detail" && activeLockerId != null) {
@@ -2838,9 +2862,13 @@ export function IndexPage() {
     // 무엇을 찾은 결과인지도 함께 본다. 결과가 이전 검색과 같은 외곽 좌표로
     // 나오면 범위만으로는 구분되지 않는데, 두 훅 모두 placeholderData 로 이전
     // 결과를 들고 있어 그 사이 bounds 가 비어 ref 가 풀리는 순간도 없다.
+    //
+    // 왼쪽 가림 폭도 본다. 결과를 연 채 창을 데스크톱 폭으로 넓히면 카드가 생겨
+    // 왼쪽 끝 결과가 카드 밑으로 들어가므로, 새 여백으로 다시 맞춘다.
     const fitSignature = JSON.stringify({
       bounds,
       bottomPadding,
+      obscuredLeftPx: mapObscuredLeftPx,
       placeId: activePlaceId ?? null,
       keyword: effectiveSearchQuery,
       filters: searchFilters,
@@ -2865,6 +2893,7 @@ export function IndexPage() {
     searchFilters,
     sheetMode,
     windowHeight,
+    mapObscuredLeftPx,
     context,
     mapInstance,
     mapCamera.fitBounds,
@@ -2994,7 +3023,9 @@ export function IndexPage() {
    * 무엇이 가리는지 몰라도 되고, 넓은 화면에서 좌측 패널을 쓰면 같은 자리에
    * left 가 채워진다.
    */
-  const mapObscuredInset = createBottomMapInset(sheetVisibleHeight);
+  const mapObscuredInset = isDesktopLayout
+    ? createMapInset({ left: mapObscuredLeftPx })
+    : createBottomMapInset(sheetVisibleHeight);
   const mapControlBottom = resolveMapControlBottomPx({
     baseBottomPx: MAP_CONTROL_FALLBACK_BOTTOM_PX,
     obscuredInset: mapObscuredInset,
@@ -3290,9 +3321,11 @@ export function IndexPage() {
       focusNaverMapOnClusterBounds({
         map: mapInstance,
         bounds,
+        leftPadding:
+          CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX + mapObscuredLeftPx,
       });
     },
-    [mapInstance, suppressNextMapPressForMarkerInteraction],
+    [mapInstance, mapObscuredLeftPx, suppressNextMapPressForMarkerInteraction],
   );
 
   return (
@@ -3360,7 +3393,9 @@ export function IndexPage() {
       ) : (shouldRenderMapControls || isRefreshing) &&
         mapControlBottom !== null ? (
         <HomeMapControls
-          bottom={mapControlRaisedBottom}
+          bottom={
+            isDesktopLayout ? mapControlBaseBottom : mapControlRaisedBottom
+          }
           isMapReady={!!mapInstance}
           isRefreshing={isRefreshing}
           isRefreshSpinning={isRefreshSpinning}
