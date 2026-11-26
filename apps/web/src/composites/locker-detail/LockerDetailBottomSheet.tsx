@@ -541,7 +541,13 @@ export function LockerDetailBottomSheet({
         }
         data-desktop-detail-panel={desktopPlacement}
       >
+        {/*
+          보관함마다 새로 마운트한다. 카드는 보관함이 바뀌어도 같은 자리에 남아, 그대로
+          두면 앞 보관함에서 내려 둔 스크롤 위치가 새 보관함에 남아 제목·버튼이 위로
+          숨는다. 모바일은 시트가 같은 기준(sheetSessionKey)으로 새로 마운트된다.
+        */}
         <LockerDetailScreen
+          key={locker.lockerId}
           locker={locker}
           loadState={loadState}
           onRetry={onRetry}

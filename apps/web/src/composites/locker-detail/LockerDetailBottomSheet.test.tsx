@@ -73,6 +73,12 @@ vi.mock(
   }),
 );
 
+const desktopLayoutState = vi.hoisted(() => ({ isDesktopLayout: false }));
+
+vi.mock("#/shared/hooks/useIsDesktopLayout", () => ({
+  useIsDesktopLayout: () => desktopLayoutState.isDesktopLayout,
+}));
+
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   SHEET_SETTLE_SPRING: { type: "spring" },
   DraggableBottomSheet: (props: {
@@ -1502,5 +1508,58 @@ describe("LockerDetailBottomSheet", () => {
         .querySelector("[data-scroll-enabled]")
         ?.getAttribute("data-scroll-enabled"),
     ).toBe("true");
+  });
+});
+
+describe("LockerDetailBottomSheet 데스크톱 패널", () => {
+  beforeEach(() => {
+    setTestLanguage("ko");
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(PUSH_REMINDER_QUERY_KEY, []);
+    desktopLayoutState.isDesktopLayout = true;
+  });
+
+  afterEach(() => {
+    desktopLayoutState.isDesktopLayout = false;
+    cleanup();
+  });
+
+  it("시트 대신 패널에 그리고 놓을 자리를 표식으로 남긴다", () => {
+    const { container } = render(
+      <LockerDetailBottomSheet
+        locker={LOCKER_DETAIL}
+        desktopPlacement="beside"
+      />,
+    );
+
+    expect(screen.queryByTestId("mock-draggable-bottom-sheet")).toBeNull();
+    expect(
+      container
+        .querySelector("[data-desktop-detail-panel]")
+        ?.getAttribute("data-desktop-detail-panel"),
+    ).toBe("beside");
+  });
+
+  it("다른 보관함으로 바뀌면 앞 보관함에서 내린 스크롤을 남기지 않는다", () => {
+    const { container, rerender } = render(
+      <LockerDetailBottomSheet locker={LOCKER_DETAIL} />,
+    );
+    const scrollOf = () =>
+      container.querySelector<HTMLElement>("[data-scroll-enabled]");
+    const firstScroll = scrollOf();
+    if (!firstScroll) throw new Error("스크롤 영역이 없다");
+    firstScroll.scrollTop = 320;
+
+    rerender(
+      <LockerDetailBottomSheet
+        locker={{ ...LOCKER_DETAIL, lockerId: 12, title: "다른 보관함" }}
+      />,
+    );
+
+    expect(screen.getByText("다른 보관함")).toBeTruthy();
+    expect(scrollOf()).not.toBe(firstScroll);
+    expect(scrollOf()?.scrollTop).toBe(0);
   });
 });
