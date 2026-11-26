@@ -19,6 +19,8 @@ import { useMapLocationValue } from "#/entities/map/model/useMapLocationValue";
 import { useMapPressBus } from "#/entities/map/model/useMapPressBus";
 import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPersistence";
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
+import { isDetailOverListScreen } from "#/features/search/model/map-viewport-policy";
+import { readSearchQueryParam } from "#/features/search/model/search-url-state";
 import { useMapEntryInputs } from "#/features/search/model/useMapEntryInputs";
 import { DEFAULT_SEARCH_COORDINATES } from "#/features/search/model/useMapSheetSession";
 import { useIsDesktopLayout } from "#/shared/hooks/useIsDesktopLayout";
@@ -48,7 +50,14 @@ function MapLayout() {
    * 자식의 `loaderData` 는 통로를 내지 않고 `useMatches()` 로 읽는다. 라우터가 주는
    * 매치 목록에 자식 것이 이미 들어 있어, 지도를 올리려고 새 prop 을 뚫을 필요가 없다.
    */
-  const { lockerIdFromQuery, focusLat, focusLng } = useMapEntryInputs();
+  const {
+    lockerIdFromQuery,
+    openLockerId,
+    focusLat,
+    focusLng,
+    searchQueryFromUrl,
+    placeIdFromUrl,
+  } = useMapEntryInputs();
   const matches = useMatches();
   const detail = useMemo(() => pickMapLoaderDetail(matches), [matches]);
 
@@ -76,9 +85,21 @@ function MapLayout() {
    * 비추거나 범위를 맞추는 모든 경로가 카드 오른쪽 지도의 가운데를 기준으로 삼는다.
    */
   const isDesktopLayout = useIsDesktopLayout();
+  /*
+   * 목록 위에서 연 상세면 데스크톱에서 목록 옆에 상세 카드가 붙는다. 그동안은 내 위치
+   * 이동처럼 화면이 여백을 따로 주지 않는 카메라 명령도 두 카드를 피해야 한다.
+   */
+  const isDetailBesideList = isDetailOverListScreen({
+    searchQuery: readSearchQueryParam(searchQueryFromUrl),
+    placeId: placeIdFromUrl,
+    lockerId: openLockerId,
+  });
   const camera = useMapCamera({
     getMap,
-    obscuredLeftPx: resolveMapObscuredLeftPx(isDesktopLayout),
+    obscuredLeftPx: resolveMapObscuredLeftPx(
+      isDesktopLayout,
+      isDetailBesideList,
+    ),
   });
   const mapPressBus = useMapPressBus();
 

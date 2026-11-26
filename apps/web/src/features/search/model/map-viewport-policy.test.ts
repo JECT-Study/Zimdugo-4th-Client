@@ -5,6 +5,7 @@ import {
   getDetailFocusBottomInsetPx,
   getSearchBoundsBottomPadding,
   hasListUnderDetail,
+  isDetailOverListScreen,
   MIN_MAP_BOUNDS_BOTTOM_PADDING_PX,
   resolveDetailFocusInsets,
 } from "./map-viewport-policy";
@@ -111,5 +112,41 @@ describe("resolveDetailFocusInsets", () => {
         isDetailBesideList: true,
       }),
     ).toEqual({ bottomInsetPx: 0, leftInsetPx: 828 });
+  });
+});
+
+describe("isDetailOverListScreen", () => {
+  it("검색어나 장소가 남은 상세 주소는 목록 위의 상세다", () => {
+    expect(
+      isDetailOverListScreen({
+        searchQuery: "강남역",
+        placeId: undefined,
+        lockerId: 164,
+      }),
+    ).toBe(true);
+    expect(
+      isDetailOverListScreen({
+        searchQuery: undefined,
+        placeId: 9,
+        lockerId: 164,
+      }),
+    ).toBe(true);
+  });
+
+  it("보관함만 가리키는 주소나 목록 주소는 목록 위의 상세가 아니다", () => {
+    expect(
+      isDetailOverListScreen({
+        searchQuery: undefined,
+        placeId: undefined,
+        lockerId: 164,
+      }),
+    ).toBe(false);
+    expect(
+      isDetailOverListScreen({
+        searchQuery: "강남역",
+        placeId: undefined,
+        lockerId: undefined,
+      }),
+    ).toBe(false);
   });
 });

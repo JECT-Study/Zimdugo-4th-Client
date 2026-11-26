@@ -1,4 +1,5 @@
 import { resolveMapObscuredLeftPx } from "#/shared/lib/app-chrome-layout";
+import { type MapScreenParams, resolveMapScreen } from "./map-screen";
 import type {
   MapDetailBack,
   SearchDetailBackTarget,
@@ -34,6 +35,25 @@ export const hasListUnderDetail = ({
   if (sheetMode === "list") return true;
   if (sheetMode !== "detail") return false;
   return searchDetailBack !== null || mapDetailBack === "placeList";
+};
+
+/**
+ * 주소만 보고 목록 위에 상세가 얹힌 화면인지 답한다.
+ *
+ * 지도 카메라는 레이아웃 라우트에 있어 화면의 시트 상태를 모른다. 주소가 화면의
+ * 원본이라(`map-screen`) 주소로 같은 답을 낸다. 데스크톱에서 이 화면이면 목록 옆에
+ * 상세 카드가 붙어, 카메라가 비추는 모든 좌표(내 위치 등)가 두 카드를 피해야 한다.
+ */
+export const isDetailOverListScreen = (params: MapScreenParams): boolean => {
+  const screen = resolveMapScreen(params);
+  return (
+    screen.target === "detail" &&
+    hasListUnderDetail({
+      sheetMode: "detail",
+      searchDetailBack: screen.searchDetailBack,
+      mapDetailBack: screen.mapDetailBack,
+    })
+  );
 };
 
 /**
