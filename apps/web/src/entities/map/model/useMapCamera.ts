@@ -5,6 +5,7 @@ import {
   type MapCoordinates,
 } from "./current-location";
 import {
+  FIT_BOUNDS_HORIZONTAL_PADDING_PX,
   type FitNaverMapBoundsOptions,
   fitNaverMapToBounds,
 } from "./map-bounds";
@@ -21,6 +22,13 @@ interface UseMapCameraOptions {
    * 쥔 콜백과 이펙트가 줄줄이 다시 돈다.
    */
   getMap: () => naver.maps.Map | null;
+  /**
+   * 지금 지도 왼쪽이 가려진 폭. 데스크톱 왼쪽 카드 등.
+   *
+   * 화면마다 넘기지 않고 카메라가 기본으로 반영한다. 좌표를 비추는 곳이 열몇 곳이라
+   * 하나라도 빠뜨리면 그 경로만 카드 밑으로 비춘다. 호출부가 값을 직접 주면 그것을 쓴다.
+   */
+  obscuredLeftPx?: number;
 }
 
 /**
@@ -37,9 +45,15 @@ interface UseMapCameraOptions {
  * 반환하는 함수들은 지도가 없으면 아무것도 하지 않고 `false` 를 준다. 원래 헬퍼가
  * 그렇게 동작해서 호출부의 가드가 대부분 불필요했다.
  */
-export function useMapCamera({ getMap }: UseMapCameraOptions) {
+export function useMapCamera({
+  getMap,
+  obscuredLeftPx = 0,
+}: UseMapCameraOptions) {
   const getMapRef = useRef(getMap);
   getMapRef.current = getMap;
+  /** 명령 함수의 identity 를 바꾸지 않도록 렌더마다 갱신하는 거울. */
+  const obscuredLeftRef = useRef(obscuredLeftPx);
+  obscuredLeftRef.current = obscuredLeftPx;
 
   /** 좌표를 비춘다. 지도가 없거나 좌표가 없으면 false. */
   const focusOn = useCallback(
@@ -50,6 +64,9 @@ export function useMapCamera({ getMap }: UseMapCameraOptions) {
       focusNaverMapOnCoordinates({
         map: getMapRef.current(),
         coordinates,
+        ...(obscuredLeftRef.current > 0
+          ? { leftInsetPx: obscuredLeftRef.current }
+          : null),
         ...options,
       }),
     [],
@@ -65,6 +82,13 @@ export function useMapCamera({ getMap }: UseMapCameraOptions) {
         map: getMapRef.current(),
         bounds,
         ...options,
+        ...(obscuredLeftRef.current > 0
+          ? {
+              leftPadding:
+                (options?.leftPadding ?? FIT_BOUNDS_HORIZONTAL_PADDING_PX) +
+                obscuredLeftRef.current,
+            }
+          : null),
       }),
     [],
   );

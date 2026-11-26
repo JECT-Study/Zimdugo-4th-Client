@@ -119,6 +119,37 @@ describe("focusNaverMapOnClusterBounds", () => {
     });
   });
 
+  it("왼쪽 여백이 더 크면 남은 지도의 가운데에 오도록 중심을 서쪽으로 옮긴다", () => {
+    const morph = vi.fn();
+    const map = {
+      getZoom: vi.fn(() => 10),
+      getSize: vi.fn(() => ({ width: 1440, height: 900 })),
+      morph,
+    } as unknown as naver.maps.Map;
+    const bounds = {
+      swLat: 37.45,
+      swLng: 126.95,
+      neLat: 37.55,
+      neLng: 127.05,
+    };
+    const leftPadding = CLUSTER_FIT_BOUNDS_HORIZONTAL_PADDING_PX + 416;
+
+    focusNaverMapOnClusterBounds({
+      map,
+      maps: createFakeMaps(),
+      bounds,
+      leftPadding,
+    });
+
+    const [latLng, zoom] = morph.mock.calls[0] ?? [];
+    const center = latLng as FakeLatLng;
+    // (왼쪽 - 오른쪽 여백)/2 = 208px 를 목표 줌의 경도 폭으로 환산한 만큼.
+    const degreesPerPixel = 360 / (256 * 2 ** (zoom as number));
+
+    expect(center.latitude).toBeCloseTo(37.5);
+    expect(center.longitude).toBeCloseTo(127 - 208 * degreesPerPixel, 10);
+  });
+
   it("클러스터 범위가 아주 좁아도 최대 줌을 넘지 않는다", () => {
     const morph = vi.fn();
     const map = {

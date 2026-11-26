@@ -7,6 +7,7 @@ import {
 } from "#/entities/map/model/map-inset";
 import {
   resolveMapControlTopLimitPx,
+  resolveMapObscuredLeftPx,
   resolveSheetFullSnapPoint,
   resolveSheetFullStageSnapPoint,
   resolveSheetTopLimitPx,
@@ -369,6 +370,11 @@ describe("크롬 아래 경계", () => {
 
   it("음수가 들어와도 선을 끌어올리지 않는다", () => {
     expect(resolveSheetTopLimitPx(-20)).toBe(112);
+  });
+
+  it("데스크톱에서는 왼쪽 카드 폭만큼 지도가 가려진다", () => {
+    expect(resolveMapObscuredLeftPx(true)).toBe(416);
+    expect(resolveMapObscuredLeftPx(false)).toBe(0);
   });
 
   it("데스크톱에서는 왼쪽 위 검색 카드 아래 간격까지만 올라간다", () => {

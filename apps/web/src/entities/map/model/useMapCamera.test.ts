@@ -44,6 +44,42 @@ describe("useMapCamera", () => {
     });
   });
 
+  it("왼쪽이 가려져 있으면 좌표를 비출 때 그 폭을 함께 넘긴다", () => {
+    const map = fakeMap(15);
+    const { result } = renderHook(() =>
+      useMapCamera({ getMap: () => map, obscuredLeftPx: 416 }),
+    );
+
+    act(() => {
+      result.current.focusOn({ lat: 37.5, lng: 127 });
+    });
+
+    expect(focusSpy).toHaveBeenCalledWith({
+      map,
+      coordinates: { lat: 37.5, lng: 127 },
+      leftInsetPx: 416,
+    });
+  });
+
+  it("왼쪽이 가려져 있으면 범위를 맞출 때 왼쪽 여백에 그 폭을 더한다", () => {
+    const map = fakeMap(15);
+    const bounds = { swLat: 37.4, swLng: 127.0, neLat: 37.6, neLng: 127.2 };
+    const { result } = renderHook(() =>
+      useMapCamera({ getMap: () => map, obscuredLeftPx: 416 }),
+    );
+
+    act(() => {
+      result.current.fitBounds(bounds, { bottomPadding: 200 });
+    });
+
+    expect(fitSpy).toHaveBeenCalledWith({
+      map,
+      bounds,
+      bottomPadding: 200,
+      leftPadding: 48 + 416,
+    });
+  });
+
   it("범위에 맞추면 지금 지도에 그 범위를 넘긴다", () => {
     const map = fakeMap(15);
     const bounds = { swLat: 37.4, swLng: 127.0, neLat: 37.6, neLng: 127.2 };

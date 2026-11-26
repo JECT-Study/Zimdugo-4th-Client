@@ -21,6 +21,8 @@ import { useMapViewportPersistence } from "#/entities/map/model/useMapViewportPe
 import { MyLocationMarker } from "#/entities/map/ui/MyLocationMarker";
 import { useMapEntryInputs } from "#/features/search/model/useMapEntryInputs";
 import { DEFAULT_SEARCH_COORDINATES } from "#/features/search/model/useMapSheetSession";
+import { useIsDesktopLayout } from "#/shared/hooks/useIsDesktopLayout";
+import { resolveMapObscuredLeftPx } from "#/shared/lib/app-chrome-layout";
 import { mapLayoutShell } from "./_map.css";
 import { pickMapLoaderDetail } from "./-map-loader-detail";
 
@@ -69,7 +71,15 @@ function MapLayout() {
     setIsLoading,
     setHasError,
   } = useMapInstance({ mapRef: mapInstanceRef });
-  const camera = useMapCamera({ getMap });
+  /*
+   * 데스크톱이면 왼쪽 카드가 지도를 가린다. 카메라가 이 폭을 기본으로 피해서, 좌표를
+   * 비추거나 범위를 맞추는 모든 경로가 카드 오른쪽 지도의 가운데를 기준으로 삼는다.
+   */
+  const isDesktopLayout = useIsDesktopLayout();
+  const camera = useMapCamera({
+    getMap,
+    obscuredLeftPx: resolveMapObscuredLeftPx(isDesktopLayout),
+  });
   const mapPressBus = useMapPressBus();
 
   /*

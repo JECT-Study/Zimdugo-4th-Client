@@ -55,6 +55,18 @@ export const resolveSheetTopLimitPx = (
     ? DESKTOP_SHEET_TOP_LIMIT_PX
     : SHEET_TOP_LIMIT_PX + Math.max(0, safeAreaInsetTopPx);
 
+/**
+ * 데스크톱(1200px~)에서 왼쪽 위 카드가 지도를 가리는 폭.
+ *
+ * 카드 위치(16) + 카드 폭(400). 카메라가 좌표를 비추거나 범위를 맞출 때 이만큼을
+ * 빼고 남은 오른쪽 지도의 가운데를 기준으로 삼는다.
+ */
+const DESKTOP_MAP_OBSCURED_LEFT_PX = 16 + 400;
+
+/** 지도 왼쪽이 화면 크롬에 가려지는 폭. 데스크톱이 아니면 0. */
+export const resolveMapObscuredLeftPx = (isDesktopLayout: boolean) =>
+  isDesktopLayout ? DESKTOP_MAP_OBSCURED_LEFT_PX : 0;
+
 export const resolveMapControlTopLimitPx = (safeAreaInsetTopPx: number) =>
   MAP_CONTROL_TOP_LIMIT_PX + Math.max(0, safeAreaInsetTopPx);
 

@@ -7,6 +7,8 @@ export const CLUSTER_FIT_BOUNDS_BOTTOM_PADDING_PX = 144;
 export const MIN_FIT_BOUNDS_RADIUS_METERS = 250;
 export const MIN_CLUSTER_FIT_BOUNDS_RADIUS_METERS = 500;
 
+/** 범위를 맞출 때 좌우에 두는 기본 여백 */
+export const FIT_BOUNDS_HORIZONTAL_PADDING_PX = 48;
 const METERS_PER_LATITUDE_DEGREE = 111_320;
 const WEB_MERCATOR_TILE_SIZE_PX = 256;
 const MAX_MERCATOR_LATITUDE = 85.05112878;
@@ -73,9 +75,9 @@ export const fitNaverMapToBounds = ({
   maps = typeof window !== "undefined" ? window.naver?.maps : null,
   minRadiusMeters = MIN_FIT_BOUNDS_RADIUS_METERS,
   topPadding = SEARCH_MAP_TOP_PADDING_PX,
-  rightPadding = 48,
+  rightPadding = FIT_BOUNDS_HORIZONTAL_PADDING_PX,
   bottomPadding = 120,
-  leftPadding = 48,
+  leftPadding = FIT_BOUNDS_HORIZONTAL_PADDING_PX,
 }: FitNaverMapBoundsOptions): boolean => {
   if (!map || !bounds || !maps?.LatLng || !maps.LatLngBounds) {
     return false;
@@ -193,7 +195,17 @@ export const focusNaverMapOnClusterBounds = ({
       })
     : minimumZoom;
   const targetZoom = clamp(fitZoom, minimumZoom, maximumZoom);
-  const targetLatLng = new maps.LatLng(centerLat, centerLng);
+  /*
+   * 좌우 여백이 다르면(데스크톱 왼쪽 카드) 남은 지도의 가운데가 화면 가운데에서
+   * 옆으로 비켜 있다. fitBounds 와 달리 morph 는 중심만 받으므로, 그 차이만큼
+   * 목표 줌의 경도 폭으로 환산해 중심을 옮긴다.
+   */
+  const horizontalShiftPx = (leftPadding - rightPadding) / 2;
+  const degreesPerPixel = 360 / (WEB_MERCATOR_TILE_SIZE_PX * 2 ** targetZoom);
+  const targetLatLng = new maps.LatLng(
+    centerLat,
+    centerLng - horizontalShiftPx * degreesPerPixel,
+  );
 
   if (typeof map.morph === "function") {
     map.morph(targetLatLng, targetZoom, {

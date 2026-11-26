@@ -1,5 +1,7 @@
 import {
   compactDeviceSelector,
+  desktopLayoutSelector,
+  desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
@@ -76,6 +78,18 @@ export const locationControlStack = style({
       selectors: {
         [compactDeviceSelector]: {
           maxWidth: "100%",
+        },
+      },
+    },
+    /*
+     * 데스크톱: 가운데 열이 아니라 화면 오른쪽 아래에 둔다. 왼쪽 카드·가운데 시트와
+     * 겹치지 않아 시트를 따라 오르지도 않는다(_map._screen 의 mapControlBaseBottom).
+     */
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          maxWidth: "none",
+          paddingRight: vars.layout.desktopInset,
         },
       },
     },
