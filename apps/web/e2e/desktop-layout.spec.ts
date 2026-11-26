@@ -349,6 +349,31 @@ test.describe("데스크톱 레이아웃 플래그", () => {
         desktopListPanel(page).getByText("결과 목록 강남역 보관함"),
       ).toBeVisible();
     });
+
+    test("상세 옆 목록에서 필터를 열면 상세를 닫고 목록 위에 필터를 연다", async ({
+      page,
+    }) => {
+      await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}&desktop=1`);
+      await waitForMapReady(page);
+      await desktopListPanel(page).getByText("결과 목록 강남역 보관함").click();
+      await expect(desktopDetailPanel(page)).toBeVisible();
+      await expect(page).toHaveURL(/\/lockers\//);
+
+      await searchFilterChip(page).click();
+
+      await expect(desktopFilterPanel(page)).toBeVisible();
+      await expect(desktopDetailPanel(page)).toHaveCount(0);
+      await expect(page).toHaveURL(/\/search\?/);
+
+      // 뒤로가기는 필터만 닫고 상세 없는 목록 주소에 남는다.
+      await page.goBack();
+      await expect(desktopFilterPanel(page)).toHaveCount(0);
+      await expect(
+        desktopListPanel(page).getByText("결과 목록 강남역 보관함"),
+      ).toBeVisible();
+      await expect(desktopDetailPanel(page)).toHaveCount(0);
+      await expect(page).toHaveURL(/\/search\?/);
+    });
   });
 
   test.describe("검색 오버레이", () => {

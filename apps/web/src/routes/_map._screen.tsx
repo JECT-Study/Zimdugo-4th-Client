@@ -2646,10 +2646,25 @@ export function IndexPage() {
 
   const handleBackFromSearchFilter = closeSearchFilter;
 
+  /*
+   * 데스크톱에서는 상세 카드 옆에 목록이 남아 있어 상세를 연 채로 필터를 누를 수 있다.
+   * 필터는 목록 위의 시트 칸이라, 상세 주소 위에 열면 뒤로가기·적용·닫기가 모두
+   * 상세 주소에서 목록으로만 돌아가 상세 패널 없는 상세 주소가 남는다. 상세를 먼저
+   * 닫아 목록 칸으로 돌아간 뒤 그 위에 필터 칸을 연다. 되감기가 끝난 뒤에 칸을 만드는
+   * 순서는 이동 훅이 지킨다.
+   */
   const handleOpenSearchFilter = useCallback(() => {
+    if (sheetMode === "detail") {
+      handleBackFromDetail();
+    }
     setSheetMode("filter");
     mapScreenNavigation.pushSheetEntry("filter");
-  }, [mapScreenNavigation.pushSheetEntry, setSheetMode]);
+  }, [
+    handleBackFromDetail,
+    mapScreenNavigation.pushSheetEntry,
+    setSheetMode,
+    sheetMode,
+  ]);
 
   const handleResetSearchFilter = resetSearchFilters;
 
