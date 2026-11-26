@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useIsHydrating } from "#/shared/hooks/useIsHydrating";
 
 const DEFAULT_STYLE_READY_CHECK_LIMIT = 20;
 const STYLE_READY_PROBE_STYLE =
@@ -15,23 +16,6 @@ interface UseStyleReadyProbeOptions {
   probes: StyleReadyProbe[];
   checkLimit?: number;
 }
-
-const subscribeNothing = () => () => {};
-const getIsHydratingOnClient = () => false;
-const getIsHydratingOnServer = () => true;
-
-/**
- * 서버 렌더와 그 마크업을 이어받는 하이드레이션 렌더에서만 true.
- *
- * useSyncExternalStore 는 하이드레이션 중에 서버 스냅샷을 쓰므로, 하이드레이션이 끝난 뒤
- * 새로 마운트되는 컴포넌트(클라이언트 이동)와 구분된다.
- */
-const useIsHydrating = () =>
-  useSyncExternalStore(
-    subscribeNothing,
-    getIsHydratingOnClient,
-    getIsHydratingOnServer,
-  );
 
 export function useStyleReadyProbe({
   enabled = true,

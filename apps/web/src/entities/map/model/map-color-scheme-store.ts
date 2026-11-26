@@ -144,9 +144,15 @@ export const useMapColorScheme = () => {
   const toggleColorScheme = useMapColorSchemeStore(
     (state) => state.toggleColorScheme,
   );
+  const isHydrated = useMapColorSchemeStore((state) => state.isHydrated);
 
   return {
     colorScheme: resolveColorScheme(preference, systemColorScheme),
+    /**
+     * 저장된 선호와 기기 설정을 읽었는지. 서버와 첫 렌더는 읽기 전이라 colorScheme 이
+     * 임시값(light)이다. 이 값을 보여 줄지 정할 때 쓴다.
+     */
+    isColorSchemeResolved: isHydrated,
     toggleColorScheme,
   };
 };

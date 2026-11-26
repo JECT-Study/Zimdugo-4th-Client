@@ -199,6 +199,7 @@ import type {
 } from "#/shared/api/lockers";
 import { useDocumentTitle } from "#/shared/hooks/useDocumentTitle";
 import { useIsDesktopLayout } from "#/shared/hooks/useIsDesktopLayout";
+import { useIsHydrating } from "#/shared/hooks/useIsHydrating";
 import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useLocationPermissionPopup } from "#/shared/hooks/useLocationPermissionPopup";
 import { useSafeAreaInsetTop } from "#/shared/hooks/useSafeAreaInsetTop";
@@ -290,11 +291,17 @@ export function IndexPage() {
     [matches],
   );
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { data: user } = useUser(isAuthenticated);
+  const { data: user, isPending: isUserPending } = useUser(isAuthenticated);
   const {
     colorScheme: mapColorScheme,
+    isColorSchemeResolved: isMapColorSchemeResolved,
     toggleColorScheme: toggleMapColorScheme,
   } = useMapColorScheme();
+  // 로그인 여부는 쿠키에서 읽어 서버가 모른다. 하이드레이션 동안은 서버처럼 "모름"으로
+  // 두고, 그 뒤에는 로그인했으면 프로필을 받을 때까지 기다린다.
+  const isHydrating = useIsHydrating();
+  const isProfileResolved =
+    !isHydrating && (!isAuthenticated || !isUserPending);
 
   /*
    * 주소가 지시하는 첫 화면의 조건. 레이아웃도 같은 값을 봐야 해서 훅 하나로 뒀다.
@@ -3341,6 +3348,8 @@ export function IndexPage() {
         onLogoPress={resetSearchContext}
         mapColorScheme={mapColorScheme}
         onMapColorSchemePress={toggleMapColorScheme}
+        isMapColorSchemeResolved={isMapColorSchemeResolved}
+        isProfileResolved={isProfileResolved}
       />
       {shouldRenderHomeSearchBar ? (
         <HomeSearchBar

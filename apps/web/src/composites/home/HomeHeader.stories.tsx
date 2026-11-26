@@ -68,3 +68,12 @@ export const WithProfileImage: Story = {
 export const StyleLoadingSkeleton: StoryObj = {
   render: () => <HomeHeaderSkeleton />,
 };
+
+/** 지도 테마와 로그인 상태를 아직 읽지 못한 첫 로딩. 두 버튼 자리만 스켈레톤이다. */
+export const ActionsResolving: Story = {
+  args: {
+    profileImageUrl: "",
+    isMapColorSchemeResolved: false,
+    isProfileResolved: false,
+  },
+};
