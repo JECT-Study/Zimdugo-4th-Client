@@ -101,20 +101,22 @@ function BottomTabBarComponent({
   labels,
   className,
 }: BottomTabBarProps) {
-  const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
-    enabled: !hasBottomTabStyleResolved,
-    probes: BOTTOM_TAB_STYLE_PROBES,
-  });
+  const { isStyleReady, isStyleVerified, isStyleTimedOut } = useStyleReadyProbe(
+    {
+      enabled: !hasBottomTabStyleResolved,
+      probes: BOTTOM_TAB_STYLE_PROBES,
+    },
+  );
 
   const shouldProbeStyle = !hasBottomTabStyleResolved;
   const defaultLabels = getDefaultLabels();
   const getLabel = (key: BottomTabKey) => labels?.[key] ?? defaultLabels[key];
 
   useEffect(() => {
-    if (shouldProbeStyle && isStyleReady && !isStyleTimedOut) {
+    if (shouldProbeStyle && isStyleVerified) {
       hasBottomTabStyleResolved = true;
     }
-  }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
+  }, [shouldProbeStyle, isStyleVerified]);
 
   return (
     <BottomBarFrame className={className}>

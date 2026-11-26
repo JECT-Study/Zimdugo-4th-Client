@@ -119,10 +119,12 @@ export function HomeSearchBar({
   isSearchContextActive = false,
 }: HomeSearchBarProps) {
   const shouldProbeStyle = !hasHomeSearchBarStyleResolved;
-  const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
-    enabled: shouldProbeStyle,
-    probes: HOME_SEARCH_BAR_STYLE_PROBES,
-  });
+  const { isStyleReady, isStyleVerified, isStyleTimedOut } = useStyleReadyProbe(
+    {
+      enabled: shouldProbeStyle,
+      probes: HOME_SEARCH_BAR_STYLE_PROBES,
+    },
+  );
   const handleOpenSearch = () => {
     onOpenSearch();
   };
@@ -150,10 +152,10 @@ export function HomeSearchBar({
   };
 
   useEffect(() => {
-    if (shouldProbeStyle && isStyleReady && !isStyleTimedOut) {
+    if (shouldProbeStyle && isStyleVerified) {
       hasHomeSearchBarStyleResolved = true;
     }
-  }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
+  }, [shouldProbeStyle, isStyleVerified]);
 
   // 폴백은 CSS 가 없을 때만 얹는다. 항상 얹으면 인라인 zIndex 10 이 클래스의 ui
   // 레이어(20)를 덮어써 검색 바가 의도보다 아래 층으로 내려간다.

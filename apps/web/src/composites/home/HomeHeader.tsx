@@ -209,10 +209,12 @@ export function HomeHeader({
   const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
   const currentLanguage = normalizeLanguage(languageTag()) ?? APP_LANGUAGES[0];
   const shouldProbeStyle = !hasHomeHeaderStyleResolved;
-  const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
-    enabled: shouldProbeStyle,
-    probes: HOME_HEADER_STYLE_PROBES,
-  });
+  const { isStyleReady, isStyleVerified, isStyleTimedOut } = useStyleReadyProbe(
+    {
+      enabled: shouldProbeStyle,
+      probes: HOME_HEADER_STYLE_PROBES,
+    },
+  );
   const fallbackStyle = (style: CSSProperties) =>
     isStyleTimedOut ? style : undefined;
   // 폴백의 인라인 zIndex 는 headerAboveBottomSheet 클래스를 덮는다. 목록이 열려
@@ -268,10 +270,10 @@ export function HomeHeader({
   }, [isLanguageExpanded]);
 
   useEffect(() => {
-    if (shouldProbeStyle && isStyleReady && !isStyleTimedOut) {
+    if (shouldProbeStyle && isStyleVerified) {
       hasHomeHeaderStyleResolved = true;
     }
-  }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
+  }, [shouldProbeStyle, isStyleVerified]);
 
   if (!isStyleReady) {
     return <HomeHeaderSkeleton />;
