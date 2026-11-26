@@ -226,6 +226,30 @@ describe("LockerDetailBottomSheet", () => {
     });
   });
 
+  it("데스크톱에서는 full 이 왼쪽 위 검색 카드 아래에서 멈춘다", () => {
+    // 시트 윗변과 그 위 실시간 카드는 같은 오프셋을 보므로 둘이 함께 168 에서 멈춘다.
+    expect(
+      resolveLockerDetailSnapPoints({
+        windowHeight: 1000,
+        isDesktopLayout: true,
+      }).minSnapPoint,
+    ).toBe(168);
+  });
+
+  it("데스크톱에서는 호출부가 준 full 자리도 검색 카드 위로 올리지 않는다", () => {
+    expect(
+      resolveLockerDetailSnapPoints({
+        windowHeight: 1000,
+        minSnapPoint: 112,
+        isDesktopLayout: true,
+      }).minSnapPoint,
+    ).toBe(168);
+    expect(
+      resolveLockerDetailSnapPoints({ windowHeight: 1000, minSnapPoint: 112 })
+        .minSnapPoint,
+    ).toBe(112);
+  });
+
   it("사이즈가 없어도 행을 비우지 않고 미제공으로 알린다", () => {
     // 행이 통째로 사라지면 정보가 아직 안 들어온 것인지 이 보관함에 원래 없는
     // 것인지 구분되지 않고, 보관함마다 행 개수가 달라 자리가 흔들린다.

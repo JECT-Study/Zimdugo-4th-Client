@@ -1,5 +1,8 @@
 import {
   compactDeviceSelector,
+  desktopLayoutFlagSelector,
+  desktopLayoutSelector,
+  desktopMediaQuery,
   layoutScale,
 } from "@repo/ui/tokens/layout/layout.css";
 import { vars } from "@repo/ui/vars";
@@ -37,6 +40,26 @@ export const header = style({
     [`screen and (min-width: ${layoutScale.tabletBreakpoint})`]: {
       maxWidth: vars.layout.tabletAppMaxWidth,
     },
+    /*
+     * 데스크톱: 헤더는 왼쪽 위 카드의 로고 줄이 된다. 카드의 흰 바탕과 그림자는
+     * 검색 바 레이어가 로고 줄까지 덮어 그리므로, 여기서는 투명하게 두어 이음매가
+     * 생기지 않게 한다. 유틸 버튼은 actions 가 화면 오른쪽 위로 따로 띄운다.
+     */
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          top: vars.layout.desktopInset,
+          left: vars.layout.desktopInset,
+          right: "auto",
+          width: vars.layout.desktopPanelWidth,
+          maxWidth: "none",
+          height: vars.layout.desktopHeader,
+          margin: 0,
+          padding: `0 ${vars.spacing[20]}`,
+          backgroundColor: "transparent",
+        },
+      },
+    },
   },
 });
 
@@ -50,12 +73,32 @@ export const logoButton = style({
   border: "none",
   background: "none",
   cursor: "pointer",
+  "@media": {
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          height: vars.layout.desktopHeader,
+        },
+      },
+    },
+  },
 });
 
 export const logo = style({
   width: "78px",
   height: "16px",
   flexShrink: 0,
+  "@media": {
+    // 원본 비율(78:16) 그대로 24px 높이로 키운다.
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          width: "117px",
+          height: "24px",
+        },
+      },
+    },
+  },
 });
 
 export const actions = style({
@@ -64,7 +107,47 @@ export const actions = style({
   justifyContent: "flex-end",
   gap: vars.spacing[12],
   minWidth: 0,
+  "@media": {
+    /*
+     * 데스크톱: 언어·테마·내 정보를 화면 오른쪽 위의 흰 알약 하나로 묶는다.
+     * 헤더는 transform 이 없어 fixed 가 뷰포트를 기준으로 잡힌다.
+     */
+    [desktopMediaQuery]: {
+      selectors: {
+        [desktopLayoutSelector]: {
+          position: "fixed",
+          top: vars.layout.desktopInset,
+          right: vars.layout.desktopInset,
+          gap: vars.spacing[8],
+          padding: "6px",
+          borderRadius: vars.radius.max,
+          backgroundColor: vars.color.bg.default,
+          boxShadow: vars.shadow[2],
+        },
+      },
+    },
+  },
 });
+
+/**
+ * 알약 안에서는 버튼마다 그림자를 빼고, 마우스를 올리면 바탕만 바꾼다.
+ *
+ * 플래그 셀렉터가 `&:focus-visible` 보다 구체적이라, 그림자를 빼는 규칙이 포커스 링까지
+ * 지운다. 포커스 링은 같은 명시도로 다시 건다.
+ */
+const desktopPillButton = {
+  selectors: {
+    [desktopLayoutSelector]: {
+      boxShadow: "none",
+    },
+    [`${desktopLayoutFlagSelector} &:hover`]: {
+      backgroundColor: vars.color.bg.surface,
+    },
+    [`${desktopLayoutFlagSelector} &:focus-visible`]: {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
+} as const;
 
 /**
  * 언어 목록이 열린 동안만 헤더를 바텀시트 위로 올린다.
@@ -144,6 +227,7 @@ export const languageTrigger = style({
         },
       },
     },
+    [desktopMediaQuery]: desktopPillButton,
   },
 });
 
@@ -277,6 +361,9 @@ export const colorSchemeButton = style({
     "&:focus-visible": {
       boxShadow: `0 0 0 2px ${vars.color.focus}`,
     },
+  },
+  "@media": {
+    [desktopMediaQuery]: desktopPillButton,
   },
 });
 

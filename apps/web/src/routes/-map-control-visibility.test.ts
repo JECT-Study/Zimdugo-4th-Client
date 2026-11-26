@@ -371,6 +371,13 @@ describe("크롬 아래 경계", () => {
     expect(resolveSheetTopLimitPx(-20)).toBe(112);
   });
 
+  it("데스크톱에서는 왼쪽 위 검색 카드 아래 간격까지만 올라간다", () => {
+    // 카드 16 + 로고 줄 72 + 검색 48 + 아래 여백 20 + 간격 12.
+    // 데스크톱에는 노치가 없으니 안전 영역은 보지 않는다.
+    expect(resolveSheetTopLimitPx(0, true)).toBe(168);
+    expect(resolveSheetTopLimitPx(59, true)).toBe(168);
+  });
+
   it("지도 컨트롤도 같은 안전 영역만큼 내려간다", () => {
     // 시트보다 간격을 넓게(12px) 두는 것 말고는 같은 기준이다.
     expect(resolveMapControlTopLimitPx(0)).toBe(120);
