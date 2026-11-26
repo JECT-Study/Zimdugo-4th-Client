@@ -52,11 +52,12 @@ export const searchBarLayer = style({
           backgroundColor: vars.color.bg.default,
           boxShadow: vars.shadow[2],
         },
-        // 결과 패널이 아래로 이어지면 두 카드가 한 장이다. 검색 카드 그림자가 패널
-        // 위에 줄을 긋지 않도록 걷고, 그림자는 패널이 맡는다.
-        [`${desktopLayoutFlagSelector}:has([data-desktop-list-panel]) &`]: {
-          boxShadow: "none",
-        },
+        // 결과·필터 패널이 아래로 이어지면 두 카드가 한 장이다. 검색 카드 그림자가
+        // 패널 위에 줄을 긋지 않도록 걷고, 그림자는 패널이 맡는다.
+        [`${desktopLayoutFlagSelector}:has([data-desktop-list-panel], [data-desktop-filter-panel]) &`]:
+          {
+            boxShadow: "none",
+          },
       },
     },
   },

@@ -105,6 +105,11 @@ const sheetSurface = (page: Page) => page.locator("[data-bottom-sheet-surface]")
 const searchInput = (page: Page) => page.getByLabel("검색어 입력");
 const desktopListPanel = (page: Page) =>
   page.locator("[data-desktop-list-panel]");
+const desktopFilterPanel = (page: Page) =>
+  page.locator("[data-desktop-filter-panel]");
+/** 검색 결과 목록의 필터 칩. 이름은 시각적으로 숨긴 글자에서 온다. */
+const searchFilterChip = (page: Page) =>
+  page.getByRole("button", { name: "장소 유형", exact: true });
 const searchOverlay = (page: Page) => page.locator("[data-search-overlay]");
 /** 검색 카드의 입력창은 누르기만 하는 자리라 readonly, 타이핑은 오버레이가 받는다. */
 const homeSearchInput = (page: Page) =>
@@ -332,6 +337,104 @@ test.describe("데스크톱 레이아웃 플래그", () => {
       const box = await searchOverlay(page).boundingBox();
       expect(box?.y).toBe(0);
       expect(box?.height).toBe(VIEWPORT.height);
+    });
+  });
+
+  test.describe("필터", () => {
+    // 권한이 없으면 위치 안내 팝업이 화면 전체를 덮어 필터 칩이 눌리지 않는다.
+    test.use({
+      permissions: ["geolocation"],
+      geolocation: { latitude: 37.4979, longitude: 127.0276 },
+    });
+
+    test("데스크톱 필터는 바텀시트가 아니라 결과 패널 자리의 패널로 열린다", async ({
+      page,
+    }) => {
+      await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}&desktop=1`);
+      await waitForMapReady(page);
+      await expect(desktopListPanel(page)).toBeVisible();
+
+      await searchFilterChip(page).click();
+
+      const panel = desktopFilterPanel(page);
+      await expect(panel).toBeVisible();
+      await expect(
+        panel.getByRole("heading", { name: "필터", exact: true }),
+      ).toBeVisible();
+      await expect(
+        panel.getByRole("button", { name: "보관함 보기" }),
+      ).toBeVisible();
+      await expect(sheetSurface(page)).toHaveCount(0);
+      await expect(desktopListPanel(page)).toHaveCount(0);
+
+      const box = await panel.boundingBox();
+      expect(box?.x).toBe(DESKTOP_INSET_PX);
+      expect(box?.y).toBe(DESKTOP_INSET_PX);
+      expect(box?.width).toBe(DESKTOP_PANEL_WIDTH_PX);
+      expect((box?.y ?? 0) + (box?.height ?? 0)).toBe(
+        VIEWPORT.height - DESKTOP_INSET_PX,
+      );
+
+      // 제목·구역 제목 글자와 하단 버튼이 검색 카드와 같은 왼쪽 선(패널 + 20)에서
+      // 시작한다. 글자는 상자 여백이 아니라 글자가 실제로 그려진 자리를 잰다.
+      const textLeftOf = (locator: ReturnType<Page["locator"]>) =>
+        locator.evaluate((element) => {
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          return Math.round(range.getBoundingClientRect().left);
+        });
+      const contentLeft = DESKTOP_INSET_PX + 20;
+      expect(
+        await textLeftOf(
+          panel.getByRole("heading", { name: "필터", exact: true }),
+        ),
+      ).toBe(contentLeft);
+      expect(await textLeftOf(panel.getByText("사이즈", { exact: true }))).toBe(
+        contentLeft,
+      );
+      expect(
+        Math.round(
+          (await panel.getByRole("button", { name: "초기화" }).boundingBox())
+            ?.x ?? -1,
+        ),
+      ).toBe(contentLeft);
+
+      // 닫기는 검색 카드의 되돌아가기 버튼이 맡는다. 패널에는 따로 두지 않는다.
+      await expect(panel.getByRole("button", { name: "필터 닫기" })).toHaveCount(
+        0,
+      );
+    });
+
+    test("데스크톱 필터를 검색 카드의 되돌아가기 버튼으로 닫으면 고른 값을 적용하지 않고 결과로 돌아간다", async ({
+      page,
+    }) => {
+      await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}&desktop=1`);
+      await waitForMapReady(page);
+
+      await searchFilterChip(page).click();
+      const subwayChip = desktopFilterPanel(page).getByRole("button", {
+        name: "지하철역",
+        exact: true,
+      });
+      await subwayChip.click();
+      await expect(subwayChip).toHaveAttribute("aria-pressed", "true");
+
+      await page.getByRole("button", { name: "홈으로 돌아가기" }).click();
+
+      await expect(desktopFilterPanel(page)).toHaveCount(0);
+      await expect(desktopListPanel(page)).toBeVisible();
+      await expect(
+        desktopListPanel(page).getByText("결과 목록 강남역 보관함"),
+      ).toBeVisible();
+
+      // 다시 열면 적용하지 않은 선택은 남아 있지 않다.
+      await searchFilterChip(page).click();
+      await expect(
+        desktopFilterPanel(page).getByRole("button", {
+          name: "지하철역",
+          exact: true,
+        }),
+      ).toHaveAttribute("aria-pressed", "false");
     });
   });
 });

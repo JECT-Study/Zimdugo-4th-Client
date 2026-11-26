@@ -1,4 +1,10 @@
+import { m } from "@repo/i18n";
 import { useEffect, useState } from "react";
+import { desktopSearchPanel } from "./desktop-search-panel.css";
+import {
+  desktopFilterScreen,
+  desktopFilterTitle,
+} from "./SearchFilterBottomSheet.css";
 import {
   createDefaultSearchFilters,
   type SearchFilterAppliedState,
@@ -196,6 +202,32 @@ export function SearchFilterBottomSheet({
       }),
     );
   }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
+
+  /*
+   * 데스크톱: 같은 필터 화면을 결과 목록과 같은 왼쪽 패널에 놓는다. 끌어내려 닫는
+   * 길이는 없다. 닫기는 검색 카드의 되돌아가기 버튼이 맡는다(필터가 열려 있으면
+   * 고른 값을 적용하지 않고 결과 목록으로 돌아간다). 패널은 늘 다 펼쳐져 있어 펼침
+   * 정도는 넘기지 않는다.
+   */
+  if (isDesktopLayout) {
+    return (
+      <section
+        className={desktopSearchPanel}
+        data-desktop-filter-panel=""
+        aria-labelledby="search-filter-panel-title"
+      >
+        <h2 id="search-filter-panel-title" className={desktopFilterTitle}>
+          {m.search_filter_title()}
+        </h2>
+        <SearchFilterScreen
+          className={[desktopFilterScreen, className].filter(Boolean).join(" ")}
+          initialFilters={initialFilters}
+          onReset={onReset}
+          onApply={onApply}
+        />
+      </section>
+    );
+  }
 
   return (
     <DraggableBottomSheet

@@ -75,6 +75,7 @@
   "search_filter_back_to_results": "返回結果",
   "search_filter_reset": "重置",
   "search_filter_view_lockers": "查看寄存櫃",
+  "search_filter_title": "篩選",
   "search_filter_error_price_required": "請輸入有效的價格範圍。",
   "search_filter_error_price_min": "請輸入有效的價格範圍。",
   "search_filter_error_price_max": "請輸入有效的價格範圍。",
