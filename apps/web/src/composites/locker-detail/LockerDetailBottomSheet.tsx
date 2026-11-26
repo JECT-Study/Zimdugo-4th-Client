@@ -359,9 +359,22 @@ export function LockerDetailBottomSheet({
    * resolvedInitialSnapPoint 는 거기에 clamp 까지 걸려 주소창이 접히기만 해도 변한다.
    * 그래서 "어느 단계로 열라는 요청이 있었는가" 만 본다.
    */
+  /*
+   * 데스크톱 패널에서 모바일 시트로 돌아온 횟수. 패널인 동안 시트는 내려가 있다가 새로
+   * 마운트되어 초기 단계에 뜨는데, 여기 단계·오프셋은 패널로 가기 전 값(예: mini)으로
+   * 남는다. 횟수를 시트 세션 기준에 넣어, 보관함이 바뀔 때와 같은 초기화를 탄다.
+   */
+  const [wasDesktopLayout, setWasDesktopLayout] = useState(isDesktopLayout);
+  const [mobileReturnCount, setMobileReturnCount] = useState(0);
+  if (wasDesktopLayout !== isDesktopLayout) {
+    setWasDesktopLayout(isDesktopLayout);
+    if (!isDesktopLayout) {
+      setMobileReturnCount((count) => count + 1);
+    }
+  }
   const sheetSessionKey = `${locker.lockerId}-${
     initialSnapPoint === undefined ? "auto" : "requested"
-  }`;
+  }-${mobileReturnCount}`;
   const sheetSessionKeyRef = useRef(sheetSessionKey);
   const initialSnapPointRef = useRef(resolvedInitialSnapPoint);
 
