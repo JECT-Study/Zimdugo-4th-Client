@@ -446,6 +446,78 @@ export function IconCopy16({ className }: { className?: string }) {
   );
 }
 
+/*
+ * 데스크톱 상세의 동작 칩(길찾기·공유하기·신고하기) 아이콘. 칩 글자색을 따르도록
+ * 선을 currentColor 로 그린다. 모양은 Figma 데스크톱 9 의 칩 아이콘 그대로다.
+ */
+const outlineIcon16Props = {
+  stroke: "currentColor",
+  strokeWidth: 1.2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
+
+export function IconDirections16({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={16}
+      height={16}
+      aria-hidden="true"
+    >
+      <path
+        d="M8 1.33 14.67 8 8 14.67 1.33 8 8 1.33Z"
+        {...outlineIcon16Props}
+      />
+      <path
+        d="M6 9.33V7.67h3.33M8 6l1.67 1.67L8 9.33"
+        {...outlineIcon16Props}
+      />
+    </svg>
+  );
+}
+
+export function IconShare16({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={16}
+      height={16}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="3.33" r="2" {...outlineIcon16Props} />
+      <circle cx="4" cy="8" r="2" {...outlineIcon16Props} />
+      <circle cx="12" cy="12.67" r="2" {...outlineIcon16Props} />
+      <path d="m5.73 9 4.54 2.67M10.27 4.33 5.73 7" {...outlineIcon16Props} />
+    </svg>
+  );
+}
+
+export function IconFlag16({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={16}
+      height={16}
+      aria-hidden="true"
+    >
+      <path
+        d="M3.33 14V2.67h7.34L9.33 5.33 10.67 8H3.33"
+        {...outlineIcon16Props}
+      />
+    </svg>
+  );
+}
+
 export function IconX24({ className }: { className?: string }) {
   return (
     <svg
