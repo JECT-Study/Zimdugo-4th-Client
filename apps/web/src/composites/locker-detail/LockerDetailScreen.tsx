@@ -962,7 +962,7 @@ function FullDetailContent({
     /**
      * 그 사진이 깨졌거나 시트가 리마운트돼 버튼이 사라졌을 수 있다. 분리된 노드에
      * focus() 해도 포커스는 body 로 빠지므로, 남아 있는 첫 사진으로 옮기고
-     * 사진이 하나도 없으면 시트에 항상 있는 더보기 버튼으로 되돌린다.
+     * 사진이 하나도 없으면 시트에 항상 있는 더보기 버튼(데스크톱 패널은 닫기 버튼)으로 되돌린다.
      */
     const fallback = contentRootRef.current?.querySelector<HTMLButtonElement>(
       "[data-image-index] button",
@@ -1270,7 +1270,12 @@ function SummarySection({
                 )}
               </button>
             ) : null}
+            {/*
+              패널엔 더보기 버튼이 없다. 사진 미리보기가 돌아갈 사진 버튼을 잃었을 때
+              포커스를 받는 자리를 닫기 버튼이 대신 맡는다.
+            */}
             <button
+              ref={moreActionsButtonRef}
               type="button"
               className={panelIconButton}
               onClick={onClose}
