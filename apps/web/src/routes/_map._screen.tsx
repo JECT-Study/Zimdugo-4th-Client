@@ -2850,10 +2850,14 @@ export function IndexPage() {
       return;
     }
 
-    const bottomPadding = getSearchBoundsBottomPadding({
-      sheetMode,
-      windowHeight,
-    });
+    // 데스크톱은 결과가 바텀시트가 아니라 왼쪽 패널에 있어 아래쪽을 비울 필요가
+    // 없다. 왼쪽은 카메라가 가림 폭만큼 이미 비운다.
+    const bottomPadding = isDesktopLayout
+      ? undefined
+      : getSearchBoundsBottomPadding({
+          sheetMode,
+          windowHeight,
+        });
 
     // 테마를 바꾸면 지도를 새로 만든다. 그 이유만으로 범위를 다시 맞추면
     // 사용자가 드래그해 둔 위치가 검색 결과 전체 범위로 덮인다. 범위·시트·
@@ -2894,6 +2898,7 @@ export function IndexPage() {
     sheetMode,
     windowHeight,
     mapObscuredLeftPx,
+    isDesktopLayout,
     context,
     mapInstance,
     mapCamera.fitBounds,
