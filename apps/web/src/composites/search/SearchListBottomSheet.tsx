@@ -21,6 +21,7 @@ import {
   resolveBottomSheetExpandedProgress,
 } from "#/shared/ui/DraggableBottomSheet";
 import type { SearchFilterAppliedState } from "./SearchFilterScreen";
+import { desktopListPanel } from "./SearchListBottomSheet.css";
 import { SearchListScreen } from "./SearchListScreen";
 import type {
   SearchLockerResultItem,
@@ -452,16 +453,38 @@ export function SearchListBottomSheet({
    * 단계는 화면 높이와 무관한 의미 단위라 그대로 두면 된다. 높이는 그때그때
    * 현재 스냅 지점으로 다시 계산한다.
    */
+  const resolveInitialSnapStage = () =>
+    resolveSearchListSnapStage({
+      maxSnapPoint: resolvedMaxSnapPoint,
+      miniSnapPoint: resolvedMiniSnapPoint,
+      minSnapPoint: resolvedMinSnapPoint,
+      offset: resolvedInitialSnapPoint,
+      snapPoint: resolvedSnapPoint,
+    });
   const [currentSnapStage, setCurrentSnapStage] =
-    useState<SearchListSheetSnapStage>(() =>
-      resolveSearchListSnapStage({
-        maxSnapPoint: resolvedMaxSnapPoint,
-        miniSnapPoint: resolvedMiniSnapPoint,
-        minSnapPoint: resolvedMinSnapPoint,
-        offset: resolvedInitialSnapPoint,
-        snapPoint: resolvedSnapPoint,
-      }),
-    );
+    useState<SearchListSheetSnapStage>(resolveInitialSnapStage);
+
+  /**
+   * 데스크톱 패널에서 모바일 시트로 돌아오면 시트는 처음 스냅으로 새로 마운트된다.
+   * DraggableBottomSheet 는 마운트할 때 onSnapChange 를 부르지 않으므로, 들고 있던
+   * 단계(예: full)를 그대로 두면 부모에게 실제 시트보다 높은 자리를 알리게 된다.
+   * 전환되는 렌더에서 단계와 펼침 정도를 시트가 마운트되는 자리로 되돌린다.
+   */
+  const [wasDesktopLayout, setWasDesktopLayout] = useState(isDesktopLayout);
+  if (wasDesktopLayout !== isDesktopLayout) {
+    setWasDesktopLayout(isDesktopLayout);
+
+    if (!isDesktopLayout) {
+      setCurrentSnapStage(resolveInitialSnapStage());
+      setExpandedProgress(
+        resolveBottomSheetExpandedProgress({
+          maxSnapPoint: resolvedMaxSnapPoint,
+          minSnapPoint: resolvedMinSnapPoint,
+          offset: resolvedInitialSnapPoint,
+        }),
+      );
+    }
+  }
   const lastStageNoticeRef = useRef<string | null>(null);
   const notifySnapStage = useCallback(
     (stage: SearchListSheetSnapStage, visibleHeightPx: number | null) => {
@@ -515,6 +538,46 @@ export function SearchListBottomSheet({
     );
   }, [resolvedMaxSnapPoint, resolvedMinSnapPoint, resolvedInitialSnapPoint]);
 
+  const listScreen = (
+    <SearchListScreen
+      searchQuery={searchQuery}
+      items={items}
+      placeName={placeName}
+      appLanguage={appLanguage}
+      englishSubPolicy={englishSubPolicy}
+      isFilterActive={isFilterActive}
+      isFilterOpen={isFilterOpen}
+      appliedFilters={appliedFilters}
+      onAppliedFiltersChange={onAppliedFiltersChange}
+      isLoading={isLoading}
+      isError={isError}
+      onRetry={onRetry}
+      onOpenFilter={onOpenFilter}
+      onResetFilter={onResetFilter}
+      onLockerPress={onLockerPress}
+      onPlacePress={onPlacePress}
+      onFavoriteChange={onFavoriteChange}
+      onContentHeightChange={setFullContentHeight}
+      // 데스크톱 패널은 늘 다 펼쳐져 있다. 시트의 펼침 정도를 따르지 않는다.
+      expandedProgress={isDesktopLayout ? 1 : expandedProgress}
+    >
+      {children}
+    </SearchListScreen>
+  );
+
+  /*
+   * 데스크톱: 같은 목록 화면을 왼쪽 위 검색 카드 아래로 이어지는 패널에 놓는다.
+   * 끌어서 올리고 내리는 단계가 없어 시트의 스냅·라이브 오프셋은 쓰지 않는다.
+   * 지도 컨트롤은 데스크톱에서 시트를 따라가지 않으므로 알릴 것도 없다.
+   */
+  if (isDesktopLayout) {
+    return (
+      <section className={desktopListPanel} data-desktop-list-panel="">
+        {listScreen}
+      </section>
+    );
+  }
+
   return (
     <DraggableBottomSheet
       snapPoint={resolvedSnapPoint}
@@ -530,29 +593,7 @@ export function SearchListBottomSheet({
       onLiveOffsetChange={handleLiveOffsetChange}
       onDismiss={onDismiss}
     >
-      <SearchListScreen
-        searchQuery={searchQuery}
-        items={items}
-        placeName={placeName}
-        appLanguage={appLanguage}
-        englishSubPolicy={englishSubPolicy}
-        isFilterActive={isFilterActive}
-        isFilterOpen={isFilterOpen}
-        appliedFilters={appliedFilters}
-        onAppliedFiltersChange={onAppliedFiltersChange}
-        isLoading={isLoading}
-        isError={isError}
-        onRetry={onRetry}
-        onOpenFilter={onOpenFilter}
-        onResetFilter={onResetFilter}
-        onLockerPress={onLockerPress}
-        onPlacePress={onPlacePress}
-        onFavoriteChange={onFavoriteChange}
-        onContentHeightChange={setFullContentHeight}
-        expandedProgress={expandedProgress}
-      >
-        {children}
-      </SearchListScreen>
+      {listScreen}
     </DraggableBottomSheet>
   );
 }

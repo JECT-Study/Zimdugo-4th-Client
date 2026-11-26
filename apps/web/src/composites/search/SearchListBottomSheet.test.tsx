@@ -1,11 +1,22 @@
 // @vitest-environment jsdom
 
 import { m, setLanguageTag } from "@repo/i18n";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const draggableBottomSheetMock = vi.hoisted(() => vi.fn());
+const desktopLayoutState = vi.hoisted(() => ({ isDesktopLayout: false }));
+
+vi.mock("#/shared/hooks/useIsDesktopLayout", () => ({
+  useIsDesktopLayout: () => desktopLayoutState.isDesktopLayout,
+}));
 
 vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   DraggableBottomSheet: (props: {
@@ -63,6 +74,7 @@ describe("SearchListBottomSheet", () => {
 
   afterEach(() => {
     draggableBottomSheetMock.mockClear();
+    desktopLayoutState.isDesktopLayout = false;
   });
 
   it("full 이 없으면 그 자리를 half 로 읽어 접는 길을 남긴다", () => {
@@ -256,6 +268,41 @@ describe("SearchListBottomSheet", () => {
       "half",
       expect.any(Number),
     );
+  });
+
+  it("데스크톱 패널에서 모바일 시트로 돌아오면 다시 마운트된 시트의 단계를 알린다", () => {
+    // full 로 둔 채 데스크톱 폭으로 넓혔다가 되돌리면 시트는 half 로 새로 마운트되고,
+    // 마운트할 때는 onSnapChange 를 부르지 않는다. 들고 있던 full 을 계속 알리면
+    // 컨트롤이 실제 시트보다 높은 자리에 놓인다.
+    const handleSnapStageChange = vi.fn();
+    const renderSheet = () => (
+      <SearchListBottomSheet
+        searchQuery="강남"
+        items={[]}
+        onSnapStageChange={handleSnapStageChange}
+      />
+    );
+
+    const { rerender } = render(renderSheet());
+    const { onSnapChange } = draggableBottomSheetMock.mock.lastCall?.[0] as {
+      onSnapChange: (nextSnap: number) => void;
+    };
+    act(() => onSnapChange(112));
+    expect(handleSnapStageChange).toHaveBeenLastCalledWith("full", 700);
+
+    desktopLayoutState.isDesktopLayout = true;
+    rerender(renderSheet());
+    expect(screen.queryByTestId("mock-draggable-bottom-sheet")).toBeNull();
+
+    desktopLayoutState.isDesktopLayout = false;
+    rerender(renderSheet());
+
+    expect(screen.getByTestId("mock-draggable-bottom-sheet")).toBeTruthy();
+    expect(draggableBottomSheetMock.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ initialSnapPoint: 471 }),
+    );
+    // 812 - 471 = 341.
+    expect(handleSnapStageChange).toHaveBeenLastCalledWith("half", 341);
   });
 
   it("기본으로 상세와 같은 방식의 스냅 값을 시트에 넘긴다", () => {

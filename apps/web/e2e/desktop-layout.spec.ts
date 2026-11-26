@@ -39,16 +39,39 @@ const lockerDetailRaw = {
   inaccurateVoteCount: 1,
 };
 
+const KEYWORD = "강남역";
+
+const searchItemRaw = {
+  type: "LOCKER",
+  placeId: 900,
+  placeName: "강남역",
+  lockerId: LOCKER_ID,
+  lockerName: "결과 목록 강남역 보관함",
+  roadAddress: "서울 강남구 강남대로 지하 396",
+  lockerType: "SUBWAY",
+  minPrice: 2000,
+  latitude: 37.4979,
+  longitude: 127.0276,
+  distanceMeters: 120,
+  updatedAt: "2026-08-01T00:00:00",
+  isFavorite: false,
+  lockers: [],
+};
+
+const boundsRaw = { swLat: 37.49, swLng: 127.01, neLat: 37.51, neLng: 127.04 };
+
 const stubApi = async (page: Page) => {
   await page.route("**/api/v1/**", async (route) => {
     const url = route.request().url();
     const data = url.includes("/pins")
       ? { items: [] }
-      : url.includes(`/lockers/${LOCKER_ID}`)
-        ? lockerDetailRaw
-        : url.includes("/search") || url.includes("/suggest")
-          ? { items: [], hasNext: false }
-          : {};
+      : url.includes("/lockers/search")
+        ? { count: 1, bounds: boundsRaw, items: [searchItemRaw] }
+        : url.includes(`/lockers/${LOCKER_ID}`)
+          ? lockerDetailRaw
+          : url.includes("/suggest")
+            ? { items: [], hasNext: false }
+            : {};
 
     await route.fulfill({
       status: 200,
@@ -67,6 +90,8 @@ const stubApi = async (page: Page) => {
 const mapControlStack = (page: Page) => page.locator("[data-map-control-stack]");
 const sheetSurface = (page: Page) => page.locator("[data-bottom-sheet-surface]");
 const searchInput = (page: Page) => page.getByLabel("검색어 입력");
+const desktopListPanel = (page: Page) =>
+  page.locator("[data-desktop-list-panel]");
 
 const waitForMapReady = async (page: Page) => {
   await expect(page.locator('[data-map-state="ready"]')).toBeAttached();
@@ -183,5 +208,40 @@ test.describe("데스크톱 레이아웃 플래그", () => {
     const placement = await controlPlacementOf(page);
     expect(placement.right).toBe(VIEWPORT.width - DESKTOP_INSET_PX);
     expect(placement.bottom).toBe(BASE_BOTTOM_PX);
+  });
+
+  test("데스크톱 검색 결과는 바텀시트가 아니라 검색 카드 아래 패널에 열린다", async ({
+    page,
+  }) => {
+    await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}&desktop=1`);
+    await waitForMapReady(page);
+
+    const panel = desktopListPanel(page);
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText("결과 목록 강남역 보관함")).toBeVisible();
+    await expect(sheetSurface(page)).toHaveCount(0);
+
+    // 검색 카드와 같은 자리·폭으로 화면 아래(여백 16)까지 이어진다.
+    const box = await panel.boundingBox();
+    expect(box?.x).toBe(DESKTOP_INSET_PX);
+    expect(box?.y).toBe(DESKTOP_INSET_PX);
+    expect(box?.width).toBe(DESKTOP_PANEL_WIDTH_PX);
+    expect((box?.y ?? 0) + (box?.height ?? 0)).toBe(
+      VIEWPORT.height - DESKTOP_INSET_PX,
+    );
+
+    // 검색창은 패널 위층 카드 안에서 그대로 보이고 눌린다.
+    const search = await searchInput(page).boundingBox();
+    expect(search?.y).toBeLessThan((box?.y ?? 0) + 160);
+  });
+
+  test("플래그가 꺼져 있으면 검색 결과는 기존 바텀시트로 열린다", async ({
+    page,
+  }) => {
+    await page.goto(`/search?q=${encodeURIComponent(KEYWORD)}`);
+    await waitForMapReady(page);
+
+    await expect(sheetSurface(page)).toBeVisible();
+    await expect(desktopListPanel(page)).toHaveCount(0);
   });
 });
