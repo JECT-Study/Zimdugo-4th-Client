@@ -140,6 +140,39 @@ test.describe("데스크톱 레이아웃 플래그", () => {
     expect(placement.bottom).toBe(BASE_BOTTOM_PX);
   });
 
+  test("데스크톱에서는 로딩 중 컨트롤 자리표시도 화면 오른쪽 끝에 놓인다", async ({
+    page,
+  }) => {
+    // 지도 SDK 응답을 붙잡아 로딩 상태에 머물게 한다. 끊으면 오류 화면으로 넘어가
+    // 자리표시가 사라진다. 자리표시가 실제 컨트롤과 같은 자리에 있어야 SDK 가 붙을 때
+    // 버튼이 오른쪽으로 튀지 않는다.
+    let releaseSdk = () => {};
+    const sdkHeld = new Promise<void>((resolve) => {
+      releaseSdk = resolve;
+    });
+    await page.route("**/openapi.map.naver.com/**", async (route) => {
+      await sdkHeld;
+      await route.continue().catch(() => {});
+    });
+    // load 이벤트는 붙잡힌 SDK 를 기다리므로 문서가 그려진 시점까지만 기다린다.
+    await page.goto("/?desktop=1", { waitUntil: "domcontentloaded" });
+
+    const skeleton = page.locator("[data-map-controls-skeleton]");
+    await expect(skeleton).toBeVisible();
+    const right = await skeleton.evaluate((element) =>
+      Math.round(
+        Math.max(
+          ...[...element.children].map(
+            (child) => child.getBoundingClientRect().right,
+          ),
+        ),
+      ),
+    );
+
+    expect(right).toBe(VIEWPORT.width - DESKTOP_INSET_PX);
+    releaseSdk();
+  });
+
   test("데스크톱에서는 상세 시트가 열려도 컨트롤이 따라 오르지 않는다", async ({
     page,
   }) => {
