@@ -22,6 +22,7 @@ import {
   getSeoSiteName,
 } from "#/features/seo/model/localized-seo-head";
 import { useBootstrapAuth } from "#/shared/hooks/useBootstrapAuth";
+import { useIsomorphicLayoutEffect } from "#/shared/hooks/useIsomorphicLayoutEffect";
 import { useLoginResultHandler } from "#/shared/hooks/useLoginResultHandler";
 import { useResetAppScrollOnResize } from "#/shared/hooks/useResetAppScrollOnResize";
 import { useServiceWorker } from "#/shared/hooks/useServiceWorker";
@@ -30,7 +31,14 @@ import {
   normalizeLocale,
   stripLocalePathPrefix,
 } from "#/shared/i18n/locales";
-import { DESKTOP_LAYOUT_FLAG_SCRIPT } from "#/shared/lib/desktop-layout-flag";
+import {
+  COMPACT_DEVICE_LAYOUT_SCRIPT,
+  syncCompactDeviceAttribute,
+} from "#/shared/lib/compact-device-layout";
+import {
+  DESKTOP_LAYOUT_FLAG_SCRIPT,
+  restoreDesktopLayoutFlagAttribute,
+} from "#/shared/lib/desktop-layout-flag";
 import { SITE_ORIGIN } from "#/shared/lib/site-url";
 import { isPathnameTransitionPending } from "#/shared/model/page-transition";
 import { GtmBodyNoscript, GtmHeadScript } from "#/shared/ui/GtmContainer";
@@ -108,62 +116,6 @@ const CRITICAL_LAYOUT_CSS = `
     color: inherit;
     text-decoration: none;
   }
-`;
-
-const COMPACT_DEVICE_LAYOUT_SCRIPT = `
-(function () {
-  try {
-    var hasCoarsePointer =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(pointer: coarse)").matches;
-    var maxTouchPoints =
-      window.navigator && typeof window.navigator.maxTouchPoints === "number"
-        ? window.navigator.maxTouchPoints
-        : 0;
-    var hasTouch = maxTouchPoints > 0 || "ontouchstart" in window;
-    var isTouchLike = hasCoarsePointer || hasTouch;
-
-    function isCompactDevice() {
-      var screenWidth = window.screen && window.screen.width;
-      var screenHeight = window.screen && window.screen.height;
-      var viewportWidth = window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 0;
-      var viewportHeight = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
-      var shortSide = Math.min(screenWidth || 0, screenHeight || 0);
-      var pixelRatio = window.devicePixelRatio || 1;
-      var isPhysicalScreen =
-        (viewportWidth > 0 && (screenWidth || 0) > viewportWidth * 1.5) ||
-        (viewportHeight > 0 && (screenHeight || 0) > viewportHeight * 1.5);
-      var cssShortSide =
-        isPhysicalScreen && pixelRatio > 1 ? shortSide / pixelRatio : shortSide;
-
-      return (
-        isTouchLike &&
-        ((shortSide > 0 && shortSide < 600) ||
-          (cssShortSide > 0 && cssShortSide < 600))
-      );
-    }
-
-    function syncCompactDeviceLayout() {
-      if (isCompactDevice()) {
-        document.documentElement.dataset.compactDevice = "true";
-      } else {
-        delete document.documentElement.dataset.compactDevice;
-      }
-    }
-
-    syncCompactDeviceLayout();
-
-    if (isTouchLike) {
-      window.addEventListener("resize", syncCompactDeviceLayout, {
-        passive: true,
-      });
-      window.addEventListener("orientationchange", syncCompactDeviceLayout, {
-        passive: true,
-      });
-    }
-  } catch (_) {
-  }
-})();
 `;
 
 type SeoHeadLocationContext = {
@@ -342,6 +294,14 @@ function RootDocument({ children }: { children: ReactNode }) {
     normalizedPath === "/report" || normalizedPath.startsWith("/report/");
 
   useResetAppScrollOnResize(!isDocumentScrollPage);
+
+  // 하이드레이션이 실패해 html 을 다시 그리면 인라인 스크립트가 붙인 속성(기기 판별,
+  // 데스크톱 플래그)이 지워진다. 그 마운트에서 그리기 전에 다시 붙인다. 정상
+  // 하이드레이션에서는 속성이 그대로라 결과가 바뀌지 않는다.
+  useIsomorphicLayoutEffect(() => {
+    syncCompactDeviceAttribute();
+    restoreDesktopLayoutFlagAttribute();
+  }, []);
 
   /*
    * 지도 레이아웃(`/_map`) 아래 화면인지. 경로 문자열을 다시 나열하지 않고 라우트

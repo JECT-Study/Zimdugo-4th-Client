@@ -32,6 +32,19 @@ export interface HomeHeaderProps {
   /** 지금 지도에 적용된 색 테마 */
   mapColorScheme: "light" | "dark";
   onMapColorSchemePress: () => void;
+  /**
+   * 지도 색 테마를 저장소에서 읽었는지. 읽기 전의 mapColorScheme 은 임시값이라, false 면
+   * 테마 버튼 자리에 스켈레톤을 둔다. 읽은 뒤 아이콘이 다른 색으로 바뀌는 것을 막는다.
+   */
+  isMapColorSchemeResolved?: boolean;
+  /**
+   * 프로필 버튼에 무엇을 그릴지 정해졌는지. 로그인 여부는 서버가 모르고, 로그인했다면
+   * 사진을 받아 와야 한다. false 면 버튼 안의 그림만 스켈레톤으로 둔다.
+   *
+   * 버튼 자체는 늘 그린다. 설정으로 가는 데는 프로필이 필요 없고, 오프라인이면 조회가
+   * 멈춰 이 값이 계속 false 로 남는데 그동안 설정으로 갈 길이 없어지면 안 된다.
+   */
+  isProfileResolved?: boolean;
 }
 
 const LANGUAGE_DROPDOWN_TRANSITION = {
@@ -145,6 +158,23 @@ const HOME_HEADER_STYLE_PROBES: StyleReadyProbe[] = [
   },
 ];
 
+/**
+ * 아직 정해지지 않은 액션 버튼 자리.
+ *
+ * 버튼과 같은 32px 원이라, 값이 정해져 버튼으로 바뀌어도 알약 폭과 옆 버튼 위치가
+ * 그대로다.
+ */
+function HeaderActionSkeleton() {
+  return (
+    <Skeleton
+      width={32}
+      height={32}
+      variant="circle"
+      style={{ ...circleActionFallbackStyle, ...SKELETON_SURFACE_STYLE }}
+    />
+  );
+}
+
 /** 앱 크롬이라 세션당 한 번만 프로브한다. */
 let hasHomeHeaderStyleResolved = false;
 
@@ -201,6 +231,8 @@ export function HomeHeader({
   onLogoPress,
   mapColorScheme,
   onMapColorSchemePress,
+  isMapColorSchemeResolved = true,
+  isProfileResolved = true,
 }: HomeHeaderProps) {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const languageTriggerRef = useRef<HTMLButtonElement>(null);
@@ -209,10 +241,12 @@ export function HomeHeader({
   const [isLanguageOptionsOpen, setIsLanguageOptionsOpen] = useState(false);
   const currentLanguage = normalizeLanguage(languageTag()) ?? APP_LANGUAGES[0];
   const shouldProbeStyle = !hasHomeHeaderStyleResolved;
-  const { isStyleReady, isStyleTimedOut } = useStyleReadyProbe({
-    enabled: shouldProbeStyle,
-    probes: HOME_HEADER_STYLE_PROBES,
-  });
+  const { isStyleReady, isStyleVerified, isStyleTimedOut } = useStyleReadyProbe(
+    {
+      enabled: shouldProbeStyle,
+      probes: HOME_HEADER_STYLE_PROBES,
+    },
+  );
   const fallbackStyle = (style: CSSProperties) =>
     isStyleTimedOut ? style : undefined;
   // 폴백의 인라인 zIndex 는 headerAboveBottomSheet 클래스를 덮는다. 목록이 열려
@@ -268,10 +302,10 @@ export function HomeHeader({
   }, [isLanguageExpanded]);
 
   useEffect(() => {
-    if (shouldProbeStyle && isStyleReady && !isStyleTimedOut) {
+    if (shouldProbeStyle && isStyleVerified) {
       hasHomeHeaderStyleResolved = true;
     }
-  }, [shouldProbeStyle, isStyleReady, isStyleTimedOut]);
+  }, [shouldProbeStyle, isStyleVerified]);
 
   if (!isStyleReady) {
     return <HomeHeaderSkeleton />;
@@ -408,30 +442,42 @@ export function HomeHeader({
             ) : null}
           </AnimatePresence>
         </motion.div>
-        <button
-          type="button"
-          className={styles.colorSchemeButton}
-          style={fallbackStyle(circleActionFallbackStyle)}
-          // 이름이 다음에 넘어갈 색을 가리키므로 aria-pressed 를 함께 두지
-          // 않는다. "라이트 모드로 전환, 눌림" 은 라이트가 켜져 있다는 뜻으로
-          // 들려 지금 색을 정반대로 알린다.
-          aria-label={
-            mapColorScheme === "dark"
-              ? m.home_map_light_mode_aria()
-              : m.home_map_dark_mode_aria()
-          }
-          onClick={onMapColorSchemePress}
-        >
-          <IconMapColorScheme24 scheme={mapColorScheme} />
-        </button>
+        {isMapColorSchemeResolved ? (
+          <button
+            type="button"
+            className={styles.colorSchemeButton}
+            style={fallbackStyle(circleActionFallbackStyle)}
+            // 이름이 다음에 넘어갈 색을 가리키므로 aria-pressed 를 함께 두지
+            // 않는다. "라이트 모드로 전환, 눌림" 은 라이트가 켜져 있다는 뜻으로
+            // 들려 지금 색을 정반대로 알린다.
+            aria-label={
+              mapColorScheme === "dark"
+                ? m.home_map_light_mode_aria()
+                : m.home_map_dark_mode_aria()
+            }
+            onClick={onMapColorSchemePress}
+          >
+            <IconMapColorScheme24 scheme={mapColorScheme} />
+          </button>
+        ) : (
+          <HeaderActionSkeleton />
+        )}
         <button
           type="button"
           className={styles.profileButton}
           style={fallbackStyle(circleActionFallbackStyle)}
           aria-label={m.my_profile_aria()}
+          aria-busy={isProfileResolved ? undefined : true}
           onClick={onProfilePress}
         >
-          {profileImageUrl ? (
+          {!isProfileResolved ? (
+            <Skeleton
+              width={32}
+              height={32}
+              variant="circle"
+              style={SKELETON_SURFACE_STYLE}
+            />
+          ) : profileImageUrl ? (
             <ProfileImage src={profileImageUrl} size={32} />
           ) : (
             <IconHomeProfile32 />

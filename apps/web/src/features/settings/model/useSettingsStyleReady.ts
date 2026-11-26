@@ -42,18 +42,10 @@ export function useSettingsStyleReady({ enabled = true } = {}) {
   });
 
   useEffect(() => {
-    if (
-      shouldProbeStyle &&
-      styleReadyState.isStyleReady &&
-      !styleReadyState.isStyleTimedOut
-    ) {
+    if (shouldProbeStyle && styleReadyState.isStyleVerified) {
       hasSettingsStyleResolved = true;
     }
-  }, [
-    shouldProbeStyle,
-    styleReadyState.isStyleReady,
-    styleReadyState.isStyleTimedOut,
-  ]);
+  }, [shouldProbeStyle, styleReadyState.isStyleVerified]);
 
   return styleReadyState;
 }
