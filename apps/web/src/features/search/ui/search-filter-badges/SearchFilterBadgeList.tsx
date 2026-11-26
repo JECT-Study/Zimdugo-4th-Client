@@ -73,6 +73,7 @@ export function SearchFilterBadgeList({
         <ControlChip
           className={moreBadge}
           variant="filter"
+          isActive
           showsIndicator={false}
           label={`+${hiddenCount}`}
           aria-label={m.search_filter_badge_more({ count: hiddenCount })}

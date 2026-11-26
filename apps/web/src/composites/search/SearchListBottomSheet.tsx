@@ -20,8 +20,8 @@ import {
   DraggableBottomSheet,
   resolveBottomSheetExpandedProgress,
 } from "#/shared/ui/DraggableBottomSheet";
+import { desktopSearchPanel } from "./desktop-search-panel.css";
 import type { SearchFilterAppliedState } from "./SearchFilterScreen";
-import { desktopListPanel } from "./SearchListBottomSheet.css";
 import { SearchListScreen } from "./SearchListScreen";
 import type {
   SearchLockerResultItem,
@@ -572,7 +572,7 @@ export function SearchListBottomSheet({
    */
   if (isDesktopLayout) {
     return (
-      <section className={desktopListPanel} data-desktop-list-panel="">
+      <section className={desktopSearchPanel} data-desktop-list-panel="">
         {listScreen}
       </section>
     );

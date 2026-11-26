@@ -31,24 +31,25 @@ export const badge = style({
   paddingRight: vars.spacing[8],
 });
 
-/*
- * 글자는 활성 테두리와 같은 초록, × 아이콘은 회색으로 둔다. 칩의 활성
- * 선택자(클래스 + 속성)를 이기도록 클래스를 한 번 더 건다.
- * `+N` 칩도 글자·테두리를 같은 초록으로 맞춘다.
- */
-globalStyle(`${badge}${badge}[data-active='true']`, {
-  color: vars.color.focus,
-});
-
-globalStyle(`${badge} svg path`, {
-  stroke: vars.color.palette.gray[500],
-});
-
 export const moreBadge = style({
   minWidth: "40px",
 });
 
-globalStyle(`${moreBadge}${moreBadge}`, {
-  borderColor: vars.color.focus,
-  color: vars.color.focus,
+/*
+ * 뱃지와 `+N` 칩은 필터 화면에서 칩을 골랐을 때(ControlChip choice 활성)와 같은
+ * 진초록 채움에 흰 글자로 둔다. 해제·펼침 버튼이라 선택 상태(aria-pressed)를 알리는
+ * choice 변형은 쓰지 않고, filter 변형의 활성 선택자(클래스 + 속성)를 이기도록
+ * 클래스를 한 번 더 걸어 색만 덮는다. × 아이콘도 글자와 같은 흰색이다.
+ */
+globalStyle(
+  `${badge}${badge}[data-active='true'], ${moreBadge}${moreBadge}[data-active='true']`,
+  {
+    backgroundColor: vars.color.bg.brand.active,
+    borderColor: "transparent",
+    color: vars.color.palette.gray[100],
+  },
+);
+
+globalStyle(`${badge} svg path`, {
+  stroke: "currentColor",
 });

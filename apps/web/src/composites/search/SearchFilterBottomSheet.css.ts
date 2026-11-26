@@ -93,3 +93,41 @@ export const sizeGuideList = style({
   padding: 0,
   listStyle: "none",
 });
+
+/*
+ * 데스크톱 필터 패널. 표면(패널 자리)은 결과 목록과 같은 desktopSearchPanel 을 쓴다.
+ * 닫기는 검색 카드의 되돌아가기 버튼이 맡아 패널에는 제목만 둔다.
+ *
+ * 제목·구역·하단 버튼의 왼쪽 시작선을 검색 카드(좌우 20)와 같게 맞춘다. 칩 줄은
+ * 모바일처럼 가운데 그대로 둔다. 모바일
+ * 시트는 그대로 두고 이 패널 안에서만 덮어쓴다.
+ */
+const DESKTOP_FILTER_INLINE_PADDING = vars.spacing[20];
+
+export const desktopFilterTitle = style({
+  flexShrink: 0,
+  margin: 0,
+  // 제목 줄 60px(위 26 + 글자 20 + 아래 14) 안에서 Figma 와 같은 자리에 둔다.
+  padding: `26px ${DESKTOP_FILTER_INLINE_PADDING} 14px`,
+  color: vars.color.text.title,
+  fontSize: "17px",
+  fontWeight: vars.typography.fontWeight.Bold,
+  lineHeight: "20px",
+});
+
+/** 패널 안에서는 제목 줄 아래 남은 높이를 채운다. 시트처럼 높이 100% 를 받지 않는다. */
+export const desktopFilterScreen = style({
+  flex: 1,
+  height: "auto",
+  paddingTop: 0,
+});
+
+globalStyle(`${desktopFilterScreen} ${scrollArea}`, {
+  paddingLeft: DESKTOP_FILTER_INLINE_PADDING,
+  paddingRight: DESKTOP_FILTER_INLINE_PADDING,
+});
+
+globalStyle(`${desktopFilterScreen} ${bottomActionBar}`, {
+  paddingLeft: DESKTOP_FILTER_INLINE_PADDING,
+  paddingRight: DESKTOP_FILTER_INLINE_PADDING,
+});
