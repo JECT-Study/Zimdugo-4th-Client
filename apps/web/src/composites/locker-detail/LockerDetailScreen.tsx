@@ -937,6 +937,8 @@ function FullDetailContent({
   isReportOpen: boolean;
 }) {
   const isPanel = variant === "panel";
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
   const detailInfo = useMemo(
     () => parseLockerDetailInfo(locker.detailHelpText),
     [locker.detailHelpText],
@@ -948,11 +950,16 @@ function FullDetailContent({
     detailInfoGraphic?.sizes.some((item) => item.price !== undefined) ?? false;
   const hasGraphicCount =
     detailInfoGraphic?.sizes.some((item) => item.count !== undefined) ?? false;
+  const isRealtimeInGraphic =
+    isPanel &&
+    isRealtimeAvailable &&
+    (detailInfoGraphic?.sizes.some(
+      (item) => item.count !== undefined && item.count > 0,
+    ) ??
+      false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);
-  const realtimeAvailability = locker.realtimeAvailability;
-  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
 
   const handleOpenImagePreview = (
     index: number,
@@ -1018,7 +1025,13 @@ function FullDetailContent({
             />
           ) : null}
           {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
-          {isRealtimeAvailable && isRealtimeCardVisible ? (
+          {/*
+            데스크톱 패널에서 그림이 크기별 남은 칸 게이지를 그리면 실시간 카드는 두지
+            않는다. 같은 숫자를 두 번 보여 주게 된다.
+          */}
+          {isRealtimeAvailable &&
+          isRealtimeCardVisible &&
+          !isRealtimeInGraphic ? (
             <div data-realtime-status-card="">
               <LockerRealtimeStatusCard
                 availability={realtimeAvailability}
