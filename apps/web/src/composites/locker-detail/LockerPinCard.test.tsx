@@ -79,7 +79,7 @@ describe("LockerPinCard", () => {
     expect(screen.getByRole("button", { name: "자세히 보기" })).toBeTruthy();
   });
 
-  it("실시간 이용 정보가 있으면 크기별 남은 칸을 함께 보여 준다", () => {
+  it("실시간 정보가 있으면 맨 위에 이용 가능 여부만 알리고 크기별 개수는 두지 않는다", () => {
     render(
       <LockerPinCard
         locker={{
@@ -96,6 +96,7 @@ describe("LockerPinCard", () => {
       />,
     );
 
-    expect(screen.getByText("12")).toBeTruthy();
+    expect(screen.getByText("실시간 이용 가능")).toBeTruthy();
+    expect(screen.queryByText("12")).toBeNull();
   });
 });
