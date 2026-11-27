@@ -38,6 +38,7 @@ import {
   IconGoogle24,
   IconHomeProfile32,
   IconImageUnavailable24,
+  IconInfo16,
   IconKakao24,
   IconLockerDetailCapacity24,
   IconLockerDetailHeader24,
@@ -726,6 +727,10 @@ const ICON_CATALOG = [
       {
         name: "flag",
         render: () => <IconFlag16 />,
+      },
+      {
+        name: "info-16",
+        render: () => <IconInfo16 />,
       },
       {
         name: "check",
