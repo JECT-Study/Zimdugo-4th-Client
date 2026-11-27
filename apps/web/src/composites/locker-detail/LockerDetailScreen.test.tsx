@@ -273,4 +273,36 @@ describe("LockerDetailScreen 상세 정보 그래픽", () => {
     expect(screen.getByText(m.locker_detail_price_section())).toBeTruthy();
     expect(screen.getByText("개찰구를 지나 왼쪽")).toBeTruthy();
   });
+
+  it("요금을 하나도 읽지 못하면 그림과 함께 가격 행을 남긴다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{
+          ...LOCKER_DETAIL,
+          priceLabel: "2,000원 ~ 4,000원",
+          detailHelpText: "- 보관함 개수: 소형 36개 / 중형 8개",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("36칸")).toBeTruthy();
+    expect(screen.getByText(m.locker_detail_price_section())).toBeTruthy();
+    expect(screen.getByText("2,000원 ~ 4,000원")).toBeTruthy();
+    expect(screen.queryByText(m.locker_detail_size_section())).toBeNull();
+  });
+
+  it("개수를 하나도 읽지 못하면 그림과 함께 사이즈 행을 남긴다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{
+          ...LOCKER_DETAIL,
+          detailHelpText: "- 이용요금: 소형 2,000원 / 중형 3,000원",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("2,000원")).toBeTruthy();
+    expect(screen.getByText(m.locker_detail_size_section())).toBeTruthy();
+    expect(screen.queryByText(m.locker_detail_price_section())).toBeNull();
+  });
 });

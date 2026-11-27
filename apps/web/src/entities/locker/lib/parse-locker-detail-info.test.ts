@@ -95,4 +95,25 @@ describe("parseLockerDetailInfo", () => {
       parseLockerDetailInfo("11번 출구 쪽 개찰구 밖, 화장실 맞은편에 있어요."),
     ).toBeNull();
   });
+
+  it("한 칸에 크기나 숫자가 둘 이상이면 일부만 읽지 않고 줄 전체를 원문으로 남긴다", () => {
+    const info = parseLockerDetailInfo(
+      "- 보관함 개수: 소형 36개, 중형 8개\n- 이용요금: 소형 2,000~3,000원",
+    );
+
+    expect(info).toBeNull();
+    expect(
+      parseLockerDetailInfo(
+        "- 상세위치: 대합실\n- 보관함 개수: 소형 36개, 중형 8개\n- 이용요금: 소형 2,000~3,000원",
+      ),
+    ).toEqual({
+      location: "대합실",
+      sizes: [],
+      priceBasis: undefined,
+      unparsedLines: [
+        "보관함 개수: 소형 36개, 중형 8개",
+        "이용요금: 소형 2,000~3,000원",
+      ],
+    });
+  });
 });

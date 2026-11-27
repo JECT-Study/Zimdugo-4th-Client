@@ -944,6 +944,10 @@ function FullDetailContent({
   /** 크기 정보까지 읽혀야 그림으로 그린다. 위치만 읽혔으면 문장이 더 낫다. */
   const detailInfoGraphic =
     detailInfo && detailInfo.sizes.length > 0 ? detailInfo : null;
+  const hasGraphicPrice =
+    detailInfoGraphic?.sizes.some((item) => item.price !== undefined) ?? false;
+  const hasGraphicCount =
+    detailInfoGraphic?.sizes.some((item) => item.count !== undefined) ?? false;
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);
@@ -1041,36 +1045,40 @@ function FullDetailContent({
               }
             />
             {/*
-              상세 정보에서 크기별 개수·요금을 읽어 냈으면 가격·사이즈·상세 정보 세
-              행을 그림 하나로 바꾼다. 읽지 못하면 지금처럼 문장 그대로 둔다.
+              상세 정보에서 크기별 개수·요금을 읽어 냈으면 그 부분을 그림으로 그린다.
+              그림이 담지 못한 정보는 기존 행으로 남긴다. 요금을 하나도 못 읽었으면
+              가격 행을(최소·최대 요금은 따로 온다), 개수를 하나도 못 읽었으면 사이즈
+              행을 둔다. 요금 줄에만 기댄 크기 목록은 실제 크기 전부가 아닐 수 있다.
             */}
+            {!detailInfoGraphic || !hasGraphicPrice ? (
+              <DetailInfoRow
+                icon={<IconLockerDetailWallet24 />}
+                title={m.locker_detail_price_section()}
+                description={locker.priceLabel ?? formatLockerPriceLabel()}
+                iconTone="neutral"
+              />
+            ) : null}
+            {!detailInfoGraphic || !hasGraphicCount ? (
+              <DetailInfoRow
+                icon={<IconLockerDetailCapacity24 />}
+                title={m.locker_detail_size_section()}
+                description={formatLockerSizeLabel(locker.sizeLabel)}
+                iconTone="neutral"
+              />
+            ) : null}
             {detailInfoGraphic ? (
               <LockerDetailInfoGraphic
                 info={detailInfoGraphic}
                 realtimeAvailability={locker.realtimeAvailability}
               />
             ) : (
-              <>
-                <DetailInfoRow
-                  icon={<IconLockerDetailWallet24 />}
-                  title={m.locker_detail_price_section()}
-                  description={locker.priceLabel ?? formatLockerPriceLabel()}
-                  iconTone="neutral"
-                />
-                <DetailInfoRow
-                  icon={<IconLockerDetailCapacity24 />}
-                  title={m.locker_detail_size_section()}
-                  description={formatLockerSizeLabel(locker.sizeLabel)}
-                  iconTone="neutral"
-                />
-                <DetailInfoRow
-                  icon={<IconCaution24 />}
-                  title={m.locker_detail_info_section()}
-                  description={detailHelpText}
-                  iconTone="neutral"
-                  descriptionClassName={detailDescriptionMultiline}
-                />
-              </>
+              <DetailInfoRow
+                icon={<IconCaution24 />}
+                title={m.locker_detail_info_section()}
+                description={detailHelpText}
+                iconTone="neutral"
+                descriptionClassName={detailDescriptionMultiline}
+              />
             )}
           </div>
           <LockerDetailImageStrip

@@ -80,7 +80,8 @@ const SIZE_ORDER: readonly LockerSizeType[] = ["SMALL", "MEDIUM", "LARGE"];
 const LINE_PATTERN = /^\s*-?\s*([^:：]+?)\s*[:：]\s*(.+?)\s*$/;
 /** 값 끝의 괄호(반각·전각) 하나. 요금 기준이 여기 들어온다. */
 const TRAILING_PAREN_PATTERN = /\s*[(（]([^()（）]+)[)）]\s*$/;
-const NUMBER_PATTERN = /\d[\d,]*/;
+/** 천 단위 쉼표를 품은 숫자. 쉼표는 숫자 사이에 있을 때만 숫자의 일부다. */
+const NUMBER_PATTERN = /\d+(?:,\d{3})*/g;
 
 const normalizeLabel = (label: string) =>
   label.toLowerCase().replace(/\s+/g, "");
@@ -93,17 +94,21 @@ const resolveLineKind = (label: string): DetailLineKind | null => {
   return null;
 };
 
-const findSizeWord = (segment: string): LockerSizeType | null => {
-  for (const token of segment.toLowerCase().split(/[\s\d,]+/)) {
-    const size = SIZE_WORDS.get(token);
-    if (size) return size;
-  }
-  return null;
-};
+/** 칸 안의 크기 낱말들. 하나여야 그 칸을 읽는다. */
+const findSizeWords = (segment: string): LockerSizeType[] =>
+  segment
+    .toLowerCase()
+    .split(/[\s\d,]+/)
+    .flatMap((token) => {
+      const size = SIZE_WORDS.get(token);
+      return size ? [size] : [];
+    });
 
 /**
- * `소형 36개 / 중형 8개` 를 크기별 숫자로 읽는다. 칸 하나라도 크기나 숫자를 찾지
- * 못하면 줄 전체를 읽지 못한 것으로 본다. 반쯤 읽은 값을 그리면 틀린 그림이 된다.
+ * `소형 36개 / 중형 8개` 를 크기별 숫자로 읽는다. 칸마다 크기 낱말과 숫자가 정확히
+ * 하나씩이어야 한다. `/` 대신 쉼표로 이은 `소형 36개, 중형 8개` 나 범위인
+ * `2,000~3,000원` 은 한 칸에 둘이 들어 있어 일부만 읽게 되므로, 줄 전체를 읽지 못한
+ * 것으로 보고 원문으로 남긴다. 반쯤 읽은 값을 그리면 틀린 그림이 된다.
  */
 const parseSizeNumbers = (
   value: string,
@@ -111,11 +116,13 @@ const parseSizeNumbers = (
   const result = new Map<LockerSizeType, number>();
 
   for (const segment of value.split("/")) {
-    const size = findSizeWord(segment);
-    const numberMatch = segment.match(NUMBER_PATTERN);
-    if (!size || !numberMatch || result.has(size)) return null;
+    const sizes = findSizeWords(segment);
+    const numbers = segment.match(NUMBER_PATTERN) ?? [];
+    if (sizes.length !== 1 || numbers.length !== 1) return null;
 
-    result.set(size, Number(numberMatch[0].replace(/,/g, "")));
+    const [size] = sizes;
+    if (result.has(size)) return null;
+    result.set(size, Number(numbers[0].replace(/,/g, "")));
   }
 
   return result.size > 0 ? result : null;
