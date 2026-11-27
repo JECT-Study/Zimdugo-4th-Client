@@ -56,8 +56,6 @@ describe("LockerDetailInfoGraphic", () => {
       />,
     );
 
-    // 게이지가 실시간 남은 칸이라는 것을 한 줄로 알린다.
-    expect(screen.getByText("실시간 이용 가능")).toBeTruthy();
     expect(cardOf("소형").getByText("남은 칸 12 / 전체 36")).toBeTruthy();
     expect(cardOf("중형").getByText("남은 칸 2 / 전체 8")).toBeTruthy();
     // 전체가 0 칸인 크기는 채울 게이지가 없다.
@@ -79,7 +77,6 @@ describe("LockerDetailInfoGraphic", () => {
     );
 
     expect(screen.queryByText(/남은 칸/)).toBeNull();
-    expect(screen.queryByText("실시간 이용 가능")).toBeNull();
   });
 
   it("읽지 못한 줄은 원문 그대로 아래에 남긴다", () => {

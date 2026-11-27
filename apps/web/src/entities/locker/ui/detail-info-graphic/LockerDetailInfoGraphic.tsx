@@ -11,7 +11,6 @@ import type {
   LockerSizeType,
 } from "#/entities/locker/lib/parse-locker-detail-info";
 import type { LockerRealtimeAvailability } from "#/entities/locker/model/locker-detail";
-import { LockerRealtimeStatusLine } from "#/entities/locker/ui/realtime-availability";
 import { formatCurrencyAmount } from "#/shared/lib/locker-detail-labels";
 import {
   basis,
@@ -73,20 +72,9 @@ export function LockerDetailInfoGraphic({
   const availability = realtimeAvailability?.isAvailable
     ? realtimeAvailability
     : null;
-  const hasRealtimeGauge =
-    availability !== null &&
-    info.sizes.some((item) => item.count !== undefined && item.count > 0);
 
   return (
     <section className={root} aria-label={m.locker_detail_info_section()}>
-      {/*
-        게이지가 실시간 남은 칸이라는 것과 그 시각을 알린다. 크기별 남은 칸 수는 카드의
-        게이지가 맡아, 실시간 카드를 따로 두지 않아도 되게 한다.
-      */}
-      {hasRealtimeGauge && availability ? (
-        <LockerRealtimeStatusLine fetchedAt={availability.fetchedAt} />
-      ) : null}
-
       {info.sizes.length > 0 ? (
         <ul className={sizeGrid}>
           {info.sizes.map((item) => (

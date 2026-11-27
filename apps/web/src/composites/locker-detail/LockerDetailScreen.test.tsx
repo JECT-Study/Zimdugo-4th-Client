@@ -304,32 +304,4 @@ describe("LockerDetailScreen 상세 정보 그래픽", () => {
     expect(screen.getByText(m.locker_detail_size_section())).toBeTruthy();
     expect(screen.queryByText(m.locker_detail_price_section())).toBeNull();
   });
-
-  it("데스크톱 패널은 그림이 남은 칸을 보여 주면 실시간 카드를 따로 두지 않는다", () => {
-    const locker = {
-      ...LOCKER_DETAIL,
-      detailHelpText: "- 보관함 개수: 소형 36개 / 중형 8개",
-      realtimeAvailability: {
-        isAvailable: true,
-        smallAvailableCount: 12,
-        mediumAvailableCount: 2,
-        largeAvailableCount: 0,
-        fetchedAt: "2026-11-28T10:00:00",
-      },
-    };
-    const { rerender } = render(
-      <LockerDetailScreen locker={locker} variant="panel" />,
-    );
-
-    expect(
-      screen.queryByRole("region", { name: "실시간 이용 가능" }),
-    ).toBeNull();
-    expect(screen.getByText("남은 칸 12 / 전체 36")).toBeTruthy();
-
-    // 모바일 시트는 실시간 카드를 그대로 둔다.
-    rerender(<LockerDetailScreen locker={locker} />);
-    expect(
-      screen.getByRole("region", { name: "실시간 이용 가능" }),
-    ).toBeTruthy();
-  });
 });
