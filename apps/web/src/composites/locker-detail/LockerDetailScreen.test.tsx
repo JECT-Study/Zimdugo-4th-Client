@@ -241,3 +241,36 @@ describe("LockerDetailScreen 데스크톱 패널", () => {
     ).toBeTruthy();
   });
 });
+
+describe("LockerDetailScreen 상세 정보 그래픽", () => {
+  it("상세 정보에서 크기별 개수·요금을 읽으면 가격·사이즈·상세 정보 행 대신 그림으로 보여 준다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{
+          ...LOCKER_DETAIL,
+          detailHelpText:
+            "- 상세위치: 대합실\n- 보관함 개수: 중형 9개 / 소형 36개\n- 이용요금: 중형 3,000원 / 소형 2,000원 (4시간 당)",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("region", { name: m.locker_detail_info_section() }),
+    ).toBeTruthy();
+    expect(screen.getByText("대합실")).toBeTruthy();
+    expect(screen.getByText("36칸")).toBeTruthy();
+    expect(screen.queryByText(m.locker_detail_price_section())).toBeNull();
+    expect(screen.queryByText(m.locker_detail_size_section())).toBeNull();
+  });
+
+  it("상세 정보를 읽지 못하면 지금처럼 문장 행을 그대로 둔다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{ ...LOCKER_DETAIL, detailHelpText: "개찰구를 지나 왼쪽" }}
+      />,
+    );
+
+    expect(screen.getByText(m.locker_detail_price_section())).toBeTruthy();
+    expect(screen.getByText("개찰구를 지나 왼쪽")).toBeTruthy();
+  });
+});

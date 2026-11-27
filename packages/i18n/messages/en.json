@@ -323,6 +323,8 @@
   "locker_detail_price_section": "Price",
   "locker_detail_size_section": "Size",
   "locker_detail_size_not_provided": "Not provided",
+  "locker_detail_size_count": "{count} lockers",
+  "locker_detail_size_available": "{available} of {total} available",
   "locker_detail_info_section": "Locker details",
   "locker_detail_detail_help": "Share the exact locker location and any extra fee details.",
   "locker_detail_feedback_accurate": "Accurate info {count}",

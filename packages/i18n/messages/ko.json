@@ -323,6 +323,8 @@
   "locker_detail_price_section": "가격",
   "locker_detail_size_section": "사이즈",
   "locker_detail_size_not_provided": "미제공",
+  "locker_detail_size_count": "{count}칸",
+  "locker_detail_size_available": "남은 칸 {available} / 전체 {total}",
   "locker_detail_info_section": "보관함 상세 정보",
   "locker_detail_detail_help": "물품보관함의 상세 위치 및 추가 요금 정보를 알려주세요.",
   "locker_detail_feedback_accurate": "정확한 정보에요 {count}",

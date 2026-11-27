@@ -27,11 +27,14 @@ import {
   type RefObject,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
+import { parseLockerDetailInfo } from "#/entities/locker/lib/parse-locker-detail-info";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import { LockerDetailImageStrip } from "#/entities/locker/ui/detail-images";
+import { LockerDetailInfoGraphic } from "#/entities/locker/ui/detail-info-graphic";
 import {
   LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX,
   LockerRealtimeStatusCard,
@@ -934,6 +937,13 @@ function FullDetailContent({
   isReportOpen: boolean;
 }) {
   const isPanel = variant === "panel";
+  const detailInfo = useMemo(
+    () => parseLockerDetailInfo(locker.detailHelpText),
+    [locker.detailHelpText],
+  );
+  /** 크기 정보까지 읽혀야 그림으로 그린다. 위치만 읽혔으면 문장이 더 낫다. */
+  const detailInfoGraphic =
+    detailInfo && detailInfo.sizes.length > 0 ? detailInfo : null;
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);
@@ -1030,25 +1040,38 @@ function FullDetailContent({
                 </button>
               }
             />
-            <DetailInfoRow
-              icon={<IconLockerDetailWallet24 />}
-              title={m.locker_detail_price_section()}
-              description={locker.priceLabel ?? formatLockerPriceLabel()}
-              iconTone="neutral"
-            />
-            <DetailInfoRow
-              icon={<IconLockerDetailCapacity24 />}
-              title={m.locker_detail_size_section()}
-              description={formatLockerSizeLabel(locker.sizeLabel)}
-              iconTone="neutral"
-            />
-            <DetailInfoRow
-              icon={<IconCaution24 />}
-              title={m.locker_detail_info_section()}
-              description={detailHelpText}
-              iconTone="neutral"
-              descriptionClassName={detailDescriptionMultiline}
-            />
+            {/*
+              상세 정보에서 크기별 개수·요금을 읽어 냈으면 가격·사이즈·상세 정보 세
+              행을 그림 하나로 바꾼다. 읽지 못하면 지금처럼 문장 그대로 둔다.
+            */}
+            {detailInfoGraphic ? (
+              <LockerDetailInfoGraphic
+                info={detailInfoGraphic}
+                realtimeAvailability={locker.realtimeAvailability}
+              />
+            ) : (
+              <>
+                <DetailInfoRow
+                  icon={<IconLockerDetailWallet24 />}
+                  title={m.locker_detail_price_section()}
+                  description={locker.priceLabel ?? formatLockerPriceLabel()}
+                  iconTone="neutral"
+                />
+                <DetailInfoRow
+                  icon={<IconLockerDetailCapacity24 />}
+                  title={m.locker_detail_size_section()}
+                  description={formatLockerSizeLabel(locker.sizeLabel)}
+                  iconTone="neutral"
+                />
+                <DetailInfoRow
+                  icon={<IconCaution24 />}
+                  title={m.locker_detail_info_section()}
+                  description={detailHelpText}
+                  iconTone="neutral"
+                  descriptionClassName={detailDescriptionMultiline}
+                />
+              </>
+            )}
           </div>
           <LockerDetailImageStrip
             images={images}
