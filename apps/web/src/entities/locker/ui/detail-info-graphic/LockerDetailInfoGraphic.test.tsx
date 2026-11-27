@@ -87,4 +87,31 @@ describe("LockerDetailInfoGraphic", () => {
 
     expect(screen.getByText("비고: 주말엔 조기 마감")).toBeTruthy();
   });
+
+  it("칸이 있는 크기는 실시간 정보가 없어도 초록 그림으로, 실시간으로 마감이면 회색으로 그린다", () => {
+    const stateOf = (sizeName: string) =>
+      screen
+        .getByText(sizeName)
+        .closest("li")
+        ?.querySelector("svg path")
+        ?.getAttribute("fill");
+    const { rerender } = render(<LockerDetailInfoGraphic info={INFO} />);
+    const green = stateOf("소형");
+    expect(stateOf("중형")).toBe(green);
+
+    rerender(
+      <LockerDetailInfoGraphic
+        info={INFO}
+        realtimeAvailability={{
+          isAvailable: true,
+          smallAvailableCount: 12,
+          mediumAvailableCount: 0,
+          largeAvailableCount: 0,
+          fetchedAt: "2026-11-28T10:00:00",
+        }}
+      />,
+    );
+    expect(stateOf("소형")).toBe(green);
+    expect(stateOf("중형")).not.toBe(green);
+  });
 });

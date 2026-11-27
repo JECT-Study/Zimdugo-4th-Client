@@ -135,11 +135,16 @@ function SizeCardItem({
   const hasGauge =
     availableCount !== undefined && total !== undefined && total > 0;
   const ratio = hasGauge ? Math.min(1, availableCount / total) : 0;
+  /*
+   * 칸이 있는 크기는 초록으로 둔다. 실시간 정보가 남은 칸이 없다고 알려 줄 때만
+   * 회색(마감)으로, 칸이 아예 없는 크기는 흐리게 둔다. 실시간 정보가 없는 보관함이
+   * 더 많아, 남은 칸이 확인될 때만 초록으로 두면 대부분 회색이라 비활성처럼 보인다.
+   */
   const iconState = isEmpty
     ? "disabled"
-    : availableCount !== undefined && availableCount > 0
-      ? "selected"
-      : "default";
+    : availableCount === 0
+      ? "default"
+      : "selected";
 
   return (
     <li className={sizeCard} data-empty={isEmpty ? "true" : undefined}>
