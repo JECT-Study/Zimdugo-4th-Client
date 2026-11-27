@@ -77,6 +77,18 @@ export function LockerPinCard({
       }
       data-locker-pin-card=""
     >
+      {/*
+          실시간 카드는 요약 카드 안이 아니라 그 위에 얹는다. 모바일에서 시트 윗변 위에
+          떠 있는 것과 같은 카드다.
+        */}
+      {!isLoading && realtimeAvailability?.isAvailable ? (
+        <div className={realtime}>
+          <LockerRealtimeStatusCard
+            availability={realtimeAvailability}
+            variant="floating"
+          />
+        </div>
+      ) : null}
       <section
         className={card}
         aria-label={isLoading ? undefined : locker.title}
@@ -132,15 +144,6 @@ export function LockerPinCard({
             </button>
           ) : null}
         </div>
-
-        {!isLoading && realtimeAvailability?.isAvailable ? (
-          <div className={realtime}>
-            <LockerRealtimeStatusCard
-              availability={realtimeAvailability}
-              variant="inline"
-            />
-          </div>
-        ) : null}
 
         <div className={actions}>
           <button

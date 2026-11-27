@@ -24,9 +24,9 @@ export const anchor = style({
 export const card = style({
   display: "flex",
   flexDirection: "column",
-  gap: vars.spacing[12],
+  gap: vars.spacing[16],
   width: "300px",
-  padding: `${vars.spacing[16]} ${vars.spacing[16]} ${vars.spacing[12]}`,
+  padding: `${vars.spacing[20]} ${vars.spacing[20]} ${vars.spacing[16]}`,
   boxSizing: "border-box",
   borderRadius: vars.radius[16],
   backgroundColor: vars.color.bg.default,
@@ -50,7 +50,7 @@ export const header = style({
 export const titleColumn = style({
   display: "flex",
   flexDirection: "column",
-  gap: vars.spacing[4],
+  gap: "6px",
   flex: 1,
   minWidth: 0,
 });
@@ -69,7 +69,7 @@ export const meta = style({
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  gap: vars.spacing[4],
+  gap: vars.spacing[8],
   color: vars.color.text.surface,
   fontSize: "12px",
   lineHeight: "16px",
@@ -115,9 +115,10 @@ globalStyle(`${favoriteButton} svg`, {
   height: "18px",
 });
 
+/** 요약 카드 위에 얹는 실시간 카드 자리. 요약 카드 왼쪽 끝에 맞춘다. */
 export const realtime = style({
-  display: "flex",
-  justifyContent: "center",
+  alignSelf: "flex-start",
+  marginBottom: "10px",
 });
 
 export const actions = style({
@@ -130,14 +131,14 @@ export const actionButton = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "6px",
-  height: "36px",
+  gap: vars.spacing[4],
+  height: "30px",
   padding: `0 ${vars.spacing[12]}`,
   border: `1px solid ${vars.color.border.default}`,
   borderRadius: vars.radius.max,
   backgroundColor: vars.color.bg.default,
   color: vars.color.text.content,
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: vars.typography.fontWeight.SemiBold,
   cursor: "pointer",
   outline: "none",
@@ -165,7 +166,7 @@ export const primaryActionButton = style({
 });
 
 globalStyle(`${actionButton} svg`, {
-  width: "16px",
-  height: "16px",
+  width: "14px",
+  height: "14px",
   flexShrink: 0,
 });
