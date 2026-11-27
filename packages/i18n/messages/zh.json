@@ -406,6 +406,7 @@
   "locker_correction_submit_error_invalid": "请再次确认填写的内容。",
   "locker_correction_close_aria": "关闭举报",
   "locker_detail_navigate": "路线",
+  "locker_pin_card_view_detail": "查看详情",
   "locker_detail_image_list_aria": "储物柜照片列表",
   "locker_detail_image_item_aria": "储物柜照片 {index} / {total}",
   "locker_detail_image_previous": "上一张照片",
