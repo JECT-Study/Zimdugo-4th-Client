@@ -115,6 +115,11 @@ globalStyle(`${favoriteButton} svg`, {
   height: "18px",
 });
 
+export const realtime = style({
+  display: "flex",
+  justifyContent: "center",
+});
+
 export const actions = style({
   display: "grid",
   gridTemplateColumns: "1fr 1fr",

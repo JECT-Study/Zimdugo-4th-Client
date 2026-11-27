@@ -8,7 +8,7 @@ import {
 } from "@repo/ui/assets/icons";
 import { Skeleton } from "@repo/ui/components/feedback/skeleton";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
-import { LockerRealtimeStatusLine } from "#/entities/locker/ui/realtime-availability";
+import { LockerRealtimeStatusCard } from "#/entities/locker/ui/realtime-availability";
 import { SKELETON_SURFACE_STYLE } from "#/shared/ui/skeleton-style";
 import {
   actionButton,
@@ -20,6 +20,7 @@ import {
   meta,
   metaItem,
   primaryActionButton,
+  realtime,
   tail,
   title,
   titleColumn,
@@ -41,7 +42,7 @@ export interface LockerPinCardProps {
  * 데스크톱에서 지도 핀을 눌렀을 때 핀 바로 위에 뜨는 요약 카드.
  *
  * 상세 패널을 열기 전에 지도 위에서 바로 훑어보는 자리다. 이름·거리·운영시간과 실시간
- * 이용 가능 여부를 보여 주고, 길찾기·즐겨찾기는 여기서 바로 한다. 더 보려면 "자세히 보기" 로
+ * 남은 칸을 보여 주고, 길찾기·즐겨찾기는 여기서 바로 한다. 더 보려면 "자세히 보기" 로
  * 지금의 상세 패널을 연다. 주소는 바꾸지 않는다.
  */
 export function LockerPinCard({
@@ -80,15 +81,6 @@ export function LockerPinCard({
         className={card}
         aria-label={isLoading ? undefined : locker.title}
       >
-        {/*
-          실시간 정보가 있다는 사실만 맨 위에 알린다. 크기별 남은 칸 수는 헷갈리지
-          않도록 "자세히 보기" 의 크기 카드 게이지에서만 보여 준다.
-        */}
-        {!isLoading && realtimeAvailability?.isAvailable ? (
-          <LockerRealtimeStatusLine
-            fetchedAt={realtimeAvailability.fetchedAt}
-          />
-        ) : null}
         <div className={header}>
           <div className={titleColumn}>
             {isLoading ? (
@@ -140,6 +132,15 @@ export function LockerPinCard({
             </button>
           ) : null}
         </div>
+
+        {!isLoading && realtimeAvailability?.isAvailable ? (
+          <div className={realtime}>
+            <LockerRealtimeStatusCard
+              availability={realtimeAvailability}
+              variant="inline"
+            />
+          </div>
+        ) : null}
 
         <div className={actions}>
           <button
