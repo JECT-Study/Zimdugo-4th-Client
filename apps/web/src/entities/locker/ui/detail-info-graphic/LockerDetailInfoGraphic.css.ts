@@ -8,34 +8,6 @@ export const root = style({
   padding: `${vars.spacing[4]} 0 ${vars.spacing[16]}`,
 });
 
-export const badgeRow = style({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: vars.spacing[8],
-});
-
-export const badge = style({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: vars.spacing[4],
-  maxWidth: "100%",
-  padding: `${vars.spacing[4]} 10px`,
-  borderRadius: vars.radius.max,
-  backgroundColor: vars.color.bg.surface,
-  color: vars.color.text.content,
-  fontSize: "12px",
-  fontWeight: vars.typography.fontWeight.Medium,
-  lineHeight: "16px",
-  wordBreak: "keep-all",
-  overflowWrap: "anywhere",
-});
-
-globalStyle(`${badge} svg`, {
-  width: "14px",
-  height: "14px",
-  flexShrink: 0,
-});
-
 export const sizeGrid = style({
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",

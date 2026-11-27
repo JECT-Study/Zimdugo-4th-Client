@@ -1,6 +1,5 @@
 import { m } from "@repo/i18n";
 import {
-  IconLockerDetailMapPin24,
   IconNavigationClock24,
   IconSizeL,
   IconSizeM,
@@ -14,8 +13,6 @@ import type {
 import type { LockerRealtimeAvailability } from "#/entities/locker/model/locker-detail";
 import { formatCurrencyAmount } from "#/shared/lib/locker-detail-labels";
 import {
-  badge,
-  badgeRow,
   basis,
   extraLines,
   gauge,
@@ -64,8 +61,8 @@ const availableCountOf = (
 /**
  * 보관함 상세 정보를 그림으로 보여 준다.
  *
- * 문장 세 줄(상세위치·개수·요금)을 위치 뱃지, 크기별 칸 카드(그림·요금·개수),
- * 요금 기준으로 펼친다. 실시간 남은 칸이 있으면 카드마다 남은/전체 게이지를 단다.
+ * 문장 세 줄(상세위치·개수·요금) 중 개수·요금을 크기별 칸 카드(그림·요금·개수)와
+ * 요금 기준으로 펼친다. 상세위치는 보관함 이름이 대개 이미 담고 있어 따로 달지 않는다. 실시간 남은 칸이 있으면 카드마다 남은/전체 게이지를 단다.
  * 읽지 못한 줄은 원문 그대로 아래에 남긴다.
  */
 export function LockerDetailInfoGraphic({
@@ -78,16 +75,6 @@ export function LockerDetailInfoGraphic({
 
   return (
     <section className={root} aria-label={m.locker_detail_info_section()}>
-      {/* 층은 바로 위 주소 행이 이미 보여 준다. 여기선 그 층 안의 자리만 단다. */}
-      {info.location ? (
-        <div className={badgeRow}>
-          <span className={badge}>
-            <IconLockerDetailMapPin24 />
-            {info.location}
-          </span>
-        </div>
-      ) : null}
-
       {info.sizes.length > 0 ? (
         <ul className={sizeGrid}>
           {info.sizes.map((item) => (

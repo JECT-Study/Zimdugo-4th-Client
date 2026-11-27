@@ -257,7 +257,6 @@ describe("LockerDetailScreen 상세 정보 그래픽", () => {
     expect(
       screen.getByRole("region", { name: m.locker_detail_info_section() }),
     ).toBeTruthy();
-    expect(screen.getByText("대합실")).toBeTruthy();
     expect(screen.getByText("36칸")).toBeTruthy();
     expect(screen.queryByText(m.locker_detail_price_section())).toBeNull();
     expect(screen.queryByText(m.locker_detail_size_section())).toBeNull();

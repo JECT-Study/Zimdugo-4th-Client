@@ -30,10 +30,11 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("LockerDetailInfoGraphic", () => {
-  it("크기마다 이름·요금·칸 수를 카드로 그리고 위치와 요금 기준을 단다", () => {
+  it("크기마다 이름·요금·칸 수를 카드로 그리고 요금 기준을 단다", () => {
     render(<LockerDetailInfoGraphic info={INFO} />);
 
-    expect(screen.getByText("표 내는 곳 주변")).toBeTruthy();
+    // 상세위치는 보관함 이름이 대개 담고 있어 그림에 달지 않는다.
+    expect(screen.queryByText("표 내는 곳 주변")).toBeNull();
     expect(screen.getByText("평일 기본 4시간 기준")).toBeTruthy();
     expect(cardOf("소형").getByText("2,200원")).toBeTruthy();
     expect(cardOf("소형").getByText("36칸")).toBeTruthy();
