@@ -325,6 +325,7 @@
   "locker_detail_size_not_provided": "미제공",
   "locker_detail_size_count": "{count}칸",
   "locker_detail_size_available": "{available}/{total}칸 남음",
+  "locker_detail_size_remaining": "{available}칸 남음",
   "locker_detail_size_not_offered": "없음",
   "locker_detail_price_basis": "이용 요금: {basis}",
   "locker_detail_info_section": "보관함 상세 정보",

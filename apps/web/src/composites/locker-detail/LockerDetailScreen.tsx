@@ -950,13 +950,12 @@ function FullDetailContent({
     detailInfoGraphic?.sizes.some((item) => item.price !== undefined) ?? false;
   const hasGraphicCount =
     detailInfoGraphic?.sizes.some((item) => item.count !== undefined) ?? false;
+  /*
+   * 그림은 실시간 정보가 있으면 세 크기의 남은 칸을 빠짐없이 그린다(전체 칸 수를
+   * 몰라도 "N칸 남음"). 그래서 그림이 있으면 실시간 카드를 두지 않아도 된다.
+   */
   const isRealtimeInGraphic =
-    isPanel &&
-    isRealtimeAvailable &&
-    (detailInfoGraphic?.sizes.some(
-      (item) => item.count !== undefined && item.count > 0,
-    ) ??
-      false);
+    isPanel && isRealtimeAvailable && detailInfoGraphic !== null;
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);

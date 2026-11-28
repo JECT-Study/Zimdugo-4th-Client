@@ -325,6 +325,7 @@
   "locker_detail_size_not_provided": "Not provided",
   "locker_detail_size_count": "{count} lockers",
   "locker_detail_size_available": "{available}/{total} left",
+  "locker_detail_size_remaining": "{available} left",
   "locker_detail_size_not_offered": "None",
   "locker_detail_price_basis": "Fee: {basis}",
   "locker_detail_info_section": "Locker details",

@@ -87,7 +87,11 @@ export function LockerDetailInfoGraphic({
    * 줄만 읽었으면 빠진 크기가 실제로 없는지 알 수 없어 비워 둔다.
    */
   const hasCountData = info.sizes.some((item) => item.count !== undefined);
-  const showsGauge = availability !== null && hasCountData;
+  /*
+   * 실시간 정보가 있으면 카드마다 남은 칸을 보여 준다. 데스크톱 패널은 이때 실시간
+   * 카드를 따로 두지 않으므로, 전체 칸 수를 모르는 크기도 남은 칸은 빠짐없이 그린다.
+   */
+  const showsGauge = availability !== null;
 
   return (
     <section className={root} aria-label={m.locker_detail_info_section()}>
@@ -157,8 +161,13 @@ function SizeCardItem({
    * - full: 칸은 있지만 실시간으로 남은 칸이 없다.
    * - available: 칸이 있다(실시간으로 남은 칸이 있거나 실시간 정보가 없다).
    * - unknown: 개수를 모른다(요금만 읽혔다).
+   *
+   * 상세 정보가 없다거나 개수를 몰라도 실시간 정보에 남은 칸이 있으면 실시간을
+   * 믿고 칸이 있는 크기로 본다. 상세 정보는 사람이 적은 글이라 늦을 수 있다.
    */
-  const state: SizeCardState = !item
+  const hasRealtimeRemaining =
+    availableCount !== undefined && availableCount > 0;
+  const detailState: SizeCardState = !item
     ? isKnownAbsent
       ? "absent"
       : "unknown"
@@ -169,6 +178,11 @@ function SizeCardItem({
         : availableCount === 0
           ? "full"
           : "available";
+  const state: SizeCardState =
+    hasRealtimeRemaining &&
+    (detailState === "absent" || detailState === "unknown")
+      ? "available"
+      : detailState;
   const iconState =
     state === "absent" ? "disabled" : state === "full" ? "default" : "selected";
   const hasGaugeFill =
@@ -177,17 +191,15 @@ function SizeCardItem({
     total !== undefined &&
     total > 0;
   const ratio = hasGaugeFill ? Math.min(1, availableCount / total) : 0;
-  const countText =
-    state === "absent"
-      ? m.locker_detail_size_not_offered()
-      : total === undefined
-        ? ""
-        : hasGaugeFill
-          ? m.locker_detail_size_available({
-              available: availableCount,
-              total,
-            })
-          : m.locker_detail_size_count({ count: total });
+  const countText = hasGaugeFill
+    ? m.locker_detail_size_available({ available: availableCount, total })
+    : hasRealtimeRemaining
+      ? m.locker_detail_size_remaining({ available: availableCount })
+      : state === "absent"
+        ? m.locker_detail_size_not_offered()
+        : total !== undefined && total > 0
+          ? m.locker_detail_size_count({ count: total })
+          : "";
 
   return (
     <li className={sizeCard} data-state={state}>
@@ -199,7 +211,11 @@ function SizeCardItem({
         {item?.price !== undefined ? formatCurrencyAmount(item.price) : ""}
       </span>
       {showsGauge ? (
-        <span className={gaugeTrack} aria-hidden="true">
+        <span
+          className={gaugeTrack}
+          data-filled={hasGaugeFill ? "true" : "false"}
+          aria-hidden="true"
+        >
           {hasGaugeFill ? (
             <span
               className={gaugeFill}

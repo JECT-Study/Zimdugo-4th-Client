@@ -85,8 +85,9 @@ export const gaugeTrack = style({
   margin: `${vars.spacing[4]} 0 2px`,
   height: "6px",
   selectors: {
-    // 없는 크기는 자리만 남긴다. 빈 막대는 "남은 칸 0" 으로 읽힌다.
-    "[data-state='absent'] > &": {
+    // 채울 수 없는 막대(없는 크기, 전체 칸 수를 모르는 크기)는 자리만 남긴다. 빈
+    // 막대는 "남은 칸 0" 으로 읽힌다.
+    "&[data-filled='false']": {
       visibility: "hidden",
     },
   },

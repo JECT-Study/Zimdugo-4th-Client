@@ -304,4 +304,35 @@ describe("LockerDetailScreen 상세 정보 그래픽", () => {
     expect(screen.getByText(m.locker_detail_size_section())).toBeTruthy();
     expect(screen.queryByText(m.locker_detail_price_section())).toBeNull();
   });
+
+  it("데스크톱 패널은 그림이 있으면 실시간 카드 대신 그림에 크기마다 남은 칸을 모두 보여 준다", () => {
+    const locker = {
+      ...LOCKER_DETAIL,
+      // 개수 줄에는 소형만 있고 요금 줄에 중형이 있다. 중형의 전체 칸 수는 모른다.
+      detailHelpText:
+        "- 보관함 개수: 소형 36개\n- 이용요금: 소형 2,000원 / 중형 3,000원",
+      realtimeAvailability: {
+        isAvailable: true,
+        smallAvailableCount: 12,
+        mediumAvailableCount: 2,
+        largeAvailableCount: 0,
+        fetchedAt: "2026-11-28T10:00:00",
+      },
+    };
+    const { rerender } = render(
+      <LockerDetailScreen locker={locker} variant="panel" />,
+    );
+
+    expect(
+      screen.queryByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeNull();
+    expect(screen.getByText("12/36칸 남음")).toBeTruthy();
+    expect(screen.getByText("2칸 남음")).toBeTruthy();
+
+    // 모바일 시트는 실시간 카드를 그대로 둔다.
+    rerender(<LockerDetailScreen locker={locker} />);
+    expect(
+      screen.getByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeTruthy();
+  });
 });

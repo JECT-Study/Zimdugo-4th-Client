@@ -325,6 +325,7 @@
   "locker_detail_size_not_provided": "未提供",
   "locker_detail_size_count": "{count}個",
   "locker_detail_size_available": "剩餘{available}/{total}個",
+  "locker_detail_size_remaining": "剩餘{available}個",
   "locker_detail_size_not_offered": "無",
   "locker_detail_price_basis": "使用費用：{basis}",
   "locker_detail_info_section": "寄存櫃詳情",

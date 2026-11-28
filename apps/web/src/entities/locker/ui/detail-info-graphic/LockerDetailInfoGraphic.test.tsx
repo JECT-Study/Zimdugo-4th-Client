@@ -182,4 +182,31 @@ describe("LockerDetailInfoGraphic", () => {
     );
     expect(levels).toEqual(["ample", "low", "critical"]);
   });
+
+  it("전체 칸 수를 모르거나 없다고 적힌 크기도 실시간으로 남은 칸이 있으면 남은 칸을 보여 준다", () => {
+    render(
+      <LockerDetailInfoGraphic
+        info={{
+          ...INFO,
+          sizes: [
+            { size: "SMALL", count: 36, price: 2200 },
+            { size: "MEDIUM", price: 3300 },
+          ],
+        }}
+        realtimeAvailability={{
+          isAvailable: true,
+          smallAvailableCount: 12,
+          mediumAvailableCount: 2,
+          largeAvailableCount: 3,
+          fetchedAt: "2026-11-28T10:00:00",
+        }}
+      />,
+    );
+
+    expect(cardOf("소형").getByText("12/36칸 남음")).toBeTruthy();
+    // 개수 줄에 없어 전체를 모르는 중형, 개수 줄에 없어 없다고 볼 대형 모두 실시간을 따른다.
+    expect(cardOf("중형").getByText("2칸 남음")).toBeTruthy();
+    expect(cardOf("대형").getByText("3칸 남음")).toBeTruthy();
+    expect(screen.queryByText("없음")).toBeNull();
+  });
 });
