@@ -28,6 +28,8 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   SHEET_SETTLE_SPRING: {},
 }));
 
+import { LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX } from "#/entities/locker/ui/realtime-availability";
+import { CONTENT_STACK_GAP_PX } from "./LockerDetailBottomSheet.css.ts";
 import { LockerDetailScreen } from "./LockerDetailScreen";
 
 let queryClient = new QueryClient();
@@ -230,7 +232,23 @@ describe("LockerDetailScreen 데스크톱 패널", () => {
     );
   });
 
-  it("즐겨찾기를 쓸 수 없으면 별 버튼을 두지 않는다", () => {
+  it("로그인 전에도 즐겨찾기 처리가 있으면 별 버튼을 둔다", () => {
+    const onFavoriteChange = vi.fn();
+    render(
+      <LockerDetailScreen
+        locker={{ ...LOCKER_DETAIL, isFavorite: false }}
+        variant="panel"
+        onFavoriteChange={onFavoriteChange}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: m.search_favorite_add() }),
+    );
+    expect(onFavoriteChange).toHaveBeenCalled();
+  });
+
+  it("즐겨찾기 처리가 없으면 별 버튼을 두지 않는다", () => {
     render(<LockerDetailScreen locker={LOCKER_DETAIL} variant="panel" />);
 
     expect(
@@ -334,5 +352,38 @@ describe("LockerDetailScreen 상세 정보 그래픽", () => {
     expect(
       screen.getByRole("region", { name: "실시간 이용 가능" }),
     ).toBeTruthy();
+  });
+
+  it("데스크톱 패널은 실시간 카드를 뺀 자리의 높이를 콘텐츠 높이에 보태지 않는다", () => {
+    const locker = {
+      ...LOCKER_DETAIL,
+      detailHelpText: "- 보관함 개수: 소형 36개 / 중형 8개",
+      realtimeAvailability: {
+        isAvailable: true,
+        smallAvailableCount: 12,
+        mediumAvailableCount: 2,
+        largeAvailableCount: 0,
+        fetchedAt: "2026-11-28T10:00:00",
+      },
+    };
+    const heightOf = (variant: "sheet" | "panel") => {
+      const onMetricsChange = vi.fn();
+      const { unmount } = render(
+        <LockerDetailScreen
+          locker={locker}
+          variant={variant}
+          isRealtimeCardVisible={false}
+          onMetricsChange={onMetricsChange}
+        />,
+      );
+      const height = onMetricsChange.mock.lastCall?.[0].contentHeightPx;
+      unmount();
+      return height as number;
+    };
+
+    // 시트는 카드를 잠깐 밖으로 옮긴 것이라 카드 높이와 간격을 보탠다.
+    expect(heightOf("sheet") - heightOf("panel")).toBe(
+      LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX,
+    );
   });
 });

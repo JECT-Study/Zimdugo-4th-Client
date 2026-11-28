@@ -209,4 +209,30 @@ describe("LockerDetailInfoGraphic", () => {
     expect(cardOf("대형").getByText("3칸 남음")).toBeTruthy();
     expect(screen.queryByText("없음")).toBeNull();
   });
+
+  it("전체 칸 수를 모르는 크기가 실시간으로 0칸이면 비우지 않고 0칸 남음으로 마감을 알린다", () => {
+    render(
+      <LockerDetailInfoGraphic
+        info={{
+          ...INFO,
+          sizes: [
+            { size: "SMALL", count: 36, price: 2200 },
+            { size: "MEDIUM", price: 3300 },
+          ],
+        }}
+        realtimeAvailability={{
+          isAvailable: true,
+          smallAvailableCount: 12,
+          mediumAvailableCount: 0,
+          largeAvailableCount: 0,
+          fetchedAt: "2026-11-28T10:00:00",
+        }}
+      />,
+    );
+
+    expect(cardOf("중형").getByText("0칸 남음")).toBeTruthy();
+    expect(screen.getByText("중형").closest("li")?.dataset.state).toBe("full");
+    // 없다고 볼 수 있는 대형은 그대로 없음이다.
+    expect(cardOf("대형").getByText("없음")).toBeTruthy();
+  });
 });

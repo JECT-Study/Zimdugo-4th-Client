@@ -178,11 +178,17 @@ function SizeCardItem({
         : availableCount === 0
           ? "full"
           : "available";
+  /*
+   * 개수를 모르는 크기도 실시간 정보가 0칸이라고 하면 마감으로 본다. 비워 두면 마감과
+   * 실시간 정보 없음을 가를 수 없다.
+   */
   const state: SizeCardState =
     hasRealtimeRemaining &&
     (detailState === "absent" || detailState === "unknown")
       ? "available"
-      : detailState;
+      : detailState === "unknown" && availableCount === 0
+        ? "full"
+        : detailState;
   const iconState =
     state === "absent" ? "disabled" : state === "full" ? "default" : "selected";
   const hasGaugeFill =
@@ -193,7 +199,7 @@ function SizeCardItem({
   const ratio = hasGaugeFill ? Math.min(1, availableCount / total) : 0;
   const countText = hasGaugeFill
     ? m.locker_detail_size_available({ available: availableCount, total })
-    : hasRealtimeRemaining
+    : availableCount !== undefined && state !== "absent"
       ? m.locker_detail_size_remaining({ available: availableCount })
       : state === "absent"
         ? m.locker_detail_size_not_offered()

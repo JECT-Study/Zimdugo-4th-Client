@@ -274,7 +274,10 @@ export function LockerDetailScreen({
      * 카드가 드나들면 contentStack 높이가 바뀌어 ResizeObserver 가 다시 부르고,
      * 그때 DOM 을 직접 확인하므로 보정값이 측정 시점과 어긋나지 않는다.
      */
+    // 데스크톱 패널은 실시간 카드를 시트 밖으로 잠깐 옮기는 일이 없다. 카드가 없으면
+    // 그림이 대신 맡아 아예 빠진 것이라 높이를 보태지 않는다.
     const missingRealtimeCardHeight =
+      variant === "sheet" &&
       isRealtimeAvailable &&
       element.querySelector(REALTIME_CARD_MEASURE_SELECTOR) === null
         ? LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX
@@ -300,10 +303,15 @@ export function LockerDetailScreen({
       ),
       actionFooterHeightPx: footerHeight,
     });
-  }, [isRealtimeAvailable]);
+  }, [isRealtimeAvailable, variant]);
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
+  /*
+   * 데스크톱 패널은 로그인 전에도 ☆ 를 둔다. 누르면 즐겨찾기 처리가 로그인 창을 띄운다.
+   * 모바일 시트는 더보기 메뉴에서 지금처럼 로그인했을 때만 둔다.
+   */
   const canFavorite =
-    isFavoriteActionVisible && typeof onFavoriteChange === "function";
+    typeof onFavoriteChange === "function" &&
+    (isFavoriteActionVisible || variant === "panel");
   // 이펙트 의존성으로 쓰려면 객체가 아니라 값으로 꺼내 두어야 한다. 세션 객체는
   // 매 렌더 새로 만들어져 통째로 의존하면 이펙트가 매번 다시 돈다.
   const clearTimerFailure = timerSession.clearFailure;
