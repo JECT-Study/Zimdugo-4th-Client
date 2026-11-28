@@ -28,6 +28,8 @@ vi.mock("#/shared/ui/DraggableBottomSheet", () => ({
   SHEET_SETTLE_SPRING: {},
 }));
 
+import { LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX } from "#/entities/locker/ui/realtime-availability";
+import { CONTENT_STACK_GAP_PX } from "./LockerDetailBottomSheet.css.ts";
 import { LockerDetailScreen } from "./LockerDetailScreen";
 
 let queryClient = new QueryClient();
@@ -230,7 +232,23 @@ describe("LockerDetailScreen 데스크톱 패널", () => {
     );
   });
 
-  it("즐겨찾기를 쓸 수 없으면 별 버튼을 두지 않는다", () => {
+  it("로그인 전에도 즐겨찾기 처리가 있으면 별 버튼을 둔다", () => {
+    const onFavoriteChange = vi.fn();
+    render(
+      <LockerDetailScreen
+        locker={{ ...LOCKER_DETAIL, isFavorite: false }}
+        variant="panel"
+        onFavoriteChange={onFavoriteChange}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: m.search_favorite_add() }),
+    );
+    expect(onFavoriteChange).toHaveBeenCalled();
+  });
+
+  it("즐겨찾기 처리가 없으면 별 버튼을 두지 않는다", () => {
     render(<LockerDetailScreen locker={LOCKER_DETAIL} variant="panel" />);
 
     expect(
@@ -239,5 +257,133 @@ describe("LockerDetailScreen 데스크톱 패널", () => {
     expect(
       screen.getByRole("button", { name: m.search_close_aria() }),
     ).toBeTruthy();
+  });
+});
+
+describe("LockerDetailScreen 상세 정보 그래픽", () => {
+  it("상세 정보에서 크기별 개수·요금을 읽으면 가격·사이즈·상세 정보 행 대신 그림으로 보여 준다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{
+          ...LOCKER_DETAIL,
+          detailHelpText:
+            "- 상세위치: 대합실\n- 보관함 개수: 중형 9개 / 소형 36개\n- 이용요금: 중형 3,000원 / 소형 2,000원 (4시간 당)",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("region", { name: m.locker_detail_info_section() }),
+    ).toBeTruthy();
+    expect(screen.getByText("36칸")).toBeTruthy();
+    expect(screen.queryByText(m.locker_detail_price_section())).toBeNull();
+    expect(screen.queryByText(m.locker_detail_size_section())).toBeNull();
+  });
+
+  it("상세 정보를 읽지 못하면 지금처럼 문장 행을 그대로 둔다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{ ...LOCKER_DETAIL, detailHelpText: "개찰구를 지나 왼쪽" }}
+      />,
+    );
+
+    expect(screen.getByText(m.locker_detail_price_section())).toBeTruthy();
+    expect(screen.getByText("개찰구를 지나 왼쪽")).toBeTruthy();
+  });
+
+  it("요금을 하나도 읽지 못하면 그림과 함께 가격 행을 남긴다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{
+          ...LOCKER_DETAIL,
+          priceLabel: "2,000원 ~ 4,000원",
+          detailHelpText: "- 보관함 개수: 소형 36개 / 중형 8개",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("36칸")).toBeTruthy();
+    expect(screen.getByText(m.locker_detail_price_section())).toBeTruthy();
+    expect(screen.getByText("2,000원 ~ 4,000원")).toBeTruthy();
+    expect(screen.queryByText(m.locker_detail_size_section())).toBeNull();
+  });
+
+  it("개수를 하나도 읽지 못하면 그림과 함께 사이즈 행을 남긴다", () => {
+    render(
+      <LockerDetailScreen
+        locker={{
+          ...LOCKER_DETAIL,
+          detailHelpText: "- 이용요금: 소형 2,000원 / 중형 3,000원",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("2,000원")).toBeTruthy();
+    expect(screen.getByText(m.locker_detail_size_section())).toBeTruthy();
+    expect(screen.queryByText(m.locker_detail_price_section())).toBeNull();
+  });
+
+  it("데스크톱 패널은 그림이 있으면 실시간 카드 대신 그림에 크기마다 남은 칸을 모두 보여 준다", () => {
+    const locker = {
+      ...LOCKER_DETAIL,
+      // 개수 줄에는 소형만 있고 요금 줄에 중형이 있다. 중형의 전체 칸 수는 모른다.
+      detailHelpText:
+        "- 보관함 개수: 소형 36개\n- 이용요금: 소형 2,000원 / 중형 3,000원",
+      realtimeAvailability: {
+        isAvailable: true,
+        smallAvailableCount: 12,
+        mediumAvailableCount: 2,
+        largeAvailableCount: 0,
+        fetchedAt: "2026-11-28T10:00:00",
+      },
+    };
+    const { rerender } = render(
+      <LockerDetailScreen locker={locker} variant="panel" />,
+    );
+
+    expect(
+      screen.queryByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeNull();
+    expect(screen.getByText("12/36칸 남음")).toBeTruthy();
+    expect(screen.getByText("2칸 남음")).toBeTruthy();
+
+    // 모바일 시트는 실시간 카드를 그대로 둔다.
+    rerender(<LockerDetailScreen locker={locker} />);
+    expect(
+      screen.getByRole("region", { name: "실시간 이용 가능" }),
+    ).toBeTruthy();
+  });
+
+  it("데스크톱 패널은 실시간 카드를 뺀 자리의 높이를 콘텐츠 높이에 보태지 않는다", () => {
+    const locker = {
+      ...LOCKER_DETAIL,
+      detailHelpText: "- 보관함 개수: 소형 36개 / 중형 8개",
+      realtimeAvailability: {
+        isAvailable: true,
+        smallAvailableCount: 12,
+        mediumAvailableCount: 2,
+        largeAvailableCount: 0,
+        fetchedAt: "2026-11-28T10:00:00",
+      },
+    };
+    const heightOf = (variant: "sheet" | "panel") => {
+      const onMetricsChange = vi.fn();
+      const { unmount } = render(
+        <LockerDetailScreen
+          locker={locker}
+          variant={variant}
+          isRealtimeCardVisible={false}
+          onMetricsChange={onMetricsChange}
+        />,
+      );
+      const height = onMetricsChange.mock.lastCall?.[0].contentHeightPx;
+      unmount();
+      return height as number;
+    };
+
+    // 시트는 카드를 잠깐 밖으로 옮긴 것이라 카드 높이와 간격을 보탠다.
+    expect(heightOf("sheet") - heightOf("panel")).toBe(
+      LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX,
+    );
   });
 });

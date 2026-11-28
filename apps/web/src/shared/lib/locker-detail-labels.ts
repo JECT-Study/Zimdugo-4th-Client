@@ -11,7 +11,7 @@ const NUMBER_LOCALE_BY_TAG: Record<AppLocale, string> = {
   "zh-TW": "zh-TW",
 };
 
-const formatCurrencyAmount = (amount: number): string => {
+export const formatCurrencyAmount = (amount: number): string => {
   const appLocale = normalizeLocale(languageTag()) ?? "ko";
   const locale = NUMBER_LOCALE_BY_TAG[appLocale];
   const formatted = amount.toLocaleString(locale);

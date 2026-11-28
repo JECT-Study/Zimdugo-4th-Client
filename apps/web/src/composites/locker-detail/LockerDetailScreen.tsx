@@ -27,11 +27,14 @@ import {
   type RefObject,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
+import { parseLockerDetailInfo } from "#/entities/locker/lib/parse-locker-detail-info";
 import type { LockerDetailItem } from "#/entities/locker/model/locker-detail";
 import { LockerDetailImageStrip } from "#/entities/locker/ui/detail-images";
+import { LockerDetailInfoGraphic } from "#/entities/locker/ui/detail-info-graphic";
 import {
   LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX,
   LockerRealtimeStatusCard,
@@ -271,7 +274,10 @@ export function LockerDetailScreen({
      * 카드가 드나들면 contentStack 높이가 바뀌어 ResizeObserver 가 다시 부르고,
      * 그때 DOM 을 직접 확인하므로 보정값이 측정 시점과 어긋나지 않는다.
      */
+    // 데스크톱 패널은 실시간 카드를 시트 밖으로 잠깐 옮기는 일이 없다. 카드가 없으면
+    // 그림이 대신 맡아 아예 빠진 것이라 높이를 보태지 않는다.
     const missingRealtimeCardHeight =
+      variant === "sheet" &&
       isRealtimeAvailable &&
       element.querySelector(REALTIME_CARD_MEASURE_SELECTOR) === null
         ? LOCKER_REALTIME_STATUS_CARD_HEIGHT_PX + CONTENT_STACK_GAP_PX
@@ -297,10 +303,15 @@ export function LockerDetailScreen({
       ),
       actionFooterHeightPx: footerHeight,
     });
-  }, [isRealtimeAvailable]);
+  }, [isRealtimeAvailable, variant]);
   const detailHelpText = locker.detailHelpText ?? m.locker_detail_detail_help();
+  /*
+   * 데스크톱 패널은 로그인 전에도 ☆ 를 둔다. 누르면 즐겨찾기 처리가 로그인 창을 띄운다.
+   * 모바일 시트는 더보기 메뉴에서 지금처럼 로그인했을 때만 둔다.
+   */
   const canFavorite =
-    isFavoriteActionVisible && typeof onFavoriteChange === "function";
+    typeof onFavoriteChange === "function" &&
+    (isFavoriteActionVisible || variant === "panel");
   // 이펙트 의존성으로 쓰려면 객체가 아니라 값으로 꺼내 두어야 한다. 세션 객체는
   // 매 렌더 새로 만들어져 통째로 의존하면 이펙트가 매번 다시 돈다.
   const clearTimerFailure = timerSession.clearFailure;
@@ -934,11 +945,28 @@ function FullDetailContent({
   isReportOpen: boolean;
 }) {
   const isPanel = variant === "panel";
+  const realtimeAvailability = locker.realtimeAvailability;
+  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
+  const detailInfo = useMemo(
+    () => parseLockerDetailInfo(locker.detailHelpText),
+    [locker.detailHelpText],
+  );
+  /** 크기 정보까지 읽혀야 그림으로 그린다. 위치만 읽혔으면 문장이 더 낫다. */
+  const detailInfoGraphic =
+    detailInfo && detailInfo.sizes.length > 0 ? detailInfo : null;
+  const hasGraphicPrice =
+    detailInfoGraphic?.sizes.some((item) => item.price !== undefined) ?? false;
+  const hasGraphicCount =
+    detailInfoGraphic?.sizes.some((item) => item.count !== undefined) ?? false;
+  /*
+   * 그림은 실시간 정보가 있으면 세 크기의 남은 칸을 빠짐없이 그린다(전체 칸 수를
+   * 몰라도 "N칸 남음"). 그래서 그림이 있으면 실시간 카드를 두지 않아도 된다.
+   */
+  const isRealtimeInGraphic =
+    isPanel && isRealtimeAvailable && detailInfoGraphic !== null;
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRootRef = useRef<HTMLDivElement | null>(null);
-  const realtimeAvailability = locker.realtimeAvailability;
-  const isRealtimeAvailable = realtimeAvailability?.isAvailable === true;
 
   const handleOpenImagePreview = (
     index: number,
@@ -1004,7 +1032,13 @@ function FullDetailContent({
             />
           ) : null}
           {/* data 속성은 높이 보정이 REALTIME_CARD_MEASURE_SELECTOR 로 찾는 표식이다. */}
-          {isRealtimeAvailable && isRealtimeCardVisible ? (
+          {/*
+            데스크톱 패널에서 그림이 크기별 남은 칸 게이지를 그리면 실시간 카드는 두지
+            않는다. 같은 숫자를 두 번 보여 주게 된다.
+          */}
+          {isRealtimeAvailable &&
+          isRealtimeCardVisible &&
+          !isRealtimeInGraphic ? (
             <div data-realtime-status-card="">
               <LockerRealtimeStatusCard
                 availability={realtimeAvailability}
@@ -1030,25 +1064,42 @@ function FullDetailContent({
                 </button>
               }
             />
-            <DetailInfoRow
-              icon={<IconLockerDetailWallet24 />}
-              title={m.locker_detail_price_section()}
-              description={locker.priceLabel ?? formatLockerPriceLabel()}
-              iconTone="neutral"
-            />
-            <DetailInfoRow
-              icon={<IconLockerDetailCapacity24 />}
-              title={m.locker_detail_size_section()}
-              description={formatLockerSizeLabel(locker.sizeLabel)}
-              iconTone="neutral"
-            />
-            <DetailInfoRow
-              icon={<IconCaution24 />}
-              title={m.locker_detail_info_section()}
-              description={detailHelpText}
-              iconTone="neutral"
-              descriptionClassName={detailDescriptionMultiline}
-            />
+            {/*
+              상세 정보에서 크기별 개수·요금을 읽어 냈으면 그 부분을 그림으로 그린다.
+              그림이 담지 못한 정보는 기존 행으로 남긴다. 요금을 하나도 못 읽었으면
+              가격 행을(최소·최대 요금은 따로 온다), 개수를 하나도 못 읽었으면 사이즈
+              행을 둔다. 요금 줄에만 기댄 크기 목록은 실제 크기 전부가 아닐 수 있다.
+            */}
+            {!detailInfoGraphic || !hasGraphicPrice ? (
+              <DetailInfoRow
+                icon={<IconLockerDetailWallet24 />}
+                title={m.locker_detail_price_section()}
+                description={locker.priceLabel ?? formatLockerPriceLabel()}
+                iconTone="neutral"
+              />
+            ) : null}
+            {!detailInfoGraphic || !hasGraphicCount ? (
+              <DetailInfoRow
+                icon={<IconLockerDetailCapacity24 />}
+                title={m.locker_detail_size_section()}
+                description={formatLockerSizeLabel(locker.sizeLabel)}
+                iconTone="neutral"
+              />
+            ) : null}
+            {detailInfoGraphic ? (
+              <LockerDetailInfoGraphic
+                info={detailInfoGraphic}
+                realtimeAvailability={locker.realtimeAvailability}
+              />
+            ) : (
+              <DetailInfoRow
+                icon={<IconCaution24 />}
+                title={m.locker_detail_info_section()}
+                description={detailHelpText}
+                iconTone="neutral"
+                descriptionClassName={detailDescriptionMultiline}
+              />
+            )}
           </div>
           <LockerDetailImageStrip
             images={images}

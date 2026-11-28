@@ -499,6 +499,25 @@ export function IconShare16({ className }: { className?: string }) {
   );
 }
 
+/** 안내(i). 보충 설명 앞에 붙인다. 선은 글자색을 따른다. */
+export function IconInfo16({ className }: { className?: string }) {
+  return (
+    <svg
+      className={[iconSvgFixed, className].filter(Boolean).join(" ")}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      width={16}
+      height={16}
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="6.4" {...outlineIcon16Props} />
+      <path d="M8 7.2v3.6" {...outlineIcon16Props} />
+      <circle cx="8" cy="5.1" r="0.8" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function IconFlag16({ className }: { className?: string }) {
   return (
     <svg
