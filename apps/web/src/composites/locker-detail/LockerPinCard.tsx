@@ -15,12 +15,15 @@ import {
   actions,
   anchor,
   card,
+  errorRow,
+  errorText,
   favoriteButton,
   header,
   meta,
   metaItem,
   primaryActionButton,
   realtime,
+  retryButton,
   tail,
   title,
   titleColumn,
@@ -30,6 +33,9 @@ export interface LockerPinCardProps {
   locker: LockerDetailItem;
   /** 상세를 아직 받는 중이면 이름 자리 등을 자리표시로 둔다. */
   isLoading?: boolean;
+  /** 상세를 받지 못했으면 자리표시 대신 오류와 다시 시도를 보여 준다. */
+  isError?: boolean;
+  onRetry?: () => void;
   /** 고른 핀이 겹친 핀을 피해 옮겨진 거리. 카드도 같은 만큼 옮겨 핀 위에 둔다. */
   offset?: { offsetX: number; offsetY: number } | null;
   canFavorite?: boolean;
@@ -48,6 +54,8 @@ export interface LockerPinCardProps {
 export function LockerPinCard({
   locker,
   isLoading = false,
+  isError = false,
+  onRetry,
   offset,
   canFavorite = false,
   onFavoriteChange,
@@ -95,7 +103,14 @@ export function LockerPinCard({
       >
         <div className={header}>
           <div className={titleColumn}>
-            {isLoading ? (
+            {isError ? (
+              <div className={errorRow} role="alert">
+                <span className={errorText}>{m.locker_pin_card_error()}</span>
+                <button type="button" className={retryButton} onClick={onRetry}>
+                  {m.locker_pin_card_retry()}
+                </button>
+              </div>
+            ) : isLoading ? (
               <>
                 <Skeleton
                   width="80%"
@@ -128,7 +143,7 @@ export function LockerPinCard({
               </>
             )}
           </div>
-          {canFavorite && !isLoading ? (
+          {canFavorite && !isLoading && !isError ? (
             <button
               type="button"
               className={favoriteButton}
@@ -150,7 +165,9 @@ export function LockerPinCard({
             type="button"
             className={actionButton}
             onClick={handleNavigatePress}
-            disabled={isLoading}
+            // 상세가 없으면 길찾기에 쓸 이름·주소가 없다. 자세히 보기는 상세 패널이
+            // 자기 오류·다시 시도를 갖고 있어 그대로 연다.
+            disabled={isLoading || isError}
           >
             <IconDirections16 />
             {m.locker_detail_navigate()}

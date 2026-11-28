@@ -407,6 +407,8 @@
   "locker_correction_close_aria": "Close report",
   "locker_detail_navigate": "Directions",
   "locker_pin_card_view_detail": "View details",
+  "locker_pin_card_error": "Couldn't load details",
+  "locker_pin_card_retry": "Try again",
   "locker_detail_image_list_aria": "Locker photo list",
   "locker_detail_image_item_aria": "Locker photo {index} of {total}",
   "locker_detail_image_previous": "Previous photo",

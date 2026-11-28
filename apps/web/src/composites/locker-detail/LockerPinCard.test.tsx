@@ -98,4 +98,32 @@ describe("LockerPinCard", () => {
 
     expect(screen.getByText("12")).toBeTruthy();
   });
+
+  it("상세를 받지 못했으면 오류와 다시 시도를 보여 주고 길찾기만 막는다", () => {
+    const onRetry = vi.fn();
+    const onOpenDetail = vi.fn();
+    render(
+      <LockerPinCard
+        locker={LOCKER}
+        isError
+        canFavorite
+        onRetry={onRetry}
+        onOpenDetail={onOpenDetail}
+      />,
+    );
+
+    expect(screen.getByRole("alert").textContent).toContain(
+      "정보를 불러오지 못했어요",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+
+    expect(
+      (screen.getByRole("button", { name: "길찾기" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(screen.queryByRole("button", { name: "즐겨찾기 추가" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "자세히 보기" }));
+    expect(onOpenDetail).toHaveBeenCalledTimes(1);
+  });
 });

@@ -407,6 +407,8 @@
   "locker_correction_close_aria": "關閉檢舉",
   "locker_detail_navigate": "路線",
   "locker_pin_card_view_detail": "查看詳情",
+  "locker_pin_card_error": "無法載入資訊",
+  "locker_pin_card_retry": "重試",
   "locker_detail_image_list_aria": "置物櫃照片列表",
   "locker_detail_image_item_aria": "置物櫃照片 {index} / {total}",
   "locker_detail_image_previous": "上一張照片",

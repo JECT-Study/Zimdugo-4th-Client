@@ -467,6 +467,57 @@ test.describe("데스크톱 레이아웃 플래그", () => {
       await expect(page).toHaveURL(/\/lockers\/500/);
     });
 
+    test("상세를 받지 못하면 카드가 자리표시에 머물지 않고 오류와 다시 시도를 보여 준다", async ({
+      page,
+    }) => {
+      // 상세 요청만 실패시킨다. 나중에 건 경로가 먼저 응답한다.
+      let failDetail = true;
+      await page.route(`**/api/v1/lockers/${LOCKER_ID}?**`, async (route) => {
+        if (!failDetail) return route.fallback();
+        await route.fulfill({ status: 500, body: "{}" });
+      });
+      await page.goto("/?desktop=1");
+      await waitForMapReady(page);
+      await pressFirstMarker(page);
+
+      const card = lockerPinCard(page);
+      await expect(card.getByText("정보를 불러오지 못했어요")).toBeVisible();
+      await expect(card.getByRole("button", { name: "길찾기" })).toBeDisabled();
+      await expect(
+        card.getByRole("button", { name: "자세히 보기" }),
+      ).toBeEnabled();
+
+      failDetail = false;
+      await card.getByRole("button", { name: "다시 시도" }).click();
+      await expect(
+        card.getByRole("heading", { name: "강남역 4번 출구 물품보관함" }),
+      ).toBeVisible();
+    });
+
+    test("카드에서 연 길찾기 창은 뒤로가기로 닫히고 앞으로가기로 다시 열린다", async ({
+      page,
+    }) => {
+      await page.goto("/?desktop=1");
+      await waitForMapReady(page);
+      await pressFirstMarker(page);
+      const card = lockerPinCard(page);
+      await expect(
+        card.getByRole("heading", { name: "강남역 4번 출구 물품보관함" }),
+      ).toBeVisible();
+
+      await card.getByRole("button", { name: "길찾기" }).click();
+      const popup = page.getByRole("dialog", { name: "길찾기 플랫폼 선택" });
+      await expect(popup).toBeVisible();
+
+      await page.goBack();
+      await expect(popup).toHaveCount(0);
+
+      await page.goForward();
+      await expect(popup).toBeVisible();
+      // 카드는 주소를 바꾸지 않는다. 앞으로가기로도 상세 화면이 되지 않는다.
+      await expect(page).not.toHaveURL(/\/lockers\//);
+    });
+
     test("플래그가 꺼져 있으면 핀을 누를 때 카드 없이 상세를 연다", async ({
       page,
     }) => {

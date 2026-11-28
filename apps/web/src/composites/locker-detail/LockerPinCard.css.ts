@@ -143,7 +143,11 @@ export const actionButton = style({
   cursor: "pointer",
   outline: "none",
   selectors: {
-    "&:hover": {
+    "&:disabled": {
+      color: vars.color.text.disable,
+      cursor: "not-allowed",
+    },
+    "&:hover:not(:disabled)": {
       backgroundColor: vars.color.bg.surface,
     },
     "&:focus-visible": {
@@ -169,4 +173,39 @@ globalStyle(`${actionButton} svg`, {
   width: "14px",
   height: "14px",
   flexShrink: 0,
+});
+
+/** 상세를 받지 못했을 때 이름 자리에 두는 줄. */
+export const errorRow = style({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: vars.spacing[8],
+});
+
+export const errorText = style({
+  color: vars.color.text.content,
+  fontSize: "13px",
+  lineHeight: "18px",
+});
+
+export const retryButton = style({
+  flexShrink: 0,
+  padding: `${vars.spacing[4]} 10px`,
+  border: `1px solid ${vars.color.border.default}`,
+  borderRadius: vars.radius.max,
+  backgroundColor: vars.color.bg.default,
+  color: vars.color.text.content,
+  fontSize: "12px",
+  fontWeight: vars.typography.fontWeight.SemiBold,
+  cursor: "pointer",
+  outline: "none",
+  selectors: {
+    "&:hover": {
+      backgroundColor: vars.color.bg.surface,
+    },
+    "&:focus-visible": {
+      boxShadow: `0 0 0 2px ${vars.color.focus}`,
+    },
+  },
 });

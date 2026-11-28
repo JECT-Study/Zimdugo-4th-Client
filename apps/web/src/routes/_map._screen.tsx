@@ -662,6 +662,9 @@ export function IndexPage() {
    */
   const [navigationPopupLocker, setNavigationPopupLocker] =
     useState<LockerDetailItem | null>(null);
+  /** 기록 칸이 바뀐 순간 이펙트가 읽는 최신 값. */
+  const navigationPopupLockerRef = useRef<LockerDetailItem | null>(null);
+  navigationPopupLockerRef.current = navigationPopupLocker;
 
   // 위치 및 방향 트래킹 — 위치 관련 훅과 콜백은 side effect보다 먼저 선언한다.
   const [isCameraCentered, setIsCameraCentered] = useState(false);
@@ -2466,6 +2469,9 @@ export function IndexPage() {
         }
 
         suppressNextMapPressForMarkerInteraction();
+        // 기존 핀 선택처럼 내 위치 따라가기를 끈다. 켜 두면 다음 위치 갱신에 지도가
+        // 내 위치로 돌아가 방금 띄운 카드가 화면 밖으로 밀린다.
+        setIsCameraCentered(false);
         setDesktopPinCard({
           lockerId: id,
           pin,
@@ -2806,6 +2812,17 @@ export function IndexPage() {
       setSheetMode("filter");
     }
     if (sheetEntry === "searchOverlay") setIsSearchOpen(true);
+    /*
+     * 핀 카드에서 연 길찾기 칸. 카드는 주소를 바꾸지 않아 상세 화면이 아니다. 카드에서
+     * 고른 보관함을 들고 있으면 그것으로 다시 연다. 열지 않으면 빈 기록 칸이 남는다.
+     */
+    if (
+      sheetEntry === "navigationPopup" &&
+      mapScreen.target !== "detail" &&
+      navigationPopupLockerRef.current
+    ) {
+      setIsNavigationPopupOpen(true);
+    }
     if (sheetEntry === "navigationPopup" && mapScreen.target === "detail") {
       if (
         sheetModeRef.current === "detail" &&
@@ -3111,7 +3128,11 @@ export function IndexPage() {
       lng: origin.lng,
     };
   }, [desktopPinCard, lockerDetailQueryOrigin, searchCoordinates]);
-  const { data: pinCardDetail } = useLockerDetail(pinCardDetailParams);
+  const {
+    data: pinCardDetail,
+    isError: isPinCardDetailError,
+    refetch: refetchPinCardDetail,
+  } = useLockerDetail(pinCardDetailParams);
   const pinCardLocker = useMemo(() => {
     if (!desktopPinCard) return null;
 
@@ -3128,9 +3149,14 @@ export function IndexPage() {
         )
       : null;
   }, [desktopPinCard, pinCardDetail, favoriteSession.getEffectiveIsFavorite]);
-  const isPinCardLoading =
+  const hasPinCardDetail =
     desktopPinCard !== null &&
-    pinCardDetail?.lockerId !== desktopPinCard.lockerId;
+    pinCardDetail?.lockerId === desktopPinCard.lockerId;
+  /* 받은 상세가 없을 때만 실패를 알린다. 다시 받다가 실패해도 받아 둔 상세는 보여 준다. */
+  const isPinCardError =
+    desktopPinCard !== null && !hasPinCardDetail && isPinCardDetailError;
+  const isPinCardLoading =
+    desktopPinCard !== null && !hasPinCardDetail && !isPinCardDetailError;
 
   const handleNavigateFromPinCard = useCallback(
     (locker: LockerDetailItem) => {
@@ -3609,6 +3635,8 @@ export function IndexPage() {
           <LockerPinCard
             locker={pinCardLocker}
             isLoading={isPinCardLoading}
+            isError={isPinCardError}
+            onRetry={() => void refetchPinCardDetail()}
             offset={desktopPinCard.offset}
             // 로그인 전에도 ☆ 를 둔다. 누르면 즐겨찾기 처리가 로그인 창을 띄운다.
             canFavorite

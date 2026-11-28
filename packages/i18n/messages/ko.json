@@ -407,6 +407,8 @@
   "locker_correction_close_aria": "신고하기 닫기",
   "locker_detail_navigate": "길찾기",
   "locker_pin_card_view_detail": "자세히 보기",
+  "locker_pin_card_error": "정보를 불러오지 못했어요",
+  "locker_pin_card_retry": "다시 시도",
   "locker_detail_image_list_aria": "보관함 사진 목록",
   "locker_detail_image_item_aria": "보관함 사진 {index} / {total}",
   "locker_detail_image_previous": "이전 사진",
