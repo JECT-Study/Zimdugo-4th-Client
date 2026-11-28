@@ -3610,7 +3610,8 @@ export function IndexPage() {
             locker={pinCardLocker}
             isLoading={isPinCardLoading}
             offset={desktopPinCard.offset}
-            canFavorite={isAuthenticated}
+            // 로그인 전에도 ☆ 를 둔다. 누르면 즐겨찾기 처리가 로그인 창을 띄운다.
+            canFavorite
             onFavoriteChange={(item, next) =>
               favoriteSession.handleDetailFavoriteChange(
                 item,
