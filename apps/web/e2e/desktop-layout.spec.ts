@@ -73,11 +73,25 @@ const suggestItemRaw = {
   updatedAt: "2026-08-01T00:00:00",
 };
 
+/** 상세와 같은 자리의 보관함 핀 하나. 핀 카드 흐름에서 누른다. */
+const lockerPinRaw = {
+  pinType: "LOCKER",
+  lockerId: LOCKER_ID,
+  placeId: null,
+  latitude: 37.4979,
+  longitude: 127.0276,
+  isFavorite: false,
+  lockerCount: null,
+  pinCount: null,
+  bounds: null,
+  markerStatus: "DEFAULT",
+};
+
 const stubApi = async (page: Page) => {
   await page.route("**/api/v1/**", async (route) => {
     const url = route.request().url();
     const data = url.includes("/pins")
-      ? { items: [] }
+      ? { items: [lockerPinRaw] }
       : url.includes("/lockers/search")
         ? { count: 1, bounds: boundsRaw, items: [searchItemRaw] }
         : url.includes(`/lockers/${LOCKER_ID}`)
@@ -113,6 +127,35 @@ const desktopDetailPanel = (page: Page) =>
 const searchFilterChip = (page: Page) =>
   page.getByRole("button", { name: "장소 유형", exact: true });
 const searchOverlay = (page: Page) => page.locator("[data-search-overlay]");
+const lockerPinCard = (page: Page) => page.locator("[data-locker-pin-card]");
+
+/**
+ * 지도 핀을 누른다. 핀은 지도 SDK 가 얹은 층 아래에 깔려 Playwright 의 클릭이 닿지
+ * 않으므로, SDK 가 듣는 이벤트를 핀 요소에 직접 보낸다(home-history 와 같은 방식).
+ */
+const pressFirstMarker = async (page: Page) => {
+  await expect
+    .poll(() => page.locator(".map-marker-offset-wrapper").count())
+    .toBeGreaterThan(0);
+  await page.evaluate(() => {
+    const marker = document.querySelector(".map-marker-offset-wrapper");
+    if (!marker) throw new Error("핀이 없다");
+    const box = marker.getBoundingClientRect();
+    const init = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      clientX: box.x + box.width / 2,
+      clientY: box.y + box.height / 2,
+    };
+    const pointer = { ...init, pointerType: "mouse", isPrimary: true };
+    marker.dispatchEvent(new PointerEvent("pointerdown", pointer));
+    marker.dispatchEvent(new MouseEvent("mousedown", init));
+    marker.dispatchEvent(new PointerEvent("pointerup", pointer));
+    marker.dispatchEvent(new MouseEvent("mouseup", init));
+    marker.dispatchEvent(new MouseEvent("click", init));
+  });
+};
 /** 검색 카드의 입력창은 누르기만 하는 자리라 readonly, 타이핑은 오버레이가 받는다. */
 const homeSearchInput = (page: Page) =>
   page.locator('input[aria-label="검색어 입력"][readonly]');
@@ -373,6 +416,117 @@ test.describe("데스크톱 레이아웃 플래그", () => {
       ).toBeVisible();
       await expect(desktopDetailPanel(page)).toHaveCount(0);
       await expect(page).toHaveURL(/\/search\?/);
+    });
+  });
+
+  test.describe("핀 위 요약 카드", () => {
+    test.use({
+      permissions: ["geolocation"],
+      geolocation: { latitude: 37.4979, longitude: 127.0276 },
+    });
+
+    test("데스크톱에서 지도 핀을 누르면 상세 대신 핀 위에 요약 카드를 띄운다", async ({
+      page,
+    }) => {
+      await page.goto("/?desktop=1");
+      await waitForMapReady(page);
+      await pressFirstMarker(page);
+
+      const card = lockerPinCard(page);
+      await expect(card).toBeVisible();
+      // 상세 응답의 이름이 보여야 핀 자리표시가 아니라 받아 온 상세를 그린 것이다.
+      await expect(
+        card.getByRole("heading", { name: "강남역 4번 출구 물품보관함" }),
+      ).toBeVisible();
+      await expect(
+        card.getByRole("button", { name: "자세히 보기" }),
+      ).toBeVisible();
+      await expect(desktopDetailPanel(page)).toHaveCount(0);
+      await expect(page).not.toHaveURL(/\/lockers\//);
+
+      // Esc 로 닫는다.
+      await page.keyboard.press("Escape");
+      await expect(card).toHaveCount(0);
+    });
+
+    test("자세히 보기를 누르면 카드를 닫고 상세 패널을 연다", async ({ page }) => {
+      await page.goto("/?desktop=1");
+      await waitForMapReady(page);
+      await pressFirstMarker(page);
+      await lockerPinCard(page)
+        .getByRole("button", { name: "자세히 보기" })
+        .click();
+
+      await expect(desktopDetailPanel(page)).toBeVisible();
+      await expect(
+        desktopDetailPanel(page).getByRole("heading", {
+          name: "강남역 4번 출구 물품보관함",
+        }),
+      ).toBeVisible();
+      await expect(lockerPinCard(page)).toHaveCount(0);
+      await expect(page).toHaveURL(/\/lockers\/500/);
+    });
+
+    test("상세를 받지 못하면 카드가 자리표시에 머물지 않고 오류와 다시 시도를 보여 준다", async ({
+      page,
+    }) => {
+      // 상세 요청만 실패시킨다. 나중에 건 경로가 먼저 응답한다.
+      let failDetail = true;
+      await page.route(`**/api/v1/lockers/${LOCKER_ID}?**`, async (route) => {
+        if (!failDetail) return route.fallback();
+        await route.fulfill({ status: 500, body: "{}" });
+      });
+      await page.goto("/?desktop=1");
+      await waitForMapReady(page);
+      await pressFirstMarker(page);
+
+      const card = lockerPinCard(page);
+      await expect(card.getByText("정보를 불러오지 못했어요")).toBeVisible();
+      await expect(card.getByRole("button", { name: "길찾기" })).toBeDisabled();
+      await expect(
+        card.getByRole("button", { name: "자세히 보기" }),
+      ).toBeEnabled();
+
+      failDetail = false;
+      await card.getByRole("button", { name: "다시 시도" }).click();
+      await expect(
+        card.getByRole("heading", { name: "강남역 4번 출구 물품보관함" }),
+      ).toBeVisible();
+    });
+
+    test("카드에서 연 길찾기 창은 뒤로가기로 닫히고 앞으로가기로 다시 열린다", async ({
+      page,
+    }) => {
+      await page.goto("/?desktop=1");
+      await waitForMapReady(page);
+      await pressFirstMarker(page);
+      const card = lockerPinCard(page);
+      await expect(
+        card.getByRole("heading", { name: "강남역 4번 출구 물품보관함" }),
+      ).toBeVisible();
+
+      await card.getByRole("button", { name: "길찾기" }).click();
+      const popup = page.getByRole("dialog", { name: "길찾기 플랫폼 선택" });
+      await expect(popup).toBeVisible();
+
+      await page.goBack();
+      await expect(popup).toHaveCount(0);
+
+      await page.goForward();
+      await expect(popup).toBeVisible();
+      // 카드는 주소를 바꾸지 않는다. 앞으로가기로도 상세 화면이 되지 않는다.
+      await expect(page).not.toHaveURL(/\/lockers\//);
+    });
+
+    test("플래그가 꺼져 있으면 핀을 누를 때 카드 없이 상세를 연다", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await waitForMapReady(page);
+      await pressFirstMarker(page);
+
+      await expect(sheetSurface(page)).toBeVisible();
+      await expect(lockerPinCard(page)).toHaveCount(0);
     });
   });
 

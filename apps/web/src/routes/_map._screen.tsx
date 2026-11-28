@@ -22,6 +22,7 @@ import {
   resolveDetailSheetVisibleHeight,
 } from "#/composites/locker-detail/LockerDetailBottomSheet";
 import { LockerDetailPreviewCard } from "#/composites/locker-detail/LockerDetailPreviewCard";
+import { LockerPinCard } from "#/composites/locker-detail/LockerPinCard";
 import { HomeSearchBar } from "#/composites/search/HomeSearchBar";
 import { NavigationPlatformPopup } from "#/composites/search/NavigationPlatformPopup";
 import {
@@ -87,6 +88,7 @@ import type {
   LocationRequestOutcome,
 } from "#/entities/map/model/useLocationTracking";
 import { LOCKER_PINS_QUERY_KEY } from "#/entities/map/model/useLockerMarkers";
+import { MapAnchoredOverlay } from "#/entities/map/ui/MapAnchoredOverlay";
 import {
   MAP_CONTROL_FALLBACK_BOTTOM_PX,
   MAP_CONTROL_SHEET_GAP_PX,
@@ -257,6 +259,22 @@ const reloadForLocationRecovery = () => {
 
 /** 주소의 검색 값을 받아 다음 값을 돌려주는 함수. */
 type SearchUrlUpdate = (search: SearchUrlParams) => SearchUrlParams;
+
+type SelectMapPin = (
+  pinType: "LOCKER" | "PLACE",
+  id: number,
+  pin?: LockerPinItemResponse,
+  offset?: LockerMarkerOffset,
+) => void;
+
+/** 데스크톱에서 핀 위에 띄운 요약 카드. 주소에는 남기지 않는다. */
+interface DesktopPinCardState {
+  lockerId: number;
+  pin: LockerPinItemResponse;
+  offset: LockerMarkerOffset | null;
+  /** "자세히 보기". 카드를 띄우기 전 원래 하던 핀 선택(상세 열기)을 이어 부른다. */
+  openDetail: () => void;
+}
 
 /** openLockerId 계열 딥링크 파라미터를 걷어 낸다. */
 const withoutOpenLockerParams = ({
@@ -636,6 +654,17 @@ export function IndexPage() {
     clear: clearSearchHistory,
   } = useSearchHistory();
   const [isNavigationPopupOpen, setIsNavigationPopupOpen] = useState(false);
+  const [desktopPinCard, setDesktopPinCard] =
+    useState<DesktopPinCardState | null>(null);
+  /**
+   * 핀 카드에서 연 길찾기 팝업이 가리킬 보관함. 상세에서 열면 비워 두고, 팝업은 지금
+   * 보이는 상세를 쓴다.
+   */
+  const [navigationPopupLocker, setNavigationPopupLocker] =
+    useState<LockerDetailItem | null>(null);
+  /** 기록 칸이 바뀐 순간 이펙트가 읽는 최신 값. */
+  const navigationPopupLockerRef = useRef<LockerDetailItem | null>(null);
+  navigationPopupLockerRef.current = navigationPopupLocker;
 
   // 위치 및 방향 트래킹 — 위치 관련 훅과 콜백은 side effect보다 먼저 선언한다.
   const [isCameraCentered, setIsCameraCentered] = useState(false);
@@ -2425,8 +2454,58 @@ export function IndexPage() {
     ],
   );
 
+  /*
+   * 데스크톱: 지도에서 보관함 핀을 누르면 상세를 바로 열지 않고 핀 위에 요약 카드를
+   * 띄운다. 카드의 "자세히 보기" 가 원래의 핀 선택(상세 열기)을 그대로 이어 부른다.
+   * 카드만으로는 주소를 바꾸지 않는다. 장소 핀과 모바일은 지금처럼 바로 연다.
+   */
+  const selectPinHandlers = useMemo(() => {
+    const presentPinCard =
+      (select: SelectMapPin): SelectMapPin =>
+      (pinType, id, pin, offset) => {
+        if (!isDesktopLayout || pinType !== "LOCKER" || !pin) {
+          select(pinType, id, pin, offset);
+          return;
+        }
+
+        suppressNextMapPressForMarkerInteraction();
+        // 기존 핀 선택처럼 내 위치 따라가기를 끈다. 켜 두면 다음 위치 갱신에 지도가
+        // 내 위치로 돌아가 방금 띄운 카드가 화면 밖으로 밀린다.
+        setIsCameraCentered(false);
+        setDesktopPinCard({
+          lockerId: id,
+          pin,
+          offset: offset ?? null,
+          openDetail: () => select(pinType, id, pin, offset),
+        });
+        mapCamera.focusOn({ lat: pin.latitude, lng: pin.longitude });
+      };
+
+    return {
+      idle: presentPinCard(handleIdlePinSelect),
+      search: presentPinCard(handleSearchMarkerSelect),
+      mapPlace: presentPinCard(handleMapPlaceMarkerSelect),
+      selectedMapDetail: presentPinCard(handleSelectedMapDetailMarkerSelect),
+    };
+  }, [
+    isDesktopLayout,
+    suppressNextMapPressForMarkerInteraction,
+    mapCamera.focusOn,
+    handleIdlePinSelect,
+    handleSearchMarkerSelect,
+    handleMapPlaceMarkerSelect,
+    handleSelectedMapDetailMarkerSelect,
+  ]);
+
+  const handleOpenPinCardDetail = useCallback(() => {
+    const card = desktopPinCard;
+    setDesktopPinCard(null);
+    card?.openDetail();
+  }, [desktopPinCard]);
+
   /** 길찾기 팝업도 히스토리 칸을 하나 만들어 기기 뒤로가기로 닫힌다. */
   const handleOpenNavigationPopup = useCallback(() => {
+    setNavigationPopupLocker(null);
     setIsNavigationPopupOpen(true);
     mapScreenNavigation.pushSheetEntry("navigationPopup");
   }, [mapScreenNavigation.pushSheetEntry]);
@@ -2733,6 +2812,17 @@ export function IndexPage() {
       setSheetMode("filter");
     }
     if (sheetEntry === "searchOverlay") setIsSearchOpen(true);
+    /*
+     * 핀 카드에서 연 길찾기 칸. 카드는 주소를 바꾸지 않아 상세 화면이 아니다. 카드에서
+     * 고른 보관함을 들고 있으면 그것으로 다시 연다. 열지 않으면 빈 기록 칸이 남는다.
+     */
+    if (
+      sheetEntry === "navigationPopup" &&
+      mapScreen.target !== "detail" &&
+      navigationPopupLockerRef.current
+    ) {
+      setIsNavigationPopupOpen(true);
+    }
     if (sheetEntry === "navigationPopup" && mapScreen.target === "detail") {
       if (
         sheetModeRef.current === "detail" &&
@@ -3023,6 +3113,85 @@ export function IndexPage() {
     lockerDetail,
     selectedLockerDetail,
   ]);
+
+  /*
+   * 핀 카드가 보여 줄 상세. 상세 패널과 같은 조건으로 받아, 카드에서 "자세히 보기" 로
+   * 넘어가면 받아 둔 응답을 그대로 쓴다.
+   */
+  /*
+   * 원점은 "자세히 보기" 가 상세를 열며 쓰는 것과 같은 지금 좌표다. 앞서 연 상세의
+   * 원점(lockerDetailQueryOrigin)이 남아 있어도 따르지 않는다. 그 원점으로 받으면
+   * 자세히 보기의 조회 키와 달라져 같은 보관함을 한 번 더 받는다.
+   */
+  const pinCardDetailParams = useMemo(() => {
+    if (!desktopPinCard) return null;
+
+    return {
+      lockerId: desktopPinCard.lockerId,
+      lat: searchCoordinates.lat,
+      lng: searchCoordinates.lng,
+    };
+  }, [desktopPinCard, searchCoordinates]);
+  const {
+    data: pinCardDetail,
+    isError: isPinCardDetailError,
+    refetch: refetchPinCardDetail,
+  } = useLockerDetail(pinCardDetailParams);
+  const pinCardLocker = useMemo(() => {
+    if (!desktopPinCard) return null;
+
+    const base =
+      pinCardDetail?.lockerId === desktopPinCard.lockerId
+        ? pinCardDetail
+        : desktopPinCard.pin.pinType === "LOCKER"
+          ? createLockerDetailFromPin(desktopPinCard.pin)
+          : null;
+    return base
+      ? applyFavoriteOverlayToLockerDetail(
+          base,
+          favoriteSession.getEffectiveIsFavorite,
+        )
+      : null;
+  }, [desktopPinCard, pinCardDetail, favoriteSession.getEffectiveIsFavorite]);
+  const hasPinCardDetail =
+    desktopPinCard !== null &&
+    pinCardDetail?.lockerId === desktopPinCard.lockerId;
+  /* 받은 상세가 없을 때만 실패를 알린다. 다시 받다가 실패해도 받아 둔 상세는 보여 준다. */
+  const isPinCardError =
+    desktopPinCard !== null && !hasPinCardDetail && isPinCardDetailError;
+  const isPinCardLoading =
+    desktopPinCard !== null && !hasPinCardDetail && !isPinCardDetailError;
+
+  const handleNavigateFromPinCard = useCallback(
+    (locker: LockerDetailItem) => {
+      handleOpenNavigationPopup();
+      setNavigationPopupLocker(locker);
+    },
+    [handleOpenNavigationPopup],
+  );
+
+  /*
+   * 핀 카드를 닫는 때. 화면(주소)이 바뀌거나, 검색을 열거나, 모바일 폭으로 줄면 닫는다.
+   * 주소가 바뀌는 순간에는 카드가 가리키던 맥락이 사라진다.
+   */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 주소가 바뀐 것 자체가 닫을 신호다
+  useEffect(() => {
+    setDesktopPinCard(null);
+  }, [mapScreenKey]);
+
+  useEffect(() => {
+    if (!isDesktopLayout || isSearchOpen) setDesktopPinCard(null);
+  }, [isDesktopLayout, isSearchOpen]);
+
+  useEffect(() => {
+    if (!desktopPinCard) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDesktopPinCard(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [desktopPinCard]);
   displayedLockerDetailRef.current = displayedLockerDetail;
 
   // 기다리던 길찾기 팝업을 상세가 뜨면 연다(위 시트 이펙트 참고).
@@ -3329,6 +3498,12 @@ export function IndexPage() {
         return;
       }
 
+      // 핀 카드가 떠 있으면 지도 클릭은 카드만 닫는다.
+      if (desktopPinCard) {
+        setDesktopPinCard(null);
+        return;
+      }
+
       if (
         (context === "search" || context === "map") &&
         sheetMode === "list" &&
@@ -3351,6 +3526,7 @@ export function IndexPage() {
   }, [
     context,
     clearNextMapPressSuppression,
+    desktopPinCard,
     detailSheetSnapStage,
     isSearchOpen,
     listSheetSnapStage,
@@ -3436,12 +3612,7 @@ export function IndexPage() {
             mapPlace: mapPlacePins,
             selectedMapDetail: selectedMapDetailPins,
           }}
-          onSelectPin={{
-            idle: handleIdlePinSelect,
-            search: handleSearchMarkerSelect,
-            mapPlace: handleMapPlaceMarkerSelect,
-            selectedMapDetail: handleSelectedMapDetailMarkerSelect,
-          }}
+          onSelectPin={selectPinHandlers}
           onClusterClick={handleClusterClick}
           resolveEffectiveFavorite={favoriteSession.getEffectiveIsFavorite}
           spreadCenter={
@@ -3457,6 +3628,34 @@ export function IndexPage() {
           preservedOffsets={selectedPinPreservedOffsets}
         />
       </MapSelectionProvider>
+      {desktopPinCard && pinCardLocker ? (
+        <MapAnchoredOverlay
+          map={mapInstance}
+          position={{
+            lat: desktopPinCard.pin.latitude,
+            lng: desktopPinCard.pin.longitude,
+          }}
+        >
+          <LockerPinCard
+            locker={pinCardLocker}
+            isLoading={isPinCardLoading}
+            isError={isPinCardError}
+            onRetry={() => void refetchPinCardDetail()}
+            offset={desktopPinCard.offset}
+            // 로그인 전에도 ☆ 를 둔다. 누르면 즐겨찾기 처리가 로그인 창을 띄운다.
+            canFavorite
+            onFavoriteChange={(item, next) =>
+              favoriteSession.handleDetailFavoriteChange(
+                item,
+                next,
+                pinCardDetail?.isFavorite,
+              )
+            }
+            onNavigate={handleNavigateFromPinCard}
+            onOpenDetail={handleOpenPinCardDetail}
+          />
+        </MapAnchoredOverlay>
+      ) : null}
       {/*
         배치 불가(null)면 스켈레톤도 내보내지 않는다. 실제 컨트롤은 바로 아래
         분기에서 숨겨지므로, 스켈레톤만 남기면 지도가 준비되는 순간 버튼이 사라진다.
@@ -3625,7 +3824,11 @@ export function IndexPage() {
 
       <NavigationPlatformPopup
         isOpen={isNavigationPopupOpen}
-        locker={displayedLockerDetail}
+        locker={
+          isNavigationPopupOpen && navigationPopupLocker
+            ? navigationPopupLocker
+            : displayedLockerDetail
+        }
         knownLocation={navigationKnownLocation}
         onOpenChange={handleNavigationPopupOpenChange}
       />
