@@ -3118,16 +3118,20 @@ export function IndexPage() {
    * 핀 카드가 보여 줄 상세. 상세 패널과 같은 조건으로 받아, 카드에서 "자세히 보기" 로
    * 넘어가면 받아 둔 응답을 그대로 쓴다.
    */
+  /*
+   * 원점은 "자세히 보기" 가 상세를 열며 쓰는 것과 같은 지금 좌표다. 앞서 연 상세의
+   * 원점(lockerDetailQueryOrigin)이 남아 있어도 따르지 않는다. 그 원점으로 받으면
+   * 자세히 보기의 조회 키와 달라져 같은 보관함을 한 번 더 받는다.
+   */
   const pinCardDetailParams = useMemo(() => {
     if (!desktopPinCard) return null;
 
-    const origin = lockerDetailQueryOrigin ?? searchCoordinates;
     return {
       lockerId: desktopPinCard.lockerId,
-      lat: origin.lat,
-      lng: origin.lng,
+      lat: searchCoordinates.lat,
+      lng: searchCoordinates.lng,
     };
-  }, [desktopPinCard, lockerDetailQueryOrigin, searchCoordinates]);
+  }, [desktopPinCard, searchCoordinates]);
   const {
     data: pinCardDetail,
     isError: isPinCardDetailError,
